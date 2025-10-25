@@ -1,0 +1,33 @@
+[package]
+name = "helm-schema"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[dependencies]
+color-eyre.workspace = true
+# gtmpl = { version = "0", features = [] }
+# gtmpl = { version = "0", features = ["derive"] }
+helm-schema-go-template = { path = "../helm-schema-go-template/" }
+helm-schema-go-template-value = { path = "../helm-schema-go-template-value/", features = ["serde"] }
+helm-schema-go-template-derive = { path = "../helm-schema-go-template-derive/" }
+
+tracing.workspace = true
+tracing-subscriber = { version = "0", features = ["json", "env-filter"] }
+termcolor = "1"
+
+# todo
+glob = "0"
+flate2 = "1"
+tar = "0"
+serde.workspace = true
+serde_yaml = "0"
+
+[dev-dependencies]
+similar-asserts.workspace = true
+indoc = "2"

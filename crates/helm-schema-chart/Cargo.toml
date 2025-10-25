@@ -1,0 +1,40 @@
+[package]
+name = "helm-schema-chart"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[features]
+default = ["extract_tgz"]
+extract_tgz = ["dep:flate2", "dep:tar"]
+
+[dependencies]
+thiserror.workspace = true
+
+# tracing
+tracing.workspace = true
+
+# virtual file system
+vfs.workspace = true
+camino.workspace = true
+
+# serialization
+serde.workspace = true
+serde_yaml.workspace = true
+
+# Optional: extract .tgz sub charts
+flate2 = { version = "1", optional = true }
+tar = { version = "0", optional = true }
+
+helm-schema-core.workspace = true
+helm-schema-vfs-walk.workspace = true
+
+[dev-dependencies]
+color-eyre.workspace = true
+indoc.workspace = true
+test-util.workspace = true

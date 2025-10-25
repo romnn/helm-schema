@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = [
+  # "crates/*",
+  "crates/test-util",
+  "crates/helm-schema-core",
+  "crates/helm-schema-chart",
+  "crates/helm-schema-cli",
+  "crates/helm-schema-vfs-walk",
+  "crates/helm-schema-template-grammar",
+  "crates/helm-schema-template", 
+  "crates/helm-schema-mapper",
+]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+authors = ["romnn <contact@romnn.com>"]
+description = "Generate an accurate JSON schema for any helm chart"
+license = "MIT"
+homepage = "https://github.com/romnn/helm-schema"
+repository = "https://github.com/romnn/helm-schema"
+categories = [
+  "development-tools",
+  "development-tools::build-utils",
+]
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+opt-level = 3
+
+[workspace.dependencies]
+color-eyre = "0"
+thiserror = "2"
+indoc = "2"
+
+# safe paths
+camino = "1"
+
+# serialization
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0"
+serde_json = "1"
+
+# async runtime
+tokio = { version = "1", features = ["full"] }
+futures = "0"
+
+# virtual file system
+vfs = "0"
+
+# tracing
+tracing = "0.1"
+
+# tree sitter parser
+tree-sitter = "0.25"
+
+# local charts
+test-util = { path = "crates/test-util" }
+helm-schema-core = { path = "crates/helm-schema-core" }
+helm-schema-chart = { path = "crates/helm-schema-chart" }
+helm-schema-cli = { path = "crates/helm-schema-cli" }
+helm-schema-vfs-walk = { path = "crates/helm-schema-vfs-walk" }
+helm-schema-template-grammar = { path = "crates/helm-schema-template-grammar" }
+helm-schema-template = { path = "crates/helm-schema-template" }
+helm-schema-mapper = { path = "crates/helm-schema-mapper" }
