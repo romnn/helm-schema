@@ -12,13 +12,10 @@ fn is_sequence(n: &Node) -> bool {
 }
 
 fn is_key_node(node: Node, pair: Node) -> bool {
-    // find the node that is the direct child under `pair`
     let n_under_pair = ascend_to_child_of(node, pair);
-
     if let Some(k) = pair.child_by_field_name("key") {
         return n_under_pair.id() == k.id();
     }
-    // fallback: first named child is typically the key
     if let Some(first) = pair.named_child(0) {
         return n_under_pair.id() == first.id();
     }
@@ -280,95 +277,4 @@ fn parse_placeholder_id(text: &str) -> Option<usize> {
     t.strip_prefix("__TSG_PLACEHOLDER_")
         .and_then(|rest| rest.strip_suffix("__"))
         .and_then(|num| num.parse::<usize>().ok())
-}
-
-// if let Some(path) = compute_path_for_scalar(n, sanitized) {
-//     map.insert(id, path);
-// }
-
-#[cfg(false)]
-pub mod v1 {
-    use super::{PathElem, YamlPath};
-    use std::collections::BTreeMap;
-    use thiserror::Error;
-    use tree_sitter::{Node, Parser};
-
-    /// compute YAML path for a scalar node by walking up mapping/sequence parents
-    fn compute_path_for_scalar(mut node: Node, src: &str) -> Option<YamlPath> {
-        let mut elems = Vec::<PathElem>::new();
-
-        loop {
-            let parent = node.parent()?;
-            match parent.kind() {
-                "block_mapping_pair" | "flow_pair" => {
-                    // get key text
-                    let key = parent
-                        .child_by_field_name("key")
-                        .unwrap_or_else(|| parent.named_child(0).unwrap());
-                    let key_text = key.utf8_text(src.as_bytes()).ok()?;
-                    // sanitize key text to identifier-ish (strip quotes if any)
-                    let key_norm = key_text
-                        .trim()
-                        .trim_matches('"')
-                        .trim_matches('\'')
-                        .to_string();
-                    elems.push(PathElem::Key(key_norm));
-                    // move to the pair's parent
-                    node = parent;
-                }
-                "block_sequence_item" | "flow_node" | "block_node" => {
-                    // compute index among siblings if parent is a sequence
-                    if let Some(seq) = find_sequence_parent(node) {
-                        let idx = index_in_sequence(node, seq);
-                        elems.push(PathElem::Index(idx));
-                        node = seq;
-                    } else {
-                        node = parent;
-                    }
-                }
-                _ => {
-                    node = parent;
-                }
-            }
-
-            // stop at document root-ish nodes
-            if matches!(node.kind(), "document" | "stream" | "program") {
-                break;
-            }
-        }
-
-        elems.reverse();
-        Some(YamlPath(elems))
-    }
-
-    fn find_sequence_parent(mut node: Node) -> Option<Node> {
-        let mut p = node.parent();
-        while let Some(pp) = p {
-            if pp.kind().contains("sequence") {
-                return Some(pp);
-            }
-            p = pp.parent();
-        }
-        None
-    }
-
-    fn index_in_sequence(item_or_descendant: Node, seq: Node) -> usize {
-        // find nearest ancestor that is a child of seq
-        let mut node = item_or_descendant;
-        while let Some(p) = node.parent() {
-            if p.id() == seq.id() {
-                break;
-            }
-            node = p;
-        }
-        let mut idx = 0usize;
-        let mut c = seq.walk();
-        for ch in seq.named_children(&mut c) {
-            if ch.id() == node.id() {
-                return idx;
-            }
-            idx += 1;
-        }
-        idx
-    }
 }

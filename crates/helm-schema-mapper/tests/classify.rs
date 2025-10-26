@@ -27,12 +27,11 @@ fn classifies_key_vs_value_vs_fragment() -> eyre::Result<()> {
     }
 
     dbg!(&by);
+    let by: Vec<_> = by.iter().map(|(k, v)| (k.as_str(), *v)).collect();
 
-    // badKey appears before colon on the same line => MappingKey (no placeholder)
-    assert_that!(by.get("badKey"), some(eq(&Role::MappingKey)));
-    // meta.name appears after colon => ScalarValue (placeholder inserted)
-    assert_that!(by.get("meta.name"), some(eq(&Role::ScalarValue)));
-    // include ... | nindent (fragment) -> classified Fragment/Unknown (no placeholder)
-    // (value_path under include may not exist; classification sanity checked indirectly)
+    assert_that!(&by, unordered_elements_are![
+        eq(&("badKey", Role::MappingKey)),
+        eq(&("meta.name", Role::ScalarValue)),
+    ]);
     Ok(())
 }

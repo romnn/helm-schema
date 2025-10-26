@@ -225,3 +225,41 @@ If you’d like, I can turn this into an issue-sized checklist with module skele
 [13]: https://docs.rs/jsonschema/latest/jsonschema/?utm_source=chatgpt.com "jsonschema - Rust - Docs.rs"
 [14]: https://github.com/yannh/kubeconform?utm_source=chatgpt.com "GitHub - yannh/kubeconform: A FAST Kubernetes manifests validator, with ..."
 
+
+-------------------------------------
+
+Notes on include “execution” via static analysis
+
+We still don’t execute includes. The plan to get “closure” semantics without runtime rendering:
+
+Chart-level pass: Analyze all template files (templates/**/*.yaml, *.tpl) and union their .Values uses.
+
+Call-site context: For an include "name" … inside a YAML value, we attach all .Values discovered inside the define "name" body as uses at that call site (i.e., we duplicate those uses with the caller’s YAML path context).
+
+Composition: For nested includes, repeat transitively. For tpl, parse the embedded string with the go-template grammar and run the same collection.
+
+Control flow merging: Keep guard/fragment roles; we’ll use them later to build OR/AND branches in the schema.
+
+This is the next logical step after today’s fixes; the above changes already make the assignment/guard parts analyzable so we can safely attribute include bodies later.
+
+----------------------------------------- 
+
+To truly handle SigNoz (and then Bitnami) end-to-end, we still need:
+
+Include Closure: resolve include "name" . / tpl to the define body’s collected .Values, and attach them to each call site (with the site’s role/path). We do not execute — just inline the set of value-uses.
+
+Arg-aware include introspection: when helpers take dict/list arguments and then access them, we need minimal alias tracking:
+
+For patterns like (dict "customLabels" .Values.commonLabels "context" .) used by helpers, record .Values.commonLabels as part of that include’s use set.
+
+Range/with scope notes (optional for this round): we don’t need to model .host or .path now (they’re not .Values), but we should keep the source .Values.signoz.ingress.hosts and .Values.signoz.ingress.tls marked as Guard. (Your sanitizer already does this; keep it.)
+
+Multi-binding dedup / priority: when a key occurs as Guard and ScalarValue, keep ScalarValue + best path (current upgrade logic already does that).
+
+Once the test above is green, we can add “closure” as a thin layer:
+
+Build an index: define-name -> set<Values> by analyzing _helpers.tpl.
+
+In analyze_template_file, when you see an include "name" ... placeholder, union those values into the placeholder’s entry at the call site (keeping roles/paths of the call site).
+
+That should make the SigNoz ingress fully covered, and it’s the same mechanism you’ll need for Bitnami’s common.* helpers.
