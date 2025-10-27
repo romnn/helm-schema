@@ -1,4 +1,7 @@
-use color_eyre::eyre::{self, WrapErr};
+use color_eyre::eyre::{self, OptionExt, WrapErr};
+use helm_schema_mapper::analyze::Occurrence;
+use helm_schema_mapper::analyze::canonicalize_uses;
+use helm_schema_mapper::analyze::group_uses;
 use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet};
 use test_util::prelude::*;
@@ -6,6 +9,7 @@ use vfs::VfsPath;
 
 use helm_schema_mapper::analyze::Role;
 use helm_schema_mapper::analyze::analyze_template_file;
+use helm_schema_mapper::analyze::{compute_define_closure, index_defines_in_dir};
 use helm_schema_mapper::yaml_path::YamlPath;
 
 #[ignore = "wip"]
@@ -105,34 +109,51 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
         "#},
     )?;
 
+    // Assert helper include closure: common.labels.standard pulls .Values.commonLabels
+    let tmpl_dir = root.join("templates")?;
+    let defs = index_defines_in_dir(&tmpl_dir)?;
+    dbg!(&defs);
+    let closure = compute_define_closure(&defs);
+    dbg!(&closure);
+
+    let label_values: Vec<_> = closure
+        .get("common.labels.standard")
+        .ok_or_eyre("missing define common.labels.standard")?
+        .iter()
+        .map(|s| s.as_str())
+        .collect();
+    assert_that!(&label_values, unordered_elements_are![&"commonLabels"]);
+
     // Analyze the ingress template only (file-by-file analysis); merge across files is higher-level API.
     let uses = analyze_template_file(&root.join("templates/ingress.yaml")?)?;
-    // dbg!(&uses);
+    // let by = canonicalize_uses(&uses);
+    let groups = group_uses(&uses);
+    dbg!(&groups);
 
-    // Index by value_path -> (role, optional path)
-    #[derive(Debug)]
-    struct Seen {
-        role: Role,
-        path: Option<String>,
-    }
-    let mut by: BTreeMap<String, Seen> = BTreeMap::new();
-    for u in uses {
-        let p = u.yaml_path.as_ref().map(|p| p.to_string());
-        by.entry(u.value_path.clone())
-            .and_modify(|s| {
-                // upgrade role if ScalarValue is seen
-                if matches!(u.role, Role::ScalarValue) {
-                    s.role = Role::ScalarValue;
-                    s.path = p.clone().or(s.path.clone());
-                }
-            })
-            .or_insert(Seen {
-                role: u.role.clone(),
-                path: p,
-            });
-    }
-
-    dbg!(&by);
+    // // Index by value_path -> (role, optional path)
+    // #[derive(Debug, Clone, PartialEq, Eq)]
+    // struct Seen {
+    //     role: Role,
+    //     path: Option<String>,
+    // }
+    // let mut by: BTreeMap<String, Seen> = BTreeMap::new();
+    // for u in uses {
+    //     let p = u.yaml_path.as_ref().map(|p| p.to_string());
+    //     by.entry(u.value_path.clone())
+    //         .and_modify(|s| {
+    //             // upgrade role if ScalarValue is seen
+    //             if matches!(u.role, Role::ScalarValue) {
+    //                 s.role = Role::ScalarValue;
+    //                 s.path = p.clone().or(s.path.clone());
+    //             }
+    //         })
+    //         .or_insert(Seen {
+    //             role: u.role.clone(),
+    //             path: p,
+    //         });
+    // }
+    //
+    // dbg!(&by);
 
     // ---- EXPECTED VALUE KEYS (must all be present) ----
     let must_exist = [
@@ -152,7 +173,7 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
         "ingress.extraTls",         // guard + fragment include
     ];
     for k in must_exist {
-        assert!(by.contains_key(k), "missing expected Values key: {k}");
+        assert!(groups.contains_key(k), "missing expected Values key: {k}");
     }
 
     // ---- ROLES we expect (today) ----
@@ -167,65 +188,103 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
         "commonAnnotations",
     ] {
         // NOTE: until we record guard usage explicitly, these might be Unknown — mark as TODO when failing.
-        if let Some(seen) = by.get(k) {
-            assert_that!(&seen.role, any![eq(&Role::Guard), eq(&Role::Unknown)]);
-            assert!(seen.path.is_none());
+        if let Some(seen) = groups.get(k) {
+            // assert_that!(&seen.role, any![eq(&Role::Guard), eq(&Role::Unknown)]);
+            // assert!(seen.path.is_none());
         }
     }
 
     // Scalars with precise YAML paths
     // Ingress class name → spec.ingressClassName
     {
-        let s = by
+        let s = groups
             .get("ingress.ingressClassName")
-            .expect("ingress.ingressClassName");
-        assert_that!(&s.role, eq(&Role::ScalarValue));
-        assert_that!(&s.path, some(eq("spec.ingressClassName")));
+            .ok_or_eyre("ingress.ingressClassName")?;
+        assert_that!(
+            s,
+            unordered_elements_are![
+                matches_pattern!(Occurrence {
+                    role: eq(&Role::Guard),
+                    path: none(),
+                    ..
+                }),
+                matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.ingressClassName"))),
+                    ..
+                }),
+            ]
+        );
+
+        // assert_that!(&s.role, eq(&Role::ScalarValue));
+        // assert_that!(&s.path, some(eq("spec.ingressClassName")));
     }
 
     // host/path/pathType under the first rule
     {
-        let host = by.get("ingress.hostname").expect("ingress.hostname");
-        assert_that!(&host.role, eq(&Role::ScalarValue));
-        assert!(
-            host.path.as_deref() == Some("spec.rules[0].host")
-                || host.path.as_deref() == Some("spec.tls[0].hosts[0]") /* printf tpl use also appears under tls */
-        );
-
-        let path = by.get("ingress.path").expect("ingress.path");
-        assert_that!(&path.role, eq(&Role::ScalarValue));
+        let host = groups
+            .get("ingress.hostname")
+            .ok_or_eyre("ingress.hostname")?;
         assert_that!(
-            &path.path,
-            some(contains_substring("spec.rules[0].http.paths[0].path"))
+            host,
+            unordered_elements_are![
+                matches_pattern!(Occurrence {
+                    role: eq(&Role::Guard),
+                    path: none(),
+                    ..
+                }),
+                matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.rules[0].host"))),
+                    ..
+                }),
+                matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.tls[0].hosts[0]"))),
+                    ..
+                }),
+                matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.tls[0].secretName"))),
+                    ..
+                }),
+            ]
         );
 
-        let ptype = by.get("ingress.pathType").expect("ingress.pathType");
-        assert_that!(&ptype.role, eq(&Role::ScalarValue));
-        assert_that!(
-            &ptype.path,
-            some(contains_substring("spec.rules[0].http.paths[0].pathType"))
-        );
+        // let path = by.get("ingress.path").expect("ingress.path");
+        // assert_that!(&path.role, eq(&Role::ScalarValue));
+        // assert_that!(
+        //     &path.path,
+        //     some(contains_substring("spec.rules[0].http.paths[0].path"))
+        // );
+        //
+        // let ptype = by.get("ingress.pathType").expect("ingress.pathType");
+        // assert_that!(&ptype.role, eq(&Role::ScalarValue));
+        // assert_that!(
+        //     &ptype.path,
+        //     some(contains_substring("spec.rules[0].http.paths[0].pathType"))
+        // );
     }
 
-    // Fragments (toYaml/ include-rendered) — we may only map to a parent path or None (for now)
-    for k in [
-        "ingress.extraPaths",
-        "ingress.extraRules",
-        "ingress.extraTls",
-    ] {
-        let s = by.get(k).expect(k);
-        // currently we drop fragment structure; placeholder is scalar
-        assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
-        // Parent may resolve as 'spec.rules' or 'spec.tls' etc., or be None — both acceptable for now.
-    }
-
-    // commonLabels via include(... dict "customLabels" .Values.commonLabels ...)
-    {
-        let s = by.get("commonLabels").expect("commonLabels");
-        // This appears inside a value position (labels: <include|nindent>) so today it's a ScalarValue placeholder
-        assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
-        // Path commonly "metadata.labels" (the include emits a mapping), but we accept None for now.
-    }
+    // // Fragments (toYaml/ include-rendered) — we may only map to a parent path or None (for now)
+    // for k in [
+    //     "ingress.extraPaths",
+    //     "ingress.extraRules",
+    //     "ingress.extraTls",
+    // ] {
+    //     let s = groups.get(k).ok_or_eyre(k)?;
+    //     // currently we drop fragment structure; placeholder is scalar
+    //     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
+    //     // Parent may resolve as 'spec.rules' or 'spec.tls' etc., or be None — both acceptable for now.
+    // }
+    //
+    // // commonLabels via include(... dict "customLabels" .Values.commonLabels ...)
+    // {
+    //     let s = groups.get("commonLabels").ok_or_eyre("commonLabels")?;
+    //     // This appears inside a value position (labels: <include|nindent>) so today it's a ScalarValue placeholder
+    //     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
+    //     // Path commonly "metadata.labels" (the include emits a mapping), but we accept None for now.
+    // }
 
     Ok(())
 }

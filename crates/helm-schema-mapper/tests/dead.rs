@@ -1,3 +1,40 @@
+// // Index by value_path -> (role, optional path)
+// #[derive(Clone, Debug, PartialEq, Eq)]
+// struct Seen {
+//     role: Role,
+//     path: Option<String>,
+// }
+// let mut by: BTreeMap<String, Seen> = BTreeMap::new();
+// for u in uses {
+//     let p = u.yaml_path.as_ref().map(|p| p.to_string());
+//     by.entry(u.value_path.clone())
+//         .and_modify(|s| {
+//             // upgrade role if ScalarValue is seen
+//             if matches!(u.role, Role::ScalarValue) {
+//                 s.role = Role::ScalarValue;
+//                 s.path = p.clone().or(s.path.clone());
+//             }
+//         })
+//         .or_insert(Seen {
+//             role: u.role.clone(),
+//             path: p,
+//         });
+// }
+//
+// dbg!(&by);
+//
+// let by: Vec<_> = by.iter().map(|(k, v)| (k.as_str(), v.clone())).collect();
+
+// for k in ["signoz.name", "nameOverride"] {
+//     let s = by
+//         .get(k)
+//         .unwrap_or_else(|| panic!("missing include-closure Value key: {k}"));
+//     // This include is placed at `metadata.labels: {{ include "signoz.labels" . | nindent 4 }}`
+//     // Today we model it as a scalar placeholder, so role is ScalarValue and path is metadata.labels.
+//     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
+//     assert_that!(&s.path, some(eq("metadata.labels")));
+// }
+
 // write(
 //     &root.join("templates/_helpers.tpl")?,
 //     indoc! {r#"

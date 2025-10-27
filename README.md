@@ -263,3 +263,17 @@ Build an index: define-name -> set<Values> by analyzing _helpers.tpl.
 In analyze_template_file, when you see an include "name" ... placeholder, union those values into the placeholder’s entry at the call site (keeping roles/paths of the call site).
 
 That should make the SigNoz ingress fully covered, and it’s the same mechanism you’ll need for Bitnami’s common.* helpers.
+
+-------------------------------------------
+
+Would a joint YAML + template incremental parser be nicer?
+
+Yes—long-term that’s the cleanest:
+
+Stream the literal YAML text through a tolerant YAML tokenizer while you walk the template AST.
+
+Maintain a small context stack (in-mapping / in-sequence, expecting key vs value) from actual YAML tokens instead of line heuristics.
+
+When you reach a template node, you know exactly which slot you’re in and can choose placeholder shapes deterministically.
+
+That’s more engineering and adds a real streaming YAML layer. The approach above gets nearly the same correctness for our use-cases with <50 lines of code and no new dependencies.

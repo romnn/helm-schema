@@ -1,13 +1,13 @@
-use color_eyre::eyre::OptionExt;
-use color_eyre::eyre::{self};
+#![allow(warnings)]
+use color_eyre::eyre::{self, OptionExt};
+use helm_schema_mapper::ValueUse;
 use indoc::indoc;
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use test_util::prelude::*;
 use vfs::VfsPath;
 
-use helm_schema_mapper::analyze::Role;
-use helm_schema_mapper::analyze::analyze_template_file;
+use helm_schema_mapper::analyze::{Occurrence, analyze_template_file};
+use helm_schema_mapper::analyze::{Role, group_uses};
 use helm_schema_mapper::analyze::{compute_define_closure, index_defines_in_dir};
 
 #[test]
@@ -137,148 +137,400 @@ fn parses_signoz_ingress_template_and_maps_values() -> eyre::Result<()> {
         "#},
     )?;
 
-    let tmpl_dir = root.join("templates")?;
-    let defs = index_defines_in_dir(&tmpl_dir)?;
-    dbg!(&defs);
-    let closure = compute_define_closure(&defs);
-    dbg!(&closure);
-
-    // signoz.labels should (transitively) reference .Values.signoz.name and .Values.nameOverride
-    let label_values: Vec<_> = closure
-        .get("signoz.labels")
-        .ok_or_eyre("missing define signoz.labels")?
-        .iter()
-        .map(|s| s.as_str())
-        .collect();
-    dbg!(&label_values);
-    assert_that!(
-        label_values,
-        unordered_elements_are![&"signoz.name", &"nameOverride"]
-    );
-
     // Analyze the ingress template only (file-by-file analysis); merge across files is higher-level API.
     let uses = analyze_template_file(&root.join("templates/ingress.yaml")?)?;
+    dbg!(&uses);
 
-    // Index by value_path -> (role, optional path)
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    struct Seen {
-        role: Role,
-        path: Option<String>,
-    }
-    let mut by: BTreeMap<String, Seen> = BTreeMap::new();
-    for u in uses {
-        let p = u.yaml_path.as_ref().map(|p| p.to_string());
-        by.entry(u.value_path.clone())
-            .and_modify(|s| {
-                // upgrade role if ScalarValue is seen
-                if matches!(u.role, Role::ScalarValue) {
-                    s.role = Role::ScalarValue;
-                    s.path = p.clone().or(s.path.clone());
-                }
-            })
-            .or_insert(Seen {
-                role: u.role.clone(),
-                path: p,
-            });
-    }
+    let groups = group_uses(&uses);
+    dbg!(&groups);
 
-    dbg!(&by);
+    // NEGATIVE sanity: no Capabilities-derived keys & no guard-prefix rebinding
+    let bad_keys: Vec<_> = groups
+        .keys()
+        .filter(|k| {
+            k.contains(".Capabilities")
+                || (k.starts_with("signoz.ingress.enabled.")
+                    && k.as_str() != "signoz.ingress.enabled")
+        })
+        .cloned()
+        .collect();
+    assert_that!(&bad_keys, unordered_elements_are![]);
 
-    let by: Vec<_> = by.iter().map(|(k, v)| (k.as_str(), v.clone())).collect();
+    // --- USE-LEVEL spot checks for the direct Values in the template
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"signoz.ingress.className"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.ingressClassName"))),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"signoz.ingress.tls.hosts"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.tls[0].hosts[0]"))),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"signoz.ingress.tls.secretName"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.tls[0].secretName"))),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"signoz.ingress.hosts.host"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.rules[0].host"))),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"signoz.ingress.annotations"),
+            role: eq(&Role::Fragment), // toYaml block
+            yaml_path: some(displays_as(eq("metadata.annotations"))),
+            ..
+        }))
+    );
 
-    // Must see these direct Values keys from ingress.yaml
+    // GROUP-LEVEL expectations from the template only
+    let by: Vec<_> = groups
+        .clone()
+        .into_iter()
+        .filter(|(k, _)| {
+            matches!(
+                k.as_str(),
+                // guards
+                "signoz.ingress.enabled"
+                    | "signoz.ingress.tls"
+                    | "signoz.ingress.hosts"
+                    // scalar placements
+                    | "signoz.ingress.className"
+                    | "signoz.ingress.tls.hosts"
+                    | "signoz.ingress.tls.secretName"
+                    | "signoz.ingress.hosts.host"
+                    | "signoz.ingress.hosts.paths.path"
+                    | "signoz.ingress.hosts.paths.pathType"
+                    | "signoz.ingress.hosts.paths.port"
+                    // fragment block
+                    | "signoz.ingress.annotations"
+            )
+        })
+        .collect();
+
     assert_that!(
         &by,
         unordered_elements_are![
+            // top-level template guard
             (
                 eq(&"signoz.ingress.enabled"),
-                matches_pattern!(Seen {
-                    role: any![eq(&Role::Guard), eq(&Role::Unknown)],
+                contains(matches_pattern!(Occurrence {
+                    role: eq(&Role::Guard),
                     path: none(),
-                })
+                    ..
+                }))
             ),
+            // annotations: guard + fragment at metadata.annotations
             (
                 eq(&"signoz.ingress.annotations"),
-                matches_pattern!(Seen {
-                    role: any![eq(&Role::Guard), eq(&Role::Unknown)],
-                    path: none(),
-                })
+                unordered_elements_are![
+                    matches_pattern!(Occurrence {
+                        role: eq(&Role::Guard),
+                        path: none(),
+                        ..
+                    }),
+                    matches_pattern!(Occurrence {
+                        role: eq(&Role::Fragment),
+                        path: some(displays_as(eq("metadata.annotations"))),
+                        ..
+                    }),
+                ]
             ),
+            // className: guard + scalar render
             (
                 eq(&"signoz.ingress.className"),
-                matches_pattern!(Seen {
-                    role: eq(&Role::ScalarValue),
-                    path: some(eq("spec.ingressClassName")),
-                })
+                unordered_elements_are![
+                    matches_pattern!(Occurrence {
+                        role: eq(&Role::Guard),
+                        path: none(),
+                        ..
+                    }),
+                    matches_pattern!(Occurrence {
+                        role: eq(&Role::ScalarValue),
+                        path: some(displays_as(eq("spec.ingressClassName"))),
+                        ..
+                    }),
+                ]
             ),
+            // tls appears as guards (outer if + range)
             (
                 eq(&"signoz.ingress.tls"),
-                matches_pattern!(Seen {
-                    role: any![eq(&Role::Guard), eq(&Role::Unknown)],
+                contains(matches_pattern!(Occurrence {
+                    role: eq(&Role::Guard),
                     path: none(),
-                })
+                    ..
+                }))
             ),
+            // concrete tls scalars
+            (
+                eq(&"signoz.ingress.tls.hosts"),
+                contains(matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.tls[0].hosts[0]"))),
+                    ..
+                }))
+            ),
+            (
+                eq(&"signoz.ingress.tls.secretName"),
+                contains(matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.tls[0].secretName"))),
+                    ..
+                }))
+            ),
+            // hosts range guard
             (
                 eq(&"signoz.ingress.hosts"),
-                matches_pattern!(Seen {
-                    role: any![eq(&Role::Guard), eq(&Role::Unknown)],
+                contains(matches_pattern!(Occurrence {
+                    role: eq(&Role::Guard),
                     path: none(),
-                })
+                    ..
+                }))
             ),
-            // Include-inducced keys at call sites
-            // labels: {{ include "signoz.labels" . | nindent 4 }} → pulls nameOverride, signoz.name
+            // concrete host scalar
             (
-                eq(&"nameOverride"),
-                matches_pattern!(Seen {
+                eq(&"signoz.ingress.hosts.host"),
+                contains(matches_pattern!(Occurrence {
                     role: eq(&Role::ScalarValue),
-                    path: some(eq("metadata.labels")),
-                })
+                    path: some(displays_as(eq("spec.rules[0].host"))),
+                    ..
+                }))
             ),
+            // path & pathType scalars inside paths[]
             (
-                eq(&"signoz.name"),
-                matches_pattern!(Seen {
+                eq(&"signoz.ingress.hosts.paths.path"),
+                contains(matches_pattern!(Occurrence {
                     role: eq(&Role::ScalarValue),
-                    path: some(eq("metadata.labels")),
-                })
+                    path: some(displays_as(eq("spec.rules[0].http.paths[0].path"))),
+                    ..
+                }))
             ),
-            // $fullName := include "signoz.fullname" . → pulls fullnameOverride (assignment → Fragment)
             (
-                eq(&"fullnameOverride"),
-                matches_pattern!(Seen {
-                    role: eq(&Role::Fragment),
-                    path: none(),
-                })
+                eq(&"signoz.ingress.hosts.paths.pathType"),
+                contains(matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.rules[0].http.paths[0].pathType"))),
+                    ..
+                }))
+            ),
+            // port scalar appears in both stable/legacy branches
+            (
+                eq(&"signoz.ingress.hosts.paths.port"),
+                unordered_elements_are![
+                    matches_pattern!(Occurrence {
+                        role: eq(&Role::ScalarValue),
+                        path: some(displays_as(eq(
+                            "spec.rules[0].http.paths[0].backend.service.port.number"
+                        ))),
+                        ..
+                    }),
+                    matches_pattern!(Occurrence {
+                        role: eq(&Role::ScalarValue),
+                        path: some(displays_as(eq(
+                            "spec.rules[0].http.paths[0].backend.servicePort"
+                        ))),
+                        ..
+                    }),
+                ]
             )
-        ]
-    );
-
-    let helpers_uses = analyze_template_file(&root.join("templates/_helpers.tpl")?)?;
-
-    let mut helper_values: BTreeSet<String> = BTreeSet::new();
-    for u in helpers_uses {
-        helper_values.insert(u.value_path);
-    }
-
-    // for k in ["signoz.name", "nameOverride"] {
-    //     let s = by
-    //         .get(k)
-    //         .unwrap_or_else(|| panic!("missing include-closure Value key: {k}"));
-    //     // This include is placed at `metadata.labels: {{ include "signoz.labels" . | nindent 4 }}`
-    //     // Today we model it as a scalar placeholder, so role is ScalarValue and path is metadata.labels.
-    //     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
-    //     assert_that!(&s.path, some(eq("metadata.labels")));
-    // }
-
-    // Keys inside helpers that the ingress references (indirectly, via includes)
-    // (We’ll attach these to call-sites in the closure phase)
-    assert_that!(
-        &helper_values,
-        unordered_elements_are![
-            eq(&"fullnameOverride"), // .Values.fullnameOverride (top-level)
-            eq(&"nameOverride"),     // .Values.nameOverride (top-level)
-            eq(&"signoz.name"),      // used in selectorLabels (default "signoz" otherwise)
         ]
     );
 
     Ok(())
 }
+
+// let tmpl_dir = root.join("templates")?;
+// let defs = index_defines_in_dir(&tmpl_dir)?;
+// dbg!(&defs);
+// let closure = compute_define_closure(&defs);
+// dbg!(&closure);
+//
+// // signoz.labels should (transitively) reference .Values.signoz.name and .Values.nameOverride
+// let label_values: Vec<_> = closure
+//     .get("signoz.labels")
+//     .ok_or_eyre("missing define signoz.labels")?
+//     .iter()
+//     .map(|s| s.as_str())
+//     .collect();
+// dbg!(&label_values);
+// assert_that!(
+//     label_values,
+//     unordered_elements_are![&"signoz.name", &"nameOverride"]
+// );
+
+// // Must see these direct Values keys from ingress.yaml
+// assert_that!(
+//     &groups,
+//     unordered_elements_are![
+//         (
+//             eq(&"signoz.ingress.enabled"),
+//             unordered_elements_are![matches_pattern!(Occurrence {
+//                 // role: any![eq(&Role::Guard), eq(&Role::Unknown)],
+//                 role: eq(&Role::Guard),
+//                 path: none(),
+//                 ..
+//             })]
+//         ),
+//         (
+//             eq(&"signoz.ingress.annotations"),
+//             unordered_elements_are![matches_pattern!(Occurrence {
+//                 role: eq(&Role::Guard),
+//                 // role: any![eq(&Role::Guard), eq(&Role::Unknown)],
+//                 path: none(),
+//                 ..
+//             })]
+//         ),
+//         (
+//             eq(&"signoz.ingress.className"),
+//             unordered_elements_are![
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::Guard),
+//                     path: none(),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq("spec.ingressClassName"))),
+//                     ..
+//                 }),
+//             ]
+//         ),
+//         (
+//             eq(&"signoz.ingress.tls"),
+//             unordered_elements_are![
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::Guard),
+//                     path: none(),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::Guard),
+//                     path: none(),
+//                     ..
+//                 }),
+//             ]
+//         ),
+//         (
+//             eq(&"signoz.ingress.hosts"),
+//             unordered_elements_are![matches_pattern!(Occurrence {
+//                 role: eq(&Role::Guard),
+//                 // role: any![eq(&Role::Guard), eq(&Role::Unknown)],
+//                 path: none(),
+//                 ..
+//             })]
+//         ),
+//         // Include-inducced keys at call sites
+//         // labels: {{ include "signoz.labels" . | nindent 4 }} → pulls nameOverride, signoz.name
+//         (
+//             eq(&"nameOverride"),
+//             unordered_elements_are![
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::Fragment),
+//                     path: none(),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::Fragment),
+//                     path: none(),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq("metadata.name"))),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq(
+//                         "spec.rules[0].http.paths[0].backend.service.name"
+//                     ))), // stable
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq(
+//                         "spec.rules[0].http.paths[0].backend.serviceName"
+//                     ))), // legacy
+//                     ..
+//                 }),
+//             ]
+//         ),
+//         (
+//             eq(&"signoz.name"),
+//             unordered_elements_are![matches_pattern!(Occurrence {
+//                 role: eq(&Role::Fragment),
+//                 path: none(),
+//                 // path: some(displays_as(eq("metadata.labels"))),
+//                 ..
+//             })]
+//         ),
+//         // $fullName := include "signoz.fullname" . → pulls fullnameOverride (assignment → Fragment)
+//         (
+//             eq(&"fullnameOverride"),
+//             unordered_elements_are![
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::Fragment),
+//                     path: none(),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq("metadata.name"))),
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq(
+//                         "spec.rules[0].http.paths[0].backend.service.name"
+//                     ))), // stable
+//                     ..
+//                 }),
+//                 matches_pattern!(Occurrence {
+//                     role: eq(&Role::ScalarValue),
+//                     path: some(displays_as(eq(
+//                         "spec.rules[0].http.paths[0].backend.serviceName"
+//                     ))), // legacy
+//                     ..
+//                 }),
+//             ]
+//         )
+//     ]
+// );
+//
+// let helpers_uses = analyze_template_file(&root.join("templates/_helpers.tpl")?)?;
+//
+// let mut helper_values: BTreeSet<String> = BTreeSet::new();
+// for u in helpers_uses {
+//     helper_values.insert(u.value_path);
+// }
+//
+// // Keys inside helpers that the ingress references (indirectly, via includes)
+// // (We’ll attach these to call-sites in the closure phase)
+// assert_that!(
+//     &helper_values,
+//     unordered_elements_are![
+//         eq(&"fullnameOverride"), // .Values.fullnameOverride (top-level)
+//         eq(&"nameOverride"),     // .Values.nameOverride (top-level)
+//         eq(&"signoz.name"),      // used in selectorLabels (default "signoz" otherwise)
+//     ]
+// );

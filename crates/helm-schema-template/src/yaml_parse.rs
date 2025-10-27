@@ -1,23 +1,4 @@
-// use crate::GtmplBlock;
 use tree_sitter::{Parser, Tree};
-
-// /// Replace every go-template block with a quoted placeholder that keeps YAML valid.
-// /// We try to preserve line count by keeping the same number of lines in the replacement where possible.
-// pub fn sanitize_yaml_for_parse(src: &str, blocks: &[GtmplBlock]) -> String {
-//     if blocks.is_empty() {
-//         return src.to_string();
-//     }
-//     let mut out = String::with_capacity(src.len());
-//     let mut i = 0;
-//     for b in blocks {
-//         out.push_str(&src[i..b.start]);
-//         // simple safe scalar
-//         out.push_str("\"__TSG_EXPR__\"");
-//         i = b.end;
-//     }
-//     out.push_str(&src[i..]);
-//     out
-// }
 
 // Build sanitized YAML by concatenating all `text` nodes from the gotmpl tree.
 pub fn sanitize_yaml_from_gotmpl_text_nodes(gotmpl_tree: &tree_sitter::Tree, src: &str) -> String {
@@ -49,7 +30,6 @@ pub fn sanitize_yaml_for_parse_from_gotmpl(
 ) -> String {
     // Replace each template range with a YAML-safe placeholder of the same length to keep offsets.
     // We’ll use spaces/newlines to preserve indentation/structure as much as possible.
-    // use std::borrow::Cow;
     let mut out = String::with_capacity(text.len());
     let mut last = 0usize;
     for r in ranges {

@@ -7,6 +7,10 @@ fn is_mapping_pair(n: &Node) -> bool {
     matches!(n.kind(), "block_mapping_pair" | "flow_pair")
 }
 
+fn is_mapping_container(n: &Node) -> bool {
+    matches!(n.kind(), "block_mapping" | "flow_mapping")
+}
+
 fn is_sequence(n: &Node) -> bool {
     matches!(n.kind(), "block_sequence" | "flow_sequence")
 }
@@ -87,7 +91,7 @@ fn index_in_sequence(item_or_descendant: Node, seq: Node) -> usize {
     idx
 }
 
-fn compute_path_for_scalar(mut leaf: Node, src: &str) -> Option<YamlPath> {
+fn compute_path_for_node(mut leaf: Node, src: &str) -> Option<YamlPath> {
     let mut elems = Vec::<PathElem>::new();
 
     // We’ll move upward in hops: nearest mapping-pair OR nearest sequence, whichever comes first.
@@ -98,20 +102,32 @@ fn compute_path_for_scalar(mut leaf: Node, src: &str) -> Option<YamlPath> {
 
         match (near_pair, near_seq) {
             (Some(p), Some(s)) => {
-                // pick the one **closer** to `leaf`
+                // Pick the one **closer** to `leaf`
                 let d_pair = depth_between(leaf, p);
                 let d_seq = depth_between(leaf, s);
-                if d_pair <= d_seq {
-                    // mapping pair is closer
+
+                // Pefer sequence when equal distance
+                if d_pair < d_seq {
                     let key = mapping_key_text(p, src)?;
                     elems.push(PathElem::Key(key));
-                    leaf = p; // continue from the pair
+                    leaf = p;
                 } else {
-                    // sequence is closer
                     let idx = index_in_sequence(leaf, s);
                     elems.push(PathElem::Index(idx));
-                    leaf = s; // continue from the sequence
+                    leaf = s;
                 }
+
+                // if d_pair <= d_seq {
+                //     // mapping pair is closer
+                //     let key = mapping_key_text(p, src)?;
+                //     elems.push(PathElem::Key(key));
+                //     leaf = p; // continue from the pair
+                // } else {
+                //     // sequence is closer
+                //     let idx = index_in_sequence(leaf, s);
+                //     elems.push(PathElem::Index(idx));
+                //     leaf = s; // continue from the sequence
+                // }
             }
             (Some(p), None) => {
                 let key = mapping_key_text(p, src)?;
@@ -228,16 +244,20 @@ pub fn compute_yaml_paths_for_placeholders(
                 // Is this scalar a mapping key?
                 if let Some(pair) = nearest_ancestor(n, is_mapping_pair) {
                     if is_key_node(n, pair) {
+                        // bind to the *parent mapping* path, e.g., metadata.labels
+                        let parent_map = nearest_ancestor(pair, |x| is_mapping_container(&x));
+                        let parent_path =
+                            parent_map.and_then(|m| compute_path_for_node(m, sanitized));
                         map.insert(
                             id,
                             Binding {
-                                role: Role::MappingKey,
-                                path: None,
+                                role: Role::Fragment,
+                                path: parent_path,
                             },
                         );
-                        // don't compute value path for keys
                     } else {
-                        let path = compute_path_for_scalar(n, sanitized);
+                        // value under a pair
+                        let path = compute_path_for_node(n, sanitized);
                         map.insert(
                             id,
                             Binding {
@@ -246,9 +266,38 @@ pub fn compute_yaml_paths_for_placeholders(
                             },
                         );
                     }
+                    // if is_key_node(n, pair) {
+                    //     // map.insert(
+                    //     //     id,
+                    //     //     Binding {
+                    //     //         role: Role::MappingKey,
+                    //     //         path: None,
+                    //     //     },
+                    //     // );
+                    //     // Bind to the *parent mapping* path so fragment users get "metadata.labels"
+                    //     let parent_map = nearest_ancestor(pair, |x| is_mapping_pair(&x));
+                    //     let parent_path =
+                    //         parent_map.and_then(|m| compute_path_for_node(m, sanitized));
+                    //     map.insert(
+                    //         id,
+                    //         Binding {
+                    //             role: Role::Fragment, // this will also be enforced by is_fragment_output upstream
+                    //             path: parent_path,
+                    //         },
+                    //     );
+                    // } else {
+                    //     let path = compute_path_for_node(n, sanitized);
+                    //     map.insert(
+                    //         id,
+                    //         Binding {
+                    //             role: Role::ScalarValue,
+                    //             path,
+                    //         },
+                    //     );
+                    // }
                 } else {
                     // Not under a pair => treat as value and compute path if possible (e.g., sequence item)
-                    let path = compute_path_for_scalar(n, sanitized);
+                    let path = compute_path_for_node(n, sanitized);
                     map.insert(
                         id,
                         Binding {

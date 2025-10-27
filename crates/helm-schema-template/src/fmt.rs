@@ -60,7 +60,8 @@ impl<'tree> Node<'tree, tree_sitter::TreeCursor<'tree>, &'static str> for tree_s
     }
 }
 
-const DEFAULT_PREVIEW_MAX_CHARS: usize = 32;
+// const DEFAULT_PREVIEW_MAX_CHARS: usize = 64;
+const DEFAULT_PREVIEW_MAX_CHARS: usize = usize::MAX;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

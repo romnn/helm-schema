@@ -1,5 +1,9 @@
 use color_eyre::eyre;
-use helm_schema_mapper::{Role, analyze_template_file};
+use helm_schema_mapper::{
+    Role, ValueUse,
+    analyze::{Occurrence, group_uses},
+    analyze_template_file,
+};
 use indoc::indoc;
 use test_util::prelude::*;
 use vfs::VfsPath;
@@ -7,7 +11,7 @@ use vfs::VfsPath;
 #[test]
 fn maps_scalar_values_to_yaml_paths() -> eyre::Result<()> {
     Builder::default().build();
-    
+
     let root = VfsPath::new(vfs::MemoryFS::new());
     let tpl = indoc! {r#"
         {{- if .Values.ingress.enabled }}
@@ -26,49 +30,118 @@ fn maps_scalar_values_to_yaml_paths() -> eyre::Result<()> {
     let uses = analyze_template_file(&root.join("templates/ing.yaml")?)?;
     dbg!(&uses);
 
-    // Filter only scalar value roles
-    let scalar: Vec<_> = uses
+    // --- Use-level assertions (exact scalar placements)
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"ingress.hostname"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.rules[0].host"))),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"ingress.path"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.rules[0].http.paths[0].path"))),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"ingress.pathType"),
+            role: eq(&Role::ScalarValue),
+            yaml_path: some(displays_as(eq("spec.rules[0].http.paths[0].pathType"))),
+            ..
+        }))
+    );
+
+    // Guards are recorded and have no YAML path
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"ingress"),
+            role: eq(&Role::Guard),
+            yaml_path: none(),
+            ..
+        }))
+    );
+    assert_that!(
+        &uses,
+        contains(matches_pattern!(ValueUse {
+            value_path: eq(&"ingress.enabled"),
+            role: eq(&Role::Guard),
+            yaml_path: none(),
+            ..
+        }))
+    );
+
+    // --- Group-level assertions
+    let groups = group_uses(&uses);
+    dbg!(&groups);
+
+    // Focus the grouped map to just the three scalar insertions under the guard
+    let by: Vec<_> = groups
+        .clone()
         .into_iter()
-        .filter(|u| matches!(u.role, Role::ScalarValue))
+        .filter(|(k, _)| {
+            matches!(
+                k.as_str(),
+                "ingress.hostname" | "ingress.path" | "ingress.pathType"
+            )
+        })
         .collect();
 
-    // Collect a map value_path -> yaml_path string
-    use std::collections::BTreeMap;
-    let mut mp = BTreeMap::new();
-    for u in scalar {
-        mp.insert(
-            u.value_path.clone(),
-            u.yaml_path
-                .as_ref()
-                .map(|p| p.to_string())
-                .unwrap_or_default(),
-        );
-    }
+    assert_that!(
+        &by,
+        unordered_elements_are![
+            (
+                eq(&"ingress.hostname"),
+                unordered_elements_are![matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.rules[0].host"))),
+                    ..
+                })]
+            ),
+            (
+                eq(&"ingress.path"),
+                unordered_elements_are![matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.rules[0].http.paths[0].path"))),
+                    ..
+                })]
+            ),
+            (
+                eq(&"ingress.pathType"),
+                unordered_elements_are![matches_pattern!(Occurrence {
+                    role: eq(&Role::ScalarValue),
+                    path: some(displays_as(eq("spec.rules[0].http.paths[0].pathType"))),
+                    ..
+                })]
+            )
+        ]
+    );
 
-    dbg!(&mp);
-    let mp: Vec<_> = mp.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+    // And the guard keys exist in groups with at least one Guard occurrence and no path.
+    assert_that!(
+        groups.get("ingress"),
+        some(contains(matches_pattern!(Occurrence {
+            role: eq(&Role::Guard),
+            path: none(),
+            ..
+        })))
+    );
+    assert_that!(
+        groups.get("ingress.enabled"),
+        some(contains(matches_pattern!(Occurrence {
+            role: eq(&Role::Guard),
+            path: none(),
+            ..
+        })))
+    );
 
-    assert_that!(&mp, unordered_elements_are![
-      eq(&("ingress.hostname", "spec.rules[0].host")),
-      eq(&("ingress.path", "spec.rules[0].http.paths[0].path")),
-      eq(&("ingress.pathType", "spec.rules[0].http.paths[0].pathType")),
-    ]);
-
-    // Spot-check core bindings
-    // assert_that!(
-    //     mp.get("ingress.hostname").cloned(),
-    //     some(eq("spec.rules[0].host"))
-    // );
-    // assert_that!(
-    //     mp.get("ingress.path").cloned(),
-    //     some(eq("spec.rules[0].http.paths[0].path"))
-    // );
-    // assert_that!(
-    //     mp.get("ingress.pathType").cloned(),
-    //     some(eq("spec.rules[0].http.paths[0].pathType"))
-    // );
-    //
-    // // Enabled appears only as a guard (no scalar insertion)
-    // assert_that!(mp.contains_key("ingress.enabled"), eq(false));
     Ok(())
 }

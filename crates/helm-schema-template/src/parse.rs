@@ -4,13 +4,17 @@ pub struct Parsed {
     pub source: String,
 }
 
-// NEW: parse the whole template (with YAML + {{...}}) using go-template grammar
+// Parse the whole template (with YAML + {{...}}) using go-template grammar
 pub fn parse_gotmpl_document(source: &str) -> Option<Parsed> {
     let mut parser = tree_sitter::Parser::new();
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
     parser.set_language(&language).ok()?;
     let tree = parser.parse(source, None)?;
+
+    let ast = crate::fmt::SExpr::parse_tree(&tree.root_node(), source);
+    println!("=====================\n{}\n", ast.to_string_pretty());
+
     Some(Parsed {
         tree,
         source: source.to_string(),
