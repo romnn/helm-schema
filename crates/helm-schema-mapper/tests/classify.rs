@@ -12,16 +12,27 @@ use vfs::VfsPath;
 fn classifies_key_vs_value_vs_fragment() -> eyre::Result<()> {
     Builder::default().build();
     let root = VfsPath::new(vfs::MemoryFS::new());
-    let tpl = indoc! {r#"
-        metadata:
-          {{ .Values.badKey }}: literal
-          name: {{ .Values.meta.name }}
-          labels:
-            {{- include "toYamlFragment" . | nindent 4 }}
-    "#};
-    write(&root.join("t.yaml")?, tpl)?;
 
-    let uses = analyze_template_file(&root.join("t.yaml")?)?;
+    let template_path = write(
+        &root.join("template.yaml")?,
+        indoc! {r#"
+            metadata:
+              {{ .Values.badKey }}: literal
+              name: {{ .Values.meta.name }}
+              labels:
+                {{- include "toYamlFragment" . | nindent 4 }}
+        "#},
+    )?;
+
+    let _define_path = write(
+        &root.join("define.tpl")?,
+        indoc! {r#"
+            {{- define "toYamlFragment" -}}
+            {{- end -}}
+        "#},
+    )?;
+
+    let uses = analyze_template_file(&template_path)?;
     dbg!(&uses);
 
     let groups = group_uses(&uses);

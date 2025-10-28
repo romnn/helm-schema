@@ -1,7 +1,4 @@
-use helm_schema_template::{
-    parse::parse_gotmpl_document,
-    values::{ValuePath as TmplValuePath, extract_values_paths},
-};
+use helm_schema_template::parse::parse_gotmpl_document;
 use owo_colors::OwoColorize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::collections::{HashMap, HashSet};
@@ -11,11 +8,44 @@ use thiserror::Error;
 use tree_sitter::Node;
 use vfs::VfsPath;
 
+use crate::values::{
+    ValuePath as TmplValuePath, extract_values_paths, normalize_segments, parse_index_call,
+    parse_selector_chain, parse_selector_expression,
+};
 use crate::yaml_path::{YamlPath, compute_yaml_paths_for_placeholders};
 use crate::{
     analyze,
-    sanitize::{Placeholder, Slot, build_sanitized_with_placeholders},
+    sanitize::{Placeholder, Slot, ensure_current_line_indent},
 };
+
+pub mod diagnostics {
+    use miette::{GraphicalReportHandler, LabeledSpan, NamedSource, SourceSpan, miette};
+
+    /// Pretty print an error pointing at a byte span in `source`.
+    pub fn pretty_error(
+        source_name: &str,
+        source: &str,
+        range: std::ops::Range<usize>,
+        msg: Option<&str>,
+    ) -> String {
+        let span = SourceSpan::new(range.start.into(), (range.end - range.start).into());
+
+        // Create a diagnostic with a label for the span and attach the source text.
+        let report = miette!(
+            labels = vec![LabeledSpan::at(span, "here")],
+            "{}",
+            msg.unwrap_or_default()
+        )
+        .with_source_code(NamedSource::new(source_name.to_owned(), source.to_owned()));
+
+        // Turn the diagnostic into a pretty string.
+        let mut out = String::new();
+        GraphicalReportHandler::new()
+            .render_report(&mut out, report.as_ref())
+            .expect("render failed");
+        out
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Role {
@@ -217,6 +247,27 @@ fn first_text_start(n: &tree_sitter::Node) -> Option<usize> {
     None
 }
 
+fn collect_include_names(tree: &tree_sitter::Tree, src: &str) -> BTreeSet<String> {
+    let mut names = BTreeSet::new();
+    let mut stack = vec![tree.root_node()];
+    while let Some(n) = stack.pop() {
+        if n.is_named() {
+            if n.kind() == "function_call" && is_include_call(n, src) {
+                if let Ok((name, _)) = parse_include_call(n, src) {
+                    names.insert(name);
+                }
+            }
+            let mut w = n.walk();
+            for ch in n.children(&mut w) {
+                if ch.is_named() {
+                    stack.push(ch);
+                }
+            }
+        }
+    }
+    names
+}
+
 fn collect_guards(tree: &tree_sitter::Tree, src: &str) -> Vec<ValueUse> {
     let mut out = Vec::new();
     let root = tree.root_node();
@@ -265,12 +316,12 @@ pub fn analyze_template_file(path: &VfsPath) -> Result<Vec<ValueUse>, Error> {
 
     // Index sibling defines (*.tpl)
     let dir = path.parent();
-    let mut files = Vec::<(VfsPath, Arc<String>)>::new();
-    for p in dir.read_dir()? {
-        if p.filename().ends_with(".tpl") {
-            files.push((p.clone(), Arc::new(p.read_to_string()?)));
-        }
-    }
+    let files: Vec<_> = dir
+        .read_dir()?
+        // TODO: defines can also be in .yaml template files
+        .filter(|p| p.filename().ends_with(".tpl"))
+        .collect();
+
     let define_index = collect_defines(&files)?;
 
     analyze_template(&parsed.tree, &source, define_index)
@@ -281,13 +332,28 @@ pub fn analyze_template(
     source: &str,
     define_index: DefineIndex,
 ) -> Result<Vec<ValueUse>, Error> {
-    // let ast = helm_schema_template::fmt::SExpr::parse_tree(&parsed.tree.root_node(), &source);
-    // println!("{}", ast.to_string_pretty());
-
     let inline = InlineState {
         define_index: &define_index,
     };
     let mut guard = ExpansionGuard::new();
+
+    // Hard-fail early if the template uses include() but the DefineIndex
+    // doesn't have the referenced defines.
+    let incs = collect_include_names(tree, source);
+    if !incs.is_empty() {
+        let mut missing: Vec<String> = Vec::new();
+        for nm in incs {
+            if inline.define_index.get(&nm).is_none() {
+                missing.push(nm);
+            }
+        }
+        if !missing.is_empty() {
+            // Pick the first missing name (you can format the list if you want)
+            return Err(Error::Include(IncludeError::UnknownDefine(
+                missing.remove(0),
+            )));
+        }
+    }
 
     // Start scope at chart root (treat dot/dollar as .Values by convention for analysis)
     let scope = Scope {
@@ -318,12 +384,19 @@ pub fn analyze_template(
     let mut uses = Vec::<ValueUse>::new();
     for ph in out.placeholders {
         let binding = ph_map.get(&ph.id).cloned().unwrap_or_default();
+        // let role = if ph.is_fragment_output {
+        //     Role::Fragment
+        // } else {
+        //     binding.role
+        // };
+
         // Role: key/value from YAML unless we force Fragment for fragment outputs
-        let role = if ph.is_fragment_output {
+        let role = if ph.is_fragment_output || out.force_fragment_role.contains(&ph.id) {
             Role::Fragment
         } else {
             binding.role
         };
+
         let yaml_path = binding.path;
         for v in ph.values {
             uses.push(ValueUse {
@@ -366,27 +439,41 @@ fn collect_values_in_subtree(node: &Node, src: &str) -> Vec<String> {
                     .map(|p| p.kind() == "selector_expression")
                     .unwrap_or(false);
                 if !parent_is_selector {
-                    if let Some(segs0) = parse_selector_chain(n, src) {
-                        let segs = normalize_segments(&segs0);
-                        // Keep only .Values.* and strip the "Values" root for the returned key
-                        if segs.len() >= 2
-                            && segs[0] == "."
-                            && segs[1] == "Values"
-                            && segs.len() > 2
-                        {
-                            out.insert(segs[2..].join("."));
-                        } else if segs.len() >= 2
-                            && segs[0] == "$"
-                            && segs[1] == "Values"
-                            && segs.len() > 2
-                        {
-                            out.insert(segs[2..].join("."));
-                        } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
-                            out.insert(segs[1..].join("."));
+                    if let Some(tail) = parse_selector_expression(&n, src) {
+                        if !tail.is_empty() {
+                            out.insert(tail.join("."));
                         }
                     }
                 }
             }
+            // "selector_expression" => {
+            //     let parent_is_selector = n
+            //         .parent()
+            //         .map(|p| p.kind() == "selector_expression")
+            //         .unwrap_or(false);
+            //     if !parent_is_selector {
+            //         if let Some(segs0) = parse_selector_chain(n, src) {
+            //             let segs = normalize_segments(&segs0);
+            //             // Keep only .Values.* and strip the "Values" root for the returned key
+            //             if segs.len() >= 2
+            //                 && segs[0] == "."
+            //                 && segs[1] == "Values"
+            //                 && segs.len() > 2
+            //             {
+            //                 out.insert(segs[2..].join("."));
+            //             } else if segs.len() >= 2
+            //                 && segs[0] == "$"
+            //                 && segs[1] == "Values"
+            //                 && segs.len() > 2
+            //             {
+            //                 out.insert(segs[2..].join("."));
+            //             } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
+            //                 out.insert(segs[1..].join("."));
+            //             }
+            //         }
+            //     }
+            // }
+
             // "selector_expression" => {
             //     let parent_is_selector = n
             //         .parent()
@@ -403,7 +490,7 @@ fn collect_values_in_subtree(node: &Node, src: &str) -> Vec<String> {
             //     }
             // }
             "function_call" => {
-                if let Some(segs) = helm_schema_template::values::parse_index_call(&n, src) {
+                if let Some(segs) = parse_index_call(&n, src) {
                     if !segs.is_empty() {
                         out.insert(segs.join("."));
                     }
@@ -449,6 +536,69 @@ fn function_name_of(node: &Node, src: &str) -> Option<String> {
     None
 }
 
+fn extract_nindent_width(node: &Node, src: &str) -> Option<usize> {
+    // direct:   (function_call nindent 2)
+    if node.kind() == "function_call" {
+        if function_name_of(node, src).as_deref() == Some("nindent") {
+            let mut c = node.walk();
+            for ch in node.children(&mut c) {
+                if ch.is_named() && ch.kind() == "argument_list" {
+                    // First named child should be the width; accept int literals only
+                    let mut ac = ch.walk();
+                    for arg in ch.children(&mut ac) {
+                        if arg.is_named() && arg.kind() == "int_literal" {
+                            if let Ok(w) = arg.utf8_text(src.as_bytes()).ok()?.parse::<usize>() {
+                                return Some(w);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // chained:  (... | nindent 2)
+    if node.kind() == "chained_pipeline" {
+        let mut width: Option<usize> = None;
+        let mut c = node.walk();
+        for ch in node.children(&mut c) {
+            if ch.is_named() && ch.kind() == "function_call" {
+                if function_name_of(&ch, src).as_deref() == Some("nindent") {
+                    // last nindent wins
+                    if let Some(w) = extract_nindent_width(&ch, src) {
+                        width = Some(w);
+                    }
+                }
+            }
+        }
+        return width;
+    }
+    None
+}
+
+// NEW: does this node (or any fn in a chained pipeline) contain any of the wanted function names?
+fn pipeline_contains_any(node: &Node, src: &str, wanted: &[&str]) -> bool {
+    fn has_name(call: &Node, src: &str, wanted: &[&str]) -> bool {
+        if let Some(name) = function_name_of(call, src) {
+            return wanted.iter().any(|w| *w == name);
+        }
+        false
+    }
+
+    match node.kind() {
+        "function_call" => has_name(node, src, wanted),
+        "chained_pipeline" => {
+            let mut w = node.walk();
+            for ch in node.children(&mut w) {
+                if ch.is_named() && ch.kind() == "function_call" && has_name(&ch, src, wanted) {
+                    return true;
+                }
+            }
+            false
+        }
+        _ => false,
+    }
+}
+
 fn arg_list<'tree>(node: &Node<'tree>) -> Option<Node<'tree>> {
     node.child_by_field_name("argument_list")
         .or_else(|| node.child_by_field_name("arguments"))
@@ -461,6 +611,15 @@ fn pipeline_head(node: Node) -> Option<Node> {
         // treat anything else as its own head (selector_expression, field, dot, variable, function_call)
         _ => Some(node),
     }
+}
+
+fn pipeline_head_is_include<'tree>(node: Node<'tree>, src: &str) -> Option<Node<'tree>> {
+    if let Some(head) = pipeline_head(node) {
+        if head.kind() == "function_call" && is_include_call(head, src) {
+            return Some(head);
+        }
+    }
+    None
 }
 
 /// Best-effort parse for the grammar variant where `.Values.foo` is tokenized
@@ -570,27 +729,42 @@ fn collect_define_info(node: &Node, src: &str) -> DefineInfo {
                     .parent()
                     .map(|p| p.kind() == "selector_expression")
                     .unwrap_or(false);
+
                 if !parent_is_selector {
-                    if let Some(segs0) = parse_selector_chain(n, src) {
-                        let segs = normalize_segments(&segs0);
-                        if segs.len() >= 2
-                            && segs[0] == "."
-                            && segs[1] == "Values"
-                            && segs.len() > 2
-                        {
-                            values.insert(segs[2..].join("."));
-                        } else if segs.len() >= 2
-                            && segs[0] == "$"
-                            && segs[1] == "Values"
-                            && segs.len() > 2
-                        {
-                            values.insert(segs[2..].join("."));
-                        } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
-                            values.insert(segs[1..].join("."));
+                    if let Some(tail) = parse_selector_expression(&n, src) {
+                        if !tail.is_empty() {
+                            values.insert(tail.join("."));
                         }
                     }
                 }
             }
+            // "selector_expression" => {
+            //     // OUTERMOST selector only
+            //     let parent_is_selector = n
+            //         .parent()
+            //         .map(|p| p.kind() == "selector_expression")
+            //         .unwrap_or(false);
+            //     if !parent_is_selector {
+            //         if let Some(segs0) = parse_selector_chain(n, src) {
+            //             let segs = normalize_segments(&segs0);
+            //             if segs.len() >= 2
+            //                 && segs[0] == "."
+            //                 && segs[1] == "Values"
+            //                 && segs.len() > 2
+            //             {
+            //                 values.insert(segs[2..].join("."));
+            //             } else if segs.len() >= 2
+            //                 && segs[0] == "$"
+            //                 && segs[1] == "Values"
+            //                 && segs.len() > 2
+            //             {
+            //                 values.insert(segs[2..].join("."));
+            //             } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
+            //                 values.insert(segs[1..].join("."));
+            //             }
+            //         }
+            //     }
+            // }
             // "selector_expression" => {
             //     // OUTERMOST selector only
             //     let parent_is_selector = n
@@ -608,7 +782,7 @@ fn collect_define_info(node: &Node, src: &str) -> DefineInfo {
             //     }
             // }
             "function_call" => {
-                if let Some(segs) = helm_schema_template::values::parse_index_call(&n, src) {
+                if let Some(segs) = parse_index_call(&n, src) {
                     if !segs.is_empty() {
                         values.insert(segs.join("."));
                     }
@@ -813,23 +987,21 @@ fn extract_define_name_and_body(
     (name, body)
 }
 
-fn collect_defines(files: &[(VfsPath, Arc<String>)]) -> Result<DefineIndex, Error> {
+pub fn collect_defines(files: &[VfsPath]) -> Result<DefineIndex, Error> {
     let mut idx = DefineIndex::default();
-    for (path, src) in files {
+    for path in files {
         println!("\n======================= AST for helper {}", path.as_str());
 
-        let parsed = parse_gotmpl_document(src).ok_or(Error::ParseTemplate)?;
-
-        // let ast = helm_schema_template::fmt::SExpr::parse_tree(&parsed.tree.root_node(), src);
-        // println!("{}", ast.to_string_pretty());
-        // println!("");
+        let src = path.read_to_string()?;
+        let src = Arc::new(src);
+        let parsed = parse_gotmpl_document(&src).ok_or(Error::ParseTemplate)?;
 
         for node in find_nodes(&parsed.tree, "define_action") {
-            if let (Some(name), Some(body_range)) = extract_define_name_and_body(src, node) {
+            if let (Some(name), Some(body_range)) = extract_define_name_and_body(&src, node) {
                 idx.insert(DefineEntry {
                     name,
                     path: path.clone(),
-                    source: src.clone(),
+                    source: Arc::clone(&src),
                     body_byte_range: body_range,
                 });
             }
@@ -858,33 +1030,6 @@ fn origin_to_value_path(o: &ExprOrigin) -> Option<String> {
         }
         _ => None,
     }
-}
-
-fn normalize_segments(raw: &[String]) -> Vec<String> {
-    let mut out = Vec::with_capacity(raw.len() + 4);
-    for s in raw {
-        if s == "." || s == "$" || s == "Values" {
-            out.push(s.clone());
-            continue;
-        }
-        // $cfg → ["$", "cfg"]
-        if s.starts_with('$') && s.len() > 1 {
-            out.push("$".to_string());
-            out.push(s[1..].to_string());
-            continue;
-        }
-        // .config → [".", "config"]
-        if s.starts_with('.') {
-            out.push(".".to_string());
-            let trimmed = s.trim_start_matches('.');
-            if !trimmed.is_empty() {
-                out.push(trimmed.to_string());
-            }
-            continue;
-        }
-        out.push(s.clone());
-    }
-    out
 }
 
 fn is_helm_builtin_root(name: &str) -> bool {
@@ -960,14 +1105,29 @@ impl Scope {
                 return self.extend_origin(self.dot.clone(), &segments[1..]);
             }
             "$" => {
-                // Ignore `$ .Capabilities.*` / `$ .Chart.*` / etc.
-                if segments.len() >= 2 && is_helm_builtin_root(&segments[1]) {
-                    return ExprOrigin::Opaque;
-                }
+                // bare "$"
                 if segments.len() == 1 {
                     return self.dollar.clone();
                 }
-                return self.extend_origin(self.dollar.clone(), &segments[1..]);
+                // dbg!(&segments);
+                // Ignore "$.Capabilities.*" / "$.Chart.*" / etc.
+                if is_helm_builtin_root(&segments[1]) {
+                    return ExprOrigin::Opaque;
+                }
+                // "$.Values[.tail]" → extend from current `$` origin
+                if segments[1].as_str() == "Values" {
+                    return self.extend_origin(self.dollar.clone(), &segments[1..]);
+                }
+                // "$name[.tail]" → binding lookup
+                let var = segments[1].as_str();
+                if let Some(bound) = self.bindings.get(var) {
+                    if segments.len() == 2 {
+                        return bound.clone();
+                    }
+                    return self.extend_origin(bound.clone(), &segments[2..]);
+                }
+                // Unbound $var → hard error
+                panic!("unbound template variable ${var} in selector: {segments:?}");
             }
             first => {
                 // Ignore bare `Capabilities.*` / `Chart.*` / etc.
@@ -992,23 +1152,7 @@ impl Scope {
                     return self.extend_origin(self.dot.clone(), &segments);
                 }
                 ExprOrigin::Opaque
-            } // first => {
-              //     if let Some(bound) = self.bindings.get(first) {
-              //         if segments.len() == 1 {
-              //             return bound.clone();
-              //         }
-              //         return self.extend_origin(bound.clone(), &segments[1..]);
-              //     }
-              //     if first == "Values" {
-              //         let mut v = vec!["Values".to_string()];
-              //         v.extend_from_slice(&segments[1..]);
-              //         return ExprOrigin::Selector(v);
-              //     }
-              //     if let ExprOrigin::Selector(_) = self.dot {
-              //         return self.extend_origin(self.dot.clone(), segments);
-              //     }
-              //     ExprOrigin::Opaque
-              // }
+            }
         };
 
         eprintln!("[resolve] {:?} -> {:?}", segments, selector);
@@ -1032,14 +1176,6 @@ impl Scope {
                 }
                 v.extend(t);
                 ExprOrigin::Selector(v)
-
-                // // Drop a duplicated leading "Values" (e.g. ["Values"] + ["Values","x"]).
-                // let mut t: Vec<String> = tail.to_vec();
-                // if !v.is_empty() && v[0] == "Values" && !t.is_empty() && t[0] == "Values" {
-                //     t.remove(0);
-                // }
-                // v.extend(t);
-                // ExprOrigin::Selector(v)
             }
             ExprOrigin::Dot | ExprOrigin::Dollar | ExprOrigin::Opaque => ExprOrigin::Opaque,
         }
@@ -1084,63 +1220,6 @@ fn guard_selectors_for_action(node: Node, src: &str, scope: &Scope) -> Vec<ExprO
 
     out
 }
-
-// fn guard_selectors_for_action(node: Node, src: &str, scope: &Scope) -> Vec<ExprOrigin> {
-//     // everything before the first named "text" child is the guard region
-//     let mut out = Vec::new();
-//     let mut w = node.walk();
-//     let mut seen_text = false;
-//     for ch in node.children(&mut w) {
-//         if !ch.is_named() {
-//             continue;
-//         }
-//         if ch.kind() == "text" {
-//             seen_text = true;
-//             break;
-//         }
-//
-//         // Collect *outermost* selector in guard
-//         if ch.kind() == "selector_expression" {
-//             if let Some(segs) = parse_selector_chain(ch, src) {
-//                 out.push(scope.resolve_selector(&segs));
-//             }
-//         } else if ch.kind() == "dot" {
-//             out.push(scope.dot.clone());
-//         } else if ch.kind() == "variable" {
-//             // `$` variable in guard
-//             let t = ch.utf8_text(src.as_bytes()).unwrap_or("");
-//             if t.trim() == "$" {
-//                 out.push(scope.dollar.clone());
-//             }
-//         } else if ch.kind() == "field" {
-//             // Handle guards like `range .accessModes` where guard is a `field`
-//             // Build a relative selector like [".", "<name>"]
-//             let ident = ch
-//                 .child_by_field_name("identifier")
-//                 .or_else(|| ch.child_by_field_name("field_identifier"))
-//                 .and_then(|id| id.utf8_text(src.as_bytes()).ok())
-//                 .or_else(|| ch.utf8_text(src.as_bytes()).ok())
-//                 .unwrap_or_default();
-//
-//             let name = ident.trim().trim_start_matches('.').to_string();
-//             if !name.is_empty() {
-//                 out.push(scope.resolve_selector(&vec![".".into(), name]));
-//             }
-//             // let ident = ch
-//             //     .child_by_field_name("identifier")
-//             //     .or_else(|| ch.child_by_field_name("field_identifier"))
-//             //     .and_then(|id| id.utf8_text(src.as_bytes()).ok())
-//             //     .unwrap_or_else(|| &src[ch.byte_range()]);
-//             //
-//             // let name = ident.trim().trim_start_matches('.').to_string();
-//             // if !name.is_empty() {
-//             //     out.push(scope.resolve_selector(&vec![".".into(), name]));
-//             // }
-//         }
-//         // Note: could add more cases (function_call pipelines), but this covers our PVC shapes
-//     }
-//     out
-// }
 
 /// Arg expression for include's second parameter
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1244,68 +1323,57 @@ fn parse_include_call(call_node: Node, src: &str) -> Result<(String, ArgExpr), I
                     ArgExpr::Opaque
                 }
             }
-            // "selector_expression" => {
-            //     if let Some(segs) =
-            //         helm_schema_template::values::parse_selector_expression(&node, src)
-            //     {
-            //         ArgExpr::Selector(segs)
-            //     } else {
-            //         ArgExpr::Opaque
-            //     }
-            // }
             "selector_expression" => {
-                // Robustly extract segments, then re-introduce the syntactic prefix we care about
-                // so tests can assert the normalized form:
-                //   .Values.foo   => Selector([".", "Values", "foo"])
-                //   .Values       => Selector([".", "Values"])
-                //   (.Values.foo) => Selector([".", "Values", "foo"])
-                let text = &src[node.byte_range()];
-                let trimmed = text.trim();
-
-                if let Some(mut segs) =
-                    helm_schema_template::values::parse_selector_expression(&node, src)
-                {
-                    let mut out = Vec::<String>::new();
-
-                    // If the original text starts with '.', we want to preserve that as a prefix token.
-                    if trimmed.starts_with('.') {
-                        out.push(".".to_string());
-
-                        // If it specifically starts with ".Values", ensure "Values" immediately follows.
-                        // parse_selector_expression() may or may not include "Values" as the first segment,
-                        // depending on grammar/tokenization; normalize either way.
-                        if trimmed.starts_with(".Values") {
-                            // Avoid duplicating "Values"
-                            if !segs.is_empty() && segs[0] == "Values" {
-                                // keep segs as-is; we'll just add "."
-                            } else {
-                                out.push("Values".to_string());
-                            }
-                        }
-                    }
-
-                    // If we already injected ".Values", drop a redundant leading "Values" from segs.
-                    if out.len() >= 2 && out[0] == "." && out[1] == "Values" {
-                        if !segs.is_empty() && segs[0] == "Values" {
-                            segs.remove(0);
-                        }
-                    }
-
-                    out.extend(segs);
-                    ArgExpr::Selector(out)
+                // Use our robust chain parser so we always get ["." | "$", ...] tokens.
+                // This lets include-arg resolution rebase through local bindings correctly
+                // (e.g., .config.inner → ["." ,"config","inner"]).
+                if let Some(segs) = parse_selector_chain(node, src) {
+                    ArgExpr::Selector(segs)
                 } else {
                     ArgExpr::Opaque
                 }
             }
-            // // NEW: handle `.ctx` / `.something` passed to include
-            // "field" => {
-            //     let name = node
-            //         .child_by_field_name("identifier")
-            //         .or_else(|| node.child(0))
-            //         .and_then(|id| id.utf8_text(src.as_bytes()).ok())
-            //         .map(|s| s.trim().trim_start_matches('.').to_string());
-            //     if let Some(nm) = name {
-            //         ArgExpr::Selector(vec![".".to_string(), nm])
+            // THIS WAS BEFORE:
+            // "selector_expression" => {
+            //     // Robustly extract segments, then re-introduce the syntactic prefix we care about
+            //     // so tests can assert the normalized form:
+            //     //   .Values.foo   => Selector([".", "Values", "foo"])
+            //     //   .Values       => Selector([".", "Values"])
+            //     //   (.Values.foo) => Selector([".", "Values", "foo"])
+            //     let text = &src[node.byte_range()];
+            //     let trimmed = text.trim();
+            //
+            //     if let Some(mut segs) =
+            //         helm_schema_template::values::parse_selector_expression(&node, src)
+            //     {
+            //         let mut out = Vec::<String>::new();
+            //
+            //         // If the original text starts with '.', we want to preserve that as a prefix token.
+            //         if trimmed.starts_with('.') {
+            //             out.push(".".to_string());
+            //
+            //             // If it specifically starts with ".Values", ensure "Values" immediately follows.
+            //             // parse_selector_expression() may or may not include "Values" as the first segment,
+            //             // depending on grammar/tokenization; normalize either way.
+            //             if trimmed.starts_with(".Values") {
+            //                 // Avoid duplicating "Values"
+            //                 if !segs.is_empty() && segs[0] == "Values" {
+            //                     // keep segs as-is; we'll just add "."
+            //                 } else {
+            //                     out.push("Values".to_string());
+            //                 }
+            //             }
+            //         }
+            //
+            //         // If we already injected ".Values", drop a redundant leading "Values" from segs.
+            //         if out.len() >= 2 && out[0] == "." && out[1] == "Values" {
+            //             if !segs.is_empty() && segs[0] == "Values" {
+            //                 segs.remove(0);
+            //             }
+            //         }
+            //
+            //         out.extend(segs);
+            //         ArgExpr::Selector(out)
             //     } else {
             //         ArgExpr::Opaque
             //     }
@@ -1398,68 +1466,7 @@ fn parse_include_call(call_node: Node, src: &str) -> Result<(String, ArgExpr), I
                 }
                 ArgExpr::Opaque
             }
-            // "function_call" => {
-            //     // maybe dict "k" <expr> ...
-            //     let mut is_dict = false;
-            //     let mut kvs: Vec<(String, ArgExpr)> = Vec::new();
-            //     let mut ident_seens = 0;
-            //     for i in 0..node.child_count() {
-            //         let ch = node.child(i).unwrap();
-            //         match ch.kind() {
-            //             "identifier" => {
-            //                 let id = ch.utf8_text(src.as_bytes()).unwrap_or("");
-            //                 if id.trim() == "dict" {
-            //                     is_dict = true;
-            //                 }
-            //             }
-            //             "argument_list" if is_dict => {
-            //                 // parse pairs: "k" <expr> ...
-            //                 let args = ch;
-            //                 let mut j = 0;
-            //                 while j < args.child_count() {
-            //                     // find string key
-            //                     let k_node = args.child(j).unwrap();
-            //                     if !k_node.is_named() {
-            //                         j += 1;
-            //                         continue;
-            //                     }
-            //                     if k_node.kind() != "interpreted_string_literal"
-            //                         && k_node.kind() != "raw_string_literal"
-            //                         && k_node.kind() != "string"
-            //                     {
-            //                         // not a key; bail
-            //                         break;
-            //                     }
-            //                     let key = k_node
-            //                         .utf8_text(src.as_bytes())
-            //                         .unwrap_or("")
-            //                         .trim()
-            //                         .trim_matches('"')
-            //                         .trim_matches('`')
-            //                         .to_string();
-            //                     // find value node
-            //                     j += 1;
-            //                     while j < args.child_count() && !args.child(j).unwrap().is_named() {
-            //                         j += 1;
-            //                     }
-            //                     if j >= args.child_count() {
-            //                         break;
-            //                     }
-            //                     let v_node = args.child(j).unwrap();
-            //                     let val = parse_arg_expr(v_node, src);
-            //                     kvs.push((key, val));
-            //                     j += 1;
-            //                 }
-            //             }
-            //             _ => {}
-            //         }
-            //     }
-            //     if is_dict {
-            //         ArgExpr::Dict(kvs)
-            //     } else {
-            //         ArgExpr::Opaque
-            //     }
-            // }
+
             _ => ArgExpr::Opaque,
         }
     }
@@ -1590,55 +1597,6 @@ fn is_include_call(call_node: Node, src: &str) -> bool {
     false
 }
 
-fn parse_selector_chain(node: Node, src: &str) -> Option<Vec<String>> {
-    fn rec(n: Node, src: &str, out: &mut Vec<String>) {
-        match n.kind() {
-            "selector_expression" => {
-                let left = n
-                    .child_by_field_name("operand")
-                    .or_else(|| n.child(0))
-                    .unwrap();
-                let right = n
-                    .child_by_field_name("field")
-                    .or_else(|| n.child(1))
-                    .unwrap();
-                rec(left, src, out);
-                let id = right
-                    .utf8_text(src.as_bytes())
-                    .ok()
-                    .unwrap_or("")
-                    .trim()
-                    .to_string();
-                if !id.is_empty() {
-                    out.push(id);
-                }
-            }
-            "dot" => out.push(".".into()),
-            "variable" => {
-                let t = n.utf8_text(src.as_bytes()).ok().unwrap_or("").trim();
-                if t == "$" {
-                    out.push("$".into());
-                }
-            }
-            "identifier" | "field" | "field_identifier" => {
-                let id = n
-                    .utf8_text(src.as_bytes())
-                    .ok()
-                    .unwrap_or("")
-                    .trim()
-                    .to_string();
-                if !id.is_empty() {
-                    out.push(id);
-                }
-            }
-            _ => {}
-        }
-    }
-    let mut segs = Vec::new();
-    rec(node, src, &mut segs);
-    if segs.is_empty() { None } else { Some(segs) }
-}
-
 type Env = BTreeMap<String, BTreeSet<String>>;
 
 fn variable_ident_of(node: &Node, src: &str) -> Option<String> {
@@ -1657,6 +1615,88 @@ fn variable_ident_of(node: &Node, src: &str) -> Option<String> {
         .map(|t| t.trim().trim_start_matches('$').to_string())
 }
 
+fn collect_bases_from_expr(base: Node, src: &str, scope: &Scope, env: &Env) -> Vec<String> {
+    match base.kind() {
+        // Straight selectors
+        "selector_expression" => {
+            if let Some(segs) =
+                parse_selector_expression(&base, src).or_else(|| parse_selector_chain(base, src))
+            {
+                if let Some(vp) = origin_to_value_path(&scope.resolve_selector(&segs)) {
+                    return vec![vp];
+                }
+            }
+            vec![]
+        }
+        // Dot → current dot origin (if it maps into .Values)
+        "dot" => origin_to_value_path(&scope.dot).into_iter().collect(),
+
+        // $ or $name
+        "variable" => {
+            let raw = base.utf8_text(src.as_bytes()).unwrap_or("").trim();
+            if raw == "$" {
+                return origin_to_value_path(&scope.dollar).into_iter().collect();
+            }
+            let name = raw.trim_start_matches('$');
+            if let Some(set) = env.get(name) {
+                return set.iter().cloned().collect();
+            }
+            // Keep the same behavior as elsewhere: panic for unbound user vars
+            panic!(
+                "unbound template variable ${name} used as base at bytes {:?}",
+                base.byte_range()
+            );
+        }
+
+        // `.foo` in a bare field
+        "field" => {
+            let name = base
+                .child_by_field_name("identifier")
+                .or_else(|| base.child_by_field_name("field_identifier"))
+                .and_then(|id| {
+                    id.utf8_text(src.as_bytes())
+                        .ok()
+                        .map(|s| s.trim().to_string())
+                })
+                .unwrap_or_else(|| {
+                    base.utf8_text(src.as_bytes())
+                        .unwrap_or("")
+                        .trim()
+                        .trim_start_matches('.')
+                        .to_string()
+                });
+
+            if let Some(bound) = scope.bindings.get(&name) {
+                if let Some(vp) = origin_to_value_path(bound) {
+                    return vec![vp];
+                }
+                // fall back: resolve `.name` relative to dot
+                let segs = vec![".".to_string(), name];
+                return origin_to_value_path(&scope.resolve_selector(&segs))
+                    .into_iter()
+                    .collect();
+            } else {
+                let segs = vec![".".to_string(), name];
+                return origin_to_value_path(&scope.resolve_selector(&segs))
+                    .into_iter()
+                    .collect();
+            }
+        }
+
+        // NEW: allow nested calls and parenthesized/chained pipelines as base
+        "function_call" | "parenthesized_pipeline" | "chained_pipeline" => {
+            // Delegate to the main collector. For something like
+            //   (index .Values "a")
+            // this returns {"a"} which we can then extend with outer keys.
+            collect_values_with_scope(base, src, scope, env)
+                .into_iter()
+                .collect()
+        }
+
+        _ => vec![],
+    }
+}
+
 /// Collect `.Values.*` keys reachable from `node` using the caller's `scope` and current `$var` env.
 fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
@@ -1664,6 +1704,21 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
 
     while let Some(n) = stack.pop() {
         match n.kind() {
+            "variable" => {
+                if let Some(var) = variable_ident_of(&n, src) {
+                    // bare '$' used as a value is uncommon; ignore here.
+                    if !var.is_empty() {
+                        if let Some(bases) = env.get(&var) {
+                            for b in bases {
+                                if !b.is_empty() {
+                                    out.insert(b.clone());
+                                }
+                            }
+                        }
+                        // (Do not hard-error here; we only hard-error for unbound variables in SELECTORS.)
+                    }
+                }
+            }
             "dot" => {
                 if let Some(vp) = origin_to_value_path(&scope.dot) {
                     if !vp.is_empty() {
@@ -1671,8 +1726,22 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                     }
                 }
             }
-            // Handle bare `.foo` nodes
+            // Handle bare `.foo` nodes (but NOT when it's part of a selector_expression)
             "field" => {
+                if n.parent()
+                    .map(|p| p.kind() == "selector_expression")
+                    .unwrap_or(false)
+                {
+                    // The outer selector will be handled in the selector_expression arm.
+                    // Avoid collecting ".foo" twice.
+                    let mut c = n.walk();
+                    for ch in n.children(&mut c) {
+                        if ch.is_named() {
+                            stack.push(ch);
+                        }
+                    }
+                    continue;
+                }
                 let ident = n
                     .child_by_field_name("identifier")
                     .or_else(|| n.child_by_field_name("field_identifier"))
@@ -1688,12 +1757,17 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                 }
             }
             "selector_expression" => {
+                dbg!(n.utf8_text(src.as_bytes()));
+
                 // 0) First, if the left operand is a variable ($ or $name), expand via env — do this
                 //    even if parse_selector_expression() returns None on this grammar.
                 if let Some(op) = n.child_by_field_name("operand").or_else(|| n.child(0)) {
                     if op.kind() == "variable" {
                         if let Some(var) = variable_ident_of(&op, src) {
-                            if let Some(bases) = env.get(&var) {
+                            // if let Some(bases) = env.get(&var) {
+                            if var.is_empty() {
+                                // bare "$" — let fallback handle
+                            } else if let Some(bases) = env.get(&var) {
                                 // Build tail after the variable using the robust chain walker
                                 let segs2 = parse_selector_chain(n, src).unwrap_or_default();
                                 // Skip the variable tokens (`$`, `$var`, `var`); keep the rest
@@ -1724,15 +1798,22 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                                 }
                                 // handled
                                 continue;
+                            } else {
+                                eprintln!(
+                                    "{}",
+                                    diagnostics::pretty_error("todo", src, n.byte_range(), None)
+                                );
+                                panic!(
+                                    "unbound template variable ${var} used in selector at bytes {:?}",
+                                    n.byte_range()
+                                );
                             }
                         }
                     }
                 }
 
                 // 1) Normal path: if we can parse the selector segments, use scope resolution
-                if let Some(segs) = helm_schema_template::values::parse_selector_expression(&n, src)
-                    .or_else(|| parse_selector_chain(n, src))
-                {
+                if let Some(segs) = parse_selector_chain(n, src) {
                     let parent_is_selector = n
                         .parent()
                         .map(|p| p.kind() == "selector_expression")
@@ -1741,12 +1822,20 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                     if parent_is_selector {
                         // We'll still traverse its children later; just don't record this node itself.
                     } else {
-                        // if let Some(segs) = helm_schema_template::values::parse_selector_expression(&n, src)
-                        // {
-                        // Handle tokenizations that include $ in the segments
                         if !segs.is_empty() && segs[0] == "$" && segs.len() >= 2 {
                             let var = segs[1].trim_start_matches('.');
-                            if let Some(bases) = env.get(var) {
+
+                            // NEW: handle Helm builtins rooted at '$'
+                            if is_helm_builtin_root(var) {
+                                // Either just ignore (no .Values key to collect) or fall through
+                                // to scope.resolve_selector(segs) which will return Opaque.
+                                // Ignoring is fine here:
+                                continue;
+                            }
+
+                            if var == "Values" {
+                                // treat as "$.Values..." — fall through to normal resolution below
+                            } else if let Some(bases) = env.get(var) {
                                 let tail = if segs.len() > 2 {
                                     segs[2..]
                                         .iter()
@@ -1767,12 +1856,59 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                                     }
                                 }
                                 continue;
+                            } else {
+                                eprintln!(
+                                    "{}",
+                                    diagnostics::pretty_error("todo", src, n.byte_range(), None)
+                                );
+                                panic!(
+                                    "unbound template variable ${var} used in selector at bytes {:?}",
+                                    n.byte_range()
+                                );
                             }
+
+                            // let var = segs[1].trim_start_matches('.');
+                            // if var == "Values" {
+                            //     // treat as "$.Values..." — fall through to normal resolution
+                            // } else if let Some(bases) = env.get(var) {
+                            //     let tail = if segs.len() > 2 {
+                            //         segs[2..]
+                            //             .iter()
+                            //             .map(|s| s.trim_start_matches('.'))
+                            //             .collect::<Vec<_>>()
+                            //             .join(".")
+                            //     } else {
+                            //         String::new()
+                            //     };
+                            //     for base in bases {
+                            //         let key = if tail.is_empty() {
+                            //             base.clone()
+                            //         } else {
+                            //             format!("{base}.{tail}")
+                            //         };
+                            //         if !key.is_empty() {
+                            //             out.insert(key);
+                            //         }
+                            //     }
+                            //     continue;
+                            // } else {
+                            //     eprintln!(
+                            //         "{}",
+                            //         diagnostics::pretty_error("todo", src, n.byte_range(), None,)
+                            //     );
+                            //     panic!(
+                            //         "unbound template variable ${var} used in selector at bytes {:?}",
+                            //         n.byte_range()
+                            //     );
+                            // }
                         }
                         if let Some(first) = segs.first() {
                             if first.starts_with('$') {
                                 let var = first.trim_start_matches('$');
-                                if let Some(bases) = env.get(var) {
+                                if var.is_empty() {
+                                    // bare "$" — fall through
+                                } else if let Some(bases) = env.get(var) {
+                                    // if let Some(bases) = env.get(var) {
                                     let tail = if segs.len() > 1 {
                                         segs[1..].join(".")
                                     } else {
@@ -1789,6 +1925,20 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                                         }
                                     }
                                     continue;
+                                } else {
+                                    eprintln!(
+                                        "{}",
+                                        diagnostics::pretty_error(
+                                            "todo",
+                                            src,
+                                            n.byte_range(),
+                                            None,
+                                        )
+                                    );
+                                    panic!(
+                                        "unbound template variable ${var} used in selector at bytes {:?}",
+                                        n.byte_range()
+                                    );
                                 }
                             }
                         }
@@ -1806,9 +1956,9 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
             "chained_pipeline" => {
                 if let Some(head) = n.named_child(0) {
                     if head.kind() == "selector_expression" {
-                        if let Some(segs) =
-                            helm_schema_template::values::parse_selector_expression(&head, src)
-                                .or_else(|| parse_selector_chain(head, src))
+                        if let Some(segs) = parse_selector_chain(head, src)
+                        // if let Some(segs) = parse_selector_expression(&head, src)
+                        //     .or_else(|| parse_selector_chain(head, src))
                         {
                             let origin = scope.resolve_selector(&segs);
                             if let Some(vp) = origin_to_value_path(&origin) {
@@ -1822,7 +1972,7 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
             }
             "function_call" => {
                 // Existing: .Values… and $ "Values" fast-paths (keep)
-                if let Some(segs) = helm_schema_template::values::parse_index_call(&n, src) {
+                if let Some(segs) = parse_index_call(&n, src) {
                     if !segs.is_empty() {
                         if segs[0] == "Values" && segs.len() > 1 {
                             out.insert(segs[1..].join("."));
@@ -1835,7 +1985,222 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                         }
                     }
                 }
+                // NEW: sprig get(base, "key") → base.key
+                if function_name_of(&n, src).as_deref() == Some("get") {
+                    if let Some(args) = arg_list(&n) {
+                        // base = first named arg; remaining named string args are keys
+                        let mut w = args.walk();
+                        let mut named = args.named_children(&mut w);
+                        if let Some(base) = named.next() {
+                            // collect string keys
+                            let mut keys: Vec<String> = Vec::new();
+                            let mut w2 = args.walk();
+                            for ch in args.named_children(&mut w2) {
+                                if ch.id() == base.id() {
+                                    continue;
+                                }
+                                if matches!(
+                                    ch.kind(),
+                                    "interpreted_string_literal" | "raw_string_literal" | "string"
+                                ) {
+                                    let k = ch
+                                        .utf8_text(src.as_bytes())
+                                        .unwrap_or("")
+                                        .trim()
+                                        .trim_matches('"')
+                                        .trim_matches('`')
+                                        .to_string();
+                                    if !k.is_empty() {
+                                        keys.push(k);
+                                    }
+                                }
+                            }
 
+                            // resolve base to .Values paths (same as index())
+                            // resolve base -> list of base paths
+                            let mut bases: Vec<String> =
+                                collect_bases_from_expr(base, src, scope, env);
+                            // let mut bases: Vec<String> = Vec::new();
+                            // match base.kind() {
+                            //     "selector_expression" => {
+                            //         if let Some(segs) = parse_selector_chain(base, src)
+                            //         // if let Some(segs) = parse_selector_expression(&base, src)
+                            //         //     .or_else(|| parse_selector_chain(base, src))
+                            //         {
+                            //             if let Some(vp) =
+                            //                 origin_to_value_path(&scope.resolve_selector(&segs))
+                            //             {
+                            //                 bases.push(vp);
+                            //             }
+                            //         }
+                            //     }
+                            //     "dot" => {
+                            //         if let Some(vp) = origin_to_value_path(&scope.dot) {
+                            //             bases.push(vp);
+                            //         }
+                            //     }
+                            //     "variable" => {
+                            //         let raw = base.utf8_text(src.as_bytes()).unwrap_or("").trim();
+                            //         if raw == "$" {
+                            //             if let Some(vp) = origin_to_value_path(&scope.dollar) {
+                            //                 bases.push(vp);
+                            //             }
+                            //         } else {
+                            //             let name = raw.trim_start_matches('$');
+                            //             if let Some(set) = env.get(name) {
+                            //                 bases.extend(set.iter().cloned());
+                            //             } else {
+                            //                 panic!(
+                            //                     "unbound template variable ${name} used as get() base at bytes {:?}",
+                            //                     n.byte_range()
+                            //                 );
+                            //             }
+                            //         }
+                            //     }
+                            //     "field" => {
+                            //         let name = base
+                            //             .child_by_field_name("identifier")
+                            //             .or_else(|| base.child_by_field_name("field_identifier"))
+                            //             .and_then(|id| {
+                            //                 id.utf8_text(src.as_bytes())
+                            //                     .ok()
+                            //                     .map(|s| s.trim().to_string())
+                            //             })
+                            //             .unwrap_or_else(|| {
+                            //                 base.utf8_text(src.as_bytes())
+                            //                     .unwrap_or("")
+                            //                     .trim()
+                            //                     .trim_start_matches('.')
+                            //                     .to_string()
+                            //             });
+                            //
+                            //         if let Some(bound) = scope.bindings.get(&name) {
+                            //             if let Some(vp) = origin_to_value_path(bound) {
+                            //                 bases.push(vp);
+                            //             } else {
+                            //                 let segs = vec![".".to_string(), name.clone()];
+                            //                 if let Some(vp) =
+                            //                     origin_to_value_path(&scope.resolve_selector(&segs))
+                            //                 {
+                            //                     bases.push(vp);
+                            //                 }
+                            //             }
+                            //         } else {
+                            //             let segs = vec![".".to_string(), name];
+                            //             if let Some(vp) =
+                            //                 origin_to_value_path(&scope.resolve_selector(&segs))
+                            //             {
+                            //                 bases.push(vp);
+                            //             }
+                            //         }
+                            //     }
+                            //     _ => {}
+                            // }
+
+                            // combine base + keys
+                            for mut b in bases {
+                                if b == "." {
+                                    b.clear();
+                                }
+                                if keys.is_empty() {
+                                    // conservative fallback
+                                    if !b.is_empty() {
+                                        out.insert(b);
+                                    }
+                                } else if b.is_empty() {
+                                    // root-of-.Values case
+                                    out.insert(keys.join("."));
+                                } else {
+                                    out.insert(format!("{b}.{}", keys.join(".")));
+                                }
+                            }
+                        }
+                    }
+                    // fully handled; don't descend (prevents duplicate base collection)
+                    continue;
+                }
+                // NEW: fromYaml consumes YAML text → record the input origin(s), but do not
+                // attempt to treat its result as a selector-capable value.
+                if function_name_of(&n, src).as_deref() == Some("fromYaml") {
+                    if let Some(args) = arg_list(&n) {
+                        let mut w = args.walk();
+                        if let Some(first) = args.named_children(&mut w).next() {
+                            // Reuse your existing selector resolution helpers:
+                            // - selector_expression / field / dot / variable
+                            if let Some(segs) = parse_selector_chain(first, src) {
+                                if let Some(vp) =
+                                    origin_to_value_path(&scope.resolve_selector(&segs))
+                                {
+                                    out.insert(vp); // <- record ".Values.rawYaml"
+                                }
+                            } else if first.kind() == "dot" {
+                                if let Some(vp) = origin_to_value_path(&scope.dot) {
+                                    out.insert(vp);
+                                }
+                            } else if first.kind() == "variable" {
+                                let raw = first.utf8_text(src.as_bytes()).unwrap_or("").trim();
+                                if raw == "$" {
+                                    if let Some(vp) = origin_to_value_path(&scope.dollar) {
+                                        out.insert(vp);
+                                    }
+                                } else if let Some(set) = env.get(raw.trim_start_matches('$')) {
+                                    out.extend(set.iter().cloned());
+                                }
+                            }
+                        }
+                    }
+                    // fully handled
+                    continue;
+                }
+                // NEW: sprig pluck("key", base[, ...]) → base.key (for each base)
+                if function_name_of(&n, src).as_deref() == Some("pluck") {
+                    if let Some(args) = arg_list(&n) {
+                        // collect named children once
+                        let mut named_nodes: Vec<Node> = Vec::new();
+                        let mut w = args.walk();
+                        for ch in args.named_children(&mut w) {
+                            named_nodes.push(ch);
+                        }
+
+                        // first named must be a string key
+                        if let Some(first) = named_nodes.first() {
+                            if matches!(
+                                first.kind(),
+                                "interpreted_string_literal" | "raw_string_literal" | "string"
+                            ) {
+                                let key = first
+                                    .utf8_text(src.as_bytes())
+                                    .unwrap_or("")
+                                    .trim()
+                                    .trim_matches('"')
+                                    .trim_matches('`')
+                                    .to_string();
+
+                                if !key.is_empty() {
+                                    for base in named_nodes.into_iter().skip(1) {
+                                        // resolve base -> list of base paths
+                                        let mut bases: Vec<String> =
+                                            collect_bases_from_expr(base, src, scope, env);
+
+                                        for mut b in bases {
+                                            if b == "." {
+                                                b.clear();
+                                            }
+                                            if b.is_empty() {
+                                                // root-of-.Values → just the key
+                                                out.insert(key.clone());
+                                            } else {
+                                                out.insert(format!("{b}.{}", key));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // fully handled
+                    continue;
+                }
                 // NEW: generic index base: . / binding / $var / field
                 if function_name_of(&n, src).as_deref() == Some("index") {
                     if let Some(args) = arg_list(&n) {
@@ -1868,98 +2233,24 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                             }
 
                             // resolve base -> list of base paths
-                            let mut bases: Vec<String> = Vec::new();
-                            match base.kind() {
-                                "selector_expression" => {
-                                    if let Some(segs) =
-                                        helm_schema_template::values::parse_selector_expression(
-                                            &base, src,
-                                        )
-                                    {
-                                        if let Some(vp) =
-                                            origin_to_value_path(&scope.resolve_selector(&segs))
-                                        {
-                                            bases.push(vp);
-                                        }
-                                    }
-                                }
-                                "dot" => {
-                                    if let Some(vp) = origin_to_value_path(&scope.dot) {
-                                        bases.push(vp);
-                                    }
-                                }
-                                "variable" => {
-                                    let raw = base.utf8_text(src.as_bytes()).unwrap_or("").trim();
-                                    if raw == "$" {
-                                        if let Some(vp) = origin_to_value_path(&scope.dollar) {
-                                            bases.push(vp); // "" at root
-                                        }
-                                    } else {
-                                        let name = raw.trim_start_matches('$');
-                                        if let Some(set) = env.get(name) {
-                                            bases.extend(set.iter().cloned());
-                                        }
-                                    }
-                                }
-                                "field" => {
-                                    // Prefer explicit identifier nodes if present, otherwise use the full node text.
-                                    let name = base
-                                        .child_by_field_name("identifier")
-                                        .or_else(|| base.child_by_field_name("field_identifier"))
-                                        .and_then(|id| {
-                                            id.utf8_text(src.as_bytes())
-                                                .ok()
-                                                .map(|s| s.trim().to_string())
-                                        })
-                                        .unwrap_or_else(|| {
-                                            // Fallback: ".config" → "config"
-                                            base.utf8_text(src.as_bytes())
-                                                .unwrap_or("")
-                                                .trim()
-                                                .trim_start_matches('.')
-                                                .to_string()
-                                        });
+                            let mut bases: Vec<String> =
+                                collect_bases_from_expr(base, src, scope, env);
 
-                                    if let Some(bound) = scope.bindings.get(&name) {
-                                        if let Some(vp) = origin_to_value_path(bound) {
-                                            debug_assert!(!vp.is_empty());
-                                            if !vp.is_empty() {
-                                                bases.push(vp);
-                                            }
-                                        } else {
-                                            // Binding exists but isn't a .Values selector: resolve relative to dot.
-                                            let segs = vec![".".to_string(), name.clone()];
-                                            if let Some(vp) =
-                                                origin_to_value_path(&scope.resolve_selector(&segs))
-                                            {
-                                                bases.push(vp);
-                                            }
-                                        }
-                                    } else {
-                                        // No binding: resolve `.name` relative to current dot/bindings.
-                                        let segs = vec![".".to_string(), name];
-                                        if let Some(vp) =
-                                            origin_to_value_path(&scope.resolve_selector(&segs))
-                                        {
-                                            debug_assert!(!vp.is_empty());
-                                            if !vp.is_empty() {
-                                                bases.push(vp);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                _ => {}
-                            }
-
-                            // and finally inserts only `{base}.{joined keys}` (never the bare base)
+                            // And finally insert `{base}.{joined keys}`
+                            // If no constant keys, fall back to the bare base (dynamic key case)
                             for mut b in bases {
                                 if b == "." {
                                     b.clear();
                                 }
                                 if keys.is_empty() {
-                                    // no-op: do not insert a bare base for index()
+                                    // dynamic key → at least attribute to the base value
+                                    if !b.is_empty() {
+                                        out.insert(b);
+                                    }
                                 } else if b.is_empty() {
+                                    // if keys.is_empty() {
+                                    //     // no-op: do not insert a bare base for index()
+                                    // } else if b.is_empty() {
                                     if !keys.is_empty() && keys[0] == "Values" {
                                         out.insert(keys[1..].join("."));
                                     } else {
@@ -2014,14 +2305,12 @@ fn collect_values_following_includes(
                     match arg {
                         ArgExpr::Dot => callee.dot = scope.dot.clone(),
                         ArgExpr::Dollar => callee.dot = scope.dollar.clone(),
-                        // ArgExpr::Selector(sel) => callee.dot = ExprOrigin::Selector(sel),
                         ArgExpr::Selector(sel) => callee.dot = scope.resolve_selector(&sel),
                         ArgExpr::Dict(kvs) => {
                             for (k, v) in kvs {
                                 let origin = match v {
                                     ArgExpr::Dot => scope.dot.clone(),
                                     ArgExpr::Dollar => scope.dollar.clone(),
-                                    // ArgExpr::Selector(s) => ExprOrigin::Selector(s),
                                     ArgExpr::Selector(s) => scope.resolve_selector(&s),
                                     _ => ExprOrigin::Opaque,
                                 };
@@ -2070,32 +2359,8 @@ struct InlineOut {
     guards: Vec<ValueUse>,
     next_id: usize,
     env: Env, // $var -> set of .Values.* it refers to
-}
-
-fn looks_like_fragment(node: &Node, src: &str) -> bool {
-    // true if the node itself or any function in its pipeline is include|toYaml
-    let mut check = |n: &Node| -> bool {
-        if n.kind() != "function_call" {
-            return false;
-        }
-        if let Some(name) = function_name_of(n, src) {
-            return name == "include" || name == "toYaml";
-        }
-        false
-    };
-    match node.kind() {
-        "function_call" => check(node),
-        "chained_pipeline" => {
-            let mut w = node.walk();
-            for ch in node.children(&mut w) {
-                if ch.is_named() && ch.kind() == "function_call" && check(&ch) {
-                    return true;
-                }
-            }
-            false
-        }
-        _ => false,
-    }
+    // NEW: force Role::Fragment at conversion time (without changing how we wrote the placeholder)
+    force_fragment_role: HashSet<usize>,
 }
 
 fn first_text_child_start(n: &Node) -> Option<usize> {
@@ -2156,10 +2421,14 @@ fn write_fragment_placeholder_line(buf: &mut String, id: usize, slot: Slot) {
             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0");
         }
         Slot::SequenceItem => {
+            // List item already started with "- "
             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
         }
         Slot::Plain => {
-            let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
+            // let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
+            // TOP-LEVEL or “plain” site for *fragments* → use a mapping stub
+            // so the overall YAML document remains a mapping, not a scalar.
+            let _ = write!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0\n");
         }
     }
 }
@@ -2170,6 +2439,7 @@ fn write_placeholder(
     src: &str,
     values: BTreeSet<String>,
     is_fragment_output: bool,
+    force_fragment_role: bool,
 ) {
     let id = out.next_id;
     out.next_id += 1;
@@ -2184,17 +2454,38 @@ fn write_placeholder(
     }
 
     if is_fragment_output {
-        let slot = current_slot_in_buf(&out.buf);
+        // Decide slot with nindent awareness
+        let nin = extract_nindent_width(&node, src).unwrap_or(0);
+        let mut slot = current_slot_in_buf(&out.buf);
+
         eprintln!(
             "[frag-ph] id={id} slot={:?} after='{}'",
             slot,
             last_non_empty_line(&out.buf).trim_end()
         );
+
+        // If previous non-empty line ended with ":" we *usually* are in the mapping value.
+        // But `nindent 0` escapes back to top-level → force Plain.
+        if matches!(slot, Slot::MappingValue) {
+            if nin == 0 {
+                slot = Slot::Plain;
+            } else {
+                // We remain under the mapping; make sure the line has at least `nin` spaces.
+                ensure_current_line_indent(&mut out.buf, nin);
+            }
+        } else if matches!(slot, Slot::Plain) && nin > 0 {
+            // Even in "plain" sites (e.g. right after a newline), rendering will start
+            // with `nin` spaces. Reflect it for YAML cleanliness.
+            ensure_current_line_indent(&mut out.buf, nin);
+        }
+
         write_fragment_placeholder_line(&mut out.buf, id, slot);
     } else {
+        // Scalar placeholders must end with a newline, or YAML can get glued together.
         out.buf.push('"');
         out.buf.push_str(&format!("__TSG_PLACEHOLDER_{}__", id));
         out.buf.push('"');
+        // out.buf.push('\n'); // <<< important
     }
 
     out.placeholders.push(Placeholder {
@@ -2204,6 +2495,10 @@ fn write_placeholder(
         values: values.into_iter().collect(),
         is_fragment_output,
     });
+
+    if force_fragment_role {
+        out.force_fragment_role.insert(id);
+    }
 }
 
 // Walk a template/define body and inline includes when appropriate.
@@ -2223,6 +2518,12 @@ fn inline_emit_tree(
         guard: &mut ExpansionGuard,
         out: &mut InlineOut,
     ) -> Result<(), Error> {
+        // Do not emit or traverse into {{ define }} bodies in the top-level pass.
+        // We'll analyze define bodies only when they are included (we parse the body_src then).
+        if container.kind() == "define_action" {
+            return Ok(());
+        }
+
         let mut c = container.walk();
 
         // If this container is a control-flow node, pre-compute the body scope with adjusted dot
@@ -2257,16 +2558,6 @@ fn inline_emit_tree(
                 s.dot = ExprOrigin::Selector(sel);
             }
 
-            // if let Some(sel) = guard_selectors_for_action(container, src, scope)
-            //     .into_iter()
-            //     .find_map(|o| match o {
-            //         ExprOrigin::Selector(v) => Some(v),
-            //         _ => None,
-            //     })
-            // {
-            //     s.dot = ExprOrigin::Selector(sel);
-            // }
-
             Some(s)
         } else {
             None
@@ -2298,14 +2589,47 @@ fn inline_emit_tree(
             // GUARD: record and continue (must use the *original* scope here)
             if is_guard_piece(&ch) {
                 if container_is_cf {
-                    if !guards_emitted_for_container {
-                        let origins = guard_selectors_for_action(container, src, scope);
+                    // NEW: capture "$var := ..." inside guard so the body can resolve $var.something
+                    if crate::sanitize::is_assignment_kind(ch.kind()) {
+                        let vals = collect_values_following_includes(
+                            ch, src, scope, inline, guard, &out.env,
+                        );
+                        // Bind $var -> set of bases
+                        let mut vc = ch.walk();
+                        for sub in ch.children(&mut vc) {
+                            if sub.is_named() && sub.kind() == "variable" {
+                                if let Some(name) = variable_ident_of(&sub, src) {
+                                    out.env.insert(name, vals.clone());
+                                }
+                                break;
+                            }
+                        }
+                        // Do not emit a placeholder for guard assignments.
+                        // Fall through to emit the guard ValueUse rows once per container.
+                    }
 
+                    // NEW: bind "$k, $v := ..." for range guards
+                    if ch.kind() == "range_variable_definition" {
+                        // Collect the base(s) from the guard (e.g., ".Values.env" → {"env"})
+                        let vals = collect_values_following_includes(
+                            ch, src, scope, inline, guard, &out.env,
+                        );
+                        // Bind BOTH $k and $v to the same base set (env)
+                        let mut vc = ch.walk();
+                        for sub in ch.children(&mut vc) {
+                            if sub.is_named() && sub.kind() == "variable" {
+                                if let Some(name) = variable_ident_of(&sub, src) {
+                                    out.env.insert(name, vals.clone());
+                                }
+                            }
+                        }
+                    }
+
+                    if !guards_emitted_for_container {
                         let origins = guard_selectors_for_action(container, src, scope);
 
                         // Range vs With:
                         //  - range: emit ONLY the exact guard key; and if it's just '.', suppress entirely
-                        //  - with  : keep prefix expansion (e.g. "config.accessModes" => "config", "config.accessModes")
                         if container.kind() == "range_action" {
                             let dot_vp = origin_to_value_path(&scope.dot);
                             let mut seen = std::collections::BTreeSet::new();
@@ -2358,35 +2682,9 @@ fn inline_emit_tree(
                             }
                         }
 
-                        // // NEW: emit every non-empty dot-separated prefix only once
-                        // let mut seen = std::collections::BTreeSet::new();
-                        // for o in origins {
-                        //     if let Some(vp) = origin_to_value_path(&o) {
-                        //         if vp.is_empty() {
-                        //             continue;
-                        //         }
-                        //         // split "a.b.c" -> ["a", "a.b", "a.b.c"]
-                        //         let mut acc = String::new();
-                        //         for (i, seg) in vp.split('.').enumerate() {
-                        //             if i == 0 {
-                        //                 acc.push_str(seg);
-                        //             } else {
-                        //                 acc.push('.');
-                        //                 acc.push_str(seg);
-                        //             }
-                        //             if seen.insert(acc.clone()) {
-                        //                 out.guards.push(ValueUse {
-                        //                     value_path: acc.clone(),
-                        //                     role: Role::Guard,
-                        //                     action_span: ch.byte_range(),
-                        //                     yaml_path: None,
-                        //                 });
-                        //             }
-                        //         }
-                        //     }
-                        // }
                         guards_emitted_for_container = true;
                     }
+
                     // IMPORTANT: short-circuit so we don't fall back and duplicate
                     continue;
                 } else {
@@ -2404,99 +2702,6 @@ fn inline_emit_tree(
                     }
                     continue;
                 }
-
-                // if container_is_cf {
-                //     if !guards_emitted_for_container {
-                //         let origins = guard_selectors_for_action(container, src, scope);
-                //         let mut seen = std::collections::BTreeSet::new();
-                //         for o in origins {
-                //             if let Some(vp) = origin_to_value_path(&o) {
-                //                 if !vp.is_empty() && seen.insert(vp.clone()) {
-                //                     out.guards.push(ValueUse {
-                //                         value_path: vp,
-                //                         role: Role::Guard,
-                //                         action_span: ch.byte_range(),
-                //                         yaml_path: None,
-                //                     });
-                //                 }
-                //             }
-                //         }
-                //         guards_emitted_for_container = true;
-                //     }
-                //     // IMPORTANT: short-circuit so we don't fall back and duplicate
-                //     continue;
-                // } else {
-                //     // Non-control-flow guard-ish piece (rare): fallback but filter empties
-                //     let vals = collect_values_with_scope(ch, src, scope, &out.env);
-                //     for v in vals {
-                //         if !v.is_empty() {
-                //             out.guards.push(ValueUse {
-                //                 value_path: v,
-                //                 role: Role::Guard,
-                //                 action_span: ch.byte_range(),
-                //                 yaml_path: None,
-                //             });
-                //         }
-                //     }
-                //     continue;
-                // }
-
-                // // We'll emit guards only once per container to avoid duplicates
-                // // (e.g., dot inside the selector_expression).
-                // static EMITTED_KEY: &str = "__guards_emitted__";
-                // // Attach a tiny flag to the node via a local map we keep on the stack of this function call.
-                // // We can emulate it by capturing a boolean per container invocation.
-                // // Put this boolean near the top of walk_container:
-                // if container_is_cf && !guards_emitted_for_container {
-                //     let origins = guard_selectors_for_action(container, src, scope);
-                //     let mut seen = std::collections::BTreeSet::new();
-                //     for o in origins {
-                //         if let Some(vp) = origin_to_value_path(&o) {
-                //             if !vp.is_empty() && seen.insert(vp.clone()) {
-                //                 out.guards.push(ValueUse {
-                //                     value_path: vp,
-                //                     role: Role::Guard,
-                //                     action_span: ch.byte_range(),
-                //                     yaml_path: None,
-                //                 });
-                //             }
-                //         }
-                //     }
-                //     guards_emitted_for_container = true;
-                // } else {
-                //     // Fallback (non-control-flow): keep old behavior but filter empties
-                //     let vals = collect_values_with_scope(ch, src, scope, &out.env);
-                //     for v in vals {
-                //         if !v.is_empty() {
-                //             out.guards.push(ValueUse {
-                //                 value_path: v,
-                //                 role: Role::Guard,
-                //                 action_span: ch.byte_range(),
-                //                 yaml_path: None,
-                //             });
-                //         }
-                //     }
-                // }
-                // continue;
-
-                // // Suppress the extra Guard for `range .`:
-                // // In a range_action whose subject is a plain dot, we don't want
-                // // to count another Guard (the `with` already guarded the data).
-                // if container.kind() == "range_action" && ch.kind() == "dot" {
-                //     // still traverse everything else later, but don't record a Guard
-                //     continue;
-                // }
-                //
-                // let vals = collect_values_with_scope(ch, src, scope, &out.env);
-                // for v in vals {
-                //     out.guards.push(ValueUse {
-                //         value_path: v,
-                //         role: Role::Guard,
-                //         action_span: ch.byte_range(),
-                //         yaml_path: None,
-                //     });
-                // }
-                // continue;
             }
 
             // Nested containers / control flow
@@ -2540,14 +2745,12 @@ fn inline_emit_tree(
                     match arg {
                         ArgExpr::Dot => callee.dot = use_scope.dot.clone(),
                         ArgExpr::Dollar => callee.dot = use_scope.dollar.clone(),
-                        // ArgExpr::Selector(sel) => callee.dot = ExprOrigin::Selector(sel),
                         ArgExpr::Selector(sel) => callee.dot = use_scope.resolve_selector(&sel),
                         ArgExpr::Dict(kvs) => {
                             for (k, v) in kvs {
                                 let origin = match v {
                                     ArgExpr::Dot => use_scope.dot.clone(),
                                     ArgExpr::Dollar => use_scope.dollar.clone(),
-                                    // ArgExpr::Selector(s) => ExprOrigin::Selector(s),
                                     ArgExpr::Selector(s) => use_scope.resolve_selector(&s),
                                     _ => ExprOrigin::Opaque,
                                 };
@@ -2581,6 +2784,7 @@ fn inline_emit_tree(
                             // 3) Emit one scalar placeholder at the include site
                             write_placeholder(
                                 out, ch, src, vals, /*is_fragment_output=*/ false,
+                                /*force_fragment_output=*/ false,
                             );
 
                             // 4) Keep callee guards
@@ -2596,59 +2800,303 @@ fn inline_emit_tree(
                     continue;
                 }
 
-                // Non-include output
-                let is_frag = looks_like_fragment(&ch, src);
+                // Include at the head of a pipeline (e.g., {{ include "x" . | nindent 2 }})
+                if ch.kind() == "chained_pipeline" {
+                    if let Some(head_inc) = pipeline_head_is_include(ch, src) {
+                        // Classify by the pipeline site, not just the head
+                        let ctx = classify_action(src, &ch.byte_range());
+                        let (tpl, arg) = parse_include_call(head_inc, src)?;
 
-                // Prefer using the pipeline "head" (covers bare `field`, `selector_expression`,
-                // or the head of a `chained_pipeline`). If that yields exactly one key,
-                // use it; otherwise fall back to the full include-aware collector.
-                let vals: BTreeSet<String> = if let Some(head) = pipeline_head(ch) {
-                    let head_keys =
-                        collect_values_with_scope(head, src, use_scope, &Env::default());
-                    if head_keys.len() == 1 {
-                        head_keys
+                        if guard.stack.iter().any(|n| n == &tpl) {
+                            continue;
+                        }
+                        let entry = inline
+                            .define_index
+                            .get(&tpl)
+                            .ok_or_else(|| IncludeError::UnknownDefine(tpl.clone()))?;
+
+                        // Build callee scope using use_scope (same as the direct-include path)
+                        let mut callee = Scope {
+                            dot: use_scope.dot.clone(),
+                            dollar: use_scope.dollar.clone(),
+                            bindings: Default::default(),
+                        };
+                        match arg {
+                            ArgExpr::Dot => callee.dot = use_scope.dot.clone(),
+                            ArgExpr::Dollar => callee.dot = use_scope.dollar.clone(),
+                            ArgExpr::Selector(sel) => callee.dot = use_scope.resolve_selector(&sel),
+                            ArgExpr::Dict(kvs) => {
+                                for (k, v) in kvs {
+                                    let origin = match v {
+                                        ArgExpr::Dot => use_scope.dot.clone(),
+                                        ArgExpr::Dollar => use_scope.dollar.clone(),
+                                        ArgExpr::Selector(s) => use_scope.resolve_selector(&s),
+                                        _ => ExprOrigin::Opaque,
+                                    };
+                                    callee.bind_key(&k, origin);
+                                }
+                            }
+                            _ => {}
+                        }
+
+                        let body_src = &entry.source[entry.body_byte_range.clone()];
+                        let body = parse_gotmpl_document(body_src).ok_or(Error::ParseTemplate)?;
+
+                        match ctx {
+                            Role::ScalarValue => {
+                                // Same 4 steps as the direct-include branch
+                                let mut tmp = InlineOut::default();
+                                inline_emit_tree(
+                                    &body.tree, body_src, &callee, inline, guard, &mut tmp,
+                                )?;
+
+                                let vals = collect_values_following_includes(
+                                    body.tree.root_node(),
+                                    body_src,
+                                    &callee,
+                                    inline,
+                                    guard,
+                                    &tmp.env,
+                                );
+
+                                write_placeholder(
+                                    out, ch, // <- note: use the pipeline node
+                                    src, vals, /*is_fragment_output=*/ false,
+                                    /*force_fragment_role=*/ false,
+                                );
+
+                                out.guards.extend(tmp.guards.into_iter());
+                            }
+                            _ => {
+                                // Treat include|... in non-scalar position as a YAML fragment emission.
+                                // We do NOT inline the callee body text here; we emit one fragment placeholder
+                                // so nindent/indent is respected and yaml_path is correct.
+
+                                // 1) Walk the callee into a temporary buffer to capture guards and $var bindings.
+                                let mut tmp = InlineOut::default();
+                                inline_emit_tree(
+                                    &body.tree, body_src, &callee, inline, guard, &mut tmp,
+                                )?;
+
+                                // 2) Collect the .Values.* origins from the callee (follow its nested includes)
+                                let vals = collect_values_following_includes(
+                                    body.tree.root_node(),
+                                    body_src,
+                                    &callee,
+                                    inline,
+                                    guard,
+                                    &tmp.env,
+                                );
+
+                                // 3) Emit a single FRAGMENT placeholder at the pipeline node.
+                                //    write_placeholder() will look at the current slot and apply nindent width.
+                                write_placeholder(
+                                    out, ch, // use the pipeline node span
+                                    src, vals, /*is_fragment_output=*/ true,
+                                    /*force_fragment_role=*/ false,
+                                );
+
+                                // 4) Keep any guards we discovered while walking the callee
+                                out.guards.extend(tmp.guards.into_iter());
+                            }
+                        }
+                        continue;
+                    }
+                }
+
+                // Non-include output
+                {
+                    // --- NEW: handle sprig ternary specially so the condition becomes a Guard ---
+                    if let Some(head) = pipeline_head(ch) {
+                        if head.kind() == "function_call"
+                            && function_name_of(&head, src).as_deref() == Some("ternary")
+                        {
+                            if let Some(args) = arg_list(&head) {
+                                // Gather named args: ternary <a> <b> <cond>
+                                let mut named: Vec<Node> = Vec::new();
+                                let mut w = args.walk();
+                                for a in args.named_children(&mut w) {
+                                    named.push(a);
+                                }
+                                if named.len() >= 3 {
+                                    let then_node = named[0];
+                                    let else_node = named[1];
+                                    let cond_node = named[2];
+
+                                    // 1) The condition is a Guard
+                                    let cond_vals = collect_values_with_scope(
+                                        cond_node, src, use_scope, &out.env,
+                                    );
+                                    for v in cond_vals {
+                                        if !v.is_empty() {
+                                            out.guards.push(ValueUse {
+                                                value_path: v,
+                                                role: Role::Guard,
+                                                action_span: ch.byte_range(),
+                                                yaml_path: None,
+                                            });
+                                        }
+                                    }
+
+                                    // 2) Only branch value sources feed the placeholder's "values" set
+                                    use std::collections::BTreeSet;
+                                    let mut branch_vals: BTreeSet<String> = BTreeSet::new();
+                                    for br in [then_node, else_node] {
+                                        branch_vals.extend(collect_values_following_includes(
+                                            br, src, use_scope, inline, guard, &out.env,
+                                        ));
+                                    }
+
+                                    // 3) Keep your fragment/indent logic as-is
+                                    let slot = current_slot_in_buf(&out.buf);
+                                    let has_indent =
+                                        pipeline_contains_any(&ch, src, &["nindent", "indent"]);
+                                    let head_is_fragment_producer =
+                                        pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+                                            || pipeline_contains_any(&ch, src, &["tpl", "include"]);
+                                    let fragmentish_pipeline =
+                                        pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+                                            || (has_indent
+                                                && pipeline_contains_any(
+                                                    &ch,
+                                                    src,
+                                                    &["tpl", "include"],
+                                                ));
+                                    let is_frag_output =
+                                        (matches!(slot, Slot::MappingValue | Slot::SequenceItem)
+                                            && fragmentish_pipeline)
+                                            || (has_indent && head_is_fragment_producer);
+                                    let force_fragment_role =
+                                        pipeline_contains_any(&ch, src, &["fromYaml"]);
+
+                                    write_placeholder(
+                                        out,
+                                        ch,
+                                        src,
+                                        branch_vals,
+                                        is_frag_output,
+                                        force_fragment_role,
+                                    );
+                                    continue; // <<< important: skip the generic path
+                                }
+                            }
+                        }
+                    }
+
+                    // Compute the set of .Values sources feeding this action.
+                    let vals: BTreeSet<String> = if let Some(head) = pipeline_head(ch) {
+                        let head_keys = collect_values_with_scope(head, src, use_scope, &out.env);
+                        if head_keys.len() == 1 {
+                            head_keys
+                        } else {
+                            collect_values_following_includes(
+                                ch, src, use_scope, inline, guard, &out.env,
+                            )
+                        }
                     } else {
                         collect_values_following_includes(
                             ch, src, use_scope, inline, guard, &out.env,
                         )
-                    }
-                } else {
-                    collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env)
-                };
+                    };
 
-                write_placeholder(out, ch, src, vals, is_frag);
-                continue;
+                    // Where are we about to write?
+                    let slot = current_slot_in_buf(&out.buf);
+                    let has_indent = pipeline_contains_any(&ch, src, &["nindent", "indent"]);
 
-                // let vals =
-                //     collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env);
-                // write_placeholder(out, ch, src, vals, is_frag);
-                // continue;
+                    // Which kinds of heads tend to produce YAML fragments?
+                    let head_is_fragment_producer =
+                        pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+                            || pipeline_contains_any(&ch, src, &["tpl", "include"]);
+
+                    // Treat as fragment if:
+                    //  - it's toYaml/fromYaml, OR
+                    //  - it's tpl/include piped through (n)indent
+                    let fragmentish_pipeline =
+                        pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+                            || (has_indent && pipeline_contains_any(&ch, src, &["tpl", "include"]));
+
+                    // Slot-based decision with a fallback when (n)indent is present:
+                    // Sometimes slot detection lags; if (n)indent is present and the head
+                    // is a fragment producer, emit a fragment placeholder anyway.
+                    let is_frag_output = (matches!(slot, Slot::MappingValue | Slot::SequenceItem)
+                        && fragmentish_pipeline)
+                        || (has_indent && head_is_fragment_producer);
+
+                    // Force role=Fragment for fromYaml even if we kept an inline scalar placeholder.
+                    let force_fragment_role = pipeline_contains_any(&ch, src, &["fromYaml"]);
+
+                    write_placeholder(out, ch, src, vals, is_frag_output, force_fragment_role);
+                    continue;
+                }
             }
 
-            // Assignments ($x := ...): use the child-specific scope too
+            // Assignments ($x := ...): record bindings (no placeholders)
+            // Also handle the special case: $o := fromYaml .Values.rawYaml  → bind $o as OPAQUE and
+            // record a Guard use for the consumed source(s).
             if crate::sanitize::is_assignment_kind(ch.kind()) {
+                // Detect whether RHS contains a fromYaml() call
+                let mut rhs_is_from_yaml = false;
+                {
+                    let mut w = ch.walk();
+                    for sub in ch.children(&mut w) {
+                        if sub.is_named() && sub.kind() == "function_call" {
+                            if function_name_of(&sub, src).as_deref() == Some("fromYaml") {
+                                rhs_is_from_yaml = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Collect value origins on RHS (includes fromYaml arg via our collector)
                 let vals =
                     collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env);
-                let id = out.next_id;
-                out.next_id += 1;
-                out.placeholders.push(Placeholder {
-                    id,
-                    role: Role::Fragment,
-                    action_span: ch.byte_range(),
-                    values: vals.iter().cloned().collect(),
-                    is_fragment_output: true,
-                });
+
+                // Bind the LHS variable
                 let mut vc = ch.walk();
                 for sub in ch.children(&mut vc) {
                     if sub.is_named() && sub.kind() == "variable" {
                         if let Some(name) = variable_ident_of(&sub, src) {
-                            out.env.insert(name, vals.clone());
+                            if rhs_is_from_yaml {
+                                // OPAQUE binding: prevent $o.someField → rawYaml.someField propagation
+                                out.env.insert(name, BTreeSet::new());
+
+                                // Also *record* that the source was consumed (as a non-emitting use).
+                                // We use Guard role (no yaml_path), which the tests accept.
+                                for v in &vals {
+                                    if !v.is_empty() {
+                                        out.guards.push(ValueUse {
+                                            value_path: v.clone(),
+                                            role: Role::Guard,
+                                            action_span: ch.byte_range(),
+                                            yaml_path: None,
+                                        });
+                                    }
+                                }
+                            } else {
+                                out.env.insert(name, vals.clone());
+                            }
                         }
                         break;
                     }
                 }
                 continue;
             }
+            // if crate::sanitize::is_assignment_kind(ch.kind()) {
+            //     let vals =
+            //         collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env);
+            //
+            //     let mut vc = ch.walk();
+            //     for sub in ch.children(&mut vc) {
+            //         if sub.is_named() && sub.kind() == "variable" {
+            //             if let Some(name) = variable_ident_of(&sub, src) {
+            //                 out.env.insert(name, vals.clone());
+            //             }
+            //             break;
+            //         }
+            //     }
+            //     continue;
+            // }
         }
         Ok(())
     }
@@ -3595,6 +4043,8 @@ mod map_iteration_and_index {
         "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
+
         // We should at least detect `.Values.env` as the source feeding env[].value.
         assert_that!(
             &uses,
@@ -3626,6 +4076,8 @@ mod map_iteration_and_index {
         "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
+
         assert_that!(
             &uses,
             contains(matches_pattern!(ValueUse {
@@ -3649,6 +4101,7 @@ mod map_iteration_and_index {
         "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
 
         // Conservative expectation: we at least record `.Values.extra` being used as scalar here.
         // (Path mapping may be "data.chosen" or left unknown initially; assert the value path.)
@@ -3676,6 +4129,7 @@ mod map_iteration_and_index {
         "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
 
         assert_that!(
             &uses,
@@ -3721,6 +4175,7 @@ mod tpl_and_yaml_fragments {
         "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
 
         assert_that!(
             &uses,
@@ -3730,6 +4185,28 @@ mod tpl_and_yaml_fragments {
                 yaml_path: some(displays_as(eq("metadata.labels"))),
                 ..
             })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn from_yaml_bridges_value_to_yaml_path() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+        ingress: {{ fromYaml .Values.ingress }}
+    "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
+
+        assert_that!(
+            &uses,
+            contains(matches_pattern!(ValueUse {
+                role: eq(&Role::Fragment),
+                value_path: eq("ingress"),
+                yaml_path: some(displays_as(eq("ingress"))),
+                ..
+            }))
         );
         Ok(())
     }
@@ -3772,6 +4249,7 @@ mod tpl_and_yaml_fragments {
         "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
 
         assert_that!(
             &uses,
@@ -3789,6 +4267,976 @@ mod tpl_and_yaml_fragments {
                     ..
                 }))
             ]
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod scope_rebinding {
+    use super::*;
+    use color_eyre::eyre::{self, OptionExt, WrapErr};
+    use helm_schema_template::parse::parse_gotmpl_document;
+    use indoc::indoc;
+    use std::collections::BTreeSet;
+    use test_util::prelude::*;
+
+    // convenience: turn ExprOrigin into an Option<String> like "a.b.c" (only for .Values.*)
+    fn vp(o: &ExprOrigin) -> Option<String> {
+        super::origin_to_value_path(o)
+    }
+    // convenience: build Vec<String> segments
+    fn segs(parts: &[&str]) -> Vec<String> {
+        parts.iter().map(|s| s.to_string()).collect()
+    }
+
+    fn root_scope() -> Scope {
+        Scope {
+            dot: ExprOrigin::Selector(vec!["Values".into()]),
+            dollar: ExprOrigin::Selector(vec!["Values".into()]),
+            bindings: Default::default(),
+        }
+    }
+
+    #[test]
+    fn dollar_rebinding_to_values_then_shadow_to_other_values() {
+        Builder::default().build();
+
+        // Simulate: {{$cfg := .Values.a}} ... {{$cfg := .Values.b}} ... {{$cfg.c}}
+        let mut scope = root_scope();
+        scope.bind_key(
+            "cfg",
+            ExprOrigin::Selector(vec!["Values".into(), "a".into()]),
+        );
+        // shadow with a new binding in a nested scope:
+        let mut inner_scope = scope.clone();
+        inner_scope.bind_key(
+            "cfg",
+            ExprOrigin::Selector(vec!["Values".into(), "b".into()]),
+        );
+
+        let got = inner_scope.resolve_selector(&segs(&["$cfg", "c"]));
+        assert_that!(vp(&got), some(eq("b.c"))); // inner shadowing wins
+
+        // outer scope still points to a.c
+        let got_outer = scope.resolve_selector(&segs(&["$cfg", "c"]));
+        assert_that!(vp(&got_outer), some(eq("a.c")));
+    }
+
+    #[test]
+    fn rebinding_dot_with_with_action_body_changes_relative_selectors() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            {{- with .Values.server }}
+            {{- $cfg := . }}
+            # both `.port` and `$cfg.port` should resolve to server.port
+            {{ .port }} {{ $cfg.port }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        // find `with_action`
+        let with_node = {
+            let mut stack = vec![parsed.tree.root_node()];
+            let mut found = None;
+            while let Some(n) = stack.pop() {
+                if n.kind() == "with_action" {
+                    found = Some(n);
+                    break;
+                }
+                let mut w = n.walk();
+                for ch in n.children(&mut w) {
+                    if ch.is_named() {
+                        stack.push(ch);
+                    }
+                }
+            }
+            found.ok_or_eyre("missing with_action")?
+        };
+        let scope = root_scope();
+        let origins = super::guard_selectors_for_action(with_node, src, &scope);
+        let base = origins
+            .into_iter()
+            .find_map(|o| {
+                if matches!(o, ExprOrigin::Selector(_)) {
+                    Some(o)
+                } else {
+                    None
+                }
+            })
+            .ok_or_eyre("missing selector")?;
+
+        // simulate `$cfg := .` inside the with-body
+        let mut body_scope = root_scope();
+        body_scope.dot = base.clone();
+        body_scope.bind_key("cfg", base);
+
+        // `.port`
+        let got1 = body_scope.resolve_selector(&segs(&[".", "port"]));
+        assert_that!(vp(&got1), some(eq("server.port")));
+        // `$cfg.port`
+        let got2 = body_scope.resolve_selector(&segs(&["$cfg", "port"]));
+        assert_that!(vp(&got2), some(eq("server.port")));
+        Ok(())
+    }
+
+    #[test]
+    fn rebind_root_dollar_to_opaque_makes_future_uses_non_values() {
+        Builder::default().build();
+        let mut s = root_scope();
+        // simulate `$ := dict` (often used in Helm helpers)
+        s.dollar = ExprOrigin::Opaque;
+        let got = s.resolve_selector(&segs(&["$", "Values", "x"]));
+        assert_that!(vp(&got), none()); // once $ stops being .Values, it no longer yields a values path
+    }
+
+    #[test]
+    fn range_kv_binding_prefers_element_for_value_paths() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            {{- range $i, $e := .Values.items }}
+            {{ $e.name }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            unordered_elements_are![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("items"),
+                    yaml_path: none(),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("items.name"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn range_assignment_with_body_dot_and_element_var_both_resolve() -> eyre::Result<()> {
+        Builder::default().build();
+
+        // Note that `.key` here is equivalent to `$v.key` (not `$k`)
+        let src = indoc! {r#"
+            {{- range $k, $v := .Values.env }}
+            {{ .key }}: {{ $v.value }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        // we expect a guard on env, and scalar uses for env.key and env.value
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("env"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    // Accept Fragment until we tighten classification
+                    role: any!(eq(&Role::MappingKey), eq(&Role::Fragment)),
+                    value_path: eq("env.key"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("env.value"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn if_with_variable_assignment_tracks_both_binding_and_body() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            {{- if $x := .Values.feature }}
+            {{ $x.enabled }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        // guard on `feature` from if, then scalar for `$x.enabled` → feature.enabled
+        assert_that!(
+            &uses,
+            unordered_elements_are![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("feature"),
+                    yaml_path: none(),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("feature.enabled"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod pipelines_and_functions {
+    use super::*;
+    use color_eyre::eyre::{self, OptionExt, WrapErr};
+    use helm_schema_template::parse::parse_gotmpl_document;
+    use indoc::indoc;
+    use test_util::prelude::*;
+
+    #[test]
+    fn default_collects_both_candidate_sources() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            metadata:
+              name: {{ default .Values.nameOverride .Values.name }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        // We don't know which wins statically, so both should be tracked to the same YAML path.
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("nameOverride"),
+                    yaml_path: some(displays_as(eq("metadata.name"))),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("name"),
+                    yaml_path: some(displays_as(eq("metadata.name"))),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn coalesce_collects_all_args_that_are_values() -> eyre::Result<()> {
+        Builder::default().build();
+        // coalesce is a sprig func; for now we at least expect we collect all .Values.* arguments
+        let src = indoc! {r#"
+            image:
+              tag: {{ coalesce .Values.image.tag .Values.appVersion .Values.fallbackTag }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("image.tag"),
+                    yaml_path: some(displays_as(eq("image.tag"))),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("appVersion"),
+                    yaml_path: some(displays_as(eq("image.tag"))),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("fallbackTag"),
+                    yaml_path: some(displays_as(eq("image.tag"))),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn index_with_nested_index_is_traced() -> eyre::Result<()> {
+        Builder::default().build();
+        // {{ index (index .Values "a") "b" }}  → a.b
+        let src = r#"{{ index (index .Values "a") "b" }}"#;
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        // find the single function_call (outer)
+        let mut node = parsed.tree.root_node();
+        {
+            let mut stack = vec![node];
+            while let Some(n) = stack.pop() {
+                if n.kind() == "function_call" {
+                    node = n;
+                    break;
+                }
+                let mut w = n.walk();
+                for ch in n.children(&mut w) {
+                    if ch.is_named() {
+                        stack.push(ch);
+                    }
+                }
+            }
+        }
+        let scope = Scope {
+            dot: ExprOrigin::Selector(vec!["Values".into()]),
+            dollar: ExprOrigin::Selector(vec!["Values".into()]),
+            bindings: Default::default(),
+        };
+        let env: super::Env = Default::default();
+        let vals = super::collect_values_with_scope(node, src, &scope, &env);
+        dbg!(&vals);
+        assert_that!(&vals, unordered_elements_are![eq(&"a.b")]);
+        Ok(())
+    }
+
+    #[test]
+    fn and_or_chains_collect_selectors_from_all_sides() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            {{- if and .Values.enable (or .Values.a .Values.b) }}
+            {{ .Values.payload }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        // Guards on enable, a, b; scalar on payload
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("enable"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("a"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("b"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("payload"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn pipe_chain_preserves_source_value() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            spec:
+              replicas: {{ .Values.replicas | int | max 1 }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("replicas"),
+                yaml_path: some(displays_as(eq("spec.replicas"))),
+                ..
+            }),]
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod define_include_integration {
+    use super::*;
+    use color_eyre::eyre::{self, OptionExt, WrapErr};
+    use helm_schema_template::parse::parse_gotmpl_document;
+    use indoc::indoc;
+    use test_util::prelude::*;
+
+    #[test]
+    fn nested_include_passes_config_through_parent() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        // child reads .config.child
+        let child = write(
+            &root.join("_child.tpl")?,
+            indoc! {r#"
+                {{- define "child" -}}
+                child: {{ .config.child }}
+                {{- end -}}
+            "#},
+        )?;
+        // parent passes .Values.parent as config to child
+        let parent = write(
+            &root.join("_parent.tpl")?,
+            indoc! {r#"
+                {{- define "parent" -}}
+                {{ include "child" (dict "config" .Values.parent) }}
+                {{- end -}}
+            "#},
+        )?;
+
+        let define_index = collect_defines(&[child, parent])?;
+        let src = r#"{{ include "parent" . }}"#;
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, define_index)?;
+        dbg!(&uses);
+
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("parent.child"),
+                ..
+            })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn include_with_ctx_and_local_overrides_dot() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        // helper expects `.ctx` to be the chart root and `.config` to a subtree
+        let helper = write(
+            &root.join("_helper.tpl")?,
+            indoc! {r#"
+                {{- define "helper" -}}
+                name: {{ include "fullname" .ctx }}
+                leaf: {{ .config.leaf }}
+                {{- end -}}
+            "#},
+        )?;
+        let fullname = write(
+            &root.join("_fullname.tpl")?,
+            indoc! {r#"
+                {{- define "fullname" -}}
+                {{- if .Values.fullnameOverride -}}
+                {{- .Values.fullnameOverride -}}
+                {{- else -}}
+                {{- printf "%s-%s" .Release.Name .Chart.Name -}}
+                {{- end -}}
+                {{- end -}}
+            "#},
+        )?;
+
+        let define_index = collect_defines(&[helper, fullname])?;
+        // include helper with (ctx=$, config=.Values.node)
+        let src = r#"{{ include "helper" (dict "ctx" $ "config" .Values.node) }}"#;
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, define_index)?;
+        dbg!(&uses);
+
+        // We care only about .Values.* surfaces:
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("fullnameOverride"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("node.leaf"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn include_chain_three_levels_deep_carries_bindings() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        let c = write(
+            &root.join("_c.tpl")?,
+            indoc! {r#"
+                {{- define "C" -}}
+                field: {{ .config.final }}
+                {{- end -}}
+            "#},
+        )?;
+        let b = write(
+            &root.join("b.tpl")?,
+            indoc! {r#"
+                {{- define "B" -}}
+                {{ include "C" (dict "config" .config.inner) }}
+                {{- end -}}
+            "#},
+        )?;
+        let a = write(
+            &root.join("a.tpl")?,
+            indoc! {r#"
+                {{- define "A" -}}
+                {{ include "B" (dict "config" .Values.A) }}
+                {{- end -}}
+            "#},
+        )?;
+
+        let define_index = collect_defines(&[a, b, c])?;
+        let src = r#"{{ include "A" . }}"#;
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, define_index)?;
+        dbg!(&uses);
+
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("A.inner.final"),
+                ..
+            })]
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod guards_and_yaml_paths {
+    use super::*;
+    use color_eyre::eyre::{self, OptionExt};
+    use helm_schema_template::parse::parse_gotmpl_document;
+    use indoc::indoc;
+    use test_util::prelude::*;
+
+    #[test]
+    fn haskey_if_emits_minimal_guard_on_container() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            {{- if hasKey .Values.labels "app" }}
+            app.kubernetes.io/name: {{ .Values.labels.app }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        // at minimum we should see a guard on `labels` and a scalar on `labels.app`
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("labels"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("labels.app"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn fragment_block_to_yaml_is_recorded() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            metadata:
+              labels:
+                {{- with .Values.extraLabels }}
+                {{- toYaml . | nindent 8 }}
+                {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("extraLabels"),
+                    yaml_path: none(),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Fragment),
+                    value_path: eq("extraLabels"),
+                    yaml_path: some(displays_as(eq("metadata.labels"))),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn list_index_or_star_is_normalized_for_first_item() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            spec:
+              accessModes:
+                {{- range .Values.pvc.accessModes }}
+                - {{ . }}
+                {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
+        // Expect a Guard on pvc and pvc.accessModes and a single ScalarValue for at least one list item.
+        assert_that!(
+            &uses,
+            contains_each![
+                // matches_pattern!(ValueUse {
+                //     role: eq(&Role::Guard),
+                //     value_path: eq("pvc"),
+                //     ..
+                // }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("pvc.accessModes"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("pvc.accessModes"),
+                    yaml_path: some(displays_as(any![
+                        eq("spec.accessModes[0]"),
+                        eq("spec.accessModes[*]")
+                    ])),
+                    ..
+                }),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn nested_with_inside_if_emits_both_guards() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            {{- if .Values.ingress }}
+            {{- with .Values.ingress.tls }}
+            secretName: {{ .secretName }}
+            {{- end }}
+            {{- end }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("ingress"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::Guard),
+                    value_path: eq("ingress.tls"),
+                    ..
+                }),
+                matches_pattern!(ValueUse {
+                    role: eq(&Role::ScalarValue),
+                    value_path: eq("ingress.tls.secretName"),
+                    ..
+                })
+            ]
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod regressions {
+    use super::*;
+    use color_eyre::eyre::{self, OptionExt};
+    use helm_schema_template::parse::parse_gotmpl_document;
+    use indoc::indoc;
+    use test_util::prelude::*;
+
+    #[test]
+    fn required_function_still_collects_underlying_selector() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = indoc! {r#"
+            image:
+              repository: {{ required "repo is required" .Values.image.repository }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("image.repository"),
+                yaml_path: some(displays_as(eq("image.repository"))),
+                ..
+            })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn tpl_on_values_string_minimally_records_value_origin() -> eyre::Result<()> {
+        Builder::default().build();
+        // Even if we don't expand tpl deeply yet, we should (at least) record the source value that feeds tpl.
+        let src = indoc! {r#"
+            {{ tpl .Values.rawTemplate $ }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("rawTemplate"),
+                ..
+            })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn index_then_get_field_after_binding() -> eyre::Result<()> {
+        Builder::default().build();
+        // {{$cfg := index .Values "server"}} {{ $cfg.port }}
+        let src = indoc! {r#"
+            {{- $cfg := index .Values "server" -}}
+            listen: {{ $cfg.port }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        // We want to see "server.port" end up as a ScalarValue
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("server.port"),
+                yaml_path: some(displays_as(eq("listen"))),
+                ..
+            })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn pluck_then_first_is_traced_to_key() -> eyre::Result<()> {
+        Builder::default().build();
+        // {{ (pluck "nodeSelector" .Values.podSpec | first) | toYaml }}
+        // Ambitious: we expect at least `.Values.podSpec.nodeSelector` to be registered
+        let src = indoc! {r#"
+            {{- (pluck "nodeSelector" .Values.podSpec | first) | toYaml }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: any!(eq(&Role::Fragment), eq(&Role::ScalarValue)),
+                value_path: eq("podSpec.nodeSelector"),
+                ..
+            })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn get_function_with_default_like_pattern() -> eyre::Result<()> {
+        Builder::default().build();
+        // {{ default "Always" (get .Values.image "pullPolicy") }} → image.pullPolicy collected
+        let src = indoc! {r#"
+            imagePullPolicy: {{ default "Always" (get .Values.image "pullPolicy") }}
+        "#};
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        assert_that!(
+            &uses,
+            contains_each![matches_pattern!(ValueUse {
+                role: eq(&Role::ScalarValue),
+                value_path: eq("image.pullPolicy"),
+                yaml_path: some(displays_as(eq("imagePullPolicy"))),
+                ..
+            })]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn dollar_root_in_if_does_not_panic() -> eyre::Result<()> {
+        Builder::default().build();
+        let src = r#"{{- if ($.Chart).AppVersion }}X{{- end }}"#;
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, src, DefineIndex::default())?;
+        dbg!(&uses);
+        assert_that!(&uses, is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn dollar_root_survives_through_include_scope() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        let src_path = write(
+            &root.join("template.yaml")?,
+            indoc! {r#"
+                {{- define "t" -}}
+                {{- if ($.Release).Name }}ok{{- end }}
+                {{- end -}}
+                {{ include "t" . }}
+            "#},
+        )?;
+
+        let src = src_path.read_to_string()?;
+        let define_index = collect_defines(&[src_path])?;
+        let parsed = parse_gotmpl_document(&src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, &src, define_index)?;
+        dbg!(&uses);
+        assert_that!(&uses, is_empty());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod nindent_parenting {
+    use super::*;
+    use crate::analyze::{Role, ValueUse};
+    use color_eyre::eyre::{self, OptionExt};
+    use indoc::indoc;
+    use test_util::prelude::*;
+
+    /// helper: pretty display of yaml_path for debugging
+    fn path_display(p: &Option<YamlPath>) -> String {
+        p.as_ref().map(|pp| pp.to_string()).unwrap_or_default()
+    }
+
+    #[test]
+    fn nindent_2_places_fragment_under_parent_even_with_zero_ws() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        // `helper` renders YAML under `.Values.foo`
+        // `top` renders YAML under `.Values.tl`
+        // The first include is on the next line after `parent:`, but with no spaces in the template.
+        // nindent(2) must make it land *under* `parent`.
+        let src_path = write(
+            &root.join("template.yaml")?,
+            indoc! {r#"
+                {{- define "helper" -}}
+                foo: {{ .Values.foo }}
+                {{- end -}}
+                {{- define "top" -}}
+                tl: {{ .Values.tl }}
+                {{- end -}}
+
+                parent:
+                {{ include "helper" . | nindent 2 }}
+                {{ include "top" . | nindent 0 }}
+            "#},
+        )?;
+
+        let src = src_path.read_to_string()?;
+        let define_index = collect_defines(&[src_path])?;
+        let parsed = parse_gotmpl_document(&src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, &src, define_index)?;
+        dbg!(&uses);
+
+        // Expect `.Values.foo` to be attributed to yaml_path == "parent" as a Fragment
+        let mut saw_parent = false;
+        let mut saw_top = false;
+
+        for u in &uses {
+            if u.value_path == "foo" {
+                assert_eq!(
+                    u.role,
+                    Role::Fragment,
+                    "foo should be a fragment landing under a mapping slot"
+                );
+                assert_eq!(
+                    path_display(&u.yaml_path),
+                    "parent",
+                    "foo should map to the 'parent' key"
+                );
+                saw_parent = true;
+            }
+            if u.value_path == "tl" {
+                // This include is `nindent 0` at top-level; yaml_path can be empty/root.
+                assert_eq!(u.role, Role::Fragment);
+                assert!(
+                    u.yaml_path.is_none() || path_display(&u.yaml_path).is_empty(),
+                    "tl should map to the document root (top-level)"
+                );
+                saw_top = true;
+            }
+        }
+
+        assert!(
+            saw_parent,
+            "did not see ValueUse for .Values.foo under parent"
+        );
+        assert!(saw_top, "did not see ValueUse for .Values.tl at top-level");
+        Ok(())
+    }
+
+    #[test]
+    fn two_successive_fragments_stay_under_same_parent_via_placeholder_heuristic()
+    -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        // This specifically exercises the `current_slot_in_buf` heuristic that treats
+        // a previous placeholder mapping entry as keeping us in a mapping.
+        let src_path = write(
+            &root.join("template.yaml")?,
+            indoc! {r#"
+                {{- define "a" -}}
+                a1: {{ .Values.a1 }}
+                {{- end -}}
+                {{- define "b" -}}
+                b1: {{ .Values.b1 }}
+                {{- end -}}
+
+                parent:
+                {{ include "a" . | nindent 2 }}
+                {{ include "b" . | nindent 2 }}
+            "#},
+        )?;
+
+        let src = src_path.read_to_string()?;
+        let define_index = collect_defines(&[src_path])?;
+        let parsed = parse_gotmpl_document(&src).ok_or_eyre("parse failed")?;
+        let uses = super::analyze_template(&parsed.tree, &src, define_index)?;
+        dbg!(&uses);
+
+        let mut seen_a = false;
+        let mut seen_b = false;
+        for u in &uses {
+            if u.value_path == "a1" {
+                assert_eq!(u.role, Role::Fragment);
+                assert_eq!(
+                    u.yaml_path.as_ref().map(|p| p.to_string()).as_deref(),
+                    Some("parent")
+                );
+                seen_a = true;
+            }
+            if u.value_path == "b1" {
+                assert_eq!(u.role, Role::Fragment);
+                assert_eq!(
+                    u.yaml_path.as_ref().map(|p| p.to_string()).as_deref(),
+                    Some("parent")
+                );
+                seen_b = true;
+            }
+        }
+        assert!(
+            seen_a && seen_b,
+            "expected both .Values.a1 and .Values.b1 under 'parent'"
         );
         Ok(())
     }

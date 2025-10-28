@@ -1,3 +1,4 @@
+#![allow(warnings)]
 use color_eyre::eyre::{self, OptionExt, WrapErr};
 use helm_schema_mapper::analyze::Occurrence;
 use helm_schema_mapper::analyze::canonicalize_uses;

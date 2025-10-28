@@ -142,9 +142,7 @@ fn maps_values_through_pvc_define_and_call_sites() -> eyre::Result<()> {
     chart_with_pvc_includes(&root)?;
 
     let template_path = root.join("templates/pvc.yaml")?;
-    let uses: Vec<ValueUse> = analyze::analyze_template_file(&template_path)
-        .wrap_err_with(|| eyre::eyre!("analyze {} failed", template_path.as_str()))?;
-
+    let uses = analyze::analyze_template_file(&template_path)?;
     // dbg!(&uses);
 
     let groups = group_uses(&uses);

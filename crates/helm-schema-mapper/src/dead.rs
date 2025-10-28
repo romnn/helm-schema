@@ -1817,6 +1817,859 @@ pub mod analyze {
     //         Ok(())
     //     }
     // }
+
+    // if segments.is_empty() {
+    //     return ExprOrigin::Opaque;
+    // }
+    //
+    // let head = segments[0].as_str();
+    //
+    // // NEW: variable reference like `$cfg`
+    // if let Some(var_name) = head.strip_prefix('$') {
+    //     if var_name.is_empty() {
+    //         // plain `$` (root); keep existing behavior
+    //         return self.resolve_absolute_root(&segments[1..]);
+    //     }
+    //     if let Some(origin) = self.bindings.get(var_name) {
+    //         return Self::append_fields(origin.clone(), &segments[1..]);
+    //     } else {
+    //         // Unbound variable: do NOT pretend it's `.Values.<name>`
+    //         return ExprOrigin::Opaque;
+    //     }
+    // }
+
+    // // bare "$"
+    // if segments.len() == 1 {
+    //     return self.dollar.clone();
+    // }
+    // // "$.Values.*" → absolute .Values chain
+    // if segments[1].as_str() == "Values" {
+    //     let mut v = vec!["Values".to_string()];
+    //     if segments.len() > 2 {
+    //         v.extend_from_slice(&segments[2..]);
+    //     }
+    //     return ExprOrigin::Selector(v);
+    // }
+    // // Ignore "$.Capabilities.*" / "$.Chart.*" / etc.
+    // if is_helm_builtin_root(&segments[1]) {
+    //     return ExprOrigin::Opaque;
+    // }
+    // // "$name[.tail]" → treat like a binding lookup
+    // let var = segments[1].as_str();
+    // if let Some(bound) = self.bindings.get(var) {
+    //     if segments.len() == 2 {
+    //         return bound.clone();
+    //     }
+    //     return self.extend_origin(bound.clone(), &segments[2..]);
+    // }
+    // // Unbound $var: hard error — mirrors Helm behavior (unknown variable)
+    // panic!("unbound template variable ${var} in selector: {segments:?}",);
+
+    // // If this is just `$`, return the bound dollar origin.
+    // if segments.len() == 1 {
+    //     return self.dollar.clone();
+    // }
+    //
+    // // `$<name>` should resolve through local bindings first.
+    // let second = segments[1].as_str();
+    //
+    // // Ignore Helm builtins like $.Capabilities.*, $.Chart.*, etc.
+    // if is_helm_builtin_root(second) {
+    //     return ExprOrigin::Opaque;
+    // }
+    //
+    // // Absolute $.Values.*  → treat as absolute Values selector
+    // if second == "Values" {
+    //     let mut v = vec!["Values".to_string()];
+    //     if segments.len() > 2 {
+    //         v.extend_from_slice(&segments[2..]);
+    //     }
+    //     return ExprOrigin::Selector(v);
+    // }
+    //
+    // // Bound variable: `$cfg.foo` → (bindings["cfg"]).foo
+    // if let Some(bound) = self.bindings.get(second) {
+    //     if segments.len() == 2 {
+    //         return bound.clone();
+    //     }
+    //     return self.extend_origin(bound.clone(), &segments[2..]);
+    // }
+    //
+    // // Fallback: extend the caller's `$` origin.
+    // return self.extend_origin(self.dollar.clone(), &segments[1..]);
+
+    // // Ignore `$ .Capabilities.*` / `$ .Chart.*` / etc.
+    // if segments.len() >= 2 && is_helm_builtin_root(&segments[1]) {
+    //     return ExprOrigin::Opaque;
+    // }
+    // if segments.len() == 1 {
+    //     return self.dollar.clone();
+    // }
+    // return self.extend_origin(self.dollar.clone(), &segments[1..]);
+
+    // first => {
+    //     if let Some(bound) = self.bindings.get(first) {
+    //         if segments.len() == 1 {
+    //             return bound.clone();
+    //         }
+    //         return self.extend_origin(bound.clone(), &segments[1..]);
+    //     }
+    //     if first == "Values" {
+    //         let mut v = vec!["Values".to_string()];
+    //         v.extend_from_slice(&segments[1..]);
+    //         return ExprOrigin::Selector(v);
+    //     }
+    //     if let ExprOrigin::Selector(_) = self.dot {
+    //         return self.extend_origin(self.dot.clone(), segments);
+    //     }
+    //     ExprOrigin::Opaque
+    // }
+
+    // // Drop a duplicated leading "Values" (e.g. ["Values"] + ["Values","x"]).
+    // let mut t: Vec<String> = tail.to_vec();
+    // if !v.is_empty() && v[0] == "Values" && !t.is_empty() && t[0] == "Values" {
+    //     t.remove(0);
+    // }
+    // v.extend(t);
+    // ExprOrigin::Selector(v)
+
+    // fn guard_selectors_for_action(node: Node, src: &str, scope: &Scope) -> Vec<ExprOrigin> {
+    //     // everything before the first named "text" child is the guard region
+    //     let mut out = Vec::new();
+    //     let mut w = node.walk();
+    //     let mut seen_text = false;
+    //     for ch in node.children(&mut w) {
+    //         if !ch.is_named() {
+    //             continue;
+    //         }
+    //         if ch.kind() == "text" {
+    //             seen_text = true;
+    //             break;
+    //         }
+    //
+    //         // Collect *outermost* selector in guard
+    //         if ch.kind() == "selector_expression" {
+    //             if let Some(segs) = parse_selector_chain(ch, src) {
+    //                 out.push(scope.resolve_selector(&segs));
+    //             }
+    //         } else if ch.kind() == "dot" {
+    //             out.push(scope.dot.clone());
+    //         } else if ch.kind() == "variable" {
+    //             // `$` variable in guard
+    //             let t = ch.utf8_text(src.as_bytes()).unwrap_or("");
+    //             if t.trim() == "$" {
+    //                 out.push(scope.dollar.clone());
+    //             }
+    //         } else if ch.kind() == "field" {
+    //             // Handle guards like `range .accessModes` where guard is a `field`
+    //             // Build a relative selector like [".", "<name>"]
+    //             let ident = ch
+    //                 .child_by_field_name("identifier")
+    //                 .or_else(|| ch.child_by_field_name("field_identifier"))
+    //                 .and_then(|id| id.utf8_text(src.as_bytes()).ok())
+    //                 .or_else(|| ch.utf8_text(src.as_bytes()).ok())
+    //                 .unwrap_or_default();
+    //
+    //             let name = ident.trim().trim_start_matches('.').to_string();
+    //             if !name.is_empty() {
+    //                 out.push(scope.resolve_selector(&vec![".".into(), name]));
+    //             }
+    //             // let ident = ch
+    //             //     .child_by_field_name("identifier")
+    //             //     .or_else(|| ch.child_by_field_name("field_identifier"))
+    //             //     .and_then(|id| id.utf8_text(src.as_bytes()).ok())
+    //             //     .unwrap_or_else(|| &src[ch.byte_range()]);
+    //             //
+    //             // let name = ident.trim().trim_start_matches('.').to_string();
+    //             // if !name.is_empty() {
+    //             //     out.push(scope.resolve_selector(&vec![".".into(), name]));
+    //             // }
+    //         }
+    //         // Note: could add more cases (function_call pipelines), but this covers our PVC shapes
+    //     }
+    //     out
+    // }
+
+    // "selector_expression" => {
+    //     if let Some(segs) =
+    //         helm_schema_template::values::parse_selector_expression(&node, src)
+    //     {
+    //         ArgExpr::Selector(segs)
+    //     } else {
+    //         ArgExpr::Opaque
+    //     }
+    // }
+
+    // // NEW: handle `.ctx` / `.something` passed to include
+    // "field" => {
+    //     let name = node
+    //         .child_by_field_name("identifier")
+    //         .or_else(|| node.child(0))
+    //         .and_then(|id| id.utf8_text(src.as_bytes()).ok())
+    //         .map(|s| s.trim().trim_start_matches('.').to_string());
+    //     if let Some(nm) = name {
+    //         ArgExpr::Selector(vec![".".to_string(), nm])
+    //     } else {
+    //         ArgExpr::Opaque
+    //     }
+    // }
+
+    // "function_call" => {
+    //     // maybe dict "k" <expr> ...
+    //     let mut is_dict = false;
+    //     let mut kvs: Vec<(String, ArgExpr)> = Vec::new();
+    //     let mut ident_seens = 0;
+    //     for i in 0..node.child_count() {
+    //         let ch = node.child(i).unwrap();
+    //         match ch.kind() {
+    //             "identifier" => {
+    //                 let id = ch.utf8_text(src.as_bytes()).unwrap_or("");
+    //                 if id.trim() == "dict" {
+    //                     is_dict = true;
+    //                 }
+    //             }
+    //             "argument_list" if is_dict => {
+    //                 // parse pairs: "k" <expr> ...
+    //                 let args = ch;
+    //                 let mut j = 0;
+    //                 while j < args.child_count() {
+    //                     // find string key
+    //                     let k_node = args.child(j).unwrap();
+    //                     if !k_node.is_named() {
+    //                         j += 1;
+    //                         continue;
+    //                     }
+    //                     if k_node.kind() != "interpreted_string_literal"
+    //                         && k_node.kind() != "raw_string_literal"
+    //                         && k_node.kind() != "string"
+    //                     {
+    //                         // not a key; bail
+    //                         break;
+    //                     }
+    //                     let key = k_node
+    //                         .utf8_text(src.as_bytes())
+    //                         .unwrap_or("")
+    //                         .trim()
+    //                         .trim_matches('"')
+    //                         .trim_matches('`')
+    //                         .to_string();
+    //                     // find value node
+    //                     j += 1;
+    //                     while j < args.child_count() && !args.child(j).unwrap().is_named() {
+    //                         j += 1;
+    //                     }
+    //                     if j >= args.child_count() {
+    //                         break;
+    //                     }
+    //                     let v_node = args.child(j).unwrap();
+    //                     let val = parse_arg_expr(v_node, src);
+    //                     kvs.push((key, val));
+    //                     j += 1;
+    //                 }
+    //             }
+    //             _ => {}
+    //         }
+    //     }
+    //     if is_dict {
+    //         ArgExpr::Dict(kvs)
+    //     } else {
+    //         ArgExpr::Opaque
+    //     }
+    // }
+
+    // if let Some(segs) = helm_schema_template::values::parse_selector_expression(&n, src)
+    // {
+    // Handle tokenizations that include $ in the segments
+    // if !segs.is_empty() && segs[0] == "$" && segs.len() >= 2 {
+    //     let var = segs[1].trim_start_matches('.');
+    //     if let Some(bases) = env.get(var) {
+
+    // ArgExpr::Selector(sel) => callee.dot = ExprOrigin::Selector(sel),
+    // ArgExpr::Selector(s) => ExprOrigin::Selector(s),
+
+    // if let Some(sel) = guard_selectors_for_action(container, src, scope)
+    //     .into_iter()
+    //     .find_map(|o| match o {
+    //         ExprOrigin::Selector(v) => Some(v),
+    //         _ => None,
+    //     })
+    // {
+    //     s.dot = ExprOrigin::Selector(sel);
+    // }
+
+    // // NEW: even inside the guard, capture $var := ... assignments
+    // // so the body can resolve $x.foo to the correct .Values base.
+    // if crate::sanitize::is_assignment_kind(ch.kind()) {
+    //     let vals = collect_values_following_includes(
+    //         ch, src, scope, inline, guard, &out.env,
+    //     );
+    //
+    //     // We reuse the same "assignment" handling as below, but with guard scope.
+    //     let id = out.next_id;
+    //     out.next_id += 1;
+    //     out.placeholders.push(Placeholder {
+    //         id,
+    //         role: Role::Fragment, // assignment produces no scalar
+    //         action_span: ch.byte_range(),
+    //         values: vals.iter().cloned().collect(),
+    //         is_fragment_output: true, // don't emit into YAML buffer
+    //     });
+    //
+    //     // Bind `$var` -> set of .Values.* for later expansion (`$var.tail`)
+    //     let mut vc = ch.walk();
+    //     for sub in ch.children(&mut vc) {
+    //         if sub.is_named() && sub.kind() == "variable" {
+    //             if let Some(name) = variable_ident_of(&sub, src) {
+    //                 out.env.insert(name, vals.clone());
+    //             }
+    //             break;
+    //         }
+    //     }
+    //     // fall through: we still emit Guard entries for the container below
+    // }
+
+    // // NEW: emit every non-empty dot-separated prefix only once
+    // let mut seen = std::collections::BTreeSet::new();
+    // for o in origins {
+    //     if let Some(vp) = origin_to_value_path(&o) {
+    //         if vp.is_empty() {
+    //             continue;
+    //         }
+    //         // split "a.b.c" -> ["a", "a.b", "a.b.c"]
+    //         let mut acc = String::new();
+    //         for (i, seg) in vp.split('.').enumerate() {
+    //             if i == 0 {
+    //                 acc.push_str(seg);
+    //             } else {
+    //                 acc.push('.');
+    //                 acc.push_str(seg);
+    //             }
+    //             if seen.insert(acc.clone()) {
+    //                 out.guards.push(ValueUse {
+    //                     value_path: acc.clone(),
+    //                     role: Role::Guard,
+    //                     action_span: ch.byte_range(),
+    //                     yaml_path: None,
+    //                 });
+    //             }
+    //         }
+    //     }
+    // }
+
+    // if container_is_cf {
+    //     if !guards_emitted_for_container {
+    //         let origins = guard_selectors_for_action(container, src, scope);
+    //         let mut seen = std::collections::BTreeSet::new();
+    //         for o in origins {
+    //             if let Some(vp) = origin_to_value_path(&o) {
+    //                 if !vp.is_empty() && seen.insert(vp.clone()) {
+    //                     out.guards.push(ValueUse {
+    //                         value_path: vp,
+    //                         role: Role::Guard,
+    //                         action_span: ch.byte_range(),
+    //                         yaml_path: None,
+    //                     });
+    //                 }
+    //             }
+    //         }
+    //         guards_emitted_for_container = true;
+    //     }
+    //     // IMPORTANT: short-circuit so we don't fall back and duplicate
+    //     continue;
+    // } else {
+    //     // Non-control-flow guard-ish piece (rare): fallback but filter empties
+    //     let vals = collect_values_with_scope(ch, src, scope, &out.env);
+    //     for v in vals {
+    //         if !v.is_empty() {
+    //             out.guards.push(ValueUse {
+    //                 value_path: v,
+    //                 role: Role::Guard,
+    //                 action_span: ch.byte_range(),
+    //                 yaml_path: None,
+    //             });
+    //         }
+    //     }
+    //     continue;
+    // }
+
+    // // We'll emit guards only once per container to avoid duplicates
+    // // (e.g., dot inside the selector_expression).
+    // static EMITTED_KEY: &str = "__guards_emitted__";
+    // // Attach a tiny flag to the node via a local map we keep on the stack of this function call.
+    // // We can emulate it by capturing a boolean per container invocation.
+    // // Put this boolean near the top of walk_container:
+    // if container_is_cf && !guards_emitted_for_container {
+    //     let origins = guard_selectors_for_action(container, src, scope);
+    //     let mut seen = std::collections::BTreeSet::new();
+    //     for o in origins {
+    //         if let Some(vp) = origin_to_value_path(&o) {
+    //             if !vp.is_empty() && seen.insert(vp.clone()) {
+    //                 out.guards.push(ValueUse {
+    //                     value_path: vp,
+    //                     role: Role::Guard,
+    //                     action_span: ch.byte_range(),
+    //                     yaml_path: None,
+    //                 });
+    //             }
+    //         }
+    //     }
+    //     guards_emitted_for_container = true;
+    // } else {
+    //     // Fallback (non-control-flow): keep old behavior but filter empties
+    //     let vals = collect_values_with_scope(ch, src, scope, &out.env);
+    //     for v in vals {
+    //         if !v.is_empty() {
+    //             out.guards.push(ValueUse {
+    //                 value_path: v,
+    //                 role: Role::Guard,
+    //                 action_span: ch.byte_range(),
+    //                 yaml_path: None,
+    //             });
+    //         }
+    //     }
+    // }
+    // continue;
+
+    // // Suppress the extra Guard for `range .`:
+    // // In a range_action whose subject is a plain dot, we don't want
+    // // to count another Guard (the `with` already guarded the data).
+    // if container.kind() == "range_action" && ch.kind() == "dot" {
+    //     // still traverse everything else later, but don't record a Guard
+    //     continue;
+    // }
+    //
+    // let vals = collect_values_with_scope(ch, src, scope, &out.env);
+    // for v in vals {
+    //     out.guards.push(ValueUse {
+    //         value_path: v,
+    //         role: Role::Guard,
+    //         action_span: ch.byte_range(),
+    //         yaml_path: None,
+    //     });
+    // }
+    // continue;
+
+    // let vals =
+    //     collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env);
+    // write_placeholder(out, ch, src, vals, is_frag);
+    // continue;
+
+    // let id = out.next_id;
+    // out.next_id += 1;
+    // out.placeholders.push(Placeholder {
+    //     id,
+    //     role: Role::Fragment,
+    //     action_span: ch.byte_range(),
+    //     values: vals.iter().cloned().collect(),
+    //     is_fragment_output: true,
+    // });
+
+    // {
+    //     // Compute the set of .Values sources feeding this action.
+    //     let vals: BTreeSet<String> = if let Some(head) = pipeline_head(ch) {
+    //         let head_keys = collect_values_with_scope(head, src, use_scope, &out.env);
+    //         if head_keys.len() == 1 {
+    //             head_keys
+    //         } else {
+    //             collect_values_following_includes(
+    //                 ch, src, use_scope, inline, guard, &out.env,
+    //             )
+    //         }
+    //     } else {
+    //         collect_values_following_includes(
+    //             ch, src, use_scope, inline, guard, &out.env,
+    //         )
+    //     };
+    //
+    //     // Decide if this action is *emitting a YAML fragment* (vs a scalar).
+    //     // - toYaml/fromYaml → fragment-ish
+    //     // - tpl → fragment only when piped through nindent/indent
+    //     let slot = current_slot_in_buf(&out.buf);
+    //     let fragmentish_pipeline =
+    //         pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+    //             || (pipeline_contains_any(&ch, src, &["tpl"])
+    //                 && pipeline_contains_any(&ch, src, &["nindent", "indent"]));
+    //
+    //     // We still only *write* a fragment placeholder when we’re clearly in a mapping/sequence slot.
+    //     let is_frag_output = matches!(slot, Slot::MappingValue | Slot::SequenceItem)
+    //         && fragmentish_pipeline;
+    //
+    //     // NEW: force fragment *role* for fromYaml even if we keep a scalar placeholder on the same line.
+    //     let force_fragment_role = pipeline_contains_any(&ch, src, &["fromYaml"]);
+    //
+    //     write_placeholder(out, ch, src, vals, is_frag_output, force_fragment_role);
+    //     continue;
+    // }
+
+    // {
+    //     // Compute the set of .Values sources feeding this action.
+    //     // Prefer the pipeline head if it yields a single key; otherwise collect across the whole subtree.
+    //     let vals: BTreeSet<String> = if let Some(head) = pipeline_head(ch) {
+    //         let head_keys = collect_values_with_scope(head, src, use_scope, &out.env);
+    //         if head_keys.len() == 1 {
+    //             head_keys
+    //         } else {
+    //             collect_values_following_includes(
+    //                 ch, src, use_scope, inline, guard, &out.env,
+    //             )
+    //         }
+    //     } else {
+    //         collect_values_following_includes(
+    //             ch, src, use_scope, inline, guard, &out.env,
+    //         )
+    //     };
+    //
+    //     // Decide if this action is *emitting a YAML fragment* (vs a scalar).
+    //     // Rules:
+    //     // - `toYaml` → fragment (when inserted into a YAML slot)
+    //     // - `fromYaml` → fragment (when inserted into a YAML slot)
+    //     // - `tpl` → fragment only when used in a fragment-ish pipeline (e.g. `| nindent` / `| indent`)
+    //     //
+    //     // We still *only* mark as fragment when we're in a YAML value/sequence slot; inline scalars remain ScalarValue.
+    //     let slot = current_slot_in_buf(&out.buf);
+    //     let fragmentish_pipeline =
+    //         pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+    //             || (pipeline_contains_any(&ch, src, &["tpl"])
+    //                 && pipeline_contains_any(&ch, src, &["nindent", "indent"]));
+    //
+    //     let is_frag_output = matches!(slot, Slot::MappingValue | Slot::SequenceItem)
+    //         && fragmentish_pipeline;
+    //
+    //     write_placeholder(out, ch, src, vals, is_frag_output);
+    //     continue;
+    // }
+
+    // let is_frag = looks_like_fragment(&ch, src);
+    //
+    // // Prefer using the pipeline "head" (covers bare `field`, `selector_expression`,
+    // // or the head of a `chained_pipeline`). If that yields exactly one key,
+    // // use it; otherwise fall back to the full include-aware collector.
+    // let vals: BTreeSet<String> = if let Some(head) = pipeline_head(ch) {
+    //     let head_keys = collect_values_with_scope(head, src, use_scope, &out.env);
+    //     // collect_values_with_scope(head, src, use_scope, &Env::default());
+    //     if head_keys.len() == 1 {
+    //         head_keys
+    //     } else {
+    //         collect_values_following_includes(
+    //             ch, src, use_scope, inline, guard, &out.env,
+    //         )
+    //     }
+    // } else {
+    //     collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env)
+    // };
+    //
+    // write_placeholder(out, ch, src, vals, is_frag);
+    // continue;
+
+    // _ => {
+    //     guard.stack.push(tpl.clone());
+    //     inline_emit_tree(
+    //         &body.tree, body_src, &callee, inline, guard, out,
+    //     )?;
+    //     guard.stack.pop();
+    // }
+
+    // // Emit prefixes (like WITH/IF), but still suppress guard == current dot
+    // let dot_vp = origin_to_value_path(&scope.dot);
+    // let mut seen = std::collections::BTreeSet::new();
+    //
+    // for o in origins {
+    //     if let Some(vp) = origin_to_value_path(&o) {
+    //         if vp.is_empty() {
+    //             continue;
+    //         }
+    //         if dot_vp.as_ref() == Some(&vp) {
+    //             // range .  → no guard output
+    //             continue;
+    //         }
+    //
+    //         // Emit a, a.b, a.b.c (prefix expansion)
+    //         let mut acc = String::new();
+    //         for (i, seg) in vp.split('.').enumerate() {
+    //             if i == 0 {
+    //                 acc.push_str(seg);
+    //             } else {
+    //                 acc.push('.');
+    //                 acc.push_str(seg);
+    //             }
+    //             if seen.insert(acc.clone()) {
+    //                 out.guards.push(ValueUse {
+    //                     value_path: acc.clone(),
+    //                     role: Role::Guard,
+    //                     action_span: ch.byte_range(),
+    //                     yaml_path: None,
+    //                 });
+    //             }
+    //         }
+    //     }
+    // }
+
+    // if is_fragment_output {
+    //     let slot = current_slot_in_buf(&out.buf);
+    //     eprintln!(
+    //         "[frag-ph] id={id} slot={:?} after='{}'",
+    //         slot,
+    //         last_non_empty_line(&out.buf).trim_end()
+    //     );
+    //     write_fragment_placeholder_line(&mut out.buf, id, slot);
+    // } else {
+    //     out.buf.push('"');
+    //     out.buf.push_str(&format!("__TSG_PLACEHOLDER_{}__", id));
+    //     out.buf.push('"');
+    // }
+    //
+    // out.placeholders.push(Placeholder {
+    //     id,
+    //     role: Role::Unknown,
+    //     action_span: node.byte_range(),
+    //     values: values.into_iter().collect(),
+    //     is_fragment_output,
+    // });
+    //
+    // // NEW: remember to force fragment role for this placeholder id
+    // if force_fragment_role {
+    //     out.force_fragment_role.insert(id);
+    // }
+
+    // fn looks_like_fragment(node: &Node, src: &str) -> bool {
+    //     // true if the node itself or any function in its pipeline is include|toYaml
+    //     let mut check = |n: &Node| -> bool {
+    //         if n.kind() != "function_call" {
+    //             return false;
+    //         }
+    //         if let Some(name) = function_name_of(n, src) {
+    //             return name == "include" || name == "toYaml";
+    //         }
+    //         false
+    //     };
+    //     match node.kind() {
+    //         "function_call" => check(node),
+    //         "chained_pipeline" => {
+    //             let mut w = node.walk();
+    //             for ch in node.children(&mut w) {
+    //                 if ch.is_named() && ch.kind() == "function_call" && check(&ch) {
+    //                     return true;
+    //                 }
+    //             }
+    //             false
+    //         }
+    //         _ => false,
+    //     }
+    // }
+
+    // let mut bases: Vec<String> = Vec::new();
+    // match base.kind() {
+    //     "selector_expression" => {
+    //         if let Some(segs) = parse_selector_expression(&base, src) {
+    //             if let Some(vp) =
+    //                 origin_to_value_path(&scope.resolve_selector(&segs))
+    //             {
+    //                 bases.push(vp);
+    //             }
+    //         }
+    //     }
+    //     "dot" => {
+    //         if let Some(vp) = origin_to_value_path(&scope.dot) {
+    //             bases.push(vp);
+    //         }
+    //     }
+    //     "variable" => {
+    //         let raw = base.utf8_text(src.as_bytes()).unwrap_or("").trim();
+    //         if raw == "$" {
+    //             if let Some(vp) = origin_to_value_path(&scope.dollar) {
+    //                 bases.push(vp); // "" at root
+    //             }
+    //         } else {
+    //             let name = raw.trim_start_matches('$');
+    //             if let Some(set) = env.get(name) {
+    //                 bases.extend(set.iter().cloned());
+    //             } else {
+    //                 panic!(
+    //                     "unbound template variable ${name} used as index() base at bytes {:?}",
+    //                     n.byte_range()
+    //                 );
+    //             }
+    //         }
+    //     }
+    //     "field" => {
+    //         // Prefer explicit identifier nodes if present, otherwise use the full node text.
+    //         let name = base
+    //             .child_by_field_name("identifier")
+    //             .or_else(|| base.child_by_field_name("field_identifier"))
+    //             .and_then(|id| {
+    //                 id.utf8_text(src.as_bytes())
+    //                     .ok()
+    //                     .map(|s| s.trim().to_string())
+    //             })
+    //             .unwrap_or_else(|| {
+    //                 // Fallback: ".config" → "config"
+    //                 base.utf8_text(src.as_bytes())
+    //                     .unwrap_or("")
+    //                     .trim()
+    //                     .trim_start_matches('.')
+    //                     .to_string()
+    //             });
+    //
+    //         if let Some(bound) = scope.bindings.get(&name) {
+    //             if let Some(vp) = origin_to_value_path(bound) {
+    //                 // NOTE: allow empty base ("") for root-of-.Values; later code handles it.
+    //                 bases.push(vp);
+    //             } else {
+    //                 // Binding exists but isn't a .Values selector: resolve relative to dot.
+    //                 let segs = vec![".".to_string(), name.clone()];
+    //                 if let Some(vp) =
+    //                     origin_to_value_path(&scope.resolve_selector(&segs))
+    //                 {
+    //                     bases.push(vp);
+    //                 }
+    //             }
+    //         } else {
+    //             // No binding: resolve `.name` relative to current dot/bindings.
+    //             let segs = vec![".".to_string(), name];
+    //             if let Some(vp) =
+    //                 origin_to_value_path(&scope.resolve_selector(&segs))
+    //             {
+    //                 bases.push(vp);
+    //             }
+    //         }
+    //         // // Prefer explicit identifier nodes if present, otherwise use the full node text.
+    //         // let name = base
+    //         //     .child_by_field_name("identifier")
+    //         //     .or_else(|| base.child_by_field_name("field_identifier"))
+    //         //     .and_then(|id| {
+    //         //         id.utf8_text(src.as_bytes())
+    //         //             .ok()
+    //         //             .map(|s| s.trim().to_string())
+    //         //     })
+    //         //     .unwrap_or_else(|| {
+    //         //         // Fallback: ".config" → "config"
+    //         //         base.utf8_text(src.as_bytes())
+    //         //             .unwrap_or("")
+    //         //             .trim()
+    //         //             .trim_start_matches('.')
+    //         //             .to_string()
+    //         //     });
+    //         //
+    //         // if let Some(bound) = scope.bindings.get(&name) {
+    //         //     if let Some(vp) = origin_to_value_path(bound) {
+    //         //         debug_assert!(!vp.is_empty());
+    //         //         if !vp.is_empty() {
+    //         //             bases.push(vp);
+    //         //         }
+    //         //     } else {
+    //         //         // Binding exists but isn't a .Values selector: resolve relative to dot.
+    //         //         let segs = vec![".".to_string(), name.clone()];
+    //         //         if let Some(vp) =
+    //         //             origin_to_value_path(&scope.resolve_selector(&segs))
+    //         //         {
+    //         //             bases.push(vp);
+    //         //         }
+    //         //     }
+    //         // } else {
+    //         //     // No binding: resolve `.name` relative to current dot/bindings.
+    //         //     let segs = vec![".".to_string(), name];
+    //         //     if let Some(vp) =
+    //         //         origin_to_value_path(&scope.resolve_selector(&segs))
+    //         //     {
+    //         //         debug_assert!(!vp.is_empty());
+    //         //         if !vp.is_empty() {
+    //         //             bases.push(vp);
+    //         //         }
+    //         //     }
+    //         // }
+    //     }
+    //
+    //     _ => {}
+    // }
+
+    // let mut bases: Vec<String> = Vec::new();
+    // match base.kind() {
+    //     "selector_expression" => {
+    //         if let Some(segs) = parse_selector_chain(base, src)
+    //         // if let Some(segs) =
+    //         //     parse_selector_expression(&base, src)
+    //         //         .or_else(|| parse_selector_chain(base, src))
+    //         {
+    //             if let Some(vp) = origin_to_value_path(
+    //                 &scope.resolve_selector(&segs),
+    //             ) {
+    //                 bases.push(vp);
+    //             }
+    //         }
+    //     }
+    //     "dot" => {
+    //         if let Some(vp) = origin_to_value_path(&scope.dot) {
+    //             bases.push(vp);
+    //         }
+    //     }
+    //     "variable" => {
+    //         let raw = base
+    //             .utf8_text(src.as_bytes())
+    //             .unwrap_or("")
+    //             .trim();
+    //         if raw == "$" {
+    //             if let Some(vp) =
+    //                 origin_to_value_path(&scope.dollar)
+    //             {
+    //                 bases.push(vp);
+    //             }
+    //         } else {
+    //             let name = raw.trim_start_matches('$');
+    //             if let Some(set) = env.get(name) {
+    //                 bases.extend(set.iter().cloned());
+    //             } else {
+    //                 panic!(
+    //                     "unbound template variable ${name} used as pluck() base at bytes {:?}",
+    //                     n.byte_range()
+    //                 );
+    //             }
+    //         }
+    //     }
+    //     "field" => {
+    //         let name = base
+    //             .child_by_field_name("identifier")
+    //             .or_else(|| {
+    //                 base.child_by_field_name("field_identifier")
+    //             })
+    //             .and_then(|id| {
+    //                 id.utf8_text(src.as_bytes())
+    //                     .ok()
+    //                     .map(|s| s.trim().to_string())
+    //             })
+    //             .unwrap_or_else(|| {
+    //                 base.utf8_text(src.as_bytes())
+    //                     .unwrap_or("")
+    //                     .trim()
+    //                     .trim_start_matches('.')
+    //                     .to_string()
+    //             });
+    //
+    //         if let Some(bound) = scope.bindings.get(&name) {
+    //             if let Some(vp) = origin_to_value_path(bound) {
+    //                 bases.push(vp);
+    //             } else {
+    //                 let segs =
+    //                     vec![".".to_string(), name.clone()];
+    //                 if let Some(vp) = origin_to_value_path(
+    //                     &scope.resolve_selector(&segs),
+    //                 ) {
+    //                     bases.push(vp);
+    //                 }
+    //             }
+    //         } else {
+    //             let segs = vec![".".to_string(), name];
+    //             if let Some(vp) = origin_to_value_path(
+    //                 &scope.resolve_selector(&segs),
+    //             ) {
+    //                 bases.push(vp);
+    //             }
+    //         }
+    //     }
+    //     _ => {}
+    // }
+
+    // if let Some(segs) = parse_selector_expression(&first, src)
+    //     .or_else(|| parse_selector_chain(first, src))
 }
 
 pub mod sanitize {
@@ -2077,6 +2930,593 @@ pub mod sanitize {
     //     }
     //     Slot::Plain
     // }
+
+    // pub fn build_sanitized_with_placeholders(
+    //     src: &str,
+    //     gtree: &tree_sitter::Tree,
+    //     out_placeholders: &mut Vec<Placeholder>,
+    //     collect_values: impl Fn(&Node) -> Vec<String> + Copy,
+    // ) -> String {
+    //     let mut next_id = 0usize;
+    //
+    //     // Variable environment: var name -> Values set
+    //     type Env = BTreeMap<String, BTreeSet<String>>;
+    //     let mut env: Env = Env::new();
+    //
+    //     fn emit_placeholder_for(
+    //         node: tree_sitter::Node,
+    //         src: &str,
+    //         buf: &mut String,
+    //         next_id: &mut usize,
+    //         out: &mut Vec<Placeholder>,
+    //         collect_values: impl Fn(&Node) -> Vec<String> + Copy,
+    //         env: &BTreeMap<String, BTreeSet<String>>,
+    //         is_fragment_output: bool,
+    //     ) {
+    //         let id = *next_id;
+    //         *next_id += 1;
+    //         buf.push('"');
+    //         buf.push_str(&format!("__TSG_PLACEHOLDER_{}__", id));
+    //         buf.push('"');
+    //
+    //         let mut values: Vec<String> = if node.kind() == "variable" {
+    //             // Pull values from env if we know the variable
+    //             if let Some(name) = variable_ident(&node, src) {
+    //                 env.get(&name)
+    //                     .map(|s| s.iter().cloned().collect())
+    //                     .unwrap_or_default()
+    //             } else {
+    //                 Vec::new()
+    //             }
+    //         } else {
+    //             collect_values(&node)
+    //         };
+    //         out.push(Placeholder {
+    //             id,
+    //             role: Role::Unknown, // decided later from YAML AST
+    //             action_span: node.byte_range(),
+    //             values,
+    //             is_fragment_output,
+    //         });
+    //     }
+    //
+    //     fn walk(
+    //         node: Node,
+    //         src: &str,
+    //         buf: &mut String,
+    //         next_id: &mut usize,
+    //         out: &mut Vec<Placeholder>,
+    //         collect_values: impl Fn(&Node) -> Vec<String> + Copy,
+    //         env: &mut BTreeMap<String, BTreeSet<String>>,
+    //     ) {
+    //         // 1) pass through raw text
+    //         if node.kind() == "text" {
+    //             buf.push_str(&src[node.byte_range()]);
+    //             return;
+    //         }
+    //
+    //         // 2) containers: descend into their DIRECT children only
+    //         if is_container(node.kind()) || is_control_flow(node.kind()) {
+    //             let mut c = node.walk();
+    //             let parent_is_define = node.kind() == "define_action";
+    //             for ch in node.children(&mut c) {
+    //                 let parent_is_define = node.kind() == "define_action";
+    //
+    //                 if !ch.is_named() {
+    //                     continue;
+    //                 }
+    //                 if ch.kind() == "text" {
+    //                     // Do NOT emit raw text from define bodies — keeps sanitized YAML valid
+    //                     if !parent_is_define {
+    //                         buf.push_str(&src[ch.byte_range()]);
+    //                     }
+    //                     continue;
+    //                 }
+    //
+    //                 // // RECORD guards (no YAML emission)
+    //                 if is_control_flow(node.kind()) && is_guard_child(&ch) {
+    //                     let id = *next_id;
+    //                     *next_id += 1;
+    //                     // let values = collect_values(&ch);
+    //                     // out.push(Placeholder {
+    //                     //     id,
+    //                     //     role: Role::Guard,
+    //                     //     action_span: ch.byte_range(),
+    //                     //     values,
+    //                     //     is_fragment_output: false,
+    //                     // });
+    //                     continue;
+    //                 }
+    //
+    //                 if is_control_flow(ch.kind()) || is_container(ch.kind()) {
+    //                     // Nested container (e.g., else_clause); recurse
+    //                     walk(ch, src, buf, next_id, out, collect_values, env);
+    //                 } else if is_output_expr_kind(ch.kind()) {
+    //                     // single placeholder for this direct child expression
+    //                     let frag = looks_like_fragment_output(&ch, src);
+    //                     if parent_is_define || frag {
+    //                         // Record the placeholder, but DO NOT write anything into the buffer.
+    //                         // This keeps the surrounding YAML valid.
+    //                         let id = *next_id;
+    //                         *next_id += 1;
+    //
+    //                         let values = if ch.kind() == "variable" {
+    //                             if let Some(name) = variable_ident(&ch, src) {
+    //                                 env.get(&name)
+    //                                     .map(|s| s.iter().cloned().collect())
+    //                                     .unwrap_or_default()
+    //                             } else {
+    //                                 Vec::new()
+    //                             }
+    //                         } else {
+    //                             collect_values(&ch)
+    //                         };
+    //                         out.push(Placeholder {
+    //                             id,
+    //                             role: Role::Fragment,
+    //                             action_span: ch.byte_range(),
+    //                             values,
+    //                             is_fragment_output: true,
+    //                         });
+    //
+    //                         // // In define bodies: record the use, but DO NOT write to buf
+    //                         // let id = *next_id;
+    //                         // *next_id += 1;
+    //                         // let values = if ch.kind() == "variable" {
+    //                         //     if let Some(name) = variable_ident(&ch, src) {
+    //                         //         env.get(&name)
+    //                         //             .map(|s| s.iter().cloned().collect())
+    //                         //             .unwrap_or_default()
+    //                         //     } else {
+    //                         //         Vec::new()
+    //                         //     }
+    //                         // } else {
+    //                         //     collect_values(&ch)
+    //                         // };
+    //                         // out.push(Placeholder {
+    //                         //     id,
+    //                         //     role: Role::Fragment, // define content has no concrete YAML site
+    //                         //     action_span: ch.byte_range(),
+    //                         //     values,
+    //                         //     is_fragment_output: frag,
+    //                         // });
+    //
+    //                         // IMPORTANT: only write to the buffer when not suppressing define body text
+    //                         if !parent_is_define {
+    //                             let slot = current_slot_in_buf(buf);
+    //                             write_fragment_placeholder(buf, id, slot);
+    //                         }
+    //                     } else {
+    //                         // Normal template files: emit placeholder into YAML
+    //                         emit_placeholder_for(ch, src, buf, next_id, out, collect_values, env, frag);
+    //                     }
+    //                 } else if ch.kind() == "ERROR" {
+    //                     // These commonly carry indentation/spacing that YAML needs.
+    //                     // Preserve them verbatim.
+    //                     // buf.push_str(&src[ch.byte_range()]);
+    //                     // skip (often whitespace artifacts)
+    //                     continue;
+    //                 } else if is_assignment_node(&ch, src) {
+    //                     // RECORD assignment uses (no YAML emission)
+    //                     let id = *next_id;
+    //                     *next_id += 1;
+    //                     let values = collect_values(&ch);
+    //                     out.push(Placeholder {
+    //                         id,
+    //                         role: Role::Fragment, // records a use; no concrete YAML location
+    //                         action_span: ch.byte_range(),
+    //                         values: values.clone(),
+    //                         is_fragment_output: false,
+    //                     });
+    //                     // Try to extract `$var` name and bind collected values
+    //                     // child "variable" holds the LHS
+    //                     let mut vc = ch.walk();
+    //                     for sub in ch.children(&mut vc) {
+    //                         if sub.is_named() && sub.kind() == "variable" {
+    //                             if let Some(name) = variable_ident(&sub, src) {
+    //                                 let mut set = BTreeSet::<String>::new();
+    //                                 set.extend(values.into_iter());
+    //                                 env.insert(name, set);
+    //                             }
+    //                             break;
+    //                         }
+    //                     }
+    //                     continue;
+    //                 } else {
+    //                     // Unknown non-output node at container level — skip to keep YAML valid.
+    //                     continue;
+    //                 }
+    //             }
+    //             return;
+    //         }
+    //
+    //         // 3) non-container reached (shouldn’t happen for well-formed trees, but safe fallback)
+    //         if is_output_expr_kind(node.kind()) {
+    //             let frag = looks_like_fragment_output(&node, src);
+    //             emit_placeholder_for(node, src, buf, next_id, out, collect_values, env, frag);
+    //         } else {
+    //             unreachable!("should not happen?");
+    //             // trivia/unknown — pass through
+    //             buf.push_str(&src[node.byte_range()]);
+    //         }
+    //     }
+    //
+    //     let mut out = String::new();
+    //     walk(
+    //         gtree.root_node(),
+    //         src,
+    //         &mut out,
+    //         &mut next_id,
+    //         out_placeholders,
+    //         collect_values,
+    //         &mut env,
+    //     );
+    //     out
+    // }/ pub fn build_sanitized_with_placeholders(
+    //     src: &str,
+    //     gtree: &tree_sitter::Tree,
+    //     out_placeholders: &mut Vec<Placeholder>,
+    //     collect_values: impl Fn(&Node) -> Vec<String> + Copy,
+    // ) -> String {
+    //     let mut next_id = 0usize;
+    //
+    //     // Variable environment: var name -> Values set
+    //     type Env = BTreeMap<String, BTreeSet<String>>;
+    //     let mut env: Env = Env::new();
+    //
+    //     fn emit_placeholder_for(
+    //         node: tree_sitter::Node,
+    //         src: &str,
+    //         buf: &mut String,
+    //         next_id: &mut usize,
+    //         out: &mut Vec<Placeholder>,
+    //         collect_values: impl Fn(&Node) -> Vec<String> + Copy,
+    //         env: &BTreeMap<String, BTreeSet<String>>,
+    //         is_fragment_output: bool,
+    //     ) {
+    //         let id = *next_id;
+    //         *next_id += 1;
+    //         buf.push('"');
+    //         buf.push_str(&format!("__TSG_PLACEHOLDER_{}__", id));
+    //         buf.push('"');
+    //
+    //         let mut values: Vec<String> = if node.kind() == "variable" {
+    //             // Pull values from env if we know the variable
+    //             if let Some(name) = variable_ident(&node, src) {
+    //                 env.get(&name)
+    //                     .map(|s| s.iter().cloned().collect())
+    //                     .unwrap_or_default()
+    //             } else {
+    //                 Vec::new()
+    //             }
+    //         } else {
+    //             collect_values(&node)
+    //         };
+    //         out.push(Placeholder {
+    //             id,
+    //             role: Role::Unknown, // decided later from YAML AST
+    //             action_span: node.byte_range(),
+    //             values,
+    //             is_fragment_output,
+    //         });
+    //     }
+    //
+    //     fn walk(
+    //         node: Node,
+    //         src: &str,
+    //         buf: &mut String,
+    //         next_id: &mut usize,
+    //         out: &mut Vec<Placeholder>,
+    //         collect_values: impl Fn(&Node) -> Vec<String> + Copy,
+    //         env: &mut BTreeMap<String, BTreeSet<String>>,
+    //     ) {
+    //         // 1) pass through raw text
+    //         if node.kind() == "text" {
+    //             buf.push_str(&src[node.byte_range()]);
+    //             return;
+    //         }
+    //
+    //         // 2) containers: descend into their DIRECT children only
+    //         if is_container(node.kind()) || is_control_flow(node.kind()) {
+    //             let mut c = node.walk();
+    //             let parent_is_define = node.kind() == "define_action";
+    //             for ch in node.children(&mut c) {
+    //                 let parent_is_define = node.kind() == "define_action";
+    //
+    //                 if !ch.is_named() {
+    //                     continue;
+    //                 }
+    //                 if ch.kind() == "text" {
+    //                     // Do NOT emit raw text from define bodies — keeps sanitized YAML valid
+    //                     if !parent_is_define {
+    //                         buf.push_str(&src[ch.byte_range()]);
+    //                     }
+    //                     continue;
+    //                 }
+    //
+    //                 // // RECORD guards (no YAML emission)
+    //                 if is_control_flow(node.kind()) && is_guard_child(&ch) {
+    //                     let id = *next_id;
+    //                     *next_id += 1;
+    //                     // let values = collect_values(&ch);
+    //                     // out.push(Placeholder {
+    //                     //     id,
+    //                     //     role: Role::Guard,
+    //                     //     action_span: ch.byte_range(),
+    //                     //     values,
+    //                     //     is_fragment_output: false,
+    //                     // });
+    //                     continue;
+    //                 }
+    //
+    //                 if is_control_flow(ch.kind()) || is_container(ch.kind()) {
+    //                     // Nested container (e.g., else_clause); recurse
+    //                     walk(ch, src, buf, next_id, out, collect_values, env);
+    //                 } else if is_output_expr_kind(ch.kind()) {
+    //                     // single placeholder for this direct child expression
+    //                     let frag = looks_like_fragment_output(&ch, src);
+    //                     if parent_is_define || frag {
+    //                         // Record the placeholder, but DO NOT write anything into the buffer.
+    //                         // This keeps the surrounding YAML valid.
+    //                         let id = *next_id;
+    //                         *next_id += 1;
+    //
+    //                         let values = if ch.kind() == "variable" {
+    //                             if let Some(name) = variable_ident(&ch, src) {
+    //                                 env.get(&name)
+    //                                     .map(|s| s.iter().cloned().collect())
+    //                                     .unwrap_or_default()
+    //                             } else {
+    //                                 Vec::new()
+    //                             }
+    //                         } else {
+    //                             collect_values(&ch)
+    //                         };
+    //                         out.push(Placeholder {
+    //                             id,
+    //                             role: Role::Fragment,
+    //                             action_span: ch.byte_range(),
+    //                             values,
+    //                             is_fragment_output: true,
+    //                         });
+    //
+    //                         // // In define bodies: record the use, but DO NOT write to buf
+    //                         // let id = *next_id;
+    //                         // *next_id += 1;
+    //                         // let values = if ch.kind() == "variable" {
+    //                         //     if let Some(name) = variable_ident(&ch, src) {
+    //                         //         env.get(&name)
+    //                         //             .map(|s| s.iter().cloned().collect())
+    //                         //             .unwrap_or_default()
+    //                         //     } else {
+    //                         //         Vec::new()
+    //                         //     }
+    //                         // } else {
+    //                         //     collect_values(&ch)
+    //                         // };
+    //                         // out.push(Placeholder {
+    //                         //     id,
+    //                         //     role: Role::Fragment, // define content has no concrete YAML site
+    //                         //     action_span: ch.byte_range(),
+    //                         //     values,
+    //                         //     is_fragment_output: frag,
+    //                         // });
+    //
+    //                         // IMPORTANT: only write to the buffer when not suppressing define body text
+    //                         if !parent_is_define {
+    //                             let slot = current_slot_in_buf(buf);
+    //                             write_fragment_placeholder(buf, id, slot);
+    //                         }
+    //                     } else {
+    //                         // Normal template files: emit placeholder into YAML
+    //                         emit_placeholder_for(ch, src, buf, next_id, out, collect_values, env, frag);
+    //                     }
+    //                 } else if ch.kind() == "ERROR" {
+    //                     // These commonly carry indentation/spacing that YAML needs.
+    //                     // Preserve them verbatim.
+    //                     // buf.push_str(&src[ch.byte_range()]);
+    //                     // skip (often whitespace artifacts)
+    //                     continue;
+    //                 } else if is_assignment_node(&ch, src) {
+    //                     // RECORD assignment uses (no YAML emission)
+    //                     let id = *next_id;
+    //                     *next_id += 1;
+    //                     let values = collect_values(&ch);
+    //                     out.push(Placeholder {
+    //                         id,
+    //                         role: Role::Fragment, // records a use; no concrete YAML location
+    //                         action_span: ch.byte_range(),
+    //                         values: values.clone(),
+    //                         is_fragment_output: false,
+    //                     });
+    //                     // Try to extract `$var` name and bind collected values
+    //                     // child "variable" holds the LHS
+    //                     let mut vc = ch.walk();
+    //                     for sub in ch.children(&mut vc) {
+    //                         if sub.is_named() && sub.kind() == "variable" {
+    //                             if let Some(name) = variable_ident(&sub, src) {
+    //                                 let mut set = BTreeSet::<String>::new();
+    //                                 set.extend(values.into_iter());
+    //                                 env.insert(name, set);
+    //                             }
+    //                             break;
+    //                         }
+    //                     }
+    //                     continue;
+    //                 } else {
+    //                     // Unknown non-output node at container level — skip to keep YAML valid.
+    //                     continue;
+    //                 }
+    //             }
+    //             return;
+    //         }
+    //
+    //         // 3) non-container reached (shouldn’t happen for well-formed trees, but safe fallback)
+    //         if is_output_expr_kind(node.kind()) {
+    //             let frag = looks_like_fragment_output(&node, src);
+    //             emit_placeholder_for(node, src, buf, next_id, out, collect_values, env, frag);
+    //         } else {
+    //             unreachable!("should not happen?");
+    //             // trivia/unknown — pass through
+    //             buf.push_str(&src[node.byte_range()]);
+    //         }
+    //     }
+    //
+    //     let mut out = String::new();
+    //     walk(
+    //         gtree.root_node(),
+    //         src,
+    //         &mut out,
+    //         &mut next_id,
+    //         out_placeholders,
+    //         collect_values,
+    //         &mut env,
+    //     );
+    //     out
+    // }
+
+    // fn current_slot_in_buf(buf: &str) -> Slot {
+    //     // Look at the current and the previous non-empty line
+    //     let mut it = buf.rsplit('\n');
+    //
+    //     let cur = it.next().unwrap_or(""); // current (possibly empty) line
+    //     let cur_trim = cur.trim_start();
+    //
+    //     // If current line already starts with "- " → list item context
+    //     if cur_trim.starts_with("- ") {
+    //         return Slot::SequenceItem;
+    //     }
+    //
+    //     let prev_non_empty = it.find(|l| !l.trim().is_empty()).unwrap_or("");
+    //
+    //     let prev_trim = prev_non_empty.trim_end();
+    //
+    //     // Definitely mapping value if the previous non-empty line ends with ':'
+    //     if prev_trim.ends_with(':') {
+    //         return Slot::MappingValue;
+    //     }
+    //
+    //     // NEW: stay in mapping if the previous non-empty line is a placeholder mapping entry
+    //     // e.g.   "  "__TSG_PLACEHOLDER_3__": 0"
+    //     if prev_trim.contains("__TSG_PLACEHOLDER_") && prev_trim.contains("\": 0") {
+    //         return Slot::MappingValue;
+    //     }
+    //
+    //     Slot::Plain
+    // }
+
+    // fn write_fragment_placeholder(out: &mut String, id: usize, slot: Slot) {
+    //     use std::fmt::Write as _;
+    //     match slot {
+    //         Slot::MappingValue => {
+    //             // becomes an entry *inside* the surrounding block mapping,
+    //             // can repeat multiple times safely:
+    //             let _ = write!(out, "\"__TSG_PLACEHOLDER_{id}__\": 0\n");
+    //         }
+    //         Slot::SequenceItem => {
+    //             // fill the list item in-line, do NOT add a leading '- ' here; it's already present
+    //             let _ = write!(out, "\"__TSG_PLACEHOLDER_{id}__\"\n");
+    //         }
+    //         Slot::Plain => {
+    //             // standalone scalar is fine anywhere else
+    //             let _ = write!(out, "\"__TSG_PLACEHOLDER_{id}__\"\n");
+    //         }
+    //     }
+    // }
+
+    // Only these node kinds should be replaced by a single placeholder
+    fn is_output_expr_kind(kind: &str) -> bool {
+        matches!(
+            kind,
+            "selector_expression" | "function_call" | "chained_pipeline" | "variable" | "dot"
+        )
+    }
+
+    fn variable_ident(node: &Node, src: &str) -> Option<String> {
+        if node.kind() != "variable" {
+            return None;
+        }
+        // prefer identifier child if present
+        let mut c = node.walk();
+        for ch in node.children(&mut c) {
+            if ch.is_named() && ch.kind() == "identifier" {
+                return ch.utf8_text(src.as_bytes()).ok().map(|s| s.to_string());
+            }
+        }
+        // fallback: strip leading '$'
+        node.utf8_text(src.as_bytes())
+            .ok()
+            .map(|t| t.trim().trim_start_matches('$').to_string())
+    }
+
+    fn function_name<'a>(node: &tree_sitter::Node<'a>, src: &str) -> Option<String> {
+        if node.kind() != "function_call" {
+            return None;
+        }
+        let f = node.child_by_field_name("function")?;
+        Some(f.utf8_text(src.as_bytes()).ok()?.to_string())
+    }
+
+    fn looks_like_fragment_output(node: &tree_sitter::Node, src: &str) -> bool {
+        match node.kind() {
+            "function_call" => {
+                if let Some(name) = function_name(node, src) {
+                    // These usually render mappings/sequences, not scalars
+                    // return matches!(name.as_str(), "toYaml");
+                    return name == "include" || name == "toYaml";
+                }
+            }
+            "chained_pipeline" => {
+                // If any function in the chain is a known fragment producer, treat as fragment
+                let mut c = node.walk();
+                for ch in node.children(&mut c) {
+                    if ch.is_named() && ch.kind() == "function_call" {
+                        if let Some(name) = function_name(&ch, src) {
+                            if name == "include" || name == "toYaml" {
+                                // if matches!(name.as_str(), "toYaml") {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        };
+        false
+    }
+
+    fn is_assignment_node(node: &Node, src: &str) -> bool {
+        if is_assignment_kind(node.kind()) {
+            return true;
+        }
+        // fallback: grammar differences — detect ':=' in the action text
+        let t = &src[node.byte_range()];
+        t.contains(":=")
+    }
+
+    /// Is `node` a guard child inside a control-flow action? (i.e. appears before the first text body)
+    fn is_guard_child(node: &Node) -> bool {
+        let Some(parent) = node.parent() else {
+            return false;
+        };
+        if !is_control_flow(parent.kind()) {
+            return false;
+        }
+
+        // find first named `text` child in the control-flow node
+        let mut c = parent.walk();
+        let mut first_text_start: Option<usize> = None;
+        for ch in parent.children(&mut c) {
+            if ch.is_named() && ch.kind() == "text" {
+                first_text_start = Some(ch.start_byte());
+                break;
+            }
+        }
+        match first_text_start {
+            Some(body_start) => node.end_byte() <= body_start,
+            None => true, // no text body at all → everything is guard-ish
+        }
+    }
 }
 
 pub mod yaml_path {

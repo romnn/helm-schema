@@ -46,6 +46,12 @@ fn parses_signoz_ingress_template_and_maps_values() -> eyre::Result<()> {
         {{- end -}}
         {{- end -}}
         {{- end -}}
+        {{/*
+        Create chart name and version as used by the chart label.
+        */}}
+        {{- define "signoz.chart" -}}
+        {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+        {{- end -}}
         {{- define "signoz.labels" -}}
         helm.sh/chart: {{ include "signoz.chart" . }}
         {{ include "signoz.selectorLabels" . }}

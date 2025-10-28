@@ -14,11 +14,12 @@ pub mod prelude {
 //     paths.into_iter().map(|p| p.as_str()).collect()
 // }
 
-pub fn write(path: &VfsPath, data: impl AsRef<[u8]>) -> eyre::Result<()> {
+pub fn write(path: &VfsPath, data: impl AsRef<[u8]>) -> eyre::Result<VfsPath> {
+    // let path: &VfsPath = path.as_ref();
     let _ = path.parent().create_dir_all();
     let mut file = path.create_file()?;
     file.write_all(data.as_ref())?;
-    Ok(())
+    Ok(path.clone())
 }
 
 pub type LogLevel = tracing::metadata::Level;
