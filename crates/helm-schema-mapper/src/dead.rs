@@ -2670,6 +2670,277 @@ pub mod analyze {
 
     // if let Some(segs) = parse_selector_expression(&first, src)
     //     .or_else(|| parse_selector_chain(first, src))
+
+    // let mut bases: Vec<String> = Vec::new();
+    // match base.kind() {
+    //     "selector_expression" => {
+    //         if let Some(segs) = parse_selector_chain(base, src)
+    //         // if let Some(segs) = parse_selector_expression(&base, src)
+    //         //     .or_else(|| parse_selector_chain(base, src))
+    //         {
+    //             if let Some(vp) =
+    //                 origin_to_value_path(&scope.resolve_selector(&segs))
+    //             {
+    //                 bases.push(vp);
+    //             }
+    //         }
+    //     }
+    //     "dot" => {
+    //         if let Some(vp) = origin_to_value_path(&scope.dot) {
+    //             bases.push(vp);
+    //         }
+    //     }
+    //     "variable" => {
+    //         let raw = base.utf8_text(src.as_bytes()).unwrap_or("").trim();
+    //         if raw == "$" {
+    //             if let Some(vp) = origin_to_value_path(&scope.dollar) {
+    //                 bases.push(vp);
+    //             }
+    //         } else {
+    //             let name = raw.trim_start_matches('$');
+    //             if let Some(set) = env.get(name) {
+    //                 bases.extend(set.iter().cloned());
+    //             } else {
+    //                 panic!(
+    //                     "unbound template variable ${name} used as get() base at bytes {:?}",
+    //                     n.byte_range()
+    //                 );
+    //             }
+    //         }
+    //     }
+    //     "field" => {
+    //         let name = base
+    //             .child_by_field_name("identifier")
+    //             .or_else(|| base.child_by_field_name("field_identifier"))
+    //             .and_then(|id| {
+    //                 id.utf8_text(src.as_bytes())
+    //                     .ok()
+    //                     .map(|s| s.trim().to_string())
+    //             })
+    //             .unwrap_or_else(|| {
+    //                 base.utf8_text(src.as_bytes())
+    //                     .unwrap_or("")
+    //                     .trim()
+    //                     .trim_start_matches('.')
+    //                     .to_string()
+    //             });
+    //
+    //         if let Some(bound) = scope.bindings.get(&name) {
+    //             if let Some(vp) = origin_to_value_path(bound) {
+    //                 bases.push(vp);
+    //             } else {
+    //                 let segs = vec![".".to_string(), name.clone()];
+    //                 if let Some(vp) =
+    //                     origin_to_value_path(&scope.resolve_selector(&segs))
+    //                 {
+    //                     bases.push(vp);
+    //                 }
+    //             }
+    //         } else {
+    //             let segs = vec![".".to_string(), name];
+    //             if let Some(vp) =
+    //                 origin_to_value_path(&scope.resolve_selector(&segs))
+    //             {
+    //                 bases.push(vp);
+    //             }
+    //         }
+    //     }
+    //     _ => {}
+    // }
+
+    // if let Some(segs) = parse_selector_expression(&head, src)
+    //     .or_else(|| parse_selector_chain(head, src))
+
+    // let var = segs[1].trim_start_matches('.');
+    // if var == "Values" {
+    //     // treat as "$.Values..." — fall through to normal resolution
+    // } else if let Some(bases) = env.get(var) {
+    //     let tail = if segs.len() > 2 {
+    //         segs[2..]
+    //             .iter()
+    //             .map(|s| s.trim_start_matches('.'))
+    //             .collect::<Vec<_>>()
+    //             .join(".")
+    //     } else {
+    //         String::new()
+    //     };
+    //     for base in bases {
+    //         let key = if tail.is_empty() {
+    //             base.clone()
+    //         } else {
+    //             format!("{base}.{tail}")
+    //         };
+    //         if !key.is_empty() {
+    //             out.insert(key);
+    //         }
+    //     }
+    //     continue;
+    // } else {
+    //     eprintln!(
+    //         "{}",
+    //         diagnostics::pretty_error("todo", src, n.byte_range(), None,)
+    //     );
+    //     panic!(
+    //         "unbound template variable ${var} used in selector at bytes {:?}",
+    //         n.byte_range()
+    //     );
+    // }
+
+    // THIS WAS BEFORE:
+    // "selector_expression" => {
+    //     // Robustly extract segments, then re-introduce the syntactic prefix we care about
+    //     // so tests can assert the normalized form:
+    //     //   .Values.foo   => Selector([".", "Values", "foo"])
+    //     //   .Values       => Selector([".", "Values"])
+    //     //   (.Values.foo) => Selector([".", "Values", "foo"])
+    //     let text = &src[node.byte_range()];
+    //     let trimmed = text.trim();
+    //
+    //     if let Some(mut segs) =
+    //         helm_schema_template::values::parse_selector_expression(&node, src)
+    //     {
+    //         let mut out = Vec::<String>::new();
+    //
+    //         // If the original text starts with '.', we want to preserve that as a prefix token.
+    //         if trimmed.starts_with('.') {
+    //             out.push(".".to_string());
+    //
+    //             // If it specifically starts with ".Values", ensure "Values" immediately follows.
+    //             // parse_selector_expression() may or may not include "Values" as the first segment,
+    //             // depending on grammar/tokenization; normalize either way.
+    //             if trimmed.starts_with(".Values") {
+    //                 // Avoid duplicating "Values"
+    //                 if !segs.is_empty() && segs[0] == "Values" {
+    //                     // keep segs as-is; we'll just add "."
+    //                 } else {
+    //                     out.push("Values".to_string());
+    //                 }
+    //             }
+    //         }
+    //
+    //         // If we already injected ".Values", drop a redundant leading "Values" from segs.
+    //         if out.len() >= 2 && out[0] == "." && out[1] == "Values" {
+    //             if !segs.is_empty() && segs[0] == "Values" {
+    //                 segs.remove(0);
+    //             }
+    //         }
+    //
+    //         out.extend(segs);
+    //         ArgExpr::Selector(out)
+    //     } else {
+    //         ArgExpr::Opaque
+    //     }
+    // }
+
+    // "selector_expression" => {
+    //     // OUTERMOST selector only
+    //     let parent_is_selector = n
+    //         .parent()
+    //         .map(|p| p.kind() == "selector_expression")
+    //         .unwrap_or(false);
+    //     if !parent_is_selector {
+    //         if let Some(segs0) = parse_selector_chain(n, src) {
+    //             let segs = normalize_segments(&segs0);
+    //             if segs.len() >= 2
+    //                 && segs[0] == "."
+    //                 && segs[1] == "Values"
+    //                 && segs.len() > 2
+    //             {
+    //                 values.insert(segs[2..].join("."));
+    //             } else if segs.len() >= 2
+    //                 && segs[0] == "$"
+    //                 && segs[1] == "Values"
+    //                 && segs.len() > 2
+    //             {
+    //                 values.insert(segs[2..].join("."));
+    //             } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
+    //                 values.insert(segs[1..].join("."));
+    //             }
+    //         }
+    //     }
+    // }
+    // "selector_expression" => {
+    //     // OUTERMOST selector only
+    //     let parent_is_selector = n
+    //         .parent()
+    //         .map(|p| p.kind() == "selector_expression")
+    //         .unwrap_or(false);
+    //     if !parent_is_selector {
+    //         if let Some(segs) =
+    //             helm_schema_template::values::parse_selector_expression(&n, src)
+    //         {
+    //             if !segs.is_empty() {
+    //                 values.insert(segs.join("."));
+    //             }
+    //         }
+    //     }
+    // }
+
+    // "selector_expression" => {
+    //     let parent_is_selector = n
+    //         .parent()
+    //         .map(|p| p.kind() == "selector_expression")
+    //         .unwrap_or(false);
+    //     if !parent_is_selector {
+    //         if let Some(segs0) = parse_selector_chain(n, src) {
+    //             let segs = normalize_segments(&segs0);
+    //             // Keep only .Values.* and strip the "Values" root for the returned key
+    //             if segs.len() >= 2
+    //                 && segs[0] == "."
+    //                 && segs[1] == "Values"
+    //                 && segs.len() > 2
+    //             {
+    //                 out.insert(segs[2..].join("."));
+    //             } else if segs.len() >= 2
+    //                 && segs[0] == "$"
+    //                 && segs[1] == "Values"
+    //                 && segs.len() > 2
+    //             {
+    //                 out.insert(segs[2..].join("."));
+    //             } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
+    //                 out.insert(segs[1..].join("."));
+    //             }
+    //         }
+    //     }
+    // }
+
+    // "selector_expression" => {
+    //     let parent_is_selector = n
+    //         .parent()
+    //         .map(|p| p.kind() == "selector_expression")
+    //         .unwrap_or(false);
+    //     if !parent_is_selector {
+    //         if let Some(segs) =
+    //             helm_schema_template::values::parse_selector_expression(&n, src)
+    //         {
+    //             if !segs.is_empty() {
+    //                 out.insert(segs.join("."));
+    //             }
+    //         }
+    //     }
+    // }
+
+    // let role = if ph.is_fragment_output {
+    //     Role::Fragment
+    // } else {
+    //     binding.role
+    // };
+
+    // if crate::sanitize::is_assignment_kind(ch.kind()) {
+    //     let vals =
+    //         collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env);
+    //
+    //     let mut vc = ch.walk();
+    //     for sub in ch.children(&mut vc) {
+    //         if sub.is_named() && sub.kind() == "variable" {
+    //             if let Some(name) = variable_ident_of(&sub, src) {
+    //                 out.env.insert(name, vals.clone());
+    //             }
+    //             break;
+    //         }
+    //     }
+    //     continue;
+    // }
 }
 
 pub mod sanitize {

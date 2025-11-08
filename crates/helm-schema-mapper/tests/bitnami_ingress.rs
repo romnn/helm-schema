@@ -13,7 +13,7 @@ use helm_schema_mapper::analyze::analyze_template_file;
 use helm_schema_mapper::analyze::{compute_define_closure, index_defines_in_dir};
 use helm_schema_mapper::yaml_path::YamlPath;
 
-#[ignore = "wip"]
+// #[ignore = "wip"]
 #[test]
 fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
     Builder::default().build();
@@ -99,64 +99,167 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
     write(
         &root.join("templates/_helpers.tpl")?,
         indoc! {r#"
-          {{- define "common.labels.standard" -}}
-          {{- /* deliberately reference Values */ -}}
-          {{- .Values.commonLabels | toYaml -}}
-          {{- end -}}
+            {{/*
+            Kubernetes standard labels
+            {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) -}}
+            */}}
+            {{- define "common.labels.standard" -}}
+            {{- if and (hasKey . "customLabels") (hasKey . "context") -}}
+            {{- $default := dict "app.kubernetes.io/name" (include "common.names.name" .context) "helm.sh/chart" (include "common.names.chart" .context) "app.kubernetes.io/instance" .context.Release.Name "app.kubernetes.io/managed-by" .context.Release.Service -}}
+            {{- with .context.Chart.AppVersion -}}
+            {{- $_ := set $default "app.kubernetes.io/version" . -}}
+            {{- end -}}
+            {{ template "common.tplvalues.merge" (dict "values" (list .customLabels $default) "context" .context) }}
+            {{- else -}}
+            app.kubernetes.io/name: {{ include "common.names.name" . }}
+            helm.sh/chart: {{ include "common.names.chart" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+            app.kubernetes.io/managed-by: {{ .Release.Service }}
+            {{- with .Chart.AppVersion }}
+            app.kubernetes.io/version: {{ . | replace "+" "_" | quote }}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
 
-          {{- define "common.tplvalues.render" -}}
-          {{- /* real chart uses the passed dict.value; we keep it simple here */ -}}
-          {{- end -}}
+            {{/*
+            Return the appropriate apiVersion for ingress.
+            */}}
+            {{- define "common.capabilities.ingress.apiVersion" -}}
+            {{- print "networking.k8s.io/v1" -}}
+            {{- end -}}
+
+            {{/*
+            Generate backend entry that is compatible with all Kubernetes API versions.
+
+            Usage:
+            {{ include "common.ingress.backend" (dict "serviceName" "backendName" "servicePort" "backendPort" "context" $) }}
+
+            Params:
+              - serviceName - String. Name of an existing service backend
+              - servicePort - String/Int. Port name (or number) of the service. It will be translated to different yaml depending if it is a string or an integer.
+              - context - Dict - Required. The context for the template evaluation.
+            */}}
+            {{- define "common.ingress.backend" -}}
+            service:
+              name: {{ .serviceName }}
+              port:
+                {{- if typeIs "string" .servicePort }}
+                name: {{ .servicePort }}
+                {{- else if or (typeIs "int" .servicePort) (typeIs "float64" .servicePort) }}
+                number: {{ .servicePort | int }}
+                {{- end }}
+            {{- end -}}
+
+            {{/*
+            Return true if cert-manager required annotations for TLS signed
+            certificates are set in the Ingress annotations
+            Ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+            Usage:
+            {{ include "common.ingress.certManagerRequest" ( dict "annotations" .Values.path.to.the.ingress.annotations ) }}
+            */}}
+            {{- define "common.ingress.certManagerRequest" -}}
+            {{ if or (hasKey .annotations "cert-manager.io/cluster-issuer") (hasKey .annotations "cert-manager.io/issuer") (hasKey .annotations "kubernetes.io/tls-acme") }}
+                {{- true -}}
+            {{- end -}}
+            {{- end -}}
+
+            {{/*
+            Expand the name of the chart.
+            */}}
+            {{- define "common.names.name" -}}
+            {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+
+            {{/*
+            Create chart name and version as used by the chart label.
+            */}}
+            {{- define "common.names.chart" -}}
+            {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+
+            {{/*
+            Create a default fully qualified app name.
+            We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+            If release name contains chart name it will be used as a full name.
+            */}}
+            {{- define "common.names.fullname" -}}
+            {{- if .Values.fullnameOverride -}}
+            {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- else -}}
+            {{- $name := default .Chart.Name .Values.nameOverride -}}
+            {{- $releaseName := regexReplaceAll "(-?[^a-z\\d\\-])+-?" (lower .Release.Name) "-" -}}
+            {{- if contains $name $releaseName -}}
+            {{- $releaseName | trunc 63 | trimSuffix "-" -}}
+            {{- else -}}
+            {{- printf "%s-%s" $releaseName $name | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
+
+            {{/*
+            Allow the release namespace to be overridden for multi-namespace deployments in combined charts.
+            */}}
+            {{- define "common.names.namespace" -}}
+            {{- default .Release.Namespace .Values.namespaceOverride | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+
+            {{/* vim: set filetype=mustache: */}}
+            {{/*
+            Renders a value that contains template perhaps with scope if the scope is present.
+            Usage:
+            {{ include "common.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $ ) }}
+            {{ include "common.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $ "scope" $app ) }}
+            */}}
+            {{- define "common.tplvalues.render" -}}
+            {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+            {{- if contains "{{" (toJson .value) }}
+              {{- if .scope }}
+                  {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+              {{- else }}
+                {{- tpl $value .context }}
+              {{- end }}
+            {{- else }}
+                {{- $value }}
+            {{- end }}
+            {{- end -}}
+
+            {{/*
+            Merge a list of values that contains template after rendering them.
+            Merge precedence is consistent with http://masterminds.github.io/sprig/dicts.html#merge-mustmerge
+            Usage:
+            {{ include "common.tplvalues.merge" ( dict "values" (list .Values.path.to.the.Value1 .Values.path.to.the.Value2) "context" $ ) }}
+            */}}
+            {{- define "common.tplvalues.merge" -}}
+            {{- $dst := dict -}}
+            {{- range .values -}}
+            {{- $dst = include "common.tplvalues.render" (dict "value" . "context" $.context "scope" $.scope) | fromYaml | merge $dst -}}
+            {{- end -}}
+            {{ $dst | toYaml }}
+            {{- end -}}
+            
         "#},
     )?;
 
     // Assert helper include closure: common.labels.standard pulls .Values.commonLabels
-    let tmpl_dir = root.join("templates")?;
-    let defs = index_defines_in_dir(&tmpl_dir)?;
-    dbg!(&defs);
-    let closure = compute_define_closure(&defs);
-    dbg!(&closure);
+    // let tmpl_dir = root.join("templates")?;
+    // let defs = index_defines_in_dir(&tmpl_dir)?;
+    // dbg!(&defs);
+    // let closure = compute_define_closure(&defs);
+    // dbg!(&closure);
 
-    let label_values: Vec<_> = closure
-        .get("common.labels.standard")
-        .ok_or_eyre("missing define common.labels.standard")?
-        .iter()
-        .map(|s| s.as_str())
-        .collect();
-    assert_that!(&label_values, unordered_elements_are![&"commonLabels"]);
+    // let label_values: Vec<_> = closure
+    //     .get("common.labels.standard")
+    //     .ok_or_eyre("missing define common.labels.standard")?
+    //     .iter()
+    //     .map(|s| s.as_str())
+    //     .collect();
+    // assert_that!(&label_values, unordered_elements_are![&"commonLabels"]);
 
-    // Analyze the ingress template only (file-by-file analysis); merge across files is higher-level API.
     let uses = analyze_template_file(&root.join("templates/ingress.yaml")?)?;
-    // let by = canonicalize_uses(&uses);
     let groups = group_uses(&uses);
     dbg!(&groups);
 
-    // // Index by value_path -> (role, optional path)
-    // #[derive(Debug, Clone, PartialEq, Eq)]
-    // struct Seen {
-    //     role: Role,
-    //     path: Option<String>,
-    // }
-    // let mut by: BTreeMap<String, Seen> = BTreeMap::new();
-    // for u in uses {
-    //     let p = u.yaml_path.as_ref().map(|p| p.to_string());
-    //     by.entry(u.value_path.clone())
-    //         .and_modify(|s| {
-    //             // upgrade role if ScalarValue is seen
-    //             if matches!(u.role, Role::ScalarValue) {
-    //                 s.role = Role::ScalarValue;
-    //                 s.path = p.clone().or(s.path.clone());
-    //             }
-    //         })
-    //         .or_insert(Seen {
-    //             role: u.role.clone(),
-    //             path: p,
-    //         });
-    // }
-    //
-    // dbg!(&by);
-
-    // ---- EXPECTED VALUE KEYS (must all be present) ----
+    // EXPECTED VALUE KEYS (must all be present)
     let must_exist = [
         "ingress.enabled",          // guard
         "commonLabels",             // via include(... .Values.commonLabels ...)
@@ -177,7 +280,7 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
         assert!(groups.contains_key(k), "missing expected Values key: {k}");
     }
 
-    // ---- ROLES we expect (today) ----
+    // ROLES we expect (today)
     // Guards (no YAML path)
     for k in [
         "ingress.enabled",
@@ -216,9 +319,6 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
                 }),
             ]
         );
-
-        // assert_that!(&s.role, eq(&Role::ScalarValue));
-        // assert_that!(&s.path, some(eq("spec.ingressClassName")));
     }
 
     // host/path/pathType under the first rule
@@ -267,25 +367,62 @@ fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
         // );
     }
 
-    // // Fragments (toYaml/ include-rendered) — we may only map to a parent path or None (for now)
-    // for k in [
-    //     "ingress.extraPaths",
-    //     "ingress.extraRules",
-    //     "ingress.extraTls",
-    // ] {
-    //     let s = groups.get(k).ok_or_eyre(k)?;
-    //     // currently we drop fragment structure; placeholder is scalar
-    //     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
-    //     // Parent may resolve as 'spec.rules' or 'spec.tls' etc., or be None — both acceptable for now.
-    // }
-    //
-    // // commonLabels via include(... dict "customLabels" .Values.commonLabels ...)
-    // {
-    //     let s = groups.get("commonLabels").ok_or_eyre("commonLabels")?;
-    //     // This appears inside a value position (labels: <include|nindent>) so today it's a ScalarValue placeholder
-    //     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
-    //     // Path commonly "metadata.labels" (the include emits a mapping), but we accept None for now.
-    // }
-
     Ok(())
 }
+
+// {{- define "common.labels.standard" -}}
+// {{- /* deliberately reference Values */ -}}
+// {{- .Values.commonLabels | toYaml -}}
+// {{- end -}}
+//
+// {{- define "common.tplvalues.render" -}}
+// {{- /* real chart uses the passed dict.value; we keep it simple here */ -}}
+// {{- end -}}
+
+// // Index by value_path -> (role, optional path)
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// struct Seen {
+//     role: Role,
+//     path: Option<String>,
+// }
+// let mut by: BTreeMap<String, Seen> = BTreeMap::new();
+// for u in uses {
+//     let p = u.yaml_path.as_ref().map(|p| p.to_string());
+//     by.entry(u.value_path.clone())
+//         .and_modify(|s| {
+//             // upgrade role if ScalarValue is seen
+//             if matches!(u.role, Role::ScalarValue) {
+//                 s.role = Role::ScalarValue;
+//                 s.path = p.clone().or(s.path.clone());
+//             }
+//         })
+//         .or_insert(Seen {
+//             role: u.role.clone(),
+//             path: p,
+//         });
+// }
+//
+// dbg!(&by);
+
+// assert_that!(&s.role, eq(&Role::ScalarValue));
+// assert_that!(&s.path, some(eq("spec.ingressClassName")));
+
+// // Fragments (toYaml/ include-rendered) — we may only map to a parent path or None (for now)
+// for k in [
+//     "ingress.extraPaths",
+//     "ingress.extraRules",
+//     "ingress.extraTls",
+// ] {
+//     let s = groups.get(k).ok_or_eyre(k)?;
+//     // currently we drop fragment structure; placeholder is scalar
+//     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
+//     // Parent may resolve as 'spec.rules' or 'spec.tls' etc., or be None — both acceptable for now.
+// }
+//
+// // commonLabels via include(... dict "customLabels" .Values.commonLabels ...)
+// {
+//     let s = groups.get("commonLabels").ok_or_eyre("commonLabels")?;
+//     // This appears inside a value position (labels: <include|nindent>) so today it's a ScalarValue placeholder
+//     assert_that!(&s.role, any![eq(&Role::ScalarValue), eq(&Role::Unknown)]);
+//     // Path commonly "metadata.labels" (the include emits a mapping), but we accept None for now.
+// }

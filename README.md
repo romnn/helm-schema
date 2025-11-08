@@ -277,3 +277,130 @@ Maintain a small context stack (in-mapping / in-sequence, expecting key vs value
 When you reach a template node, you know exactly which slot you’re in and can choose placeholder shapes deterministically.
 
 That’s more engineering and adds a real streaming YAML layer. The approach above gets nearly the same correctness for our use-cases with <50 lines of code and no new dependencies.
+
+--------------------------------------------
+
+Of course. You've hit the fundamental limitations of a text-based, heuristic approach. The core issue is that a Helm template is a **program that generates text**, and you're trying to treat it like a **data file with holes in it**. This will always be brittle because the program's logic (ifs, ranges, includes) fundamentally alters the structure of the output data.
+
+To make this rock-solid, you must shift your perspective from "sanitizing text" to **"abstractly interpreting the template's logic."**
+
+Here is a disciplined, first-principles approach that will be vastly more reliable and correct. We'll call it the **Virtual YAML Tree (VYT)** method.
+
+### Core Principle: Abstract Interpretation, Not Text Manipulation
+
+The fatal flaw of the heuristic approach is that it treats a template file—a program—as if it were a data file. It tries to guess the final YAML structure before the template logic has even run.
+
+The correct approach is to build an in-memory representation of the final YAML document by interpreting the *structural meaning* of the template's AST (Abstract Syntax Tree), without actually executing it with real values. This is analogous to how a web browser builds a Virtual DOM from JSX code before rendering it to the screen.
+
+### The Architecture: The Virtual YAML Tree (VYT)
+
+The VYT is an in-memory tree whose nodes represent YAML structures: `Mappings`, `Sequences`, and `Scalars`. However, unlike a standard YAML parser's output, the "values" in our VYT aren't concrete strings or numbers. They are **unresolved expressions** that point back to their source in the `.Values` file.
+
+**VYT Node Types:**
+
+*   `VYMapping`: Represents a YAML object (`{key: value, ...}`).
+*   `VYSequence`: Represents a YAML list (`[item1, item2, ...]`).
+*   `VYScalar`: Represents a leaf value. Its payload contains:
+    *   `source_expression`: The Helm variable path (e.g., `.Values.ingress.hostname`).
+    *   `guards`: A list of conditions (`.Values.ingress.enabled`) that must be true for this node to exist.
+*   `VYFragment`: A special node for things like `toYaml` or `include`. It signifies that a whole sub-tree of YAML will be inserted here.
+    *   `source_expression`: The Helm variable path feeding the fragment (e.g., `.Values.labels`).
+    *   `properties`: Metadata like `indentation` from an `nindent` pipe.
+
+---
+
+### The Rock-Solid Four-Stage Pipeline
+
+#### Stage 1: Template Parsing -> AST
+
+This is the foundation. You cannot work with the template as text; you must work with its structure.
+
+1.  **Tooling:** Use `tree-sitter` with a reliable `go-template` grammar. This is non-negotiable. It correctly parses the syntax into a concrete syntax tree, flawlessly distinguishing between raw text, comments, and Go template actions.
+2.  **Input:** All template files (`*.yaml`, `*.tpl`).
+3.  **Output:** An AST for each template file.
+
+#### Stage 2: Static Analysis & Helper Indexing
+
+Before interpreting the main templates, pre-process all helper files (`_helpers.tpl`).
+
+1.  **Walk the ASTs** of all files to find every `{{ define "name" }}` action.
+2.  **Create an Index:** Build a map where keys are helper names (e.g., `"common.names.fullname"`) and values are the AST nodes of their content.
+3.  **Function Knowledge Base:** Create a static registry of "special" Helm/Sprig functions and their behavior. This is crucial.
+    *   **Structural Functions:** `toYaml`, `fromYaml` (produce fragments).
+    *   **Control Flow:** `if`, `with`, `range` (alter scope and existence).
+    *   **Scope Modifiers:** `include`, `template` (execute sub-templates with new scopes).
+    *   **Formatting:** `nindent`, `indent` (modify properties of a VYT node).
+    *   **Value Selectors:** `default`, `coalesce`, `required` (represent multiple potential `source_expression`s for a single VYScalar).
+
+#### Stage 3: Abstract Interpretation -> Building the VYT
+
+This is the core of the solution. You will write a recursive "interpreter" that walks the main template's AST and builds the VYT. It maintains a **cursor** (the current parent node in the VYT) and a **scope** (what `.` and `$` refer to).
+
+The interpreter's logic for handling different AST nodes:
+
+*   **`text` node:**
+    1.  Parse the text content as a YAML snippet.
+    2.  Merge the resulting YAML structure into the VYT at the current cursor position.
+    3.  Update the cursor to point to the last node you inserted. For example, if you parsed `metadata:\n  labels:`, the cursor now points to the `labels` mapping node.
+
+*   **Expression node `{{ .Values.foo.bar }}`:**
+    1.  Resolve the expression `.Values.foo.bar` within the current scope.
+    2.  At the current VYT cursor, insert a `VYScalar` node.
+    3.  Set its `source_expression` to `"foo.bar"`.
+    4.  Attach any guards from the current scope (see `if` below).
+
+*   **`{{ if .Values.enabled }}` node:**
+    1.  Analyze the condition (`.Values.enabled`). This is a **guard**.
+    2.  Recursively process the children *inside* the `if` block.
+    3.  Crucially, every VYT node created within this block gets the guard `.Values.enabled` added to its `guards` list.
+    4.  The `else` block is processed with the inverted guard.
+
+*   **`{{ range .Values.items }}` node:**
+    1.  The expression `.Values.items` becomes a guard.
+    2.  At the current VYT cursor, insert a `VYSequence` node.
+    3.  Create a **new scope** for processing the `range` body. In this new scope, `.` now resolves to an element of `.Values.items`.
+    4.  Process the body of the `range` once.
+    5.  When you encounter an expression like `{{ .name }}` inside, your scope resolution will correctly identify it as `items[*].name`. The `[*]` represents iteration.
+    6.  The VYT nodes generated from the body become the "template" for the items in the `VYSequence`.
+
+*   **`{{ toYaml .Values.obj | nindent 4 }}` node:**
+    1.  This is a structural function. Your interpreter identifies `toYaml`.
+    2.  At the current cursor, insert a `VYFragment` node.
+    3.  Its `source_expression` is `.Values.obj`.
+    4.  The `nindent 4` pipe doesn't change the text; it sets the `indentation` property on the `VYFragment` node.
+    5.  This solves your original problem perfectly. The parent VYT node (e.g., `paths`) sees it's receiving a fragment, not a scalar, and can accommodate it correctly without generating invalid YAML.
+
+*   **`{{ include "my.helper" . }}` node:**
+    1.  Look up `"my.helper"` in your helper index from Stage 2.
+    2.  Determine the new scope for the helper (in this case, `.` is passed through).
+    3.  Recursively invoke the interpreter on the helper's AST with the new scope.
+    4.  The VYT nodes generated by the helper are inserted at the current cursor.
+
+#### Stage 4: Path Extraction from the VYT
+
+Once the VYT is fully built, the final step is simple and 100% reliable.
+
+1.  **Traverse the VYT** from the root.
+2.  As you descend, build the YAML path string (e.g., `"metadata"`, then `"metadata.labels"`).
+3.  When you reach a `VYScalar` or `VYFragment` node:
+    *   You have the complete, unambiguous YAML Path.
+    *   You have the `source_expression` (e.g., `"ingress.hostname"`).
+    *   You have the list of `guards` required for it to exist.
+4.  **Record the mapping:** `source_expression -> (yaml_path, guards)`.
+
+### Benefits of this Approach
+
+*   **Correctness:** It handles control flow, scopes, and structural functions based on their logic, not text-based guesswork. It will never generate invalid intermediate YAML.
+*   **Reliability:** It is immune to whitespace variations, comments, and complex nested expressions because it operates on the structured AST.
+*   **Scalability:** It correctly handles multi-level `include` chains by modeling scopes, which is impossible with a text-based approach.
+*   **Richness:** You get more than just the mapping. You also get the **conditions** (`guards`) under which that mapping exists, which is extremely valuable for deeper analysis.
+
+This is a significant engineering effort compared to string replacement, but it is the **only** way to achieve the rock-solid reliability you're looking for. It is the "first principles" solution because it models the problem domain correctly from the start.
+
+```bash
+NO_COLOR=1 CLICOLOR=0 \
+cargo --color never test -p helm-schema-mapper \
+  parses_bitnami_ingress_template_and_maps_values \
+  -- --nocapture --color never \
+  > cargo-test.txt 2>&1
+```

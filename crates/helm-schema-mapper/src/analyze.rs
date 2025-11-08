@@ -62,7 +62,7 @@ pub enum Role {
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ValueUse {
     pub value_path: String, // e.g., "ingress.pathType"
     pub role: Role,
@@ -365,6 +365,8 @@ pub fn analyze_template(
     // Inline + sanitize to a single YAML buffer with placeholders
     let mut out = InlineOut::default();
     inline_emit_tree(tree, &source, &scope, &inline, &mut guard, &mut out)?;
+ 
+    flush_all_pending(&mut out);
 
     println!(
         "=== SANITIZED YAML ===\n\n{}\n========================",
@@ -384,11 +386,6 @@ pub fn analyze_template(
     let mut uses = Vec::<ValueUse>::new();
     for ph in out.placeholders {
         let binding = ph_map.get(&ph.id).cloned().unwrap_or_default();
-        // let role = if ph.is_fragment_output {
-        //     Role::Fragment
-        // } else {
-        //     binding.role
-        // };
 
         // Role: key/value from YAML unless we force Fragment for fragment outputs
         let role = if ph.is_fragment_output || out.force_fragment_role.contains(&ph.id) {
@@ -446,49 +443,6 @@ fn collect_values_in_subtree(node: &Node, src: &str) -> Vec<String> {
                     }
                 }
             }
-            // "selector_expression" => {
-            //     let parent_is_selector = n
-            //         .parent()
-            //         .map(|p| p.kind() == "selector_expression")
-            //         .unwrap_or(false);
-            //     if !parent_is_selector {
-            //         if let Some(segs0) = parse_selector_chain(n, src) {
-            //             let segs = normalize_segments(&segs0);
-            //             // Keep only .Values.* and strip the "Values" root for the returned key
-            //             if segs.len() >= 2
-            //                 && segs[0] == "."
-            //                 && segs[1] == "Values"
-            //                 && segs.len() > 2
-            //             {
-            //                 out.insert(segs[2..].join("."));
-            //             } else if segs.len() >= 2
-            //                 && segs[0] == "$"
-            //                 && segs[1] == "Values"
-            //                 && segs.len() > 2
-            //             {
-            //                 out.insert(segs[2..].join("."));
-            //             } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
-            //                 out.insert(segs[1..].join("."));
-            //             }
-            //         }
-            //     }
-            // }
-
-            // "selector_expression" => {
-            //     let parent_is_selector = n
-            //         .parent()
-            //         .map(|p| p.kind() == "selector_expression")
-            //         .unwrap_or(false);
-            //     if !parent_is_selector {
-            //         if let Some(segs) =
-            //             helm_schema_template::values::parse_selector_expression(&n, src)
-            //         {
-            //             if !segs.is_empty() {
-            //                 out.insert(segs.join("."));
-            //             }
-            //         }
-            //     }
-            // }
             "function_call" => {
                 if let Some(segs) = parse_index_call(&n, src) {
                     if !segs.is_empty() {
@@ -656,8 +610,11 @@ fn parse_values_field_call(node: &Node, src: &str) -> Option<String> {
 // Info we index for every {{ define "name" }}...{{ end }}
 #[derive(Debug, Clone, Default)]
 pub struct DefineInfo {
-    pub values: BTreeSet<String>,   // .Values.* used inside this define body
+    pub values: BTreeSet<String>, // .Values.* used inside this define body
     pub includes: BTreeSet<String>, // nested {{ include "..." ... }} calls
+
+                                  // NEW: fields the define reads from its local dot param (e.g. .customLabels, .context)
+                                  // pub consumes: BTreeSet<String>,
 }
 
 // Best-effort string unquote ( "foo", `foo` )
@@ -679,7 +636,6 @@ fn include_call_name(node: &Node, src: &str) -> Option<String> {
     if !(func.kind() == "identifier" && func.utf8_text(src.as_bytes()).ok()? == "include") {
         return None;
     }
-    // let args = node.child_by_field_name("arguments")?;
     let args = arg_list(node)?;
     let mut c = args.walk();
     for ch in args.named_children(&mut c) {
@@ -691,6 +647,38 @@ fn include_call_name(node: &Node, src: &str) -> Option<String> {
     }
     None
 }
+
+// walk(doc.tree.root_node(), |node| {
+// // Handle both direct include and include as pipeline head
+// let inc_node = if node.kind() == "function_call" && is_include_call(node, src) {
+//     Some(node)
+// } else if node.kind() == "chained_pipeline" {
+//     pipeline_head_is_include(node, src)
+// } else {
+//     None
+// };
+//
+// if let Some(inc) = inc_node {
+//     let (tpl, arg) = parse_include_call(inc, src)?;
+//     if let Some(def) = defs.get_mut(&tpl) {
+//         if let ArgExpr::Dict(kvs) = arg {
+//             for (k, v) in kvs {
+//                 // Only attribute keys the define actually consumes
+//                 if !def.consumes.contains(&k) {
+//                     continue;
+//                 }
+//                 if let Some(vp) = value_path_from_argexpr(&v) {
+//                     // vp like "Values.commonLabels" → push "commonLabels"
+//                     if let Some(stripped) = vp.strip_prefix("Values.") {
+//                         def.values.insert(stripped.to_string());
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+// Ok(())
+// })?;
 
 // Get define name for {{ define "name" }} body node
 fn define_name(node: &Node, src: &str) -> Option<String> {
@@ -738,49 +726,6 @@ fn collect_define_info(node: &Node, src: &str) -> DefineInfo {
                     }
                 }
             }
-            // "selector_expression" => {
-            //     // OUTERMOST selector only
-            //     let parent_is_selector = n
-            //         .parent()
-            //         .map(|p| p.kind() == "selector_expression")
-            //         .unwrap_or(false);
-            //     if !parent_is_selector {
-            //         if let Some(segs0) = parse_selector_chain(n, src) {
-            //             let segs = normalize_segments(&segs0);
-            //             if segs.len() >= 2
-            //                 && segs[0] == "."
-            //                 && segs[1] == "Values"
-            //                 && segs.len() > 2
-            //             {
-            //                 values.insert(segs[2..].join("."));
-            //             } else if segs.len() >= 2
-            //                 && segs[0] == "$"
-            //                 && segs[1] == "Values"
-            //                 && segs.len() > 2
-            //             {
-            //                 values.insert(segs[2..].join("."));
-            //             } else if !segs.is_empty() && segs[0] == "Values" && segs.len() > 1 {
-            //                 values.insert(segs[1..].join("."));
-            //             }
-            //         }
-            //     }
-            // }
-            // "selector_expression" => {
-            //     // OUTERMOST selector only
-            //     let parent_is_selector = n
-            //         .parent()
-            //         .map(|p| p.kind() == "selector_expression")
-            //         .unwrap_or(false);
-            //     if !parent_is_selector {
-            //         if let Some(segs) =
-            //             helm_schema_template::values::parse_selector_expression(&n, src)
-            //         {
-            //             if !segs.is_empty() {
-            //                 values.insert(segs.join("."));
-            //             }
-            //         }
-            //     }
-            // }
             "function_call" => {
                 if let Some(segs) = parse_index_call(&n, src) {
                     if !segs.is_empty() {
@@ -829,9 +774,6 @@ pub fn index_defines_in_dir(dir: &VfsPath) -> Result<BTreeMap<String, DefineInfo
         let src = path.read_to_string()?;
         if let Some(parsed) = helm_schema_template::parse::parse_gotmpl_document(&src) {
             let root = parsed.tree.root_node();
-
-            // let ast = helm_schema_template::fmt::SExpr::parse_tree(&root, &src);
-            // println!("{}", ast.to_string_pretty());
 
             let mut stack = vec![root];
             while let Some(n) = stack.pop() {
@@ -898,7 +840,7 @@ pub fn compute_define_closure(
     memo
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DefineEntry {
     pub name: String,
     pub path: VfsPath,
@@ -907,7 +849,7 @@ pub struct DefineEntry {
     pub body_byte_range: std::ops::Range<usize>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DefineIndex {
     map: HashMap<String, DefineEntry>,
 }
@@ -1011,7 +953,7 @@ pub fn collect_defines(files: &[VfsPath]) -> Result<DefineIndex, Error> {
 }
 
 #[derive(Debug, Clone)]
-enum ExprOrigin {
+pub enum ExprOrigin {
     // A canonicalized chain like `.Values.persistentVolumeClaims`
     Selector(Vec<String>),
     // The current dot (whatever it canonicalizes to)
@@ -1037,13 +979,13 @@ fn is_helm_builtin_root(name: &str) -> bool {
 }
 
 #[derive(Debug, Clone)]
-struct Scope {
+pub struct Scope {
     // What does `.` mean here?
-    dot: ExprOrigin,
+    pub dot: ExprOrigin,
     // What does `$` mean here? (usually root; we carry it through)
-    dollar: ExprOrigin,
+    pub dollar: ExprOrigin,
     // Local bindings for paths inside the define, e.g. "config" => <call-site expr origin>
-    bindings: HashMap<String, ExprOrigin>,
+    pub bindings: HashMap<String, ExprOrigin>,
 }
 
 impl Scope {
@@ -1109,7 +1051,6 @@ impl Scope {
                 if segments.len() == 1 {
                     return self.dollar.clone();
                 }
-                // dbg!(&segments);
                 // Ignore "$.Capabilities.*" / "$.Chart.*" / etc.
                 if is_helm_builtin_root(&segments[1]) {
                     return ExprOrigin::Opaque;
@@ -1118,6 +1059,12 @@ impl Scope {
                 if segments[1].as_str() == "Values" {
                     return self.extend_origin(self.dollar.clone(), &segments[1..]);
                 }
+
+                // "$.<field>[.tail]" → root-dollar field: extend from `$`
+                if segments[1].starts_with('.') {
+                    return self.extend_origin(self.dollar.clone(), &segments[1..]);
+                }
+
                 // "$name[.tail]" → binding lookup
                 let var = segments[1].as_str();
                 if let Some(bound) = self.bindings.get(var) {
@@ -1126,8 +1073,21 @@ impl Scope {
                     }
                     return self.extend_origin(bound.clone(), &segments[2..]);
                 }
-                // Unbound $var → hard error
-                panic!("unbound template variable ${var} in selector: {segments:?}");
+
+                // Unbound $var → degrade to opaque (do NOT panic)
+                return ExprOrigin::Opaque;
+
+                // // "$name[.tail]" → binding lookup
+                // let var = segments[1].as_str();
+                // if let Some(bound) = self.bindings.get(var) {
+                //     if segments.len() == 2 {
+                //         return bound.clone();
+                //     }
+                //     return self.extend_origin(bound.clone(), &segments[2..]);
+                // }
+
+                // // Unbound $var → hard error
+                // panic!("unbound template variable ${var} in selector: {segments:?}");
             }
             first => {
                 // Ignore bare `Capabilities.*` / `Chart.*` / etc.
@@ -1333,51 +1293,6 @@ fn parse_include_call(call_node: Node, src: &str) -> Result<(String, ArgExpr), I
                     ArgExpr::Opaque
                 }
             }
-            // THIS WAS BEFORE:
-            // "selector_expression" => {
-            //     // Robustly extract segments, then re-introduce the syntactic prefix we care about
-            //     // so tests can assert the normalized form:
-            //     //   .Values.foo   => Selector([".", "Values", "foo"])
-            //     //   .Values       => Selector([".", "Values"])
-            //     //   (.Values.foo) => Selector([".", "Values", "foo"])
-            //     let text = &src[node.byte_range()];
-            //     let trimmed = text.trim();
-            //
-            //     if let Some(mut segs) =
-            //         helm_schema_template::values::parse_selector_expression(&node, src)
-            //     {
-            //         let mut out = Vec::<String>::new();
-            //
-            //         // If the original text starts with '.', we want to preserve that as a prefix token.
-            //         if trimmed.starts_with('.') {
-            //             out.push(".".to_string());
-            //
-            //             // If it specifically starts with ".Values", ensure "Values" immediately follows.
-            //             // parse_selector_expression() may or may not include "Values" as the first segment,
-            //             // depending on grammar/tokenization; normalize either way.
-            //             if trimmed.starts_with(".Values") {
-            //                 // Avoid duplicating "Values"
-            //                 if !segs.is_empty() && segs[0] == "Values" {
-            //                     // keep segs as-is; we'll just add "."
-            //                 } else {
-            //                     out.push("Values".to_string());
-            //                 }
-            //             }
-            //         }
-            //
-            //         // If we already injected ".Values", drop a redundant leading "Values" from segs.
-            //         if out.len() >= 2 && out[0] == "." && out[1] == "Values" {
-            //             if !segs.is_empty() && segs[0] == "Values" {
-            //                 segs.remove(0);
-            //             }
-            //         }
-            //
-            //         out.extend(segs);
-            //         ArgExpr::Selector(out)
-            //     } else {
-            //         ArgExpr::Opaque
-            //     }
-            // }
             // NEW: handle `.ctx` / `.something` passed to include (robust to grammar variants)
             "field" => {
                 // Prefer explicit identifier nodes; fall back to first *named* child; and finally to full node text.
@@ -1485,19 +1400,20 @@ fn parse_include_call(call_node: Node, src: &str) -> Result<(String, ArgExpr), I
 }
 
 /// Prevent runaway recursion
-struct ExpansionGuard {
-    stack: Vec<String>,
+pub struct ExpansionGuard {
+    pub stack: Vec<String>,
 }
+
 impl ExpansionGuard {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { stack: Vec::new() }
     }
 }
 
 /// This state sits next to your existing emitter state. We keep it tiny.
-#[derive(Debug, Clone)]
-struct InlineState<'a> {
-    define_index: &'a DefineIndex,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InlineState<'a> {
+    pub define_index: &'a DefineIndex,
 }
 
 /// Walk the define body with a callee scope and let your *existing emitter* handle nodes.
@@ -1641,11 +1557,26 @@ fn collect_bases_from_expr(base: Node, src: &str, scope: &Scope, env: &Env) -> V
             if let Some(set) = env.get(name) {
                 return set.iter().cloned().collect();
             }
-            // Keep the same behavior as elsewhere: panic for unbound user vars
-            panic!(
-                "unbound template variable ${name} used as base at bytes {:?}",
-                base.byte_range()
+
+            // Degrade gracefully: treat as opaque/unknown base
+            eprintln!(
+                "{}",
+                diagnostics::pretty_error(
+                    "todo",
+                    src,
+                    base.byte_range(),
+                    Some(&format!(
+                        "unbound template variable ${name} used as base; treating as opaque"
+                    ))
+                )
             );
+            return vec![];
+
+            // // Keep the same behavior as elsewhere: panic for unbound user vars
+            // panic!(
+            //     "unbound template variable ${name} used as base at bytes {:?}",
+            //     base.byte_range()
+            // );
         }
 
         // `.foo` in a bare field
@@ -1801,12 +1732,27 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                             } else {
                                 eprintln!(
                                     "{}",
-                                    diagnostics::pretty_error("todo", src, n.byte_range(), None)
+                                    diagnostics::pretty_error(
+                                        "todo",
+                                        src,
+                                        n.byte_range(),
+                                        Some(&format!(
+                                            "unbound template variable ${var} in selector; treating as opaque"
+                                        ))
+                                    )
                                 );
-                                panic!(
-                                    "unbound template variable ${var} used in selector at bytes {:?}",
-                                    n.byte_range()
-                                );
+                                // Do NOT panic; just skip this fast-path and let generic resolution run
+                                // (or effectively ignore this occurrence for Values collection).
+                                continue;
+
+                                // eprintln!(
+                                //     "{}",
+                                //     diagnostics::pretty_error("todo", src, n.byte_range(), None)
+                                // );
+                                // panic!(
+                                //     "unbound template variable ${var} used in selector at bytes {:?}",
+                                //     n.byte_range()
+                                // );
                             }
                         }
                     }
@@ -1859,48 +1805,28 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                             } else {
                                 eprintln!(
                                     "{}",
-                                    diagnostics::pretty_error("todo", src, n.byte_range(), None)
+                                    diagnostics::pretty_error(
+                                        "todo",
+                                        src,
+                                        n.byte_range(),
+                                        Some(&format!(
+                                            "unbound template variable ${var} in selector; treating as opaque"
+                                        ))
+                                    )
                                 );
-                                panic!(
-                                    "unbound template variable ${var} used in selector at bytes {:?}",
-                                    n.byte_range()
-                                );
-                            }
+                                // Do NOT panic; just skip this fast-path and let generic resolution run
+                                // (or effectively ignore this occurrence for Values collection).
+                                continue;
 
-                            // let var = segs[1].trim_start_matches('.');
-                            // if var == "Values" {
-                            //     // treat as "$.Values..." — fall through to normal resolution
-                            // } else if let Some(bases) = env.get(var) {
-                            //     let tail = if segs.len() > 2 {
-                            //         segs[2..]
-                            //             .iter()
-                            //             .map(|s| s.trim_start_matches('.'))
-                            //             .collect::<Vec<_>>()
-                            //             .join(".")
-                            //     } else {
-                            //         String::new()
-                            //     };
-                            //     for base in bases {
-                            //         let key = if tail.is_empty() {
-                            //             base.clone()
-                            //         } else {
-                            //             format!("{base}.{tail}")
-                            //         };
-                            //         if !key.is_empty() {
-                            //             out.insert(key);
-                            //         }
-                            //     }
-                            //     continue;
-                            // } else {
-                            //     eprintln!(
-                            //         "{}",
-                            //         diagnostics::pretty_error("todo", src, n.byte_range(), None,)
-                            //     );
-                            //     panic!(
-                            //         "unbound template variable ${var} used in selector at bytes {:?}",
-                            //         n.byte_range()
-                            //     );
-                            // }
+                                // eprintln!(
+                                //     "{}",
+                                //     diagnostics::pretty_error("todo", src, n.byte_range(), None)
+                                // );
+                                // panic!(
+                                //     "unbound template variable ${var} used in selector at bytes {:?}",
+                                //     n.byte_range()
+                                // );
+                            }
                         }
                         if let Some(first) = segs.first() {
                             if first.starts_with('$') {
@@ -1932,13 +1858,28 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                                             "todo",
                                             src,
                                             n.byte_range(),
-                                            None,
+                                            Some(&format!(
+                                                "unbound template variable ${var} in selector; treating as opaque"
+                                            ))
                                         )
                                     );
-                                    panic!(
-                                        "unbound template variable ${var} used in selector at bytes {:?}",
-                                        n.byte_range()
-                                    );
+                                    // Do NOT panic; just skip this fast-path and let generic resolution run
+                                    // (or effectively ignore this occurrence for Values collection).
+                                    continue;
+
+                                    // eprintln!(
+                                    //     "{}",
+                                    //     diagnostics::pretty_error(
+                                    //         "todo",
+                                    //         src,
+                                    //         n.byte_range(),
+                                    //         None,
+                                    //     )
+                                    // );
+                                    // panic!(
+                                    //     "unbound template variable ${var} used in selector at bytes {:?}",
+                                    //     n.byte_range()
+                                    // );
                                 }
                             }
                         }
@@ -1956,10 +1897,7 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
             "chained_pipeline" => {
                 if let Some(head) = n.named_child(0) {
                     if head.kind() == "selector_expression" {
-                        if let Some(segs) = parse_selector_chain(head, src)
-                        // if let Some(segs) = parse_selector_expression(&head, src)
-                        //     .or_else(|| parse_selector_chain(head, src))
-                        {
+                        if let Some(segs) = parse_selector_chain(head, src) {
                             let origin = scope.resolve_selector(&segs);
                             if let Some(vp) = origin_to_value_path(&origin) {
                                 if !vp.is_empty() {
@@ -2016,86 +1954,9 @@ fn collect_values_with_scope(node: Node, src: &str, scope: &Scope, env: &Env) ->
                                 }
                             }
 
-                            // resolve base to .Values paths (same as index())
                             // resolve base -> list of base paths
                             let mut bases: Vec<String> =
                                 collect_bases_from_expr(base, src, scope, env);
-                            // let mut bases: Vec<String> = Vec::new();
-                            // match base.kind() {
-                            //     "selector_expression" => {
-                            //         if let Some(segs) = parse_selector_chain(base, src)
-                            //         // if let Some(segs) = parse_selector_expression(&base, src)
-                            //         //     .or_else(|| parse_selector_chain(base, src))
-                            //         {
-                            //             if let Some(vp) =
-                            //                 origin_to_value_path(&scope.resolve_selector(&segs))
-                            //             {
-                            //                 bases.push(vp);
-                            //             }
-                            //         }
-                            //     }
-                            //     "dot" => {
-                            //         if let Some(vp) = origin_to_value_path(&scope.dot) {
-                            //             bases.push(vp);
-                            //         }
-                            //     }
-                            //     "variable" => {
-                            //         let raw = base.utf8_text(src.as_bytes()).unwrap_or("").trim();
-                            //         if raw == "$" {
-                            //             if let Some(vp) = origin_to_value_path(&scope.dollar) {
-                            //                 bases.push(vp);
-                            //             }
-                            //         } else {
-                            //             let name = raw.trim_start_matches('$');
-                            //             if let Some(set) = env.get(name) {
-                            //                 bases.extend(set.iter().cloned());
-                            //             } else {
-                            //                 panic!(
-                            //                     "unbound template variable ${name} used as get() base at bytes {:?}",
-                            //                     n.byte_range()
-                            //                 );
-                            //             }
-                            //         }
-                            //     }
-                            //     "field" => {
-                            //         let name = base
-                            //             .child_by_field_name("identifier")
-                            //             .or_else(|| base.child_by_field_name("field_identifier"))
-                            //             .and_then(|id| {
-                            //                 id.utf8_text(src.as_bytes())
-                            //                     .ok()
-                            //                     .map(|s| s.trim().to_string())
-                            //             })
-                            //             .unwrap_or_else(|| {
-                            //                 base.utf8_text(src.as_bytes())
-                            //                     .unwrap_or("")
-                            //                     .trim()
-                            //                     .trim_start_matches('.')
-                            //                     .to_string()
-                            //             });
-                            //
-                            //         if let Some(bound) = scope.bindings.get(&name) {
-                            //             if let Some(vp) = origin_to_value_path(bound) {
-                            //                 bases.push(vp);
-                            //             } else {
-                            //                 let segs = vec![".".to_string(), name.clone()];
-                            //                 if let Some(vp) =
-                            //                     origin_to_value_path(&scope.resolve_selector(&segs))
-                            //                 {
-                            //                     bases.push(vp);
-                            //                 }
-                            //             }
-                            //         } else {
-                            //             let segs = vec![".".to_string(), name];
-                            //             if let Some(vp) =
-                            //                 origin_to_value_path(&scope.resolve_selector(&segs))
-                            //             {
-                            //                 bases.push(vp);
-                            //             }
-                            //         }
-                            //     }
-                            //     _ => {}
-                            // }
 
                             // combine base + keys
                             for mut b in bases {
@@ -2352,15 +2213,280 @@ fn collect_values_following_includes(
     acc
 }
 
-#[derive(Default)]
-struct InlineOut {
-    buf: String,
-    placeholders: Vec<crate::sanitize::Placeholder>,
-    guards: Vec<ValueUse>,
-    next_id: usize,
-    env: Env, // $var -> set of .Values.* it refers to
+// NEW: remember the parent container (mapping/sequence) at a given indent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct FragmentParent {
+    slot: Slot, // MappingValue or SequenceItem
+    indent: usize,
+}
+
+fn line_indent(buf: &str) -> usize {
+    let start = buf.rfind('\n').map(|i| i + 1).unwrap_or(0);
+    buf[start..].chars().take_while(|c| *c == ' ').count()
+}
+
+// NEW: update the sticky parent hint when we append raw YAML text.
+// - If a non-empty line ends with ":" → mapping parent at that indent
+// - If a line (after indent) starts with "- " → sequence item context
+// - Any other non-whitespace content clears the hint (conservatively)
+fn update_fragment_parent_from_text(
+    out: &mut InlineOut,
+    // hint: &mut Option<FragmentParent>,
+    text: &str,
+) {
+    // for line in text.split('\n') {
+    //     let trimmed_end = line.trim_end();
+    //     if trimmed_end.is_empty() {
+    //         continue;
+    //     }
+    //     let indent = line.chars().take_while(|&c| c == ' ').count();
+    //     let after = &line[indent..];
+    //
+    //     if trimmed_end.ends_with(':') {
+    //         out.last_fragment_parent = Some(FragmentParent {
+    //             slot: Slot::MappingValue,
+    //             indent,
+    //         });
+    //     } else if after.starts_with("- ") {
+    //         // Sequence context detected at this indent.
+    //         out.last_fragment_parent = Some(FragmentParent {
+    //             slot: Slot::SequenceItem,
+    //             indent,
+    //         });
+    //
+    //         // 🔧 Retro-fix: if the last placeholder at this indent was emitted as a mapping value,
+    //         // rewrite that line into a list item.
+    //         if let Some(&(line_start, ph_id, ph_slot)) = out.last_ph_line_by_indent.get(&indent) {
+    //             if matches!(ph_slot, Slot::MappingValue) {
+    //                 // Locate end of that line
+    //                 let line_end = out.buf[line_start..]
+    //                     .find('\n')
+    //                     .map(|k| line_start + k)
+    //                     .unwrap_or_else(|| out.buf.len());
+    //
+    //                 // The old line is: <indent>"__TSG_PLACEHOLDER_{id}__": 0
+    //                 // Replace with:    <indent>- { "__TSG_PLACEHOLDER_{id}__": 0 }
+    //                 let replacement = format!(
+    //                     "{}- {{ \"__TSG_PLACEHOLDER_{}__\": 0 }}",
+    //                     " ".repeat(indent),
+    //                     ph_id
+    //                 );
+    //
+    //                 out.buf.replace_range(line_start..line_end, &replacement);
+    //
+    //                 // Update the cached slot for this indent so we don't rewrite again.
+    //                 out.last_ph_line_by_indent
+    //                     .insert(indent, (line_start, ph_id, Slot::SequenceItem));
+    //             }
+    //         }
+    //     } else if after.chars().any(|ch| !ch.is_whitespace()) {
+    //         out.last_fragment_parent = None;
+    //     }
+    // }
+    for line in text.split('\n') {
+        let trimmed_end = line.trim_end();
+        if trimmed_end.is_empty() {
+            continue;
+        }
+        let indent = line.chars().take_while(|&c| c == ' ').count();
+        let after = &line[indent..];
+        if trimmed_end.ends_with(':') {
+            out.last_fragment_parent = Some(FragmentParent {
+                slot: Slot::MappingValue,
+                indent,
+            });
+        } else if after.starts_with("- ") {
+            out.last_fragment_parent = Some(FragmentParent {
+                slot: Slot::SequenceItem,
+                indent,
+            });
+        } else if after.chars().any(|ch| !ch.is_whitespace()) {
+            // Some real content that isn't a key/dash → drop the old hint
+            out.last_fragment_parent = None;
+        }
+    }
+}
+
+#[cfg(false)]
+mod guess {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum BlockKind {
+        Seq,
+        Map,
+        Unknown,
+    }
+
+    /// Scan around the insertion line to guess whether siblings at `indent` are a sequence or a map.
+    /// We look forward first, then backward; only consider non-empty lines at the same indent.
+    fn guess_block_kind(lines: &[&str], cur_idx: usize, indent: usize) -> BlockKind {
+        // look forward up to ~16 logical lines
+        let fwd_limit = lines.len().min(cur_idx + 16);
+        for j in (cur_idx + 1)..fwd_limit {
+            let l = lines[j];
+            let t = l.trim_start();
+            if t.is_empty() {
+                continue;
+            }
+            let ind = l.len() - t.len();
+            if ind < indent {
+                break;
+            } // left the block
+            if ind == indent {
+                if t.starts_with("- ") || t == "-" {
+                    return BlockKind::Seq;
+                }
+                if t.ends_with(':') || t.contains(": ") {
+                    return BlockKind::Map;
+                }
+            }
+        }
+        // look backward up to ~16 logical lines
+        let start = cur_idx.saturating_sub(16);
+        for j in (start..cur_idx).rev() {
+            let l = lines[j];
+            let t = l.trim_start();
+            if t.is_empty() {
+                continue;
+            }
+            let ind = l.len() - t.len();
+            if ind < indent {
+                break;
+            }
+            if ind == indent {
+                if t.starts_with("- ") || t == "-" {
+                    return BlockKind::Seq;
+                }
+                if t.ends_with(':') || t.contains(": ") {
+                    return BlockKind::Map;
+                }
+            }
+        }
+        BlockKind::Unknown
+    }
+
+    /// Count the number of '\n' before `byte` to get the 0-based source line index.
+    fn source_line_index_at(src: &str, byte: usize) -> usize {
+        src[..byte]
+            .as_bytes()
+            .iter()
+            .filter(|&&b| b == b'\n')
+            .count()
+    }
+
+    /// Emit a single *line* placeholder adjusted to the surrounding container.
+    /// IMPORTANT: This writes at the *current* line position (so call `ensure_current_line_indent` first).
+    /// Returns the kind it chose (Seq/Map/Unknown) so callers can update sticky parent hints.
+    fn emit_contextual_placeholder_line(
+        out: &mut String,
+        id: usize,
+        target_indent: usize,
+        src: &str,
+        node: &tree_sitter::Node,
+    ) -> BlockKind {
+        let lines: Vec<&str> = src.split('\n').collect();
+        let cur_idx = source_line_index_at(src, node.start_byte());
+        let kind = guess_block_kind(&lines, cur_idx, target_indent);
+
+        use std::fmt::Write as _;
+        let tag = format!("__TSG_PLACEHOLDER_{}__", id);
+
+        match kind {
+            BlockKind::Seq => {
+                // Emit a *list item* that is a tiny map: - { "__TSG_PLACEHOLDER_#__": 0 }
+                let _ = writeln!(out, r#"- {{ "{tag}": 0 }}"#);
+            }
+            BlockKind::Map => {
+                // Emit a mapping entry under the current value position: "__TSG_PLACEHOLDER_#__": 0
+                let _ = writeln!(out, r#""{tag}": 0"#);
+            }
+            BlockKind::Unknown => {
+                // Stay safe: a comment never breaks YAML and still leaves a breadcrumb
+                let _ = writeln!(out, r#"# {tag}"#);
+            }
+        }
+
+        kind
+    }
+}
+
+#[derive(Clone, Debug)]
+struct PendingFragment {
+    id: usize,
+    indent: usize,
+}
+
+fn flush_pending_for_indent(out: &mut InlineOut, indent: usize, slot: Slot) {
+    use std::fmt::Write as _;
+    if let Some(mut ids) = out.pending.remove(&indent) {
+        if !out.buf.ends_with('\n') {
+            out.buf.push('\n');
+        }
+        for id in ids.drain(..) {
+            ensure_current_line_indent(&mut out.buf, indent);
+            write_fragment_placeholder_line(&mut out.buf, id, slot);
+        }
+        // record parent once we actually wrote something
+        out.last_fragment_parent = Some(FragmentParent { slot, indent });
+    }
+}
+
+fn flush_all_pending(out: &mut InlineOut) {
+    // if we never got a decisive line, default to mapping at that indent
+    let indents: Vec<usize> = out.pending.keys().copied().collect();
+    for i in indents {
+        flush_pending_for_indent(out, i, Slot::MappingValue);
+    }
+}
+
+// fn flush_pending_for_indent(out: &mut InlineOut, indent: usize, slot: Slot) {
+//     use std::fmt::Write as _;
+//     if let Some(mut ids) = out.pending.remove(&indent) {
+//         if !out.buf.ends_with('\n') {
+//             out.buf.push('\n');
+//         }
+//         for id in ids.drain(..) {
+//             ensure_current_line_indent(&mut out.buf, indent);
+//             write_fragment_placeholder_line(&mut out.buf, id, slot);
+//         }
+//         // update sticky parent after actually writing
+//         out.last_fragment_parent = Some(FragmentParent { slot, indent });
+//     }
+// }
+//
+// fn flush_all_pending(out: &mut InlineOut) {
+//     // default to mapping value when we never saw a disambiguating line
+//     let indents: Vec<usize> = out.pending.keys().copied().collect();
+//     for i in indents {
+//         flush_pending_for_indent(out, i, Slot::MappingValue);
+//     }
+// }
+
+#[derive(Default, Clone, PartialEq, Eq)]
+pub struct InlineOut {
+    pub buf: String,
+    pub placeholders: Vec<crate::sanitize::Placeholder>,
+    pub guards: Vec<ValueUse>,
+    pub next_id: usize,
+    pub env: Env, // $var -> set of .Values.* it refers to
     // NEW: force Role::Fragment at conversion time (without changing how we wrote the placeholder)
-    force_fragment_role: HashSet<usize>,
+    pub force_fragment_role: HashSet<usize>,
+    // NEW: sticky parent container hint (mapping or sequence) at a specific indent
+    pub last_fragment_parent: Option<FragmentParent>,
+
+    // NEW: defer fragment placeholders until we know the container kind at this indent
+    pub pending: std::collections::BTreeMap<usize, Vec<usize>>,
+
+    // // NEW: deferred fragment placeholders waiting for disambiguation at an indent
+    // pub pending: std::collections::BTreeMap<usize, Vec<usize>>,
+    // NEW: remember the last fragment placeholder line we emitted at a given indent
+    // pub last_ph_line_by_indent: BTreeMap<
+    //     usize,
+    //     (
+    //         usize, /*line_start*/
+    //         usize, /*id*/
+    //         Slot,  /*slot we used*/
+    //     ),
+    // >,
 }
 
 fn first_text_child_start(n: &Node) -> Option<usize> {
@@ -2385,34 +2511,56 @@ fn is_guard_piece(node: &Node) -> bool {
 }
 
 fn current_slot_in_buf(buf: &str) -> Slot {
-    // Look at the current and the previous non-empty line
     let mut it = buf.rsplit('\n');
+    let cur = it.next().unwrap_or("");
+    let cur_trim_end = cur.trim_end();
 
-    let cur = it.next().unwrap_or(""); // current (possibly empty) line
+    // NEW: if the *current* line ends with ':', we're about to emit its value
+    if cur_trim_end.ends_with(':') {
+        return Slot::MappingValue;
+    }
+
     let cur_trim = cur.trim_start();
-
-    // If current line already starts with "- " → list item context
     if cur_trim.starts_with("- ") {
         return Slot::SequenceItem;
     }
 
     let prev_non_empty = it.find(|l| !l.trim().is_empty()).unwrap_or("");
-
-    let prev_trim = prev_non_empty.trim_end();
-
-    // Definitely mapping value if the previous non-empty line ends with ':'
-    if prev_trim.ends_with(':') {
+    if prev_non_empty.trim_end().ends_with(':') {
         return Slot::MappingValue;
     }
-
-    // NEW: stay in mapping if the previous non-empty line is a placeholder mapping entry
-    // e.g.   "  "__TSG_PLACEHOLDER_3__": 0"
-    if prev_trim.contains("__TSG_PLACEHOLDER_") && prev_trim.contains("\": 0") {
-        return Slot::MappingValue;
-    }
-
     Slot::Plain
 }
+
+// fn current_slot_in_buf(buf: &str) -> Slot {
+//     // Look at the current and the previous non-empty line
+//     let mut it = buf.rsplit('\n');
+//
+//     let cur = it.next().unwrap_or(""); // current (possibly empty) line
+//     let cur_trim = cur.trim_start();
+//
+//     // If current line already starts with "- " → list item context
+//     if cur_trim.starts_with("- ") {
+//         return Slot::SequenceItem;
+//     }
+//
+//     let prev_non_empty = it.find(|l| !l.trim().is_empty()).unwrap_or("");
+//
+//     let prev_trim = prev_non_empty.trim_end();
+//
+//     // Definitely mapping value if the previous non-empty line ends with ':'
+//     if prev_trim.ends_with(':') {
+//         return Slot::MappingValue;
+//     }
+//
+//     // // NEW: stay in mapping if the previous non-empty line is a placeholder mapping entry
+//     // // e.g.   "  "__TSG_PLACEHOLDER_3__": 0"
+//     // if prev_trim.contains("__TSG_PLACEHOLDER_") && prev_trim.contains("\": 0") {
+//     //     return Slot::MappingValue;
+//     // }
+//
+//     Slot::Plain
+// }
 
 fn write_fragment_placeholder_line(buf: &mut String, id: usize, slot: Slot) {
     use std::fmt::Write as _;
@@ -2421,16 +2569,184 @@ fn write_fragment_placeholder_line(buf: &mut String, id: usize, slot: Slot) {
             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0");
         }
         Slot::SequenceItem => {
-            // List item already started with "- "
-            let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
+            // // Write a *list item* that is a one-line mapping
+            // let _ = writeln!(buf, "- {{ \"__TSG_PLACEHOLDER_{id}__\": 0 }}");
+            // IMPORTANT: a sequence item must start with "- "
+            let _ = writeln!(buf, "- \"__TSG_PLACEHOLDER_{id}__\": 0");
         }
         Slot::Plain => {
-            // let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
-            // TOP-LEVEL or “plain” site for *fragments* → use a mapping stub
-            // so the overall YAML document remains a mapping, not a scalar.
             let _ = write!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0\n");
         }
     }
+}
+
+fn emit_text_and_update(out: &mut InlineOut, text: &str) {
+    for raw in text.split_inclusive('\n') {
+        let line = raw.trim_end_matches('\n');
+        let indent = line.chars().take_while(|&c| c == ' ').count();
+        let after = &line[indent..];
+
+        // On dedent: flush any deeper-indented pending as mapping
+        {
+            let deeper: Vec<usize> = out
+                .pending
+                .keys()
+                .copied()
+                .filter(|&i| i > indent)
+                .collect();
+            for i in deeper {
+                flush_pending_for_indent(out, i, Slot::MappingValue);
+            }
+        }
+
+        // If the next line at this indent is decisive (non-template, non-blank), flush pending first
+        let is_template = after.trim_start().starts_with("{{");
+        let is_blank = after.trim().is_empty();
+        if out.pending.contains_key(&indent) && !is_template && !is_blank {
+            if after.starts_with("- ") {
+                flush_pending_for_indent(out, indent, Slot::SequenceItem);
+            } else if after.contains(':') {
+                flush_pending_for_indent(out, indent, Slot::MappingValue);
+            }
+            // else keep waiting (e.g., comments)
+        }
+
+        // Now append the actual text and keep the simple sticky hint
+        out.buf.push_str(raw);
+        update_fragment_parent_from_text(out, raw);
+    }
+}
+
+// fn emit_text_and_update(out: &mut InlineOut, text: &str) {
+//     // Process line-by-line, so we can flush before appending the decisive line
+//     for raw in text.split_inclusive('\n') {
+//         let line = raw.trim_end_matches('\n');
+//         let indent = line.chars().take_while(|&c| c == ' ').count();
+//         let after = &line[indent..];
+//
+//         // 1) If we dedent, flush any pending deeper-than-current as mapping
+//         {
+//             let deeper: Vec<usize> = out
+//                 .pending
+//                 .keys()
+//                 .copied()
+//                 .filter(|&i| i > indent)
+//                 .collect();
+//             for i in deeper {
+//                 flush_pending_for_indent(out, i, Slot::MappingValue);
+//             }
+//         }
+//
+//         // 2) If this line is a real YAML token at this indent, flush pending at this indent
+//         //    BEFORE writing the line
+//         let is_template = after.trim_start().starts_with("{{");
+//         let is_blank = after.trim().is_empty();
+//
+//         if out.pending.contains_key(&indent) && !is_template && !is_blank {
+//             if after.starts_with("- ") {
+//                 flush_pending_for_indent(out, indent, Slot::SequenceItem);
+//             } else if after.contains(':') {
+//                 // "key:" (or "key: value") → mapping value at this indent
+//                 flush_pending_for_indent(out, indent, Slot::MappingValue);
+//             }
+//             // else: not decisive, keep waiting
+//         }
+//
+//         // 3) Append the actual text line
+//         out.buf.push_str(raw);
+//
+//         // 4) Maintain the sticky parent hint from what we just wrote
+//         update_fragment_parent_from_text(out, raw);
+//     }
+// }
+
+// fn write_fragment_placeholder_line(buf: &mut String, id: usize, slot: Slot) {
+//     use std::fmt::Write as _;
+//     match slot {
+//         Slot::MappingValue => {
+//             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0");
+//         }
+//         Slot::SequenceItem => {
+//             // Treat fragment as a mapping node under the list item
+//             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0");
+//         }
+//         Slot::Plain => {
+//             let _ = write!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0\n");
+//         }
+//     }
+// }
+
+// fn write_fragment_placeholder_line(buf: &mut String, id: usize, slot: Slot) {
+//     use std::fmt::Write as _;
+//     match slot {
+//         Slot::MappingValue => {
+//             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0");
+//         }
+//         Slot::SequenceItem => {
+//             // List item already started with "- "
+//             let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
+//         }
+//         Slot::Plain => {
+//             // let _ = writeln!(buf, "\"__TSG_PLACEHOLDER_{id}__\"");
+//             // TOP-LEVEL or “plain” site for *fragments* → use a mapping stub
+//             // so the overall YAML document remains a mapping, not a scalar.
+//             let _ = write!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0\n");
+//         }
+//     }
+// }
+
+/// Scan forward in `src` from byte offset `from` to find the next non-empty *text* line
+/// at exactly `target_indent`. Ignore template actions like `{{ ... }}`.
+/// If such a line starts with "- " => sequence item; if it looks like `key:` => mapping value.
+/// Otherwise return None (can’t decide).
+fn predict_slot_ahead(src: &str, from: usize, target_indent: usize) -> Option<Slot> {
+    let bytes = src.as_bytes();
+    let mut i = from;
+
+    while i < bytes.len() {
+        // line bounds
+        let line_start = i;
+        let mut j = i;
+        while j < bytes.len() && bytes[j] != b'\n' {
+            j += 1;
+        }
+        let line = &src[line_start..j];
+        i = if j < bytes.len() { j + 1 } else { j };
+
+        let trimmed = line.trim_end();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        let indent = line.chars().take_while(|&c| c == ' ').count();
+        let after = &line[indent..];
+
+        // Skip pure template actions
+        if after.starts_with("{{") || after.starts_with("{%-") || after.starts_with("{%") {
+            continue;
+        }
+
+        // If we bubbled out, stop — parent changed
+        if indent < target_indent {
+            return None;
+        }
+        // If deeper, not informative for this level — keep scanning
+        if indent > target_indent {
+            continue;
+        }
+
+        // indent == target_indent
+        if after.starts_with("- ") {
+            return Some(Slot::SequenceItem);
+        }
+        // treat `key:`/`"key":` as mapping; cheap heuristic is fine here
+        if after.contains(':') {
+            return Some(Slot::MappingValue);
+        }
+
+        // some other token: keep looking
+    }
+    None
 }
 
 fn write_placeholder(
@@ -2454,32 +2770,292 @@ fn write_placeholder(
     }
 
     if is_fragment_output {
-        // Decide slot with nindent awareness
+        // Decide the container target indent (same logic you already compute)
         let nin = extract_nindent_width(&node, src).unwrap_or(0);
         let mut slot = current_slot_in_buf(&out.buf);
+        let before_indent = line_indent(&out.buf);
 
-        eprintln!(
-            "[frag-ph] id={id} slot={:?} after='{}'",
-            slot,
-            last_non_empty_line(&out.buf).trim_end()
-        );
-
-        // If previous non-empty line ended with ":" we *usually* are in the mapping value.
-        // But `nindent 0` escapes back to top-level → force Plain.
-        if matches!(slot, Slot::MappingValue) {
-            if nin == 0 {
-                slot = Slot::Plain;
-            } else {
-                // We remain under the mapping; make sure the line has at least `nin` spaces.
-                ensure_current_line_indent(&mut out.buf, nin);
+        // Inherit parent if we looked "Plain" but have a sticky parent recorded at this indent
+        if matches!(slot, Slot::Plain) {
+            if let Some(h) = out.last_fragment_parent {
+                let target_indent = if nin > 0 { nin } else { before_indent };
+                if h.indent == target_indent {
+                    slot = h.slot;
+                }
             }
-        } else if matches!(slot, Slot::Plain) && nin > 0 {
-            // Even in "plain" sites (e.g. right after a newline), rendering will start
-            // with `nin` spaces. Reflect it for YAML cleanliness.
-            ensure_current_line_indent(&mut out.buf, nin);
         }
 
-        write_fragment_placeholder_line(&mut out.buf, id, slot);
+        // Unified line break & target indent (we still want the fragment on its own line)
+        let (need_nl, target_indent) = match slot {
+            Slot::MappingValue => (true, if nin > 0 { nin } else { before_indent + 2 }),
+            Slot::SequenceItem => (true, if nin > 0 { nin } else { before_indent + 2 }),
+            Slot::Plain => (false, if nin > 0 { nin } else { before_indent }),
+        };
+
+        if need_nl && !out.buf.ends_with('\n') {
+            out.buf.push('\n');
+        }
+
+        // *** NEW: defer emission. We’ll flush as soon as a decisive line appears at this indent.
+        out.pending.entry(target_indent).or_default().push(id);
+
+        // let nin = extract_nindent_width(&node, src).unwrap_or(0);
+        // let mut slot = current_slot_in_buf(&out.buf);
+        // let before_indent = line_indent(&out.buf);
+        //
+        // // If we think we're Plain but we have a sticky parent at the same indent, inherit it
+        // if matches!(slot, Slot::Plain) {
+        //     if let Some(h) = out.last_fragment_parent {
+        //         let target_indent = if nin > 0 { nin } else { before_indent };
+        //         if h.indent == target_indent {
+        //             slot = h.slot;
+        //         }
+        //     }
+        // }
+        //
+        // // --- NEW: unified line-break & indent policy for container sites ---
+        // let (need_nl, target_indent) = match slot {
+        //     Slot::MappingValue => (true, if nin > 0 { nin } else { before_indent + 2 }),
+        //     Slot::SequenceItem => (true, if nin > 0 { nin } else { before_indent + 2 }),
+        //     Slot::Plain => (false, if nin > 0 { nin } else { before_indent }),
+        // };
+        //
+        // // NEW: look ahead to disambiguate container at this indent
+        // let predicted = predict_slot_ahead(src, node.end_byte(), target_indent);
+        // if let Some(p) = predicted {
+        //     // Only allow Seq/Map override; never force Plain here
+        //     match p {
+        //         Slot::SequenceItem | Slot::MappingValue => {
+        //             slot = p;
+        //         }
+        //         Slot::Plain => {}
+        //     }
+        // }
+        //
+        // let line_start = out.buf.rfind('\n').map(|i| i + 1).unwrap_or(0);
+        //
+        // if need_nl && !out.buf.ends_with('\n') {
+        //     out.buf.push('\n');
+        // }
+        // if target_indent > 0 {
+        //     ensure_current_line_indent(&mut out.buf, target_indent);
+        // }
+        //
+        // // // remember where this placeholder line begins, and with which slot we *think* we’re in
+        // // out.last_ph_line_by_indent
+        // //     .insert(target_indent, (line_start, id, slot));
+        //
+        // // actually write the placeholder line
+        // write_fragment_placeholder_line(&mut out.buf, id, slot);
+        //
+        // // // Write the container-safe placeholder line (no leading spaces; we already set indent)
+        // // let kind = emit_contextual_placeholder_line(&mut out.buf, id, target_indent, src, &node);
+        // //
+        // // // Update sticky parent based on what we actually emitted
+        // // out.last_fragment_parent = match kind {
+        // //     BlockKind::Seq => Some(FragmentParent {
+        // //         slot: Slot::SequenceItem,
+        // //         indent: target_indent,
+        // //     }),
+        // //     BlockKind::Map => Some(FragmentParent {
+        // //         slot: Slot::MappingValue,
+        // //         indent: target_indent,
+        // //     }),
+        // //     BlockKind::Unknown => None,
+        // // };
+        // //
+        // // write_fragment_placeholder_line(&mut out.buf, id, slot);
+        //
+        // // Sticky parent remembers the indent we actually used
+        // match slot {
+        //     Slot::MappingValue | Slot::SequenceItem => {
+        //         out.last_fragment_parent = Some(FragmentParent {
+        //             slot,
+        //             indent: target_indent,
+        //         });
+        //     }
+        //     Slot::Plain => {
+        //         out.last_fragment_parent = None;
+        //     }
+        // }
+
+        // record placeholder metadata (unchanged) ...
+        out.placeholders.push(Placeholder {
+            id,
+            role: Role::Unknown,
+            action_span: node.byte_range(),
+            values: values.into_iter().collect(),
+            is_fragment_output: true,
+        });
+        if force_fragment_role {
+            out.force_fragment_role.insert(id);
+        }
+        return;
+
+        // -------- 
+
+        // let nin = extract_nindent_width(&node, src).unwrap_or(0);
+        // let mut slot = current_slot_in_buf(&out.buf);
+        // let before_indent = line_indent(&out.buf);
+        //
+        // // If we currently think we're "Plain", but we have a remembered parent at this indent,
+        // // inherit it so successive fragment lines stay under the same mapping/sequence.
+        // if matches!(slot, Slot::Plain) {
+        //     if let Some(h) = out.last_fragment_parent {
+        //         let target_indent = if nin > 0 { nin } else { before_indent };
+        //         if h.indent == target_indent {
+        //             slot = h.slot;
+        //         }
+        //     }
+        // }
+        //
+        // // ✅ NEW logic for mapping-value sites
+        // if matches!(slot, Slot::MappingValue) {
+        //     // Use explicit nindent if present, else indent one YAML level under the key
+        //     let target_indent = if nin > 0 { nin } else { before_indent + 2 };
+        //     ensure_current_line_indent(&mut out.buf, target_indent);
+        // } else if matches!(slot, Slot::Plain) && nin > 0 {
+        //     // Plain site with explicit indentation → reflect it
+        //     ensure_current_line_indent(&mut out.buf, nin);
+        // }
+        //
+        // write_fragment_placeholder_line(&mut out.buf, id, slot);
+        //
+        // // Update sticky parent hint with the *same* indent we just used
+        // match slot {
+        //     Slot::MappingValue | Slot::SequenceItem => {
+        //         let parent_indent = if nin > 0 { nin } else { before_indent + 2 }; // ← changed
+        //         out.last_fragment_parent = Some(FragmentParent {
+        //             slot,
+        //             indent: parent_indent,
+        //         });
+        //     }
+        //     Slot::Plain => {
+        //         out.last_fragment_parent = None;
+        //     }
+        // }
+
+        // // Decide slot with nindent awareness + sticky parent hint
+        // let nin = extract_nindent_width(&node, src).unwrap_or(0);
+        // let mut slot = current_slot_in_buf(&out.buf);
+        // let before_indent = line_indent(&out.buf);
+        //
+        // // If we currently think we're "Plain", but we have a remembered parent at this indent,
+        // // inherit it so successive fragment lines stay under the same mapping/sequence.
+        // if matches!(slot, Slot::Plain) {
+        //     if let Some(h) = out.last_fragment_parent {
+        //         let target_indent = if nin > 0 { nin } else { before_indent };
+        //         if h.indent == target_indent {
+        //             slot = h.slot;
+        //         }
+        //     }
+        // }
+        //
+        // // --- NEW: always break the line before emitting a fragment into a mapping value
+        // // (and also when an explicit nindent/indent width is present).
+        // let must_break_line = matches!(slot, Slot::MappingValue) || nin > 0;
+        // if must_break_line && !out.buf.ends_with('\n') {
+        //     out.buf.push('\n');
+        // }
+        //
+        // // Apply indent *after* the break. If nin==0 at a mapping site, escape to Plain.
+        // if matches!(slot, Slot::MappingValue) {
+        //     if nin == 0 {
+        //         slot = Slot::Plain; // treat nindent 0 as escaping to top-level
+        //     } else {
+        //         ensure_current_line_indent(&mut out.buf, nin);
+        //     }
+        // } else if matches!(slot, Slot::Plain) && nin > 0 {
+        //     ensure_current_line_indent(&mut out.buf, nin);
+        // }
+        //
+        // // Actually write the placeholder line for fragments
+        // write_fragment_placeholder_line(&mut out.buf, id, slot);
+        //
+        // // Update sticky parent hint
+        // match slot {
+        //     Slot::MappingValue | Slot::SequenceItem => {
+        //         let parent_indent = if nin > 0 { nin } else { before_indent };
+        //         out.last_fragment_parent = Some(FragmentParent {
+        //             slot,
+        //             indent: parent_indent,
+        //         });
+        //     }
+        //     Slot::Plain => out.last_fragment_parent = None,
+        // }
+
+        // // Decide slot with nindent awareness + sticky parent hint
+        // let nin = extract_nindent_width(&node, src).unwrap_or(0);
+        // let mut slot = current_slot_in_buf(&out.buf);
+        // let before_indent = line_indent(&out.buf);
+        //
+        // // If we currently think we're "Plain", but we have a remembered parent at this indent,
+        // // inherit it so successive fragment lines stay under the same mapping/sequence.
+        // if matches!(slot, Slot::Plain) {
+        //     if let Some(h) = out.last_fragment_parent {
+        //         let target_indent = if nin > 0 { nin } else { before_indent };
+        //         if h.indent == target_indent {
+        //             slot = h.slot;
+        //         }
+        //     }
+        // }
+        //
+        // // Apply indent effects for mapping sites when nindent > 0
+        // if matches!(slot, Slot::MappingValue) {
+        //     if nin == 0 {
+        //         // nindent(0) escapes to top-level → treat as Plain
+        //         slot = Slot::Plain;
+        //     } else {
+        //         ensure_current_line_indent(&mut out.buf, nin);
+        //     }
+        // } else if matches!(slot, Slot::Plain) && nin > 0 {
+        //     // Plain site with explicit indentation → reflect it for YAML cleanliness
+        //     ensure_current_line_indent(&mut out.buf, nin);
+        // }
+        //
+        // // Actually write the placeholder line for fragments
+        // write_fragment_placeholder_line(&mut out.buf, id, slot);
+        //
+        // // Update the sticky parent hint for subsequent fragments at the same indent
+        // match slot {
+        //     Slot::MappingValue | Slot::SequenceItem => {
+        //         let parent_indent = if nin > 0 { nin } else { before_indent };
+        //         out.last_fragment_parent = Some(FragmentParent {
+        //             slot,
+        //             indent: parent_indent,
+        //         });
+        //     }
+        //     Slot::Plain => {
+        //         out.last_fragment_parent = None;
+        //     }
+        // }
+
+        // // Decide slot with nindent awareness
+        // let nin = extract_nindent_width(&node, src).unwrap_or(0);
+        // let mut slot = current_slot_in_buf(&out.buf);
+        //
+        // eprintln!(
+        //     "[frag-ph] id={id} slot={:?} after='{}'",
+        //     slot,
+        //     last_non_empty_line(&out.buf).trim_end()
+        // );
+        //
+        // // If previous non-empty line ended with ":" we *usually* are in the mapping value.
+        // // But `nindent 0` escapes back to top-level → force Plain.
+        // if matches!(slot, Slot::MappingValue) {
+        //     if nin == 0 {
+        //         slot = Slot::Plain;
+        //     } else {
+        //         // We remain under the mapping; make sure the line has at least `nin` spaces.
+        //         ensure_current_line_indent(&mut out.buf, nin);
+        //     }
+        // } else if matches!(slot, Slot::Plain) && nin > 0 {
+        //     // Even in "plain" sites (e.g. right after a newline), rendering will start
+        //     // with `nin` spaces. Reflect it for YAML cleanliness.
+        //     ensure_current_line_indent(&mut out.buf, nin);
+        // }
+        //
+        // write_fragment_placeholder_line(&mut out.buf, id, slot);
     } else {
         // Scalar placeholders must end with a newline, or YAML can get glued together.
         out.buf.push('"');
@@ -2502,7 +3078,7 @@ fn write_placeholder(
 }
 
 // Walk a template/define body and inline includes when appropriate.
-fn inline_emit_tree(
+pub fn inline_emit_tree(
     tree: &tree_sitter::Tree,
     src: &str,
     scope: &Scope,
@@ -2581,8 +3157,17 @@ fn inline_emit_tree(
             if ch.kind() == "text" {
                 let parent_is_define = container.kind() == "define_action";
                 if !parent_is_define {
-                    out.buf.push_str(&src[ch.byte_range()]);
+                    let txt = &src[ch.byte_range()];
+                    emit_text_and_update(out, txt);
+
+                    // let txt = &src[ch.byte_range()];
+                    // // NEW: keep parent container hint in sync with the text we just appended
+                    // update_fragment_parent_from_text(out, txt);
+                    // out.buf.push_str(txt);
                 }
+                // if !parent_is_define {
+                //     out.buf.push_str(&src[ch.byte_range()]);
+                // }
                 continue;
             }
 
@@ -2842,14 +3427,27 @@ fn inline_emit_tree(
                         let body_src = &entry.source[entry.body_byte_range.clone()];
                         let body = parse_gotmpl_document(body_src).ok_or(Error::ParseTemplate)?;
 
-                        match ctx {
-                            Role::ScalarValue => {
-                                // Same 4 steps as the direct-include branch
+                        let slot = current_slot_in_buf(&out.buf);
+                        let has_indent = pipeline_contains_any(&ch, src, &["nindent", "indent"]);
+                        let fragmentish_pipeline =
+                            pipeline_contains_any(&ch, src, &["toYaml", "fromYaml"])
+                                || (has_indent
+                                    && pipeline_contains_any(&ch, src, &["tpl", "include"]));
+
+                        // Treat as fragment when we're under a container slot and the pipeline is fragment-ish
+                        // Also treat `fromYaml` as fragment even at top-level (bridges to a structure)
+                        let force_fragment_here =
+                            matches!(slot, Slot::MappingValue | Slot::SequenceItem)
+                                && fragmentish_pipeline
+                                || pipeline_contains_any(&ch, src, &["fromYaml"]);
+
+                        match (ctx, force_fragment_here) {
+                            (Role::ScalarValue, false) => {
+                                // current SCALAR path (unchanged)
                                 let mut tmp = InlineOut::default();
                                 inline_emit_tree(
                                     &body.tree, body_src, &callee, inline, guard, &mut tmp,
                                 )?;
-
                                 let vals = collect_values_following_includes(
                                     body.tree.root_node(),
                                     body_src,
@@ -2858,27 +3456,18 @@ fn inline_emit_tree(
                                     guard,
                                     &tmp.env,
                                 );
-
                                 write_placeholder(
-                                    out, ch, // <- note: use the pipeline node
-                                    src, vals, /*is_fragment_output=*/ false,
+                                    out, ch, src, vals, /*is_fragment_output=*/ false,
                                     /*force_fragment_role=*/ false,
                                 );
-
                                 out.guards.extend(tmp.guards.into_iter());
                             }
                             _ => {
-                                // Treat include|... in non-scalar position as a YAML fragment emission.
-                                // We do NOT inline the callee body text here; we emit one fragment placeholder
-                                // so nindent/indent is respected and yaml_path is correct.
-
-                                // 1) Walk the callee into a temporary buffer to capture guards and $var bindings.
+                                // FRAGMENT path (reuse your existing non-ScalarValue branch)
                                 let mut tmp = InlineOut::default();
                                 inline_emit_tree(
                                     &body.tree, body_src, &callee, inline, guard, &mut tmp,
                                 )?;
-
-                                // 2) Collect the .Values.* origins from the callee (follow its nested includes)
                                 let vals = collect_values_following_includes(
                                     body.tree.root_node(),
                                     body_src,
@@ -2887,18 +3476,66 @@ fn inline_emit_tree(
                                     guard,
                                     &tmp.env,
                                 );
-
-                                // 3) Emit a single FRAGMENT placeholder at the pipeline node.
-                                //    write_placeholder() will look at the current slot and apply nindent width.
                                 write_placeholder(
-                                    out, ch, // use the pipeline node span
-                                    src, vals, /*is_fragment_output=*/ true,
+                                    out, ch, src, vals, /*is_fragment_output=*/ true,
                                     /*force_fragment_role=*/ false,
                                 );
-
-                                // 4) Keep any guards we discovered while walking the callee
                                 out.guards.extend(tmp.guards.into_iter());
-                            }
+                            } //     // Same 4 steps as the direct-include branch
+                              //     let mut tmp = InlineOut::default();
+                              //     inline_emit_tree(
+                              //         &body.tree, body_src, &callee, inline, guard, &mut tmp,
+                              //     )?;
+                              //
+                              //     let vals = collect_values_following_includes(
+                              //         body.tree.root_node(),
+                              //         body_src,
+                              //         &callee,
+                              //         inline,
+                              //         guard,
+                              //         &tmp.env,
+                              //     );
+                              //
+                              //     write_placeholder(
+                              //         out, ch, // <- note: use the pipeline node
+                              //         src, vals, /*is_fragment_output=*/ false,
+                              //         /*force_fragment_role=*/ false,
+                              //     );
+                              //
+                              //     out.guards.extend(tmp.guards.into_iter());
+                              // }
+                              // _ => {
+                              //     // Treat include|... in non-scalar position as a YAML fragment emission.
+                              //     // We do NOT inline the callee body text here; we emit one fragment placeholder
+                              //     // so nindent/indent is respected and yaml_path is correct.
+                              //
+                              //     // 1) Walk the callee into a temporary buffer to capture guards and $var bindings.
+                              //     let mut tmp = InlineOut::default();
+                              //     inline_emit_tree(
+                              //         &body.tree, body_src, &callee, inline, guard, &mut tmp,
+                              //     )?;
+                              //
+                              //     // 2) Collect the .Values.* origins from the callee (follow its nested includes)
+                              //     let vals = collect_values_following_includes(
+                              //         body.tree.root_node(),
+                              //         body_src,
+                              //         &callee,
+                              //         inline,
+                              //         guard,
+                              //         &tmp.env,
+                              //     );
+                              //
+                              //     // 3) Emit a single FRAGMENT placeholder at the pipeline node.
+                              //     //    write_placeholder() will look at the current slot and apply nindent width.
+                              //     write_placeholder(
+                              //         out, ch, // use the pipeline node span
+                              //         src, vals, /*is_fragment_output=*/ true,
+                              //         /*force_fragment_role=*/ false,
+                              //     );
+                              //
+                              //     // 4) Keep any guards we discovered while walking the callee
+                              //     out.guards.extend(tmp.guards.into_iter());
+                              // }
                         }
                         continue;
                     }
@@ -2906,7 +3543,7 @@ fn inline_emit_tree(
 
                 // Non-include output
                 {
-                    // --- NEW: handle sprig ternary specially so the condition becomes a Guard ---
+                    // Handle sprig ternary specially so the condition becomes a guard
                     if let Some(head) = pipeline_head(ch) {
                         if head.kind() == "function_call"
                             && function_name_of(&head, src).as_deref() == Some("ternary")
@@ -3082,21 +3719,6 @@ fn inline_emit_tree(
                 }
                 continue;
             }
-            // if crate::sanitize::is_assignment_kind(ch.kind()) {
-            //     let vals =
-            //         collect_values_following_includes(ch, src, use_scope, inline, guard, &out.env);
-            //
-            //     let mut vc = ch.walk();
-            //     for sub in ch.children(&mut vc) {
-            //         if sub.is_named() && sub.kind() == "variable" {
-            //             if let Some(name) = variable_ident_of(&sub, src) {
-            //                 out.env.insert(name, vals.clone());
-            //             }
-            //             break;
-            //         }
-            //     }
-            //     continue;
-            // }
         }
         Ok(())
     }
@@ -4166,6 +4788,42 @@ mod tpl_and_yaml_fragments {
     use test_util::prelude::*;
 
     #[test]
+    fn include_pipeline_on_key_line_is_fragment() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        // helper renders a mapping fragment
+        let helper = write(
+            &root.join("_labels.tpl")?,
+            indoc! {r#"
+                {{- define "labels.helper" -}}
+                extra: true
+                {{- end -}}
+            "#},
+        )?;
+
+        let src_path = write(
+            &root.join("t.yaml")?,
+            indoc! {r#"
+                metadata:
+                  labels: {{ include "labels.helper" . | nindent 4 }}
+                    # static siblings must still parse
+                    app.kubernetes.io/name: app
+            "#},
+        )?;
+
+        let src = src_path.read_to_string()?;
+        let define_index = collect_defines(&[helper])?;
+        let parsed = parse_gotmpl_document(&src).ok_or_eyre("parse failed")?;
+        let uses = analyze_template(&parsed.tree, &src, define_index)?;
+        dbg!(&uses);
+        assert_that!(uses, is_empty());
+        // assert!(uses.iter().any(|u| u.role == Role::Fragment
+        //     && u.value_path == "/* whatever the helper reads, or empty if none */"));
+        Ok(())
+    }
+
+    #[test]
     fn to_yaml_emits_fragment_on_mapping_slot() -> eyre::Result<()> {
         Builder::default().build();
         let src = indoc! {r#"
@@ -4193,8 +4851,8 @@ mod tpl_and_yaml_fragments {
     fn from_yaml_bridges_value_to_yaml_path() -> eyre::Result<()> {
         Builder::default().build();
         let src = indoc! {r#"
-        ingress: {{ fromYaml .Values.ingress }}
-    "#};
+            ingress: {{ fromYaml .Values.ingress }}
+        "#};
         let parsed = parse_gotmpl_document(src).ok_or_eyre("parse failed")?;
         let uses = crate::analyze::analyze_template(&parsed.tree, src, DefineIndex::default())?;
         dbg!(&uses);
@@ -5064,6 +5722,36 @@ mod regressions {
                 ..
             })]
         );
+        Ok(())
+    }
+
+    #[test]
+    fn dollar_root_field_should_not_be_treated_as_named_variable() -> eyre::Result<()> {
+        Builder::default().build();
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        let src_path = write(
+            &root.join("template.yaml")?,
+            indoc! {r#"
+                {{- define "u" -}}
+                {{- end -}}
+
+                {{- define "t" -}}
+                {{- $x := dict "k" 1 -}}
+                {{- include "u" (dict "scope" $.scope "context" $.context) -}}
+                {{- end -}}
+            "#},
+        )?;
+        let src = src_path.read_to_string()?;
+        let parsed = parse_gotmpl_document(&src).ok_or_eyre("parse failed")?;
+        let define_index = collect_defines(&[src_path])?;
+        let uses = super::analyze_template(&parsed.tree, &src, define_index)?;
+        dbg!(&uses);
+        assert_that!(&uses, is_empty());
+        // Walk to the (dict ...) and ensure $.scope is parsed as a selector rooted at "."
+        // and, importantly, the resolver does NOT panic.
+        // Depending on your API, assert we got an ArgExpr::Dict with a "scope" key and
+        // the value is either a Selector starting at "." or Opaque — but no panic.
         Ok(())
     }
 

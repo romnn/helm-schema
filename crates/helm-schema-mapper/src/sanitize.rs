@@ -2,7 +2,7 @@ use crate::analyze::Role;
 use std::ops::Range;
 
 /// Record of a placeholder we inserted while sanitizing
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Placeholder {
     pub id: usize,
     pub role: Role,
