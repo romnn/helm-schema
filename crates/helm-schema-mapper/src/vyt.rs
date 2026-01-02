@@ -64,8 +64,8 @@ struct Bindings {
     scopes: Vec<HashMap<String, Binding>>,
     // What '.' is rebound to in this scope (if any)
     dot_stack: Vec<Option<Binding>>,
-    // Mapping like "config" -> "node" (Values subtree path)
-    alias_stack: Vec<HashMap<String, String>>,
+    // Aliases: e.g. "config" -> ["node"], "values" -> ["ingress.annotations","commonAnnotations"]
+    alias_stack: Vec<HashMap<String, Vec<String>>>,
 }
 
 impl Bindings {
@@ -92,7 +92,7 @@ impl Bindings {
         self.dot_stack.iter().rev().find_map(|o| o.as_ref())
     }
 
-    fn push_alias_map(&mut self, m: HashMap<String, String>) {
+    fn push_alias_map(&mut self, m: HashMap<String, Vec<String>>) {
         self.alias_stack.push(m);
     }
 
@@ -100,7 +100,7 @@ impl Bindings {
         let _ = self.alias_stack.pop();
     }
 
-    fn resolve_alias(&self, head: &str) -> Option<String> {
+    fn resolve_alias(&self, head: &str) -> Option<Vec<String>> {
         for m in self.alias_stack.iter().rev() {
             if let Some(v) = m.get(head) {
                 return Some(v.clone());
@@ -157,11 +157,31 @@ impl Shape {
                 (Container::Mapping, Some(k)) => out.push(k.clone()),
                 (Container::Mapping, None) => {}
                 (Container::Sequence, _) => {
-                    // We do not insert indices for smoke tests; parent path is sufficient.
+                    // Mark the *previous* mapping segment as a list.
+                    if let Some(last) = out.last_mut() {
+                        if !last.ends_with("[*]") {
+                            last.push_str("[*]");
+                        }
+                    } else {
+                        // Sequence at root (rare): represent as a root-level list
+                        out.push("[*]".to_string());
+                    }
                 }
             }
         }
         YPath(out)
+
+        // let mut out: Vec<String> = Vec::new();
+        // for (_, kind, pending_key) in &self.stack {
+        //     match (kind, pending_key) {
+        //         (Container::Mapping, Some(k)) => out.push(k.clone()),
+        //         (Container::Mapping, None) => {}
+        //         (Container::Sequence, _) => {
+        //             // We do not insert indices for smoke tests; parent path is sufficient.
+        //         }
+        //     }
+        // }
+        // YPath(out)
     }
 
     fn ingest(&mut self, text: &str) {
@@ -170,11 +190,13 @@ impl Shape {
             let indent = line.chars().take_while(|&c| c == ' ').count();
             let after = &line[indent..];
 
-            let trimmed = after.trim();
+            // let trimmed = after.trim();
+            let trimmed = after.trim_end();
 
             // IMPORTANT: ignore blank/template lines BEFORE dedent,
             // so they don't pop the current mapping context.
-            if trimmed.is_empty() || trimmed.starts_with("{{") {
+            if trimmed.is_empty() || trimmed.trim_start().starts_with("{{") {
+                // if trimmed.is_empty() || trimmed.starts_with("{{") {
                 continue;
             }
 
@@ -350,6 +372,45 @@ impl VYT {
             .max_by_key(|k| (k.matches('.').count(), k.len()))
     }
 
+    fn node_is_function_named(&self, n: Node, name: &str) -> bool {
+        let target = if n.kind() == "parenthesized_pipeline" {
+            let mut w = n.walk();
+            n.children(&mut w)
+                .find(|c| c.is_named() && c.kind() == "function_call")
+                .unwrap_or(n)
+        } else {
+            n
+        };
+        function_name_of(&target, &self.source).as_deref() == Some(name)
+    }
+
+    fn collect_list_value_paths(&self, n: Node) -> Vec<String> {
+        // n is a (list ...) or parenthesized list
+        let mut out = Vec::new();
+        let target = if n.kind() == "parenthesized_pipeline" {
+            let mut w = n.walk();
+            n.children(&mut w)
+                .find(|c| c.is_named() && c.kind() == "function_call")
+                .unwrap_or(n)
+        } else {
+            n
+        };
+        if let Some(args) = target.child_by_field_name("arguments").or_else(|| {
+            let mut w = target.walk();
+            target
+                .children(&mut w)
+                .find(|c| c.is_named() && c.kind() == "argument_list")
+        }) {
+            let mut w = args.walk();
+            for a in args.children(&mut w).filter(|x| x.is_named()) {
+                if let Some(p) = self.value_path_from_expr(a) {
+                    out.push(p);
+                }
+            }
+        }
+        out
+    }
+
     fn open_with_scope_if_any(&mut self, node: Node) -> bool {
         if node.kind() != "with_action" {
             return false;
@@ -487,10 +548,17 @@ impl VYT {
 
     fn walk(&mut self, node: Node) {
         // Containers & control-flow: walk children with small pre/post hooks
-        println!(
-            "walk: visit node={:?} shape={:?} guards={:?}",
-            node, self.shape, self.guards
-        );
+        if false {
+            println!(
+                "walk: visit node={}[{:?}-{:?}] shape={:?} guards={:?} value={:?}",
+                node.kind(),
+                node.start_byte(),
+                node.end_byte(),
+                self.shape,
+                self.guards,
+                node.utf8_text(self.source.as_bytes()).unwrap_or_default(),
+            );
+        }
 
         if is_control_flow_kind(node.kind()) {
             let sp = self.guards.savepoint();
@@ -531,8 +599,12 @@ impl VYT {
                 self.yaml_tree.update_partial_yaml(txt);
             }
             "function_call" => {
-                // Special-case include
-                if function_name_of(&node, &self.source).as_deref() == Some("include") {
+                // Special-case include/template: inline and walk the referenced define
+                if matches!(
+                    function_name_of(&node, &self.source).as_deref(),
+                    Some("include" | "template")
+                ) {
+                    // if function_name_of(&node, &self.source).as_deref() == Some("include") {
                     if self.inline_include(node) {
                         return;
                     }
@@ -557,7 +629,7 @@ impl VYT {
                 }
             }
             // NEW: variables and '.' (dot) must be recorded as scalar outputs
-            "variable" | "dot" => {
+            "variable" | "dot" | "field" => {
                 self.handle_output(node);
                 // (they have no meaningful named children, so no need to descend)
             }
@@ -619,7 +691,7 @@ impl VYT {
         };
 
         // Build alias map / dot binding from ctx
-        let mut alias_map: HashMap<String, String> = HashMap::new();
+        let mut alias_map: HashMap<String, Vec<String>> = HashMap::new();
         let mut dot_binding: Option<Binding> = None;
         if let Some(ctx_node) = ctx {
             self.extract_include_context(ctx_node, &mut alias_map, &mut dot_binding);
@@ -658,7 +730,7 @@ impl VYT {
     fn extract_include_context(
         &self,
         n: Node,
-        alias_out: &mut HashMap<String, String>,
+        alias_out: &mut HashMap<String, Vec<String>>,
         dot_out: &mut Option<Binding>,
     ) {
         // Unwrap (dict ...) written as a parenthesized_pipeline
@@ -694,11 +766,20 @@ impl VYT {
                         .trim_matches('`')
                         .to_string();
 
-                    if !key_txt.is_empty() {
-                        if let Some(p) = self.value_path_from_expr(val_node) {
-                            // Only record aliases that resolve to .Values.* subpaths
-                            alias_out.insert(key_txt, p);
+                    // if !key_txt.is_empty() {
+                    //     if let Some(p) = self.value_path_from_expr(val_node) {
+                    //         // Only record aliases that resolve to .Values.* subpaths
+                    //         alias_out.insert(key_txt, p);
+                    //     }
+                    // }
+                    // Special-case: list of value paths → multi-alias
+                    if self.node_is_function_named(val_node, "list") {
+                        let items = self.collect_list_value_paths(val_node);
+                        if !items.is_empty() {
+                            alias_out.insert(key_txt, items);
                         }
+                    } else if let Some(p) = self.value_path_from_expr(val_node) {
+                        alias_out.insert(key_txt, vec![p]);
                     }
                     i += 2;
                 }
@@ -731,14 +812,26 @@ impl VYT {
                             return Some(rest.join("."));
                         }
                         [".", head, rest @ ..] if !head.is_empty() => {
-                            if let Some(base) = self.bindings.resolve_alias(head) {
-                                if rest.is_empty() {
-                                    return Some(base);
-                                } else {
-                                    return Some(format!("{}.{}", base, rest.join(".")));
+                            if let Some(bases) = self.bindings.resolve_alias(head) {
+                                // Prefer first for single-binding cases; multi handled at call sites that need sets.
+                                if let Some(base) = bases.first() {
+                                    if rest.is_empty() {
+                                        return Some(base.clone());
+                                    } else {
+                                        return Some(format!("{}.{}", base, rest.join(".")));
+                                    }
                                 }
                             }
                         }
+                        // [".", head, rest @ ..] if !head.is_empty() => {
+                        //     if let Some(base) = self.bindings.resolve_alias(head) {
+                        //         if rest.is_empty() {
+                        //             return Some(base);
+                        //         } else {
+                        //             return Some(format!("{}.{}", base, rest.join(".")));
+                        //         }
+                        //     }
+                        // }
                         _ => {}
                     }
                 }
@@ -789,16 +882,20 @@ impl VYT {
                         ["Values", rest @ ..] if !rest.is_empty() => {
                             out.insert(rest.join("."));
                         }
-                        // .config.foo → alias "config" → node
+                        // .config.foo → alias "config" → node(s)
                         [".", head, rest @ ..] if !rest.is_empty() => {
-                            if let Some(base) = self.bindings.resolve_alias(head) {
-                                out.insert(format!("{}.{}", base, rest.join(".")));
+                            if let Some(bases) = self.bindings.resolve_alias(head) {
+                                for base in bases {
+                                    out.insert(format!("{}.{}", base, rest.join(".")));
+                                }
                             }
                         }
                         // .config (no tail)
                         [".", head] => {
-                            if let Some(base) = self.bindings.resolve_alias(head) {
-                                out.insert(base);
+                            if let Some(bases) = self.bindings.resolve_alias(head) {
+                                for base in bases {
+                                    out.insert(base);
+                                }
                             }
                         }
                         _ => {}
@@ -857,6 +954,41 @@ impl VYT {
         );
 
         // if node.is_named() && (node.kind() == "identifier" || node.kind() == "variable") {
+
+        // NEW: handle `.field` when tree-sitter emits a `field` node (e.g., `.secretName`)
+        if node.kind() == "field" {
+            if let Ok(t) = node.utf8_text(self.source.as_bytes()) {
+                let t = t.trim();
+                // Expect shapes like ".name"
+                if let Some(stripped) = t.strip_prefix('.') {
+                    if !stripped.is_empty() {
+                        if let Some(b) = self.bindings.dot_binding() {
+                            // Base is whatever the current dot is bound to (e.g., "ingress.tls")
+                            let mut src = b.base.clone();
+
+                            // If you later want star-normalization for list items of maps,
+                            // you could check `b.role == BindingRole::Item` here.
+
+                            // Append the field
+                            if !src.is_empty() {
+                                src.push('.');
+                            }
+                            src.push_str(stripped);
+
+                            let path = self.shape.current_path();
+                            let guards = self.guards.snapshot();
+                            self.uses.push(VYUse {
+                                source_expr: src,
+                                path,
+                                kind: VYKind::Scalar,
+                                guards,
+                            });
+                            return; // handled
+                        }
+                    }
+                }
+            }
+        }
 
         // Is this a variable or a dot?
         if node.is_named() && (node.kind() == "variable" || node.kind() == "dot") {
@@ -975,19 +1107,35 @@ fn pipeline_contains_any(node: Node, src: &str, wanted: &[&str]) -> bool {
         }
         false
     }
-    match node.kind() {
-        "function_call" => has_name(&node, src, wanted),
-        "chained_pipeline" => {
-            let mut w = node.walk();
-            for ch in node.children(&mut w) {
-                if ch.is_named() && ch.kind() == "function_call" && has_name(&ch, src, wanted) {
-                    return true;
-                }
-            }
-            false
+
+    fn any_in_subtree(n: Node, src: &str, wanted: &[&str]) -> bool {
+        if n.kind() == "function_call" && has_name(&n, src, wanted) {
+            return true;
         }
-        _ => false,
+        let mut w = n.walk();
+        for ch in n.children(&mut w) {
+            if ch.is_named() && any_in_subtree(ch, src, wanted) {
+                return true;
+            }
+        }
+        false
     }
+
+    any_in_subtree(node, src, wanted)
+
+    // match node.kind() {
+    //     "function_call" => has_name(&node, src, wanted),
+    //     "chained_pipeline" => {
+    //         let mut w = node.walk();
+    //         for ch in node.children(&mut w) {
+    //             if ch.is_named() && ch.kind() == "function_call" && has_name(&ch, src, wanted) {
+    //                 return true;
+    //             }
+    //         }
+    //         false
+    //     }
+    //     _ => false,
+    // }
 }
 
 pub struct IncrementalYamlTree {
@@ -1014,7 +1162,7 @@ impl IncrementalYamlTree {
         let old_end_point = calculate_end_point(&self.source_text);
 
         self.source_text.push_str(&chunk);
-        if true {
+        if false {
             println!("=== PARTIAL YAML === ");
             println!("{}", &self.source_text);
             println!("=================== ");
@@ -1038,7 +1186,7 @@ impl IncrementalYamlTree {
             .parse(self.source_text.as_bytes(), self.tree.as_ref());
 
         if let Some(tree) = &self.tree {
-            if true {
+            if false {
                 let ast = helm_schema_template::fmt::SExpr::parse_tree(
                     &tree.root_node(),
                     &self.source_text,
@@ -1053,9 +1201,13 @@ impl IncrementalYamlTree {
 #[cfg(test)]
 mod tests {
     use super::{DefineIndex, VYKind, VYT, VYUse, YPath};
+    use color_eyre::eyre::{self, OptionExt};
     use helm_schema_template::parse::parse_gotmpl_document;
     use indoc::indoc;
+    use std::collections::BTreeMap;
+    use std::sync::Arc;
     use test_util::prelude::*;
+    use vfs::VfsPath;
 
     fn run_vyt(src: &str) -> Vec<VYUse> {
         let parsed = parse_gotmpl_document(src).expect("parse");
@@ -1526,7 +1678,7 @@ mod tests {
             &uses,
             contains(matches_pattern!(VYUse {
                 source_expr: eq("env"),
-                path: eq(&YPath(vec!["env".into(), "name".into()])),
+                path: eq(&YPath(vec!["env[*]".into(), "name".into()])),
                 kind: eq(&VYKind::Scalar),
                 .. // guards not asserted
             }))
@@ -1537,7 +1689,7 @@ mod tests {
             &uses,
             contains(matches_pattern!(VYUse {
                 source_expr: eq("env"),
-                path: eq(&YPath(vec!["env".into(), "value".into()])),
+                path: eq(&YPath(vec!["env[*]".into(), "value".into()])),
                 kind: eq(&VYKind::Scalar),
                 .. // guards not asserted
             }))
@@ -1563,7 +1715,7 @@ mod tests {
             &uses,
             contains(matches_pattern!(VYUse {
                 source_expr: eq("pvc.accessModes.*"),
-                path: eq(&YPath(vec!["spec".into(), "accessModes".into()])),
+                path: eq(&YPath(vec!["spec".into(), "accessModes[*]".into()])),
                 kind: eq(&VYKind::Scalar),
                 .. // guards not asserted
             }))
@@ -1695,5 +1847,495 @@ mod tests {
                 ..
             }))
         );
+    }
+
+    #[test]
+    fn default_collects_both_candidate_sources_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            metadata:
+              name: {{ default .Values.nameOverride .Values.name }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(
+            has_scalar(&uses, "nameOverride", &["metadata", "name"]),
+            "{:#?}",
+            uses
+        );
+        assert!(
+            has_scalar(&uses, "name", &["metadata", "name"]),
+            "{:#?}",
+            uses
+        );
+    }
+
+    #[test]
+    fn coalesce_collects_all_args_that_are_values_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            image:
+              tag: {{ coalesce .Values.image.tag .Values.appVersion .Values.fallbackTag }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(
+            has_scalar(&uses, "image.tag", &["image", "tag"]),
+            "{:#?}",
+            uses
+        );
+        assert!(
+            has_scalar(&uses, "appVersion", &["image", "tag"]),
+            "{:#?}",
+            uses
+        );
+        assert!(
+            has_scalar(&uses, "fallbackTag", &["image", "tag"]),
+            "{:#?}",
+            uses
+        );
+    }
+
+    #[test]
+    fn pipe_chain_preserves_source_value_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            spec:
+              replicas: {{ .Values.replicas | int | max 1 }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(
+            has_scalar(&uses, "replicas", &["spec", "replicas"]),
+            "{:#?}",
+            uses
+        );
+    }
+
+    #[test]
+    fn include_pipeline_on_key_line_is_fragment_vyt() {
+        Builder::default().build();
+
+        // With no define index, include+nindent should not surface any .Values uses here.
+        let tpl = indoc! {r#"
+            metadata:
+              labels: {{ include "labels.helper" . | nindent 4 }}
+                app.kubernetes.io/name: app
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(uses.is_empty(), "{:#?}", uses);
+    }
+
+    #[test]
+    fn required_function_still_collects_underlying_selector_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            image:
+              repository: {{ required "repo is required" .Values.image.repository }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(
+            has_scalar(&uses, "image.repository", &["image", "repository"]),
+            "{:#?}",
+            uses
+        );
+    }
+
+    #[test]
+    fn index_with_constant_key_at_least_records_base_vyt() {
+        Builder::default().build();
+
+        // Minimal probe: we at least record the base when indexing with a constant string.
+        let tpl = indoc! {r#"
+            data:
+              thing: {{ index .Values.extra "foo" }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(
+            has_scalar(&uses, "extra", &["data", "thing"]),
+            "{:#?}",
+            uses
+        );
+    }
+
+    #[test]
+    fn nested_with_inside_if_emits_both_guards_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            {{- if .Values.ingress }}
+            {{- with .Values.ingress.tls }}
+            secretName: {{ .secretName }}
+            {{- end }}
+            {{- end }}
+        "#};
+        let uses = run_vyt(tpl);
+
+        // body scalar we can see:
+        assert!(
+            has_scalar(&uses, "ingress.tls.secretName", &["secretName"]),
+            "{:#?}",
+            uses
+        );
+
+        // and its recorded guards should include BOTH "ingress" and "ingress.tls"
+        let g: Vec<_> = guards_of(&uses, "ingress.tls.secretName")
+            .cloned()
+            .collect();
+        assert!(g.iter().any(|s| s == "ingress"), "{:#?}", g);
+        assert!(g.iter().any(|s| s == "ingress.tls"), "{:#?}", g);
+    }
+
+    #[test]
+    fn dollar_root_survives_through_include_scope_vyt() {
+        Builder::default().build();
+
+        // define "t" that checks a $.Release field — should not surface .Values
+        let t = indoc! {r#"
+            {{- define "t" -}}
+            {{- if ($.Release).Name }}ok{{- end }}
+            {{- end -}}
+        "#};
+        let defs = make_define_index(&[("t", t)]);
+
+        let src = r#"{{ include "t" . }}"#;
+        let uses = run_vyt_with_defs(src, defs);
+        assert!(uses.is_empty(), "{:#?}", uses);
+    }
+
+    // Build a DefineIndex by extracting each {{ define "x" }} ... {{ end }} as its own mini template.
+    fn index_defines_from_str(src: &str) -> eyre::Result<Arc<DefineIndex>> {
+        let parsed = parse_gotmpl_document(src).ok_or_eyre("parse helpers")?;
+        let mut idx = DefineIndex::default();
+
+        // Walk for define_action nodes and slice each block's source; parse each block into its own tree.
+        let mut stack = vec![parsed.tree.root_node()];
+        while let Some(n) = stack.pop() {
+            if n.kind() == "define_action" {
+                // naive but robust enough: read the node's exact source and regex the name
+                let block = n.utf8_text(src.as_bytes()).unwrap_or_default();
+                // e.g. {{- define "common.names.fullname" -}}
+                let name = regex::Regex::new(r#"define\s+"([^"]+)""#)
+                    .unwrap()
+                    .captures(block)
+                    .and_then(|c| c.get(1).map(|m| m.as_str().to_string()))
+                    .ok_or_eyre("missing define name")?;
+
+                // Parse the sliced block as its own template; store by name
+                let parsed_block = parse_gotmpl_document(block).ok_or_eyre("parse define block")?;
+                idx.insert(name, parsed_block.tree, block.to_string());
+            }
+
+            let mut w = n.walk();
+            for ch in n.children(&mut w) {
+                if ch.is_named() {
+                    stack.push(ch);
+                }
+            }
+        }
+
+        Ok(Arc::new(idx))
+    }
+
+    #[test]
+    fn parses_bitnami_ingress_template_and_maps_values_vyt() -> eyre::Result<()> {
+        Builder::default().build();
+
+        let root = VfsPath::new(vfs::MemoryFS::new());
+
+        // Minimal chart identity (not strictly needed by VYT, but included to mirror the original test)
+        let _ = write(
+            &root.join("Chart.yaml")?,
+            indoc! {r#"
+                apiVersion: v2
+                name: minio
+                version: 0.1.0
+            "#},
+        )?;
+
+        // Bitnami ingress template (verbatim)
+        let ingress_path = write(
+            &root.join("templates/ingress.yaml")?,
+            indoc! {r#"
+                {{- /*
+                Copyright Broadcom, Inc. All Rights Reserved.
+                SPDX-License-Identifier: APACHE-2.0
+                */}}
+
+                {{- if .Values.ingress.enabled }}
+                apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+                kind: Ingress
+                metadata:
+                  name: {{ include "common.names.fullname" . }}
+                  namespace: {{ include "common.names.namespace" . | quote }}
+                  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" .) | nindent 4 }}
+                    app.kubernetes.io/component: minio
+                    app.kubernetes.io/part-of: minio
+                  {{- if or .Values.ingress.annotations .Values.commonAnnotations }}
+                  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.ingress.annotations .Values.commonAnnotations) "context" .) }}
+                  annotations: {{- include "common.tplvalues.render" (dict "value" $annotations "context" .) | nindent 4 }}
+                  {{- end }}
+                spec:
+                  {{- if .Values.ingress.ingressClassName }}
+                  ingressClassName: {{ .Values.ingress.ingressClassName | quote }}
+                  {{- end }}
+                  rules:
+                    {{- if .Values.ingress.hostname }}
+                    - host: {{ tpl .Values.ingress.hostname . }}
+                      http:
+                        paths:
+                          {{- if .Values.ingress.extraPaths }}
+                          {{- toYaml .Values.ingress.extraPaths | nindent 10 }}
+                          {{- end }}
+                          - path: {{ .Values.ingress.path }}
+                            pathType: {{ .Values.ingress.pathType }}
+                            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" .) "servicePort" "tcp-api" "context" .)  | nindent 14 }}
+                    {{- end }}
+                    {{- range .Values.ingress.extraHosts }}
+                    - host: {{ .name | quote }}
+                      http:
+                        paths:
+                          - path: {{ default "/" .path }}
+                            pathType: {{ default "ImplementationSpecific" .pathType }}
+                            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" $) "servicePort" "tcp-api" "context" $) | nindent 14 }}
+                    {{- end }}
+                    {{- if .Values.ingress.extraRules }}
+                    {{- include "common.tplvalues.render" (dict "value" .Values.ingress.extraRules "context" .) | nindent 4 }}
+                    {{- end }}
+                  {{- if or (and .Values.ingress.tls (or (include "common.ingress.certManagerRequest" (dict "annotations" .Values.ingress.annotations)) .Values.ingress.selfSigned)) .Values.ingress.extraTls }}
+                  tls:
+                    {{- if and .Values.ingress.tls (or (include "common.ingress.certManagerRequest" (dict "annotations" .Values.ingress.annotations)) .Values.ingress.selfSigned) }}
+                    - hosts:
+                        - {{ tpl .Values.ingress.hostname . }}
+                      secretName: {{ printf "%s-tls" (tpl .Values.ingress.hostname .) }}
+                    {{- end }}
+                    {{- if .Values.ingress.extraTls }}
+                    {{- include "common.tplvalues.render" (dict "value" .Values.ingress.extraTls "context" .) | nindent 4 }}
+                    {{- end }}
+                  {{- end }}
+                {{- end }}
+            "#},
+        )?;
+
+        // Helpers (verbatim, as in your old test)
+        let helpers_path = write(
+            &root.join("templates/_helpers.tpl")?,
+            indoc! {r#"
+                {{/*
+                Kubernetes standard labels
+                {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) -}}
+                */}}
+                {{- define "common.labels.standard" -}}
+                {{- if and (hasKey . "customLabels") (hasKey . "context") -}}
+                {{- $default := dict "app.kubernetes.io/name" (include "common.names.name" .context) "helm.sh/chart" (include "common.names.chart" .context) "app.kubernetes.io/instance" .context.Release.Name "app.kubernetes.io/managed-by" .context.Release.Service -}}
+                {{- with .context.Chart.AppVersion -}}
+                {{- $_ := set $default "app.kubernetes.io/version" . -}}
+                {{- end -}}
+                {{ template "common.tplvalues.merge" (dict "values" (list .customLabels $default) "context" .context) }}
+                {{- else -}}
+                app.kubernetes.io/name: {{ include "common.names.name" . }}
+                helm.sh/chart: {{ include "common.names.chart" . }}
+                app.kubernetes.io/instance: {{ .Release.Name }}
+                app.kubernetes.io/managed-by: {{ .Release.Service }}
+                {{- with .Chart.AppVersion }}
+                app.kubernetes.io/version: {{ . | replace "+" "_" | quote }}
+                {{- end -}}
+                {{- end -}}
+                {{- end -}}
+
+                {{- define "common.capabilities.ingress.apiVersion" -}}
+                {{- print "networking.k8s.io/v1" -}}
+                {{- end -}}
+
+                {{- define "common.ingress.backend" -}}
+                service:
+                  name: {{ .serviceName }}
+                  port:
+                    {{- if typeIs "string" .servicePort }}
+                    name: {{ .servicePort }}
+                    {{- else if or (typeIs "int" .servicePort) (typeIs "float64" .servicePort) }}
+                    number: {{ .servicePort | int }}
+                    {{- end }}
+                {{- end -}}
+
+                {{- define "common.ingress.certManagerRequest" -}}
+                {{ if or (hasKey .annotations "cert-manager.io/cluster-issuer") (hasKey .annotations "cert-manager.io/issuer") (hasKey .annotations "kubernetes.io/tls-acme") }}
+                    {{- true -}}
+                {{- end -}}
+                {{- end -}}
+
+                {{- define "common.names.name" -}}
+                {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+                {{- end -}}
+
+                {{- define "common.names.chart" -}}
+                {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+                {{- end -}}
+
+                {{- define "common.names.fullname" -}}
+                {{- if .Values.fullnameOverride -}}
+                {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+                {{- else -}}
+                {{- $name := default .Chart.Name .Values.nameOverride -}}
+                {{- $releaseName := regexReplaceAll "(-?[^a-z\\d\\-])+-?" (lower .Release.Name) "-" -}}
+                {{- if contains $name $releaseName -}}
+                {{- $releaseName | trunc 63 | trimSuffix "-" -}}
+                {{- else -}}
+                {{- printf "%s-%s" $releaseName $name | trunc 63 | trimSuffix "-" -}}
+                {{- end -}}
+                {{- end -}}
+                {{- end -}}
+
+                {{- define "common.names.namespace" -}}
+                {{- default .Release.Namespace .Values.namespaceOverride | trunc 63 | trimSuffix "-" -}}
+                {{- end -}}
+
+                {{- define "common.tplvalues.render" -}}
+                {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+                {{- if contains "{{" (toJson .value) }}
+                  {{- if .scope }}
+                      {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+                  {{- else }}
+                    {{- tpl $value .context }}
+                  {{- end }}
+                {{- else }}
+                    {{- $value }}
+                {{- end }}
+                {{- end -}}
+
+                {{- define "common.tplvalues.merge" -}}
+                {{- $dst := dict -}}
+                {{- range .values -}}
+                {{- $dst = include "common.tplvalues.render" (dict "value" . "context" $.context "scope" $.scope) | fromYaml | merge $dst -}}
+                {{- end -}}
+                {{ $dst | toYaml }}
+                {{- end -}}
+            "#},
+        )?;
+
+        let ingress_src = ingress_path.read_to_string()?;
+        let helpers_src = helpers_path.read_to_string()?;
+        let defs = index_defines_from_str(&helpers_src)?;
+
+        // Run VYT on the ingress template with the helper defines available
+        let parsed = parse_gotmpl_document(&ingress_src).ok_or_eyre("parse ingress")?;
+        let uses = VYT::new(ingress_src.clone())
+            .with_defines(defs)
+            .run(&parsed.tree);
+
+        dbg!(&uses);
+
+        // Group by source_expr for easy presence checks
+        let mut by: BTreeMap<String, Vec<&VYUse>> = BTreeMap::new();
+        for u in &uses {
+            by.entry(u.source_expr.clone()).or_default().push(u);
+        }
+
+        // --- MUST EXIST: mirror the original list (presence only) ---
+        let must_exist = [
+            "ingress.enabled",
+            "commonLabels",
+            "commonAnnotations",
+            "ingress.annotations",
+            "ingress.ingressClassName",
+            "ingress.hostname",
+            "ingress.path",
+            "ingress.pathType",
+            "ingress.extraPaths",
+            "ingress.extraHosts",
+            "ingress.extraRules",
+            "ingress.tls",
+            "ingress.selfSigned",
+            "ingress.extraTls",
+        ];
+        for k in must_exist {
+            assert!(by.contains_key(k), "missing expected Values key: {k}");
+        }
+
+        // Guards sourced by `range .values` inside merge helper:
+        assert!(
+            uses.iter()
+                .any(|u| u.source_expr == "ingress.annotations" && u.path.0.is_empty())
+        );
+        assert!(
+            uses.iter()
+                .any(|u| u.source_expr == "commonAnnotations" && u.path.0.is_empty())
+        );
+
+        // --- PATHED ASSERTS we can do with current VYT path model (no indices) ---
+
+        // spec.ingressClassName
+        assert!(
+            has_scalar(
+                &uses,
+                "ingress.ingressClassName",
+                &["spec", "ingressClassName"]
+            ),
+            "{:#?}",
+            by.get("ingress.ingressClassName")
+        );
+
+        // First rule host + http paths (no sequence indices in VYT; we assert parent chain)
+        assert!(
+            has_scalar(&uses, "ingress.hostname", &["spec", "rules[*]", "host"]),
+            "{:#?}",
+            by.get("ingress.hostname")
+        );
+        assert!(
+            has_scalar(
+                &uses,
+                "ingress.path",
+                &["spec", "rules[*]", "http", "paths[*]", "path"]
+            ),
+            "{:#?}",
+            by.get("ingress.path")
+        );
+        assert!(
+            has_scalar(
+                &uses,
+                "ingress.pathType",
+                &["spec", "rules[*]", "http", "paths[*]", "pathType"]
+            ),
+            "{:#?}",
+            by.get("ingress.pathType")
+        );
+
+        // toYaml .Values.ingress.extraPaths under the same "paths" mapping
+        assert!(
+            has_fragment(
+                &uses,
+                "ingress.extraPaths",
+                &["spec", "rules[*]", "http", "paths[*]"]
+            ),
+            "{:#?}",
+            by.get("ingress.extraPaths")
+        );
+
+        // TLS section: hostname shows up in hosts (list) and secretName
+        assert!(
+            has_scalar(&uses, "ingress.hostname", &["spec", "tls[*]", "hosts[*]"]),
+            "{:#?}",
+            by.get("ingress.hostname")
+        );
+        assert!(
+            has_scalar(&uses, "ingress.hostname", &["spec", "tls[*]", "secretName"]),
+            "{:#?}",
+            by.get("ingress.hostname")
+        );
+
+        // Rendered extra rules and extra tls fragments land under spec (nindent 4 from spec:)
+        // We only assert presence + that at least one of the occurrences is a fragment under "spec".
+        let has_extra_rules_fragment_under_spec = by.get("ingress.extraRules").map_or(false, |v| {
+            v.iter()
+                .any(|u| u.kind == VYKind::Fragment && u.path == YPath(vec!["spec".into()]))
+        });
+        assert!(
+            has_extra_rules_fragment_under_spec,
+            "{:#?}",
+            by.get("ingress.extraRules")
+        );
+
+        Ok(())
     }
 }

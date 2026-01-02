@@ -13,7 +13,6 @@ use helm_schema_mapper::analyze::analyze_template_file;
 use helm_schema_mapper::analyze::{compute_define_closure, index_defines_in_dir};
 use helm_schema_mapper::yaml_path::YamlPath;
 
-// #[ignore = "wip"]
 #[test]
 fn parses_bitnami_ingress_template_and_maps_values() -> eyre::Result<()> {
     Builder::default().build();

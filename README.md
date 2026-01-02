@@ -403,4 +403,10 @@ cargo --color never test -p helm-schema-mapper \
   parses_bitnami_ingress_template_and_maps_values \
   -- --nocapture --color never \
   > cargo-test.txt 2>&1
+
+NO_COLOR=1 CLICOLOR=0 \
+cargo --color never test -p helm-schema-mapper \
+  vyt:: \
+  -- --color never \
+  > cargo-test.txt 2>&1
 ```
