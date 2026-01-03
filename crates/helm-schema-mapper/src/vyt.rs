@@ -28,7 +28,78 @@ pub fn calculate_end_point(s: &str) -> tree_sitter::Point {
             col += 1;
         }
     }
+
     tree_sitter::Point::new(row, col)
+}
+
+#[derive(Default, Clone, Debug)]
+struct ResourceDetector {
+    api_version: Option<String>,
+    kind: Option<String>,
+    current: Option<ResourceRef>,
+}
+
+impl ResourceDetector {
+    fn current(&self) -> Option<ResourceRef> {
+        self.current.clone()
+    }
+
+    fn ingest(&mut self, text: &str) {
+        fn parse_literal_value(line: &str, key: &str) -> Option<String> {
+            let rest = line.strip_prefix(key)?;
+            let rest = rest.trim_start();
+            let rest = rest.strip_prefix(':')?.trim_start();
+            if rest.is_empty() {
+                return None;
+            }
+            if rest.contains("{{") {
+                return None;
+            }
+            let val = rest
+                .trim_matches('"')
+                .trim_matches('\'')
+                .split_whitespace()
+                .next()
+                .unwrap_or("")
+                .to_string();
+            if val.is_empty() {
+                None
+            } else {
+                Some(val)
+            }
+        }
+
+        for raw in text.split_inclusive('\n') {
+            let line = raw.trim_end_matches('\n');
+            let indent = line.chars().take_while(|&c| c == ' ').count();
+            let after = &line[indent..];
+            let trimmed = after.trim_end();
+
+            if trimmed.is_empty() {
+                continue;
+            }
+            if trimmed == "---" {
+                self.api_version = None;
+                self.kind = None;
+                self.current = None;
+                continue;
+            }
+
+            if let Some(v) = parse_literal_value(trimmed, "apiVersion") {
+                self.api_version = Some(v);
+            }
+            if let Some(v) = parse_literal_value(trimmed, "kind") {
+                self.kind = Some(v);
+            }
+
+            if let (Some(api_version), Some(kind)) = (&self.api_version, &self.kind) {
+                self.current = Some(ResourceRef {
+                    api_version: api_version.clone(),
+                    kind: kind.clone(),
+                });
+            }
+        }
+    }
 }
 
 // Define index
@@ -188,6 +259,13 @@ pub struct VYUse {
     pub path: YPath,         // e.g., ["metadata","labels"]
     pub kind: VYKind,        // Scalar or Fragment
     pub guards: Vec<String>, // normalized guard value paths, e.g., ["enabled"]
+    pub resource: Option<ResourceRef>, // detected apiVersion/kind for the current YAML document
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ResourceRef {
+    pub api_version: String,
+    pub kind: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -408,6 +486,7 @@ pub struct VYT {
     pub uses: Vec<VYUse>,
     yaml_tree: IncrementalYamlTree,
     shape: Shape,
+    resource_detector: ResourceDetector,
     guards: Guards,
     bindings: Bindings,
     defines: Option<Arc<DefineIndex>>,
@@ -428,6 +507,7 @@ impl VYT {
             yaml_tree: IncrementalYamlTree::new(),
             uses: Vec::new(),
             shape: Shape::default(),
+            resource_detector: ResourceDetector::default(),
             guards: Guards::default(),
             bindings: {
                 let mut b = Bindings::default();
@@ -463,6 +543,7 @@ impl VYT {
         self.text_spans = spans;
         self.text_span_idx = 0;
         self.text_pos = 0;
+        self.resource_detector = ResourceDetector::default();
     }
 
     fn ingest_text_up_to(&mut self, target: usize) {
@@ -490,6 +571,7 @@ impl VYT {
             if start < end {
                 let txt = &self.source[start..end];
                 self.shape.ingest(txt);
+                self.resource_detector.ingest(txt);
                 self.yaml_tree.update_partial_yaml(txt);
                 self.text_pos = end;
             }
@@ -538,6 +620,7 @@ impl VYT {
                 .cmp(&b.source_expr)
                 .then_with(|| a.path.0.cmp(&b.path.0))
                 .then_with(|| (a.kind as u8).cmp(&(b.kind as u8)))
+                .then_with(|| a.resource.cmp(&b.resource))
                 .then_with(|| a.guards.cmp(&b.guards))
         });
         self.uses.dedup();
@@ -1035,6 +1118,7 @@ impl VYT {
                         path: YPath(Vec::new()),
                         kind: VYKind::Scalar,
                         guards: vec![],
+                        resource: self.resource_detector.current(),
                     });
                 }
             }
@@ -1317,6 +1401,7 @@ impl VYT {
                                 },
                                 kind: VYKind::Scalar, // role-less model; scalar is fine for presence
                                 guards: vec![],
+                                resource: self.resource_detector.current(),
                             });
                         }
                     }
@@ -1374,6 +1459,7 @@ impl VYT {
                                 path,
                                 kind: VYKind::Scalar,
                                 guards,
+                                resource: self.resource_detector.current(),
                             });
                             return; // handled
                         }
@@ -1435,6 +1521,7 @@ impl VYT {
                             path: path.clone(),
                             kind: VYKind::Scalar,
                             guards: guards.clone(),
+                            resource: self.resource_detector.current(),
                         });
                     }
                     // Do not traverse further; variables are leaves
@@ -1494,6 +1581,7 @@ impl VYT {
                 path: path.clone(),
                 kind,
                 guards: guards.clone(),
+                resource: self.resource_detector.current(),
             });
 
             if let Some(p2) = extra_fragment_path.as_ref() {
@@ -1502,6 +1590,7 @@ impl VYT {
                     path: p2.clone(),
                     kind,
                     guards: guards.clone(),
+                    resource: self.resource_detector.current(),
                 });
             }
 
@@ -1511,6 +1600,7 @@ impl VYT {
                     path: p3.clone(),
                     kind,
                     guards: guards.clone(),
+                    resource: self.resource_detector.current(),
                 });
             }
         }
@@ -2003,6 +2093,7 @@ mod tests {
                     let has_a_or_b = gs.iter().any(|g| g == "a") || gs.iter().any(|g| g == "b");
                     has_enable && has_a_or_b
                 }),
+                ..
             }))
         );
     }

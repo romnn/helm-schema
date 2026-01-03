@@ -1,9 +1,17 @@
 use crate::{Role, ValueUse, YamlPath};
-use crate::vyt::{VYKind, VYUse, YPath};
+use crate::vyt::{ResourceRef, VYKind, VYUse, YPath};
+use color_eyre::eyre;
 use serde_json::{Map, Value};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fs;
+use std::path::{Path, PathBuf};
+
+const DEFAULT_K8S_SCHEMA_VERSION_DIR: &str = "v1.29.0-standalone-strict";
 
 pub trait VytSchemaProvider {
+    fn schema_for_use(&self, u: &VYUse) -> Option<Value> {
+        self.schema_for_ypath(&u.path)
+    }
     fn schema_for_ypath(&self, path: &YPath) -> Option<Value>;
 }
 
@@ -13,6 +21,33 @@ pub struct IngressV1Schema;
 impl VytSchemaProvider for IngressV1Schema {
     fn schema_for_ypath(&self, path: &YPath) -> Option<Value> {
         IngressV1Schema::schema_for_ypath(self, path)
+    }
+}
+
+#[derive(Debug)]
+pub struct UpstreamThenDefaultVytSchemaProvider {
+    pub upstream: UpstreamK8sSchemaProvider,
+    pub fallback: DefaultVytSchemaProvider,
+}
+
+impl Default for UpstreamThenDefaultVytSchemaProvider {
+    fn default() -> Self {
+        Self {
+            upstream: UpstreamK8sSchemaProvider::new(DEFAULT_K8S_SCHEMA_VERSION_DIR),
+            fallback: DefaultVytSchemaProvider::default(),
+        }
+    }
+}
+
+impl VytSchemaProvider for UpstreamThenDefaultVytSchemaProvider {
+    fn schema_for_use(&self, u: &VYUse) -> Option<Value> {
+        self.upstream
+            .schema_for_use(u)
+            .or_else(|| self.fallback.schema_for_use(u))
+    }
+
+    fn schema_for_ypath(&self, path: &YPath) -> Option<Value> {
+        self.fallback.schema_for_ypath(path)
     }
 }
 
@@ -295,15 +330,15 @@ pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider
 
         let mut inferred = match u.kind {
             VYKind::Scalar => provider
-                .schema_for_ypath(&u.path)
+                .schema_for_use(u)
                 .or_else(|| infer_fallback_schema_vyt(u)),
-            VYKind::Fragment => provider.schema_for_ypath(&u.path).or_else(|| {
-                    if u.source_expr.ends_with("annotations") || u.source_expr.ends_with("labels") {
-                        Some(string_map_schema())
-                    } else {
-                        Some(type_schema("object"))
-                    }
-                }),
+            VYKind::Fragment => provider.schema_for_use(u).or_else(|| {
+                if u.source_expr.ends_with("annotations") || u.source_expr.ends_with("labels") {
+                    Some(string_map_schema())
+                } else {
+                    Some(type_schema("object"))
+                }
+            }),
         };
 
         let Some(schema) = inferred.take() else {
@@ -640,4 +675,315 @@ fn yaml_path_pattern(path: &YamlPath) -> String {
 
 fn ypath_pattern(path: &YPath) -> String {
     path.0.join(".")
+}
+
+#[derive(Debug)]
+pub struct UpstreamK8sSchemaProvider {
+    pub version_dir: String,
+    pub cache_dir: PathBuf,
+    pub allow_download: bool,
+    pub base_url: String,
+
+    mem: std::sync::Mutex<HashMap<String, Value>>,
+}
+
+impl UpstreamK8sSchemaProvider {
+    pub fn new(version_dir: impl Into<String>) -> Self {
+        Self {
+            version_dir: version_dir.into(),
+            cache_dir: default_k8s_schema_cache_dir(),
+            allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
+                .ok()
+                .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+                .unwrap_or(false),
+            base_url: "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master".to_string(),
+            mem: std::sync::Mutex::new(HashMap::new()),
+        }
+    }
+
+    pub fn with_cache_dir(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.cache_dir = dir.into();
+        self
+    }
+
+    pub fn with_allow_download(mut self, allow: bool) -> Self {
+        self.allow_download = allow;
+        self
+    }
+
+    pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
+        self.base_url = base_url.into();
+        self
+    }
+
+    pub fn schema_for_resource(&self, resource: &ResourceRef) -> eyre::Result<Value> {
+        let filename = self.filename_for_resource(resource);
+
+        // Memoize by filename within the version dir.
+        let key = format!("{}/{}", self.version_dir, filename);
+        if let Some(v) = self.mem.lock().expect("poisoned mutex").get(&key).cloned() {
+            return Ok(v);
+        }
+
+        let local = self.local_path_for(&filename);
+        if !local.exists() {
+            if !self.allow_download {
+                return Err(eyre::eyre!(
+                    "upstream k8s schema missing and downloads disabled: {}",
+                    local.display()
+                ));
+            }
+            self.download_to_cache(&filename, &local)?;
+        }
+
+        let bytes = fs::read(&local).map_err(|e| eyre::eyre!(e))?;
+        let v: Value = serde_json::from_slice(&bytes).map_err(|e| eyre::eyre!(e))?;
+        self.mem
+            .lock()
+            .expect("poisoned mutex")
+            .insert(key, v.clone());
+        Ok(v)
+    }
+
+    pub fn schema_for_resource_ypath(
+        &self,
+        resource: &ResourceRef,
+        path: &YPath,
+    ) -> eyre::Result<Option<Value>> {
+        let root = self.schema_for_resource(resource)?;
+        let filename = filename_for_resource(resource);
+        let mut ctx = ResolveCtx::new(self, filename.clone(), root.clone());
+        Ok(schema_at_ypath(&mut ctx, &filename, path))
+    }
+
+    fn filename_for_resource(&self, resource: &ResourceRef) -> String {
+        filename_for_resource(resource)
+    }
+
+    fn local_path_for(&self, filename: &str) -> PathBuf {
+        self.cache_dir.join(&self.version_dir).join(filename)
+    }
+
+    fn download_to_cache(&self, filename: &str, local: &Path) -> eyre::Result<()> {
+        let parent = local
+            .parent()
+            .ok_or_else(|| eyre::eyre!("no parent dir for {}", local.display()))?;
+        fs::create_dir_all(parent).map_err(|e| eyre::eyre!(e))?;
+
+        let url = format!("{}/{}/{}", self.base_url, self.version_dir, filename);
+        let resp = ureq::get(&url)
+            .call()
+            .map_err(|e| eyre::eyre!("failed to download {url}: {e}"))?;
+        let mut reader = resp.into_reader();
+        let tmp = local.with_extension("json.tmp");
+        {
+            let mut f = fs::File::create(&tmp).map_err(|e| eyre::eyre!(e))?;
+            std::io::copy(&mut reader, &mut f).map_err(|e| eyre::eyre!(e))?;
+        }
+        fs::rename(&tmp, local).map_err(|e| eyre::eyre!(e))?;
+        Ok(())
+    }
+}
+
+impl VytSchemaProvider for UpstreamK8sSchemaProvider {
+    fn schema_for_use(&self, u: &VYUse) -> Option<Value> {
+        let r = u.resource.as_ref()?;
+        self.schema_for_resource_ypath(r, &u.path).ok().flatten()
+    }
+
+    fn schema_for_ypath(&self, _path: &YPath) -> Option<Value> {
+        None
+    }
+}
+
+fn default_k8s_schema_cache_dir() -> PathBuf {
+    if let Ok(p) = std::env::var("HELM_SCHEMA_K8S_SCHEMA_CACHE") {
+        return PathBuf::from(p);
+    }
+    if let Ok(xdg) = std::env::var("XDG_CACHE_HOME") {
+        return PathBuf::from(xdg).join("helm-schema").join("kubernetes-json-schema");
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        return PathBuf::from(home)
+            .join(".cache")
+            .join("helm-schema")
+            .join("kubernetes-json-schema");
+    }
+    PathBuf::from(".cache").join("helm-schema").join("kubernetes-json-schema")
+}
+
+fn filename_for_resource(resource: &ResourceRef) -> String {
+    let kind = resource.kind.to_ascii_lowercase();
+    let (group, version) = match resource.api_version.split_once('/') {
+        Some((g, v)) => (g.to_ascii_lowercase(), v.to_ascii_lowercase()),
+        None => ("".to_string(), resource.api_version.to_ascii_lowercase()),
+    };
+
+    if group.is_empty() {
+        format!("{}-{}.json", kind, version)
+    } else {
+        let group = group.replace('.', "-");
+        format!("{}-{}-{}.json", kind, group, version)
+    }
+}
+
+struct ResolveCtx<'a> {
+    provider: &'a UpstreamK8sSchemaProvider,
+    docs: HashMap<String, Value>,
+    stack: HashSet<(String, String)>,
+}
+
+impl<'a> ResolveCtx<'a> {
+    fn new(provider: &'a UpstreamK8sSchemaProvider, root_filename: String, root_doc: Value) -> Self {
+        let mut docs = HashMap::new();
+        docs.insert(root_filename, root_doc);
+        Self {
+            provider,
+            docs,
+            stack: HashSet::new(),
+        }
+    }
+
+    fn doc(&self, filename: &str) -> Option<&Value> {
+        self.docs.get(filename)
+    }
+
+    fn load_doc(&mut self, filename: &str) -> Option<&Value> {
+        if self.docs.contains_key(filename) {
+            return self.docs.get(filename);
+        }
+        let local = self
+            .provider
+            .cache_dir
+            .join(&self.provider.version_dir)
+            .join(filename);
+        let bytes = fs::read(&local).ok()?;
+        let doc: Value = serde_json::from_slice(&bytes).ok()?;
+        self.docs.insert(filename.to_string(), doc);
+        self.docs.get(filename)
+    }
+
+    fn resolve_ref(&mut self, current_filename: &str, r: &str) -> Option<(String, Value)> {
+        // local reference: "#/..."
+        if let Some(ptr) = r.strip_prefix('#') {
+            let key = (current_filename.to_string(), format!("#{}", ptr));
+            if !self.stack.insert(key) {
+                return None;
+            }
+            let doc = self.doc(current_filename)?;
+            return doc.pointer(ptr).cloned().map(|v| (current_filename.to_string(), v));
+        }
+
+        // maybe: "file.json#/..."
+        let (file, ptr) = r.split_once('#').unwrap_or((r, ""));
+        let filename = if file.is_empty() {
+            current_filename.to_string()
+        } else {
+            file.to_string()
+        };
+
+        let key = (filename.clone(), format!("#{}", ptr));
+        if !self.stack.insert(key) {
+            return None;
+        }
+
+        let doc = self.load_doc(&filename)?.clone();
+        if ptr.is_empty() {
+            Some((filename, doc))
+        } else {
+            doc.pointer(ptr)
+                .cloned()
+                .map(|v| (filename, v))
+        }
+    }
+}
+
+fn schema_at_ypath(
+    ctx: &mut ResolveCtx<'_>,
+    root_filename: &str,
+    path: &YPath,
+) -> Option<Value> {
+    let mut cur = ctx.doc(root_filename)?.clone();
+    let mut cur_filename = root_filename.to_string();
+    for seg in &path.0 {
+        let (nf, ns) = descend_one(ctx, &cur_filename, &cur, seg)?;
+        cur_filename = nf;
+        cur = ns;
+    }
+    Some(cur)
+}
+
+fn descend_one(
+    ctx: &mut ResolveCtx<'_>,
+    current_filename: &str,
+    schema: &Value,
+    seg: &str,
+) -> Option<(String, Value)> {
+    let (schema_filename, schema) = resolve_refs(ctx, current_filename, schema)?;
+
+    // anyOf/oneOf/allOf: try each branch.
+    if let Some(arr) = schema.get("allOf").and_then(|v| v.as_array()) {
+        for s in arr {
+            if let Some(v) = descend_one(ctx, &schema_filename, s, seg) {
+                return Some(v);
+            }
+        }
+    }
+    if let Some(arr) = schema.get("anyOf").and_then(|v| v.as_array()) {
+        for s in arr {
+            if let Some(v) = descend_one(ctx, &schema_filename, s, seg) {
+                return Some(v);
+            }
+        }
+    }
+    if let Some(arr) = schema.get("oneOf").and_then(|v| v.as_array()) {
+        for s in arr {
+            if let Some(v) = descend_one(ctx, &schema_filename, s, seg) {
+                return Some(v);
+            }
+        }
+    }
+
+    let (key, is_array_item) = if let Some(k) = seg.strip_suffix("[*]") {
+        (k, true)
+    } else {
+        (seg, false)
+    };
+
+    // object property
+    let mut next = schema
+        .get("properties")
+        .and_then(|p| p.as_object())
+        .and_then(|p| p.get(key))
+        .cloned()
+        .or_else(|| {
+            // map-like
+            schema
+                .get("additionalProperties")
+                .and_then(|ap| if ap.is_boolean() { None } else { Some(ap.clone()) })
+        })?;
+
+    if is_array_item {
+        let (nf, ns) = resolve_refs(ctx, &schema_filename, &next)?;
+        next = ns;
+        let doc_key = nf;
+        next = next
+            .get("items")
+            .cloned()
+            .or_else(|| next.get("prefixItems").and_then(|v| v.as_array()).and_then(|a| a.first()).cloned())?;
+        return Some((doc_key, next));
+    }
+    Some((schema_filename, next))
+}
+
+fn resolve_refs(
+    ctx: &mut ResolveCtx<'_>,
+    current_filename: &str,
+    schema: &Value,
+) -> Option<(String, Value)> {
+    // A schema may itself be a $ref.
+    if let Some(r) = schema.get("$ref").and_then(|v| v.as_str()) {
+        return ctx.resolve_ref(current_filename, r);
+    }
+    Some((current_filename.to_string(), schema.clone()))
 }

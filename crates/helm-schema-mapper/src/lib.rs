@@ -53,6 +53,6 @@ pub fn generate_values_schema_for_chart_vyt(
         return Err(color_eyre::eyre::eyre!("no templates could be processed"));
     }
 
-    let provider = schema::DefaultVytSchemaProvider::default();
+    let provider = schema::UpstreamThenDefaultVytSchemaProvider::default();
     Ok(schema::generate_values_schema_vyt(&uses, &provider))
 }
