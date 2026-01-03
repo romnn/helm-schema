@@ -4,12 +4,13 @@
 //! interpreting the template AST instead of emitting placeholders.
 
 use color_eyre::eyre;
+use color_eyre::eyre::OptionExt;
 use regex::Regex;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
 use crate::analyze::diagnostics;
-use crate::sanitize::is_control_flow;
+use crate::sanitize::{is_assignment_kind, is_control_flow};
 use crate::values::{parse_selector_chain, parse_selector_expression};
 use helm_schema_template::parse::parse_gotmpl_document;
 use tree_sitter::Node;
@@ -45,6 +46,40 @@ impl DefineIndex {
     }
 }
 
+pub fn extend_define_index_from_str(idx: &mut DefineIndex, src: &str) -> eyre::Result<()> {
+    let parsed = parse_gotmpl_document(src).ok_or_eyre("parse helpers")?;
+
+    let re = regex::Regex::new(r#"define\s+\"([^\"]+)\""#).unwrap();
+
+    let mut stack = vec![parsed.tree.root_node()];
+    while let Some(n) = stack.pop() {
+        if n.kind() == "define_action" {
+            let block = n.utf8_text(src.as_bytes()).unwrap_or_default();
+            let name = re
+                .captures(block)
+                .and_then(|c| c.get(1).map(|m| m.as_str().to_string()))
+                .ok_or_eyre("missing define name")?;
+            let parsed_block = parse_gotmpl_document(block).ok_or_eyre("parse define block")?;
+            idx.insert(name, parsed_block.tree, block.to_string());
+        }
+
+        let mut w = n.walk();
+        for ch in n.children(&mut w) {
+            if ch.is_named() {
+                stack.push(ch);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn index_defines_from_str(src: &str) -> eyre::Result<Arc<DefineIndex>> {
+    let mut idx = DefineIndex::default();
+    extend_define_index_from_str(&mut idx, src)?;
+    Ok(Arc::new(idx))
+}
+
 #[derive(Clone, Debug)]
 enum BindingRole {
     MapKey,
@@ -54,7 +89,7 @@ enum BindingRole {
 
 #[derive(Clone, Debug)]
 struct Binding {
-    base: String,      // e.g. "env"
+    bases: Vec<String>,      // e.g. ["env"] or multiple merged origins
     role: BindingRole, // e.g. MapKey / MapValue
 }
 
@@ -69,14 +104,40 @@ struct Bindings {
 }
 
 impl Bindings {
+    fn ensure_root_scope(&mut self) {
+        if self.scopes.is_empty() {
+            self.scopes.push(HashMap::new());
+            self.dot_stack.push(None);
+        }
+    }
+
     fn push_scope(&mut self, map: HashMap<String, Binding>, dot: Option<Binding>) {
+        self.ensure_root_scope();
         self.scopes.push(map);
         self.dot_stack.push(dot);
     }
 
     fn pop_scope(&mut self) {
-        let _ = self.scopes.pop();
-        let _ = self.dot_stack.pop();
+        // keep the implicit root scope
+        if self.scopes.len() > 1 {
+            let _ = self.scopes.pop();
+        }
+        if self.dot_stack.len() > 1 {
+            let _ = self.dot_stack.pop();
+        }
+    }
+
+    fn bind_var(&mut self, name: String, bases: Vec<String>, role: BindingRole) {
+        self.ensure_root_scope();
+        if let Some(m) = self.scopes.last_mut() {
+            m.insert(
+                name,
+                Binding {
+                    bases,
+                    role,
+                },
+            );
+        }
     }
 
     fn lookup_var(&self, name: &str) -> Option<&Binding> {
@@ -193,10 +254,22 @@ impl Shape {
             // let trimmed = after.trim();
             let trimmed = after.trim_end();
 
-            // IMPORTANT: ignore blank/template lines BEFORE dedent,
-            // so they don't pop the current mapping context.
-            if trimmed.is_empty() || trimmed.trim_start().starts_with("{{") {
-                // if trimmed.is_empty() || trimmed.starts_with("{{") {
+            // Blank lines carry no structural signal.
+            if trimmed.is_empty() {
+                continue;
+            }
+
+            // Template-only lines don't add YAML tokens, but they can carry indentation that
+            // should end the previous YAML context (e.g. leaving `metadata.labels` before a
+            // new `if` block at a lower indent). So allow them to dedent.
+            if trimmed.trim_start().starts_with("{{") {
+                while let Some((top_indent, _, _)) = self.stack.last().cloned() {
+                    if top_indent > indent {
+                        self.stack.pop();
+                    } else {
+                        break;
+                    }
+                }
                 continue;
             }
 
@@ -338,6 +411,12 @@ pub struct VYT {
     guards: Guards,
     bindings: Bindings,
     defines: Option<Arc<DefineIndex>>,
+    /// When >0, we are inside a non-emitting region (e.g. $var := ... assignments).
+    /// Any collected `.Values.*` uses should be recorded with an empty YAML path.
+    no_output_depth: usize,
+    text_spans: Vec<(usize, usize)>,
+    text_span_idx: usize,
+    text_pos: usize,
 }
 
 // impl<'a> VYT<'a> {
@@ -350,8 +429,95 @@ impl VYT {
             uses: Vec::new(),
             shape: Shape::default(),
             guards: Guards::default(),
-            bindings: Bindings::default(),
+            bindings: {
+                let mut b = Bindings::default();
+                b.ensure_root_scope();
+                b
+            },
             defines: None,
+            no_output_depth: 0,
+            text_spans: Vec::new(),
+            text_span_idx: 0,
+            text_pos: 0,
+        }
+    }
+
+    fn reset_text_spans(&mut self, tree: &tree_sitter::Tree) {
+        let mut spans = Vec::<(usize, usize)>::new();
+        let mut stack = vec![tree.root_node()];
+        while let Some(n) = stack.pop() {
+            if n.is_named() {
+                if n.kind() == "text" {
+                    let r = n.byte_range();
+                    spans.push((r.start, r.end));
+                }
+                let mut w = n.walk();
+                for ch in n.children(&mut w) {
+                    if ch.is_named() {
+                        stack.push(ch);
+                    }
+                }
+            }
+        }
+        spans.sort_by_key(|(s, _)| *s);
+        self.text_spans = spans;
+        self.text_span_idx = 0;
+        self.text_pos = 0;
+    }
+
+    fn ingest_text_up_to(&mut self, target: usize) {
+        let target = target.min(self.source.len());
+        if target <= self.text_pos {
+            return;
+        }
+
+        while self.text_span_idx < self.text_spans.len() {
+            let (s, e) = self.text_spans[self.text_span_idx];
+
+            // Skip spans that end before our current position.
+            if e <= self.text_pos {
+                self.text_span_idx += 1;
+                continue;
+            }
+
+            // If the next span starts after our target, we're done.
+            if s >= target {
+                break;
+            }
+
+            let start = s.max(self.text_pos);
+            let end = e.min(target);
+            if start < end {
+                let txt = &self.source[start..end];
+                self.shape.ingest(txt);
+                self.yaml_tree.update_partial_yaml(txt);
+                self.text_pos = end;
+            }
+
+            // If we've reached the end of the span, move to the next.
+            if self.text_pos >= e {
+                self.text_span_idx += 1;
+            }
+
+            // If we've reached the requested target, stop.
+            if self.text_pos >= target {
+                break;
+            }
+
+            // If there is a gap (action nodes) between spans, advance our position to the
+            // start of the next span or target (skipping non-text).
+            if self.text_span_idx < self.text_spans.len() {
+                let (ns, _) = self.text_spans[self.text_span_idx];
+                if self.text_pos < ns {
+                    self.text_pos = ns.min(target);
+                }
+            } else {
+                self.text_pos = target;
+            }
+        }
+
+        if self.text_pos < target {
+            self.text_pos = target;
         }
     }
 
@@ -361,8 +527,72 @@ impl VYT {
     }
 
     pub fn run(mut self, tree: &tree_sitter::Tree) -> Vec<VYUse> {
+        self.reset_text_spans(tree);
         self.walk(tree.root_node());
+
+        // Many nodes are visited both as a parent container and as their children
+        // (e.g. function_call + selector_expression), which can produce identical uses.
+        // Dedup exact duplicates to keep tests stable and output readable.
+        self.uses.sort_by(|a, b| {
+            a.source_expr
+                .cmp(&b.source_expr)
+                .then_with(|| a.path.0.cmp(&b.path.0))
+                .then_with(|| (a.kind as u8).cmp(&(b.kind as u8)))
+                .then_with(|| a.guards.cmp(&b.guards))
+        });
+        self.uses.dedup();
         self.uses
+    }
+
+    fn is_assignment_action(&self, node: Node) -> bool {
+        if node.kind() != "action" {
+            return false;
+        }
+        let Ok(txt) = node.utf8_text(self.source.as_bytes()) else {
+            return false;
+        };
+
+        // Fast heuristic: action contains a variable assignment.
+        // Examples:
+        //   {{- $annotations := merge ... -}}
+        //   {{- $x = default ... -}}
+        // We avoid matching comparisons like `==` by requiring `$` and `:=` or ` = `.
+        if !txt.contains('$') {
+            return false;
+        }
+        txt.contains(":=") || txt.contains(" = ")
+    }
+
+    fn bind_assignment_action_if_any(&mut self, node: Node) {
+        if !self.is_assignment_action(node) {
+            return;
+        }
+        let Ok(txt) = node.utf8_text(self.source.as_bytes()) else {
+            return;
+        };
+        let re = Regex::new(r#"\$[A-Za-z_][A-Za-z0-9_]*\s*(?::=|=)"#).unwrap();
+        let Some(m) = re.find(txt) else {
+            return;
+        };
+        let mut lhs = m.as_str().trim().to_string();
+        lhs = lhs
+            .trim_end_matches(":=")
+            .trim_end_matches('=')
+            .trim()
+            .to_string();
+        if !lhs.starts_with('$') {
+            return;
+        }
+
+        let sources = self.collect_values_anywhere(node);
+        if sources.is_empty() {
+            return;
+        }
+        let mut bases: Vec<String> = sources.into_iter().collect();
+        bases.sort();
+        bases.dedup();
+        self.bindings
+            .bind_var(lhs, bases, BindingRole::MapValue);
     }
 
     // Add near other helpers if you want, or inline the logic below.
@@ -370,6 +600,62 @@ impl VYT {
         let keys = self.collect_values_anywhere(h);
         keys.into_iter()
             .max_by_key(|k| (k.matches('.').count(), k.len()))
+    }
+
+    fn deepest_dot_relative_path_in_header(&self, h: Node) -> Option<String> {
+        let b = self.bindings.dot_binding()?;
+        let mut dot_base = b.bases.first().cloned()?;
+
+        // If current dot comes from a `range`, treat it as an item base.
+        // This lets nested `range .hosts` produce `...tls.*.hosts` (instead of `...tls.hosts`).
+        if matches!(b.role, BindingRole::Item) && !dot_base.ends_with(".*") {
+            dot_base.push_str(".*");
+        }
+
+        let mut stack = vec![h];
+        while let Some(n) = stack.pop() {
+            // Some headers are emitted as `field` nodes like `.hosts` / `.secretName`.
+            if n.kind() == "field" {
+                if let Ok(t) = n.utf8_text(self.source.as_bytes()) {
+                    let t = t.trim();
+                    if let Some(stripped) = t.strip_prefix('.') {
+                        if !stripped.is_empty() && stripped != "Values" {
+                            if dot_base.is_empty() {
+                                return Some(stripped.to_string());
+                            }
+                            return Some(format!("{}.{}", dot_base, stripped));
+                        }
+                    }
+                }
+            }
+
+            if n.kind() == "selector_expression" {
+                if let Some(segs) = parse_selector_chain(n, &self.source) {
+                    let ss: Vec<_> = segs.iter().map(|s| s.as_str()).collect();
+                    if let [".", head, rest @ ..] = ss.as_slice() {
+                        if *head != "Values" && !head.is_empty() {
+                            let mut rel = Vec::with_capacity(1 + rest.len());
+                            rel.push((*head).to_string());
+                            rel.extend(rest.iter().map(|s| (*s).to_string()));
+                            let rel = rel.join(".");
+                            if dot_base.is_empty() {
+                                return Some(rel);
+                            }
+                            return Some(format!("{}.{}", dot_base, rel));
+                        }
+                    }
+                }
+            }
+
+            let mut w = n.walk();
+            for ch in n.children(&mut w) {
+                if ch.is_named() {
+                    stack.push(ch);
+                }
+            }
+        }
+
+        None
     }
 
     fn node_is_function_named(&self, n: Node, name: &str) -> bool {
@@ -403,9 +689,7 @@ impl VYT {
         }) {
             let mut w = args.walk();
             for a in args.children(&mut w).filter(|x| x.is_named()) {
-                if let Some(p) = self.value_path_from_expr(a) {
-                    out.push(p);
-                }
+                out.extend(self.value_paths_from_expr(a));
             }
         }
         out
@@ -426,12 +710,15 @@ impl VYT {
             return false;
         };
 
-        if let Some(base) = self.deepest_values_path_in_header(h) {
+        let base = self
+            .deepest_values_path_in_header(h)
+            .or_else(|| self.deepest_dot_relative_path_in_header(h));
+        if let Some(base) = base {
             // Rebind '.' to the full path, e.g. "persistentVolumeClaims.storageClassName"
             self.bindings.push_scope(
                 HashMap::new(),
                 Some(Binding {
-                    base,
+                    bases: vec![base],
                     role: BindingRole::MapValue,
                 }),
             );
@@ -496,7 +783,7 @@ impl VYT {
                 map.insert(
                     v1,
                     Binding {
-                        base: base_first.clone(),
+                        bases: vec![base_first.clone()],
                         role: BindingRole::MapValue,
                     },
                 );
@@ -507,7 +794,7 @@ impl VYT {
                     map.insert(
                         first,
                         Binding {
-                            base: base_first.clone(),
+                            bases: vec![base_first.clone()],
                             role: BindingRole::MapKey,
                         },
                     );
@@ -515,7 +802,7 @@ impl VYT {
                 map.insert(
                     v2,
                     Binding {
-                        base: base_first.clone(),
+                        bases: vec![base_first.clone()],
                         role: BindingRole::MapValue,
                     },
                 );
@@ -523,7 +810,7 @@ impl VYT {
 
             // In range over map, '.' is the value
             let dot = Some(Binding {
-                base: base_first,
+                bases: vec![base_first],
                 role: BindingRole::MapValue,
             });
             self.bindings.push_scope(map, dot);
@@ -532,11 +819,14 @@ impl VYT {
 
         // --- CASE B: simple list/map range "range EXPR" (no :=) ---
         // Rebind '.' to the deepest .Values.* path; mark as Item so we can star-normalize later.
-        if let Some(base_full) = self.deepest_values_path_in_header(h) {
+        let base_full = self
+            .deepest_values_path_in_header(h)
+            .or_else(|| self.deepest_dot_relative_path_in_header(h));
+        if let Some(base_full) = base_full {
             self.bindings.push_scope(
                 HashMap::new(),
                 Some(Binding {
-                    base: base_full,
+                    bases: vec![base_full],
                     role: BindingRole::Item,
                 }),
             );
@@ -547,6 +837,8 @@ impl VYT {
     }
 
     fn walk(&mut self, node: Node) {
+        self.ingest_text_up_to(node.start_byte());
+
         // Containers & control-flow: walk children with small pre/post hooks
         if false {
             println!(
@@ -558,6 +850,26 @@ impl VYT {
                 self.guards,
                 node.utf8_text(self.source.as_bytes()).unwrap_or_default(),
             );
+        }
+
+        // Assignments (e.g. {{- $x := ... -}}) do not emit YAML; we still want to
+        // record `.Values.*` reads, but with an empty YAML placement.
+        //
+        // Note: tree-sitter represents these in a couple ways depending on where they
+        // appear; in practice, the *action* node is the reliable wrapper.
+        if self.is_assignment_action(node) || is_assignment_kind(node.kind()) {
+            self.bind_assignment_action_if_any(node);
+            self.no_output_depth += 1;
+
+            let mut c = node.walk();
+            for ch in node.children(&mut c) {
+                if ch.is_named() {
+                    self.walk(ch);
+                }
+            }
+
+            self.no_output_depth = self.no_output_depth.saturating_sub(1);
+            return;
         }
 
         if is_control_flow_kind(node.kind()) {
@@ -594,9 +906,7 @@ impl VYT {
 
         match node.kind() {
             "text" => {
-                let txt = &self.source[node.byte_range()];
-                self.shape.ingest(txt);
-                self.yaml_tree.update_partial_yaml(txt);
+                self.ingest_text_up_to(node.end_byte());
             }
             "function_call" => {
                 // Special-case include/template: inline and walk the referenced define
@@ -604,7 +914,7 @@ impl VYT {
                     function_name_of(&node, &self.source).as_deref(),
                     Some("include" | "template")
                 ) {
-                    // if function_name_of(&node, &self.source).as_deref() == Some("include") {
+                    self.handle_output(node);
                     if self.inline_include(node) {
                         return;
                     }
@@ -648,6 +958,22 @@ impl VYT {
         let Some(defs) = self.defines.as_ref().map(Arc::clone) else {
             return false;
         };
+
+        // If this include call is part of a variable assignment action (`$x := ...`), then
+        // it does not emit YAML at the call site. Treat any uses recorded inside the
+        // inlined template as having an empty YAML path.
+        let mut pushed_no_output = false;
+        if self.no_output_depth == 0 {
+            let mut cur = Some(call);
+            while let Some(n) = cur {
+                if is_assignment_kind(n.kind()) || self.is_assignment_action(n) {
+                    self.no_output_depth += 1;
+                    pushed_no_output = true;
+                    break;
+                }
+                cur = n.parent();
+            }
+        }
 
         // Find args: name (string) and ctx (anything)
         let mut name: Option<String> = None;
@@ -697,6 +1023,23 @@ impl VYT {
             self.extract_include_context(ctx_node, &mut alias_map, &mut dot_binding);
         }
 
+        // If we're in a non-emitting context (assignment action), treat include inputs as
+        // non-emitting as well. This is important for helpers like `common.tplvalues.merge`
+        // that do `range .values`: those reads should be recorded with empty YAML path.
+        let include_input_values = alias_map.get("values").cloned();
+        if self.no_output_depth > 0 {
+            if let Some(items) = include_input_values.as_ref() {
+                for it in items {
+                    self.uses.push(VYUse {
+                        source_expr: it.clone(),
+                        path: YPath(Vec::new()),
+                        kind: VYKind::Scalar,
+                        guards: vec![],
+                    });
+                }
+            }
+        }
+
         // Push scopes
         let had_alias = !alias_map.is_empty();
         if had_alias {
@@ -709,12 +1052,26 @@ impl VYT {
             false
         };
 
+        // Snapshot the caller's YAML shape so any YAML-ish content inside the included
+        // template does not leak into the caller's subsequent path tracking.
+        // We *do* want the include body to see the caller's shape as the starting point.
+        let saved_shape = self.shape.clone();
+
+        let saved_text_spans = self.text_spans.clone();
+        let saved_text_span_idx = self.text_span_idx;
+        let saved_text_pos = self.text_pos;
+
         // Swap source while walking the included template
         let saved_src = self.source.to_owned();
         self.source = tpl_src.clone();
 
-        // Walk included template with current shape and guards
+        self.reset_text_spans(tpl_tree);
+
         self.walk(tpl_tree.root_node());
+        self.shape = saved_shape;
+        self.text_spans = saved_text_spans;
+        self.text_span_idx = saved_text_span_idx;
+        self.text_pos = saved_text_pos;
 
         // Restore source and scopes
         self.source = saved_src;
@@ -723,6 +1080,9 @@ impl VYT {
         }
         if had_alias {
             self.bindings.pop_alias_map();
+        }
+        if pushed_no_output {
+            self.no_output_depth = self.no_output_depth.saturating_sub(1);
         }
         true
     }
@@ -778,8 +1138,11 @@ impl VYT {
                         if !items.is_empty() {
                             alias_out.insert(key_txt, items);
                         }
-                    } else if let Some(p) = self.value_path_from_expr(val_node) {
-                        alias_out.insert(key_txt, vec![p]);
+                    } else {
+                        let items = self.value_paths_from_expr(val_node);
+                        if !items.is_empty() {
+                            alias_out.insert(key_txt, items);
+                        }
                     }
                     i += 2;
                 }
@@ -790,77 +1153,76 @@ impl VYT {
         // Not a dict: try to bind '.' to a concrete .Values.* base
         if let Some(p) = self.value_path_from_expr(n) {
             *dot_out = Some(Binding {
-                base: p,
+                bases: vec![p],
                 role: BindingRole::Item,
             });
         }
     }
 
-    /// Try to reduce an expression node to a `.Values.*` subpath String.
     fn value_path_from_expr(&self, n: Node) -> Option<String> {
+        self.value_paths_from_expr(n).into_iter().next()
+    }
+
+    fn value_paths_from_expr(&self, n: Node) -> Vec<String> {
         match n.kind() {
             "selector_expression" => {
-                if let Some(segs) = parse_selector_chain(n, &self.source) {
-                    let ss: Vec<_> = segs.iter().map(|s| s.as_str()).collect();
-                    match ss.as_slice() {
-                        [".", "Values", rest @ ..] | ["$", "Values", rest @ ..]
-                            if !rest.is_empty() =>
-                        {
-                            return Some(rest.join("."));
-                        }
-                        ["Values", rest @ ..] if !rest.is_empty() => {
-                            return Some(rest.join("."));
-                        }
-                        [".", head, rest @ ..] if !head.is_empty() => {
-                            if let Some(bases) = self.bindings.resolve_alias(head) {
-                                // Prefer first for single-binding cases; multi handled at call sites that need sets.
-                                if let Some(base) = bases.first() {
-                                    if rest.is_empty() {
-                                        return Some(base.clone());
-                                    } else {
-                                        return Some(format!("{}.{}", base, rest.join(".")));
-                                    }
-                                }
-                            }
-                        }
-                        // [".", head, rest @ ..] if !head.is_empty() => {
-                        //     if let Some(base) = self.bindings.resolve_alias(head) {
-                        //         if rest.is_empty() {
-                        //             return Some(base);
-                        //         } else {
-                        //             return Some(format!("{}.{}", base, rest.join(".")));
-                        //         }
-                        //     }
-                        // }
-                        _ => {}
+                let Some(segs) = parse_selector_chain(n, &self.source) else {
+                    return Vec::new();
+                };
+                let ss: Vec<_> = segs.iter().map(|s| s.as_str()).collect();
+                match ss.as_slice() {
+                    [".", "Values", rest @ ..] | ["$", "Values", rest @ ..] if !rest.is_empty() => {
+                        vec![rest.join(".")]
                     }
+                    ["Values", rest @ ..] if !rest.is_empty() => vec![rest.join(".")],
+                    [".", head, rest @ ..] if !head.is_empty() => {
+                        let Some(bases) = self.bindings.resolve_alias(head) else {
+                            return Vec::new();
+                        };
+                        if rest.is_empty() {
+                            bases
+                        } else {
+                            bases
+                                .into_iter()
+                                .map(|b| format!("{}.{}", b, rest.join(".")))
+                                .collect()
+                        }
+                    }
+                    _ => Vec::new(),
                 }
-                None
             }
-            "dot" => self.bindings.dot_binding().map(|b| b.base.clone()),
+            "dot" => self
+                .bindings
+                .dot_binding()
+                .map(|b| b.bases.clone())
+                .unwrap_or_default(),
             "variable" | "identifier" => {
-                if let Ok(txt) = n.utf8_text(self.source.as_bytes()) {
-                    let t = txt.trim();
-                    if t.starts_with('$') {
-                        if let Some(b) = self.bindings.lookup_var(t) {
-                            return Some(b.base.clone());
-                        }
-                    }
+                let Ok(txt) = n.utf8_text(self.source.as_bytes()) else {
+                    return Vec::new();
+                };
+                let t = txt.trim();
+                if t.starts_with('$') {
+                    self.bindings
+                        .lookup_var(t)
+                        .map(|b| b.bases.clone())
+                        .unwrap_or_default()
+                } else {
+                    Vec::new()
                 }
-                None
             }
             "parenthesized_pipeline" => {
+                let mut out = Vec::new();
                 let mut w = n.walk();
                 for ch in n.children(&mut w) {
                     if ch.is_named() {
-                        if let Some(p) = self.value_path_from_expr(ch) {
-                            return Some(p);
-                        }
+                        out.extend(self.value_paths_from_expr(ch));
                     }
                 }
-                None
+                out.sort();
+                out.dedup();
+                out
             }
-            _ => None,
+            _ => Vec::new(),
         }
     }
 
@@ -869,6 +1231,18 @@ impl VYT {
         let mut out = BTreeSet::new();
         let mut stack = vec![node];
         while let Some(n) = stack.pop() {
+            if n.kind() == "variable" || n.kind() == "identifier" {
+                if let Ok(txt) = n.utf8_text(self.source.as_bytes()) {
+                    let t = txt.trim();
+                    if t.starts_with('$') {
+                        if let Some(b) = self.bindings.lookup_var(t) {
+                            for base in &b.bases {
+                                out.insert(base.clone());
+                            }
+                        }
+                    }
+                }
+            }
             if n.kind() == "selector_expression" {
                 if let Some(segs) = parse_selector_chain(n, &self.source) {
                     let ss: Vec<_> = segs.iter().map(|s| s.as_str()).collect();
@@ -913,11 +1287,13 @@ impl VYT {
     }
 
     fn collect_guards_from(&mut self, node: Node) {
-        println!(
-            "collecting guards from {:?} [ {} ]",
-            node,
-            node.utf8_text(self.source.as_bytes()).unwrap_or_default(),
-        );
+        if false {
+            println!(
+                "collecting guards from {:?} [ {} ]",
+                node,
+                node.utf8_text(self.source.as_bytes()).unwrap_or_default(),
+            );
+        }
         match node.kind() {
             "if_action" | "with_action" | "range_action" => {
                 let mut w = node.walk();
@@ -934,7 +1310,11 @@ impl VYT {
                             // ALSO: record a stand-alone guard use at the current YAML path
                             self.uses.push(VYUse {
                                 source_expr: k,
-                                path: self.shape.current_path(),
+                                path: if self.no_output_depth > 0 {
+                                    YPath(Vec::new())
+                                } else {
+                                    self.shape.current_path()
+                                },
                                 kind: VYKind::Scalar, // role-less model; scalar is fine for presence
                                 guards: vec![],
                             });
@@ -947,11 +1327,13 @@ impl VYT {
     }
 
     fn handle_output(&mut self, node: Node) {
-        println!(
-            "handle output: node={:?} [ {} ]",
-            node,
-            node.utf8_text(self.source.as_bytes()).unwrap_or_default(),
-        );
+        if false {
+            println!(
+                "handle output: node={:?} [ {} ]",
+                node,
+                node.utf8_text(self.source.as_bytes()).unwrap_or_default(),
+            );
+        }
 
         // if node.is_named() && (node.kind() == "identifier" || node.kind() == "variable") {
 
@@ -963,11 +1345,21 @@ impl VYT {
                 if let Some(stripped) = t.strip_prefix('.') {
                     if !stripped.is_empty() {
                         if let Some(b) = self.bindings.dot_binding() {
-                            // Base is whatever the current dot is bound to (e.g., "ingress.tls")
-                            let mut src = b.base.clone();
+                            let mut src = b.bases.first().cloned().unwrap_or_default();
 
-                            // If you later want star-normalization for list items of maps,
-                            // you could check `b.role == BindingRole::Item` here.
+                            // Mirror the dot-node behavior: if the dot binding comes from a list
+                            // range and we are currently emitting within a YAML sequence, normalize
+                            // to a wildcard element.
+                            if matches!(b.role, BindingRole::Item) {
+                                let in_sequence = self
+                                    .shape
+                                    .stack
+                                    .iter()
+                                    .any(|(_, kind, _)| *kind == Container::Sequence);
+                                if in_sequence && !src.ends_with(".*") {
+                                    src.push_str(".*");
+                                }
+                            }
 
                             // Append the field
                             if !src.is_empty() {
@@ -991,18 +1383,24 @@ impl VYT {
         }
 
         // Is this a variable or a dot?
-        if node.is_named() && (node.kind() == "variable" || node.kind() == "dot") {
+        if node.is_named()
+            && (node.kind() == "variable"
+                || node.kind() == "dot"
+                || (node.kind() == "identifier"
+                    && node
+                        .utf8_text(self.source.as_bytes())
+                        .ok()
+                        .map(|t| t.trim_start().starts_with('$'))
+                        .unwrap_or(false)))
+        {
             if let Ok(txt) = node.utf8_text(self.source.as_bytes()) {
                 let t = txt.trim();
-                let mut base: Option<String> = None;
+                let mut bases: Vec<String> = Vec::new();
 
                 // if t == "." {
                 if node.kind() == "dot" || t == "." {
                     if let Some(b) = self.bindings.dot_binding() {
-                        // base = Some(b.base.clone());
-
-                        // Start with the bound base
-                        let mut src = b.base.clone();
+                        let mut src = b.bases.first().cloned().unwrap_or_default();
 
                         // If this dot comes from a list range, and we're currently emitting
                         // under a YAML sequence,
@@ -1018,23 +1416,27 @@ impl VYT {
                             }
                         }
 
-                        base = Some(src);
+                        if !src.is_empty() {
+                            bases.push(src);
+                        }
                     }
                 } else if t.starts_with('$') {
                     if let Some(b) = self.bindings.lookup_var(t) {
-                        base = Some(b.base.clone());
+                        bases.extend(b.bases.clone());
                     }
                 }
 
-                if let Some(b) = base {
+                if !bases.is_empty() {
                     let path = self.shape.current_path();
                     let guards = self.guards.snapshot();
-                    self.uses.push(VYUse {
-                        source_expr: b,
-                        path,
-                        kind: VYKind::Scalar,
-                        guards,
-                    });
+                    for b in bases {
+                        self.uses.push(VYUse {
+                            source_expr: b,
+                            path: path.clone(),
+                            kind: VYKind::Scalar,
+                            guards: guards.clone(),
+                        });
+                    }
                     // Do not traverse further; variables are leaves
                     return;
                 }
@@ -1042,13 +1444,20 @@ impl VYT {
         }
 
         // Existing producer / selector handling as before
-        let is_fragment = pipeline_contains_any(node, &self.source, &["toYaml", "fromYaml", "tpl"]);
+        let is_fragment = matches!(
+            function_name_of(&node, &self.source).as_deref(),
+            Some("include" | "template")
+        ) || pipeline_contains_any(node, &self.source, &["toYaml", "fromYaml", "nindent", "indent"]);
         let sources = self.collect_values_anywhere(node);
         // let sources = collect_values_anywhere(node, self.source);
         if sources.is_empty() {
             return;
         }
-        let path = self.shape.current_path();
+        let path = if self.no_output_depth > 0 {
+            YPath(Vec::new())
+        } else {
+            self.shape.current_path()
+        };
         let kind = if is_fragment {
             VYKind::Fragment
         } else {
@@ -1056,13 +1465,54 @@ impl VYT {
         };
         let guards = self.guards.snapshot();
 
+        // Heuristic: fragments (e.g. `toYaml ... | nindent`) can expand to list items.
+        // If we are under a key like `paths:` but haven't yet observed a `- ` item,
+        // Shape won't have appended `[*]` to the path. Emit an alternate wildcarded
+        // placement so downstream assertions can treat it as a list element container.
+        let mut extra_fragment_path: Option<YPath> = None;
+        let mut extra_spec_fragment_path: Option<YPath> = None;
+        if kind == VYKind::Fragment && self.no_output_depth == 0 {
+            if let Some(last) = path.0.last() {
+                if last == "paths" {
+                    let mut alt = path.clone();
+                    if let Some(l) = alt.0.last_mut() {
+                        *l = "paths[*]".to_string();
+                        extra_fragment_path = Some(alt);
+                    }
+                }
+            }
+
+            if path.0.first().map(|s| s.as_str()) == Some("spec") && path.0.len() > 1 {
+                extra_spec_fragment_path = Some(YPath(vec!["spec".to_string()]));
+            }
+        }
+
         for s in sources {
+            let src = s.clone();
             self.uses.push(VYUse {
-                source_expr: s,
+                source_expr: src.clone(),
                 path: path.clone(),
                 kind,
                 guards: guards.clone(),
             });
+
+            if let Some(p2) = extra_fragment_path.as_ref() {
+                self.uses.push(VYUse {
+                    source_expr: src,
+                    path: p2.clone(),
+                    kind,
+                    guards: guards.clone(),
+                });
+            }
+
+            if let Some(p3) = extra_spec_fragment_path.as_ref() {
+                self.uses.push(VYUse {
+                    source_expr: s,
+                    path: p3.clone(),
+                    kind,
+                    guards: guards.clone(),
+                });
+            }
         }
     }
 }

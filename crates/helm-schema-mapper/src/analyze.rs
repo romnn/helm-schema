@@ -230,6 +230,32 @@ fn owning_action_child<'tree>(
     None
 }
 
+fn predict_slot_behind(buf: &str, target_indent: usize) -> Option<Slot> {
+    for line in buf.lines().rev() {
+        let trimmed_end = line.trim_end();
+        if trimmed_end.is_empty() {
+            continue;
+        }
+
+        let indent = line.chars().take_while(|&c| c == ' ').count();
+        if indent < target_indent {
+            break;
+        }
+        if indent > target_indent {
+            continue;
+        }
+
+        let after = &line[indent..];
+        if after.starts_with("- ") {
+            return Some(Slot::SequenceItem);
+        }
+        if trimmed_end.ends_with(':') {
+            return Some(Slot::MappingValue);
+        }
+    }
+    None
+}
+
 fn is_ctrl_flow(kind: &str) -> bool {
     matches!(
         kind,
@@ -2572,7 +2598,7 @@ fn write_fragment_placeholder_line(buf: &mut String, id: usize, slot: Slot) {
             // // Write a *list item* that is a one-line mapping
             // let _ = writeln!(buf, "- {{ \"__TSG_PLACEHOLDER_{id}__\": 0 }}");
             // IMPORTANT: a sequence item must start with "- "
-            let _ = writeln!(buf, "- \"__TSG_PLACEHOLDER_{id}__\": 0");
+            let _ = writeln!(buf, "- {{ \"__TSG_PLACEHOLDER_{id}__\": 0 }}");
         }
         Slot::Plain => {
             let _ = write!(buf, "\"__TSG_PLACEHOLDER_{id}__\": 0\n");
@@ -2586,8 +2612,10 @@ fn emit_text_and_update(out: &mut InlineOut, text: &str) {
         let indent = line.chars().take_while(|&c| c == ' ').count();
         let after = &line[indent..];
 
-        // On dedent: flush any deeper-indented pending as mapping
-        {
+        let is_template = after.trim_start().starts_with("{{");
+        let is_blank = after.trim().is_empty();
+
+        if !is_template && !is_blank {
             let deeper: Vec<usize> = out
                 .pending
                 .keys()
@@ -2595,13 +2623,12 @@ fn emit_text_and_update(out: &mut InlineOut, text: &str) {
                 .filter(|&i| i > indent)
                 .collect();
             for i in deeper {
-                flush_pending_for_indent(out, i, Slot::MappingValue);
+                let slot = predict_slot_behind(&out.buf, i).unwrap_or(Slot::MappingValue);
+                flush_pending_for_indent(out, i, slot);
             }
         }
 
         // If the next line at this indent is decisive (non-template, non-blank), flush pending first
-        let is_template = after.trim_start().starts_with("{{");
-        let is_blank = after.trim().is_empty();
         if out.pending.contains_key(&indent) && !is_template && !is_blank {
             if after.starts_with("- ") {
                 flush_pending_for_indent(out, indent, Slot::SequenceItem);
@@ -2703,6 +2730,17 @@ fn predict_slot_ahead(src: &str, from: usize, target_indent: usize) -> Option<Sl
     let bytes = src.as_bytes();
     let mut i = from;
 
+    // `from` can point into the middle of the current line (e.g., `node.end_byte()` inside `{{ ... }}`).
+    // Slot prediction is based on line indentation, so start scanning at the next line boundary.
+    if i < bytes.len() {
+        while i < bytes.len() && bytes[i] != b'\n' {
+            i += 1;
+        }
+        if i < bytes.len() && bytes[i] == b'\n' {
+            i += 1;
+        }
+    }
+
     while i < bytes.len() {
         // line bounds
         let line_start = i;
@@ -2796,8 +2834,25 @@ fn write_placeholder(
             out.buf.push('\n');
         }
 
-        // *** NEW: defer emission. We’ll flush as soon as a decisive line appears at this indent.
-        out.pending.entry(target_indent).or_default().push(id);
+        let predicted = predict_slot_ahead(src, node.end_byte(), target_indent)
+            .or_else(|| predict_slot_behind(&out.buf, target_indent));
+
+        if matches!(predicted, Some(Slot::SequenceItem)) {
+            slot = Slot::SequenceItem;
+        } else if matches!(slot, Slot::Plain) {
+            slot = predicted.unwrap_or(Slot::Plain);
+        }
+
+        if matches!(slot, Slot::Plain) {
+            out.pending.entry(target_indent).or_default().push(id);
+        } else {
+            ensure_current_line_indent(&mut out.buf, target_indent);
+            write_fragment_placeholder_line(&mut out.buf, id, slot);
+            out.last_fragment_parent = Some(FragmentParent {
+                slot,
+                indent: target_indent,
+            });
+        }
 
         // let nin = extract_nindent_width(&node, src).unwrap_or(0);
         // let mut slot = current_slot_in_buf(&out.buf);
