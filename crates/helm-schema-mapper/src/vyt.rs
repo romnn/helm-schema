@@ -79,7 +79,7 @@ impl ResourceDetector {
             if trimmed.is_empty() {
                 return;
             }
-            if trimmed == "---" {
+            if trimmed == "---" || trimmed == "..." {
                 det.api_version = None;
                 det.kind = None;
                 det.current = None;
@@ -347,6 +347,12 @@ impl Shape {
 
             // Blank lines carry no structural signal.
             if trimmed.is_empty() {
+                continue;
+            }
+
+            // Multi-document YAML boundary: reset the shape so paths don't bleed across docs.
+            if trimmed == "---" || trimmed == "..." {
+                self.stack.clear();
                 continue;
             }
 
@@ -806,15 +812,17 @@ impl VYT {
             return false;
         };
 
-        let base = self
-            .deepest_values_path_in_header(h)
-            .or_else(|| self.deepest_dot_relative_path_in_header(h));
-        if let Some(base) = base {
-            // Rebind '.' to the full path, e.g. "persistentVolumeClaims.storageClassName"
+        let mut bases: Vec<String> = self.collect_values_anywhere(h).into_iter().collect();
+        if let Some(b) = self.deepest_dot_relative_path_in_header(h) {
+            bases.push(b);
+        }
+        bases.sort();
+        bases.dedup();
+        if !bases.is_empty() {
             self.bindings.push_scope(
                 HashMap::new(),
                 Some(Binding {
-                    bases: vec![base],
+                    bases,
                     role: BindingRole::MapValue,
                 }),
             );
@@ -863,30 +871,30 @@ impl VYT {
             let vars_raw = caps.name("vars").unwrap().as_str();
             let expr = caps.name("expr").unwrap().as_str();
 
-            // Determine what the map is ranged over. Prefer an explicit .Values.* base.
-            // If the expression is a variable (e.g. `$m`), try to resolve it from
-            // the current bindings.
-            let base_full = first_values_base(expr).or_else(|| {
+            // Determine what the map is ranged over.
+            // Prefer structured extraction from the header subtree so wrapper functions
+            // like `default`, `required`, `merge`, parentheses, etc. don't break binding.
+            let mut base_candidates: Vec<String> =
+                self.collect_values_anywhere(h).into_iter().collect();
+
+            // Fallback for the common pattern `range $k, $v := $m` where `$m` was
+            // assigned from `.Values.*` earlier.
+            if base_candidates.is_empty() {
                 let e = expr.trim();
                 if e.starts_with('$') {
-                    self.bindings
-                        .lookup_var(e)
-                        .and_then(|b| b.bases.first().cloned())
-                } else {
-                    None
+                    if let Some(b) = self.bindings.lookup_var(e) {
+                        base_candidates.extend(b.bases.clone());
+                    }
                 }
-            });
+            }
 
-            let Some(base_full) = base_full else {
+            base_candidates.sort();
+            base_candidates.dedup();
+
+            if base_candidates.is_empty() {
                 // If we can't relate this range to a Values path, don't create a dot/$k/$v binding.
                 return false;
-            };
-
-            let base_first = base_full
-                .split('.')
-                .next()
-                .unwrap_or(&base_full)
-                .to_string();
+            }
 
             let mut map = HashMap::new();
 
@@ -897,7 +905,7 @@ impl VYT {
                 map.insert(
                     v1,
                     Binding {
-                        bases: vec![base_first.clone()],
+                        bases: base_candidates.clone(),
                         role: BindingRole::MapValue,
                     },
                 );
@@ -908,7 +916,7 @@ impl VYT {
                     map.insert(
                         first,
                         Binding {
-                            bases: vec![base_first.clone()],
+                            bases: base_candidates.clone(),
                             role: BindingRole::MapKey,
                         },
                     );
@@ -916,7 +924,7 @@ impl VYT {
                 map.insert(
                     v2,
                     Binding {
-                        bases: vec![base_first.clone()],
+                        bases: base_candidates.clone(),
                         role: BindingRole::MapValue,
                     },
                 );
@@ -924,7 +932,7 @@ impl VYT {
 
             // In range over map, '.' is the value
             let dot = Some(Binding {
-                bases: vec![base_first],
+                bases: base_candidates,
                 role: BindingRole::MapValue,
             });
             self.bindings.push_scope(map, dot);
@@ -1467,37 +1475,39 @@ impl VYT {
                 if let Some(stripped) = t.strip_prefix('.') {
                     if !stripped.is_empty() {
                         if let Some(b) = self.bindings.dot_binding() {
-                            let mut src = b.bases.first().cloned().unwrap_or_default();
-
-                            // Mirror the dot-node behavior: if the dot binding comes from a list
-                            // range and we are currently emitting within a YAML sequence, normalize
-                            // to a wildcard element.
-                            if matches!(b.role, BindingRole::Item) {
-                                let in_sequence = self
-                                    .shape
-                                    .stack
-                                    .iter()
-                                    .any(|(_, kind, _)| *kind == Container::Sequence);
-                                if in_sequence && !src.ends_with(".*") {
-                                    src.push_str(".*");
-                                }
-                            }
-
-                            // Append the field
-                            if !src.is_empty() {
-                                src.push('.');
-                            }
-                            src.push_str(stripped);
-
                             let path = self.shape.current_path();
                             let guards = self.guards.snapshot();
-                            self.uses.push(VYUse {
-                                source_expr: src,
-                                path,
-                                kind: VYKind::Scalar,
-                                guards,
-                                resource: self.resource_detector.current(),
-                            });
+
+                            let in_sequence = self
+                                .shape
+                                .stack
+                                .iter()
+                                .any(|(_, kind, _)| *kind == Container::Sequence);
+
+                            for base in &b.bases {
+                                let mut src = base.clone();
+
+                                // Mirror the dot-node behavior: if the dot binding comes from a list
+                                // range and we are currently emitting within a YAML sequence, normalize
+                                // to a wildcard element.
+                                if matches!(b.role, BindingRole::Item) && in_sequence && !src.ends_with(".*") {
+                                    src.push_str(".*");
+                                }
+
+                                // Append the field
+                                if !src.is_empty() {
+                                    src.push('.');
+                                }
+                                src.push_str(stripped);
+
+                                self.uses.push(VYUse {
+                                    source_expr: src,
+                                    path: path.clone(),
+                                    kind: VYKind::Scalar,
+                                    guards: guards.clone(),
+                                    resource: self.resource_detector.current(),
+                                });
+                            }
                             return; // handled
                         }
                     }
@@ -1523,24 +1533,24 @@ impl VYT {
                 // if t == "." {
                 if node.kind() == "dot" || t == "." {
                     if let Some(b) = self.bindings.dot_binding() {
-                        let mut src = b.bases.first().cloned().unwrap_or_default();
+                        let in_sequence = self
+                            .shape
+                            .stack
+                            .iter()
+                            .any(|(_, kind, _)| *kind == Container::Sequence);
 
-                        // If this dot comes from a list range, and we're currently emitting
-                        // under a YAML sequence,
-                        // normalize to a wildcard element: "pvc.accessModes.*"
-                        if matches!(b.role, BindingRole::Item) {
-                            let in_sequence = self
-                                .shape
-                                .stack
-                                .iter()
-                                .any(|(_, kind, _)| *kind == Container::Sequence);
-                            if in_sequence && !src.ends_with(".*") {
+                        for base in &b.bases {
+                            let mut src = base.clone();
+                            // If this dot comes from a list range, and we're currently emitting
+                            // under a YAML sequence,
+                            // normalize to a wildcard element: "pvc.accessModes.*"
+                            if matches!(b.role, BindingRole::Item) && in_sequence && !src.ends_with(".*") {
                                 src.push_str(".*");
                             }
-                        }
 
-                        if !src.is_empty() {
-                            bases.push(src);
+                            if !src.is_empty() {
+                                bases.push(src);
+                            }
                         }
                     }
                 } else if t.starts_with('$') {
@@ -1830,6 +1840,39 @@ mod tests {
             .find(|u| u.source_expr == src)
             .into_iter()
             .flat_map(|u| u.guards.iter())
+    }
+
+    #[test]
+    fn multi_doc_yaml_resets_shape_and_resource_detection_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {{ .Values.cmName }}
+            ---
+            apiVersion: apps/v1
+            kind: Deployment
+            spec:
+              replicas: {{ .Values.replicas }}
+        "#};
+
+        let uses = run_vyt(tpl);
+
+        // Ensure cmName is under metadata.name and associated with ConfigMap
+        let cm_use = uses
+            .iter()
+            .find(|u| u.source_expr == "cmName" && u.path == YPath(vec!["metadata".into(), "name".into()]))
+            .expect("cmName use");
+        assert_eq!(cm_use.resource.as_ref().map(|r| r.kind.as_str()), Some("ConfigMap"));
+
+        // Ensure replicas is under spec.replicas and associated with Deployment
+        let dep_use = uses
+            .iter()
+            .find(|u| u.source_expr == "replicas" && u.path == YPath(vec!["spec".into(), "replicas".into()]))
+            .expect("replicas use");
+        assert_eq!(dep_use.resource.as_ref().map(|r| r.kind.as_str()), Some("Deployment"));
     }
 
     fn parse_define(src: &str) -> (tree_sitter::Tree, String) {
