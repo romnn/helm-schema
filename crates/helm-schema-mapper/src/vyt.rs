@@ -464,6 +464,13 @@ fn is_control_flow_kind(kind: &str) -> bool {
     )
 }
 
+fn is_helm_builtin_object(name: &str) -> bool {
+    matches!(
+        name,
+        "Release" | "Chart" | "Capabilities" | "Template" | "Files" | "Subcharts"
+    )
+}
+
 fn first_values_base(expr: &str) -> Option<String> {
     for prefix in [".Values.", "$.Values.", "Values."] {
         if let Some(idx) = expr.find(prefix) {
@@ -721,7 +728,10 @@ impl VYT {
                 if let Ok(t) = n.utf8_text(self.source.as_bytes()) {
                     let t = t.trim();
                     if let Some(stripped) = t.strip_prefix('.') {
-                        if !stripped.is_empty() && stripped != "Values" {
+                        if !stripped.is_empty()
+                            && stripped != "Values"
+                            && !is_helm_builtin_object(stripped)
+                        {
                             if dot_base.is_empty() {
                                 return Some(stripped.to_string());
                             }
@@ -735,7 +745,7 @@ impl VYT {
                 if let Some(segs) = parse_selector_chain(n, &self.source) {
                     let ss: Vec<_> = segs.iter().map(|s| s.as_str()).collect();
                     if let [".", head, rest @ ..] = ss.as_slice() {
-                        if *head != "Values" && !head.is_empty() {
+                        if *head != "Values" && !head.is_empty() && !is_helm_builtin_object(head) {
                             let mut rel = Vec::with_capacity(1 + rest.len());
                             rel.push((*head).to_string());
                             rel.extend(rest.iter().map(|s| (*s).to_string()));
@@ -1305,6 +1315,9 @@ impl VYT {
                     }
                     ["Values", rest @ ..] if !rest.is_empty() => vec![rest.join(".")],
                     [".", head, rest @ ..] if !head.is_empty() => {
+                        if is_helm_builtin_object(head) {
+                            return Vec::new();
+                        }
                         let Some(bases) = self.bindings.resolve_alias(head) else {
                             return Vec::new();
                         };
@@ -1387,6 +1400,12 @@ impl VYT {
                         }
                         // .config.foo → alias "config" → node(s)
                         [".", head, rest @ ..] if !rest.is_empty() => {
+                            if is_helm_builtin_object(head) {
+                                // Do not interpret Helm builtins (Release/Chart/...) as values aliases.
+                                // This prevents false positives like `otelCollector.Release` inside
+                                // `with .Values.otelCollector` blocks.
+                                continue;
+                            }
                             if let Some(bases) = self.bindings.resolve_alias(head) {
                                 for base in bases {
                                     out.insert(format!("{}.{}", base, rest.join(".")));
@@ -1395,6 +1414,9 @@ impl VYT {
                         }
                         // .config (no tail)
                         [".", head] => {
+                            if is_helm_builtin_object(head) {
+                                continue;
+                            }
                             if let Some(bases) = self.bindings.resolve_alias(head) {
                                 for base in bases {
                                     out.insert(base);
@@ -1474,6 +1496,9 @@ impl VYT {
                 // Expect shapes like ".name"
                 if let Some(stripped) = t.strip_prefix('.') {
                     if !stripped.is_empty() {
+                        if is_helm_builtin_object(stripped) {
+                            return;
+                        }
                         if let Some(b) = self.bindings.dot_binding() {
                             let path = self.shape.current_path();
                             let guards = self.guards.snapshot();
