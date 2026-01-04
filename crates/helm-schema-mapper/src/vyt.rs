@@ -37,6 +37,7 @@ struct ResourceDetector {
     api_version: Option<String>,
     kind: Option<String>,
     current: Option<ResourceRef>,
+    buf: String,
 }
 
 impl ResourceDetector {
@@ -69,35 +70,43 @@ impl ResourceDetector {
             }
         }
 
-        for raw in text.split_inclusive('\n') {
-            let line = raw.trim_end_matches('\n');
+        fn process_line(det: &mut ResourceDetector, line: &str) {
+            let line = line.trim_end_matches('\r');
             let indent = line.chars().take_while(|&c| c == ' ').count();
             let after = &line[indent..];
             let trimmed = after.trim_end();
 
             if trimmed.is_empty() {
-                continue;
+                return;
             }
             if trimmed == "---" {
-                self.api_version = None;
-                self.kind = None;
-                self.current = None;
-                continue;
+                det.api_version = None;
+                det.kind = None;
+                det.current = None;
+                return;
             }
 
             if let Some(v) = parse_literal_value(trimmed, "apiVersion") {
-                self.api_version = Some(v);
+                det.api_version = Some(v);
             }
             if let Some(v) = parse_literal_value(trimmed, "kind") {
-                self.kind = Some(v);
+                det.kind = Some(v);
             }
 
-            if let (Some(api_version), Some(kind)) = (&self.api_version, &self.kind) {
-                self.current = Some(ResourceRef {
+            if let (Some(api_version), Some(kind)) = (&det.api_version, &det.kind) {
+                det.current = Some(ResourceRef {
                     api_version: api_version.clone(),
                     kind: kind.clone(),
                 });
             }
+        }
+
+        self.buf.push_str(text);
+        while let Some(nl) = self.buf.find('\n') {
+            let line = self.buf[..nl].to_string();
+            // drop line + '\n'
+            self.buf.drain(..nl + 1);
+            process_line(self, &line);
         }
     }
 }
@@ -293,7 +302,11 @@ impl Shape {
         let mut out: Vec<String> = Vec::new();
         for (_, kind, pending_key) in &self.stack {
             match (kind, pending_key) {
-                (Container::Mapping, Some(k)) => out.push(k.clone()),
+                (Container::Mapping, Some(k)) => {
+                    if !k.is_empty() {
+                        out.push(k.clone())
+                    }
+                }
                 (Container::Mapping, None) => {}
                 (Container::Sequence, _) => {
                     // Mark the *previous* mapping segment as a list.
@@ -850,7 +863,25 @@ impl VYT {
             let vars_raw = caps.name("vars").unwrap().as_str();
             let expr = caps.name("expr").unwrap().as_str();
 
-            let base_full = first_values_base(expr).unwrap_or_else(|| "Values".to_string());
+            // Determine what the map is ranged over. Prefer an explicit .Values.* base.
+            // If the expression is a variable (e.g. `$m`), try to resolve it from
+            // the current bindings.
+            let base_full = first_values_base(expr).or_else(|| {
+                let e = expr.trim();
+                if e.starts_with('$') {
+                    self.bindings
+                        .lookup_var(e)
+                        .and_then(|b| b.bases.first().cloned())
+                } else {
+                    None
+                }
+            });
+
+            let Some(base_full) = base_full else {
+                // If we can't relate this range to a Values path, don't create a dot/$k/$v binding.
+                return false;
+            };
+
             let base_first = base_full
                 .split('.')
                 .next()
@@ -1144,18 +1175,24 @@ impl VYT {
         let saved_text_spans = self.text_spans.clone();
         let saved_text_span_idx = self.text_span_idx;
         let saved_text_pos = self.text_pos;
+        let saved_resource_detector = self.resource_detector.clone();
 
         // Swap source while walking the included template
         let saved_src = self.source.to_owned();
         self.source = tpl_src.clone();
 
         self.reset_text_spans(tpl_tree);
+        // Includes usually render into the caller's YAML document; preserve the caller's
+        // detected (apiVersion, kind) while walking the include so emitted uses keep the
+        // surrounding resource context.
+        self.resource_detector = saved_resource_detector.clone();
 
         self.walk(tpl_tree.root_node());
         self.shape = saved_shape;
         self.text_spans = saved_text_spans;
         self.text_span_idx = saved_text_span_idx;
         self.text_pos = saved_text_pos;
+        self.resource_detector = saved_resource_detector;
 
         // Restore source and scopes
         self.source = saved_src;
@@ -1533,8 +1570,12 @@ impl VYT {
         // Existing producer / selector handling as before
         let is_fragment = matches!(
             function_name_of(&node, &self.source).as_deref(),
-            Some("include" | "template")
-        ) || pipeline_contains_any(node, &self.source, &["toYaml", "fromYaml", "nindent", "indent"]);
+            Some("include" | "template" | "tpl")
+        ) || pipeline_contains_any(
+            node,
+            &self.source,
+            &["toYaml", "fromYaml", "nindent", "indent", "tpl"],
+        );
         let sources = self.collect_values_anywhere(node);
         // let sources = collect_values_anywhere(node, self.source);
         if sources.is_empty() {
@@ -1569,7 +1610,20 @@ impl VYT {
                 }
             }
 
-            if path.0.first().map(|s| s.as_str()) == Some("spec") && path.0.len() > 1 {
+            // Special case: a fragment rendered with `| nindent 4` from within a `spec:`
+            // section often represents arbitrary YAML under `spec`, but our text-based
+            // Shape tracker cannot reliably infer the resulting substructure.
+            // Emit an additional placement at `spec` only for the specific `nindent 4`
+            // pattern to support common charts (e.g. Bitnami extraRules).
+            let has_nindent_4 = node
+                .utf8_text(self.source.as_bytes())
+                .ok()
+                .map(|t| t.contains("nindent 4"))
+                .unwrap_or(false);
+            if has_nindent_4
+                && path.0.first().map(|s| s.as_str()) == Some("spec")
+                && path.0.len() > 1
+            {
                 extra_spec_fragment_path = Some(YPath(vec!["spec".to_string()]));
             }
         }

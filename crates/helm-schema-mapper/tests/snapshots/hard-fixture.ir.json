@@ -1,0 +1,383 @@
+[
+  {
+    "guards": [],
+    "kind": "Fragment",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "commonAnnotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "commonAnnotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.containers",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "containers"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.containers[*].name",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "containers.*.name"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "volumeMounts[*].mountPath",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "containers.*.volumeMounts.*.mountPath"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "volumeMounts[*].name",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "containers.*.volumeMounts.*.name"
+  },
+  {
+    "guards": [],
+    "kind": "Fragment",
+    "path": "data.embedded.yaml",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "ConfigMap"
+    },
+    "source_expr": "extraConfig"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "data.embedded.yaml",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "ConfigMap"
+    },
+    "source_expr": "extraConfig"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "",
+    "resource": null,
+    "source_expr": "extraLabels"
+  },
+  {
+    "guards": [
+      "extraLabels"
+    ],
+    "kind": "Scalar",
+    "path": "",
+    "resource": null,
+    "source_expr": "extraLabels"
+  },
+  {
+    "guards": [
+      "extraLabels"
+    ],
+    "kind": "Scalar",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "extraLabels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "metadata.labels",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "extraLabels"
+  },
+  {
+    "guards": [
+      "extraLabels"
+    ],
+    "kind": "Scalar",
+    "path": "metadata.labels",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "extraLabels"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.containers[*].image",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.containers[*].image",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image.repository"
+  },
+  {
+    "guards": [
+      "containers"
+    ],
+    "kind": "Scalar",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image.tag"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.initContainers",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "initContainers"
+  },
+  {
+    "guards": [
+      "initContainers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.initContainers[*].image",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "initContainers.*.image"
+  },
+  {
+    "guards": [
+      "initContainers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.initContainers[*].name",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "initContainers.*.name"
+  },
+  {
+    "guards": [
+      "initContainers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.initContainers[*].volumeMounts[*].mountPath",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "initContainers.*.volumeMounts.*.mountPath"
+  },
+  {
+    "guards": [
+      "initContainers"
+    ],
+    "kind": "Scalar",
+    "path": "spec.initContainers[*].volumeMounts[*].name",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "initContainers.*.volumeMounts.*.name"
+  },
+  {
+    "guards": [],
+    "kind": "Fragment",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podAnnotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podAnnotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podExtra"
+  },
+  {
+    "guards": [
+      "podExtra"
+    ],
+    "kind": "Scalar",
+    "path": "spec.template.spec.nodeSelector",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podExtra.nodeSelector"
+  },
+  {
+    "guards": [
+      "podExtra"
+    ],
+    "kind": "Scalar",
+    "path": "spec.template.spec.tolerations",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podExtra.tolerations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.replicas",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "replicaCount"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "",
+    "resource": null,
+    "source_expr": "secret"
+  },
+  {
+    "guards": [
+      "secret",
+      "secret.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "stringData.password",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Secret"
+    },
+    "source_expr": "secret"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "",
+    "resource": null,
+    "source_expr": "secret.enabled"
+  },
+  {
+    "guards": [
+      "secret",
+      "secret.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "stringData.password",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Secret"
+    },
+    "source_expr": "secret.stringData"
+  },
+  {
+    "guards": [
+      "secret",
+      "secret.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "stringData.password",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Secret"
+    },
+    "source_expr": "secret.stringData.password"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.volumes",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "volumes"
+  },
+  {
+    "guards": [
+      "volumes"
+    ],
+    "kind": "Scalar",
+    "path": "spec.template.spec.volumes[*].name",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "volumes.*.name"
+  }
+]

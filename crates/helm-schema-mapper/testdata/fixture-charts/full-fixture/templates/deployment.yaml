@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "full-fixture.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "full-fixture.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "full-fixture.name" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "full-fixture.name" . }}
+      annotations:
+        checksum/config: {{ .Values.configChecksum | quote }}
+    spec:
+      securityContext:
+        runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
+      containers:
+        - name: {{ include "full-fixture.name" . }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
+            readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem }}
+          env:
+            {{- range .Values.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}

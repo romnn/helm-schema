@@ -753,7 +753,11 @@ impl UpstreamK8sSchemaProvider {
         let root = self.schema_for_resource(resource)?;
         let filename = filename_for_resource(resource);
         let mut ctx = ResolveCtx::new(self, filename.clone(), root.clone());
-        Ok(schema_at_ypath(&mut ctx, &filename, path))
+        let Some((leaf_filename, leaf)) = schema_at_ypath(&mut ctx, &filename, path) else {
+            return Ok(None);
+        };
+        let (_, expanded) = expand_schema_node(&mut ctx, &leaf_filename, &leaf, 0);
+        Ok(Some(expanded))
     }
 
     fn filename_for_resource(&self, resource: &ResourceRef) -> String {
@@ -902,7 +906,7 @@ fn schema_at_ypath(
     ctx: &mut ResolveCtx<'_>,
     root_filename: &str,
     path: &YPath,
-) -> Option<Value> {
+) -> Option<(String, Value)> {
     let mut cur = ctx.doc(root_filename)?.clone();
     let mut cur_filename = root_filename.to_string();
     for seg in &path.0 {
@@ -910,7 +914,7 @@ fn schema_at_ypath(
         cur_filename = nf;
         cur = ns;
     }
-    Some(cur)
+    Some((cur_filename, cur))
 }
 
 fn descend_one(
@@ -986,4 +990,81 @@ fn resolve_refs(
         return ctx.resolve_ref(current_filename, r);
     }
     Some((current_filename.to_string(), schema.clone()))
+}
+
+fn expand_schema_node(
+    ctx: &mut ResolveCtx<'_>,
+    current_filename: &str,
+    schema: &Value,
+    depth: usize,
+) -> (String, Value) {
+    if depth > 64 {
+        return (current_filename.to_string(), schema.clone());
+    }
+
+    if let Some(r) = schema.get("$ref").and_then(|v| v.as_str()) {
+        if let Some((nf, target)) = ctx.resolve_ref(current_filename, r) {
+            return expand_schema_node(ctx, &nf, &target, depth + 1);
+        }
+        return (current_filename.to_string(), schema.clone());
+    }
+
+    if let Some(arr) = schema.get("allOf").and_then(|v| v.as_array()) {
+        let mut out = Vec::new();
+        for s in arr {
+            out.push(expand_schema_node(ctx, current_filename, s, depth + 1).1);
+        }
+        let mut obj = schema.as_object().cloned().unwrap_or_default();
+        obj.insert("allOf".to_string(), Value::Array(out));
+        return (current_filename.to_string(), Value::Object(obj));
+    }
+    if let Some(arr) = schema.get("anyOf").and_then(|v| v.as_array()) {
+        let mut out = Vec::new();
+        for s in arr {
+            out.push(expand_schema_node(ctx, current_filename, s, depth + 1).1);
+        }
+        let mut obj = schema.as_object().cloned().unwrap_or_default();
+        obj.insert("anyOf".to_string(), Value::Array(out));
+        return (current_filename.to_string(), Value::Object(obj));
+    }
+    if let Some(arr) = schema.get("oneOf").and_then(|v| v.as_array()) {
+        let mut out = Vec::new();
+        for s in arr {
+            out.push(expand_schema_node(ctx, current_filename, s, depth + 1).1);
+        }
+        let mut obj = schema.as_object().cloned().unwrap_or_default();
+        obj.insert("oneOf".to_string(), Value::Array(out));
+        return (current_filename.to_string(), Value::Object(obj));
+    }
+
+    let mut obj = match schema.as_object() {
+        Some(o) => o.clone(),
+        None => return (current_filename.to_string(), schema.clone()),
+    };
+
+    if let Some(props) = obj.get("properties").and_then(|v| v.as_object()) {
+        let mut new_props = Map::new();
+        for (k, v) in props {
+            new_props.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+        }
+        obj.insert("properties".to_string(), Value::Object(new_props));
+    }
+
+    if let Some(items) = obj.get("items") {
+        obj.insert(
+            "items".to_string(),
+            expand_schema_node(ctx, current_filename, items, depth + 1).1,
+        );
+    }
+
+    if let Some(ap) = obj.get("additionalProperties") {
+        if !ap.is_boolean() {
+            obj.insert(
+                "additionalProperties".to_string(),
+                expand_schema_node(ctx, current_filename, ap, depth + 1).1,
+            );
+        }
+    }
+
+    (current_filename.to_string(), Value::Object(obj))
 }
