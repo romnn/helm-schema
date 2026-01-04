@@ -848,6 +848,26 @@ impl<'a> ResolveCtx<'a> {
         }
     }
 
+    fn normalize_ref_filename(current_filename: &str, file: &str) -> String {
+        if file.is_empty() {
+            return current_filename.to_string();
+        }
+
+        // yannh schemas may use URLs or relative paths; we only cache leaf filenames.
+        // Examples:
+        //   defs.json
+        //   _definitions.json
+        //   https://raw.githubusercontent.com/.../v1.xx/_definitions.json
+        //   ./defs.json
+        let trimmed = file.trim();
+        let trimmed = trimmed.trim_start_matches("./");
+        trimmed
+            .rsplit('/')
+            .next()
+            .unwrap_or(trimmed)
+            .to_string()
+    }
+
     fn doc(&self, filename: &str) -> Option<&Value> {
         self.docs.get(filename)
     }
@@ -856,11 +876,20 @@ impl<'a> ResolveCtx<'a> {
         if self.docs.contains_key(filename) {
             return self.docs.get(filename);
         }
+
         let local = self
             .provider
             .cache_dir
             .join(&self.provider.version_dir)
             .join(filename);
+
+        if !local.exists() {
+            if !self.provider.allow_download {
+                return None;
+            }
+            let _ = self.provider.download_to_cache(filename, &local);
+        }
+
         let bytes = fs::read(&local).ok()?;
         let doc: Value = serde_json::from_slice(&bytes).ok()?;
         self.docs.insert(filename.to_string(), doc);
@@ -870,26 +899,13 @@ impl<'a> ResolveCtx<'a> {
     fn resolve_ref(&mut self, current_filename: &str, r: &str) -> Option<(String, Value)> {
         // local reference: "#/..."
         if let Some(ptr) = r.strip_prefix('#') {
-            let key = (current_filename.to_string(), format!("#{}", ptr));
-            if !self.stack.insert(key) {
-                return None;
-            }
             let doc = self.doc(current_filename)?;
             return doc.pointer(ptr).cloned().map(|v| (current_filename.to_string(), v));
         }
 
         // maybe: "file.json#/..."
         let (file, ptr) = r.split_once('#').unwrap_or((r, ""));
-        let filename = if file.is_empty() {
-            current_filename.to_string()
-        } else {
-            file.to_string()
-        };
-
-        let key = (filename.clone(), format!("#{}", ptr));
-        if !self.stack.insert(key) {
-            return None;
-        }
+        let filename = Self::normalize_ref_filename(current_filename, file);
 
         let doc = self.load_doc(&filename)?.clone();
         if ptr.is_empty() {
@@ -900,6 +916,15 @@ impl<'a> ResolveCtx<'a> {
                 .map(|v| (filename, v))
         }
     }
+}
+
+fn strip_ref(schema: &Value) -> Value {
+    let Some(obj) = schema.as_object() else {
+        return schema.clone();
+    };
+    let mut out = obj.clone();
+    out.remove("$ref");
+    Value::Object(out)
 }
 
 fn schema_at_ypath(
@@ -1003,10 +1028,29 @@ fn expand_schema_node(
     }
 
     if let Some(r) = schema.get("$ref").and_then(|v| v.as_str()) {
-        if let Some((nf, target)) = ctx.resolve_ref(current_filename, r) {
-            return expand_schema_node(ctx, &nf, &target, depth + 1);
+        // Cycle guard is *scoped* to the current expansion chain.
+        let key = if let Some(ptr) = r.strip_prefix('#') {
+            (current_filename.to_string(), format!("#{}", ptr))
+        } else {
+            let (file, ptr) = r.split_once('#').unwrap_or((r, ""));
+            let filename = ResolveCtx::normalize_ref_filename(current_filename, file);
+            (filename, format!("#{}", ptr))
+        };
+
+        if ctx.stack.contains(&key) {
+            return (current_filename.to_string(), strip_ref(schema));
         }
-        return (current_filename.to_string(), schema.clone());
+        ctx.stack.insert(key.clone());
+
+        let out = if let Some((nf, target)) = ctx.resolve_ref(current_filename, r) {
+            expand_schema_node(ctx, &nf, &target, depth + 1)
+        } else {
+            // Unresolved (missing doc, etc.): do not leak $ref into the output.
+            (current_filename.to_string(), strip_ref(schema))
+        };
+
+        ctx.stack.remove(&key);
+        return out;
     }
 
     if let Some(arr) = schema.get("allOf").and_then(|v| v.as_array()) {
@@ -1050,11 +1094,84 @@ fn expand_schema_node(
         obj.insert("properties".to_string(), Value::Object(new_props));
     }
 
+    if let Some(pp) = obj.get("patternProperties").and_then(|v| v.as_object()) {
+        let mut new_pp = Map::new();
+        for (k, v) in pp {
+            new_pp.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+        }
+        obj.insert("patternProperties".to_string(), Value::Object(new_pp));
+    }
+
+    if let Some(defs) = obj.get("definitions").and_then(|v| v.as_object()) {
+        let mut new_defs = Map::new();
+        for (k, v) in defs {
+            new_defs.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+        }
+        obj.insert("definitions".to_string(), Value::Object(new_defs));
+    }
+
+    if let Some(defs) = obj.get("$defs").and_then(|v| v.as_object()) {
+        let mut new_defs = Map::new();
+        for (k, v) in defs {
+            new_defs.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+        }
+        obj.insert("$defs".to_string(), Value::Object(new_defs));
+    }
+
     if let Some(items) = obj.get("items") {
         obj.insert(
             "items".to_string(),
             expand_schema_node(ctx, current_filename, items, depth + 1).1,
         );
+    }
+
+    if let Some(prefix) = obj.get("prefixItems").and_then(|v| v.as_array()) {
+        let mut out = Vec::new();
+        for s in prefix {
+            out.push(expand_schema_node(ctx, current_filename, s, depth + 1).1);
+        }
+        obj.insert("prefixItems".to_string(), Value::Array(out));
+    }
+
+    if let Some(contains) = obj.get("contains") {
+        obj.insert(
+            "contains".to_string(),
+            expand_schema_node(ctx, current_filename, contains, depth + 1).1,
+        );
+    }
+
+    if let Some(not) = obj.get("not") {
+        obj.insert(
+            "not".to_string(),
+            expand_schema_node(ctx, current_filename, not, depth + 1).1,
+        );
+    }
+
+    if let Some(if_schema) = obj.get("if") {
+        obj.insert(
+            "if".to_string(),
+            expand_schema_node(ctx, current_filename, if_schema, depth + 1).1,
+        );
+    }
+    if let Some(then_schema) = obj.get("then") {
+        obj.insert(
+            "then".to_string(),
+            expand_schema_node(ctx, current_filename, then_schema, depth + 1).1,
+        );
+    }
+    if let Some(else_schema) = obj.get("else") {
+        obj.insert(
+            "else".to_string(),
+            expand_schema_node(ctx, current_filename, else_schema, depth + 1).1,
+        );
+    }
+
+    if let Some(ds) = obj.get("dependentSchemas").and_then(|v| v.as_object()) {
+        let mut out = Map::new();
+        for (k, v) in ds {
+            out.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+        }
+        obj.insert("dependentSchemas".to_string(), Value::Object(out));
     }
 
     if let Some(ap) = obj.get("additionalProperties") {
