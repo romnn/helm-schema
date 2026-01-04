@@ -2,6 +2,7 @@ use crate::{Role, ValueUse, YamlPath};
 use crate::vyt::{ResourceRef, VYKind, VYUse, YPath};
 use color_eyre::eyre;
 use serde_json::{Map, Value};
+use serde_yaml;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -96,6 +97,211 @@ fn infer_guard_schema(value_path: &str) -> Value {
         return type_schema("boolean");
     }
     Value::Object(Map::new())
+}
+
+pub fn add_values_yaml_baseline(schema: &mut Value, values_docs: &[serde_yaml::Value]) {
+    for doc in values_docs {
+        let baseline = schema_from_values_yaml(doc);
+        add_schema_additive(schema, &baseline);
+    }
+}
+
+pub fn add_values_yaml_baseline_under(
+    schema: &mut Value,
+    top_level_key: &str,
+    values_docs: &[serde_yaml::Value],
+) {
+    let Some(root) = schema.as_object_mut() else {
+        return;
+    };
+
+    if root
+        .get("type")
+        .and_then(|v| v.as_str())
+        .is_some_and(|t| t != "object")
+    {
+        return;
+    }
+
+    if root.get("properties").and_then(|v| v.as_object()).is_none() {
+        root.insert("properties".to_string(), Value::Object(Map::new()));
+    }
+
+    let Some(props) = root
+        .get_mut("properties")
+        .and_then(|v| v.as_object_mut())
+    else {
+        return;
+    };
+
+    let mut baseline = Value::Object(Map::new());
+    add_values_yaml_baseline(&mut baseline, values_docs);
+
+    match props.get_mut(top_level_key) {
+        None => {
+            props.insert(top_level_key.to_string(), baseline);
+        }
+        Some(existing) => {
+            add_schema_additive(existing, &baseline);
+        }
+    }
+}
+
+fn add_schema_additive(dst: &mut Value, src: &Value) {
+    let Some(src_obj) = src.as_object() else {
+        return;
+    };
+
+    let Some(dst_obj) = dst.as_object_mut() else {
+        return;
+    };
+
+    if dst_obj.is_empty() {
+        *dst = src.clone();
+        return;
+    }
+
+    let src_props = src_obj.get("properties").and_then(|v| v.as_object());
+    if src_props.is_none() {
+        return;
+    }
+
+    if dst_obj.get("properties").and_then(|v| v.as_object()).is_none() {
+        let type_is_object_or_missing = match dst_obj.get("type").and_then(|v| v.as_str()) {
+            None => true,
+            Some(t) => t == "object",
+        };
+
+        if type_is_object_or_missing {
+            dst_obj.insert("type".to_string(), Value::String("object".to_string()));
+            dst_obj.insert("properties".to_string(), Value::Object(Map::new()));
+        } else {
+            return;
+        }
+    }
+
+    let Some(dst_props) = dst_obj
+        .get_mut("properties")
+        .and_then(|v| v.as_object_mut())
+    else {
+        return;
+    };
+    let Some(src_props) = src_props else {
+        return;
+    };
+
+    for (k, sv) in src_props {
+        match dst_props.get_mut(k) {
+            None => {
+                dst_props.insert(k.clone(), sv.clone());
+            }
+            Some(dv) => {
+                if dv.as_object().is_some_and(|o| o.is_empty()) {
+                    *dv = sv.clone();
+                    continue;
+                }
+
+                let dst_ty = dv
+                    .as_object()
+                    .and_then(|o| o.get("type"))
+                    .and_then(|t| t.as_str());
+                let src_ty = sv
+                    .as_object()
+                    .and_then(|o| o.get("type"))
+                    .and_then(|t| t.as_str());
+
+                match (dst_ty, src_ty) {
+                    (Some("object"), Some("object")) => add_schema_additive(dv, sv),
+                    (Some("array"), Some("array")) => {
+                        let dst_items = dv.as_object_mut().and_then(|o| o.get_mut("items"));
+                        let src_items = sv.as_object().and_then(|o| o.get("items"));
+
+                        match (dst_items, src_items) {
+                            (None, Some(si)) => {
+                                if let Some(o) = dv.as_object_mut() {
+                                    o.insert("items".to_string(), si.clone());
+                                }
+                            }
+                            (Some(di), Some(si)) => add_schema_additive(di, si),
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+}
+
+fn schema_from_values_yaml(doc: &serde_yaml::Value) -> Value {
+    match doc {
+        serde_yaml::Value::Mapping(m) => {
+            let mut props = Map::new();
+            for (k, v) in m {
+                let Some(ks) = k.as_str() else {
+                    continue;
+                };
+                props.insert(ks.to_string(), schema_from_values_yaml_with_hint(v, Some(ks)));
+            }
+            let mut out = Map::new();
+            out.insert("type".to_string(), Value::String("object".to_string()));
+            out.insert("properties".to_string(), Value::Object(props));
+            out.insert("additionalProperties".to_string(), Value::Bool(false));
+            Value::Object(out)
+        }
+        _ => object_schema(Map::new()),
+    }
+}
+
+fn schema_from_values_yaml_with_hint(doc: &serde_yaml::Value, key_hint: Option<&str>) -> Value {
+    if key_hint
+        .is_some_and(|k| matches!(k, "annotations" | "labels" | "nodeSelector" | "podAnnotations" | "podLabels"))
+    {
+        return string_map_schema();
+    }
+
+    match doc {
+        serde_yaml::Value::Null => type_schema("null"),
+        serde_yaml::Value::Bool(_) => type_schema("boolean"),
+        serde_yaml::Value::Number(n) => {
+            if n.as_i64().is_some() || n.as_u64().is_some() {
+                type_schema("integer")
+            } else {
+                type_schema("number")
+            }
+        }
+        serde_yaml::Value::String(_) => type_schema("string"),
+        serde_yaml::Value::Sequence(seq) => {
+            let mut items_schemas = Vec::new();
+            for it in seq {
+                items_schemas.push(schema_from_values_yaml_with_hint(it, None));
+            }
+            let items = if items_schemas.is_empty() {
+                Value::Object(Map::new())
+            } else {
+                merge_schema_list(items_schemas)
+            };
+            let mut out = Map::new();
+            out.insert("type".to_string(), Value::String("array".to_string()));
+            out.insert("items".to_string(), items);
+            Value::Object(out)
+        }
+        serde_yaml::Value::Mapping(m) => {
+            let mut props = Map::new();
+            for (k, v) in m {
+                let Some(ks) = k.as_str() else {
+                    continue;
+                };
+                props.insert(ks.to_string(), schema_from_values_yaml_with_hint(v, Some(ks)));
+            }
+            let mut out = Map::new();
+            out.insert("type".to_string(), Value::String("object".to_string()));
+            out.insert("properties".to_string(), Value::Object(props));
+            out.insert("additionalProperties".to_string(), Value::Bool(false));
+            Value::Object(out)
+        }
+        _ => Value::Object(Map::new()),
+    }
 }
 
 #[derive(Debug, Clone)]

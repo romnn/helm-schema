@@ -75,7 +75,7 @@ pub fn discover_packed_subcharts_in_memory(
     Ok(out)
 }
 
-fn restore_tgz_into_memory_fs(bytes: &[u8]) -> Result<VfsPath, Error> {
+pub fn restore_tgz_into_memory_fs(bytes: &[u8]) -> Result<VfsPath, Error> {
     let root = VfsPath::new(vfs::MemoryFS::new());
 
     let gz = GzDecoder::new(bytes);
@@ -95,4 +95,15 @@ fn restore_tgz_into_memory_fs(bytes: &[u8]) -> Result<VfsPath, Error> {
         }
     }
     Ok(root)
+}
+
+pub fn archive_subchart_root(tgz_path: &VfsPath, inner_root: &str) -> Result<VfsPath, Error> {
+    let mut bytes = Vec::new();
+    tgz_path.open_file()?.read_to_end(&mut bytes)?;
+
+    let root = restore_tgz_into_memory_fs(&bytes)?;
+    if inner_root.is_empty() {
+        return Ok(root);
+    }
+    Ok(root.join(inner_root)?)
 }
