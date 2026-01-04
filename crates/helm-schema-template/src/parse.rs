@@ -12,8 +12,13 @@ pub fn parse_gotmpl_document(source: &str) -> Option<Parsed> {
     parser.set_language(&language).ok()?;
     let tree = parser.parse(source, None)?;
 
-    let ast = crate::fmt::SExpr::parse_tree(&tree.root_node(), source);
-    println!("=====================\n{}\n", ast.to_string_pretty());
+    if std::env::var("HELM_SCHEMA_DEBUG_AST")
+        .ok()
+        .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+    {
+        let ast = crate::fmt::SExpr::parse_tree(&tree.root_node(), source);
+        eprintln!("=====================\n{}\n", ast.to_string_pretty());
+    }
 
     Some(Parsed {
         tree,

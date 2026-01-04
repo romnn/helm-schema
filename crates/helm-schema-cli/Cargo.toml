@@ -9,6 +9,10 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+[[bin]]
+name = "helm-schema"
+path = "src/main.rs"
+
 [dependencies]
 color-eyre.workspace = true
 
@@ -17,7 +21,9 @@ vfs.workspace = true
 camino.workspace = true
 
 # serialization
+serde.workspace = true
 serde_json.workspace = true
+serde_yaml.workspace = true
 
 # cli
 clap = { version = "4", features = ["derive"] }
@@ -27,3 +33,16 @@ tracing.workspace = true
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 
 helm-schema-chart.workspace = true
+helm-schema-mapper.workspace = true
+helm-schema-template.workspace = true
+
+# chart fetching / unpacking
+ureq = "2"
+tempfile = "3"
+flate2 = "1"
+tar = "0"
+semver = "1"
+walkdir = "2"
+
+[dev-dependencies]
+assert_cmd = "2"
