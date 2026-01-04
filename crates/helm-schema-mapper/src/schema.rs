@@ -407,13 +407,31 @@ fn infer_fallback_schema_vyt(u: &VYUse) -> Option<Value> {
 pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider: &P) -> Value {
     let mut by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut required_value_paths: HashSet<String> = HashSet::new();
+    let mut guard_value_paths: HashSet<String> = HashSet::new();
+
+    for u in uses {
+        for g in &u.guards {
+            if !g.trim().is_empty() {
+                guard_value_paths.insert(g.clone());
+            }
+        }
+    }
 
     for u in uses {
         if u.source_expr.trim().is_empty() {
             continue;
         }
 
-        if u.guards.is_empty() {
+        // Required inference (strictness): values used without any active guards are assumed
+        // required, except for common guard-like booleans (e.g. *.enabled) and paths that we
+        // also observe as guards elsewhere.
+        if u.guards.is_empty()
+            && !u.path.0.is_empty()
+            && !guard_value_paths.contains(&u.source_expr)
+            && infer_guard_schema(&u.source_expr)
+                .as_object()
+                .is_some_and(|o| o.is_empty())
+        {
             required_value_paths.insert(u.source_expr.clone());
         }
 
@@ -460,7 +478,8 @@ pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider
     for (vp, schemas) in by_value_path {
         let merged = merge_schema_list(schemas);
         let merged = strengthen_leaf_schema(&vp, merged);
-        insert_schema_at_value_path(&mut root_schema, &vp, merged);
+        let is_required = required_value_paths.contains(&vp);
+        insert_schema_at_value_path_required(&mut root_schema, &vp, merged, is_required);
     }
 
     let mut out = Map::new();
@@ -511,6 +530,10 @@ fn ensure_required_contains(node: &mut Value, key: &str) {
     if !arr.iter().any(|v| v.as_str() == Some(key)) {
         arr.push(Value::String(key.to_string()));
     }
+
+    // Keep deterministic ordering for snapshot stability.
+    arr.sort_by(|a, b| a.as_str().unwrap_or("").cmp(b.as_str().unwrap_or("")));
+    arr.dedup();
 }
 
 fn insert_schema_at_parts_required(node: &mut Value, parts: &[&str], leaf: Value, required: bool) {
@@ -592,6 +615,30 @@ fn ensure_object_schema(v: &mut Value) {
             // Strict-by-default objects: no unknown keys unless explicitly modeled.
             obj.entry("additionalProperties".to_string())
                 .or_insert(Value::Bool(false));
+
+            // If the object started as "unknown" (additionalProperties: {}) but we now have
+            // structure, tighten it to strict (additionalProperties: false).
+            let has_structure = obj
+                .get("properties")
+                .and_then(|v| v.as_object())
+                .is_some_and(|m| !m.is_empty())
+                || obj
+                    .get("patternProperties")
+                    .and_then(|v| v.as_object())
+                    .is_some_and(|m| !m.is_empty())
+                || obj
+                    .get("required")
+                    .and_then(|v| v.as_array())
+                    .is_some_and(|a| !a.is_empty());
+
+            let ap_is_empty_schema = obj
+                .get("additionalProperties")
+                .and_then(|v| v.as_object())
+                .is_some_and(|m| m.is_empty());
+
+            if has_structure && ap_is_empty_schema {
+                obj.insert("additionalProperties".to_string(), Value::Bool(false));
+            }
         }
         _ => {
             *v = object_schema(Map::new());
