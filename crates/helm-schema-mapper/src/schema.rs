@@ -723,6 +723,8 @@ fn insert_schema_at_value_path_required(root: &mut Value, vp: &str, leaf: Value,
     insert_schema_at_parts_required(root, &parts, leaf, required);
 }
 
+const MAP_WILDCARD_SEGMENT: &str = "__any__";
+
 fn ensure_required_contains(node: &mut Value, key: &str) {
     ensure_object_schema(node);
     let obj = node.as_object_mut().expect("object schema");
@@ -744,6 +746,34 @@ fn ensure_required_contains(node: &mut Value, key: &str) {
 
 fn insert_schema_at_parts_required(node: &mut Value, parts: &[&str], leaf: Value, required: bool) {
     if parts.is_empty() {
+        return;
+    }
+
+    // Treat '__any__' as a map key wildcard, materialized as additionalProperties.
+    // Example: "extra.__any__" -> { extra: { type: object, additionalProperties: <leaf> } }
+    if parts[0] == MAP_WILDCARD_SEGMENT {
+        ensure_object_schema(node);
+
+        let obj = node.as_object_mut().expect("object schema");
+        let ap = obj
+            .entry("additionalProperties")
+            .or_insert_with(|| Value::Object(Map::new()));
+
+        // If we were previously strict-by-default, loosen at this node because templates
+        // are using dynamic keys.
+        if ap.as_bool() == Some(false) {
+            *ap = Value::Object(Map::new());
+        }
+
+        if parts.len() == 1 {
+            let existing = std::mem::replace(ap, Value::Null);
+            *ap = match existing {
+                Value::Null => leaf,
+                other => merge_two_schemas(other, leaf),
+            };
+        } else {
+            insert_schema_at_parts_required(ap, &parts[1..], leaf, false);
+        }
         return;
     }
 

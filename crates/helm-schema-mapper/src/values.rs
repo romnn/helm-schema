@@ -140,15 +140,22 @@ pub fn normalize_segments(raw: &[String]) -> Vec<String> {
         // $cfg → ["$", "cfg"]
         if s.starts_with('$') && s.len() > 1 {
             out.push("$".to_string());
-            out.push(s[1..].to_string());
+            let trimmed = &s[1..];
+            for seg in trimmed.split('.') {
+                if !seg.is_empty() {
+                    out.push(seg.to_string());
+                }
+            }
             continue;
         }
         // .config → [".", "config"]
         if s.starts_with('.') {
             out.push(".".to_string());
             let trimmed = s.trim_start_matches('.');
-            if !trimmed.is_empty() {
-                out.push(trimmed.to_string());
+            for seg in trimmed.split('.') {
+                if !seg.is_empty() {
+                    out.push(seg.to_string());
+                }
             }
             continue;
         }

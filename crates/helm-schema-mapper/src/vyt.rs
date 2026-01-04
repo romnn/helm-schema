@@ -471,6 +471,23 @@ fn is_helm_builtin_object(name: &str) -> bool {
     )
 }
 
+const MAP_WILDCARD_SEGMENT: &str = "__any__";
+
+fn string_literal_value(n: Node, src: &str) -> Option<String> {
+    match n.kind() {
+        "interpreted_string_literal" | "raw_string_literal" => {
+            let raw = n.utf8_text(src.as_bytes()).ok()?.trim();
+            Some(
+                raw.trim_matches('"')
+                    .trim_matches('\'')
+                    .trim_matches('`')
+                    .to_string(),
+            )
+        }
+        _ => None,
+    }
+}
+
 fn first_values_base(expr: &str) -> Option<String> {
     for prefix in [".Values.", "$.Values.", "Values."] {
         if let Some(idx) = expr.find(prefix) {
@@ -673,12 +690,18 @@ impl VYT {
     }
 
     fn bind_assignment_action_if_any(&mut self, node: Node) {
-        if !self.is_assignment_action(node) {
-            return;
-        }
         let Ok(txt) = node.utf8_text(self.source.as_bytes()) else {
             return;
         };
+
+        // Accept both `action`-wrapped and direct assignment nodes (grammar varies).
+        // Heuristic: must contain a variable assignment.
+        if !txt.contains('$') {
+            return;
+        }
+        if !(txt.contains(":=") || txt.contains(" = ")) {
+            return;
+        }
         let re = Regex::new(r#"\$[A-Za-z_][A-Za-z0-9_]*\s*(?::=|=)"#).unwrap();
         let Some(m) = re.find(txt) else {
             return;
@@ -1304,6 +1327,96 @@ impl VYT {
 
     fn value_paths_from_expr(&self, n: Node) -> Vec<String> {
         match n.kind() {
+            "function_call" => {
+                let Some(name) = function_name_of(&n, &self.source) else {
+                    return Vec::new();
+                };
+
+                // Find argument_list
+                let Some(args) = n.child_by_field_name("arguments").or_else(|| {
+                    let mut w = n.walk();
+                    n.children(&mut w)
+                        .find(|c| c.is_named() && c.kind() == "argument_list")
+                }) else {
+                    return Vec::new();
+                };
+
+                let mut w = args.walk();
+                let elems: Vec<Node> = args.children(&mut w).filter(|x| x.is_named()).collect();
+                if elems.is_empty() {
+                    return Vec::new();
+                }
+
+                match name.as_str() {
+                    // index <map> <key> [<key> ...]
+                    "index" => {
+                        if elems.len() < 2 {
+                            return Vec::new();
+                        }
+                        let bases = self.value_paths_from_expr(elems[0]);
+                        if bases.is_empty() {
+                            return Vec::new();
+                        }
+
+                        let mut segments: Vec<String> = Vec::new();
+                        for k in elems.iter().skip(1) {
+                            if let Some(s) = string_literal_value(*k, &self.source) {
+                                if !s.is_empty() {
+                                    segments.push(s);
+                                }
+                                continue;
+                            }
+                            segments.push(MAP_WILDCARD_SEGMENT.to_string());
+                        }
+                        let segs = segments.join(".");
+
+                        bases
+                            .into_iter()
+                            .map(|b| if segs.is_empty() { b } else { format!("{}.{}", b, segs) })
+                            .collect()
+                    }
+
+                    // get <map> <key>
+                    "get" => {
+                        if elems.len() < 2 {
+                            return Vec::new();
+                        }
+                        let bases = self.value_paths_from_expr(elems[0]);
+                        if bases.is_empty() {
+                            return Vec::new();
+                        }
+                        let key = string_literal_value(elems[1], &self.source)
+                            .filter(|s| !s.is_empty())
+                            .unwrap_or_else(|| MAP_WILDCARD_SEGMENT.to_string());
+                        bases
+                            .into_iter()
+                            .map(|b| format!("{}.{}", b, key))
+                            .collect()
+                    }
+
+                    // pluck <key> <map> [<map> ...]
+                    "pluck" => {
+                        if elems.len() < 2 {
+                            return Vec::new();
+                        }
+                        let key = string_literal_value(elems[0], &self.source)
+                            .filter(|s| !s.is_empty())
+                            .unwrap_or_else(|| MAP_WILDCARD_SEGMENT.to_string());
+
+                        let mut out = Vec::new();
+                        for map_expr in elems.iter().skip(1) {
+                            for b in self.value_paths_from_expr(*map_expr) {
+                                out.push(format!("{}.{}", b, key));
+                            }
+                        }
+                        out.sort();
+                        out.dedup();
+                        out
+                    }
+
+                    _ => Vec::new(),
+                }
+            }
             "selector_expression" => {
                 let Some(segs) = parse_selector_chain(n, &self.source) else {
                     return Vec::new();
@@ -1314,12 +1427,38 @@ impl VYT {
                         vec![rest.join(".")]
                     }
                     ["Values", rest @ ..] if !rest.is_empty() => vec![rest.join(".")],
+                    // $obj.foo.bar -> bind $obj to bases, then append tail.
+                    ["$", var, rest @ ..] if !var.is_empty() => {
+                        let name = format!("${}", var);
+                        let Some(b) = self.bindings.lookup_var(&name) else {
+                            return Vec::new();
+                        };
+                        if rest.is_empty() {
+                            b.bases.clone()
+                        } else {
+                            b.bases
+                                .iter()
+                                .map(|base| format!("{}.{}", base, rest.join(".")))
+                                .collect()
+                        }
+                    }
                     [".", head, rest @ ..] if !head.is_empty() => {
                         if is_helm_builtin_object(head) {
                             return Vec::new();
                         }
                         let Some(bases) = self.bindings.resolve_alias(head) else {
-                            return Vec::new();
+                            // .foo.bar can also be relative to a dot binding inside a with/range.
+                            let Some(dot) = self.bindings.dot_binding() else {
+                                return Vec::new();
+                            };
+                            if rest.is_empty() {
+                                return dot.bases.clone();
+                            }
+                            return dot
+                                .bases
+                                .iter()
+                                .map(|b| format!("{}.{}", b, ss[1..].join(".")))
+                                .collect();
                         };
                         if rest.is_empty() {
                             bases
@@ -1373,6 +1512,16 @@ impl VYT {
         let mut out = BTreeSet::new();
         let mut stack = vec![node];
         while let Some(n) = stack.pop() {
+            if n.kind() == "function_call" {
+                let paths = self.value_paths_from_expr(n);
+                if !paths.is_empty() {
+                    for p in paths {
+                        out.insert(p);
+                    }
+                    // Avoid double-counting base `.Values.*` selector args inside the call.
+                    continue;
+                }
+            }
             if n.kind() == "variable" || n.kind() == "identifier" {
                 if let Ok(txt) = n.utf8_text(self.source.as_bytes()) {
                     let t = txt.trim();
@@ -1394,9 +1543,29 @@ impl VYT {
                             if !rest.is_empty() =>
                         {
                             out.insert(rest.join("."));
+                            continue;
                         }
                         ["Values", rest @ ..] if !rest.is_empty() => {
                             out.insert(rest.join("."));
+                            continue;
+                        }
+                        // $obj.foo.bar -> bind $obj to bases, then append tail.
+                        ["$", var, rest @ ..] if !var.is_empty() => {
+                            let name = format!("${}", var);
+                            if let Some(b) = self.bindings.lookup_var(&name) {
+                                if rest.is_empty() {
+                                    for base in &b.bases {
+                                        out.insert(base.clone());
+                                    }
+                                } else {
+                                    let tail = rest.join(".");
+                                    for base in &b.bases {
+                                        out.insert(format!("{}.{}", base, tail));
+                                    }
+                                }
+                            }
+                            // Avoid double-counting just the base from the variable child node.
+                            continue;
                         }
                         // .config.foo → alias "config" → node(s)
                         [".", head, rest @ ..] if !rest.is_empty() => {
@@ -1410,6 +1579,16 @@ impl VYT {
                                 for base in bases {
                                     out.insert(format!("{}.{}", base, rest.join(".")));
                                 }
+                                continue;
+                            }
+
+                            // .foo.bar relative to dot binding inside a with/range.
+                            if let Some(dot) = self.bindings.dot_binding() {
+                                let rel = ss[1..].join(".");
+                                for base in &dot.bases {
+                                    out.insert(format!("{}.{}", base, rel));
+                                }
+                                continue;
                             }
                         }
                         // .config (no tail)
@@ -1421,6 +1600,14 @@ impl VYT {
                                 for base in bases {
                                     out.insert(base);
                                 }
+                                continue;
+                            }
+
+                            if let Some(dot) = self.bindings.dot_binding() {
+                                for base in &dot.bases {
+                                    out.insert(format!("{}.{}", base, head));
+                                }
+                                continue;
                             }
                         }
                         _ => {}
@@ -2163,7 +2350,36 @@ mod tests {
         "#};
         let uses = run_vyt(tpl);
         assert!(
-            uses.iter().any(|u| u.source_expr == "rawYaml"),
+            has_scalar(&uses, "rawYaml.someField", &["result"]),
+            "{:#?}",
+            uses
+        );
+    }
+
+    #[test]
+    fn tpl_then_from_yaml_then_field_access_propagates_source_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            {{- $o := fromYaml (tpl .Values.rawTpl .) }}
+            result: {{ $o.a }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(has_scalar(&uses, "rawTpl.a", &["result"]), "{:#?}", uses);
+    }
+
+    #[test]
+    fn with_from_yaml_then_dot_field_access_propagates_source_vyt() {
+        Builder::default().build();
+
+        let tpl = indoc! {r#"
+            {{- with (fromYaml .Values.rawYaml) }}
+            result: {{ .someField }}
+            {{- end }}
+        "#};
+        let uses = run_vyt(tpl);
+        assert!(
+            has_scalar(&uses, "rawYaml.someField", &["result"]),
             "{:#?}",
             uses
         );
@@ -2252,7 +2468,7 @@ mod tests {
     #[test]
     fn index_with_variable_key_at_least_records_base_vyt() {
         Builder::default().build();
-        // We don’t expand dynamic keys yet; ensure the base is recorded
+        // Dynamic key: we expand to a map-wildcard segment.
         let tpl = indoc! {r#"
             {{- $k := "dynamic" }}
             data:
@@ -2260,7 +2476,7 @@ mod tests {
         "#};
         let uses = run_vyt(tpl);
         assert!(
-            has_scalar(&uses, "extra", &["data", "chosen"]),
+            has_scalar(&uses, "extra.__any__", &["data", "chosen"]),
             "{:#?}",
             uses
         );
@@ -2269,13 +2485,13 @@ mod tests {
     #[test]
     fn get_function_with_default_like_pattern_records_base_vyt() {
         Builder::default().build();
-        // default "Always" (get .Values.image "pullPolicy") → we at least see `image`
+        // get .Values.image "pullPolicy" -> image.pullPolicy
         let tpl = indoc! {r#"
             imagePullPolicy: {{ default "Always" (get .Values.image "pullPolicy") }}
         "#};
         let uses = run_vyt(tpl);
         assert!(
-            has_scalar(&uses, "image", &["imagePullPolicy"]),
+            has_scalar(&uses, "image.pullPolicy", &["imagePullPolicy"]),
             "{:#?}",
             uses
         );
