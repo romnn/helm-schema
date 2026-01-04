@@ -15,6 +15,79 @@ pub trait VytSchemaProvider {
     fn schema_for_ypath(&self, path: &YPath) -> Option<Value>;
 }
 
+fn strengthen_leaf_schema(value_path: &str, schema: Value) -> Value {
+    let Some(obj) = schema.as_object() else {
+        return schema;
+    };
+    let Some(any_of) = obj.get("anyOf").and_then(|v| v.as_array()) else {
+        return schema;
+    };
+
+    fn has_type(v: &Value, ty: &str) -> bool {
+        v.as_object()
+            .and_then(|o| o.get("type"))
+            .and_then(|t| t.as_str())
+            == Some(ty)
+    }
+
+    fn is_string_map(v: &Value) -> bool {
+        let Some(o) = v.as_object() else {
+            return false;
+        };
+        if o.get("type").and_then(|v| v.as_str()) != Some("object") {
+            return false;
+        }
+        let Some(ap) = o.get("additionalProperties") else {
+            return false;
+        };
+        ap.as_object()
+            .and_then(|ap| ap.get("type"))
+            .and_then(|t| t.as_str())
+            == Some("string")
+    }
+
+    let prefer_bool = value_path == "installCRDs"
+        || value_path.ends_with(".enabled")
+        || value_path.ends_with("Enabled");
+    if prefer_bool {
+        if let Some(v) = any_of.iter().find(|v| has_type(v, "boolean")) {
+            return v.clone();
+        }
+    }
+
+    let last = value_path.split('.').last().unwrap_or("");
+    let prefer_int = matches!(
+        last,
+        "replicas"
+            | "replicaCount"
+            | "revisionHistoryLimit"
+            | "terminationGracePeriodSeconds"
+            | "port"
+            | "targetPort"
+            | "nodePort"
+            | "containerPort"
+            | "hostPort"
+            | "number"
+    );
+    if prefer_int {
+        if let Some(v) = any_of.iter().find(|v| has_type(v, "integer")) {
+            return v.clone();
+        }
+    }
+
+    let prefer_string_map = last == "labels" || last == "annotations";
+    if prefer_string_map {
+        if let Some(v) = any_of.iter().find(|v| is_string_map(v)) {
+            return v.clone();
+        }
+        if let Some(v) = any_of.iter().find(|v| has_type(v, "object")) {
+            return v.clone();
+        }
+    }
+
+    schema
+}
+
 fn infer_guard_schema(value_path: &str) -> Value {
     if value_path == "installCRDs"
         || value_path.ends_with(".enabled")
@@ -238,7 +311,7 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &IngressV1Schema) -> 
             Role::ScalarValue => provider.schema_for_yaml_path(yaml_path),
             Role::Fragment => provider
                 .schema_for_yaml_path(yaml_path)
-                .or_else(|| Some(type_schema("object"))),
+                .or_else(|| Some(unknown_object_schema())),
             Role::Guard | Role::MappingKey | Role::Unknown => None,
         };
 
@@ -257,6 +330,7 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &IngressV1Schema) -> 
     let mut root_schema = object_schema(Map::new());
     for (vp, schemas) in by_value_path {
         let merged = merge_schema_list(schemas);
+        let merged = strengthen_leaf_schema(&vp, merged);
         insert_schema_at_value_path(&mut root_schema, &vp, merged);
     }
 
@@ -265,16 +339,16 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &IngressV1Schema) -> 
         "$schema".to_string(),
         Value::String("http://json-schema.org/draft-07/schema#".to_string()),
     );
+
+    // Preserve strictness and other schema keywords we synthesized at the root.
     if let Value::Object(obj) = root_schema {
-        if let Some(ty) = obj.get("type").cloned() {
-            out.insert("type".to_string(), ty);
-        }
-        if let Some(props) = obj.get("properties").cloned() {
-            out.insert("properties".to_string(), props);
+        for (k, v) in obj {
+            out.insert(k, v);
         }
     } else {
         out.insert("type".to_string(), Value::String("object".to_string()));
         out.insert("properties".to_string(), Value::Object(Map::new()));
+        out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
     Value::Object(out)
 }
@@ -332,10 +406,15 @@ fn infer_fallback_schema_vyt(u: &VYUse) -> Option<Value> {
 
 pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider: &P) -> Value {
     let mut by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let mut required_value_paths: HashSet<String> = HashSet::new();
 
     for u in uses {
         if u.source_expr.trim().is_empty() {
             continue;
+        }
+
+        if u.guards.is_empty() {
+            required_value_paths.insert(u.source_expr.clone());
         }
 
         for g in &u.guards {
@@ -362,7 +441,7 @@ pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider
                 if u.source_expr.ends_with("annotations") || u.source_expr.ends_with("labels") {
                     Some(string_map_schema())
                 } else {
-                    Some(type_schema("object"))
+                    Some(unknown_object_schema())
                 }
             }),
         };
@@ -380,6 +459,7 @@ pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider
     let mut root_schema = object_schema(Map::new());
     for (vp, schemas) in by_value_path {
         let merged = merge_schema_list(schemas);
+        let merged = strengthen_leaf_schema(&vp, merged);
         insert_schema_at_value_path(&mut root_schema, &vp, merged);
     }
 
@@ -388,16 +468,16 @@ pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider
         "$schema".to_string(),
         Value::String("http://json-schema.org/draft-07/schema#".to_string()),
     );
+
+    // Preserve strictness and other schema keywords we synthesized at the root.
     if let Value::Object(obj) = root_schema {
-        if let Some(ty) = obj.get("type").cloned() {
-            out.insert("type".to_string(), ty);
-        }
-        if let Some(props) = obj.get("properties").cloned() {
-            out.insert("properties".to_string(), props);
+        for (k, v) in obj {
+            out.insert(k, v);
         }
     } else {
         out.insert("type".to_string(), Value::String("object".to_string()));
         out.insert("properties".to_string(), Value::Object(Map::new()));
+        out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
     Value::Object(out)
 }
@@ -407,10 +487,33 @@ fn insert_schema_at_value_path(root: &mut Value, vp: &str, leaf: Value) {
     if parts.is_empty() {
         return;
     }
-    insert_schema_at_parts(root, &parts, leaf);
+    insert_schema_at_parts_required(root, &parts, leaf, false);
 }
 
-fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value) {
+fn insert_schema_at_value_path_required(root: &mut Value, vp: &str, leaf: Value, required: bool) {
+    let parts: Vec<&str> = vp.split('.').filter(|s| !s.is_empty()).collect();
+    if parts.is_empty() {
+        return;
+    }
+    insert_schema_at_parts_required(root, &parts, leaf, required);
+}
+
+fn ensure_required_contains(node: &mut Value, key: &str) {
+    ensure_object_schema(node);
+    let obj = node.as_object_mut().expect("object schema");
+    let req = obj
+        .entry("required")
+        .or_insert_with(|| Value::Array(Vec::new()));
+    let Some(arr) = req.as_array_mut() else {
+        *req = Value::Array(Vec::new());
+        return ensure_required_contains(node, key);
+    };
+    if !arr.iter().any(|v| v.as_str() == Some(key)) {
+        arr.push(Value::String(key.to_string()));
+    }
+}
+
+fn insert_schema_at_parts_required(node: &mut Value, parts: &[&str], leaf: Value, required: bool) {
     if parts.is_empty() {
         return;
     }
@@ -427,12 +530,15 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value) {
                 other => merge_two_schemas(other, leaf),
             };
         } else {
-            insert_schema_at_parts(items, &parts[1..], leaf);
+            insert_schema_at_parts_required(items, &parts[1..], leaf, required);
         }
         return;
     }
 
     ensure_object_schema(node);
+    if required {
+        ensure_required_contains(node, parts[0]);
+    }
     let props = node
         .as_object_mut()
         .and_then(|o| o.get_mut("properties"))
@@ -453,8 +559,8 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value) {
     }
 
     let key = parts[0].to_string();
-    let child = props.entry(key).or_insert(Value::Null);
-    insert_schema_at_parts(child, &parts[1..], leaf);
+    let child = props.entry(key).or_insert_with(|| object_schema(Map::new()));
+    insert_schema_at_parts_required(child, &parts[1..], leaf, required);
 }
 
 fn object_schema(properties: Map<String, Value>) -> Value {
@@ -462,6 +568,7 @@ fn object_schema(properties: Map<String, Value>) -> Value {
         [
             ("type".to_string(), Value::String("object".to_string())),
             ("properties".to_string(), Value::Object(properties)),
+            ("additionalProperties".to_string(), Value::Bool(false)),
         ]
         .into_iter()
         .collect(),
@@ -481,6 +588,10 @@ fn ensure_object_schema(v: &mut Value) {
             {
                 obj.insert("properties".to_string(), Value::Object(Map::new()));
             }
+
+            // Strict-by-default objects: no unknown keys unless explicitly modeled.
+            obj.entry("additionalProperties".to_string())
+                .or_insert(Value::Bool(false));
         }
         _ => {
             *v = object_schema(Map::new());
@@ -553,6 +664,14 @@ fn merge_two_schemas(a: Value, b: Value) -> Value {
         return a;
     }
 
+    // If one side is an empty schema ({}), prefer the other (strictness).
+    if a.as_object().is_some_and(|o| o.is_empty()) {
+        return b;
+    }
+    if b.as_object().is_some_and(|o| o.is_empty()) {
+        return a;
+    }
+
     if let Some(merged) = try_merge_compatible(&a, &b) {
         return merged;
     }
@@ -561,7 +680,7 @@ fn merge_two_schemas(a: Value, b: Value) -> Value {
     let mut out: Vec<Value> = Vec::new();
     out.extend(flatten_anyof(a));
     out.extend(flatten_anyof(b));
-    out.sort_by(|x, y| x.to_string().cmp(&y.to_string()));
+    out.sort_by(|x, y| canonical_json_string(x).cmp(&canonical_json_string(y)));
     out.dedup();
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
@@ -615,6 +734,13 @@ fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {
             out.insert("items".to_string(), items_b);
         }
         _ => {}
+    }
+
+    // If one schema has no items but the other does, prefer the one with items.
+    let out_items_is_null = out.get("items").is_some_and(|v| v.is_null());
+    let b_items_is_null = bobj.get("items").is_some_and(|v| v.is_null());
+    if out_items_is_null && !b_items_is_null {
+        out.insert("items".to_string(), bobj.get("items").cloned().unwrap_or(Value::Null));
     }
 
     // If there are other keys beyond type/items and they conflict, treat as incompatible.
@@ -682,11 +808,102 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     let mut out = a.as_object()?.clone();
     let bobj = b.as_object()?;
 
-    // Merge additionalProperties (stricter wins; if both present, merge).
+    fn is_structured_object(obj: &Map<String, Value>) -> bool {
+        let props_nonempty = obj
+            .get("properties")
+            .and_then(|v| v.as_object())
+            .is_some_and(|m| !m.is_empty());
+        if props_nonempty {
+            return true;
+        }
+
+        let pp_nonempty = obj
+            .get("patternProperties")
+            .and_then(|v| v.as_object())
+            .is_some_and(|m| !m.is_empty());
+        if pp_nonempty {
+            return true;
+        }
+
+        let ap_is_schema = obj
+            .get("additionalProperties")
+            .is_some_and(|v| v.is_object());
+        if ap_is_schema {
+            return true;
+        }
+
+        let required_nonempty = obj
+            .get("required")
+            .and_then(|v| v.as_array())
+            .is_some_and(|a| !a.is_empty());
+        if required_nonempty {
+            return true;
+        }
+
+        false
+    }
+
+    // Prefer structured object schema over an "empty" object schema.
+    let a_structured = is_structured_object(&out);
+    let b_structured = is_structured_object(bobj);
+    if !a_structured && b_structured {
+        return Some(Value::Object(bobj.clone()));
+    }
+    if !b_structured && a_structured {
+        return Some(Value::Object(out));
+    }
+
+    fn has_nonempty_props(obj: &Map<String, Value>) -> bool {
+        obj.get("properties")
+            .and_then(|v| v.as_object())
+            .is_some_and(|m| !m.is_empty())
+    }
+
+    fn has_nonempty_pattern_props(obj: &Map<String, Value>) -> bool {
+        obj.get("patternProperties")
+            .and_then(|v| v.as_object())
+            .is_some_and(|m| !m.is_empty())
+    }
+
+    fn has_required(obj: &Map<String, Value>) -> bool {
+        obj.get("required")
+            .and_then(|v| v.as_array())
+            .is_some_and(|a| !a.is_empty())
+    }
+
+    // Fixed-shape object: named props/patternProps/required. (Strict: additionalProperties false.)
+    let a_fixed = has_nonempty_props(&out) || has_nonempty_pattern_props(&out) || has_required(&out);
+    let b_fixed = has_nonempty_props(bobj) || has_nonempty_pattern_props(bobj) || has_required(bobj);
+
+    // Map-like object: schema-valued additionalProperties and no named props.
+    let a_map_like = !a_fixed
+        && out
+            .get("additionalProperties")
+            .is_some_and(|v| v.is_object());
+    let b_map_like = !b_fixed
+        && bobj
+            .get("additionalProperties")
+            .is_some_and(|v| v.is_object());
+
+    // Merge additionalProperties.
     match (
         out.get("additionalProperties").cloned(),
         bobj.get("additionalProperties").cloned(),
     ) {
+        // If we have a fixed-shape object, keep strictness.
+        _ if a_fixed || b_fixed => {
+            out.insert("additionalProperties".to_string(), Value::Bool(false));
+        }
+        // If both sides are truly map-like, keep/merge schema-valued additionalProperties.
+        (Some(ap_a), Some(ap_b)) if a_map_like && b_map_like => {
+            out.insert("additionalProperties".to_string(), merge_two_schemas(ap_a, ap_b));
+        }
+        (Some(Value::Bool(false)), Some(ap_b)) if ap_b.is_object() => {
+            out.insert("additionalProperties".to_string(), ap_b);
+        }
+        (Some(ap_a), Some(Value::Bool(false))) if ap_a.is_object() => {
+            out.insert("additionalProperties".to_string(), ap_a);
+        }
         (Some(Value::Bool(false)), _) | (_, Some(Value::Bool(false))) => {
             out.insert("additionalProperties".to_string(), Value::Bool(false));
         }
@@ -788,6 +1005,17 @@ fn type_schema(ty: &str) -> Value {
         [("type".to_string(), Value::String(ty.to_string()))]
             .into_iter()
             .collect(),
+    )
+}
+
+fn unknown_object_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("object".to_string())),
+            ("additionalProperties".to_string(), Value::Object(Map::new())),
+        ]
+        .into_iter()
+        .collect(),
     )
 }
 

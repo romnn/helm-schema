@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
   "properties": {
     "commonAnnotations": {
       "properties": {
@@ -168,12 +169,15 @@
     },
     "containers": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string"
           },
           "volumeMounts": {
+            "additionalProperties": false,
             "items": {
+              "additionalProperties": false,
               "properties": {
                 "mountPath": {
                   "type": "string"
@@ -184,6 +188,7 @@
               },
               "type": "object"
             },
+            "properties": {},
             "type": "array"
           }
         },
@@ -197,9 +202,7 @@
     "extraLabels": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": false,
           "properties": {
             "spec": {
               "properties": {
@@ -370,6 +373,7 @@
       ]
     },
     "image": {
+      "additionalProperties": false,
       "anyOf": [
         {
           "properties": {
@@ -714,6 +718,7 @@
     },
     "initContainers": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "image": {
             "type": "string"
@@ -722,7 +727,9 @@
             "type": "string"
           },
           "volumeMounts": {
+            "additionalProperties": false,
             "items": {
+              "additionalProperties": false,
               "properties": {
                 "mountPath": {
                   "type": "string"
@@ -733,6 +740,7 @@
               },
               "type": "object"
             },
+            "properties": {},
             "type": "array"
           }
         },
@@ -906,6 +914,7 @@
       "type": "object"
     },
     "podExtra": {
+      "additionalProperties": false,
       "properties": {
         "affinity": {
           "properties": {
@@ -1065,11 +1074,13 @@
       "type": "integer"
     },
     "secret": {
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "type": "boolean"
         },
         "stringData": {
+          "additionalProperties": false,
           "properties": {
             "password": {
               "type": "string"
@@ -1082,6 +1093,7 @@
     },
     "volumes": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "emptyDir": {
             "type": "object"

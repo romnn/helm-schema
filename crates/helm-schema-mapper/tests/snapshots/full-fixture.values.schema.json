@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
   "properties": {
     "affinity": {
       "properties": {
@@ -17,6 +18,7 @@
     },
     "extraEnv": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string"
@@ -30,6 +32,7 @@
       "type": "array"
     },
     "image": {
+      "additionalProperties": false,
       "anyOf": [
         {
           "properties": {
@@ -376,6 +379,7 @@
       "type": "object"
     },
     "ingress": {
+      "additionalProperties": false,
       "anyOf": [
         {
           "additionalProperties": {
@@ -450,6 +454,7 @@
         },
         "hosts": {
           "items": {
+            "additionalProperties": false,
             "properties": {
               "host": {
                 "type": "string"
@@ -492,7 +497,9 @@
                 "type": "object"
               },
               "paths": {
+                "additionalProperties": false,
                 "items": {
+                  "additionalProperties": false,
                   "properties": {
                     "path": {
                       "type": "string"
@@ -503,6 +510,7 @@
                   },
                   "type": "object"
                 },
+                "properties": {},
                 "type": "array"
               }
             },
@@ -514,6 +522,7 @@
       "type": "object"
     },
     "podSecurityContext": {
+      "additionalProperties": false,
       "properties": {
         "runAsNonRoot": {
           "type": "boolean"
@@ -525,6 +534,7 @@
       "type": "integer"
     },
     "securityContext": {
+      "additionalProperties": false,
       "properties": {
         "allowPrivilegeEscalation": {
           "type": "string"
@@ -536,6 +546,7 @@
       "type": "object"
     },
     "service": {
+      "additionalProperties": false,
       "anyOf": [
         {
           "type": "integer"
