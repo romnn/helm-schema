@@ -106,6 +106,24 @@ pub fn add_values_yaml_baseline(schema: &mut Value, values_docs: &[serde_yaml::V
     }
 }
 
+pub fn add_json_schema_baseline_additive(schema: &mut Value, baseline: &Value) {
+    add_schema_additive(schema, baseline);
+}
+
+pub fn add_json_schema_baseline_additive_at_path(schema: &mut Value, path: &str, baseline: &Value) {
+    add_schema_additive_at_path(schema, path, baseline);
+}
+
+pub fn add_values_yaml_baseline_at_path(
+    schema: &mut Value,
+    path: &str,
+    values_docs: &[serde_yaml::Value],
+) {
+    let mut baseline = Value::Object(Map::new());
+    add_values_yaml_baseline(&mut baseline, values_docs);
+    add_schema_additive_at_path(schema, path, &baseline);
+}
+
 pub fn add_values_yaml_baseline_under(
     schema: &mut Value,
     top_level_key: &str,
@@ -145,6 +163,32 @@ pub fn add_values_yaml_baseline_under(
             add_schema_additive(existing, &baseline);
         }
     }
+}
+
+fn add_schema_additive_at_path(dst: &mut Value, path: &str, src: &Value) {
+    let parts: Vec<&str> = path.split('.').filter(|s| !s.is_empty()).collect();
+    if parts.is_empty() {
+        add_schema_additive(dst, src);
+        return;
+    }
+
+    let mut cur = dst;
+    for p in parts {
+        ensure_object_schema(cur);
+        let Some(obj) = cur.as_object_mut() else {
+            return;
+        };
+        if obj.get("properties").and_then(|v| v.as_object()).is_none() {
+            obj.insert("properties".to_string(), Value::Object(Map::new()));
+        }
+        let Some(props) = obj.get_mut("properties").and_then(|v| v.as_object_mut()) else {
+            return;
+        };
+
+        cur = props.entry(p.to_string()).or_insert_with(|| object_schema(Map::new()));
+    }
+
+    add_schema_additive(cur, src);
 }
 
 fn add_schema_additive(dst: &mut Value, src: &Value) {
@@ -196,6 +240,61 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
                 dst_props.insert(k.clone(), sv.clone());
             }
             Some(dv) => {
+                if dv
+                    .as_object()
+                    .and_then(|o| o.get("anyOf"))
+                    .and_then(|v| v.as_array())
+                    .is_some()
+                {
+                    let src_ty = sv
+                        .as_object()
+                        .and_then(|o| o.get("type"))
+                        .and_then(|t| t.as_str());
+
+                    let mut merged_any = false;
+                    if let Some(arr) = dv
+                        .as_object_mut()
+                        .and_then(|o| o.get_mut("anyOf"))
+                        .and_then(|v| v.as_array_mut())
+                    {
+                        for br in arr.iter_mut() {
+                            let br_ty = br
+                                .as_object()
+                                .and_then(|o| o.get("type"))
+                                .and_then(|t| t.as_str());
+
+                            match (br_ty, src_ty) {
+                                (Some("object"), Some("object")) | (None, Some("object")) => {
+                                    add_schema_additive(br, sv);
+                                    merged_any = true;
+                                }
+                                (Some("array"), Some("array")) => {
+                                    let dst_items = br.as_object_mut().and_then(|o| o.get_mut("items"));
+                                    let src_items = sv.as_object().and_then(|o| o.get("items"));
+                                    match (dst_items, src_items) {
+                                        (None, Some(si)) => {
+                                            if let Some(o) = br.as_object_mut() {
+                                                o.insert("items".to_string(), si.clone());
+                                            }
+                                            merged_any = true;
+                                        }
+                                        (Some(di), Some(si)) => {
+                                            add_schema_additive(di, si);
+                                            merged_any = true;
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    if merged_any {
+                        continue;
+                    }
+                }
+
                 if dv.as_object().is_some_and(|o| o.is_empty()) {
                     *dv = sv.clone();
                     continue;

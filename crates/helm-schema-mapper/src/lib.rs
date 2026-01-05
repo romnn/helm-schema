@@ -49,12 +49,12 @@ pub fn generate_values_schema_for_chart_vyt(
         uses.append(&mut u);
     }
 
-    if !processed_any {
-        return Err(color_eyre::eyre::eyre!("no templates could be processed"));
-    }
-
     let provider = schema::UpstreamThenDefaultVytSchemaProvider::default();
-    let mut out = schema::generate_values_schema_vyt(&uses, &provider);
+    let mut out = if processed_any {
+        schema::generate_values_schema_vyt(&uses, &provider)
+    } else {
+        serde_json::Value::Object(serde_json::Map::new())
+    };
 
     let mut values_docs: Vec<serde_yaml::Value> = Vec::new();
     for p in &chart.values_files {
@@ -78,8 +78,51 @@ pub fn generate_values_schema_for_chart_vyt(
         schema::add_values_yaml_baseline(&mut out, &values_docs);
     }
 
+    let chart_root = chart
+        .values_files
+        .first()
+        .map(|p| p.parent())
+        .or_else(|| chart.templates.first().map(|p| p.parent().parent()))
+        .or_else(|| chart.crds.first().map(|p| p.parent().parent()))
+        .or_else(|| {
+            chart.subcharts.first().map(|sc| match &sc.location {
+                helm_schema_chart::model::SubchartLocation::Directory { path } => {
+                    path.parent().parent()
+                }
+                helm_schema_chart::model::SubchartLocation::Archive { tgz_path, .. } => {
+                    tgz_path.parent().parent()
+                }
+            })
+        });
+
+    if let Some(root) = chart_root {
+        if let Ok(schema_path) = root.join("values.schema.json") {
+            if schema_path.exists().unwrap_or(false) {
+                if let Ok(raw) = schema_path
+                    .read_to_string()
+                    .wrap_err_with(|| format!("read values.schema.json {}", schema_path.as_str()))
+                {
+                    if let Ok(doc) = serde_json::from_str::<serde_json::Value>(&raw)
+                        .wrap_err_with(|| {
+                            format!("parse values.schema.json {}", schema_path.as_str())
+                        })
+                    {
+                        schema::add_json_schema_baseline_additive(&mut out, &doc);
+                    }
+                }
+            }
+        }
+    }
+
     // Step 2: Additively compose subchart values.yaml under the subchart key.
     for sc in &chart.subcharts {
+        let values_key = chart
+            .dependencies
+            .iter()
+            .find(|d| d.name == sc.name || d.alias.as_deref() == Some(sc.name.as_str()))
+            .map(|d| d.alias.clone().unwrap_or_else(|| d.name.clone()))
+            .unwrap_or_else(|| sc.name.clone());
+
         let sub_root = match &sc.location {
             helm_schema_chart::model::SubchartLocation::Directory { path } => path.clone(),
             helm_schema_chart::model::SubchartLocation::Archive { tgz_path, inner_root } => {
@@ -96,6 +139,8 @@ pub fn generate_values_schema_for_chart_vyt(
                 include_tests: false,
                 recurse_subcharts: true,
                 auto_extract_tgz: true,
+                respect_gitignore: false,
+                include_hidden: false,
                 ..Default::default()
             },
         ) {
@@ -103,26 +148,33 @@ pub fn generate_values_schema_for_chart_vyt(
             Err(_) => continue,
         };
 
-        let mut sub_values_docs: Vec<serde_yaml::Value> = Vec::new();
-        for p in &sub_chart.values_files {
-            let Ok(raw) = p
-                .read_to_string()
-                .wrap_err_with(|| format!("read values {}", p.as_str()))
-            else {
-                continue;
-            };
+        match generate_values_schema_for_chart_vyt(&sub_chart) {
+            Ok(sub_schema) => {
+                schema::add_json_schema_baseline_additive_at_path(&mut out, &values_key, &sub_schema);
+            }
+            Err(_) => {
+                let mut sub_values_docs: Vec<serde_yaml::Value> = Vec::new();
+                for p in &sub_chart.values_files {
+                    let Ok(raw) = p
+                        .read_to_string()
+                        .wrap_err_with(|| format!("read values {}", p.as_str()))
+                    else {
+                        continue;
+                    };
 
-            let Ok(doc) = serde_yaml::from_str::<serde_yaml::Value>(&raw)
-                .wrap_err_with(|| format!("parse values yaml {}", p.as_str()))
-            else {
-                continue;
-            };
+                    let Ok(doc) = serde_yaml::from_str::<serde_yaml::Value>(&raw)
+                        .wrap_err_with(|| format!("parse values yaml {}", p.as_str()))
+                    else {
+                        continue;
+                    };
 
-            sub_values_docs.push(doc);
-        }
+                    sub_values_docs.push(doc);
+                }
 
-        if !sub_values_docs.is_empty() {
-            schema::add_values_yaml_baseline_under(&mut out, &sc.name, &sub_values_docs);
+                if !sub_values_docs.is_empty() {
+                    schema::add_values_yaml_baseline_under(&mut out, &values_key, &sub_values_docs);
+                }
+            }
         }
     }
 
