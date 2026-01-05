@@ -1,15 +1,14 @@
 use clap::{Args, Parser, Subcommand};
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
-use color_eyre::eyre::WrapErr;
 use helm_schema_chart::{load_chart, LoadOptions};
 use helm_schema_mapper::schema::{
-    generate_values_schema_vyt, DefaultVytSchemaProvider, UpstreamK8sSchemaProvider,
-    UpstreamThenDefaultVytSchemaProvider,
+    DefaultVytSchemaProvider, UpstreamK8sSchemaProvider, UpstreamThenDefaultVytSchemaProvider,
 };
-use helm_schema_mapper::vyt;
+use helm_schema_mapper::{
+    generate_values_schema_for_chart_vyt_with_options, GenerateValuesSchemaOptions,
+};
 use serde_json::{Map, Value};
-use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 use vfs::VfsPath;
@@ -70,6 +69,10 @@ struct ValuesSchemaArgs {
     /// Chart version (for repo/chart refs). If omitted, uses latest semver.
     #[arg(long)]
     version: Option<String>,
+
+    /// Ingest chart-provided values.schema.json (NOT recommended; default off)
+    #[arg(long, default_value_t = false)]
+    ingest_values_schema_json: bool,
 }
 
 fn canonicalize_json(v: &Value) -> Value {
@@ -93,60 +96,6 @@ fn canonicalize_json(v: &Value) -> Value {
 fn json_pretty(v: &Value) -> eyre::Result<String> {
     let v = canonicalize_json(v);
     Ok(serde_json::to_string_pretty(&v).map_err(|e| eyre::eyre!(e))?)
-}
-
-fn run_vyt_on_chart_templates(chart: &helm_schema_chart::ChartSummary) -> eyre::Result<Vec<vyt::VYUse>> {
-    let mut defs = vyt::DefineIndex::default();
-    for p in &chart.templates {
-        let src = p
-            .read_to_string()
-            .wrap_err_with(|| format!("read template {}", p.as_str()))?;
-        vyt::extend_define_index_from_str(&mut defs, &src)
-            .wrap_err_with(|| format!("index defines in {}", p.as_str()))?;
-    }
-    let defs = std::sync::Arc::new(defs);
-
-    let mut all: Vec<vyt::VYUse> = Vec::new();
-    for p in &chart.templates {
-        let src = p
-            .read_to_string()
-            .wrap_err_with(|| format!("read template {}", p.as_str()))?;
-        let parsed = helm_schema_template::parse::parse_gotmpl_document(&src)
-            .ok_or_eyre("template parse returned None")
-            .wrap_err_with(|| format!("parse template {}", p.as_str()))?;
-
-        let mut uses = vyt::VYT::new(src)
-            .with_defines(std::sync::Arc::clone(&defs))
-            .run(&parsed.tree);
-        all.append(&mut uses);
-    }
-
-    Ok(all)
-}
-
-fn use_sort_key(u: &vyt::VYUse) -> (String, String, String, Vec<String>, Option<(String, String)>) {
-    let kind = match u.kind {
-        vyt::VYKind::Scalar => "Scalar",
-        vyt::VYKind::Fragment => "Fragment",
-    }
-    .to_string();
-
-    let resource = u
-        .resource
-        .as_ref()
-        .map(|r| (r.api_version.clone(), r.kind.clone()));
-
-    (
-        u.source_expr.clone(),
-        u.path.0.join("."),
-        kind,
-        u.guards.clone(),
-        resource,
-    )
-}
-
-fn cmp_uses(a: &vyt::VYUse, b: &vyt::VYUse) -> Ordering {
-    use_sort_key(a).cmp(&use_sort_key(b))
 }
 
 fn write_output(out: &str, path: Option<&Path>) -> eyre::Result<()> {
@@ -334,9 +283,6 @@ fn main() -> eyre::Result<()> {
                 },
             )?;
 
-            let mut uses = run_vyt_on_chart_templates(&chart)?;
-            uses.sort_by(cmp_uses);
-
             let upstream = {
                 let mut u = UpstreamK8sSchemaProvider::new(args.k8s_version)
                     .with_allow_download(args.allow_net);
@@ -350,7 +296,13 @@ fn main() -> eyre::Result<()> {
                 fallback: DefaultVytSchemaProvider::default(),
             };
 
-            let schema = generate_values_schema_vyt(&uses, &provider);
+            let options = GenerateValuesSchemaOptions {
+                add_values_yaml_baseline: true,
+                compose_subcharts: true,
+                ingest_values_schema_json: args.ingest_values_schema_json,
+            };
+
+            let schema = generate_values_schema_for_chart_vyt_with_options(&chart, &provider, &options)?;
             let schema_pretty = json_pretty(&schema)?;
             write_output(&schema_pretty, args.output.as_deref())?;
         }
