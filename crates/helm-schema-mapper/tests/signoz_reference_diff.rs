@@ -141,6 +141,44 @@ fn read_json_file(p: &Path) -> eyre::Result<serde_json::Value> {
     Ok(serde_json::from_str(&raw)?)
 }
 
+fn is_reference_only_missing(p: &str) -> bool {
+    if p == "otelCollector.podDisruptionBudget" {
+        return true;
+    }
+    if p == "clickhouse.global.clusterName" {
+        return true;
+    }
+
+    if p.starts_with("clickhouse.zookeeper.common.global.") {
+        return true;
+    }
+    if matches!(
+        p,
+        "clickhouse.zookeeper.global.cloud"
+            | "clickhouse.zookeeper.global.clusterDomain"
+            | "clickhouse.zookeeper.global.clusterName"
+    ) {
+        return true;
+    }
+
+    if p == "signoz-otel-gateway.global" || p.starts_with("signoz-otel-gateway.global.") {
+        return true;
+    }
+    if p.starts_with("signoz-otel-gateway.postgresql.common.global.") {
+        return true;
+    }
+    if matches!(
+        p,
+        "signoz-otel-gateway.postgresql.global.cloud"
+            | "signoz-otel-gateway.postgresql.global.clusterDomain"
+            | "signoz-otel-gateway.postgresql.global.clusterName"
+    ) {
+        return true;
+    }
+
+    false
+}
+
 #[test]
 fn signoz_reference_schema_coverage_diff() -> eyre::Result<()> {
     Builder::default().build();
@@ -198,17 +236,43 @@ fn signoz_reference_schema_coverage_diff() -> eyre::Result<()> {
     let ratio = covered as f64 / total as f64;
 
     let missing: BTreeSet<String> = ref_paths.difference(&our_paths).cloned().collect();
+    let actionable_missing: BTreeSet<String> = missing
+        .iter()
+        .filter(|p| !is_reference_only_missing(p))
+        .cloned()
+        .collect();
+
+    if let Ok(p) = std::env::var("DUMP_SIG_NOZ_MISSING") {
+        let mut out = String::new();
+        for it in &missing {
+            out.push_str(it);
+            out.push('\n');
+        }
+        std::fs::write(&p, out)?;
+    }
 
     eprintln!(
         "SigNoz ref coverage: {covered}/{total} = {ratio:.3} (missing: {})",
         missing.len()
     );
     eprintln!("SigNoz ref missing sample: {:?}", sample(&missing, 50));
+    eprintln!(
+        "SigNoz ref actionable missing: {} sample: {:?}",
+        actionable_missing.len(),
+        sample(&actionable_missing, 50)
+    );
 
     eyre::ensure!(
         ratio >= 0.40,
         "coverage too low vs reference: {ratio:.3} (covered {covered}/{total}); missing sample: {:?}",
         sample(&missing, 100)
+    );
+
+    eyre::ensure!(
+        actionable_missing.is_empty(),
+        "actionable missing paths remain ({}): {:?}",
+        actionable_missing.len(),
+        sample(&actionable_missing, 100)
     );
 
     Ok(())
