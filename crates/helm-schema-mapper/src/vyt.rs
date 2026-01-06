@@ -1680,13 +1680,32 @@ impl VYT {
         if node.kind() == "field" {
             if let Ok(t) = node.utf8_text(self.source.as_bytes()) {
                 let t = t.trim();
-                // Expect shapes like ".name"
-                if let Some(stripped) = t.strip_prefix('.') {
-                    if !stripped.is_empty() {
-                        if is_helm_builtin_object(stripped) {
+                let stripped = t.strip_prefix('.').unwrap_or(t);
+                if !stripped.is_empty() {
+                    if let Some(rest) = stripped.strip_prefix("Values.") {
+                        if !rest.is_empty() {
+                            let path = if self.no_output_depth > 0 {
+                                YPath(Vec::new())
+                            } else {
+                                self.shape.current_path()
+                            };
+                            let guards = self.guards.snapshot();
+
+                            self.uses.push(VYUse {
+                                source_expr: rest.to_string(),
+                                path,
+                                kind: VYKind::Scalar,
+                                guards,
+                                resource: self.resource_detector.current(),
+                            });
                             return;
                         }
-                        if let Some(b) = self.bindings.dot_binding() {
+                    }
+
+                    if is_helm_builtin_object(stripped) {
+                        return;
+                    }
+                    if let Some(b) = self.bindings.dot_binding() {
                             let path = self.shape.current_path();
                             let guards = self.guards.snapshot();
 
@@ -1723,7 +1742,6 @@ impl VYT {
                             return; // handled
                         }
                     }
-                }
             }
         }
 

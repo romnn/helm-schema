@@ -237,9 +237,61 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
     for (k, sv) in src_props {
         match dst_props.get_mut(k) {
             None => {
+                if std::env::var("HELM_SCHEMA_DEBUG_MERGE_RESOURCES").is_ok() && k == "resources" {
+                    let parent_has_version = dst_props.contains_key("version");
+                    let parent_has_metrics_exporter = dst_props.contains_key("metricsExporter");
+                    let parent_has_service_account = dst_props.contains_key("serviceAccount");
+                    let src_is_anyof = sv
+                        .as_object()
+                        .and_then(|o| o.get("anyOf"))
+                        .and_then(|v| v.as_array())
+                        .is_some();
+                    let src_ty = sv
+                        .as_object()
+                        .and_then(|o| o.get("type"))
+                        .and_then(|t| t.as_str())
+                        .unwrap_or("<none>");
+                    eprintln!(
+                        "[merge] insert resources src.type={} src.anyOf={} parent.version={} parent.metricsExporter={} parent.serviceAccount={}",
+                        src_ty,
+                        src_is_anyof,
+                        parent_has_version,
+                        parent_has_metrics_exporter,
+                        parent_has_service_account
+                    );
+                }
                 dst_props.insert(k.clone(), sv.clone());
             }
             Some(dv) => {
+                if std::env::var("HELM_SCHEMA_DEBUG_MERGE_RESOURCES").is_ok() && k == "resources" {
+                    let dst_is_anyof = dv
+                        .as_object()
+                        .and_then(|o| o.get("anyOf"))
+                        .and_then(|v| v.as_array())
+                        .is_some();
+                    let dst_ty = dv
+                        .as_object()
+                        .and_then(|o| o.get("type"))
+                        .and_then(|t| t.as_str())
+                        .unwrap_or("<none>");
+                    let src_is_anyof = sv
+                        .as_object()
+                        .and_then(|o| o.get("anyOf"))
+                        .and_then(|v| v.as_array())
+                        .is_some();
+                    let src_ty = sv
+                        .as_object()
+                        .and_then(|o| o.get("type"))
+                        .and_then(|t| t.as_str())
+                        .unwrap_or("<none>");
+                    eprintln!(
+                        "[merge] merge resources dst.type={} dst.anyOf={} src.type={} src.anyOf={}",
+                        dst_ty,
+                        dst_is_anyof,
+                        src_ty,
+                        src_is_anyof
+                    );
+                }
                 if dv
                     .as_object()
                     .and_then(|o| o.get("anyOf"))
@@ -288,6 +340,82 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
                                 _ => {}
                             }
                         }
+
+                        if !merged_any {
+                            if let Some(src_ty) = src_ty {
+                                let already_has_ty = arr.iter().any(|br| {
+                                    br.as_object()
+                                        .and_then(|o| o.get("type"))
+                                        .and_then(|t| t.as_str())
+                                        .is_some_and(|t| t == src_ty)
+                                });
+
+                                if !already_has_ty {
+                                    arr.push(sv.clone());
+                                    merged_any = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if merged_any {
+                        continue;
+                    }
+                }
+
+                // If the SRC is a union (anyOf) but the DST is already a concrete schema,
+                // try to merge a compatible branch from SRC into DST.
+                // This prevents losing properties that were inferred into an object-branch
+                // of an `anyOf` such as `object | string`.
+                if dv
+                    .as_object()
+                    .and_then(|o| o.get("anyOf"))
+                    .and_then(|v| v.as_array())
+                    .is_none()
+                {
+                    let dst_ty: Option<String> = dv
+                        .as_object()
+                        .and_then(|o| o.get("type"))
+                        .and_then(|t| t.as_str())
+                        .map(|s| s.to_string());
+
+                    let mut merged_any = false;
+                    if let Some(arr) = sv
+                        .as_object()
+                        .and_then(|o| o.get("anyOf"))
+                        .and_then(|v| v.as_array())
+                    {
+                        for br in arr {
+                            let br_ty = br
+                                .as_object()
+                                .and_then(|o| o.get("type"))
+                                .and_then(|t| t.as_str());
+
+                            match (dst_ty.as_deref(), br_ty) {
+                                (Some("object"), Some("object")) | (Some("object"), None) => {
+                                    add_schema_additive(dv, br);
+                                    merged_any = true;
+                                }
+                                (Some("array"), Some("array")) => {
+                                    let dst_items = dv.as_object_mut().and_then(|o| o.get_mut("items"));
+                                    let src_items = br.as_object().and_then(|o| o.get("items"));
+                                    match (dst_items, src_items) {
+                                        (None, Some(si)) => {
+                                            if let Some(o) = dv.as_object_mut() {
+                                                o.insert("items".to_string(), si.clone());
+                                            }
+                                            merged_any = true;
+                                        }
+                                        (Some(di), Some(si)) => {
+                                            add_schema_additive(di, si);
+                                            merged_any = true;
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
                     }
 
                     if merged_any {
@@ -310,7 +438,56 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
                     .and_then(|t| t.as_str());
 
                 match (dst_ty, src_ty) {
-                    (Some("object"), Some("object")) => add_schema_additive(dv, sv),
+                    (Some("object"), Some("object")) => {
+                        if std::env::var("HELM_SCHEMA_DEBUG_CLICKHOUSE_RESOURCES").is_ok()
+                            && k == "clickhouseOperator"
+                        {
+                            let src_props = sv
+                                .as_object()
+                                .and_then(|o| o.get("properties"))
+                                .and_then(|p| p.as_object());
+                            let dst_props = dv
+                                .as_object()
+                                .and_then(|o| o.get("properties"))
+                                .and_then(|p| p.as_object());
+
+                            let src_res = src_props.is_some_and(|p| p.contains_key("resources"));
+                            let dst_res = dst_props.is_some_and(|p| p.contains_key("resources"));
+                            let src_me_res = src_props
+                                .and_then(|p| p.get("metricsExporter"))
+                                .and_then(|m| m.get("properties"))
+                                .and_then(|p| p.as_object())
+                                .is_some_and(|p| p.contains_key("resources"));
+                            let dst_me_res = dst_props
+                                .and_then(|p| p.get("metricsExporter"))
+                                .and_then(|m| m.get("properties"))
+                                .and_then(|p| p.as_object())
+                                .is_some_and(|p| p.contains_key("resources"));
+
+                            eprintln!(
+                                "[chop] pre src_res={} dst_res={} src_me_res={} dst_me_res={}",
+                                src_res, dst_res, src_me_res, dst_me_res
+                            );
+                        }
+
+                        add_schema_additive(dv, sv);
+
+                        if std::env::var("HELM_SCHEMA_DEBUG_CLICKHOUSE_RESOURCES").is_ok()
+                            && k == "clickhouseOperator"
+                        {
+                            let dst_props = dv
+                                .as_object()
+                                .and_then(|o| o.get("properties"))
+                                .and_then(|p| p.as_object());
+                            let dst_res = dst_props.is_some_and(|p| p.contains_key("resources"));
+                            let dst_me_res = dst_props
+                                .and_then(|p| p.get("metricsExporter"))
+                                .and_then(|m| m.get("properties"))
+                                .and_then(|p| p.as_object())
+                                .is_some_and(|p| p.contains_key("resources"));
+                            eprintln!("[chop] post dst_res={} dst_me_res={}", dst_res, dst_me_res);
+                        }
+                    }
                     (Some("array"), Some("array")) => {
                         let dst_items = dv.as_object_mut().and_then(|o| o.get_mut("items"));
                         let src_items = sv.as_object().and_then(|o| o.get("items"));

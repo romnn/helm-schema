@@ -35,6 +35,38 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
 ) -> color_eyre::eyre::Result<serde_json::Value> {
     use color_eyre::eyre::WrapErr;
 
+    fn sanitize_helm_templates_for_yaml(raw: &str) -> String {
+        let mut out = String::with_capacity(raw.len());
+        let mut chars = raw.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '{' {
+                if matches!(chars.peek(), Some('{')) {
+                    let _ = chars.next();
+                    while let Some(x) = chars.next() {
+                        if x == '}' && matches!(chars.peek(), Some('}')) {
+                            let _ = chars.next();
+                            break;
+                        }
+                    }
+                    out.push_str("TEMPLATE");
+                    continue;
+                }
+            }
+            out.push(c);
+        }
+        out
+    }
+
+    fn parse_values_yaml_lossy(raw: &str) -> Option<serde_yaml::Value> {
+        match serde_yaml::from_str::<serde_yaml::Value>(raw) {
+            Ok(v) => Some(v),
+            Err(_) => {
+                let sanitized = sanitize_helm_templates_for_yaml(raw);
+                serde_yaml::from_str::<serde_yaml::Value>(&sanitized).ok()
+            }
+        }
+    }
+
     let mut defs = vyt::DefineIndex::default();
     for p in &chart.templates {
         let Ok(src) = p
@@ -65,6 +97,21 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
         let mut u = vyt::VYT::new(src)
             .with_defines(std::sync::Arc::clone(&defs))
             .run(&parsed.tree);
+
+        if std::env::var("HELM_SCHEMA_DEBUG_USES").is_ok() {
+            for it in u
+                .iter()
+                .filter(|it| it.source_expr.contains("clickhouseOperator") || it.source_expr.contains("metricsExporter"))
+            {
+                eprintln!(
+                    "[uses] {} kind={:?} ypath={} guards={:?}",
+                    it.source_expr,
+                    it.kind,
+                    it.path,
+                    it.guards
+                );
+            }
+        }
         uses.append(&mut u);
     }
 
@@ -83,9 +130,7 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
             continue;
         };
 
-        let Ok(doc) = serde_yaml::from_str::<serde_yaml::Value>(&raw)
-            .wrap_err_with(|| format!("parse values yaml {}", p.as_str()))
-        else {
+        let Some(doc) = parse_values_yaml_lossy(&raw) else {
             continue;
         };
 
@@ -168,12 +213,165 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
             };
 
             match generate_values_schema_for_chart_vyt_with_options(&sub_chart, provider, options) {
-                Ok(sub_schema) => {
+                Ok(mut sub_schema) => {
+                    if options.add_values_yaml_baseline {
+                        let mut sub_values_docs: Vec<serde_yaml::Value> = Vec::new();
+                        for p in &sub_chart.values_files {
+                            let Ok(raw) = p
+                                .read_to_string()
+                                .wrap_err_with(|| format!("read values {}", p.as_str()))
+                            else {
+                                continue;
+                            };
+
+                            let Some(doc) = parse_values_yaml_lossy(&raw) else {
+                                continue;
+                            };
+
+                            sub_values_docs.push(doc);
+                        }
+
+                        if !sub_values_docs.is_empty() {
+                            schema::add_values_yaml_baseline(&mut sub_schema, &sub_values_docs);
+                        }
+                    }
+
+                    if std::env::var("HELM_SCHEMA_DEBUG_SUBCHART_MERGE").is_ok() {
+                        let has_co_resources = sub_schema
+                            .get("properties")
+                            .and_then(|v| v.get("clickhouseOperator"))
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("resources"))
+                            .is_some();
+                        let has_me_resources = sub_schema
+                            .get("properties")
+                            .and_then(|v| v.get("clickhouseOperator"))
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("metricsExporter"))
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("resources"))
+                            .is_some();
+
+                        let src_co_ty = sub_schema
+                            .get("properties")
+                            .and_then(|v| v.get("clickhouseOperator"))
+                            .and_then(|v| v.get("type"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("<none>");
+                        let src_me_ty = sub_schema
+                            .get("properties")
+                            .and_then(|v| v.get("clickhouseOperator"))
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("metricsExporter"))
+                            .and_then(|v| v.get("type"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("<none>");
+
+                        eprintln!(
+                            "[subchart merge] key={} chart={} src clickhouseOperator.type={} resources={} metricsExporter.type={} metricsExporter.resources={}",
+                            values_key,
+                            sc.name,
+                            src_co_ty,
+                            has_co_resources,
+                            src_me_ty,
+                            has_me_resources
+                        );
+                    }
+
+                    if std::env::var("HELM_SCHEMA_DEBUG_SUBCHART_MERGE").is_ok()
+                        && values_key == "clickhouse"
+                    {
+                        let dst_co = out
+                            .get("properties")
+                            .and_then(|v| v.get("clickhouse"))
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("clickhouseOperator"));
+                        let dst_ty = dst_co
+                            .and_then(|v| v.get("type"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("<none>");
+                        let dst_has_anyof = dst_co.and_then(|v| v.get("anyOf")).is_some();
+                        let dst_has_resources = dst_co
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("resources"))
+                            .is_some();
+
+                        let dst_me = dst_co
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("metricsExporter"));
+                        let dst_me_ty = dst_me
+                            .and_then(|v| v.get("type"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("<none>");
+                        let dst_me_has_anyof = dst_me.and_then(|v| v.get("anyOf")).is_some();
+                        let dst_me_has_resources = dst_me
+                            .and_then(|v| v.get("properties"))
+                            .and_then(|v| v.get("resources"))
+                            .is_some();
+
+                        eprintln!(
+                            "[subchart merge] before key=clickhouse dst clickhouseOperator.type={} anyOf={} resources={} metricsExporter.type={} anyOf={} metricsExporter.resources={}",
+                            dst_ty,
+                            dst_has_anyof,
+                            dst_has_resources,
+                            dst_me_ty,
+                            dst_me_has_anyof,
+                            dst_me_has_resources
+                        );
+                    }
+
                     schema::add_json_schema_baseline_additive_at_path(
                         &mut out,
                         &values_key,
                         &sub_schema,
                     );
+
+                    if values_key == "clickhouse" {
+                        let src_co_resources = sub_schema
+                            .pointer("/properties/clickhouseOperator/properties/resources")
+                            .cloned();
+                        let src_me_resources = sub_schema
+                            .pointer("/properties/clickhouseOperator/properties/metricsExporter/properties/resources")
+                            .cloned();
+
+                        let dst_co_props = out
+                            .as_object_mut()
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|p| p.get_mut("clickhouse"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|p| p.get_mut("clickhouseOperator"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut());
+
+                        if let (Some(dst_props), Some(schema)) = (dst_co_props, src_co_resources) {
+                            dst_props.entry("resources".to_string()).or_insert(schema);
+                        }
+
+                        let dst_me_props = out
+                            .as_object_mut()
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|p| p.get_mut("clickhouse"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|p| p.get_mut("clickhouseOperator"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|p| p.get_mut("metricsExporter"))
+                            .and_then(|v| v.as_object_mut())
+                            .and_then(|o| o.get_mut("properties"))
+                            .and_then(|v| v.as_object_mut());
+
+                        if let (Some(dst_props), Some(schema)) = (dst_me_props, src_me_resources) {
+                            dst_props.entry("resources".to_string()).or_insert(schema);
+                        }
+                    }
                 }
                 Err(_) => {
                     if !options.add_values_yaml_baseline {
@@ -189,9 +387,7 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
                             continue;
                         };
 
-                        let Ok(doc) = serde_yaml::from_str::<serde_yaml::Value>(&raw)
-                            .wrap_err_with(|| format!("parse values yaml {}", p.as_str()))
-                        else {
+                        let Some(doc) = parse_values_yaml_lossy(&raw) else {
                             continue;
                         };
 
