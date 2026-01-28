@@ -285,10 +285,26 @@ pub enum VYKind {
 
 /// A tiny text->shape tracker. Not a YAML parser; good enough for smoke tests.
 /// It maintains a stack of containers determined from raw text lines.
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug)]
 struct Shape {
     /// Each level: (indent, container kind, pending mapping key at this level if any)
     stack: Vec<(usize, Container, Option<String>)>,
+    at_line_start: bool,
+    clear_pending_on_newline_at_indent: Option<usize>,
+    prefix: Vec<String>,
+    stack_floor: usize,
+}
+
+impl Default for Shape {
+    fn default() -> Self {
+        Self {
+            stack: Vec::new(),
+            at_line_start: true,
+            clear_pending_on_newline_at_indent: None,
+            prefix: Vec::new(),
+            stack_floor: 0,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -299,7 +315,7 @@ enum Container {
 
 impl Shape {
     fn current_path(&self) -> YPath {
-        let mut out: Vec<String> = Vec::new();
+        let mut out: Vec<String> = self.prefix.clone();
         for (_, kind, pending_key) in &self.stack {
             match (kind, pending_key) {
                 (Container::Mapping, Some(k)) => {
@@ -322,22 +338,111 @@ impl Shape {
             }
         }
         YPath(out)
+    }
 
-        // let mut out: Vec<String> = Vec::new();
-        // for (_, kind, pending_key) in &self.stack {
-        //     match (kind, pending_key) {
-        //         (Container::Mapping, Some(k)) => out.push(k.clone()),
-        //         (Container::Mapping, None) => {}
-        //         (Container::Sequence, _) => {
-        //             // We do not insert indices for smoke tests; parent path is sufficient.
-        //         }
-        //     }
-        // }
-        // YPath(out)
+    fn sync_action_position(&mut self, indent: usize, col: usize) {
+        let effective = std::cmp::max(indent, col);
+        while let Some((top_indent, _, _)) = self.stack.last().cloned() {
+            if top_indent > effective {
+                if self.stack.len() <= self.stack_floor {
+                    break;
+                }
+                self.stack.pop();
+            } else {
+                break;
+            }
+        }
+
+        if col == indent {
+            self.at_line_start = true;
+        }
+
+        // If an action appears after some non-indent characters on a line, it's very often
+        // the scalar value of a `key: {{ ... }}` mapping entry (or `- key: {{ ... }}` inside
+        // a sequence item). The `{{ ... }}` bytes are not part of YAML text spans, so we
+        // won't observe a scalar value in `ingest()`. Schedule clearing the pending key at
+        // end-of-line to prevent key bleed into subsequent paths.
+        if col > indent {
+            if self.clear_pending_on_newline_at_indent.is_none() {
+                let mut candidate: Option<usize> = None;
+                for (top_indent, kind, pending) in self.stack.iter().rev() {
+                    if *kind != Container::Mapping {
+                        continue;
+                    }
+                    if pending.is_none() {
+                        continue;
+                    }
+                    if *top_indent < indent {
+                        // We're above the current line's indent; stop.
+                        break;
+                    }
+                    if *top_indent <= col {
+                        candidate = Some(*top_indent);
+                        break;
+                    }
+                }
+                if let Some(i) = candidate {
+                    self.clear_pending_on_newline_at_indent = Some(i);
+                }
+            }
+        }
     }
 
     fn ingest(&mut self, text: &str) {
+        fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
+            let after = after.trim_end();
+            if after.starts_with("{{") {
+                return None;
+            }
+            let mut chars = after.chars();
+            let mut key = String::new();
+            while let Some(c) = chars.next() {
+                if c == ':' {
+                    if key.is_empty() {
+                        return None;
+                    }
+                    let rest = chars.as_str();
+                    let rest = rest.trim_start();
+                    let is_block = rest.is_empty() || rest.starts_with("|") || rest.starts_with(">");
+                    return Some((key.trim().to_string(), !is_block));
+                }
+                // stop if whitespace occurs before ':' (not a simple key)
+                if c.is_whitespace() {
+                    return None;
+                }
+                // basic allowed key characters
+                if c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/' ) {
+                    key.push(c);
+                    continue;
+                }
+                return None;
+            }
+            None
+        }
+
+        fn clear_pending_at_indent(stack: &mut Vec<(usize, Container, Option<String>)>, indent: usize) {
+            for (top_indent, kind, pending) in stack.iter_mut().rev() {
+                if *top_indent == indent {
+                    if *kind == Container::Mapping {
+                        *pending = None;
+                    }
+                    break;
+                }
+            }
+        }
+
         for raw in text.split_inclusive('\n') {
+            let is_newline_terminated = raw.ends_with('\n');
+            if !self.at_line_start {
+                if is_newline_terminated {
+                    if let Some(indent) = self.clear_pending_on_newline_at_indent.take() {
+                        clear_pending_at_indent(&mut self.stack, indent);
+                    }
+                }
+                self.at_line_start = is_newline_terminated;
+                continue;
+            }
+
             let line = raw.trim_end_matches('\n');
             let indent = line.chars().take_while(|&c| c == ' ').count();
             let after = &line[indent..];
@@ -347,32 +452,28 @@ impl Shape {
 
             // Blank lines carry no structural signal.
             if trimmed.is_empty() {
+                self.at_line_start = is_newline_terminated;
                 continue;
             }
 
             // Multi-document YAML boundary: reset the shape so paths don't bleed across docs.
             if trimmed == "---" || trimmed == "..." {
-                self.stack.clear();
+                self.stack.truncate(self.stack_floor);
+                self.at_line_start = is_newline_terminated;
                 continue;
             }
 
-            // Template-only lines don't add YAML tokens, but they can carry indentation that
-            // should end the previous YAML context (e.g. leaving `metadata.labels` before a
-            // new `if` block at a lower indent). So allow them to dedent.
             if trimmed.trim_start().starts_with("{{") {
-                while let Some((top_indent, _, _)) = self.stack.last().cloned() {
-                    if top_indent > indent {
-                        self.stack.pop();
-                    } else {
-                        break;
-                    }
-                }
+                self.at_line_start = is_newline_terminated;
                 continue;
             }
 
             // Dedent only for meaningful YAML content lines
             while let Some((top_indent, _, _)) = self.stack.last().cloned() {
                 if top_indent > indent {
+                    if self.stack.len() <= self.stack_floor {
+                        break;
+                    }
                     self.stack.pop();
                 } else {
                     break;
@@ -400,12 +501,24 @@ impl Shape {
                     let child_indent = indent + 2;
                     self.stack
                         .push((child_indent, Container::Mapping, Some(key)));
+
+                    // If `- key: value` has an inline scalar value, clear the pending key.
+                    // For `- key:` (no value) or block scalars, keep it pending.
+                    let rest = after[colon + 1..].trim_start();
+                    let scalar_value_present = !rest.is_empty() && !rest.starts_with('|') && !rest.starts_with('>');
+                    if scalar_value_present {
+                        if is_newline_terminated {
+                            clear_pending_at_indent(&mut self.stack, child_indent);
+                        } else {
+                            self.clear_pending_on_newline_at_indent = Some(child_indent);
+                        }
+                    }
                 }
+                self.at_line_start = is_newline_terminated;
                 continue;
             }
 
-            if after.ends_with(':') || after.contains(':') {
-                let key = after.split(':').next().unwrap_or("").trim().to_string();
+            if let Some((key, scalar_value_present)) = parse_yaml_key(after) {
                 match self.stack.last_mut() {
                     Some((top_indent, Container::Mapping, pending)) if *top_indent == indent => {
                         *pending = Some(key);
@@ -416,16 +529,25 @@ impl Shape {
                     None => {
                         self.stack.push((indent, Container::Mapping, Some(key)));
                     }
-                    _ => {
-                        self.stack.push((indent, Container::Mapping, Some(key)));
+                    _ => {}
+                }
+
+                if scalar_value_present {
+                    if is_newline_terminated {
+                        clear_pending_at_indent(&mut self.stack, indent);
+                    } else {
+                        self.clear_pending_on_newline_at_indent = Some(indent);
                     }
                 }
+                self.at_line_start = is_newline_terminated;
                 continue;
             }
 
             if self.stack.is_empty() {
                 self.stack.push((indent, Container::Mapping, None));
             }
+
+            self.at_line_start = is_newline_terminated;
         }
     }
 }
@@ -630,11 +752,34 @@ impl VYT {
             }
 
             // If there is a gap (action nodes) between spans, advance our position to the
-            // start of the next span or target (skipping non-text).
+            // start of the next span or target.
+            //
+            // IMPORTANT: even though action nodes don't contribute YAML tokens, the whitespace
+            // and newlines inside them (or adjacent to them) still matter for shape tracking.
+            // Tree-sitter may attach indentation/newlines to non-text nodes, which would cause
+            // us to miss structural keys (e.g. dropping `template:` / nested `spec:`).
+            //
+            // So we ingest a sanitized version of the gap that preserves only spaces/tabs and
+            // newlines, ensuring line boundaries are maintained.
             if self.text_span_idx < self.text_spans.len() {
                 let (ns, _) = self.text_spans[self.text_span_idx];
                 if self.text_pos < ns {
-                    self.text_pos = ns.min(target);
+                    let end = ns.min(target);
+                    if self.text_pos < end {
+                        let gap = &self.source[self.text_pos..end];
+                        let mut sanitized = String::with_capacity(gap.len());
+                        for ch in gap.chars() {
+                            if ch == '\n' || ch == ' ' || ch == '\t' {
+                                sanitized.push(ch);
+                            }
+                        }
+                        if !sanitized.is_empty() {
+                            self.shape.ingest(&sanitized);
+                            self.resource_detector.ingest(&sanitized);
+                            self.yaml_tree.update_partial_yaml(&sanitized);
+                        }
+                        self.text_pos = end;
+                    }
                 }
             } else {
                 self.text_pos = target;
@@ -644,6 +789,28 @@ impl VYT {
         if self.text_pos < target {
             self.text_pos = target;
         }
+    }
+
+    fn line_indent_and_col(&self, byte_pos: usize) -> (usize, usize) {
+        let bytes = self.source.as_bytes();
+        let mut line_start = byte_pos.min(bytes.len());
+        while line_start > 0 {
+            if bytes[line_start - 1] == b'\n' {
+                break;
+            }
+            line_start -= 1;
+        }
+
+        let col = byte_pos.saturating_sub(line_start);
+        let mut indent = 0usize;
+        while line_start + indent < bytes.len() {
+            if bytes[line_start + indent] == b' ' {
+                indent += 1;
+            } else {
+                break;
+            }
+        }
+        (indent, col)
     }
 
     pub fn with_defines(mut self, defines: std::sync::Arc<DefineIndex>) -> Self {
@@ -751,10 +918,7 @@ impl VYT {
                 if let Ok(t) = n.utf8_text(self.source.as_bytes()) {
                     let t = t.trim();
                     if let Some(stripped) = t.strip_prefix('.') {
-                        if !stripped.is_empty()
-                            && stripped != "Values"
-                            && !is_helm_builtin_object(stripped)
-                        {
+                        if !stripped.is_empty() {
                             if dot_base.is_empty() {
                                 return Some(stripped.to_string());
                             }
@@ -994,6 +1158,11 @@ impl VYT {
     fn walk(&mut self, node: Node) {
         self.ingest_text_up_to(node.start_byte());
 
+        if node.kind() != "text" {
+            let (indent, col) = self.line_indent_and_col(node.start_byte());
+            self.shape.sync_action_position(indent, col);
+        }
+
         // Containers & control-flow: walk children with small pre/post hooks
         if false {
             println!(
@@ -1109,7 +1278,7 @@ impl VYT {
         }
     }
 
-    fn inline_include(&mut self, call: Node) -> bool {
+    fn inline_include(&mut self, node: Node) -> bool {
         let Some(defs) = self.defines.as_ref().map(Arc::clone) else {
             return false;
         };
@@ -1117,9 +1286,12 @@ impl VYT {
         // If this include call is part of a variable assignment action (`$x := ...`), then
         // it does not emit YAML at the call site. Treat any uses recorded inside the
         // inlined template as having an empty YAML path.
+        //
+        // Note: tree-sitter represents these in a couple ways depending on where they
+        // appear; in practice, the *action* node is the reliable wrapper.
         let mut pushed_no_output = false;
         if self.no_output_depth == 0 {
-            let mut cur = Some(call);
+            let mut cur = Some(node);
             while let Some(n) = cur {
                 if is_assignment_kind(n.kind()) || self.is_assignment_action(n) {
                     self.no_output_depth += 1;
@@ -1135,8 +1307,8 @@ impl VYT {
         let mut ctx: Option<Node> = None;
 
         // args are under argument_list
-        for i in 0..call.child_count() {
-            if let Some(ch) = call.child(i) {
+        for i in 0..node.child_count() {
+            if let Some(ch) = node.child(i) {
                 if ch.is_named() && ch.kind() == "argument_list" {
                     let mut w = ch.walk();
                     let args: Vec<Node> = ch.children(&mut w).filter(|n| n.is_named()).collect();
@@ -1210,8 +1382,13 @@ impl VYT {
 
         // Snapshot the caller's YAML shape so any YAML-ish content inside the included
         // template does not leak into the caller's subsequent path tracking.
-        // We *do* want the include body to see the caller's shape as the starting point.
         let saved_shape = self.shape.clone();
+
+        // Walk the included template starting from the caller's current YAML placement,
+        // but prevent the include body's own indent-0 YAML from popping us *above* the
+        // call site context.
+        let saved_floor = self.shape.stack_floor;
+        self.shape.stack_floor = self.shape.stack.len();
 
         let saved_text_spans = self.text_spans.clone();
         let saved_text_span_idx = self.text_span_idx;
@@ -1230,6 +1407,7 @@ impl VYT {
 
         self.walk(tpl_tree.root_node());
         self.shape = saved_shape;
+        self.shape.stack_floor = saved_floor;
         self.text_spans = saved_text_spans;
         self.text_span_idx = saved_text_span_idx;
         self.text_pos = saved_text_pos;
@@ -1648,11 +1826,10 @@ impl VYT {
                             // ALSO: record a stand-alone guard use at the current YAML path
                             self.uses.push(VYUse {
                                 source_expr: k,
-                                path: if self.no_output_depth > 0 {
-                                    YPath(Vec::new())
-                                } else {
-                                    self.shape.current_path()
-                                },
+                                // Control-flow header reads are not concrete YAML writes.
+                                // Record them with an empty path so downstream logic can treat
+                                // them purely as guards/conditions.
+                                path: YPath(Vec::new()),
                                 kind: VYKind::Scalar, // role-less model; scalar is fine for presence
                                 guards: vec![],
                                 resource: self.resource_detector.current(),
@@ -1816,7 +1993,46 @@ impl VYT {
             &self.source,
             &["toYaml", "fromYaml", "nindent", "indent", "tpl"],
         );
-        let sources = self.collect_values_anywhere(node);
+        let mut sources = self.collect_values_anywhere(node);
+
+        if sources.is_empty() && is_fragment {
+            let mut stack = vec![node];
+            let mut has_dot = false;
+            while let Some(n) = stack.pop() {
+                if n.is_named() && n.kind() == "dot" {
+                    has_dot = true;
+                    break;
+                }
+                let mut w = n.walk();
+                for ch in n.children(&mut w) {
+                    if ch.is_named() {
+                        stack.push(ch);
+                    }
+                }
+            }
+
+            if has_dot {
+                if let Some(dot) = self.bindings.dot_binding() {
+                    let in_sequence = self
+                        .shape
+                        .stack
+                        .iter()
+                        .any(|(_, kind, _)| *kind == Container::Sequence);
+
+                    for base in &dot.bases {
+                        if base.is_empty() {
+                            continue;
+                        }
+                        let mut src = base.clone();
+                        if matches!(dot.role, BindingRole::Item) && in_sequence && !src.ends_with(".*") {
+                            src.push_str(".*");
+                        }
+                        sources.insert(src);
+                    }
+                }
+            }
+        }
+
         // let sources = collect_values_anywhere(node, self.source);
         if sources.is_empty() {
             return;
