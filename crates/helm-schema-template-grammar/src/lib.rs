@@ -14,7 +14,7 @@ pub mod yaml {
     /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers#static-node-types
     pub const NODE_TYPES: &'static str = include_str!(concat!(
         env!("OUT_DIR"),
-        "/vendor/tree_sitter_yaml/src/node-types.json"
+        "/vendor/tree-sitter-helm-template/src/node-types.json"
     ));
 
     #[cfg(test)]
@@ -42,7 +42,7 @@ pub mod go_template {
     /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers#static-node-types
     pub const NODE_TYPES: &'static str = include_str!(concat!(
         env!("OUT_DIR"),
-        "/vendor/tree_sitter_go_template/src/node-types.json"
+        "/vendor/tree-sitter-go-template/src/node-types.json"
     ));
 
     #[cfg(test)]
