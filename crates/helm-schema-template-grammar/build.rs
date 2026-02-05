@@ -36,7 +36,11 @@ fn main() {
         let vdir = vendor_dir.join(g.vendor_dir);
         let vsrc = vdir.join("src");
         std::fs::create_dir_all(&vsrc).unwrap();
-        std::fs::copy(gdir.join("src/node-types.json"), vsrc.join("node-types.json")).unwrap();
+        std::fs::copy(
+            gdir.join("src/node-types.json"),
+            vsrc.join("node-types.json"),
+        )
+        .unwrap();
 
         let mut build = cc::Build::new();
         build
@@ -68,6 +72,9 @@ fn main() {
         for ccxx in g.cxx_files {
             println!("cargo:rerun-if-changed={}", gdir.join(ccxx).display());
         }
-        println!("cargo:rerun-if-changed={}", gdir.join("src/node-types.json").display());
+        println!(
+            "cargo:rerun-if-changed={}",
+            gdir.join("src/node-types.json").display()
+        );
     }
 }

@@ -1,7 +1,7 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
 use color_eyre::eyre::WrapErr;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use helm_schema_mapper::vyt;
 use serde_json::Value;
@@ -16,7 +16,9 @@ fn chart_root(root: &VfsPath, name: &str) -> eyre::Result<VfsPath> {
         .map_err(Into::into)
 }
 
-fn run_vyt_on_chart_templates(chart: &helm_schema_chart::ChartSummary) -> eyre::Result<Vec<vyt::VYUse>> {
+fn run_vyt_on_chart_templates(
+    chart: &helm_schema_chart::ChartSummary,
+) -> eyre::Result<Vec<vyt::VYUse>> {
     let mut defs = vyt::DefineIndex::default();
     for p in &chart.templates {
         let src = p
@@ -182,11 +184,7 @@ fn assert_end_to_end_security_context_booleans(chart_dir_name: &str) -> eyre::Re
             ok = true;
             break;
         }
-        sample = Some((
-            u.source_expr.clone(),
-            u.path.0.join("."),
-            node.clone(),
-        ));
+        sample = Some((u.source_expr.clone(), u.path.0.join("."), node.clone()));
     }
 
     if !ok {

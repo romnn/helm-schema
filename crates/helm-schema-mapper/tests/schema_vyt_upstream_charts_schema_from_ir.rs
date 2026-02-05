@@ -1,7 +1,7 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
 use color_eyre::eyre::WrapErr;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use helm_schema_mapper::vyt;
 use serde_json::Value;
@@ -86,7 +86,10 @@ fn run_vyt_on_chart_templates(
     Ok(all)
 }
 
-fn unique_value_paths_matching<'a>(uses: &'a [vyt::VYUse], pred: impl Fn(&'a str) -> bool) -> Vec<&'a str> {
+fn unique_value_paths_matching<'a>(
+    uses: &'a [vyt::VYUse],
+    pred: impl Fn(&'a str) -> bool,
+) -> Vec<&'a str> {
     let mut set: BTreeSet<&'a str> = BTreeSet::new();
     for u in uses {
         let vp = u.source_expr.as_str();
@@ -200,7 +203,9 @@ fn assert_chart_schema_matches_ir(
     )?;
 
     // String maps (annotations/labels)
-    let maps = unique_value_paths_matching(&uses, |vp| vp.ends_with("annotations") || vp.ends_with("labels"));
+    let maps = unique_value_paths_matching(&uses, |vp| {
+        vp.ends_with("annotations") || vp.ends_with("labels")
+    });
     assert!(
         maps.len() >= min_string_maps,
         "expected at least {min_string_maps} annotation/label maps in IR for {chart_dir_name}, got {}",

@@ -52,7 +52,9 @@ fn line_col(text: &str, byte_offset: usize) -> (usize, usize) {
     (line, col)
 }
 
-fn find_most_specific_error_or_missing_node(tree: &tree_sitter::Tree) -> Option<tree_sitter::Node<'_>> {
+fn find_most_specific_error_or_missing_node(
+    tree: &tree_sitter::Tree,
+) -> Option<tree_sitter::Node<'_>> {
     let root = tree.root_node();
 
     let mut stack = vec![root];
@@ -65,11 +67,7 @@ fn find_most_specific_error_or_missing_node(tree: &tree_sitter::Tree) -> Option<
                 Some(cur) => {
                     let cur_len = cur.byte_range().len();
                     let n_len = n.byte_range().len();
-                    if n_len < cur_len {
-                        Some(n)
-                    } else {
-                        Some(cur)
-                    }
+                    if n_len < cur_len { Some(n) } else { Some(cur) }
                 }
             };
         }
@@ -101,11 +99,16 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
     files.sort();
     let total_files = files.len();
 
-    assert!(!files.is_empty(), "no yaml files found under {}", root.display());
+    assert!(
+        !files.is_empty(),
+        "no yaml files found under {}",
+        root.display()
+    );
 
     let only_path = only.as_ref().and_then(|only| {
         let only = PathBuf::from(only);
-        let is_path_like = only.is_absolute() || only.to_string_lossy().contains(std::path::MAIN_SEPARATOR);
+        let is_path_like =
+            only.is_absolute() || only.to_string_lossy().contains(std::path::MAIN_SEPARATOR);
         if !is_path_like {
             return None;
         }
@@ -175,11 +178,9 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
 
     if only.is_none() {
         assert_eq!(
-            parsed_files,
-            total_files,
+            parsed_files, total_files,
             "expected to parse all discovered charts/**/templates YAML files (found={}, parsed={})",
-            total_files,
-            parsed_files
+            total_files, parsed_files
         );
     }
 

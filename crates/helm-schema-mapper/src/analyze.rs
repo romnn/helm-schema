@@ -391,7 +391,7 @@ pub fn analyze_template(
     // Inline + sanitize to a single YAML buffer with placeholders
     let mut out = InlineOut::default();
     inline_emit_tree(tree, &source, &scope, &inline, &mut guard, &mut out)?;
- 
+
     flush_all_pending(&mut out);
 
     println!(
@@ -2501,7 +2501,6 @@ pub struct InlineOut {
 
     // NEW: defer fragment placeholders until we know the container kind at this indent
     pub pending: std::collections::BTreeMap<usize, Vec<usize>>,
-
     // // NEW: deferred fragment placeholders waiting for disambiguation at an indent
     // pub pending: std::collections::BTreeMap<usize, Vec<usize>>,
     // NEW: remember the last fragment placeholder line we emitted at a given indent
@@ -2947,7 +2946,7 @@ fn write_placeholder(
         }
         return;
 
-        // -------- 
+        // --------
 
         // let nin = extract_nindent_width(&node, src).unwrap_or(0);
         // let mut slot = current_slot_in_buf(&out.buf);

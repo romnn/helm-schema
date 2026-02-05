@@ -2,11 +2,11 @@
 
 pub mod analyze;
 pub mod sanitize;
+pub mod schema;
 pub mod values;
+pub mod vyt;
 pub mod yaml_path;
 pub mod yaml_sink;
-pub mod schema;
-pub mod vyt;
 
 pub use analyze::{Role, ValueUse, analyze_template_file};
 pub use yaml_path::YamlPath;
@@ -99,16 +99,13 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
             .run(&parsed.tree);
 
         if std::env::var("HELM_SCHEMA_DEBUG_USES").is_ok() {
-            for it in u
-                .iter()
-                .filter(|it| it.source_expr.contains("clickhouseOperator") || it.source_expr.contains("metricsExporter"))
-            {
+            for it in u.iter().filter(|it| {
+                it.source_expr.contains("clickhouseOperator")
+                    || it.source_expr.contains("metricsExporter")
+            }) {
                 eprintln!(
                     "[uses] {} kind={:?} ypath={} guards={:?}",
-                    it.source_expr,
-                    it.kind,
-                    it.path,
-                    it.guards
+                    it.source_expr, it.kind, it.path, it.guards
                 );
             }
         }
@@ -189,8 +186,12 @@ pub fn generate_values_schema_for_chart_vyt_with_options<P: schema::VytSchemaPro
 
             let sub_root = match &sc.location {
                 helm_schema_chart::model::SubchartLocation::Directory { path } => path.clone(),
-                helm_schema_chart::model::SubchartLocation::Archive { tgz_path, inner_root } => {
-                    let Ok(p) = helm_schema_chart::archive_subchart_root(tgz_path, inner_root) else {
+                helm_schema_chart::model::SubchartLocation::Archive {
+                    tgz_path,
+                    inner_root,
+                } => {
+                    let Ok(p) = helm_schema_chart::archive_subchart_root(tgz_path, inner_root)
+                    else {
                         continue;
                     };
                     p

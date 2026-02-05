@@ -1,7 +1,7 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
 use color_eyre::eyre::WrapErr;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::vyt;
 use std::path::PathBuf;
 use test_util::prelude::*;
@@ -11,7 +11,9 @@ fn crate_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
-fn run_vyt_on_chart_templates(chart: &helm_schema_chart::ChartSummary) -> eyre::Result<Vec<vyt::VYUse>> {
+fn run_vyt_on_chart_templates(
+    chart: &helm_schema_chart::ChartSummary,
+) -> eyre::Result<Vec<vyt::VYUse>> {
     let mut defs = vyt::DefineIndex::default();
     for p in &chart.templates {
         let src = p
@@ -48,7 +50,8 @@ fn path_str(u: &vyt::VYUse) -> String {
 fn signoz_otel_gateway_vyt_ir_phase_assertions() -> eyre::Result<()> {
     Builder::default().build();
 
-    let chart_root_path = crate_root().join("testdata/charts/signoz-signoz/charts/signoz-otel-gateway");
+    let chart_root_path =
+        crate_root().join("testdata/charts/signoz-signoz/charts/signoz-otel-gateway");
     if !chart_root_path.exists() {
         return Ok(());
     }
@@ -77,19 +80,22 @@ fn signoz_otel_gateway_vyt_ir_phase_assertions() -> eyre::Result<()> {
     );
 
     assert!(
-        uses.iter()
-            .any(|u| u.source_expr == "affinity" && path_str(u) == "affinity" && u.guards.contains(&"affinity".to_string())),
+        uses.iter().any(|u| u.source_expr == "affinity"
+            && path_str(u) == "affinity"
+            && u.guards.contains(&"affinity".to_string())),
         "expected .Values.affinity to map to YAML path affinity within with-guard"
     );
 
     assert!(
-        !uses.iter()
+        !uses
+            .iter()
             .any(|u| u.source_expr == "affinity" && path_str(u) == "nodeSelector"),
         "did not expect .Values.affinity to be attributed to YAML path nodeSelector"
     );
 
     assert!(
-        !uses.iter()
+        !uses
+            .iter()
             .any(|u| u.source_expr == "nodeSelector" && path_str(u) == "affinity"),
         "did not expect .Values.nodeSelector to be attributed to YAML path affinity"
     );

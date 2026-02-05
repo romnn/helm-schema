@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use test_util::prelude::*;
 use vfs::VfsPath;
@@ -26,9 +26,7 @@ fn generates_values_schema_for_local_sample_charts_vyt() -> eyre::Result<()> {
 
             // Minimal sanity: must be Draft-07 root object.
             assert_eq!(
-                schema
-                    .get("$schema")
-                    .and_then(|v| v.as_str()),
+                schema.get("$schema").and_then(|v| v.as_str()),
                 Some("http://json-schema.org/draft-07/schema#")
             );
             assert_eq!(schema.get("type").and_then(|v| v.as_str()), Some("object"));

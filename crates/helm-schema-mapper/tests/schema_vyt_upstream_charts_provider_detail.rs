@@ -1,7 +1,7 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
 use color_eyre::eyre::WrapErr;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use helm_schema_mapper::vyt;
 use serde_json::Value;
@@ -123,9 +123,15 @@ fn assert_provider_detail_for_chart(chart_dir_name: &str) -> eyre::Result<()> {
     let expectations: Vec<(&str, &str)> = vec![
         ("spec.template.spec.containers.*.image", "string"),
         ("spec.template.spec.containers.*.name", "string"),
-        ("spec.template.spec.containers.*.ports.*.containerPort", "integer"),
+        (
+            "spec.template.spec.containers.*.ports.*.containerPort",
+            "integer",
+        ),
         ("spec.template.spec.tolerations.*.key", "string"),
-        ("spec.template.spec.tolerations.*.tolerationSeconds", "integer"),
+        (
+            "spec.template.spec.tolerations.*.tolerationSeconds",
+            "integer",
+        ),
         ("spec.ports.*.port", "integer"),
         ("spec.ports.*.targetPort", "integer"),
         ("metadata.annotations", "string_map"),

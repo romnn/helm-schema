@@ -63,11 +63,7 @@ impl ResourceDetector {
                 .next()
                 .unwrap_or("")
                 .to_string();
-            if val.is_empty() {
-                None
-            } else {
-                Some(val)
-            }
+            if val.is_empty() { None } else { Some(val) }
         }
 
         fn process_line(det: &mut ResourceDetector, line: &str) {
@@ -169,8 +165,8 @@ enum BindingRole {
 
 #[derive(Clone, Debug)]
 struct Binding {
-    bases: Vec<String>,      // e.g. ["env"] or multiple merged origins
-    role: BindingRole, // e.g. MapKey / MapValue
+    bases: Vec<String>, // e.g. ["env"] or multiple merged origins
+    role: BindingRole,  // e.g. MapKey / MapValue
 }
 
 #[derive(Default, Clone, Debug)]
@@ -210,13 +206,7 @@ impl Bindings {
     fn bind_var(&mut self, name: String, bases: Vec<String>, role: BindingRole) {
         self.ensure_root_scope();
         if let Some(m) = self.scopes.last_mut() {
-            m.insert(
-                name,
-                Binding {
-                    bases,
-                    role,
-                },
-            );
+            m.insert(name, Binding { bases, role });
         }
     }
 
@@ -264,10 +254,10 @@ impl std::fmt::Display for YPath {
 /// What we record from interpretation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VYUse {
-    pub source_expr: String, // e.g., "labels" (Values.labels)
-    pub path: YPath,         // e.g., ["metadata","labels"]
-    pub kind: VYKind,        // Scalar or Fragment
-    pub guards: Vec<String>, // normalized guard value paths, e.g., ["enabled"]
+    pub source_expr: String,           // e.g., "labels" (Values.labels)
+    pub path: YPath,                   // e.g., ["metadata","labels"]
+    pub kind: VYKind,                  // Scalar or Fragment
+    pub guards: Vec<String>,           // normalized guard value paths, e.g., ["enabled"]
     pub resource: Option<ResourceRef>, // detected apiVersion/kind for the current YAML document
 }
 
@@ -403,7 +393,8 @@ impl Shape {
                     }
                     let rest = chars.as_str();
                     let rest = rest.trim_start();
-                    let is_block = rest.is_empty() || rest.starts_with("|") || rest.starts_with(">");
+                    let is_block =
+                        rest.is_empty() || rest.starts_with("|") || rest.starts_with(">");
                     return Some((key.trim().to_string(), !is_block));
                 }
                 // stop if whitespace occurs before ':' (not a simple key)
@@ -411,7 +402,7 @@ impl Shape {
                     return None;
                 }
                 // basic allowed key characters
-                if c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/' ) {
+                if c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/') {
                     key.push(c);
                     continue;
                 }
@@ -420,7 +411,10 @@ impl Shape {
             None
         }
 
-        fn clear_pending_at_indent(stack: &mut Vec<(usize, Container, Option<String>)>, indent: usize) {
+        fn clear_pending_at_indent(
+            stack: &mut Vec<(usize, Container, Option<String>)>,
+            indent: usize,
+        ) {
             for (top_indent, kind, pending) in stack.iter_mut().rev() {
                 if *top_indent == indent {
                     if *kind == Container::Mapping {
@@ -505,7 +499,8 @@ impl Shape {
                     // If `- key: value` has an inline scalar value, clear the pending key.
                     // For `- key:` (no value) or block scalars, keep it pending.
                     let rest = after[colon + 1..].trim_start();
-                    let scalar_value_present = !rest.is_empty() && !rest.starts_with('|') && !rest.starts_with('>');
+                    let scalar_value_present =
+                        !rest.is_empty() && !rest.starts_with('|') && !rest.starts_with('>');
                     if scalar_value_present {
                         if is_newline_terminated {
                             clear_pending_at_indent(&mut self.stack, child_indent);
@@ -890,8 +885,7 @@ impl VYT {
         let mut bases: Vec<String> = sources.into_iter().collect();
         bases.sort();
         bases.dedup();
-        self.bindings
-            .bind_var(lhs, bases, BindingRole::MapValue);
+        self.bindings.bind_var(lhs, bases, BindingRole::MapValue);
     }
 
     // Add near other helpers if you want, or inline the logic below.
@@ -1550,7 +1544,13 @@ impl VYT {
 
                         bases
                             .into_iter()
-                            .map(|b| if segs.is_empty() { b } else { format!("{}.{}", b, segs) })
+                            .map(|b| {
+                                if segs.is_empty() {
+                                    b
+                                } else {
+                                    format!("{}.{}", b, segs)
+                                }
+                            })
                             .collect()
                     }
 
@@ -1883,42 +1883,45 @@ impl VYT {
                         return;
                     }
                     if let Some(b) = self.bindings.dot_binding() {
-                            let path = self.shape.current_path();
-                            let guards = self.guards.snapshot();
+                        let path = self.shape.current_path();
+                        let guards = self.guards.snapshot();
 
-                            let in_sequence = self
-                                .shape
-                                .stack
-                                .iter()
-                                .any(|(_, kind, _)| *kind == Container::Sequence);
+                        let in_sequence = self
+                            .shape
+                            .stack
+                            .iter()
+                            .any(|(_, kind, _)| *kind == Container::Sequence);
 
-                            for base in &b.bases {
-                                let mut src = base.clone();
+                        for base in &b.bases {
+                            let mut src = base.clone();
 
-                                // Mirror the dot-node behavior: if the dot binding comes from a list
-                                // range and we are currently emitting within a YAML sequence, normalize
-                                // to a wildcard element.
-                                if matches!(b.role, BindingRole::Item) && in_sequence && !src.ends_with(".*") {
-                                    src.push_str(".*");
-                                }
-
-                                // Append the field
-                                if !src.is_empty() {
-                                    src.push('.');
-                                }
-                                src.push_str(stripped);
-
-                                self.uses.push(VYUse {
-                                    source_expr: src,
-                                    path: path.clone(),
-                                    kind: VYKind::Scalar,
-                                    guards: guards.clone(),
-                                    resource: self.resource_detector.current(),
-                                });
+                            // Mirror the dot-node behavior: if the dot binding comes from a list
+                            // range and we are currently emitting within a YAML sequence, normalize
+                            // to a wildcard element.
+                            if matches!(b.role, BindingRole::Item)
+                                && in_sequence
+                                && !src.ends_with(".*")
+                            {
+                                src.push_str(".*");
                             }
-                            return; // handled
+
+                            // Append the field
+                            if !src.is_empty() {
+                                src.push('.');
+                            }
+                            src.push_str(stripped);
+
+                            self.uses.push(VYUse {
+                                source_expr: src,
+                                path: path.clone(),
+                                kind: VYKind::Scalar,
+                                guards: guards.clone(),
+                                resource: self.resource_detector.current(),
+                            });
                         }
+                        return; // handled
                     }
+                }
             }
         }
 
@@ -1951,7 +1954,10 @@ impl VYT {
                             // If this dot comes from a list range, and we're currently emitting
                             // under a YAML sequence,
                             // normalize to a wildcard element: "pvc.accessModes.*"
-                            if matches!(b.role, BindingRole::Item) && in_sequence && !src.ends_with(".*") {
+                            if matches!(b.role, BindingRole::Item)
+                                && in_sequence
+                                && !src.ends_with(".*")
+                            {
                                 src.push_str(".*");
                             }
 
@@ -2024,7 +2030,10 @@ impl VYT {
                             continue;
                         }
                         let mut src = base.clone();
-                        if matches!(dot.role, BindingRole::Item) && in_sequence && !src.ends_with(".*") {
+                        if matches!(dot.role, BindingRole::Item)
+                            && in_sequence
+                            && !src.ends_with(".*")
+                        {
                             src.push_str(".*");
                         }
                         sources.insert(src);
@@ -2309,16 +2318,27 @@ mod tests {
         // Ensure cmName is under metadata.name and associated with ConfigMap
         let cm_use = uses
             .iter()
-            .find(|u| u.source_expr == "cmName" && u.path == YPath(vec!["metadata".into(), "name".into()]))
+            .find(|u| {
+                u.source_expr == "cmName" && u.path == YPath(vec!["metadata".into(), "name".into()])
+            })
             .expect("cmName use");
-        assert_eq!(cm_use.resource.as_ref().map(|r| r.kind.as_str()), Some("ConfigMap"));
+        assert_eq!(
+            cm_use.resource.as_ref().map(|r| r.kind.as_str()),
+            Some("ConfigMap")
+        );
 
         // Ensure replicas is under spec.replicas and associated with Deployment
         let dep_use = uses
             .iter()
-            .find(|u| u.source_expr == "replicas" && u.path == YPath(vec!["spec".into(), "replicas".into()]))
+            .find(|u| {
+                u.source_expr == "replicas"
+                    && u.path == YPath(vec!["spec".into(), "replicas".into()])
+            })
             .expect("replicas use");
-        assert_eq!(dep_use.resource.as_ref().map(|r| r.kind.as_str()), Some("Deployment"));
+        assert_eq!(
+            dep_use.resource.as_ref().map(|r| r.kind.as_str()),
+            Some("Deployment")
+        );
     }
 
     fn parse_define(src: &str) -> (tree_sitter::Tree, String) {

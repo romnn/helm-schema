@@ -1,6 +1,6 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use indoc::indoc;
 use test_util::prelude::*;

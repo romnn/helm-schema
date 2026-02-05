@@ -56,4 +56,3 @@ impl Utf8PathExt for Utf8Path {
         self.join(p)
     }
 }
-

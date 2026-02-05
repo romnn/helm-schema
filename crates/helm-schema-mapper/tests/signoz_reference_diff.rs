@@ -2,17 +2,14 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use test_util::prelude::*;
 use vfs::VfsPath;
 
 fn default_reference_path() -> Option<PathBuf> {
     let home = std::env::var("HOME").ok()?;
-    Some(
-        PathBuf::from(home)
-            .join("dev/luup/deployment/charts/signoz/schemas/signoz.schema.json"),
-    )
+    Some(PathBuf::from(home).join("dev/luup/deployment/charts/signoz/schemas/signoz.schema.json"))
 }
 
 fn resolve_ref<'a>(root: &'a serde_json::Value, r: &str) -> Option<&'a serde_json::Value> {

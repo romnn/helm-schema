@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use test_util::prelude::*;
 use vfs::VfsPath;
@@ -14,7 +14,9 @@ fn assert_any_exists(schema: &serde_json::Value, candidates: &[&str]) -> eyre::R
             return Ok(());
         }
     }
-    Err(eyre::eyre!("none of the candidate pointers exist: {candidates:?}"))
+    Err(eyre::eyre!(
+        "none of the candidate pointers exist: {candidates:?}"
+    ))
 }
 
 fn assert_type(schema: &serde_json::Value, p: &str, ty: &str) -> eyre::Result<()> {
@@ -40,7 +42,8 @@ fn assert_path_type_enum_or_string(schema: &serde_json::Value, base: &str) -> ey
     let enum_ptr = format!("{base}/enum");
     if let Some(arr) = schema.pointer(&enum_ptr).and_then(|v| v.as_array()) {
         eyre::ensure!(
-            arr.iter().any(|v| v.as_str() == Some("ImplementationSpecific")),
+            arr.iter()
+                .any(|v| v.as_str() == Some("ImplementationSpecific")),
             "{enum_ptr} did not contain ImplementationSpecific"
         );
         return Ok(());
@@ -64,10 +67,10 @@ fn signoz_regression_suite() -> eyre::Result<()> {
     let schema = generate_values_schema_for_chart_vyt(&chart)?;
 
     // Presence checks
-    assert_any_exists(&schema, &["/properties/clusterName"]) ?;
-    assert_any_exists(&schema, &["/properties/signoz"]) ?;
-    assert_any_exists(&schema, &["/properties/clickhouse"]) ?;
-    assert_any_exists(&schema, &["/properties/signoz-otel-gateway"]) ?;
+    assert_any_exists(&schema, &["/properties/clusterName"])?;
+    assert_any_exists(&schema, &["/properties/signoz"])?;
+    assert_any_exists(&schema, &["/properties/clickhouse"])?;
+    assert_any_exists(&schema, &["/properties/signoz-otel-gateway"])?;
 
     // Type checks (representative)
     assert_type(&schema, "/properties/clusterName/type", "string")?;
@@ -124,7 +127,10 @@ fn signoz_regression_suite() -> eyre::Result<()> {
         "/properties/signoz/properties/Release",
         "/properties/clickhouse/properties/Release",
     ] {
-        eyre::ensure!(schema.pointer(ptr).is_none(), "unexpected property exists at {ptr}");
+        eyre::ensure!(
+            schema.pointer(ptr).is_none(),
+            "unexpected property exists at {ptr}"
+        );
     }
 
     // Optional reference compare.

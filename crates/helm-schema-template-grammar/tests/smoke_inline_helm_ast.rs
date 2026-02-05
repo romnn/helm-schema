@@ -83,13 +83,26 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
     let root = tree.root_node();
     assert!(!root.has_error(), "root has_error; sexp={}", root.to_sexp());
 
-    assert!(has_any(root, "document"), "missing document; sexp={}", root.to_sexp());
-    assert!(has_any(root, "block_mapping"), "missing block_mapping; sexp={}", root.to_sexp());
+    assert!(
+        has_any(root, "document"),
+        "missing document; sexp={}",
+        root.to_sexp()
+    );
+    assert!(
+        has_any(root, "block_mapping"),
+        "missing block_mapping; sexp={}",
+        root.to_sexp()
+    );
 
     let spec_pair = find_mapping_pair_with_plain_key(root, src, "spec")
         .unwrap_or_else(|| panic!("missing spec mapping pair; sexp={}", root.to_sexp()));
-    let init_pair = find_mapping_pair_with_plain_key(root, src, "initContainers")
-        .unwrap_or_else(|| panic!("missing initContainers mapping pair; sexp={}", root.to_sexp()));
+    let init_pair =
+        find_mapping_pair_with_plain_key(root, src, "initContainers").unwrap_or_else(|| {
+            panic!(
+                "missing initContainers mapping pair; sexp={}",
+                root.to_sexp()
+            )
+        });
 
     let spec_value = spec_pair
         .child_by_field_name("value")
@@ -105,7 +118,12 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
     let init_value = init_pair
         .child_by_field_name("value")
         .and_then(|n| n.named_child(0))
-        .unwrap_or_else(|| panic!("initContainers has no value node; sexp={}", init_pair.to_sexp()));
+        .unwrap_or_else(|| {
+            panic!(
+                "initContainers has no value node; sexp={}",
+                init_pair.to_sexp()
+            )
+        });
 
     // This is the key regression check: the initContainers value should parse as a sequence
     // and still include the helm template line inside that structure.
@@ -122,8 +140,12 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
     );
 
     // Sanity: ensure we still parsed at least one explicit list item ('- name: init')
-    let bs = find_first(init_value, "block_sequence")
-        .unwrap_or_else(|| panic!("missing block_sequence under initContainers; sexp={}", init_value.to_sexp()));
+    let bs = find_first(init_value, "block_sequence").unwrap_or_else(|| {
+        panic!(
+            "missing block_sequence under initContainers; sexp={}",
+            init_value.to_sexp()
+        )
+    });
     assert!(
         bs.named_child_count() >= 1,
         "block_sequence under initContainers has no items; sexp={}",

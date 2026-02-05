@@ -1,5 +1,5 @@
-use crate::{Role, ValueUse, YamlPath};
 use crate::vyt::{ResourceRef, VYKind, VYUse, YPath};
+use crate::{Role, ValueUse, YamlPath};
 use color_eyre::eyre;
 use serde_json::{Map, Value};
 use serde_yaml;
@@ -145,10 +145,7 @@ pub fn add_values_yaml_baseline_under(
         root.insert("properties".to_string(), Value::Object(Map::new()));
     }
 
-    let Some(props) = root
-        .get_mut("properties")
-        .and_then(|v| v.as_object_mut())
-    else {
+    let Some(props) = root.get_mut("properties").and_then(|v| v.as_object_mut()) else {
         return;
     };
 
@@ -185,7 +182,9 @@ fn add_schema_additive_at_path(dst: &mut Value, path: &str, src: &Value) {
             return;
         };
 
-        cur = props.entry(p.to_string()).or_insert_with(|| object_schema(Map::new()));
+        cur = props
+            .entry(p.to_string())
+            .or_insert_with(|| object_schema(Map::new()));
     }
 
     add_schema_additive(cur, src);
@@ -210,7 +209,11 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
         return;
     }
 
-    if dst_obj.get("properties").and_then(|v| v.as_object()).is_none() {
+    if dst_obj
+        .get("properties")
+        .and_then(|v| v.as_object())
+        .is_none()
+    {
         let type_is_object_or_missing = match dst_obj.get("type").and_then(|v| v.as_str()) {
             None => true,
             Some(t) => t == "object",
@@ -286,10 +289,7 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
                         .unwrap_or("<none>");
                     eprintln!(
                         "[merge] merge resources dst.type={} dst.anyOf={} src.type={} src.anyOf={}",
-                        dst_ty,
-                        dst_is_anyof,
-                        src_ty,
-                        src_is_anyof
+                        dst_ty, dst_is_anyof, src_ty, src_is_anyof
                     );
                 }
                 if dv
@@ -321,7 +321,8 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
                                     merged_any = true;
                                 }
                                 (Some("array"), Some("array")) => {
-                                    let dst_items = br.as_object_mut().and_then(|o| o.get_mut("items"));
+                                    let dst_items =
+                                        br.as_object_mut().and_then(|o| o.get_mut("items"));
                                     let src_items = sv.as_object().and_then(|o| o.get("items"));
                                     match (dst_items, src_items) {
                                         (None, Some(si)) => {
@@ -397,7 +398,8 @@ fn add_schema_additive(dst: &mut Value, src: &Value) {
                                     merged_any = true;
                                 }
                                 (Some("array"), Some("array")) => {
-                                    let dst_items = dv.as_object_mut().and_then(|o| o.get_mut("items"));
+                                    let dst_items =
+                                        dv.as_object_mut().and_then(|o| o.get_mut("items"));
                                     let src_items = br.as_object().and_then(|o| o.get("items"));
                                     match (dst_items, src_items) {
                                         (None, Some(si)) => {
@@ -517,7 +519,10 @@ fn schema_from_values_yaml(doc: &serde_yaml::Value) -> Value {
                 let Some(ks) = k.as_str() else {
                     continue;
                 };
-                props.insert(ks.to_string(), schema_from_values_yaml_with_hint(v, Some(ks)));
+                props.insert(
+                    ks.to_string(),
+                    schema_from_values_yaml_with_hint(v, Some(ks)),
+                );
             }
             let mut out = Map::new();
             out.insert("type".to_string(), Value::String("object".to_string()));
@@ -530,9 +535,12 @@ fn schema_from_values_yaml(doc: &serde_yaml::Value) -> Value {
 }
 
 fn schema_from_values_yaml_with_hint(doc: &serde_yaml::Value, key_hint: Option<&str>) -> Value {
-    if key_hint
-        .is_some_and(|k| matches!(k, "annotations" | "labels" | "nodeSelector" | "podAnnotations" | "podLabels"))
-    {
+    if key_hint.is_some_and(|k| {
+        matches!(
+            k,
+            "annotations" | "labels" | "nodeSelector" | "podAnnotations" | "podLabels"
+        )
+    }) {
         return string_map_schema();
     }
 
@@ -568,7 +576,10 @@ fn schema_from_values_yaml_with_hint(doc: &serde_yaml::Value, key_hint: Option<&
                 let Some(ks) = k.as_str() else {
                     continue;
                 };
-                props.insert(ks.to_string(), schema_from_values_yaml_with_hint(v, Some(ks)));
+                props.insert(
+                    ks.to_string(),
+                    schema_from_values_yaml_with_hint(v, Some(ks)),
+                );
             }
             let mut out = Map::new();
             out.insert("type".to_string(), Value::String("object".to_string()));
@@ -658,13 +669,21 @@ impl VytSchemaProvider for CommonK8sSchema {
             "spec.template.spec.containers[*].imagePullPolicy" => Some(type_schema("string")),
             "spec.template.spec.containers[*].ports[*].name" => Some(type_schema("string")),
             "spec.template.spec.containers[*].ports[*].protocol" => Some(type_schema("string")),
-            "spec.template.spec.containers[*].ports[*].containerPort" => Some(type_schema("integer")),
+            "spec.template.spec.containers[*].ports[*].containerPort" => {
+                Some(type_schema("integer"))
+            }
             "spec.template.spec.containers[*].env[*].name" => Some(type_schema("string")),
             "spec.template.spec.containers[*].env[*].value" => Some(type_schema("string")),
             "spec.template.spec.containers[*].resources.limits.cpu" => Some(type_schema("string")),
-            "spec.template.spec.containers[*].resources.limits.memory" => Some(type_schema("string")),
-            "spec.template.spec.containers[*].resources.requests.cpu" => Some(type_schema("string")),
-            "spec.template.spec.containers[*].resources.requests.memory" => Some(type_schema("string")),
+            "spec.template.spec.containers[*].resources.limits.memory" => {
+                Some(type_schema("string"))
+            }
+            "spec.template.spec.containers[*].resources.requests.cpu" => {
+                Some(type_schema("string"))
+            }
+            "spec.template.spec.containers[*].resources.requests.memory" => {
+                Some(type_schema("string"))
+            }
 
             _ => None,
         }
@@ -709,14 +728,10 @@ impl IngressV1Schema {
                     (
                         "enum".to_string(),
                         Value::Array(
-                            [
-                                "ImplementationSpecific",
-                                "Exact",
-                                "Prefix",
-                            ]
-                            .into_iter()
-                            .map(|s| Value::String(s.to_string()))
-                            .collect(),
+                            ["ImplementationSpecific", "Exact", "Prefix"]
+                                .into_iter()
+                                .map(|s| Value::String(s.to_string()))
+                                .collect(),
                         ),
                     ),
                 ]
@@ -742,14 +757,10 @@ impl IngressV1Schema {
                     (
                         "enum".to_string(),
                         Value::Array(
-                            [
-                                "ImplementationSpecific",
-                                "Exact",
-                                "Prefix",
-                            ]
-                            .into_iter()
-                            .map(|s| Value::String(s.to_string()))
-                            .collect(),
+                            ["ImplementationSpecific", "Exact", "Prefix"]
+                                .into_iter()
+                                .map(|s| Value::String(s.to_string()))
+                                .collect(),
                         ),
                     ),
                 ]
@@ -757,7 +768,9 @@ impl IngressV1Schema {
                 .collect(),
             )),
             // Ingress backend service port number (stable API)
-            "spec.rules[*].http.paths[*].backend.service.port.number" => Some(type_schema("integer")),
+            "spec.rules[*].http.paths[*].backend.service.port.number" => {
+                Some(type_schema("integer"))
+            }
             // Legacy API uses servicePort directly under backend
             "spec.rules[*].http.paths[*].backend.servicePort" => Some(type_schema("integer")),
             _ => None,
@@ -926,10 +939,7 @@ pub fn generate_values_schema_vyt<P: VytSchemaProvider>(uses: &[VYUse], provider
                 if gs.as_object().is_some_and(|o| o.is_empty()) {
                     continue;
                 }
-                by_value_path
-                    .entry(g.clone())
-                    .or_default()
-                    .push(gs);
+                by_value_path.entry(g.clone()).or_default().push(gs);
             }
         }
 
@@ -1094,7 +1104,9 @@ fn insert_schema_at_parts_required(node: &mut Value, parts: &[&str], leaf: Value
     }
 
     let key = parts[0].to_string();
-    let child = props.entry(key).or_insert_with(|| object_schema(Map::new()));
+    let child = props
+        .entry(key)
+        .or_insert_with(|| object_schema(Map::new()));
     insert_schema_at_parts_required(child, &parts[1..], leaf, required);
 }
 
@@ -1116,11 +1128,7 @@ fn ensure_object_schema(v: &mut Value) {
             obj.insert("type".to_string(), Value::String("object".to_string()));
             obj.entry("properties".to_string())
                 .or_insert_with(|| Value::Object(Map::new()));
-            if !obj
-                .get("properties")
-                .and_then(|p| p.as_object())
-                .is_some()
-            {
+            if !obj.get("properties").and_then(|p| p.as_object()).is_some() {
                 obj.insert("properties".to_string(), Value::Object(Map::new()));
             }
 
@@ -1244,7 +1252,11 @@ fn merge_two_schemas(a: Value, b: Value) -> Value {
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
     } else {
-        Value::Object([("anyOf".to_string(), Value::Array(out))].into_iter().collect())
+        Value::Object(
+            [("anyOf".to_string(), Value::Array(out))]
+                .into_iter()
+                .collect(),
+        )
     }
 }
 
@@ -1258,9 +1270,7 @@ fn flatten_anyof(v: Value) -> Vec<Value> {
 }
 
 fn schema_type<'a>(v: &'a Value) -> Option<&'a str> {
-    v.as_object()?
-        .get("type")
-        .and_then(|t| t.as_str())
+    v.as_object()?.get("type").and_then(|t| t.as_str())
 }
 
 fn try_merge_compatible(a: &Value, b: &Value) -> Option<Value> {
@@ -1299,7 +1309,10 @@ fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {
     let out_items_is_null = out.get("items").is_some_and(|v| v.is_null());
     let b_items_is_null = bobj.get("items").is_some_and(|v| v.is_null());
     if out_items_is_null && !b_items_is_null {
-        out.insert("items".to_string(), bobj.get("items").cloned().unwrap_or(Value::Null));
+        out.insert(
+            "items".to_string(),
+            bobj.get("items").cloned().unwrap_or(Value::Null),
+        );
     }
 
     // If there are other keys beyond type/items and they conflict, treat as incompatible.
@@ -1328,7 +1341,10 @@ fn merge_scalar_like_schemas(a: &Value, b: &Value) -> Option<Value> {
     let bobj = b.as_object()?;
 
     // Handle enum intersection / strengthening.
-    match (out.get("enum").and_then(|v| v.as_array()).cloned(), bobj.get("enum").and_then(|v| v.as_array()).cloned()) {
+    match (
+        out.get("enum").and_then(|v| v.as_array()).cloned(),
+        bobj.get("enum").and_then(|v| v.as_array()).cloned(),
+    ) {
         (Some(ae), Some(be)) => {
             let mut inter: Vec<Value> = ae.into_iter().filter(|v| be.contains(v)).collect();
             inter.sort_by(|x, y| x.to_string().cmp(&y.to_string()));
@@ -1431,8 +1447,10 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     }
 
     // Fixed-shape object: named props/patternProps/required. (Strict: additionalProperties false.)
-    let a_fixed = has_nonempty_props(&out) || has_nonempty_pattern_props(&out) || has_required(&out);
-    let b_fixed = has_nonempty_props(bobj) || has_nonempty_pattern_props(bobj) || has_required(bobj);
+    let a_fixed =
+        has_nonempty_props(&out) || has_nonempty_pattern_props(&out) || has_required(&out);
+    let b_fixed =
+        has_nonempty_props(bobj) || has_nonempty_pattern_props(bobj) || has_required(bobj);
 
     // Map-like object: schema-valued additionalProperties and no named props.
     let a_map_like = !a_fixed
@@ -1455,7 +1473,10 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
         }
         // If both sides are truly map-like, keep/merge schema-valued additionalProperties.
         (Some(ap_a), Some(ap_b)) if a_map_like && b_map_like => {
-            out.insert("additionalProperties".to_string(), merge_two_schemas(ap_a, ap_b));
+            out.insert(
+                "additionalProperties".to_string(),
+                merge_two_schemas(ap_a, ap_b),
+            );
         }
         (Some(Value::Bool(false)), Some(ap_b)) if ap_b.is_object() => {
             out.insert("additionalProperties".to_string(), ap_b);
@@ -1473,7 +1494,10 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
             out.insert("additionalProperties".to_string(), ap_a);
         }
         (Some(ap_a), Some(ap_b)) => {
-            out.insert("additionalProperties".to_string(), merge_two_schemas(ap_a, ap_b));
+            out.insert(
+                "additionalProperties".to_string(),
+                merge_two_schemas(ap_a, ap_b),
+            );
         }
         (None, Some(ap_b)) => {
             out.insert("additionalProperties".to_string(), ap_b);
@@ -1571,7 +1595,10 @@ fn unknown_object_schema() -> Value {
     Value::Object(
         [
             ("type".to_string(), Value::String("object".to_string())),
-            ("additionalProperties".to_string(), Value::Object(Map::new())),
+            (
+                "additionalProperties".to_string(),
+                Value::Object(Map::new()),
+            ),
         ]
         .into_iter()
         .collect(),
@@ -1582,10 +1609,7 @@ fn string_map_schema() -> Value {
     Value::Object(
         [
             ("type".to_string(), Value::String("object".to_string())),
-            (
-                "additionalProperties".to_string(),
-                type_schema("string"),
-            ),
+            ("additionalProperties".to_string(), type_schema("string")),
         ]
         .into_iter()
         .collect(),
@@ -1635,7 +1659,8 @@ impl UpstreamK8sSchemaProvider {
                 .ok()
                 .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
                 .unwrap_or(false),
-            base_url: "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master".to_string(),
+            base_url: "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
+                .to_string(),
             mem: std::sync::Mutex::new(HashMap::new()),
         }
     }
@@ -1744,7 +1769,9 @@ fn default_k8s_schema_cache_dir() -> PathBuf {
         return PathBuf::from(p);
     }
     if let Ok(xdg) = std::env::var("XDG_CACHE_HOME") {
-        return PathBuf::from(xdg).join("helm-schema").join("kubernetes-json-schema");
+        return PathBuf::from(xdg)
+            .join("helm-schema")
+            .join("kubernetes-json-schema");
     }
     if let Ok(home) = std::env::var("HOME") {
         return PathBuf::from(home)
@@ -1752,7 +1779,9 @@ fn default_k8s_schema_cache_dir() -> PathBuf {
             .join("helm-schema")
             .join("kubernetes-json-schema");
     }
-    PathBuf::from(".cache").join("helm-schema").join("kubernetes-json-schema")
+    PathBuf::from(".cache")
+        .join("helm-schema")
+        .join("kubernetes-json-schema")
 }
 
 fn filename_for_resource(resource: &ResourceRef) -> String {
@@ -1777,7 +1806,11 @@ struct ResolveCtx<'a> {
 }
 
 impl<'a> ResolveCtx<'a> {
-    fn new(provider: &'a UpstreamK8sSchemaProvider, root_filename: String, root_doc: Value) -> Self {
+    fn new(
+        provider: &'a UpstreamK8sSchemaProvider,
+        root_filename: String,
+        root_doc: Value,
+    ) -> Self {
         let mut docs = HashMap::new();
         docs.insert(root_filename, root_doc);
         Self {
@@ -1800,11 +1833,7 @@ impl<'a> ResolveCtx<'a> {
         //   ./defs.json
         let trimmed = file.trim();
         let trimmed = trimmed.trim_start_matches("./");
-        trimmed
-            .rsplit('/')
-            .next()
-            .unwrap_or(trimmed)
-            .to_string()
+        trimmed.rsplit('/').next().unwrap_or(trimmed).to_string()
     }
 
     fn doc(&self, filename: &str) -> Option<&Value> {
@@ -1839,7 +1868,10 @@ impl<'a> ResolveCtx<'a> {
         // local reference: "#/..."
         if let Some(ptr) = r.strip_prefix('#') {
             let doc = self.doc(current_filename)?;
-            return doc.pointer(ptr).cloned().map(|v| (current_filename.to_string(), v));
+            return doc
+                .pointer(ptr)
+                .cloned()
+                .map(|v| (current_filename.to_string(), v));
         }
 
         // maybe: "file.json#/..."
@@ -1850,9 +1882,7 @@ impl<'a> ResolveCtx<'a> {
         if ptr.is_empty() {
             Some((filename, doc))
         } else {
-            doc.pointer(ptr)
-                .cloned()
-                .map(|v| (filename, v))
+            doc.pointer(ptr).cloned().map(|v| (filename, v))
         }
     }
 }
@@ -1926,19 +1956,25 @@ fn descend_one(
         .cloned()
         .or_else(|| {
             // map-like
-            schema
-                .get("additionalProperties")
-                .and_then(|ap| if ap.is_boolean() { None } else { Some(ap.clone()) })
+            schema.get("additionalProperties").and_then(|ap| {
+                if ap.is_boolean() {
+                    None
+                } else {
+                    Some(ap.clone())
+                }
+            })
         })?;
 
     if is_array_item {
         let (nf, ns) = resolve_refs(ctx, &schema_filename, &next)?;
         next = ns;
         let doc_key = nf;
-        next = next
-            .get("items")
-            .cloned()
-            .or_else(|| next.get("prefixItems").and_then(|v| v.as_array()).and_then(|a| a.first()).cloned())?;
+        next = next.get("items").cloned().or_else(|| {
+            next.get("prefixItems")
+                .and_then(|v| v.as_array())
+                .and_then(|a| a.first())
+                .cloned()
+        })?;
         return Some((doc_key, next));
     }
     Some((schema_filename, next))
@@ -2028,7 +2064,10 @@ fn expand_schema_node(
     if let Some(props) = obj.get("properties").and_then(|v| v.as_object()) {
         let mut new_props = Map::new();
         for (k, v) in props {
-            new_props.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+            new_props.insert(
+                k.clone(),
+                expand_schema_node(ctx, current_filename, v, depth + 1).1,
+            );
         }
         obj.insert("properties".to_string(), Value::Object(new_props));
     }
@@ -2036,7 +2075,10 @@ fn expand_schema_node(
     if let Some(pp) = obj.get("patternProperties").and_then(|v| v.as_object()) {
         let mut new_pp = Map::new();
         for (k, v) in pp {
-            new_pp.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+            new_pp.insert(
+                k.clone(),
+                expand_schema_node(ctx, current_filename, v, depth + 1).1,
+            );
         }
         obj.insert("patternProperties".to_string(), Value::Object(new_pp));
     }
@@ -2044,7 +2086,10 @@ fn expand_schema_node(
     if let Some(defs) = obj.get("definitions").and_then(|v| v.as_object()) {
         let mut new_defs = Map::new();
         for (k, v) in defs {
-            new_defs.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+            new_defs.insert(
+                k.clone(),
+                expand_schema_node(ctx, current_filename, v, depth + 1).1,
+            );
         }
         obj.insert("definitions".to_string(), Value::Object(new_defs));
     }
@@ -2052,7 +2097,10 @@ fn expand_schema_node(
     if let Some(defs) = obj.get("$defs").and_then(|v| v.as_object()) {
         let mut new_defs = Map::new();
         for (k, v) in defs {
-            new_defs.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+            new_defs.insert(
+                k.clone(),
+                expand_schema_node(ctx, current_filename, v, depth + 1).1,
+            );
         }
         obj.insert("$defs".to_string(), Value::Object(new_defs));
     }
@@ -2108,7 +2156,10 @@ fn expand_schema_node(
     if let Some(ds) = obj.get("dependentSchemas").and_then(|v| v.as_object()) {
         let mut out = Map::new();
         for (k, v) in ds {
-            out.insert(k.clone(), expand_schema_node(ctx, current_filename, v, depth + 1).1);
+            out.insert(
+                k.clone(),
+                expand_schema_node(ctx, current_filename, v, depth + 1).1,
+            );
         }
         obj.insert("dependentSchemas".to_string(), Value::Object(out));
     }

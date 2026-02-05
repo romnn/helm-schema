@@ -10,8 +10,8 @@ use test_util::prelude::*;
 use vfs::VfsPath;
 
 fn index_defines_from_str(src: &str) -> eyre::Result<Arc<DefineIndex>> {
-    let parsed = helm_schema_template::parse::parse_gotmpl_document(src)
-        .ok_or_eyre("parse helpers")?;
+    let parsed =
+        helm_schema_template::parse::parse_gotmpl_document(src).ok_or_eyre("parse helpers")?;
     let mut idx = DefineIndex::default();
 
     let mut stack = vec![parsed.tree.root_node()];
@@ -180,9 +180,7 @@ fn generates_values_schema_from_signoz_ingress_vyt() -> eyre::Result<()> {
     assert_eq!(ap.get("type").and_then(|v| v.as_str()), Some("string"));
 
     let path_type = schema
-        .pointer(
-            "/properties/signoz/properties/ingress/properties/hosts/type",
-        )
+        .pointer("/properties/signoz/properties/ingress/properties/hosts/type")
         .ok_or_eyre("missing signoz.ingress.hosts schema")?;
     assert_eq!(path_type.as_str(), Some("array"));
 
@@ -339,7 +337,8 @@ fn generates_values_schema_from_bitnami_ingress_vyt() -> eyre::Result<()> {
         .run(&parsed.tree);
 
     assert!(
-        uses.iter().any(|u| u.source_expr == "ingress.pathType" && u.kind == VYKind::Scalar),
+        uses.iter()
+            .any(|u| u.source_expr == "ingress.pathType" && u.kind == VYKind::Scalar),
         "{:#?}",
         uses
     );

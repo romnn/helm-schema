@@ -20,7 +20,8 @@ fn has_any_ref(v: &Value) -> bool {
 #[test]
 fn upstream_provider_returns_fully_expanded_leaf_schema() -> eyre::Result<()> {
     // This uses the vendored mini-cache under testdata.
-    let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testdata/kubernetes-json-schema");
+    let cache_dir =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testdata/kubernetes-json-schema");
     let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
         .with_cache_dir(cache_dir)
         .with_allow_download(false);
@@ -52,6 +53,9 @@ fn upstream_provider_returns_fully_expanded_leaf_schema() -> eyre::Result<()> {
             == Some("object"),
         "expected securityContext object; got: {schema}"
     );
-    assert!(!has_any_ref(&schema), "schema should not contain $ref: {schema}");
+    assert!(
+        !has_any_ref(&schema),
+        "schema should not contain $ref: {schema}"
+    );
     Ok(())
 }

@@ -28,9 +28,7 @@ fn upstream_provider_traverses_arrays_and_resolves_cross_file_refs() -> eyre::Re
     let version_dir = "vtest";
 
     // Expected yannh-style filename for (Deployment, apps/v1)
-    let deployment_file = cache_dir
-        .join(version_dir)
-        .join("deployment-apps-v1.json");
+    let deployment_file = cache_dir.join(version_dir).join("deployment-apps-v1.json");
     let defs_file = cache_dir.join(version_dir).join("defs.json");
 
     write_json(

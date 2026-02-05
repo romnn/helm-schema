@@ -1,6 +1,6 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use test_util::prelude::*;
 use vfs::VfsPath;
@@ -49,10 +49,14 @@ fn assert_any_pointer_type(schema: &serde_json::Value, cases: &[(&str, &str)]) -
             if v.get("type").and_then(|t| t.as_str()) == Some(*ty) {
                 return Ok(());
             }
-            return Err(eyre::eyre!("pointer {ptr} exists but has unexpected type: {v}"));
+            return Err(eyre::eyre!(
+                "pointer {ptr} exists but has unexpected type: {v}"
+            ));
         }
     }
-    Err(eyre::eyre!("none of the candidate pointers existed: {cases:?}"))
+    Err(eyre::eyre!(
+        "none of the candidate pointers existed: {cases:?}"
+    ))
 }
 
 #[test]
@@ -82,7 +86,10 @@ fn generates_values_schema_for_upstream_charts_if_present_vyt() -> eyre::Result<
             .get("properties")
             .and_then(|v| v.as_object())
             .ok_or_eyre("missing properties")?;
-        assert!(!props.is_empty(), "schema properties unexpectedly empty for {name}");
+        assert!(
+            !props.is_empty(),
+            "schema properties unexpectedly empty for {name}"
+        );
 
         match name.as_str() {
             "cert-manager" => {
@@ -119,7 +126,10 @@ fn generates_values_schema_for_upstream_charts_if_present_vyt() -> eyre::Result<
                 let _ = assert_any_pointer_type(
                     &schema,
                     &[
-                        ("/properties/replica/properties/replicaCount/type", "integer"),
+                        (
+                            "/properties/replica/properties/replicaCount/type",
+                            "integer",
+                        ),
                         ("/properties/replicaCount/type", "integer"),
                         ("/properties/master/properties/count/type", "integer"),
                     ],

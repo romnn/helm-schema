@@ -1,4 +1,4 @@
-use helm_schema_mapper::schema::{generate_values_schema_vyt, DefaultVytSchemaProvider};
+use helm_schema_mapper::schema::{DefaultVytSchemaProvider, generate_values_schema_vyt};
 use helm_schema_mapper::vyt::{VYKind, VYUse, YPath};
 
 #[test]

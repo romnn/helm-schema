@@ -1,12 +1,12 @@
 use clap::{Args, Parser, Subcommand};
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::schema::{
     DefaultVytSchemaProvider, UpstreamK8sSchemaProvider, UpstreamThenDefaultVytSchemaProvider,
 };
 use helm_schema_mapper::{
-    generate_values_schema_for_chart_vyt_with_options, GenerateValuesSchemaOptions,
+    GenerateValuesSchemaOptions, generate_values_schema_for_chart_vyt_with_options,
 };
 use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
@@ -199,7 +199,9 @@ fn resolve_repo_chart_tgz_url(
         .ok_or_eyre("chart not found in repo index")?;
 
     let selected = if let Some(v) = version {
-        vers.iter().find(|x| x.version == v).ok_or_eyre("version not found")?
+        vers.iter()
+            .find(|x| x.version == v)
+            .ok_or_eyre("version not found")?
     } else {
         vers.iter()
             .filter_map(|x| semver::Version::parse(&x.version).ok().map(|sv| (sv, x)))
@@ -215,7 +217,11 @@ fn resolve_repo_chart_tgz_url(
     Ok(join_url(repo_url, url))
 }
 
-fn load_chart_from_ref(chart_ref: &str, repo_url: Option<&str>, version: Option<&str>) -> eyre::Result<(VfsPath, Option<TempDir>)> {
+fn load_chart_from_ref(
+    chart_ref: &str,
+    repo_url: Option<&str>,
+    version: Option<&str>,
+) -> eyre::Result<(VfsPath, Option<TempDir>)> {
     let p = PathBuf::from(chart_ref);
     if p.exists() {
         if p.is_dir() {
@@ -255,7 +261,10 @@ fn main() -> eyre::Result<()> {
     let cli = Cli::parse();
 
     match cli.cmd {
-        Command::Scan { include_tests, path } => {
+        Command::Scan {
+            include_tests,
+            path,
+        } => {
             let root = vfs_root_from_local_path(&path)?;
             let summary = load_chart(
                 &root,
@@ -302,7 +311,8 @@ fn main() -> eyre::Result<()> {
                 ingest_values_schema_json: args.ingest_values_schema_json,
             };
 
-            let schema = generate_values_schema_for_chart_vyt_with_options(&chart, &provider, &options)?;
+            let schema =
+                generate_values_schema_for_chart_vyt_with_options(&chart, &provider, &options)?;
             let schema_pretty = json_pretty(&schema)?;
             write_output(&schema_pretty, args.output.as_deref())?;
         }

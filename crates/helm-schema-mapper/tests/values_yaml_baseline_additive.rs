@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::generate_values_schema_for_chart_vyt;
 use test_util::prelude::*;
 use vfs::VfsPath;
@@ -59,9 +59,7 @@ fn signoz_values_yaml_only_keys_are_present() -> eyre::Result<()> {
     assert_eq!(clickhouse_enabled.as_str(), Some("boolean"));
 
     let clickhouse_registry = schema
-        .pointer(
-            "/properties/clickhouse/properties/global/properties/imageRegistry/type",
-        )
+        .pointer("/properties/clickhouse/properties/global/properties/imageRegistry/type")
         .ok_or_else(|| eyre::eyre!("missing clickhouse.global.imageRegistry.type"))?;
     assert_eq!(clickhouse_registry.as_str(), Some("null"));
 
@@ -71,9 +69,7 @@ fn signoz_values_yaml_only_keys_are_present() -> eyre::Result<()> {
     assert_eq!(gw_replica_count.as_str(), Some("integer"));
 
     let gw_image_repo = schema
-        .pointer(
-            "/properties/signoz-otel-gateway/properties/image/properties/repository/type",
-        )
+        .pointer("/properties/signoz-otel-gateway/properties/image/properties/repository/type")
         .ok_or_else(|| eyre::eyre!("missing signoz-otel-gateway.image.repository.type"))?;
     assert_eq!(gw_image_repo.as_str(), Some("string"));
 

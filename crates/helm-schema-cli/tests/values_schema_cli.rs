@@ -1,11 +1,11 @@
 use assert_cmd::Command;
 use color_eyre::eyre;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::schema::{
     DefaultVytSchemaProvider, UpstreamK8sSchemaProvider, UpstreamThenDefaultVytSchemaProvider,
 };
 use helm_schema_mapper::{
-    generate_values_schema_for_chart_vyt_with_options, GenerateValuesSchemaOptions,
+    GenerateValuesSchemaOptions, generate_values_schema_for_chart_vyt_with_options,
 };
 use serde_json::{Map, Value};
 use std::fs;

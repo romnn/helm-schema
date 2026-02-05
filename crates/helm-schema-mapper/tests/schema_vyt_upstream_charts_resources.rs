@@ -1,7 +1,7 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
 use color_eyre::eyre::WrapErr;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::schema::{UpstreamK8sSchemaProvider, VytSchemaProvider};
 use helm_schema_mapper::vyt;
 use helm_schema_mapper::vyt::{ResourceRef, VYKind, VYUse, YPath};
@@ -17,7 +17,9 @@ fn chart_root(root: &VfsPath, name: &str) -> eyre::Result<VfsPath> {
         .map_err(Into::into)
 }
 
-fn run_vyt_on_chart_templates(chart: &helm_schema_chart::ChartSummary) -> eyre::Result<Vec<vyt::VYUse>> {
+fn run_vyt_on_chart_templates(
+    chart: &helm_schema_chart::ChartSummary,
+) -> eyre::Result<Vec<vyt::VYUse>> {
     let mut defs = vyt::DefineIndex::default();
     for p in &chart.templates {
         let src = p
@@ -78,7 +80,9 @@ fn schema_allows_type(node: &Value, ty: &str) -> bool {
     false
 }
 
-fn assert_resource_detection_for_chart(chart_dir_name: &str) -> eyre::Result<BTreeSet<ResourceRef>> {
+fn assert_resource_detection_for_chart(
+    chart_dir_name: &str,
+) -> eyre::Result<BTreeSet<ResourceRef>> {
     let root = VfsPath::new(vfs::PhysicalFS::new("."));
     let chart_dir = chart_root(&root, chart_dir_name)?;
     if !chart_dir.exists()? {
@@ -88,10 +92,7 @@ fn assert_resource_detection_for_chart(chart_dir_name: &str) -> eyre::Result<BTr
     let chart = load_chart(&chart_dir, &LoadOptions::default())?;
     let uses = run_vyt_on_chart_templates(&chart)?;
 
-    let resources: BTreeSet<ResourceRef> = uses
-        .iter()
-        .filter_map(|u| u.resource.clone())
-        .collect();
+    let resources: BTreeSet<ResourceRef> = uses.iter().filter_map(|u| u.resource.clone()).collect();
 
     assert!(
         resources.len() >= 3,
@@ -142,7 +143,8 @@ fn upstream_cert_manager_detects_kinds() -> eyre::Result<()> {
 }
 
 #[test]
-fn upstream_provider_can_use_detected_deployment_resource_when_cache_available() -> eyre::Result<()> {
+fn upstream_provider_can_use_detected_deployment_resource_when_cache_available() -> eyre::Result<()>
+{
     Builder::default().build();
 
     let resources = assert_resource_detection_for_chart("cert-manager")?;

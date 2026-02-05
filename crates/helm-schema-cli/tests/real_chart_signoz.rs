@@ -70,7 +70,10 @@ fn signoz_chart_generates_self_contained_values_schema() -> Result<(), Box<dyn s
         .get("properties")
         .and_then(|v| v.as_object())
         .is_some_and(|m| !m.is_empty());
-    assert!(props_nonempty, "expected non-empty properties at schema root");
+    assert!(
+        props_nonempty,
+        "expected non-empty properties at schema root"
+    );
 
     assert!(
         !has_any_ref(&schema),

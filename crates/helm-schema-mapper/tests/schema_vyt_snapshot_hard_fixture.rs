@@ -1,10 +1,10 @@
 use color_eyre::eyre;
 use color_eyre::eyre::OptionExt;
 use color_eyre::eyre::WrapErr;
-use helm_schema_chart::{load_chart, LoadOptions};
+use helm_schema_chart::{LoadOptions, load_chart};
 use helm_schema_mapper::schema::{
-    generate_values_schema_vyt, DefaultVytSchemaProvider, UpstreamK8sSchemaProvider,
-    UpstreamThenDefaultVytSchemaProvider,
+    DefaultVytSchemaProvider, UpstreamK8sSchemaProvider, UpstreamThenDefaultVytSchemaProvider,
+    generate_values_schema_vyt,
 };
 use helm_schema_mapper::vyt;
 use serde_json::{Map, Value};
@@ -24,7 +24,9 @@ fn fixture_root(root: &VfsPath, name: &str) -> eyre::Result<VfsPath> {
         .map_err(Into::into)
 }
 
-fn run_vyt_on_chart_templates(chart: &helm_schema_chart::ChartSummary) -> eyre::Result<Vec<vyt::VYUse>> {
+fn run_vyt_on_chart_templates(
+    chart: &helm_schema_chart::ChartSummary,
+) -> eyre::Result<Vec<vyt::VYUse>> {
     let mut defs = vyt::DefineIndex::default();
     for p in &chart.templates {
         let src = p
@@ -87,7 +89,15 @@ fn json_pretty(v: &Value) -> eyre::Result<String> {
     Ok(serde_json::to_string_pretty(&v).map_err(|e| eyre::eyre!(e))?)
 }
 
-fn use_sort_key(u: &vyt::VYUse) -> (String, String, String, Vec<String>, Option<(String, String)>) {
+fn use_sort_key(
+    u: &vyt::VYUse,
+) -> (
+    String,
+    String,
+    String,
+    Vec<String>,
+    Option<(String, String)>,
+) {
     let kind = match u.kind {
         vyt::VYKind::Scalar => "Scalar",
         vyt::VYKind::Fragment => "Fragment",
@@ -116,7 +126,10 @@ fn uses_to_json(uses: &[vyt::VYUse]) -> Value {
     let mut out: Vec<Value> = Vec::with_capacity(uses.len());
     for u in uses {
         let mut m = Map::new();
-        m.insert("source_expr".to_string(), Value::String(u.source_expr.clone()));
+        m.insert(
+            "source_expr".to_string(),
+            Value::String(u.source_expr.clone()),
+        );
         m.insert("path".to_string(), Value::String(u.path.0.join(".")));
         m.insert(
             "kind".to_string(),
@@ -131,7 +144,10 @@ fn uses_to_json(uses: &[vyt::VYUse]) -> Value {
         );
         if let Some(r) = &u.resource {
             let mut rm = Map::new();
-            rm.insert("apiVersion".to_string(), Value::String(r.api_version.clone()));
+            rm.insert(
+                "apiVersion".to_string(),
+                Value::String(r.api_version.clone()),
+            );
             rm.insert("kind".to_string(), Value::String(r.kind.clone()));
             m.insert("resource".to_string(), Value::Object(rm));
         } else {
