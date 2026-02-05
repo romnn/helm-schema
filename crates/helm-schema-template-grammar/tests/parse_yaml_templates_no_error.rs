@@ -1,4 +1,19 @@
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
+
+fn is_template_yaml(path: &Path) -> bool {
+    let Some(ext) = path.extension().and_then(|s| s.to_str()) else {
+        return false;
+    };
+
+    let is_yaml = ext.eq_ignore_ascii_case("yaml") || ext.eq_ignore_ascii_case("yml");
+    if !is_yaml {
+        return false;
+    }
+
+    path.components()
+        .any(|c| c.as_os_str() == OsStr::new("templates"))
+}
 
 fn collect_yaml_files(dir: &Path, out: &mut Vec<PathBuf>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
@@ -12,11 +27,7 @@ fn collect_yaml_files(dir: &Path, out: &mut Vec<PathBuf>) {
             continue;
         }
 
-        let Some(ext) = path.extension().and_then(|s| s.to_str()) else {
-            continue;
-        };
-
-        if ext.eq_ignore_ascii_case("yaml") || ext.eq_ignore_ascii_case("yml") {
+        if is_template_yaml(&path) {
             out.push(path);
         }
     }
@@ -88,6 +99,7 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
     let mut files = Vec::new();
     collect_yaml_files(&root, &mut files);
     files.sort();
+    let total_files = files.len();
 
     assert!(!files.is_empty(), "no yaml files found under {}", root.display());
 
@@ -98,15 +110,25 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
             return None;
         }
 
-        std::fs::canonicalize(&only).ok().or(Some(only))
+        if only.is_absolute() {
+            return std::fs::canonicalize(&only).ok().or(Some(only));
+        }
+
+        let direct = std::fs::canonicalize(&only).ok();
+        if direct.is_some() {
+            return direct;
+        }
+
+        let under_charts = root.join(&only);
+        std::fs::canonicalize(&under_charts).ok()
     });
 
     let mut parsed_files = 0usize;
 
-    for file in files {
+    for file in &files {
         if let Some(ref only) = only {
             if let Some(ref only_path) = only_path {
-                let file_canon = std::fs::canonicalize(&file).unwrap_or_else(|_| file.clone());
+                let file_canon = std::fs::canonicalize(file).unwrap_or_else(|_| (*file).clone());
                 if file_canon != *only_path {
                     continue;
                 }
@@ -121,7 +143,7 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
         parsed_files += 1;
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&language).unwrap();
-        let src = std::fs::read_to_string(&file).unwrap();
+        let src = std::fs::read_to_string(file).unwrap();
         let tree = parser.parse(&src, None).unwrap();
 
         if let Some(node) = find_most_specific_error_or_missing_node(&tree) {
@@ -129,7 +151,7 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
             let sp = node.start_position();
             let ep = node.end_position();
             panic!(
-                "tree-sitter YAML parse error/missing node in {} at {}:{}\nkind={} is_error={} is_missing={} range={:?} point={:?}..{:?}\nnode_sexp={}\nroot_sexp={}\n",
+                "tree-sitter YAML parse error/missing node in {} at {}:{}\nkind={} is_error={} is_missing={} range={:?} point={:?}..{:?}\nnode_sexp={}\n",
                 file.display(),
                 line,
                 col,
@@ -140,17 +162,25 @@ fn parses_all_testdata_yaml_templates_with_zero_error_nodes() {
                 sp,
                 ep,
                 node.to_sexp(),
-                tree.root_node().to_sexp(),
             );
         }
 
         if tree.root_node().has_error() {
             panic!(
-                "tree has_error() but no explicit ERROR/MISSING node was found in {}\nroot_sexp={}\n",
+                "tree has_error() but no explicit ERROR/MISSING node was found in {}",
                 file.display(),
-                tree.root_node().to_sexp()
             );
         }
+    }
+
+    if only.is_none() {
+        assert_eq!(
+            parsed_files,
+            total_files,
+            "expected to parse all discovered charts/**/templates YAML files (found={}, parsed={})",
+            total_files,
+            parsed_files
+        );
     }
 
     if let Some(ref only) = only {

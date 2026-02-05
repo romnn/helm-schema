@@ -186,7 +186,7 @@ static inline void ts_dbg_ret(int row, int col, TokenType t) {
 
 #define MAY_PUSH_IMP_IND(TYP)                                                                                          \
     {                                                                                                                  \
-        if (cur_ind != scanner->blk_imp_col) {                                                                         \
+        if (cur_ind != scanner->blk_imp_col || scanner->ind_typ_stk.size == 1) {                                       \
             if (scanner->blk_imp_tab)                                                                                  \
                 return false;                                                                                          \
             push_ind(scanner, IND_MAP, scanner->blk_imp_col);                                                          \

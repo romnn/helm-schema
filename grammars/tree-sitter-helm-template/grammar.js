@@ -147,14 +147,20 @@ module.exports = grammar({
   ],
 
   rules: {
-    stream: $ => seq(optional(choice(
-      seq(
-        choice($._bgn_imp_doc, $._drs_doc, $._exp_doc, $._imp_doc),
-        optional(choice($._doc_w_bgn_w_end_seq, $._doc_w_bgn_wo_end_seq))),
-      seq(
-        choice($._bgn_imp_doc_end, $._drs_doc_end, $._exp_doc_end, $._doc_end),
-        optional(choice($._doc_w_bgn_w_end_seq, $._doc_w_bgn_wo_end_seq, $._doc_wo_bgn_w_end_seq, $._doc_wo_bgn_wo_end_seq))),
-    )), $._eof),
+    stream: $ => seq(
+      repeat(choice($.comment, $._r_hlm_dir, $._br_hlm_dir, $._b_hlm_dir)),
+      choice(
+        $._eof,
+        seq(choice(
+          seq(
+            choice($._bgn_imp_doc, $._drs_doc, $._exp_doc, $._imp_doc),
+            optional(choice($._doc_w_bgn_w_end_seq, $._doc_w_bgn_wo_end_seq))),
+          seq(
+            choice($._bgn_imp_doc_end, $._drs_doc_end, $._exp_doc_end, $._doc_end),
+            optional(choice($._doc_w_bgn_w_end_seq, $._doc_w_bgn_wo_end_seq, $._doc_wo_bgn_w_end_seq, $._doc_wo_bgn_wo_end_seq))),
+        ), $._eof),
+      ),
+    ),
 
     _doc_w_bgn_w_end_seq: $ => seq(
       $._doc_w_bgn_w_end,
