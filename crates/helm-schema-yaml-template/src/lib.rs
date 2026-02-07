@@ -49,12 +49,14 @@ extern crate linked_hash_map;
 pub mod emitter;
 pub mod parser;
 pub mod scanner;
+pub mod fused;
 pub mod yaml;
 
 // reexport key APIs
 pub use crate::emitter::{EmitError, YamlEmitter};
 pub use crate::parser::Event;
 pub use crate::scanner::ScanError;
+pub use crate::fused::{parse_fused_yaml_helm, FusedNode, FusedParseError};
 pub use crate::yaml::{Yaml, YamlLoader};
 
 #[cfg(test)]

@@ -144,6 +144,10 @@ pub struct Scanner<T> {
     buffer: VecDeque<char>,
     error: Option<ScanError>,
 
+    at_line_start: bool,
+    after_value_indicator: bool,
+    last_skipped_template_else_col: Option<usize>,
+
     stream_start_produced: bool,
     stream_end_produced: bool,
     adjacent_value_allowed_at: usize,
@@ -229,13 +233,17 @@ pub type ScanResult = Result<(), ScanError>;
 
 impl<T: Iterator<Item = char>> Scanner<T> {
     /// Creates the YAML tokenizer.
-    pub fn new(rdr: T) -> Scanner<T> {
+    pub fn new(src: T) -> Scanner<T> {
         Scanner {
-            rdr,
-            buffer: VecDeque::new(),
-            mark: Marker::new(0, 1, 0),
+            rdr: src,
+            mark: Marker::new(0, 0, 0),
             tokens: VecDeque::new(),
+            buffer: VecDeque::new(),
             error: None,
+
+            at_line_start: true,
+            after_value_indicator: false,
+            last_skipped_template_else_col: None,
 
             stream_start_produced: false,
             stream_end_produced: false,
@@ -269,6 +277,17 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     #[inline]
     fn skip(&mut self) {
         let c = self.buffer.pop_front().unwrap();
+
+        if is_break(c) {
+            self.at_line_start = true;
+        } else if self.at_line_start {
+            // stay at start-of-line while consuming indentation whitespace
+            if !is_blank(c) {
+                self.at_line_start = false;
+            }
+        } else {
+            self.at_line_start = false;
+        }
 
         self.mark.index += 1;
         if c == '\n' {
@@ -352,6 +371,30 @@ impl<T: Iterator<Item = char>> Scanner<T> {
 
         self.stale_simple_keys()?;
 
+        loop {
+            let mut skipped = false;
+
+            if self.try_skip_helm_template_comment_block()
+                || self.try_skip_helm_template_control_line()
+                || self.try_skip_helm_template_multiline_action()
+                || self.try_skip_helm_template_empty_collection_after_else()
+            {
+                skipped = true;
+                self.skip_to_next_token();
+                self.stale_simple_keys()?;
+            }
+
+            if self.try_skip_helm_template_inline_value_fragment() {
+                skipped = true;
+                self.skip_to_next_token();
+                self.stale_simple_keys()?;
+            }
+
+            if !skipped {
+                break;
+            }
+        }
+
         let mark = self.mark;
         self.unroll_indent(mark.col as isize);
 
@@ -391,8 +434,10 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         let nc = self.buffer[1];
         match c {
             '[' => self.fetch_flow_collection_start(TokenType::FlowSequenceStart),
+            '{' if nc == '{' => self.fetch_plain_scalar(),
             '{' => self.fetch_flow_collection_start(TokenType::FlowMappingStart),
             ']' => self.fetch_flow_collection_end(TokenType::FlowSequenceEnd),
+            '}' if nc == '}' => self.fetch_plain_scalar(),
             '}' => self.fetch_flow_collection_end(TokenType::FlowMappingEnd),
             ',' => self.fetch_flow_entry(),
             '-' if is_blankz(nc) => self.fetch_block_entry(),
@@ -423,6 +468,413 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             )),
             _ => self.fetch_plain_scalar(),
         }
+    }
+
+    fn try_skip_helm_template_control_line(&mut self) -> bool {
+        if !self.at_line_start {
+            return false;
+        }
+
+        let start_col = self.mark.col;
+
+        self.lookahead(2);
+        if self.buffer[0] != '{' || self.buffer[1] != '{' {
+            return false;
+        }
+
+        // Look for closing "}}" before the end of the line, and ensure there are
+        // only blanks (or a YAML comment) after it.
+        let mut i: usize = 0;
+        let mut close_at: Option<usize> = None;
+        loop {
+            self.lookahead(i + 2);
+            let c = self.buffer[i];
+            if is_breakz(c) {
+                break;
+            }
+            if c == '}' && self.buffer[i + 1] == '}' {
+                close_at = Some(i + 2);
+                break;
+            }
+            i += 1;
+        }
+
+        let Some(close_at) = close_at else {
+            return false;
+        };
+
+        // Extract the action text to decide whether it is control/assignment (non-YAML output).
+        let mut action = String::new();
+        for idx in 0..close_at {
+            self.lookahead(idx + 1);
+            let c = self.buffer[idx];
+            if is_breakz(c) {
+                break;
+            }
+            action.push(c);
+        }
+
+        // Remove opening/closing braces and trim markers.
+        let mut inner = action.as_str();
+        inner = inner.strip_prefix("{{").unwrap_or(inner);
+        inner = inner.strip_prefix('-').unwrap_or(inner);
+        inner = inner.trim_start();
+        inner = inner.strip_suffix("}}").unwrap_or(inner);
+        inner = inner.strip_suffix('-').unwrap_or(inner);
+        inner = inner.trim_end();
+        let inner = inner.trim();
+
+        // Decide if we should skip this line.
+        let first = inner.split_whitespace().next().unwrap_or("");
+
+        let starts_with_control_kw = |s: &str, kw: &str| -> bool {
+            if !s.starts_with(kw) {
+                return false;
+            }
+            let rest = &s[kw.len()..];
+            rest.is_empty()
+                || rest.starts_with(char::is_whitespace)
+                // Some charts contain malformed-but-ignored directives like `range.spec.ports`.
+                // Treat those as control directives so the YAML layer can still be parsed.
+                || rest.starts_with('.')
+        };
+
+        let is_control = starts_with_control_kw(inner, "if")
+            || starts_with_control_kw(inner, "else")
+            || starts_with_control_kw(inner, "end")
+            || starts_with_control_kw(inner, "with")
+            || starts_with_control_kw(inner, "range")
+            || starts_with_control_kw(inner, "define")
+            || starts_with_control_kw(inner, "block")
+            || starts_with_control_kw(inner, "fail");
+        let is_assignment = inner.starts_with('$') && (inner.contains(":=") || inner.contains(" = "));
+        let is_comment = inner.starts_with("/*") || inner.starts_with("-/*") || inner.starts_with("//");
+
+        let is_include_like = matches!(first, "include" | "template" | "tpl");
+
+        // Fragment injectors: standalone action lines that likely expand to YAML, typically
+        // using `indent`/`nindent` and/or `toYaml`/`fromYaml`.
+        // We skip them for best-effort structural parsing.
+        let is_fragment_injector = is_include_like
+            || inner.contains("nindent")
+            || inner.contains("indent")
+            || inner.contains("toYaml")
+            || inner.contains("fromYaml");
+
+        if !(is_control || is_assignment || is_comment || is_fragment_injector) {
+            return false;
+        }
+
+        let mut j = close_at;
+
+        loop {
+            self.lookahead(j + 1);
+            let c = self.buffer[j];
+            if is_breakz(c) {
+                break;
+            }
+            if c == ' ' || c == '\t' {
+                j += 1;
+                continue;
+            }
+            if c == '#' {
+                break;
+            }
+            // Not a standalone template directive line.
+            return false;
+        }
+
+        // Consume the entire line.
+        loop {
+            self.lookahead(1);
+            if is_breakz(self.ch()) {
+                break;
+            }
+            self.skip();
+        }
+
+        // Skipped a non-YAML emitting line; don't keep treating subsequent content as a mapping value.
+        self.after_value_indicator = false;
+
+        if first == "else" {
+            self.last_skipped_template_else_col = Some(start_col);
+        } else {
+            self.last_skipped_template_else_col = None;
+        }
+
+        // IMPORTANT: do not consume the trailing newline here.
+        // Helm template control lines frequently use non-trimming `}}`, so the newline is
+        // semantically significant for YAML structure. We'll let `skip_to_next_token()`
+        // handle the newline normally.
+        true
+    }
+
+    fn try_skip_helm_template_empty_collection_after_else(&mut self) -> bool {
+        if !self.at_line_start {
+            return false;
+        }
+
+        let Some(col) = self.last_skipped_template_else_col else {
+            return false;
+        };
+        if self.mark.col < col {
+            return false;
+        }
+
+        self.lookahead(2);
+        let is_empty_map = self.buffer[0] == '{' && self.buffer[1] == '}';
+        let is_empty_seq = self.buffer[0] == '[' && self.buffer[1] == ']';
+        if !(is_empty_map || is_empty_seq) {
+            return false;
+        }
+
+        // Ensure only blanks (or a YAML comment) after it on the same line.
+        let mut j: usize = 2;
+        loop {
+            self.lookahead(j + 1);
+            let c = self.buffer[j];
+            if is_breakz(c) {
+                break;
+            }
+            if c == ' ' || c == '\t' {
+                j += 1;
+                continue;
+            }
+            if c == '#' {
+                break;
+            }
+            return false;
+        }
+
+        // Consume the entire line (but not the trailing newline).
+        loop {
+            self.lookahead(1);
+            if is_breakz(self.ch()) {
+                break;
+            }
+            self.skip();
+        }
+
+        self.after_value_indicator = false;
+        self.last_skipped_template_else_col = None;
+        true
+    }
+
+    fn try_skip_helm_template_multiline_action(&mut self) -> bool {
+        if !self.at_line_start {
+            return false;
+        }
+
+        self.lookahead(2);
+        if self.buffer[0] != '{' || self.buffer[1] != '{' {
+            return false;
+        }
+
+        // If the action is closed on the same line, the single-line skipper will handle it.
+        // Here we handle actions spanning multiple lines (e.g. `{{- if or\n ... \n}}`).
+        let mut i: usize = 0;
+        loop {
+            self.lookahead(i + 2);
+            let c = self.buffer[i];
+            if is_breakz(c) {
+                break;
+            }
+            if c == '}' && self.buffer[i + 1] == '}' {
+                return false;
+            }
+            i += 1;
+        }
+
+        // Consume until the matching `}}`.
+        let start_mark = self.mark;
+        let mut closed = false;
+        'out: loop {
+            self.lookahead(2);
+            if is_z(self.ch()) {
+                break;
+            }
+            if self.buffer[0] == '}' && self.buffer[1] == '}' {
+                self.skip();
+                self.skip();
+                closed = true;
+                break 'out;
+            }
+            self.skip();
+        }
+
+        // If we hit EOF without closing, treat it as non-skippable and let the parser error.
+        if !closed {
+            self.error = Some(ScanError::new(
+                start_mark,
+                "while scanning a helm action, found unexpected end of stream",
+            ));
+            return false;
+        }
+
+        self.after_value_indicator = false;
+        self.last_skipped_template_else_col = None;
+        true
+    }
+
+    fn try_skip_helm_template_inline_value_fragment(&mut self) -> bool {
+        if !self.after_value_indicator {
+            return false;
+        }
+
+        self.lookahead(1);
+        if is_breakz(self.ch()) {
+            return false;
+        }
+
+        // Only consider a value starting with an action.
+        self.lookahead(2);
+        if self.buffer[0] != '{' || self.buffer[1] != '{' {
+            return false;
+        }
+
+        // Find closing "}}" before end-of-line.
+        let mut i: usize = 0;
+        let mut close_at: Option<usize> = None;
+        loop {
+            self.lookahead(i + 2);
+            let c = self.buffer[i];
+            if is_breakz(c) {
+                break;
+            }
+            if c == '}' && self.buffer[i + 1] == '}' {
+                close_at = Some(i + 2);
+                break;
+            }
+            i += 1;
+        }
+        let Some(close_at) = close_at else {
+            return false;
+        };
+
+        // Extract the action text to decide whether it likely emits a block value.
+        let mut action = String::new();
+        for idx in 0..close_at {
+            self.lookahead(idx + 1);
+            let c = self.buffer[idx];
+            if is_breakz(c) {
+                break;
+            }
+            action.push(c);
+        }
+
+        let likely_block = action.contains("nindent") || action.contains("indent");
+        if !likely_block {
+            return false;
+        }
+
+        // Ensure the rest of the line after the action is blanks or a YAML comment.
+        let mut j = close_at;
+        loop {
+            self.lookahead(j + 1);
+            let c = self.buffer[j];
+            if is_breakz(c) {
+                break;
+            }
+            if c == ' ' || c == '\t' {
+                j += 1;
+                continue;
+            }
+            if c == '#' {
+                break;
+            }
+            return false;
+        }
+
+        // Consume the action (and any trailing blanks/comment) up to newline.
+        loop {
+            self.lookahead(1);
+            if is_breakz(self.ch()) {
+                break;
+            }
+            self.skip();
+        }
+
+        // Once we've skipped a value fragment, do not keep treating subsequent tokens as
+        // starting a mapping value.
+        self.after_value_indicator = false;
+        self.last_skipped_template_else_col = None;
+        true
+    }
+
+    fn try_skip_helm_template_comment_block(&mut self) -> bool {
+        if !self.at_line_start {
+            return false;
+        }
+
+        self.lookahead(2);
+        if self.buffer[0] != '{' || self.buffer[1] != '{' {
+            return false;
+        }
+
+        // Identify comment opener: `{{/*` or `{{- /*` (allowing extra blanks).
+        let mut i: usize = 2;
+        self.lookahead(i + 1);
+        if self.buffer[i] == '-' {
+            i += 1;
+            self.lookahead(i + 1);
+        }
+        while self.buffer[i] == ' ' || self.buffer[i] == '\t' {
+            i += 1;
+            self.lookahead(i + 2);
+        }
+        self.lookahead(i + 2);
+        if self.buffer[i] != '/' || self.buffer[i + 1] != '*' {
+            return false;
+        }
+
+        // Find the end of the comment block without consuming input.
+        // Accept: `*/}}`, `*/-}}`, or `*/  -}}`.
+        let mut end: Option<usize> = None;
+        let mut j: usize = 0;
+        loop {
+            self.lookahead(j + 5);
+            let c = self.buffer[j];
+            if is_z(c) {
+                break;
+            }
+
+            if c == '*' && self.buffer[j + 1] == '/' {
+                let mut k = j + 2;
+                self.lookahead(k + 3);
+                while self.buffer[k] == ' ' || self.buffer[k] == '\t' {
+                    k += 1;
+                    self.lookahead(k + 3);
+                }
+                if self.buffer[k] == '-' {
+                    k += 1;
+                    self.lookahead(k + 2);
+                }
+                if self.buffer[k] == '}' && self.buffer[k + 1] == '}' {
+                    end = Some(k + 2);
+                    break;
+                }
+            }
+
+            j += 1;
+        }
+
+        let Some(end) = end else {
+            return false;
+        };
+
+        // Consume through the closing delimiter.
+        for _ in 0..end {
+            self.lookahead(1);
+            if is_z(self.ch()) {
+                break;
+            }
+            self.skip();
+        }
+
+        self.after_value_indicator = false;
+        self.last_skipped_template_else_col = None;
+
+        true
     }
 
     pub fn next_token(&mut self) -> Result<Option<Token>, ScanError> {
@@ -465,6 +917,72 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             self.fetch_next_token()?;
         }
         self.token_available = true;
+
+        Ok(())
+    }
+
+    fn helm_action_has_closing_delimiter_ahead(&mut self) -> bool {
+        self.lookahead(2);
+        if self.buffer[0] != '{' || self.buffer[1] != '{' {
+            return false;
+        }
+
+        // Scan forward (without consuming) looking for a closing "}}" before the end of the
+        // line. If not found, treat "{{" as plain scalar content.
+        let mut i: usize = 2;
+        let max_scan: usize = 4096;
+        loop {
+            if i >= max_scan {
+                return false;
+            }
+
+            self.lookahead(i + 2);
+            let c0 = self.buffer[i];
+
+            if is_z(c0) {
+                return false;
+            }
+            if is_breakz(c0) {
+                return false;
+            }
+
+            if c0 == '}' && self.buffer[i + 1] == '}' {
+                return true;
+            }
+
+            i += 1;
+        }
+    }
+
+    fn scan_helm_action_into(&mut self, out: &mut String, start_mark: Marker) -> Result<(), ScanError> {
+        self.lookahead(2);
+        if self.buffer[0] != '{' || self.buffer[1] != '{' {
+            return Ok(());
+        }
+
+        out.push('{');
+        out.push('{');
+        self.skip();
+        self.skip();
+
+        loop {
+            self.lookahead(2);
+            if is_z(self.ch()) {
+                return Err(ScanError::new(
+                    start_mark,
+                    "while scanning a helm action, found unexpected end of stream",
+                ));
+            }
+            if self.buffer[0] == '}' && self.buffer[1] == '}' {
+                out.push('}');
+                out.push('}');
+                self.skip();
+                self.skip();
+                break;
+            }
+            out.push(self.ch());
+            self.skip();
+        }
 
         Ok(())
     }
@@ -963,6 +1481,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_flow_collection_start(&mut self, tok: TokenType) -> ScanResult {
+        self.after_value_indicator = false;
         // The indicators '[' and '{' may start a simple key.
         self.save_simple_key()?;
 
@@ -978,6 +1497,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_flow_collection_end(&mut self, tok: TokenType) -> ScanResult {
+        self.after_value_indicator = false;
         self.remove_simple_key()?;
         self.decrease_flow_level();
 
@@ -991,6 +1511,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_flow_entry(&mut self) -> ScanResult {
+        self.after_value_indicator = false;
         self.remove_simple_key()?;
         self.allow_simple_key();
 
@@ -1018,6 +1539,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_block_entry(&mut self) -> ScanResult {
+        self.after_value_indicator = false;
         if self.flow_level == 0 {
             // Check if we are allowed to start a new entry.
             if !self.simple_key_allowed {
@@ -1064,6 +1586,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_block_scalar(&mut self, literal: bool) -> ScanResult {
+        self.after_value_indicator = false;
         self.save_simple_key()?;
         self.allow_simple_key();
         let tok = self.scan_block_scalar(literal)?;
@@ -1169,7 +1692,13 @@ impl<T: Iterator<Item = char>> Scanner<T> {
 
         let start_mark = self.mark;
 
-        while self.mark.col == indent && !is_z(self.ch()) {
+        while (self.mark.col == indent
+            || (self.mark.col < indent && {
+                self.lookahead(2);
+                self.buffer[0] == '{' && self.buffer[1] == '{'
+            }))
+            && !is_z(self.ch())
+        {
             // We are at the beginning of a non-empty line.
             trailing_blank = is_blank(self.ch());
             if !literal && !leading_break.is_empty() && !leading_blank && !trailing_blank {
@@ -1267,6 +1796,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_flow_scalar(&mut self, single: bool) -> ScanResult {
+        self.after_value_indicator = false;
         self.save_simple_key()?;
         self.disallow_simple_key();
 
@@ -1322,6 +1852,17 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             // Consume non-blank characters.
 
             while !is_blankz(self.ch()) {
+                if self.ch() == '{' && self.buffer[1] == '{' {
+                    if self.helm_action_has_closing_delimiter_ahead() {
+                        self.scan_helm_action_into(&mut string, start_mark)?;
+                        self.lookahead(2);
+                        continue;
+                    }
+                    string.push(self.ch());
+                    self.skip();
+                    self.lookahead(2);
+                    continue;
+                }
                 match self.ch() {
                     // Check for an escaped single quote.
                     '\'' if self.buffer[1] == '\'' && single => {
@@ -1479,6 +2020,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_plain_scalar(&mut self) -> ScanResult {
+        self.after_value_indicator = false;
         self.save_simple_key()?;
         self.disallow_simple_key();
 
@@ -1517,13 +2059,26 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             }
             while !is_blankz(self.ch()) {
                 // indicators can end a plain scalar, see 7.3.3. Plain Style
+                if self.ch() == '{' && self.buffer[1] == '{' {
+                    if self.helm_action_has_closing_delimiter_ahead() {
+                        self.scan_helm_action_into(&mut string, start_mark)?;
+                        self.lookahead(2);
+                        continue;
+                    }
+                    string.push(self.ch());
+                    self.skip();
+                    self.lookahead(2);
+                    continue;
+                }
                 match self.ch() {
                     ':' if is_blankz(self.buffer[1])
                         || (self.flow_level > 0 && is_flow(self.buffer[1])) =>
                     {
                         break;
                     }
-                    ',' | '[' | ']' | '{' | '}' if self.flow_level > 0 => break,
+                    ',' | '[' | ']' if self.flow_level > 0 => break,
+                    '{' if self.flow_level > 0 && self.buffer[1] != '{' => break,
+                    '}' if self.flow_level > 0 && self.buffer[1] != '}' => break,
                     _ => {}
                 }
 
@@ -1606,6 +2161,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
 
     fn fetch_key(&mut self) -> ScanResult {
+        self.after_value_indicator = false;
         let start_mark = self.mark;
         if self.flow_level == 0 {
             // Check if we are allowed to start a new key (not necessarily simple).
@@ -1681,6 +2237,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         }
         self.skip();
         self.tokens.push_back(Token(start_mark, TokenType::Value));
+        self.after_value_indicator = true;
 
         Ok(())
     }
