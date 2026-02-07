@@ -316,13 +316,27 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
                     kind: "cond".to_string(),
                     text: Some(cond.clone()),
                 },
-                SExpr::Node {
-                    kind: "then".to_string(),
-                    children: then_branch.iter().map(fused_to_sexpr).collect(),
+                if then_branch.is_empty() {
+                    SExpr::Leaf {
+                        kind: "then".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "then".to_string(),
+                        children: then_branch.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
-                SExpr::Node {
-                    kind: "else".to_string(),
-                    children: else_branch.iter().map(fused_to_sexpr).collect(),
+                if else_branch.is_empty() {
+                    SExpr::Leaf {
+                        kind: "else".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "else".to_string(),
+                        children: else_branch.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
             ],
         },
@@ -337,13 +351,27 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
                     kind: "header".to_string(),
                     text: Some(header.clone()),
                 },
-                SExpr::Node {
-                    kind: "body".to_string(),
-                    children: body.iter().map(fused_to_sexpr).collect(),
+                if body.is_empty() {
+                    SExpr::Leaf {
+                        kind: "body".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "body".to_string(),
+                        children: body.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
-                SExpr::Node {
-                    kind: "else".to_string(),
-                    children: else_branch.iter().map(fused_to_sexpr).collect(),
+                if else_branch.is_empty() {
+                    SExpr::Leaf {
+                        kind: "else".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "else".to_string(),
+                        children: else_branch.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
             ],
         },
@@ -358,13 +386,27 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
                     kind: "header".to_string(),
                     text: Some(header.clone()),
                 },
-                SExpr::Node {
-                    kind: "body".to_string(),
-                    children: body.iter().map(fused_to_sexpr).collect(),
+                if body.is_empty() {
+                    SExpr::Leaf {
+                        kind: "body".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "body".to_string(),
+                        children: body.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
-                SExpr::Node {
-                    kind: "else".to_string(),
-                    children: else_branch.iter().map(fused_to_sexpr).collect(),
+                if else_branch.is_empty() {
+                    SExpr::Leaf {
+                        kind: "else".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "else".to_string(),
+                        children: else_branch.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
             ],
         },
@@ -375,9 +417,16 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
                     kind: "header".to_string(),
                     text: Some(header.clone()),
                 },
-                SExpr::Node {
-                    kind: "body".to_string(),
-                    children: body.iter().map(fused_to_sexpr).collect(),
+                if body.is_empty() {
+                    SExpr::Leaf {
+                        kind: "body".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "body".to_string(),
+                        children: body.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
             ],
         },
@@ -388,9 +437,16 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
                     kind: "header".to_string(),
                     text: Some(header.clone()),
                 },
-                SExpr::Node {
-                    kind: "body".to_string(),
-                    children: body.iter().map(fused_to_sexpr).collect(),
+                if body.is_empty() {
+                    SExpr::Leaf {
+                        kind: "body".to_string(),
+                        text: None,
+                    }
+                } else {
+                    SExpr::Node {
+                        kind: "body".to_string(),
+                        children: body.iter().map(fused_to_sexpr).collect(),
+                    }
                 },
             ],
         },

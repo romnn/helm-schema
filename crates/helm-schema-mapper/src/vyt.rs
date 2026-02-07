@@ -2032,10 +2032,10 @@ impl VYT {
         let is_include_like = matches!(func.as_deref(), Some("include" | "template"));
         let is_fragment = matches!(func.as_deref(), Some("include" | "template" | "tpl"))
             || pipeline_contains_any(
-            node,
-            &self.source,
-            &["toYaml", "fromYaml", "nindent", "indent", "tpl"],
-        );
+                node,
+                &self.source,
+                &["toYaml", "fromYaml", "nindent", "indent", "tpl"],
+            );
         let mut sources = self.collect_values_anywhere(node);
 
         if sources.is_empty() && is_fragment {

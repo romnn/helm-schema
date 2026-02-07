@@ -232,11 +232,7 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
         }
 
         let start = i;
-        while i < out.len()
-            && out[i] != b'\n'
-            && i < keep_mask.len()
-            && !keep_mask[i]
-        {
+        while i < out.len() && out[i] != b'\n' && i < keep_mask.len() && !keep_mask[i] {
             i += 1;
         }
         let end = i;
@@ -255,9 +251,7 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
         let prefix_ends_with_mapping_colon = prefix
             .iter()
             .rposition(|b| !b.is_ascii_whitespace())
-            .is_some_and(|idx| {
-                prefix[idx] == b':' && !prefix[..idx].iter().any(|b| *b == b':')
-            });
+            .is_some_and(|idx| prefix[idx] == b':' && !prefix[..idx].iter().any(|b| *b == b':'));
 
         let mut j = end;
         while j < line_end && out[j].is_ascii_whitespace() {
@@ -449,8 +443,8 @@ fn parses_all_testdata_yaml_templates_best_effort() {
                 .file_name()
                 .and_then(|s| s.to_str())
                 .unwrap_or("template.yaml");
-            let dump_path = PathBuf::from("/tmp")
-                .join(format!("helm-schema-sanitized-{}", file_name));
+            let dump_path =
+                PathBuf::from("/tmp").join(format!("helm-schema-sanitized-{}", file_name));
             let _ = std::fs::write(&dump_path, &sanitized);
         }
 

@@ -182,14 +182,11 @@ fn snapshot_full_fixture_ir_and_schema() -> eyre::Result<()> {
         println!("=== ACTUAL SCHEMA (full-fixture) ===\n{}\n", schema_pretty);
     }
 
-    let expected_ir: Value = serde_json::from_str(include_str!(
-        "snapshots/full-fixture.ir.json"
-    ))
-    .map_err(|e| eyre::eyre!(e))?;
-    let expected_schema: Value = serde_json::from_str(include_str!(
-        "snapshots/full-fixture.values.schema.json"
-    ))
-    .map_err(|e| eyre::eyre!(e))?;
+    let expected_ir: Value = serde_json::from_str(include_str!("snapshots/full-fixture.ir.json"))
+        .map_err(|e| eyre::eyre!(e))?;
+    let expected_schema: Value =
+        serde_json::from_str(include_str!("snapshots/full-fixture.values.schema.json"))
+            .map_err(|e| eyre::eyre!(e))?;
 
     let expected_ir_pretty = json_pretty(&expected_ir)?;
     let expected_schema_pretty = json_pretty(&expected_schema)?;

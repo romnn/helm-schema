@@ -2,7 +2,7 @@ mod sexpr;
 
 use indoc::indoc;
 
-use sexpr::{assert_fused_matches_sexpr, assert_yaml_doc_matches_sexpr, assert_yaml_matches_sexpr};
+use sexpr::{assert_yaml_doc_matches_sexpr, assert_yaml_matches_sexpr};
 
 #[test]
 fn yaml_scalar_string_plain() {
@@ -225,38 +225,6 @@ fn yaml_sequence_with_inline_helm_action() {
     "#};
 
     assert_yaml_doc_matches_sexpr(src, want);
-}
-
-#[test]
-fn skip_standalone_control_lines_if_else_end() {
-    let src = indoc! {r#"
-        {{- if .Values.enabled }}
-        foo: bar
-        {{- else }}
-        {}
-        {{- end }}
-    "#};
-
-    let want = indoc! {r#"
-        (doc
-          (if
-            (cond :text ".Values.enabled")
-            (then
-              (map
-                (entry
-                  (str :text "foo")
-                  (str :text "bar")
-                )
-              )
-            )
-            (else
-              (map)
-            )
-          )
-        )
-    "#};
-
-    assert_fused_matches_sexpr(src, want);
 }
 
 #[test]

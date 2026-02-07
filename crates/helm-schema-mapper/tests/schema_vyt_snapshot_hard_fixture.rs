@@ -179,20 +179,14 @@ fn snapshot_hard_fixture_ir_and_schema() -> eyre::Result<()> {
         println!("=== ACTUAL IR (hard-fixture) ===\n{}\n", ir_pretty);
     }
     if std::env::var("HELM_SCHEMA_PRINT_ACTUAL_SCHEMA").is_ok() {
-        println!(
-            "=== ACTUAL SCHEMA (hard-fixture) ===\n{}\n",
-            schema_pretty
-        );
+        println!("=== ACTUAL SCHEMA (hard-fixture) ===\n{}\n", schema_pretty);
     }
 
-    let expected_ir: Value = serde_json::from_str(include_str!(
-        "snapshots/hard-fixture.ir.json"
-    ))
-    .map_err(|e| eyre::eyre!(e))?;
-    let expected_schema: Value = serde_json::from_str(include_str!(
-        "snapshots/hard-fixture.values.schema.json"
-    ))
-    .map_err(|e| eyre::eyre!(e))?;
+    let expected_ir: Value = serde_json::from_str(include_str!("snapshots/hard-fixture.ir.json"))
+        .map_err(|e| eyre::eyre!(e))?;
+    let expected_schema: Value =
+        serde_json::from_str(include_str!("snapshots/hard-fixture.values.schema.json"))
+            .map_err(|e| eyre::eyre!(e))?;
 
     let expected_ir_pretty = json_pretty(&expected_ir)?;
     let expected_schema_pretty = json_pretty(&expected_schema)?;

@@ -136,8 +136,8 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
 
     let spec_pair = find_mapping_pair_with_plain_key(root, &sanitized, "spec")
         .unwrap_or_else(|| panic!("missing spec mapping pair; sexp={}", root.to_sexp()));
-    let init_pair =
-        find_mapping_pair_with_plain_key(root, &sanitized, "initContainers").unwrap_or_else(|| {
+    let init_pair = find_mapping_pair_with_plain_key(root, &sanitized, "initContainers")
+        .unwrap_or_else(|| {
             panic!(
                 "missing initContainers mapping pair; sexp={}",
                 root.to_sexp()
