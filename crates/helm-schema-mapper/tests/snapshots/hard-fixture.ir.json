@@ -42,7 +42,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "spec.containers",
+    "path": "spec.template.spec.containers",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -54,7 +54,7 @@
       "containers"
     ],
     "kind": "Scalar",
-    "path": "spec.containers[*].name",
+    "path": "spec.template.spec.containers[*].name",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -66,7 +66,7 @@
       "containers"
     ],
     "kind": "Scalar",
-    "path": "volumeMounts[*].mountPath",
+    "path": "spec.template.spec.containers[*].volumeMounts[*].mountPath",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -78,7 +78,7 @@
       "containers"
     ],
     "kind": "Scalar",
-    "path": "volumeMounts[*].name",
+    "path": "spec.template.spec.containers[*].volumeMounts[*].name",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -122,18 +122,6 @@
     "source_expr": "extraLabels"
   },
   {
-    "guards": [
-      "extraLabels"
-    ],
-    "kind": "Scalar",
-    "path": "",
-    "resource": {
-      "apiVersion": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "extraLabels"
-  },
-  {
     "guards": [],
     "kind": "Scalar",
     "path": "metadata.labels",
@@ -160,7 +148,7 @@
       "containers"
     ],
     "kind": "Scalar",
-    "path": "",
+    "path": "spec.template.spec.containers[*].image",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -172,19 +160,7 @@
       "containers"
     ],
     "kind": "Scalar",
-    "path": "spec.containers[*].image",
-    "resource": {
-      "apiVersion": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image"
-  },
-  {
-    "guards": [
-      "containers"
-    ],
-    "kind": "Scalar",
-    "path": "spec.containers[*].image",
+    "path": "spec.template.spec.containers[*].image",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -196,7 +172,7 @@
       "containers"
     ],
     "kind": "Scalar",
-    "path": "",
+    "path": "spec.template.spec.containers[*].image",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -206,7 +182,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "spec.initContainers",
+    "path": "spec.template.spec.initContainers",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -218,7 +194,7 @@
       "initContainers"
     ],
     "kind": "Scalar",
-    "path": "spec.initContainers[*].image",
+    "path": "spec.template.spec.initContainers[*].image",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -230,7 +206,7 @@
       "initContainers"
     ],
     "kind": "Scalar",
-    "path": "spec.initContainers[*].name",
+    "path": "spec.template.spec.initContainers[*].name",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -242,7 +218,7 @@
       "initContainers"
     ],
     "kind": "Scalar",
-    "path": "spec.initContainers[*].volumeMounts[*].mountPath",
+    "path": "spec.template.spec.initContainers[*].volumeMounts[*].mountPath",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -254,7 +230,7 @@
       "initContainers"
     ],
     "kind": "Scalar",
-    "path": "spec.initContainers[*].volumeMounts[*].name",
+    "path": "spec.template.spec.initContainers[*].volumeMounts[*].name",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -304,7 +280,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "spec.template.spec",
+    "path": "",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -411,3 +387,4 @@
     "source_expr": "volumes.*.name"
   }
 ]
+ 

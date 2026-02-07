@@ -32,16 +32,6 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "ports[*].containerPort",
-    "resource": {
-      "apiVersion": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "containerPort"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
     "path": "spec.ports[*].targetPort",
     "resource": {
       "apiVersion": "v1",
@@ -52,7 +42,17 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "env",
+    "path": "spec.template.spec.containers[*].ports[*].containerPort",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "containerPort"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].env",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -64,7 +64,7 @@
       "extraEnv"
     ],
     "kind": "Scalar",
-    "path": "env[*].name",
+    "path": "spec.template.spec.containers[*].env[*].name",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -76,32 +76,12 @@
       "extraEnv"
     ],
     "kind": "Scalar",
-    "path": "env[*].value",
+    "path": "spec.template.spec.containers[*].env[*].value",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
     },
     "source_expr": "extraEnv.*.value"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": "",
-    "resource": {
-      "apiVersion": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": "imagePullPolicy",
-    "resource": {
-      "apiVersion": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image"
   },
   {
     "guards": [],
@@ -116,7 +96,17 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "imagePullPolicy",
+    "path": "spec.template.spec.containers[*].imagePullPolicy",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].imagePullPolicy",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -136,7 +126,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "",
+    "path": "spec.template.spec.containers[*].image",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -292,7 +282,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "securityContext.allowPrivilegeEscalation",
+    "path": "spec.template.spec.containers[*].securityContext.allowPrivilegeEscalation",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -302,7 +292,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "securityContext.readOnlyRootFilesystem",
+    "path": "spec.template.spec.containers[*].securityContext.readOnlyRootFilesystem",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -312,7 +302,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "securityContext.allowPrivilegeEscalation",
+    "path": "spec.template.spec.containers[*].securityContext.allowPrivilegeEscalation",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -322,7 +312,7 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": "securityContext.readOnlyRootFilesystem",
+    "path": "spec.template.spec.containers[*].securityContext.readOnlyRootFilesystem",
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment"
@@ -396,3 +386,4 @@
     "source_expr": "service.type"
   }
 ]
+ 

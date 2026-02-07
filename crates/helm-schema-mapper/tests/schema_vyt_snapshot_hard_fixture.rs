@@ -9,8 +9,7 @@ use helm_schema_mapper::schema::{
 use helm_schema_mapper::vyt;
 use serde_json::{Map, Value};
 use std::cmp::Ordering;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use test_util::prelude::*;
 use vfs::VfsPath;
 
@@ -53,13 +52,6 @@ fn run_vyt_on_chart_templates(
     }
 
     Ok(all)
-}
-
-fn is_update_mode() -> bool {
-    std::env::var("HELM_SCHEMA_UPDATE_SNAPSHOTS")
-        .ok()
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-        .unwrap_or(false)
 }
 
 fn fixture_k8s_schema_cache_dir() -> PathBuf {
@@ -158,30 +150,6 @@ fn uses_to_json(uses: &[vyt::VYUse]) -> Value {
     Value::Array(out)
 }
 
-fn assert_snapshot(path: &Path, content: &str) -> eyre::Result<()> {
-    if is_update_mode() {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).map_err(|e| eyre::eyre!(e))?;
-        }
-        fs::write(path, content).map_err(|e| eyre::eyre!(e))?;
-        return Ok(());
-    }
-
-    if !path.exists() {
-        return Err(eyre::eyre!(
-            "snapshot missing: {} (re-run with HELM_SCHEMA_UPDATE_SNAPSHOTS=1)",
-            path.display()
-        ));
-    }
-
-    let expected = fs::read_to_string(path).map_err(|e| eyre::eyre!(e))?;
-    if expected != content {
-        return Err(eyre::eyre!("snapshot mismatch: {}", path.display()));
-    }
-
-    Ok(())
-}
-
 #[test]
 fn snapshot_hard_fixture_ir_and_schema() -> eyre::Result<()> {
     Builder::default().build();
@@ -203,17 +171,34 @@ fn snapshot_hard_fixture_ir_and_schema() -> eyre::Result<()> {
 
     let schema = generate_values_schema_vyt(&uses, &provider);
 
-    let snaps_dir = crate_root().join("tests/snapshots");
-
     let ir_json = uses_to_json(&uses);
     let ir_pretty = json_pretty(&ir_json)?;
     let schema_pretty = json_pretty(&schema)?;
 
-    let ir_path = snaps_dir.join("hard-fixture.ir.json");
-    let schema_path = snaps_dir.join("hard-fixture.values.schema.json");
+    if std::env::var("HELM_SCHEMA_PRINT_ACTUAL_IR").is_ok() {
+        println!("=== ACTUAL IR (hard-fixture) ===\n{}\n", ir_pretty);
+    }
+    if std::env::var("HELM_SCHEMA_PRINT_ACTUAL_SCHEMA").is_ok() {
+        println!(
+            "=== ACTUAL SCHEMA (hard-fixture) ===\n{}\n",
+            schema_pretty
+        );
+    }
 
-    assert_snapshot(&ir_path, &ir_pretty)?;
-    assert_snapshot(&schema_path, &schema_pretty)?;
+    let expected_ir: Value = serde_json::from_str(include_str!(
+        "snapshots/hard-fixture.ir.json"
+    ))
+    .map_err(|e| eyre::eyre!(e))?;
+    let expected_schema: Value = serde_json::from_str(include_str!(
+        "snapshots/hard-fixture.values.schema.json"
+    ))
+    .map_err(|e| eyre::eyre!(e))?;
+
+    let expected_ir_pretty = json_pretty(&expected_ir)?;
+    let expected_schema_pretty = json_pretty(&expected_schema)?;
+
+    sim_assert_eq!(expected_ir_pretty, ir_pretty);
+    sim_assert_eq!(expected_schema_pretty, schema_pretty);
 
     Ok(())
 }

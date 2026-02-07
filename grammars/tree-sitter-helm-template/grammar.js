@@ -253,7 +253,7 @@ module.exports = grammar({
     _r_blk_seq_val: $ => choice($._r_blk_seq_r_val, $._r_blk_seq_br_val),
     _r_blk_seq_r_val: $ => $._r_blk_seq,
     _r_blk_seq_br_val: $ => seq(choice($._r_prp, $._r_hlm_tpl), $._br_blk_seq),
-    _br_blk_seq_val: $ => choice($._br_blk_seq, seq(choice($._br_prp, $._br_hlm_tpl), $._br_blk_seq)),
+    _br_blk_seq_val: $ => choice($._br_blk_seq, $._br_blk_seq_tpl, seq(choice($._br_prp, $._br_hlm_tpl), choice($._br_blk_seq, $._br_blk_seq_tpl))),
 
     _r_blk_seq_spc_val: $ => seq($._r_prp, $._b_blk_seq_spc),
     _br_blk_seq_spc_val: $ => seq($._br_prp, $._b_blk_seq_spc),
@@ -261,6 +261,8 @@ module.exports = grammar({
 
     _r_blk_seq: $ => seq($._r_blk_seq_itm, repeat($._b_blk_seq_itm), $._bl),
     _br_blk_seq: $ => seq($._br_blk_seq_itm, repeat($._b_blk_seq_itm), $._bl),
+
+    _br_blk_seq_tpl: $ => seq(repeat1($._br_hlm_tpl), $._br_blk_seq),
 
     _b_blk_seq_spc: $ => seq(repeat1($._b_blk_seq_itm), $._bl),
 

@@ -768,11 +768,41 @@ static bool scn_dqt_str_cnt(Scanner *scanner, TSLexer *lexer, TSSymbol result_sy
     if (scanner->cur_col == 0 && scn_drs_doc_end(scanner, lexer)) {
         mrk_end(scanner, lexer);
         RET_SYM(scanner->cur_chr == '-' ? S_DRS_END : S_DOC_END);
-    } else {
-        adv(scanner, lexer);
     }
+
+    bool consumed = false;
     while (is_nb_double_char(lexer->lookahead)) {
+        if (lexer->lookahead == '{') {
+            adv(scanner, lexer);
+            consumed = true;
+            if (lexer->lookahead == '{') {
+                adv(scanner, lexer);
+                for (;;) {
+                    if (lexer->lookahead == 0) {
+                        break;
+                    }
+                    if (lexer->lookahead == '}') {
+                        adv(scanner, lexer);
+                        if (lexer->lookahead == '}') {
+                            adv(scanner, lexer);
+                            break;
+                        }
+                    } else if (is_nwl(lexer->lookahead)) {
+                        adv_nwl(scanner, lexer);
+                    } else {
+                        adv(scanner, lexer);
+                    }
+                }
+            }
+            continue;
+        }
+
         adv(scanner, lexer);
+        consumed = true;
+    }
+
+    if (!consumed) {
+        return false;
     }
     mrk_end(scanner, lexer);
     RET_SYM(result_symbol);
@@ -785,11 +815,41 @@ static bool scn_sqt_str_cnt(Scanner *scanner, TSLexer *lexer, TSSymbol result_sy
     if (scanner->cur_col == 0 && scn_drs_doc_end(scanner, lexer)) {
         mrk_end(scanner, lexer);
         RET_SYM(scanner->cur_chr == '-' ? S_DRS_END : S_DOC_END);
-    } else {
-        adv(scanner, lexer);
     }
+
+    bool consumed = false;
     while (is_nb_single_char(lexer->lookahead)) {
+        if (lexer->lookahead == '{') {
+            adv(scanner, lexer);
+            consumed = true;
+            if (lexer->lookahead == '{') {
+                adv(scanner, lexer);
+                for (;;) {
+                    if (lexer->lookahead == 0) {
+                        break;
+                    }
+                    if (lexer->lookahead == '}') {
+                        adv(scanner, lexer);
+                        if (lexer->lookahead == '}') {
+                            adv(scanner, lexer);
+                            break;
+                        }
+                    } else if (is_nwl(lexer->lookahead)) {
+                        adv_nwl(scanner, lexer);
+                    } else {
+                        adv(scanner, lexer);
+                    }
+                }
+            }
+            continue;
+        }
+
         adv(scanner, lexer);
+        consumed = true;
+    }
+
+    if (!consumed) {
+        return false;
     }
     mrk_end(scanner, lexer);
     RET_SYM(result_symbol);
@@ -1043,7 +1103,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                             valid_symbols[R_HLM_TPL] || valid_symbols[BR_HLM_TPL] || valid_symbols[B_HLM_TPL] ||
                             valid_symbols[COMMENT]);
             bool suppress_bl_for_hlm_line = can_hlm && is_line_start_pre && lexer->lookahead == '{' &&
-                                            ((cur_ind_typ == IND_SEQ && cur_ind == prt_ind && bgn_col == cur_ind) ||
+                                            (bgn_col < cur_ind ||
+                                             (cur_ind_typ == IND_SEQ && cur_ind == prt_ind && bgn_col == cur_ind) ||
                                              (cur_ind_typ == IND_STR) ||
                                              (cur_ind_typ == IND_MAP && scanner->blk_map_colon >= 0 &&
                                               bgn_col == scanner->blk_map_colon && bgn_col < cur_ind));
@@ -1271,6 +1332,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                             bool is_concat_after = lexer->lookahead != 0 && !is_wht(lexer->lookahead) && !is_nwl(lexer->lookahead) &&
                                                    lexer->lookahead != '#' && lexer->lookahead != ',' && lexer->lookahead != ']' &&
                                                    lexer->lookahead != '}';
+                            if (is_line_start && is_key_colon_after) {
+                                is_concat_after = false;
+                            }
                             bool treat_as_tpl = can_hlm_tpl && !is_hlm_control && !is_hlm_blk_comment;
                             if (treat_as_tpl) {
                                 prefer_hlm_dir = false;
@@ -1280,8 +1344,20 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                                 for (;;) {
                                     if (lexer->lookahead == 0 || is_wht(lexer->lookahead) || is_nwl(lexer->lookahead) ||
                                         lexer->lookahead == '#' || lexer->lookahead == ',' || lexer->lookahead == ']' ||
-                                        lexer->lookahead == '}' || lexer->lookahead == ':') {
+                                        lexer->lookahead == '}') {
                                         break;
+                                    }
+
+                                    if (lexer->lookahead == ':') {
+                                        if (is_line_start) {
+                                            break;
+                                        }
+                                        mrk_end(scanner, lexer);
+                                        adv(scanner, lexer);
+                                        if (lexer->lookahead == 0 || is_wht(lexer->lookahead) || is_nwl(lexer->lookahead)) {
+                                            break;
+                                        }
+                                        continue;
                                     }
 
                                     if (lexer->lookahead == '{') {
@@ -1408,9 +1484,6 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                             if (prefer_hlm_tpl && can_hlm_tpl) {
                                 if (is_r_hlm_tpl)
                                     RET_SYM(R_HLM_TPL);
-                                if (is_br_hlm_tpl && cur_ind_typ == IND_MAP && bgn_col > cur_ind) {
-                                    push_ind(scanner, IND_MAP, bgn_col);
-                                }
                                 if (is_br_hlm_tpl)
                                     RET_SYM(BR_HLM_TPL);
                                 if (is_b_hlm_tpl)
@@ -1427,9 +1500,6 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                             if (can_hlm_tpl) {
                                 if (is_r_hlm_tpl)
                                     RET_SYM(R_HLM_TPL);
-                                if (is_br_hlm_tpl && cur_ind_typ == IND_MAP && bgn_col > cur_ind) {
-                                    push_ind(scanner, IND_MAP, bgn_col);
-                                }
                                 if (is_br_hlm_tpl)
                                     RET_SYM(BR_HLM_TPL);
                                 if (is_b_hlm_tpl)

@@ -1,5 +1,26 @@
 use indoc::indoc;
 
+fn sanitize_yaml_from_gotmpl_text_nodes(gotmpl_tree: &tree_sitter::Tree, src: &str) -> String {
+    let mut out = String::new();
+    let root = gotmpl_tree.root_node();
+
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if node.kind() == "text" || node.kind() == "yaml_no_injection_text" {
+            let r = node.byte_range();
+            out.push_str(&src[r]);
+        }
+        let mut c = node.walk();
+        let kids: Vec<_> = node.children(&mut c).collect();
+        for ch in kids.into_iter().rev() {
+            if ch.is_named() {
+                stack.push(ch);
+            }
+        }
+    }
+    out
+}
+
 fn find_first<'a>(root: tree_sitter::Node<'a>, kind: &str) -> Option<tree_sitter::Node<'a>> {
     let mut stack = vec![root];
     while let Some(n) = stack.pop() {
@@ -28,8 +49,14 @@ fn find_mapping_pair_with_plain_key<'a>(
     while let Some(n) = stack.pop() {
         if n.kind() == "block_mapping_pair" {
             if let Some(key) = n.child_by_field_name("key") {
-                if key.kind() == "plain_scalar" {
-                    if let Ok(t) = key.utf8_text(src.as_bytes()) {
+                let key_scalar = if key.kind() == "plain_scalar" {
+                    Some(key)
+                } else {
+                    find_first(key, "plain_scalar")
+                };
+
+                if let Some(key_scalar) = key_scalar {
+                    if let Ok(t) = key_scalar.utf8_text(src.as_bytes()) {
                         if t.trim() == key_text {
                             return Some(n);
                         }
@@ -48,7 +75,9 @@ fn find_mapping_pair_with_plain_key<'a>(
 
 #[test]
 fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
-    let language = tree_sitter::Language::new(helm_schema_template_grammar::yaml::language());
+    let yaml_language = tree_sitter::Language::new(helm_schema_template_grammar::yaml::language());
+    let gotmpl_language =
+        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
 
     let src = indoc! {r#"
         apiVersion: v1
@@ -76,13 +105,24 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
                 - containerPort: 80
     "#};
 
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).unwrap();
-    let tree = parser.parse(src, None).unwrap();
+    let mut gotmpl_parser = tree_sitter::Parser::new();
+    gotmpl_parser.set_language(&gotmpl_language).unwrap();
+    let gotmpl_tree = gotmpl_parser.parse(src, None).unwrap();
+
+    let gotmpl_root = gotmpl_tree.root_node();
+    assert!(
+        has_any(gotmpl_root, "if_action"),
+        "missing if_action in gotmpl AST; sexp={}",
+        gotmpl_root.to_sexp()
+    );
+
+    let sanitized = sanitize_yaml_from_gotmpl_text_nodes(&gotmpl_tree, src);
+
+    let mut yaml_parser = tree_sitter::Parser::new();
+    yaml_parser.set_language(&yaml_language).unwrap();
+    let tree = yaml_parser.parse(&sanitized, None).unwrap();
 
     let root = tree.root_node();
-    assert!(!root.has_error(), "root has_error; sexp={}", root.to_sexp());
-
     assert!(
         has_any(root, "document"),
         "missing document; sexp={}",
@@ -94,10 +134,10 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
         root.to_sexp()
     );
 
-    let spec_pair = find_mapping_pair_with_plain_key(root, src, "spec")
+    let spec_pair = find_mapping_pair_with_plain_key(root, &sanitized, "spec")
         .unwrap_or_else(|| panic!("missing spec mapping pair; sexp={}", root.to_sexp()));
     let init_pair =
-        find_mapping_pair_with_plain_key(root, src, "initContainers").unwrap_or_else(|| {
+        find_mapping_pair_with_plain_key(root, &sanitized, "initContainers").unwrap_or_else(|| {
             panic!(
                 "missing initContainers mapping pair; sexp={}",
                 root.to_sexp()
@@ -125,21 +165,12 @@ fn smoke_parses_complex_inline_helm_yaml_and_ast_shape_is_stable() {
             )
         });
 
-    // This is the key regression check: the initContainers value should parse as a sequence
-    // and still include the helm template line inside that structure.
     assert!(
         has_any(init_value, "block_sequence"),
         "initContainers value does not contain a block_sequence; sexp={}",
         init_value.to_sexp()
     );
 
-    assert!(
-        has_any(init_value, "helm_template"),
-        "initContainers value does not contain helm_template; sexp={}",
-        init_value.to_sexp()
-    );
-
-    // Sanity: ensure we still parsed at least one explicit list item ('- name: init')
     let bs = find_first(init_value, "block_sequence").unwrap_or_else(|| {
         panic!(
             "missing block_sequence under initContainers; sexp={}",

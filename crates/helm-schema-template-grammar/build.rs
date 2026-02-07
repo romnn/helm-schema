@@ -17,8 +17,8 @@ fn main() {
     let grammars = [
         Grammar {
             name: "tree_sitter_yaml",
-            dir: "../../grammars/tree-sitter-helm-template",
-            vendor_dir: "tree-sitter-helm-template",
+            dir: "../../grammars/tree-sitter-yaml",
+            vendor_dir: "tree-sitter-yaml",
             c_files: &["src/parser.c", "src/scanner.c"],
             cxx_files: &[],
         },

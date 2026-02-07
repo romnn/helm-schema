@@ -1153,7 +1153,34 @@ impl VYT {
         self.ingest_text_up_to(node.start_byte());
 
         if node.kind() != "text" {
-            let (indent, col) = self.line_indent_and_col(node.start_byte());
+            let mut pos = node.start_byte().min(self.source.len());
+            let end = node.end_byte().min(self.source.len());
+            while pos < end {
+                match self.source.as_bytes()[pos] {
+                    b' ' | b'\t' | b'\n' | b'\r' => {
+                        pos += 1;
+                    }
+                    _ => break,
+                }
+            }
+
+            if pos > node.start_byte() {
+                let leading = &self.source[node.start_byte()..pos];
+                let mut sanitized = String::with_capacity(leading.len());
+                for ch in leading.chars() {
+                    if ch == '\n' || ch == ' ' || ch == '\t' {
+                        sanitized.push(ch);
+                    }
+                }
+                if !sanitized.is_empty() {
+                    self.shape.ingest(&sanitized);
+                    self.resource_detector.ingest(&sanitized);
+                    self.yaml_tree.update_partial_yaml(&sanitized);
+                    self.text_pos = pos;
+                }
+            }
+
+            let (indent, col) = self.line_indent_and_col(pos);
             self.shape.sync_action_position(indent, col);
         }
 
@@ -1650,11 +1677,18 @@ impl VYT {
                     _ => Vec::new(),
                 }
             }
-            "dot" => self
-                .bindings
-                .dot_binding()
-                .map(|b| b.bases.clone())
-                .unwrap_or_default(),
+            "dot" => {
+                if let Ok(txt) = n.utf8_text(self.source.as_bytes()) {
+                    if txt.trim() == "." {
+                        return self
+                            .bindings
+                            .dot_binding()
+                            .map(|b| b.bases.clone())
+                            .unwrap_or_default();
+                    }
+                }
+                Vec::new()
+            }
             "variable" | "identifier" => {
                 let Ok(txt) = n.utf8_text(self.source.as_bytes()) else {
                     return Vec::new();
@@ -1818,6 +1852,8 @@ impl VYT {
                     .find(|ch| ch.is_named() && ch.kind() != "text" && ch.kind() != "ERROR");
 
                 if let Some(h) = header {
+                    self.ingest_text_up_to(h.start_byte());
+
                     let keys = self.collect_values_anywhere(h);
                     for k in keys {
                         if !k.is_empty() {
@@ -1826,10 +1862,11 @@ impl VYT {
                             // ALSO: record a stand-alone guard use at the current YAML path
                             self.uses.push(VYUse {
                                 source_expr: k,
-                                // Control-flow header reads are not concrete YAML writes.
-                                // Record them with an empty path so downstream logic can treat
-                                // them purely as guards/conditions.
-                                path: YPath(Vec::new()),
+                                path: if node.kind() == "range_action" {
+                                    self.shape.current_path()
+                                } else {
+                                    YPath(Vec::new())
+                                },
                                 kind: VYKind::Scalar, // role-less model; scalar is fine for presence
                                 guards: vec![],
                                 resource: self.resource_detector.current(),
@@ -1941,7 +1978,7 @@ impl VYT {
                 let mut bases: Vec<String> = Vec::new();
 
                 // if t == "." {
-                if node.kind() == "dot" || t == "." {
+                if t == "." {
                     if let Some(b) = self.bindings.dot_binding() {
                         let in_sequence = self
                             .shape
@@ -1991,10 +2028,10 @@ impl VYT {
         }
 
         // Existing producer / selector handling as before
-        let is_fragment = matches!(
-            function_name_of(&node, &self.source).as_deref(),
-            Some("include" | "template" | "tpl")
-        ) || pipeline_contains_any(
+        let func = function_name_of(&node, &self.source);
+        let is_include_like = matches!(func.as_deref(), Some("include" | "template"));
+        let is_fragment = matches!(func.as_deref(), Some("include" | "template" | "tpl"))
+            || pipeline_contains_any(
             node,
             &self.source,
             &["toYaml", "fromYaml", "nindent", "indent", "tpl"],
@@ -2002,12 +2039,20 @@ impl VYT {
         let mut sources = self.collect_values_anywhere(node);
 
         if sources.is_empty() && is_fragment {
+            if is_include_like {
+                return;
+            }
+
             let mut stack = vec![node];
             let mut has_dot = false;
             while let Some(n) = stack.pop() {
                 if n.is_named() && n.kind() == "dot" {
-                    has_dot = true;
-                    break;
+                    if let Ok(t) = n.utf8_text(self.source.as_bytes()) {
+                        if t.trim() == "." {
+                            has_dot = true;
+                            break;
+                        }
+                    }
                 }
                 let mut w = n.walk();
                 for ch in n.children(&mut w) {

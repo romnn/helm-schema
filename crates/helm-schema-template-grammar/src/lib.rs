@@ -14,7 +14,7 @@ pub mod yaml {
     /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers#static-node-types
     pub const NODE_TYPES: &'static str = include_str!(concat!(
         env!("OUT_DIR"),
-        "/vendor/tree-sitter-helm-template/src/node-types.json"
+        "/vendor/tree-sitter-yaml/src/node-types.json"
     ));
 
     #[cfg(test)]
