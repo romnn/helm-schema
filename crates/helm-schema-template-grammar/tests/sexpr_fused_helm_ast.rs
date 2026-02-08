@@ -348,7 +348,7 @@ fn fuse_blocks<'a>(blocks: Vec<tree_sitter::Node<'a>>, src: &str) -> Vec<SExpr> 
     let mut out: Vec<SExpr> = Vec::new();
     let mut pending = String::new();
 
-    let mut flush_pending = |pending: &mut String, out: &mut Vec<SExpr>| {
+    let flush_pending = |pending: &mut String, out: &mut Vec<SExpr>| {
         if pending.trim().is_empty() {
             pending.clear();
             return;
@@ -357,7 +357,46 @@ fn fuse_blocks<'a>(blocks: Vec<tree_sitter::Node<'a>>, src: &str) -> Vec<SExpr> 
         out.extend(parse_yaml_items(&fragment));
     };
 
-    for b in blocks {
+    let mut i = 0usize;
+    while i < blocks.len() {
+        let b = blocks[i];
+
+        // A go-template comment action is represented as:
+        //   `{{`/`{{-` (anonymous token), `comment` (named), `}}`/`-}}` (anonymous token)
+        // We want this to survive the fusion pass as a distinct node instead of being
+        // appended into YAML text (where it will be dropped by the YAML parser as an extra).
+        if (b.kind() == "{{" || b.kind() == "{{-")
+            && blocks
+                .get(i + 1)
+                .is_some_and(|n| n.is_named() && n.kind() == "comment")
+        {
+            flush_pending(&mut pending, &mut out);
+
+            let comment_node = blocks[i + 1];
+            let comment_text = comment_node.utf8_text(src.as_bytes()).unwrap_or("");
+            out.push(SExpr::Leaf {
+                kind: "helm_comment".to_string(),
+                text: Some(comment_text.to_string()),
+            });
+
+            // Skip the left delimiter + comment.
+            i += 2;
+
+            // Skip any immediate whitespace token(s) before a trim-right delimiter `-}}`.
+            while i < blocks.len()
+                && !blocks[i].is_named()
+                && blocks[i].kind().chars().all(|c| c.is_whitespace())
+            {
+                i += 1;
+            }
+
+            // Skip the right delimiter if present.
+            if i < blocks.len() && (blocks[i].kind() == "}}" || blocks[i].kind() == "-}}") {
+                i += 1;
+            }
+            continue;
+        }
+
         if is_control_flow(b.kind()) {
             flush_pending(&mut pending, &mut out);
             out.push(fuse_control_flow(b, src));
@@ -365,6 +404,8 @@ fn fuse_blocks<'a>(blocks: Vec<tree_sitter::Node<'a>>, src: &str) -> Vec<SExpr> 
             let r = b.byte_range();
             pending.push_str(&src[r]);
         }
+
+        i += 1;
     }
 
     flush_pending(&mut pending, &mut out);
@@ -722,36 +763,116 @@ fn if_else_end_with_yaml_branches() {
 }
 
 #[test]
-fn if_else_end_with_yaml_branches() {
+fn redis_prometheus_rule_yaml() {
     let src = indoc! {r#"
-        {{- if .Values.enabled }}
-        foo: bar
-        {{- else }}
-        {}
+        {{- /*
+        Copyright Broadcom, Inc. All Rights Reserved.
+        SPDX-License-Identifier: APACHE-2.0
+        */}}
+
+        {{- if and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled }}
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: {{ template "common.names.fullname" . }}
+          namespace: {{ default (include "common.names.namespace" .) .Values.metrics.prometheusRule.namespace | quote }}
+          labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+            {{- if .Values.metrics.prometheusRule.additionalLabels }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.metrics.prometheusRule.additionalLabels "context" $) | nindent 4 }}
+            {{- end }}
+          {{- if .Values.commonAnnotations }}
+          annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+          {{- end }}
+        spec:
+          groups:
+            - name: {{ include "common.names.fullname" . }}
+              rules: {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.prometheusRule.rules "context" $ ) | nindent 8 }}
         {{- end }}
     "#};
 
     let want = indoc! {r#"
         (doc
+          (helm_comment :text "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
           (if
-            (cond :text ".Values.enabled")
+            (cond :text "and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled")
             (then
               (map
                 (entry
-                  (str :text "foo")
-                  (str :text "bar")
+                  (str :text "apiVersion")
+                  (str :text "monitoring.coreos.com/v1")
+                )
+                (entry
+                  (str :text "kind")
+                  (str :text "PrometheusRule")
+                )
+                (entry
+                  (str :text "metadata")
+                  (map
+                    (entry
+                      (str :text "name")
+                      (helm_expr :text "template \"common.names.fullname\" .")
+                    )
+                    (entry
+                      (str :text "namespace")
+                      (helm_expr :text "default (include \"common.names.namespace\" .) .Values.metrics.prometheusRule.namespace | quote")
+                    )
+                    (entry
+                      (str :text "labels")
+                      (helm_expr :text "include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4")
+                    )
+                  )
+                )
+              )
+              (if
+                (cond :text ".Values.metrics.prometheusRule.additionalLabels")
+                (then
+                  (helm_expr :text "include \"common.tplvalues.render\" (dict \"value\" .Values.metrics.prometheusRule.additionalLabels \"context\" $) | nindent 4")
+                )
+                (else)
+              )
+              (if
+                (cond :text ".Values.commonAnnotations")
+                (then
+                  (map
+                    (entry
+                      (str :text "annotations")
+                      (helm_expr :text "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")
+                    )
+                  )
+                )
+                (else)
+              )
+              (map
+                (entry
+                  (str :text "spec")
+                  (map
+                    (entry
+                      (str :text "groups")
+                      (seq
+                        (map
+                          (entry
+                            (str :text "name")
+                            (helm_expr :text "include \"common.names.fullname\" .")
+                          )
+                          (entry
+                            (str :text "rules")
+                            (helm_expr :text "include \"common.tplvalues.render\" ( dict \"value\" .Values.metrics.prometheusRule.rules \"context\" $ ) | nindent 8")
+                          )
+                        )
+                      )
+                    )
+                  )
                 )
               )
             )
-            (else
-              (map)
-            )
+            (else)
           )
         )
     "#};
 
     let have = parse_fused_template(src);
     let want = SExpr::from_str(want).expect("parse expected");
+    println!("{}", have.to_string_pretty());
     similar_asserts::assert_eq!(have, want);
 }
 
