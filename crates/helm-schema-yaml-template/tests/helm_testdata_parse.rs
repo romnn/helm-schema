@@ -70,7 +70,7 @@ fn collect_template_files(root: &Path, predicate: fn(&Path) -> bool) -> Vec<Path
 fn parse_all_testdata_helm_yaml_templates() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
-        .join("helm-schema-mapper")
+        .join("..")
         .join("testdata");
 
     let files = collect_template_files(&root, is_yaml_template_file);
@@ -106,8 +106,7 @@ fn parse_all_testdata_helm_yaml_templates() {
 #[test]
 fn parse_representative_yaml_template_to_mapping() {
     let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("helm-schema-mapper")
+        .join("../..")
         .join("testdata")
         .join("charts")
         .join("bitnami-redis")
@@ -150,8 +149,7 @@ fn parse_representative_yaml_template_to_mapping() {
 #[test]
 fn parse_networkpolicy_yaml_template() {
     let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("helm-schema-mapper")
+        .join("../..")
         .join("testdata")
         .join("charts")
         .join("bitnami-redis")
@@ -188,8 +186,7 @@ fn parse_networkpolicy_yaml_template() {
 #[test]
 fn parse_ports_configmap_yaml_template() {
     let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("helm-schema-mapper")
+        .join("../..")
         .join("testdata")
         .join("charts")
         .join("bitnami-redis")
@@ -228,7 +225,7 @@ fn parse_ports_configmap_yaml_template() {
 fn scan_all_testdata_non_yaml_templates() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
-        .join("helm-schema-mapper")
+        .join("..")
         .join("testdata");
 
     let files = collect_template_files(&root, is_non_yaml_template_file);

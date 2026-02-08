@@ -361,8 +361,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
     let dump_sanitized = std::env::var("HELM_SCHEMA_DUMP_SANITIZED").ok();
 
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("helm-schema-mapper")
+        .join("../..")
         .join("testdata")
         .join("charts");
 
