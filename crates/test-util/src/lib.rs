@@ -2,8 +2,11 @@ use color_eyre::eyre;
 use std::sync::Once;
 use vfs::VfsPath;
 
+pub mod sexpr;
+
 pub mod prelude {
     pub use crate::matchers::*;
+    pub use crate::sexpr::{ParseError as SExprParseError, SExpr};
     pub use crate::write;
     pub use crate::{Builder, LogLevel};
     pub use googletest::{assert_that, matcher::MatcherBase, matchers::*};

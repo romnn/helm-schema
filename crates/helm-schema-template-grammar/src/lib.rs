@@ -55,3 +55,28 @@ pub mod go_template {
         }
     }
 }
+
+pub mod helm_template {
+    unsafe extern "C" {
+        fn tree_sitter_helm_template() -> *const ();
+    }
+
+    pub fn language() -> tree_sitter_language::LanguageFn {
+        unsafe { tree_sitter_language::LanguageFn::from_raw(tree_sitter_helm_template) }
+    }
+
+    pub const NODE_TYPES: &'static str = include_str!(concat!(
+        env!("OUT_DIR"),
+        "/vendor/tree-sitter-helm-template/src/node-types.json"
+    ));
+
+    #[cfg(test)]
+    mod tests {
+        #[test]
+        fn loads_grammar() {
+            let mut parser = tree_sitter::Parser::new();
+            let language = tree_sitter::Language::new(super::language());
+            parser.set_language(&language).unwrap();
+        }
+    }
+}

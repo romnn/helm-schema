@@ -1,158 +1,8 @@
-use std::fmt;
-
-use lexpr::Value;
+use test_util::sexpr::SExpr;
 
 use yaml_rust::scanner::ScanError;
 use yaml_rust::FusedNode;
 use yaml_rust::{Yaml, YamlLoader};
-
-#[derive(Debug, thiserror::Error)]
-pub enum ParseError {
-    #[error(transparent)]
-    Parse(#[from] lexpr::parse::Error),
-
-    #[error("expected an s-expression list or NULL, but found: {0:?}")]
-    InvalidExpression(Value),
-
-    #[error("expected node kind to be a symbol, found {0:?}")]
-    InvalidNodeKind(Value),
-
-    #[error("node `{0}` is missing a :text attribute")]
-    MissingTextAttribute(String),
-
-    #[error(":text keyword for node `{0}` is not followed by a string value")]
-    TextAttributeWithoutString(String),
-
-    #[error(":text value for node `{0}` must be a string")]
-    NonStringTextAttribute(String),
-
-    #[error("s-expression cannot be empty")]
-    Empty,
-}
-
-#[derive(Clone, PartialEq, Eq)]
-pub enum SExpr {
-    Empty,
-    Leaf { kind: String, text: Option<String> },
-    Node { kind: String, children: Vec<SExpr> },
-}
-
-impl SExpr {
-    pub fn from_str(text: &str) -> Result<Self, ParseError> {
-        let options = lexpr::parse::Options::default()
-            .with_keyword_syntax(lexpr::parse::KeywordSyntax::ColonPrefix);
-        let value = lexpr::from_str_custom(text, options)?;
-        convert_lexpr_to_sexpr(&value)
-    }
-
-    pub fn to_string_pretty(&self) -> String {
-        let mut out = String::new();
-        let _ = self.write_with_indent(0, &mut out);
-        out
-    }
-
-    fn write_with_indent(&self, indent: usize, w: &mut impl fmt::Write) -> fmt::Result {
-        let indent_str = " ".repeat(indent);
-        match self {
-            SExpr::Empty => write!(w, "{indent_str}()"),
-            SExpr::Leaf { kind, text } => {
-                if let Some(text) = text {
-                    write!(w, "{indent_str}({kind} :text {})", escape_lexpr_string(text))
-                } else {
-                    write!(w, "{indent_str}({kind})")
-                }
-            }
-            SExpr::Node { kind, children } => {
-                write!(w, "{indent_str}({kind}")?;
-                for child in children {
-                    write!(w, "\n")?;
-                    child.write_with_indent(indent + 2, w)?;
-                }
-                write!(w, "\n{indent_str})")
-            }
-        }
-    }
-}
-
-impl fmt::Debug for SExpr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string_pretty())
-    }
-}
-
-impl fmt::Display for SExpr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string_pretty())
-    }
-}
-
-fn escape_lexpr_string(s: &str) -> String {
-    Value::String(s.into()).to_string()
-}
-
-fn convert_lexpr_to_sexpr(value: &Value) -> Result<SExpr, ParseError> {
-    let list: &lexpr::Cons = match value {
-        Value::Null => return Ok(SExpr::Empty),
-        Value::Cons(list) => list,
-        other => return Err(ParseError::InvalidExpression(other.clone())),
-    };
-
-    let mut items = list.iter().peekable();
-
-    let kind_val = items.next().ok_or(ParseError::Empty)?.car();
-    let kind = kind_val
-        .as_symbol()
-        .ok_or_else(|| ParseError::InvalidNodeKind(kind_val.clone()))?
-        .to_string();
-
-    let has_text = items
-        .peek()
-        .map(|item| item.car())
-        .and_then(|item| item.as_keyword())
-        .is_some_and(|kw| kw == "text");
-
-    let text = if has_text {
-        let _text_item = items
-            .next()
-            .ok_or_else(|| ParseError::MissingTextAttribute(kind.clone()))?;
-
-        let text_val = items
-            .next()
-            .ok_or_else(|| ParseError::TextAttributeWithoutString(kind.clone()))?
-            .car();
-
-        let text = text_val
-            .as_str()
-            .ok_or_else(|| ParseError::NonStringTextAttribute(kind.clone()))?
-            .to_string();
-
-        Some(text)
-    } else {
-        None
-    };
-
-    let children: Vec<SExpr> = items
-        .map(|item| item.car())
-        .map(convert_lexpr_to_sexpr)
-        .collect::<Result<_, _>>()?;
-
-    if children.is_empty() {
-        Ok(SExpr::Leaf { kind, text })
-    } else if text.is_none() {
-        Ok(SExpr::Node { kind, children })
-    } else {
-        let mut wrapped = Vec::with_capacity(children.len() + 1);
-        wrapped.push(SExpr::Leaf {
-            kind: "text".to_string(),
-            text,
-        });
-        wrapped.extend(children);
-        Ok(SExpr::Node {
-            kind,
-            children: wrapped,
-        })
-    }
-}
 
 pub fn yaml_to_sexpr(doc: &Yaml) -> SExpr {
     match doc {
@@ -450,7 +300,11 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
                 },
             ],
         },
-        FusedNode::Unknown { kind, text, children } => {
+        FusedNode::Unknown {
+            kind,
+            text,
+            children,
+        } => {
             let mut out_children = Vec::new();
             if let Some(text) = text {
                 out_children.push(SExpr::Leaf {

@@ -1,6 +1,6 @@
-use linked_hash_map::LinkedHashMap;
 use crate::parser::*;
 use crate::scanner::{Marker, ScanError, TScalarStyle, TokenType};
+use linked_hash_map::LinkedHashMap;
 use std::collections::BTreeMap;
 use std::f64;
 use std::i64;
@@ -367,8 +367,8 @@ impl Iterator for YamlIter {
 
 #[cfg(test)]
 mod test {
-    use std::f64;
     use crate::yaml::*;
+    use std::f64;
     #[test]
     fn test_coerce() {
         let s = "---

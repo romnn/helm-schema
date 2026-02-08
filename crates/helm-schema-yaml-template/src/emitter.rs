@@ -1,7 +1,7 @@
+use crate::yaml::{Hash, Yaml};
 use std::convert::From;
 use std::error::Error;
 use std::fmt::{self, Display};
-use crate::yaml::{Hash, Yaml};
 
 #[derive(Copy, Clone, Debug)]
 pub enum EmitError {
@@ -631,5 +631,4 @@ a:
 
         assert_eq!(s, writer);
     }
-
 }

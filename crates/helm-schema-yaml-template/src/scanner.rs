@@ -547,8 +547,10 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             || starts_with_control_kw(inner, "define")
             || starts_with_control_kw(inner, "block")
             || starts_with_control_kw(inner, "fail");
-        let is_assignment = inner.starts_with('$') && (inner.contains(":=") || inner.contains(" = "));
-        let is_comment = inner.starts_with("/*") || inner.starts_with("-/*") || inner.starts_with("//");
+        let is_assignment =
+            inner.starts_with('$') && (inner.contains(":=") || inner.contains(" = "));
+        let is_comment =
+            inner.starts_with("/*") || inner.starts_with("-/*") || inner.starts_with("//");
 
         let is_include_like = matches!(first, "include" | "template" | "tpl");
 
@@ -954,7 +956,11 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         }
     }
 
-    fn scan_helm_action_into(&mut self, out: &mut String, start_mark: Marker) -> Result<(), ScanError> {
+    fn scan_helm_action_into(
+        &mut self,
+        out: &mut String,
+        start_mark: Marker,
+    ) -> Result<(), ScanError> {
         self.lookahead(2);
         if self.buffer[0] != '{' || self.buffer[1] != '{' {
             return Ok(());

@@ -14,22 +14,39 @@ pub enum FusedParseError {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FusedNode {
-    Stream { items: Vec<FusedNode> },
-    Document { items: Vec<FusedNode> },
+    Stream {
+        items: Vec<FusedNode>,
+    },
+    Document {
+        items: Vec<FusedNode>,
+    },
 
-    Mapping { items: Vec<FusedNode> },
+    Mapping {
+        items: Vec<FusedNode>,
+    },
     Pair {
         key: Box<FusedNode>,
         value: Option<Box<FusedNode>>,
     },
 
-    Sequence { items: Vec<FusedNode> },
-    Item { value: Option<Box<FusedNode>> },
+    Sequence {
+        items: Vec<FusedNode>,
+    },
+    Item {
+        value: Option<Box<FusedNode>>,
+    },
 
-    Scalar { kind: String, text: String },
+    Scalar {
+        kind: String,
+        text: String,
+    },
 
-    HelmExpr { text: String },
-    HelmComment { text: String },
+    HelmExpr {
+        text: String,
+    },
+    HelmComment {
+        text: String,
+    },
 
     If {
         cond: String,
@@ -55,7 +72,11 @@ pub enum FusedNode {
         body: Vec<FusedNode>,
     },
 
-    Unknown { kind: String, text: Option<String>, children: Vec<FusedNode> },
+    Unknown {
+        kind: String,
+        text: Option<String>,
+        children: Vec<FusedNode>,
+    },
 }
 
 impl fmt::Display for FusedNode {
@@ -112,8 +133,7 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
 
     let mut lines = src.split_inclusive('\n').peekable();
     while let Some(line) = lines.next() {
-        if let Some((raw_action, _indent_col)) = try_take_standalone_helm_action(line, &mut lines)
-        {
+        if let Some((raw_action, _indent_col)) = try_take_standalone_helm_action(line, &mut lines) {
             flush_yaml(&mut pending_yaml, &mut stack, &mut out)?;
 
             let tok = parse_helm_template_text(&raw_action);
@@ -363,10 +383,7 @@ fn try_take_standalone_helm_action<'a>(
     line: &str,
     lines: &mut std::iter::Peekable<impl Iterator<Item = &'a str>>,
 ) -> Option<(String, usize)> {
-    let start_col = line
-        .chars()
-        .take_while(|c| *c == ' ' || *c == '\t')
-        .count();
+    let start_col = line.chars().take_while(|c| *c == ' ' || *c == '\t').count();
     let after_indent = &line[start_col..];
     if !after_indent.starts_with("{{") {
         return None;

@@ -23,7 +23,8 @@ fn is_non_yaml_template_file(path: &Path) -> bool {
 }
 
 fn has_templates_dir_component(path: &Path) -> bool {
-    path.components().any(|c| c.as_os_str() == OsStr::new("templates"))
+    path.components()
+        .any(|c| c.as_os_str() == OsStr::new("templates"))
 }
 
 fn collect_template_files(root: &Path, predicate: fn(&Path) -> bool) -> Vec<PathBuf> {
@@ -130,12 +131,7 @@ fn parse_representative_yaml_template_to_mapping() {
                 if line < min_line || line > max_line {
                     continue;
                 }
-                eprintln!(
-                    "tok @ {}:{} -> {:?}",
-                    line + 1,
-                    tok.0.col() + 1,
-                    tok.1
-                );
+                eprintln!("tok @ {}:{} -> {:?}", line + 1, tok.0.col() + 1, tok.1);
             }
             if let Some(se) = sc.get_error() {
                 eprintln!("scanner error: {se}");
@@ -145,7 +141,10 @@ fn parse_representative_yaml_template_to_mapping() {
         }
     };
     assert!(!docs.is_empty(), "expected at least one YAML document");
-    assert!(docs[0].as_hash().is_some(), "expected first document to be a mapping");
+    assert!(
+        docs[0].as_hash().is_some(),
+        "expected first document to be a mapping"
+    );
 }
 
 #[test]
@@ -174,12 +173,7 @@ fn parse_networkpolicy_yaml_template() {
                 if line < min_line || line > max_line {
                     continue;
                 }
-                eprintln!(
-                    "tok @ {}:{} -> {:?}",
-                    line + 1,
-                    tok.0.col() + 1,
-                    tok.1
-                );
+                eprintln!("tok @ {}:{} -> {:?}", line + 1, tok.0.col() + 1, tok.1);
             }
             if let Some(se) = sc.get_error() {
                 eprintln!("scanner error: {se}");
@@ -218,12 +212,7 @@ fn parse_ports_configmap_yaml_template() {
                 if line < min_line || line > max_line {
                     continue;
                 }
-                eprintln!(
-                    "tok @ {}:{} -> {:?}",
-                    line + 1,
-                    tok.0.col() + 1,
-                    tok.1
-                );
+                eprintln!("tok @ {}:{} -> {:?}", line + 1, tok.0.col() + 1, tok.1);
             }
             if let Some(se) = sc.get_error() {
                 eprintln!("scanner error: {se}");
