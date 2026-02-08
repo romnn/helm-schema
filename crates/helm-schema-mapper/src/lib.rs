@@ -1,6 +1,7 @@
 #![allow(warnings)]
 
 pub mod analyze;
+pub mod fused_ir;
 pub mod sanitize;
 pub mod schema;
 pub mod values;

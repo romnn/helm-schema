@@ -242,7 +242,7 @@ impl Bindings {
 }
 
 /// A minimal YAML path that’s easy to compare in tests.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 pub struct YPath(pub Vec<String>);
 
 impl std::fmt::Display for YPath {
@@ -252,7 +252,7 @@ impl std::fmt::Display for YPath {
 }
 
 /// What we record from interpretation.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
 pub struct VYUse {
     pub source_expr: String,           // e.g., "labels" (Values.labels)
     pub path: YPath,                   // e.g., ["metadata","labels"]
@@ -261,13 +261,13 @@ pub struct VYUse {
     pub resource: Option<ResourceRef>, // detected apiVersion/kind for the current YAML document
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize)]
 pub struct ResourceRef {
     pub api_version: String,
     pub kind: String,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
 pub enum VYKind {
     Scalar,
     Fragment,
