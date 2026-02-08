@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 
 use crate::scanner::ScanError;
@@ -110,10 +111,17 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
 
         let fragment = std::mem::take(pending_yaml);
         let fragment = deindent_yaml_fragment(&fragment);
-        match YamlLoader::load_from_str(&fragment) {
+        let (yaml_fragment, mut inline_value_frags) =
+            rewrite_inline_block_value_fragments(&fragment);
+
+        match YamlLoader::load_from_str(&yaml_fragment) {
             Ok(docs) => {
                 for doc in docs {
-                    push_to_current(stack, out, convert_yaml_to_fused(&doc));
+                    let mut node = convert_yaml_to_fused(&doc);
+                    if !inline_value_frags.is_empty() {
+                        apply_inline_value_fragments(&mut node, &mut inline_value_frags);
+                    }
+                    push_to_current(stack, out, node);
                 }
             }
             Err(_e) => {
@@ -483,10 +491,43 @@ fn convert_yaml_to_fused(doc: &Yaml) -> FusedNode {
             kind: "real".to_string(),
             text: s.clone(),
         },
-        Yaml::String(s) => FusedNode::Scalar {
-            kind: "str".to_string(),
-            text: s.clone(),
-        },
+        Yaml::String(s) => {
+            if is_entire_helm_action_scalar(s) {
+                match parse_helm_template_text(s) {
+                    HelmTok::Comment { text } => FusedNode::HelmComment { text },
+                    HelmTok::Expr { text } => FusedNode::HelmExpr { text },
+                    HelmTok::OpenIf { cond } => FusedNode::HelmExpr {
+                        text: format!("if {cond}"),
+                    },
+                    HelmTok::OpenRange { header } => FusedNode::HelmExpr {
+                        text: format!("range {header}"),
+                    },
+                    HelmTok::OpenWith { header } => FusedNode::HelmExpr {
+                        text: format!("with {header}"),
+                    },
+                    HelmTok::OpenDefine { header } => FusedNode::HelmExpr {
+                        text: format!("define {header}"),
+                    },
+                    HelmTok::OpenBlock { header } => FusedNode::HelmExpr {
+                        text: format!("block {header}"),
+                    },
+                    HelmTok::Else => FusedNode::HelmExpr {
+                        text: "else".to_string(),
+                    },
+                    HelmTok::ElseIf { cond } => FusedNode::HelmExpr {
+                        text: format!("else if {cond}"),
+                    },
+                    HelmTok::End => FusedNode::HelmExpr {
+                        text: "end".to_string(),
+                    },
+                }
+            } else {
+                FusedNode::Scalar {
+                    kind: "str".to_string(),
+                    text: s.clone(),
+                }
+            }
+        }
         Yaml::Array(items) => FusedNode::Sequence {
             items: items
                 .iter()
@@ -512,5 +553,155 @@ fn convert_yaml_to_fused(doc: &Yaml) -> FusedNode {
             kind: "bad".to_string(),
             text: "bad".to_string(),
         },
+    }
+}
+
+fn is_entire_helm_action_scalar(s: &str) -> bool {
+    let s = s.trim();
+    s.starts_with("{{") && s.ends_with("}}")
+}
+
+fn rewrite_inline_block_value_fragments(fragment: &str) -> (String, HashMap<String, Vec<String>>) {
+    let mut out = String::with_capacity(fragment.len());
+    let mut frags: HashMap<String, Vec<String>> = HashMap::new();
+
+    for line in fragment.split_inclusive('\n') {
+        let nl = if line.ends_with('\n') { "\n" } else { "" };
+        let line_no_nl = line.strip_suffix('\n').unwrap_or(line);
+
+        let Some(colon_at) = line_no_nl.find(':') else {
+            out.push_str(line);
+            continue;
+        };
+
+        let (lhs, rhs_with_colon) = line_no_nl.split_at(colon_at);
+        let key = lhs.trim();
+        if key.is_empty() {
+            out.push_str(line);
+            continue;
+        }
+
+        let rhs = &rhs_with_colon[1..];
+        let rhs_trim = rhs.trim_start();
+
+        if !rhs_trim.starts_with("{{") {
+            out.push_str(line);
+            continue;
+        }
+
+        let Some((action, _rest)) = take_action_if_closed_on_line(rhs_trim) else {
+            out.push_str(line);
+            continue;
+        };
+
+        let likely_block = action.contains("nindent") || action.contains("indent");
+        if !likely_block {
+            out.push_str(line);
+            continue;
+        }
+
+        let expr_text = match parse_helm_template_text(&action) {
+            HelmTok::Expr { text } => text,
+            HelmTok::Comment { text } => text,
+            other => format!("{other:?}"),
+        };
+        frags.entry(key.to_string()).or_default().push(expr_text);
+
+        out.push_str(&line_no_nl[..=colon_at]);
+        out.push_str(nl);
+    }
+
+    (out, frags)
+}
+
+fn apply_inline_value_fragments(node: &mut FusedNode, frags: &mut HashMap<String, Vec<String>>) {
+    match node {
+        FusedNode::Mapping { items } => {
+            for item in items.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+        }
+        FusedNode::Pair { key, value } => {
+            apply_inline_value_fragments(key, frags);
+            if let Some(v) = value.as_deref_mut() {
+                apply_inline_value_fragments(v, frags);
+            }
+
+            let FusedNode::Scalar { kind, text } = key.as_ref() else {
+                return;
+            };
+            if kind != "str" {
+                return;
+            }
+            let Some(v) = value.as_deref_mut() else {
+                return;
+            };
+            let FusedNode::Scalar {
+                kind: v_kind,
+                text: _v_text,
+            } = v
+            else {
+                return;
+            };
+            if v_kind != "null" {
+                return;
+            }
+
+            if let Some(exprs) = frags.get_mut(text) {
+                if !exprs.is_empty() {
+                    let expr = exprs.remove(0);
+                    *value = Some(Box::new(FusedNode::HelmExpr { text: expr }));
+                }
+            }
+        }
+        FusedNode::Sequence { items } => {
+            for item in items.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+        }
+        FusedNode::Item { value } => {
+            if let Some(v) = value.as_deref_mut() {
+                apply_inline_value_fragments(v, frags);
+            }
+        }
+        FusedNode::If {
+            then_branch,
+            else_branch,
+            ..
+        } => {
+            for item in then_branch.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+            for item in else_branch.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+        }
+        FusedNode::Range {
+            body, else_branch, ..
+        }
+        | FusedNode::With {
+            body, else_branch, ..
+        } => {
+            for item in body.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+            for item in else_branch.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+        }
+        FusedNode::Define { body, .. } | FusedNode::Block { body, .. } => {
+            for item in body.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+        }
+        FusedNode::Stream { items } | FusedNode::Document { items } => {
+            for item in items.iter_mut() {
+                apply_inline_value_fragments(item, frags);
+            }
+        }
+        FusedNode::Scalar { .. }
+        | FusedNode::HelmExpr { .. }
+        | FusedNode::HelmComment { .. }
+        | FusedNode::Unknown { .. } => {}
     }
 }
