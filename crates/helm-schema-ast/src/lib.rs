@@ -73,6 +73,156 @@ pub enum HelmAst {
     },
 }
 
+impl HelmAst {
+    /// Render this AST as a pretty-printed S-expression string.
+    pub fn to_sexpr(&self) -> String {
+        let mut buf = String::new();
+        self.write_sexpr(&mut buf, 0);
+        buf
+    }
+
+    fn write_sexpr(&self, buf: &mut String, indent: usize) {
+        let pad = "  ".repeat(indent);
+        match self {
+            HelmAst::Document { items } => {
+                buf.push_str(&format!("{pad}(Document"));
+                for item in items {
+                    buf.push('\n');
+                    item.write_sexpr(buf, indent + 1);
+                }
+                buf.push(')');
+            }
+            HelmAst::Mapping { items } => {
+                buf.push_str(&format!("{pad}(Mapping"));
+                for item in items {
+                    buf.push('\n');
+                    item.write_sexpr(buf, indent + 1);
+                }
+                buf.push(')');
+            }
+            HelmAst::Pair { key, value } => {
+                buf.push_str(&format!("{pad}(Pair"));
+                buf.push('\n');
+                key.write_sexpr(buf, indent + 1);
+                if let Some(v) = value {
+                    buf.push('\n');
+                    v.write_sexpr(buf, indent + 1);
+                }
+                buf.push(')');
+            }
+            HelmAst::Sequence { items } => {
+                buf.push_str(&format!("{pad}(Sequence"));
+                for item in items {
+                    buf.push('\n');
+                    item.write_sexpr(buf, indent + 1);
+                }
+                buf.push(')');
+            }
+            HelmAst::Scalar { text } => {
+                buf.push_str(&format!("{pad}(Scalar {:?})", text));
+            }
+            HelmAst::HelmExpr { text } => {
+                buf.push_str(&format!("{pad}(HelmExpr {:?})", text));
+            }
+            HelmAst::HelmComment { text } => {
+                buf.push_str(&format!("{pad}(HelmComment {:?})", text));
+            }
+            HelmAst::If {
+                cond,
+                then_branch,
+                else_branch,
+            } => {
+                buf.push_str(&format!("{pad}(If {:?}", cond));
+                if !then_branch.is_empty() {
+                    buf.push_str(&format!("\n{pad}  (then"));
+                    for item in then_branch {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 2);
+                    }
+                    buf.push(')');
+                }
+                if !else_branch.is_empty() {
+                    buf.push_str(&format!("\n{pad}  (else"));
+                    for item in else_branch {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 2);
+                    }
+                    buf.push(')');
+                }
+                buf.push(')');
+            }
+            HelmAst::Range {
+                header,
+                body,
+                else_branch,
+            } => {
+                buf.push_str(&format!("{pad}(Range {:?}", header));
+                if !body.is_empty() {
+                    buf.push_str(&format!("\n{pad}  (body"));
+                    for item in body {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 2);
+                    }
+                    buf.push(')');
+                }
+                if !else_branch.is_empty() {
+                    buf.push_str(&format!("\n{pad}  (else"));
+                    for item in else_branch {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 2);
+                    }
+                    buf.push(')');
+                }
+                buf.push(')');
+            }
+            HelmAst::With {
+                header,
+                body,
+                else_branch,
+            } => {
+                buf.push_str(&format!("{pad}(With {:?}", header));
+                if !body.is_empty() {
+                    buf.push_str(&format!("\n{pad}  (body"));
+                    for item in body {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 2);
+                    }
+                    buf.push(')');
+                }
+                if !else_branch.is_empty() {
+                    buf.push_str(&format!("\n{pad}  (else"));
+                    for item in else_branch {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 2);
+                    }
+                    buf.push(')');
+                }
+                buf.push(')');
+            }
+            HelmAst::Define { name, body } => {
+                buf.push_str(&format!("{pad}(Define {:?}", name));
+                if !body.is_empty() {
+                    for item in body {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 1);
+                    }
+                }
+                buf.push(')');
+            }
+            HelmAst::Block { name, body } => {
+                buf.push_str(&format!("{pad}(Block {:?}", name));
+                if !body.is_empty() {
+                    for item in body {
+                        buf.push('\n');
+                        item.write_sexpr(buf, indent + 1);
+                    }
+                }
+                buf.push(')');
+            }
+        }
+    }
+}
+
 /// Trait for parsing Helm+YAML templates into a shared [`HelmAst`].
 pub trait HelmParser {
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError>;

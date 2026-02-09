@@ -1,4 +1,4 @@
-use crate::{DefineIndex, FusedRustParser, HelmAst, HelmParser, TreeSitterParser};
+use crate::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 
 fn prometheusrule_src() -> String {
     let path = concat!(
@@ -16,85 +16,6 @@ fn helpers_src() -> String {
     std::fs::read_to_string(path).expect("read _helpers.tpl")
 }
 
-/// Both parsers must produce structurally equivalent AST for a simple template.
-#[test]
-fn both_parsers_produce_equivalent_ast_simple() {
-    let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
-
-    let rust_ast = FusedRustParser.parse(src).expect("fused rust parse");
-    let ts_ast = TreeSitterParser.parse(src).expect("tree-sitter parse");
-
-    // Both should have an If node with then_branch containing a Mapping with a Pair.
-    let rust_if = find_first_if(&rust_ast).expect("rust AST should have If");
-    let ts_if = find_first_if(&ts_ast).expect("ts AST should have If");
-
-    // Condition text should match.
-    assert_eq!(extract_if_cond(rust_if), extract_if_cond(ts_if));
-
-    // Both then_branches should contain a Mapping with key "foo" and value "bar".
-    let rust_then = extract_if_then(rust_if);
-    let ts_then = extract_if_then(ts_if);
-    assert!(
-        has_pair_with_key(rust_then, "foo"),
-        "rust: missing key 'foo'"
-    );
-    assert!(has_pair_with_key(ts_then, "foo"), "ts: missing key 'foo'");
-}
-
-/// FusedRustParser can parse the bitnami-redis prometheusrule template.
-#[test]
-fn fused_rust_parses_prometheusrule() {
-    let src = prometheusrule_src();
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let if_node = find_first_if(&ast).expect("should have If");
-    let cond = extract_if_cond(if_node);
-    assert!(
-        cond.contains(".Values.metrics.enabled"),
-        "condition should reference metrics.enabled, got: {cond}"
-    );
-}
-
-/// TreeSitterParser can parse the bitnami-redis prometheusrule template.
-#[test]
-fn tree_sitter_parses_prometheusrule() {
-    let src = prometheusrule_src();
-    let ast = TreeSitterParser.parse(&src).expect("parse");
-    let if_node = find_first_if(&ast).expect("should have If");
-    let cond = extract_if_cond(if_node);
-    assert!(
-        cond.contains(".Values.metrics.enabled"),
-        "condition should reference metrics.enabled, got: {cond}"
-    );
-}
-
-/// DefineIndex collects definitions from helpers using both parsers.
-#[test]
-fn define_index_from_helpers() {
-    let helpers = helpers_src();
-
-    let mut idx_rust = DefineIndex::new();
-    idx_rust
-        .add_source(&FusedRustParser, &helpers)
-        .expect("rust define index");
-    assert!(
-        idx_rust.get("redis.image").is_some(),
-        "rust define index should find 'redis.image'"
-    );
-
-    let mut idx_ts = DefineIndex::new();
-    idx_ts
-        .add_source(&TreeSitterParser, &helpers)
-        .expect("ts define index");
-    assert!(
-        idx_ts.get("redis.image").is_some(),
-        "ts define index should find 'redis.image'"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// networkpolicy.yaml tests
-// ---------------------------------------------------------------------------
-
 fn networkpolicy_src() -> String {
     let path = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -103,186 +24,605 @@ fn networkpolicy_src() -> String {
     std::fs::read_to_string(path).expect("read networkpolicy.yaml")
 }
 
-/// FusedRustParser can parse the bitnami-redis networkpolicy template.
+// ===========================================================================
+// simple template — both parsers produce identical AST
+// ===========================================================================
+
+const SIMPLE_EXPECTED_SEXPR: &str = "\
+(Document
+  (If \".Values.enabled\"
+    (then
+      (Mapping
+        (Pair
+          (Scalar \"foo\")
+          (Scalar \"bar\"))))))";
+
 #[test]
-fn fused_rust_parses_networkpolicy() {
+fn fused_rust_ast_simple() {
+    let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
+    let ast = FusedRustParser.parse(src).expect("parse");
+    similar_asserts::assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
+}
+
+#[test]
+fn tree_sitter_ast_simple() {
+    let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    similar_asserts::assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
+}
+
+// ===========================================================================
+// prometheusrule.yaml — both parsers produce identical AST
+// ===========================================================================
+
+const PROMETHEUSRULE_EXPECTED_SEXPR: &str = r#"(Document
+  (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
+  (If "and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled"
+    (then
+      (Mapping
+        (Pair
+          (Scalar "apiVersion")
+          (Scalar "monitoring.coreos.com/v1"))
+        (Pair
+          (Scalar "kind")
+          (Scalar "PrometheusRule"))
+        (Pair
+          (Scalar "metadata")
+          (Mapping
+            (Pair
+              (Scalar "name")
+              (HelmExpr "template \"common.names.fullname\" ."))
+            (Pair
+              (Scalar "namespace")
+              (HelmExpr "default (include \"common.names.namespace\" .) .Values.metrics.prometheusRule.namespace | quote"))
+            (Pair
+              (Scalar "labels")
+              (HelmExpr "include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4")))))
+      (If ".Values.metrics.prometheusRule.additionalLabels"
+        (then
+          (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.metrics.prometheusRule.additionalLabels \"context\" $) | nindent 4")))
+      (If ".Values.commonAnnotations"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "annotations")
+              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")))))
+      (Mapping
+        (Pair
+          (Scalar "spec")
+          (Mapping
+            (Pair
+              (Scalar "groups")
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "name")
+                    (HelmExpr "include \"common.names.fullname\" ."))
+                  (Pair
+                    (Scalar "rules")
+                    (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.metrics.prometheusRule.rules \"context\" $ ) | nindent 8")))))))))))
+"#;
+
+#[test]
+fn fused_rust_ast_prometheusrule() {
+    let src = prometheusrule_src();
+    let ast = FusedRustParser.parse(&src).expect("parse");
+    similar_asserts::assert_eq!(ast.to_sexpr(), PROMETHEUSRULE_EXPECTED_SEXPR.trim_end());
+}
+
+#[test]
+fn tree_sitter_ast_prometheusrule() {
+    let src = prometheusrule_src();
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    similar_asserts::assert_eq!(ast.to_sexpr(), PROMETHEUSRULE_EXPECTED_SEXPR.trim_end());
+}
+
+// ===========================================================================
+// networkpolicy.yaml — parsers differ on cosmetic details:
+//   - fused-rust emits (Scalar "null") for empty YAML values; tree-sitter omits the value
+//   - fused-rust keeps full range header "$key, $value := .Values.X"; tree-sitter extracts just ".Values.X"
+//   - fused-rust strips YAML quotes: (Scalar "true"); tree-sitter preserves them: (Scalar "\"true\"")
+// ===========================================================================
+
+const NETWORKPOLICY_FUSED_EXPECTED_SEXPR: &str = r#"(Document
+  (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
+  (If ".Values.networkPolicy.enabled"
+    (then
+      (Mapping
+        (Pair
+          (Scalar "kind")
+          (Scalar "NetworkPolicy"))
+        (Pair
+          (Scalar "apiVersion")
+          (HelmExpr "template \"common.capabilities.networkPolicy.apiVersion\" ."))
+        (Pair
+          (Scalar "metadata")
+          (Mapping
+            (Pair
+              (Scalar "name")
+              (HelmExpr "template \"common.names.fullname\" ."))
+            (Pair
+              (Scalar "namespace")
+              (HelmExpr "include \"common.names.namespace\" . | quote"))
+            (Pair
+              (Scalar "labels")
+              (HelmExpr "include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4")))))
+      (If ".Values.commonAnnotations"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "annotations")
+              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")))))
+      (Mapping
+        (Pair
+          (Scalar "spec")
+          (Mapping
+            (Pair
+              (Scalar "podSelector")
+              (Mapping
+                (Pair
+                  (Scalar "matchLabels")
+                  (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 6"))))
+            (Pair
+              (Scalar "policyTypes")
+              (Sequence
+                (Scalar "Ingress")
+                (Scalar "Egress"))))))
+      (If ".Values.networkPolicy.allowExternalEgress"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "egress")
+              (Sequence
+                (Mapping)))))
+        (else
+          (Mapping
+            (Pair
+              (Scalar "egress")
+              (Scalar "null")))
+          (If "eq .Values.architecture \"replication\""
+            (then
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "ports")
+                    (Sequence
+                      (Mapping
+                        (Pair
+                          (Scalar "port")
+                          (Scalar "53"))
+                        (Pair
+                          (Scalar "protocol")
+                          (Scalar "UDP"))))))
+                (Mapping
+                  (Pair
+                    (Scalar "ports")
+                    (Sequence
+                      (Mapping
+                        (Pair
+                          (Scalar "port")
+                          (HelmExpr ".Values.master.containerPorts.redis")))))))
+              (If ".Values.sentinel.enabled"
+                (then
+                  (Sequence
+                    (Mapping
+                      (Pair
+                        (Scalar "port")
+                        (HelmExpr ".Values.sentinel.containerPorts.sentinel"))))))
+              (Mapping
+                (Pair
+                  (Scalar "to")
+                  (Sequence
+                    (Mapping
+                      (Pair
+                        (Scalar "podSelector")
+                        (Mapping
+                          (Pair
+                            (Scalar "matchLabels")
+                            (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14"))))))))))
+          (If ".Values.networkPolicy.extraEgress"
+            (then
+              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraEgress \"context\" $ ) | nindent 4")))))
+      (Mapping
+        (Pair
+          (Scalar "ingress")
+          (Sequence
+            (Mapping
+              (Pair
+                (Scalar "ports")
+                (Sequence
+                  (Mapping
+                    (Pair
+                      (Scalar "port")
+                      (HelmExpr ".Values.master.containerPorts.redis")))))))))
+      (If ".Values.sentinel.enabled"
+        (then
+          (Sequence
+            (Mapping
+              (Pair
+                (Scalar "port")
+                (HelmExpr ".Values.sentinel.containerPorts.sentinel"))))))
+      (If "not .Values.networkPolicy.allowExternal"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "from")
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "podSelector")
+                    (Mapping
+                      (Pair
+                        (Scalar "matchLabels")
+                        (Mapping
+                          (Pair
+                            (Scalar "{{ template \"common.names.fullname\" . }}-client")
+                            (Scalar "true")))))))
+                (Mapping
+                  (Pair
+                    (Scalar "podSelector")
+                    (Mapping
+                      (Pair
+                        (Scalar "matchLabels")
+                        (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14"))))))))
+          (If "or .Values.networkPolicy.ingressNSMatchLabels .Values.networkPolicy.ingressNSPodMatchLabels"
+            (then
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "namespaceSelector")
+                    (Mapping
+                      (Pair
+                        (Scalar "matchLabels")
+                        (Scalar "null"))))))
+              (If ".Values.networkPolicy.ingressNSMatchLabels"
+                (then
+                  (Range "$key, $value := .Values.networkPolicy.ingressNSMatchLabels"
+                    (body
+                      (Mapping
+                        (Pair
+                          (HelmExpr "$key | quote")
+                          (HelmExpr "$value | quote"))))))
+                (else
+                  (Mapping)))
+              (If ".Values.networkPolicy.ingressNSPodMatchLabels"
+                (then
+                  (Mapping
+                    (Pair
+                      (Scalar "podSelector")
+                      (Mapping
+                        (Pair
+                          (Scalar "matchLabels")
+                          (Scalar "null")))))
+                  (Range "$key, $value := .Values.networkPolicy.ingressNSPodMatchLabels"
+                    (body
+                      (Mapping
+                        (Pair
+                          (HelmExpr "$key | quote")
+                          (HelmExpr "$value | quote")))))))))))
+      (If ".Values.metrics.enabled"
+        (then
+          (Sequence
+            (Mapping
+              (Pair
+                (Scalar "ports")
+                (Sequence
+                  (Mapping
+                    (Pair
+                      (Scalar "port")
+                      (HelmExpr ".Values.metrics.containerPorts.http")))))))
+          (If "not .Values.networkPolicy.metrics.allowExternal"
+            (then
+              (Mapping
+                (Pair
+                  (Scalar "from")
+                  (Scalar "null")))
+              (If "or .Values.networkPolicy.metrics.ingressNSMatchLabels .Values.networkPolicy.metrics.ingressNSPodMatchLabels"
+                (then
+                  (Sequence
+                    (Mapping
+                      (Pair
+                        (Scalar "namespaceSelector")
+                        (Mapping
+                          (Pair
+                            (Scalar "matchLabels")
+                            (Scalar "null"))))))
+                  (If ".Values.networkPolicy.metrics.ingressNSMatchLabels"
+                    (then
+                      (Range "$key, $value := .Values.networkPolicy.metrics.ingressNSMatchLabels"
+                        (body
+                          (Mapping
+                            (Pair
+                              (HelmExpr "$key | quote")
+                              (HelmExpr "$value | quote"))))))
+                    (else
+                      (Mapping)))
+                  (If ".Values.networkPolicy.metrics.ingressNSPodMatchLabels"
+                    (then
+                      (Mapping
+                        (Pair
+                          (Scalar "podSelector")
+                          (Mapping
+                            (Pair
+                              (Scalar "matchLabels")
+                              (Scalar "null")))))
+                      (Range "$key, $value := .Values.networkPolicy.metrics.ingressNSPodMatchLabels"
+                        (body
+                          (Mapping
+                            (Pair
+                              (HelmExpr "$key | quote")
+                              (HelmExpr "$value | quote")))))))))))))
+      (If ".Values.networkPolicy.extraIngress"
+        (then
+          (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraIngress \"context\" $ ) | nindent 4"))))))"#;
+
+const NETWORKPOLICY_TS_EXPECTED_SEXPR: &str = r#"(Document
+  (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
+  (If ".Values.networkPolicy.enabled"
+    (then
+      (Mapping
+        (Pair
+          (Scalar "kind")
+          (Scalar "NetworkPolicy"))
+        (Pair
+          (Scalar "apiVersion")
+          (HelmExpr "template \"common.capabilities.networkPolicy.apiVersion\" ."))
+        (Pair
+          (Scalar "metadata")
+          (Mapping
+            (Pair
+              (Scalar "name")
+              (HelmExpr "template \"common.names.fullname\" ."))
+            (Pair
+              (Scalar "namespace")
+              (HelmExpr "include \"common.names.namespace\" . | quote"))
+            (Pair
+              (Scalar "labels")
+              (HelmExpr "include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4")))))
+      (If ".Values.commonAnnotations"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "annotations")
+              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")))))
+      (Mapping
+        (Pair
+          (Scalar "spec")
+          (Mapping
+            (Pair
+              (Scalar "podSelector")
+              (Mapping
+                (Pair
+                  (Scalar "matchLabels")
+                  (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 6"))))
+            (Pair
+              (Scalar "policyTypes")
+              (Sequence
+                (Scalar "Ingress")
+                (Scalar "Egress"))))))
+      (If ".Values.networkPolicy.allowExternalEgress"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "egress")
+              (Sequence
+                (Mapping)))))
+        (else
+          (Mapping
+            (Pair
+              (Scalar "egress")))
+          (If "eq .Values.architecture \"replication\""
+            (then
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "ports")
+                    (Sequence
+                      (Mapping
+                        (Pair
+                          (Scalar "port")
+                          (Scalar "53"))
+                        (Pair
+                          (Scalar "protocol")
+                          (Scalar "UDP"))))))
+                (Mapping
+                  (Pair
+                    (Scalar "ports")
+                    (Sequence
+                      (Mapping
+                        (Pair
+                          (Scalar "port")
+                          (HelmExpr ".Values.master.containerPorts.redis")))))))
+              (If ".Values.sentinel.enabled"
+                (then
+                  (Sequence
+                    (Mapping
+                      (Pair
+                        (Scalar "port")
+                        (HelmExpr ".Values.sentinel.containerPorts.sentinel"))))))
+              (Mapping
+                (Pair
+                  (Scalar "to")
+                  (Sequence
+                    (Mapping
+                      (Pair
+                        (Scalar "podSelector")
+                        (Mapping
+                          (Pair
+                            (Scalar "matchLabels")
+                            (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14"))))))))))
+          (If ".Values.networkPolicy.extraEgress"
+            (then
+              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraEgress \"context\" $ ) | nindent 4")))))
+      (Mapping
+        (Pair
+          (Scalar "ingress")
+          (Sequence
+            (Mapping
+              (Pair
+                (Scalar "ports")
+                (Sequence
+                  (Mapping
+                    (Pair
+                      (Scalar "port")
+                      (HelmExpr ".Values.master.containerPorts.redis")))))))))
+      (If ".Values.sentinel.enabled"
+        (then
+          (Sequence
+            (Mapping
+              (Pair
+                (Scalar "port")
+                (HelmExpr ".Values.sentinel.containerPorts.sentinel"))))))
+      (If "not .Values.networkPolicy.allowExternal"
+        (then
+          (Mapping
+            (Pair
+              (Scalar "from")
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "podSelector")
+                    (Mapping
+                      (Pair
+                        (Scalar "matchLabels")
+                        (Mapping
+                          (Pair
+                            (Scalar "{{ template \"common.names.fullname\" . }}-client")
+                            (Scalar "\"true\"")))))))
+                (Mapping
+                  (Pair
+                    (Scalar "podSelector")
+                    (Mapping
+                      (Pair
+                        (Scalar "matchLabels")
+                        (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14"))))))))
+          (If "or .Values.networkPolicy.ingressNSMatchLabels .Values.networkPolicy.ingressNSPodMatchLabels"
+            (then
+              (Sequence
+                (Mapping
+                  (Pair
+                    (Scalar "namespaceSelector")
+                    (Mapping
+                      (Pair
+                        (Scalar "matchLabels"))))))
+              (If ".Values.networkPolicy.ingressNSMatchLabels"
+                (then
+                  (Range ".Values.networkPolicy.ingressNSMatchLabels"
+                    (body
+                      (Mapping
+                        (Pair
+                          (HelmExpr "$key | quote")
+                          (HelmExpr "$value | quote"))))))
+                (else
+                  (Mapping)))
+              (If ".Values.networkPolicy.ingressNSPodMatchLabels"
+                (then
+                  (Mapping
+                    (Pair
+                      (Scalar "podSelector")
+                      (Mapping
+                        (Pair
+                          (Scalar "matchLabels")))))
+                  (Range ".Values.networkPolicy.ingressNSPodMatchLabels"
+                    (body
+                      (Mapping
+                        (Pair
+                          (HelmExpr "$key | quote")
+                          (HelmExpr "$value | quote")))))))))))
+      (If ".Values.metrics.enabled"
+        (then
+          (Sequence
+            (Mapping
+              (Pair
+                (Scalar "ports")
+                (Sequence
+                  (Mapping
+                    (Pair
+                      (Scalar "port")
+                      (HelmExpr ".Values.metrics.containerPorts.http")))))))
+          (If "not .Values.networkPolicy.metrics.allowExternal"
+            (then
+              (Mapping
+                (Pair
+                  (Scalar "from")))
+              (If "or .Values.networkPolicy.metrics.ingressNSMatchLabels .Values.networkPolicy.metrics.ingressNSPodMatchLabels"
+                (then
+                  (Sequence
+                    (Mapping
+                      (Pair
+                        (Scalar "namespaceSelector")
+                        (Mapping
+                          (Pair
+                            (Scalar "matchLabels"))))))
+                  (If ".Values.networkPolicy.metrics.ingressNSMatchLabels"
+                    (then
+                      (Range ".Values.networkPolicy.metrics.ingressNSMatchLabels"
+                        (body
+                          (Mapping
+                            (Pair
+                              (HelmExpr "$key | quote")
+                              (HelmExpr "$value | quote"))))))
+                    (else
+                      (Mapping)))
+                  (If ".Values.networkPolicy.metrics.ingressNSPodMatchLabels"
+                    (then
+                      (Mapping
+                        (Pair
+                          (Scalar "podSelector")
+                          (Mapping
+                            (Pair
+                              (Scalar "matchLabels")))))
+                      (Range ".Values.networkPolicy.metrics.ingressNSPodMatchLabels"
+                        (body
+                          (Mapping
+                            (Pair
+                              (HelmExpr "$key | quote")
+                              (HelmExpr "$value | quote")))))))))))))
+      (If ".Values.networkPolicy.extraIngress"
+        (then
+          (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraIngress \"context\" $ ) | nindent 4"))))))"#;
+
+#[test]
+fn fused_rust_ast_networkpolicy() {
     let src = networkpolicy_src();
     let ast = FusedRustParser.parse(&src).expect("parse");
-
-    // Top-level should be an If guarded by .Values.networkPolicy.enabled
-    let if_node = find_first_if(&ast).expect("should have If");
-    let cond = extract_if_cond(if_node);
-    assert!(
-        cond.contains(".Values.networkPolicy.enabled"),
-        "outer condition should reference networkPolicy.enabled, got: {cond}"
-    );
-
-    // The then_branch should contain pairs for kind, apiVersion, metadata, spec
-    let then_items = extract_if_then(if_node);
-    assert!(
-        has_pair_with_key(then_items, "kind"),
-        "should have 'kind' pair"
-    );
-    assert!(
-        has_pair_with_key(then_items, "metadata"),
-        "should have 'metadata' pair"
-    );
-    assert!(
-        has_pair_with_key(then_items, "spec"),
-        "should have 'spec' pair"
-    );
+    similar_asserts::assert_eq!(ast.to_sexpr(), NETWORKPOLICY_FUSED_EXPECTED_SEXPR);
 }
 
-/// TreeSitterParser can parse the bitnami-redis networkpolicy template.
 #[test]
-fn tree_sitter_parses_networkpolicy() {
+fn tree_sitter_ast_networkpolicy() {
     let src = networkpolicy_src();
     let ast = TreeSitterParser.parse(&src).expect("parse");
-
-    let if_node = find_first_if(&ast).expect("should have If");
-    let cond = extract_if_cond(if_node);
-    assert!(
-        cond.contains(".Values.networkPolicy.enabled"),
-        "outer condition should reference networkPolicy.enabled, got: {cond}"
-    );
-
-    let then_items = extract_if_then(if_node);
-    assert!(
-        has_pair_with_key(then_items, "kind"),
-        "should have 'kind' pair"
-    );
-    assert!(
-        has_pair_with_key(then_items, "metadata"),
-        "should have 'metadata' pair"
-    );
-    assert!(
-        has_pair_with_key(then_items, "spec"),
-        "should have 'spec' pair"
-    );
+    similar_asserts::assert_eq!(ast.to_sexpr(), NETWORKPOLICY_TS_EXPECTED_SEXPR);
 }
 
-/// Both parsers produce structurally equivalent AST for networkpolicy.
+// ===========================================================================
+// DefineIndex — both parsers collect the same named template definitions
+// ===========================================================================
+
 #[test]
-fn both_parsers_produce_equivalent_ast_networkpolicy() {
-    let src = networkpolicy_src();
+fn define_index_from_helpers() {
+    let helpers = helpers_src();
 
-    let rust_ast = FusedRustParser.parse(&src).expect("fused rust");
-    let ts_ast = TreeSitterParser.parse(&src).expect("tree-sitter");
+    let mut idx_rust = DefineIndex::new();
+    idx_rust
+        .add_source(&FusedRustParser, &helpers)
+        .expect("rust define index");
 
-    // Both should find the outer `if networkPolicy.enabled`.
-    let rust_if = find_first_if(&rust_ast).expect("rust should have If");
-    let ts_if = find_first_if(&ts_ast).expect("ts should have If");
-    assert_eq!(extract_if_cond(rust_if), extract_if_cond(ts_if));
+    let mut idx_ts = DefineIndex::new();
+    idx_ts
+        .add_source(&TreeSitterParser, &helpers)
+        .expect("ts define index");
 
-    // Both should have nested `if` for `commonAnnotations` inside the outer if.
-    let rust_nested = find_nested_if_with_cond(rust_if, "commonAnnotations");
-    let ts_nested = find_nested_if_with_cond(ts_if, "commonAnnotations");
-    assert!(
-        rust_nested.is_some(),
-        "rust should have nested if for commonAnnotations"
-    );
-    assert!(
-        ts_nested.is_some(),
-        "ts should have nested if for commonAnnotations"
-    );
-}
-
-// --- helpers ---
-
-fn find_first_if(node: &HelmAst) -> Option<&HelmAst> {
-    match node {
-        HelmAst::If { .. } => Some(node),
-        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
-            items.iter().find_map(find_first_if)
-        }
-        HelmAst::Pair { value, .. } => value.as_ref().and_then(|v| find_first_if(v)),
-        _ => None,
+    let expected_defines = ["redis.image", "redis.sentinel.image", "redis.metrics.image"];
+    for name in expected_defines {
+        assert!(
+            idx_rust.get(name).is_some(),
+            "rust define index should find '{name}'"
+        );
+        assert!(
+            idx_ts.get(name).is_some(),
+            "ts define index should find '{name}'"
+        );
     }
-}
-
-fn extract_if_cond(node: &HelmAst) -> &str {
-    match node {
-        HelmAst::If { cond, .. } => cond.as_str(),
-        _ => panic!("not an If node"),
-    }
-}
-
-fn extract_if_then(node: &HelmAst) -> &[HelmAst] {
-    match node {
-        HelmAst::If { then_branch, .. } => then_branch.as_slice(),
-        _ => panic!("not an If node"),
-    }
-}
-
-fn find_nested_if_with_cond<'a>(node: &'a HelmAst, cond_substr: &str) -> Option<&'a HelmAst> {
-    match node {
-        HelmAst::If {
-            cond,
-            then_branch,
-            else_branch,
-        } => {
-            // Search children first (skip self to find *nested* ifs).
-            for item in then_branch.iter().chain(else_branch.iter()) {
-                if let Some(found) = find_if_with_cond(item, cond_substr) {
-                    return Some(found);
-                }
-            }
-            None
-        }
-        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
-            items.iter().find_map(|i| find_if_with_cond(i, cond_substr))
-        }
-        HelmAst::Pair { value, .. } => value
-            .as_ref()
-            .and_then(|v| find_if_with_cond(v, cond_substr)),
-        _ => None,
-    }
-}
-
-fn find_if_with_cond<'a>(node: &'a HelmAst, cond_substr: &str) -> Option<&'a HelmAst> {
-    match node {
-        HelmAst::If {
-            cond,
-            then_branch,
-            else_branch,
-        } => {
-            if cond.contains(cond_substr) {
-                return Some(node);
-            }
-            for item in then_branch.iter().chain(else_branch.iter()) {
-                if let Some(found) = find_if_with_cond(item, cond_substr) {
-                    return Some(found);
-                }
-            }
-            None
-        }
-        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
-            items.iter().find_map(|i| find_if_with_cond(i, cond_substr))
-        }
-        HelmAst::Pair { value, .. } => value
-            .as_ref()
-            .and_then(|v| find_if_with_cond(v, cond_substr)),
-        _ => None,
-    }
-}
-
-fn has_pair_with_key(items: &[HelmAst], key: &str) -> bool {
-    for item in items {
-        match item {
-            HelmAst::Pair { key: k, .. } => {
-                if let HelmAst::Scalar { text } = k.as_ref() {
-                    if text == key {
-                        return true;
-                    }
-                }
-            }
-            HelmAst::Mapping { items } => {
-                if has_pair_with_key(items, key) {
-                    return true;
-                }
-            }
-            _ => {}
-        }
-    }
-    false
 }
