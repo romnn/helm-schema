@@ -255,19 +255,26 @@ fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 }
             }
         }
-        "string_scalar"
-        | "double_quote_scalar"
-        | "single_quote_scalar"
-        | "block_scalar"
-        | "integer_scalar"
-        | "float_scalar"
-        | "boolean_scalar" => HelmAst::Scalar {
-            text: node
-                .utf8_text(src.as_bytes())
-                .unwrap_or("")
-                .trim()
-                .to_string(),
-        },
+        "string_scalar" | "block_scalar" | "integer_scalar" | "float_scalar" | "boolean_scalar" => {
+            HelmAst::Scalar {
+                text: node
+                    .utf8_text(src.as_bytes())
+                    .unwrap_or("")
+                    .trim()
+                    .to_string(),
+            }
+        }
+        "double_quote_scalar" | "single_quote_scalar" => {
+            let raw = node.utf8_text(src.as_bytes()).unwrap_or("").trim();
+            let text = if (raw.starts_with('"') && raw.ends_with('"'))
+                || (raw.starts_with('\'') && raw.ends_with('\''))
+            {
+                raw[1..raw.len() - 1].to_string()
+            } else {
+                raw.to_string()
+            };
+            HelmAst::Scalar { text }
+        }
         "null_scalar" => HelmAst::Scalar {
             text: String::new(),
         },
@@ -436,20 +443,27 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
             }
         }
         "range_action" => {
-            let header = node
-                .child_by_field_name("range")
-                .or_else(|| {
-                    // For `range $key, $value := expr`, the "range" field is
-                    // nested inside a `range_variable_definition` child.
-                    let mut c = node.walk();
-                    node.children(&mut c)
-                        .find(|ch| ch.kind() == "range_variable_definition")
-                        .and_then(|rvd| rvd.child_by_field_name("range"))
-                })
-                .and_then(|n| n.utf8_text(src.as_bytes()).ok())
-                .unwrap_or("")
-                .trim()
-                .to_string();
+            // For `range .Values.X`, extract the pipeline directly.
+            // For `range $key, $value := .Values.X`, extract the full
+            // variable definition text to preserve binding information.
+            let header = {
+                let mut c = node.walk();
+                let rvd = node
+                    .children(&mut c)
+                    .find(|ch| ch.kind() == "range_variable_definition");
+                if let Some(rvd) = rvd {
+                    rvd.utf8_text(src.as_bytes())
+                        .unwrap_or("")
+                        .trim()
+                        .to_string()
+                } else {
+                    node.child_by_field_name("range")
+                        .and_then(|n| n.utf8_text(src.as_bytes()).ok())
+                        .unwrap_or("")
+                        .trim()
+                        .to_string()
+                }
+            };
 
             let body = fuse_blocks(&children_with_field(node, "body"), src);
             let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src);

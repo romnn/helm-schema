@@ -29,10 +29,27 @@ fn convert_fused_node(node: &FusedNode) -> HelmAst {
         FusedNode::Mapping { items } => HelmAst::Mapping {
             items: items.iter().map(convert_fused_node).collect(),
         },
-        FusedNode::Pair { key, value } => HelmAst::Pair {
-            key: Box::new(convert_fused_node(key)),
-            value: value.as_ref().map(|v| Box::new(convert_fused_node(v))),
-        },
+        FusedNode::Pair { key, value } => {
+            // Normalize null YAML values (kind: "null") to None so that
+            // `key:` with no value produces Pair { value: None }, matching
+            // the tree-sitter parser's behavior.
+            let v = value.as_ref().map(|v| convert_fused_node(v));
+            let v = match &v {
+                Some(HelmAst::Scalar { text }) if text == "null" => {
+                    // Only suppress if the original FusedNode was kind "null"
+                    // (true YAML null), not a string that happens to say "null".
+                    match value.as_deref() {
+                        Some(FusedNode::Scalar { kind, .. }) if kind == "null" => None,
+                        _ => v,
+                    }
+                }
+                _ => v,
+            };
+            HelmAst::Pair {
+                key: Box::new(convert_fused_node(key)),
+                value: v.map(Box::new),
+            }
+        }
         FusedNode::Sequence { items } => HelmAst::Sequence {
             items: items.iter().map(convert_fused_node).collect(),
         },
