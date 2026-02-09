@@ -243,7 +243,6 @@ fn resource_detection_networkpolicy() {
 /// Both issues require deep changes to the yaml-rust fork's line-by-line approach.
 /// The tree-sitter parser is the reference implementation for correctness.
 #[test]
-#[ignore = "parser parity: fused-rust loses YAML nesting context across Helm control flow boundaries"]
 fn both_parsers_produce_same_ir_networkpolicy() {
     let src = networkpolicy_src();
 
@@ -304,16 +303,16 @@ fn fused_rust_ir_networkpolicy_full() {
         },
         {
             "source_expr": "commonLabels",
-            "path": ["metadata", "labels"],
+            "path": ["from[*]", "podSelector", "matchLabels"],
             "kind": "Fragment",
-            "guards": [t("networkPolicy.enabled")],
+            "guards": [t("networkPolicy.enabled"), n("networkPolicy.allowExternal")],
             "resource": np
         },
         {
             "source_expr": "commonLabels",
-            "path": ["podSelector", "matchLabels"],
+            "path": ["metadata", "labels"],
             "kind": "Fragment",
-            "guards": [t("networkPolicy.enabled"), n("networkPolicy.allowExternal")],
+            "guards": [t("networkPolicy.enabled")],
             "resource": np
         },
         {

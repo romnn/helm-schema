@@ -113,6 +113,7 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
         let fragment = deindent_yaml_fragment(&fragment);
         let (yaml_fragment, mut inline_value_frags) =
             rewrite_inline_block_value_fragments(&fragment);
+        let (yaml_fragment, helm_placeholders) = replace_helm_expr_placeholders(&yaml_fragment);
 
         match YamlLoader::load_from_str(&yaml_fragment) {
             Ok(docs) => {
@@ -120,6 +121,9 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
                     let mut node = convert_yaml_to_fused(&doc);
                     if !inline_value_frags.is_empty() {
                         apply_inline_value_fragments(&mut node, &mut inline_value_frags);
+                    }
+                    if !helm_placeholders.is_empty() {
+                        restore_helm_expr_placeholders(&mut node, &helm_placeholders);
                     }
                     push_to_current(stack, out, node);
                 }
@@ -399,6 +403,14 @@ fn try_take_standalone_helm_action<'a>(
 
     if let Some((action, _rest)) = take_action_if_closed_on_line(after_indent) {
         return Some((action, start_col));
+    }
+
+    // If the line already contains `}}` but `take_action_if_closed_on_line`
+    // rejected it, there is trailing content after `}}` (e.g.
+    // `{{ template "foo" . }}-client: "true"`). This is an inline expression
+    // embedded in YAML, not a standalone Helm action.
+    if after_indent.contains("}}") {
+        return None;
     }
 
     let mut action = after_indent.to_string();
@@ -704,4 +716,140 @@ fn apply_inline_value_fragments(node: &mut FusedNode, frags: &mut HashMap<String
         | FusedNode::HelmComment { .. }
         | FusedNode::Unknown { .. } => {}
     }
+}
+
+/// Replace `{{ ... }}` sequences in a YAML fragment with unique placeholders
+/// so that yaml-rust can parse the fragment. Returns the rewritten fragment
+/// and a vec of original expressions (index corresponds to placeholder number).
+fn replace_helm_expr_placeholders(fragment: &str) -> (String, Vec<String>) {
+    let mut out = String::with_capacity(fragment.len());
+    let mut exprs: Vec<String> = Vec::new();
+    let mut rest = fragment;
+
+    while let Some(start) = rest.find("{{") {
+        out.push_str(&rest[..start]);
+        let after_open = &rest[start + 2..];
+        if let Some(end) = after_open.find("}}") {
+            let full_expr = &rest[start..start + 2 + end + 2];
+            let placeholder = format!("__HELM_PLACEHOLDER_{}__", exprs.len());
+            exprs.push(full_expr.to_string());
+            out.push_str(&placeholder);
+            rest = &rest[start + 2 + end + 2..];
+        } else {
+            // No closing }}, pass through as-is.
+            out.push_str("{{");
+            rest = after_open;
+        }
+    }
+    out.push_str(rest);
+    (out, exprs)
+}
+
+/// Walk a parsed `FusedNode` tree and restore placeholder strings back to
+/// `HelmExpr` nodes (when the placeholder is the entire scalar text) or
+/// restore the original `{{ ... }}` text inline (when concatenated with
+/// other text, e.g. `{{ template "foo" . }}-client`).
+fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[String]) {
+    match node {
+        FusedNode::Scalar { text, .. } => {
+            // Check if the entire text is exactly one placeholder.
+            if let Some(idx) = parse_sole_placeholder(text) {
+                if let Some(original) = exprs.get(idx) {
+                    let inner = extract_helm_expr_inner(original);
+                    *node = FusedNode::HelmExpr {
+                        text: inner.to_string(),
+                    };
+                }
+                return;
+            }
+            // Otherwise, restore any embedded placeholders back to their
+            // original `{{ ... }}` text so the scalar preserves them inline.
+            for (i, original) in exprs.iter().enumerate() {
+                let placeholder = format!("__HELM_PLACEHOLDER_{}__", i);
+                if text.contains(&placeholder) {
+                    *text = text.replace(&placeholder, original);
+                }
+            }
+        }
+        FusedNode::Mapping { items } => {
+            for item in items.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+        }
+        FusedNode::Pair { key, value } => {
+            restore_helm_expr_placeholders(key, exprs);
+            if let Some(v) = value.as_deref_mut() {
+                restore_helm_expr_placeholders(v, exprs);
+            }
+        }
+        FusedNode::Sequence { items } => {
+            for item in items.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+        }
+        FusedNode::Item { value } => {
+            if let Some(v) = value.as_deref_mut() {
+                restore_helm_expr_placeholders(v, exprs);
+            }
+        }
+        FusedNode::If {
+            then_branch,
+            else_branch,
+            ..
+        } => {
+            for item in then_branch.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+            for item in else_branch.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+        }
+        FusedNode::Range {
+            body, else_branch, ..
+        }
+        | FusedNode::With {
+            body, else_branch, ..
+        } => {
+            for item in body.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+            for item in else_branch.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+        }
+        FusedNode::Define { body, .. } | FusedNode::Block { body, .. } => {
+            for item in body.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+        }
+        FusedNode::Stream { items } | FusedNode::Document { items } => {
+            for item in items.iter_mut() {
+                restore_helm_expr_placeholders(item, exprs);
+            }
+        }
+        FusedNode::HelmExpr { .. } | FusedNode::HelmComment { .. } | FusedNode::Unknown { .. } => {}
+    }
+}
+
+/// If the text is exactly `__HELM_PLACEHOLDER_N__`, return N.
+fn parse_sole_placeholder(text: &str) -> Option<usize> {
+    let s = text.trim();
+    let s = s.strip_prefix("__HELM_PLACEHOLDER_")?;
+    let s = s.strip_suffix("__")?;
+    s.parse().ok()
+}
+
+/// Extract the inner expression from `{{ expr }}` or `{{- expr -}}`.
+fn extract_helm_expr_inner(raw: &str) -> &str {
+    let mut s = raw.trim();
+    if let Some(rest) = s.strip_prefix("{{") {
+        s = rest;
+    }
+    s = s.strip_prefix('-').unwrap_or(s);
+    s = s.trim_start();
+    if let Some(rest) = s.strip_suffix("}}") {
+        s = rest;
+    }
+    s = s.strip_suffix('-').unwrap_or(s);
+    s.trim()
 }

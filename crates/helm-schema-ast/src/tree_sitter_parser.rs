@@ -438,6 +438,14 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
         "range_action" => {
             let header = node
                 .child_by_field_name("range")
+                .or_else(|| {
+                    // For `range $key, $value := expr`, the "range" field is
+                    // nested inside a `range_variable_definition` child.
+                    let mut c = node.walk();
+                    node.children(&mut c)
+                        .find(|ch| ch.kind() == "range_variable_definition")
+                        .and_then(|rvd| rvd.child_by_field_name("range"))
+                })
                 .and_then(|n| n.utf8_text(src.as_bytes()).ok())
                 .unwrap_or("")
                 .trim()
