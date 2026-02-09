@@ -2,7 +2,7 @@ use regex::Regex;
 
 use helm_schema_ast::{DefineIndex, HelmAst};
 
-use crate::{IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
+use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 /// Default IR generator: walks a `HelmAst` and extracts `.Values.*` uses
 /// with their YAML paths, guards, and resource context.
@@ -28,7 +28,7 @@ impl IrGenerator for DefaultIrGenerator {
 
 struct Walker<'a> {
     uses: Vec<ValueUse>,
-    guards: Vec<String>,
+    guards: Vec<Guard>,
     resource: Option<ResourceRef>,
     defines: &'a DefineIndex,
     inline_depth: usize,
@@ -104,18 +104,24 @@ impl<'a> Walker<'a> {
                 then_branch,
                 else_branch,
             } => {
-                let cond_values = extract_values_paths(cond);
+                let cond_guards = parse_condition(cond);
                 let guard_save = self.guards.len();
 
-                for g in &cond_values {
-                    self.uses.push(ValueUse {
-                        source_expr: g.clone(),
-                        path: YamlPath(vec![]),
-                        kind: ValueKind::Scalar,
-                        guards: self.guards.clone(),
-                        resource: self.resource.clone(),
-                    });
-                    self.guards.push(g.clone());
+                // Emit uses for each value path referenced in the condition.
+                for g in &cond_guards {
+                    for path in g.value_paths() {
+                        self.uses.push(ValueUse {
+                            source_expr: path.to_string(),
+                            path: YamlPath(vec![]),
+                            kind: ValueKind::Scalar,
+                            guards: self.guards.clone(),
+                            resource: self.resource.clone(),
+                        });
+                    }
+                    // Push guard only if not already present (dedup).
+                    if !self.guards.contains(g) {
+                        self.guards.push(g.clone());
+                    }
                 }
 
                 for item in then_branch {
@@ -134,18 +140,22 @@ impl<'a> Walker<'a> {
                 body,
                 else_branch,
             } => {
-                let values = extract_values_paths(header);
+                let cond_guards = parse_condition(header);
                 let guard_save = self.guards.len();
 
-                for g in &values {
-                    self.uses.push(ValueUse {
-                        source_expr: g.clone(),
-                        path: YamlPath(vec![]),
-                        kind: ValueKind::Scalar,
-                        guards: self.guards.clone(),
-                        resource: self.resource.clone(),
-                    });
-                    self.guards.push(g.clone());
+                for g in &cond_guards {
+                    for path in g.value_paths() {
+                        self.uses.push(ValueUse {
+                            source_expr: path.to_string(),
+                            path: YamlPath(vec![]),
+                            kind: ValueKind::Scalar,
+                            guards: self.guards.clone(),
+                            resource: self.resource.clone(),
+                        });
+                    }
+                    if !self.guards.contains(g) {
+                        self.guards.push(g.clone());
+                    }
                 }
 
                 for item in body {
@@ -167,15 +177,19 @@ impl<'a> Walker<'a> {
                 let values = extract_values_paths(header);
                 let guard_save = self.guards.len();
 
-                for g in &values {
+                for v in &values {
                     self.uses.push(ValueUse {
-                        source_expr: g.clone(),
+                        source_expr: v.clone(),
                         path: YamlPath(yaml_path.to_vec()),
                         kind: ValueKind::Scalar,
                         guards: self.guards.clone(),
                         resource: self.resource.clone(),
                     });
-                    self.guards.push(g.clone());
+                    // Push as truthy guard, but deduplicate.
+                    let g = Guard::Truthy { path: v.clone() };
+                    if !self.guards.contains(&g) {
+                        self.guards.push(g);
+                    }
                 }
 
                 for item in body {
@@ -276,6 +290,83 @@ pub fn extract_values_paths(text: &str) -> Vec<String> {
     result.sort();
     result.dedup();
     result
+}
+
+/// Parse a Go template condition string into structured `Guard`(s).
+///
+/// Supports patterns like:
+/// - `.Values.X`                       → `[Truthy("X")]`
+/// - `not .Values.X`                   → `[Not("X")]`
+/// - `or .Values.A .Values.B`          → `[Or(["A", "B"])]`
+/// - `eq .Values.X "value"`            → `[Eq("X", "value")]`
+/// - `and (.Values.A) (.Values.B)`     → `[Truthy("A"), Truthy("B")]`
+///
+/// Returns an empty vec if no `.Values.*` references are found.
+pub fn parse_condition(text: &str) -> Vec<Guard> {
+    let trimmed = text.trim();
+
+    // `not .Values.X` → Guard::Not
+    if let Some(rest) = trimmed
+        .strip_prefix("not ")
+        .or_else(|| trimmed.strip_prefix("not\t"))
+    {
+        let paths = extract_values_paths(rest);
+        if paths.len() == 1 {
+            return vec![Guard::Not {
+                path: paths.into_iter().next().unwrap(),
+            }];
+        }
+    }
+
+    // `or .Values.A .Values.B` → Guard::Or
+    if let Some(rest) = trimmed
+        .strip_prefix("or ")
+        .or_else(|| trimmed.strip_prefix("or\t"))
+    {
+        let paths = extract_values_paths(rest);
+        if paths.len() >= 2 {
+            return vec![Guard::Or { paths }];
+        }
+    }
+
+    // `eq .Values.X "value"` → Guard::Eq
+    if let Some(rest) = trimmed
+        .strip_prefix("eq ")
+        .or_else(|| trimmed.strip_prefix("eq\t"))
+    {
+        let paths = extract_values_paths(rest);
+        if paths.len() == 1 {
+            let eq_re = Regex::new(r#""([^"]*)""#).unwrap();
+            if let Some(caps) = eq_re.captures(rest) {
+                return vec![Guard::Eq {
+                    path: paths.into_iter().next().unwrap(),
+                    value: caps[1].to_string(),
+                }];
+            }
+        }
+    }
+
+    // `ne .Values.X "value"` → treat as a truthy guard on the referenced path
+    if let Some(rest) = trimmed
+        .strip_prefix("ne ")
+        .or_else(|| trimmed.strip_prefix("ne\t"))
+    {
+        let paths = extract_values_paths(rest);
+        if paths.len() == 1 {
+            return vec![Guard::Truthy {
+                path: paths.into_iter().next().unwrap(),
+            }];
+        }
+    }
+
+    // Default: simple truthy check(s)
+    // `and (.Values.A) (.Values.B)` or bare multiple .Values refs
+    // each become a separate Truthy guard.
+    let paths = extract_values_paths(trimmed);
+    paths
+        .into_iter()
+        .map(|p| Guard::Truthy { path: p })
+        .collect()
 }
 
 /// True when the expression likely produces a YAML fragment rather than a single scalar.

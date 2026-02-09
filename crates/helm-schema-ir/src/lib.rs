@@ -20,7 +20,7 @@ pub struct ValueUse {
     /// Whether this produces a scalar or a YAML fragment.
     pub kind: ValueKind,
     /// Guard conditions (from `if`/`with`/`range`) active when this use appears.
-    pub guards: Vec<String>,
+    pub guards: Vec<Guard>,
     /// The Kubernetes resource type detected in context, if any.
     pub resource: Option<ResourceRef>,
 }
@@ -41,6 +41,32 @@ pub enum ValueKind {
 pub struct ResourceRef {
     pub api_version: String,
     pub kind: String,
+}
+
+/// A guard condition from an `if`, `with`, or `range` block.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum Guard {
+    /// Simple truthy check: `if .Values.X`
+    Truthy { path: String },
+    /// Negated truthy check: `if not .Values.X`
+    Not { path: String },
+    /// Equality check: `if eq .Values.X "value"`
+    Eq { path: String, value: String },
+    /// Disjunction: `if or .Values.A .Values.B`
+    Or { paths: Vec<String> },
+}
+
+impl Guard {
+    /// Return all `.Values.*` paths referenced by this guard.
+    pub fn value_paths(&self) -> Vec<&str> {
+        match self {
+            Guard::Truthy { path } | Guard::Not { path } | Guard::Eq { path, .. } => {
+                vec![path.as_str()]
+            }
+            Guard::Or { paths } => paths.iter().map(|s| s.as_str()).collect(),
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +98,12 @@ impl ResourceDetector for DefaultResourceDetector {
         match (api_version, kind) {
             (Some(av), Some(k)) => Some(ResourceRef {
                 api_version: av,
+                kind: k,
+            }),
+            // Many Helm charts use `{{ template "..." }}` for apiVersion,
+            // so we still detect the resource if only `kind` is found.
+            (None, Some(k)) => Some(ResourceRef {
+                api_version: String::new(),
                 kind: k,
             }),
             _ => None,

@@ -91,6 +91,102 @@ fn define_index_from_helpers() {
     );
 }
 
+// ---------------------------------------------------------------------------
+// networkpolicy.yaml tests
+// ---------------------------------------------------------------------------
+
+fn networkpolicy_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/bitnami-redis/templates/networkpolicy.yaml"
+    );
+    std::fs::read_to_string(path).expect("read networkpolicy.yaml")
+}
+
+/// FusedRustParser can parse the bitnami-redis networkpolicy template.
+#[test]
+fn fused_rust_parses_networkpolicy() {
+    let src = networkpolicy_src();
+    let ast = FusedRustParser.parse(&src).expect("parse");
+
+    // Top-level should be an If guarded by .Values.networkPolicy.enabled
+    let if_node = find_first_if(&ast).expect("should have If");
+    let cond = extract_if_cond(if_node);
+    assert!(
+        cond.contains(".Values.networkPolicy.enabled"),
+        "outer condition should reference networkPolicy.enabled, got: {cond}"
+    );
+
+    // The then_branch should contain pairs for kind, apiVersion, metadata, spec
+    let then_items = extract_if_then(if_node);
+    assert!(
+        has_pair_with_key(then_items, "kind"),
+        "should have 'kind' pair"
+    );
+    assert!(
+        has_pair_with_key(then_items, "metadata"),
+        "should have 'metadata' pair"
+    );
+    assert!(
+        has_pair_with_key(then_items, "spec"),
+        "should have 'spec' pair"
+    );
+}
+
+/// TreeSitterParser can parse the bitnami-redis networkpolicy template.
+#[test]
+fn tree_sitter_parses_networkpolicy() {
+    let src = networkpolicy_src();
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+
+    let if_node = find_first_if(&ast).expect("should have If");
+    let cond = extract_if_cond(if_node);
+    assert!(
+        cond.contains(".Values.networkPolicy.enabled"),
+        "outer condition should reference networkPolicy.enabled, got: {cond}"
+    );
+
+    let then_items = extract_if_then(if_node);
+    assert!(
+        has_pair_with_key(then_items, "kind"),
+        "should have 'kind' pair"
+    );
+    assert!(
+        has_pair_with_key(then_items, "metadata"),
+        "should have 'metadata' pair"
+    );
+    assert!(
+        has_pair_with_key(then_items, "spec"),
+        "should have 'spec' pair"
+    );
+}
+
+/// Both parsers produce structurally equivalent AST for networkpolicy.
+#[test]
+fn both_parsers_produce_equivalent_ast_networkpolicy() {
+    let src = networkpolicy_src();
+
+    let rust_ast = FusedRustParser.parse(&src).expect("fused rust");
+    let ts_ast = TreeSitterParser.parse(&src).expect("tree-sitter");
+
+    // Both should find the outer `if networkPolicy.enabled`.
+    let rust_if = find_first_if(&rust_ast).expect("rust should have If");
+    let ts_if = find_first_if(&ts_ast).expect("ts should have If");
+    assert_eq!(extract_if_cond(rust_if), extract_if_cond(ts_if));
+
+    // Both should have nested `if` for `commonAnnotations` inside the outer if.
+    let rust_nested = find_nested_if_with_cond(rust_if, "commonAnnotations");
+    let ts_nested = find_nested_if_with_cond(ts_if, "commonAnnotations");
+    assert!(
+        rust_nested.is_some(),
+        "rust should have nested if for commonAnnotations"
+    );
+    assert!(
+        ts_nested.is_some(),
+        "ts should have nested if for commonAnnotations"
+    );
+}
+
 // --- helpers ---
 
 fn find_first_if(node: &HelmAst) -> Option<&HelmAst> {
@@ -115,6 +211,58 @@ fn extract_if_then(node: &HelmAst) -> &[HelmAst] {
     match node {
         HelmAst::If { then_branch, .. } => then_branch.as_slice(),
         _ => panic!("not an If node"),
+    }
+}
+
+fn find_nested_if_with_cond<'a>(node: &'a HelmAst, cond_substr: &str) -> Option<&'a HelmAst> {
+    match node {
+        HelmAst::If {
+            cond,
+            then_branch,
+            else_branch,
+        } => {
+            // Search children first (skip self to find *nested* ifs).
+            for item in then_branch.iter().chain(else_branch.iter()) {
+                if let Some(found) = find_if_with_cond(item, cond_substr) {
+                    return Some(found);
+                }
+            }
+            None
+        }
+        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
+            items.iter().find_map(|i| find_if_with_cond(i, cond_substr))
+        }
+        HelmAst::Pair { value, .. } => value
+            .as_ref()
+            .and_then(|v| find_if_with_cond(v, cond_substr)),
+        _ => None,
+    }
+}
+
+fn find_if_with_cond<'a>(node: &'a HelmAst, cond_substr: &str) -> Option<&'a HelmAst> {
+    match node {
+        HelmAst::If {
+            cond,
+            then_branch,
+            else_branch,
+        } => {
+            if cond.contains(cond_substr) {
+                return Some(node);
+            }
+            for item in then_branch.iter().chain(else_branch.iter()) {
+                if let Some(found) = find_if_with_cond(item, cond_substr) {
+                    return Some(found);
+                }
+            }
+            None
+        }
+        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
+            items.iter().find_map(|i| find_if_with_cond(i, cond_substr))
+        }
+        HelmAst::Pair { value, .. } => value
+            .as_ref()
+            .and_then(|v| find_if_with_cond(v, cond_substr)),
+        _ => None,
     }
 }
 

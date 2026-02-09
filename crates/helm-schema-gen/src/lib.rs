@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ValueKind, ValueUse, YamlPath};
+use helm_schema_ir::{Guard, ValueKind, ValueUse};
 use helm_schema_k8s::{
     K8sSchemaProvider, path_pattern, strengthen_leaf_schema, string_map_schema, type_schema,
 };
@@ -48,8 +48,10 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &dyn K8sSchemaProvide
 
     for u in uses {
         for g in &u.guards {
-            if !g.trim().is_empty() {
-                guard_value_paths.insert(g.clone());
+            for path in g.value_paths() {
+                if !path.trim().is_empty() {
+                    guard_value_paths.insert(path.to_string());
+                }
             }
         }
     }
@@ -64,7 +66,7 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &dyn K8sSchemaProvide
         if u.guards.is_empty()
             && !u.path.0.is_empty()
             && !guard_value_paths.contains(&u.source_expr)
-            && infer_guard_schema(&u.source_expr)
+            && infer_guard_schema(&u.source_expr, None)
                 .as_object()
                 .is_some_and(|o| o.is_empty())
         {
@@ -72,12 +74,15 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &dyn K8sSchemaProvide
         }
 
         for g in &u.guards {
-            if !g.trim().is_empty() {
-                let gs = infer_guard_schema(g);
+            for path in g.value_paths() {
+                if path.trim().is_empty() {
+                    continue;
+                }
+                let gs = infer_guard_schema(path, Some(g));
                 if gs.as_object().is_some_and(|o| o.is_empty()) {
                     continue;
                 }
-                by_value_path.entry(g.clone()).or_default().push(gs);
+                by_value_path.entry(path.to_string()).or_default().push(gs);
             }
         }
 
@@ -134,7 +139,19 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &dyn K8sSchemaProvide
 // Inference helpers
 // ---------------------------------------------------------------------------
 
-fn infer_guard_schema(guard_expr: &str) -> Value {
+fn infer_guard_schema(guard_expr: &str, guard: Option<&Guard>) -> Value {
+    // Eq guards produce enum schemas.
+    if let Some(Guard::Eq { value, .. }) = guard {
+        return Value::Object(
+            [(
+                "enum".to_string(),
+                Value::Array(vec![Value::String(value.clone())]),
+            )]
+            .into_iter()
+            .collect(),
+        );
+    }
+
     if guard_expr == "installCRDs"
         || guard_expr.ends_with(".enabled")
         || guard_expr.ends_with("Enabled")
