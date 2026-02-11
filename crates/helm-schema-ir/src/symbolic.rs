@@ -619,9 +619,6 @@ impl<'a> SymbolicWalker<'a> {
     fn collect_range_guards(&mut self, header_text: &str) {
         let values = extract_values_paths(header_text);
         let mut path = self.shape.current_path();
-        if let Some(idx) = path.0.iter().rposition(|s| s.ends_with("[*]")) {
-            path.0.truncate(idx + 1);
-        }
         for v in values {
             self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
             let g = Guard::Truthy { path: v };

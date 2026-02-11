@@ -1,3 +1,5 @@
+#![recursion_limit = "512"]
+
 mod common;
 
 use helm_schema_ast::{FusedRustParser, HelmParser};
@@ -17,7 +19,7 @@ fn schema_fused_rust() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = common::build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
+    let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
         .with_cache_dir(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/../../testdata/kubernetes-json-schema"
@@ -37,12 +39,12 @@ fn schema_fused_rust() {
                 ]
             },
             "commonAnnotations": {
-                "type": "object",
-                "additionalProperties": {}
+                "type": ["object", "null"],
+                "additionalProperties": {"type": "string"}
             },
             "commonLabels": {
-                "type": "object",
-                "additionalProperties": {}
+                "type": ["object", "null"],
+                "additionalProperties": {"type": "string"}
             },
             "master": {
                 "type": "object",
@@ -52,7 +54,12 @@ fn schema_fused_rust() {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "redis": {"type": "integer"}
+                            "redis": {
+                                "anyOf": [
+                                    {"type": "integer"},
+                                    {"type": "string"}
+                                ]
+                            }
                         }
                     }
                 }
@@ -65,7 +72,12 @@ fn schema_fused_rust() {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "http": {"type": "integer"}
+                            "http": {
+                                "anyOf": [
+                                    {"type": "integer"},
+                                    {"type": "string"}
+                                ]
+                            }
                         }
                     },
                     "enabled": {"type": "boolean"}
@@ -78,15 +90,125 @@ fn schema_fused_rust() {
                     "allowExternal": {"type": "boolean"},
                     "allowExternalEgress": {"type": "boolean"},
                     "enabled": {"type": "boolean"},
-                    "extraEgress": {"type": "array", "items": {}},
-                    "extraIngress": {"type": "array", "items": {}},
+                    "extraEgress": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "ports": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "port": {
+                                                "anyOf": [
+                                                    {"type": "integer"},
+                                                    {"type": "string"}
+                                                ]
+                                            },
+                                            "protocol": {"type": "string"}
+                                        }
+                                    }
+                                },
+                                "to": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "podSelector": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "matchLabels": {
+                                                        "type": ["object", "null"],
+                                                        "additionalProperties": {"type": "string"}
+                                                    }
+                                                }
+                                            },
+                                            "namespaceSelector": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "matchLabels": {
+                                                        "type": ["object", "null"],
+                                                        "additionalProperties": {"type": "string"}
+                                                    }
+                                                }
+                                            },
+                                            "ipBlock": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "cidr": {"type": "string"},
+                                                    "except": {"type": "array", "items": {"type": "string"}}
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "extraIngress": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "ports": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "port": {
+                                                "anyOf": [
+                                                    {"type": "integer"},
+                                                    {"type": "string"}
+                                                ]
+                                            },
+                                            "protocol": {"type": "string"}
+                                        }
+                                    }
+                                },
+                                "from": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "podSelector": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "matchLabels": {
+                                                        "type": ["object", "null"],
+                                                        "additionalProperties": {"type": "string"}
+                                                    }
+                                                }
+                                            },
+                                            "namespaceSelector": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "matchLabels": {
+                                                        "type": ["object", "null"],
+                                                        "additionalProperties": {"type": "string"}
+                                                    }
+                                                }
+                                            },
+                                            "ipBlock": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "cidr": {"type": "string"},
+                                                    "except": {"type": "array", "items": {"type": "string"}}
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "ingressNSMatchLabels": {
-                        "type": "object",
-                        "additionalProperties": {}
+                        "type": ["object", "null"],
+                        "additionalProperties": {"type": "string"}
                     },
                     "ingressNSPodMatchLabels": {
-                        "type": "object",
-                        "additionalProperties": {}
+                        "type": ["object", "null"],
+                        "additionalProperties": {"type": "string"}
                     },
                     "metrics": {
                         "type": "object",
@@ -94,12 +216,12 @@ fn schema_fused_rust() {
                         "properties": {
                             "allowExternal": {"type": "boolean"},
                             "ingressNSMatchLabels": {
-                                "type": "object",
-                                "additionalProperties": {}
+                                "type": ["object", "null"],
+                                "additionalProperties": {"type": "string"}
                             },
                             "ingressNSPodMatchLabels": {
-                                "type": "object",
-                                "additionalProperties": {}
+                                "type": ["object", "null"],
+                                "additionalProperties": {"type": "string"}
                             }
                         }
                     }
@@ -113,7 +235,12 @@ fn schema_fused_rust() {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "sentinel": {"type": "integer"}
+                            "sentinel": {
+                                "anyOf": [
+                                    {"type": "integer"},
+                                    {"type": "string"}
+                                ]
+                            }
                         }
                     },
                     "enabled": {"type": "boolean"}

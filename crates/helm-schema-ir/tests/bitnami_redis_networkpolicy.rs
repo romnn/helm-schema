@@ -190,7 +190,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.ingressNSMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]"],
+            "path": ["spec", "ingress[*]", "from[*]", "namespaceSelector", "matchLabels"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
@@ -218,7 +218,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.ingressNSPodMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]"],
+            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
@@ -253,7 +253,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.metrics.ingressNSMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]"],
+            "path": ["spec", "ingress[*]", "from[*]", "namespaceSelector", "matchLabels"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
@@ -281,7 +281,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]"],
+            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
