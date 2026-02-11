@@ -1,6 +1,7 @@
+mod symbolic;
 mod walker;
 
-pub use walker::DefaultIrGenerator;
+pub use symbolic::SymbolicIrGenerator;
 
 use serde::{Deserialize, Serialize};
 
@@ -75,7 +76,7 @@ impl Guard {
 
 /// Generates IR (`Vec<ValueUse>`) from a parsed Helm+YAML AST.
 pub trait IrGenerator {
-    fn generate(&self, ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse>;
+    fn generate(&self, src: &str, ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse>;
 }
 
 /// Detects the Kubernetes resource type from an AST node.

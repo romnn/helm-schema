@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "description": "NetworkPolicy describes what network traffic is allowed for a set of Pods",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": ["string", "null"],
+      "enum": ["networking.k8s.io/v1"]
+    },
+    "kind": {
+      "type": ["string", "null"],
+      "enum": ["NetworkPolicy"]
+    },
+    "metadata": {
+      "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+    },
+    "spec": {
+      "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/_definitions.json#/definitions/io.k8s.api.networking.v1.NetworkPolicySpec"
+    }
+  },
+  "x-kubernetes-group-version-kind": [
+    {"group": "networking.k8s.io", "kind": "NetworkPolicy", "version": "v1"}
+  ]
+}

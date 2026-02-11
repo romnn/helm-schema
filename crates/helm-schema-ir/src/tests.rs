@@ -1,5 +1,5 @@
-use crate::{DefaultIrGenerator, Guard, IrGenerator, ValueKind, YamlPath};
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
+use crate::{Guard, IrGenerator, SymbolicIrGenerator, ValueKind, YamlPath};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 
 /// Simple template IR generation test.
 #[test]
@@ -8,9 +8,9 @@ fn simple_template_ir() {
 foo: {{ .Values.name }}
 {{- end }}
 "#;
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    let ir = DefaultIrGenerator.generate(&ast, &idx);
+    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
 
     assert!(
         ir.iter()

@@ -1,9 +1,9 @@
 mod common;
 
 use helm_schema_ast::{FusedRustParser, HelmParser};
-use helm_schema_gen::{DefaultValuesSchemaGenerator, ValuesSchemaGenerator};
-use helm_schema_ir::{DefaultIrGenerator, IrGenerator};
-use helm_schema_k8s::DefaultK8sSchemaProvider;
+use helm_schema_gen::generate_values_schema_with_values_yaml;
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
+use helm_schema_k8s::UpstreamK8sSchemaProvider;
 
 /// Full schema generation for networkpolicy using fused-Rust parser.
 ///
@@ -13,10 +13,17 @@ use helm_schema_k8s::DefaultK8sSchemaProvider;
 #[test]
 fn schema_fused_rust() {
     let src = common::networkpolicy_src();
+    let values_yaml = common::values_yaml_src();
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = common::build_define_index(&FusedRustParser);
-    let ir = DefaultIrGenerator.generate(&ast, &idx);
-    let schema = DefaultValuesSchemaGenerator.generate(&ir, &DefaultK8sSchemaProvider);
+    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
+        .with_cache_dir(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../testdata/kubernetes-json-schema"
+        ))
+        .with_allow_download(false);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -30,15 +37,12 @@ fn schema_fused_rust() {
                 ]
             },
             "commonAnnotations": {
-                "anyOf": [
-                    { "type": "object", "additionalProperties": {} },
-                    { "type": "string" }
-                ]
+                "type": "object",
+                "additionalProperties": {}
             },
             "commonLabels": {
                 "type": "object",
-                "properties": {},
-                "additionalProperties": { "type": "string" }
+                "additionalProperties": {}
             },
             "master": {
                 "type": "object",
@@ -48,7 +52,7 @@ fn schema_fused_rust() {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "redis": { "type": "integer" }
+                            "redis": {"type": "integer"}
                         }
                     }
                 }
@@ -61,40 +65,42 @@ fn schema_fused_rust() {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "http": { "type": "integer" }
+                            "http": {"type": "integer"}
                         }
                     },
-                    "enabled": { "type": "boolean" }
+                    "enabled": {"type": "boolean"}
                 }
             },
             "networkPolicy": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                    "allowExternal": { "type": "string" },
-                    "allowExternalEgress": { "type": "string" },
-                    "enabled": { "type": "boolean" },
-                    "extraEgress": {
-                        "anyOf": [
-                            { "type": "object", "additionalProperties": {} },
-                            { "type": "string" }
-                        ]
+                    "allowExternal": {"type": "boolean"},
+                    "allowExternalEgress": {"type": "boolean"},
+                    "enabled": {"type": "boolean"},
+                    "extraEgress": {"type": "array", "items": {}},
+                    "extraIngress": {"type": "array", "items": {}},
+                    "ingressNSMatchLabels": {
+                        "type": "object",
+                        "additionalProperties": {}
                     },
-                    "extraIngress": {
-                        "anyOf": [
-                            { "type": "object", "additionalProperties": {} },
-                            { "type": "string" }
-                        ]
+                    "ingressNSPodMatchLabels": {
+                        "type": "object",
+                        "additionalProperties": {}
                     },
-                    "ingressNSMatchLabels": { "type": "string" },
-                    "ingressNSPodMatchLabels": { "type": "string" },
                     "metrics": {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "allowExternal": { "type": "string" },
-                            "ingressNSMatchLabels": { "type": "string" },
-                            "ingressNSPodMatchLabels": { "type": "string" }
+                            "allowExternal": {"type": "boolean"},
+                            "ingressNSMatchLabels": {
+                                "type": "object",
+                                "additionalProperties": {}
+                            },
+                            "ingressNSPodMatchLabels": {
+                                "type": "object",
+                                "additionalProperties": {}
+                            }
                         }
                     }
                 }
@@ -107,10 +113,10 @@ fn schema_fused_rust() {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "sentinel": { "type": "integer" }
+                            "sentinel": {"type": "integer"}
                         }
                     },
-                    "enabled": { "type": "boolean" }
+                    "enabled": {"type": "boolean"}
                 }
             }
         }

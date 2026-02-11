@@ -2,7 +2,7 @@ mod common;
 
 use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    DefaultIrGenerator, DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef,
+    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
 };
 
 /// Resource detection for networkpolicy (kind is scalar, apiVersion is template).
@@ -22,37 +22,21 @@ fn resource_detection() {
     );
 }
 
-/// Both parsers produce same IR for networkpolicy.
 #[test]
-fn both_parsers_produce_same_ir() {
+fn symbolic_ir_full() {
     let src = common::networkpolicy_src();
-
-    let rust_ast = FusedRustParser.parse(&src).expect("fused rust");
-    let rust_idx = common::build_define_index(&FusedRustParser);
-    let rust_ir = DefaultIrGenerator.generate(&rust_ast, &rust_idx);
-
-    let ts_ast = TreeSitterParser.parse(&src).expect("tree-sitter");
-    let ts_idx = common::build_define_index(&TreeSitterParser);
-    let ts_ir = DefaultIrGenerator.generate(&ts_ast, &ts_idx);
-
-    let rust_json: serde_json::Value = serde_json::to_value(&rust_ir).expect("serialize");
-    let ts_json: serde_json::Value = serde_json::to_value(&ts_ir).expect("serialize");
-    similar_asserts::assert_eq!(rust_json, ts_json);
-}
-
-/// Full hardcoded expected IR for networkpolicy using fused-Rust parser.
-///
-/// Uses structured Guard types: Truthy, Not, Or, Eq.
-/// Guards are deduplicated (no duplicate from if→range chains).
-/// `not` conditions produce Guard::Not, `or` produces Guard::Or, `eq` produces Guard::Eq.
-#[test]
-fn fused_rust_ir_full() {
-    let src = common::networkpolicy_src();
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = common::build_define_index(&FusedRustParser);
-    let ir = DefaultIrGenerator.generate(&ast, &idx);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = common::build_define_index(&TreeSitterParser);
+    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");
+
+    if std::env::var("SYMBOLIC_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&actual).expect("pretty json")
+        );
+    }
 
     let np = serde_json::json!({"api_version": "", "kind": "NetworkPolicy"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
@@ -77,16 +61,9 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "commonAnnotations",
-            "path": ["annotations"],
+            "path": ["metadata", "annotations"],
             "kind": "Fragment",
             "guards": [t("networkPolicy.enabled"), t("commonAnnotations")],
-            "resource": np
-        },
-        {
-            "source_expr": "commonLabels",
-            "path": ["from[*]", "podSelector", "matchLabels"],
-            "kind": "Fragment",
-            "guards": [t("networkPolicy.enabled"), n("networkPolicy.allowExternal")],
             "resource": np
         },
         {
@@ -98,35 +75,42 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "commonLabels",
+            "path": ["spec", "egress[*]", "to[*]", "podSelector", "matchLabels"],
+            "kind": "Fragment",
+            "guards": [t("networkPolicy.enabled"), eq("architecture", "replication")],
+            "resource": np
+        },
+        {
+            "source_expr": "commonLabels",
+            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
+            "kind": "Fragment",
+            "guards": [t("networkPolicy.enabled"), n("networkPolicy.allowExternal")],
+            "resource": np
+        },
+        {
+            "source_expr": "commonLabels",
             "path": ["spec", "podSelector", "matchLabels"],
             "kind": "Fragment",
             "guards": [t("networkPolicy.enabled")],
             "resource": np
         },
         {
-            "source_expr": "commonLabels",
-            "path": ["to[*]", "podSelector", "matchLabels"],
-            "kind": "Fragment",
+            "source_expr": "master.containerPorts.redis",
+            "path": ["spec", "egress[*]", "ports[*]", "port"],
+            "kind": "Scalar",
             "guards": [t("networkPolicy.enabled"), eq("architecture", "replication")],
             "resource": np
         },
         {
             "source_expr": "master.containerPorts.redis",
-            "path": ["ingress[*]", "ports[*]", "port"],
+            "path": ["spec", "ingress[*]", "ports[*]", "port"],
             "kind": "Scalar",
             "guards": [t("networkPolicy.enabled")],
             "resource": np
         },
         {
-            "source_expr": "master.containerPorts.redis",
-            "path": ["ports[*]", "port"],
-            "kind": "Scalar",
-            "guards": [t("networkPolicy.enabled"), eq("architecture", "replication")],
-            "resource": np
-        },
-        {
             "source_expr": "metrics.containerPorts.http",
-            "path": ["ports[*]", "port"],
+            "path": ["spec", "ingress[*]", "ports[*]", "port"],
             "kind": "Scalar",
             "guards": [t("networkPolicy.enabled"), t("metrics.enabled")],
             "resource": np
@@ -168,7 +152,7 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "networkPolicy.extraEgress",
-            "path": [],
+            "path": ["spec", "egress"],
             "kind": "Fragment",
             "guards": [t("networkPolicy.enabled"), t("networkPolicy.extraEgress")],
             "resource": np
@@ -182,12 +166,11 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "networkPolicy.extraIngress",
-            "path": [],
+            "path": ["spec", "ingress"],
             "kind": "Fragment",
             "guards": [t("networkPolicy.enabled"), t("networkPolicy.extraIngress")],
             "resource": np
         },
-        // networkPolicy.ingressNSMatchLabels: from the `or` condition (emitted for Or guard)
         {
             "source_expr": "networkPolicy.ingressNSMatchLabels",
             "path": [],
@@ -195,7 +178,6 @@ fn fused_rust_ir_full() {
             "guards": [t("networkPolicy.enabled"), n("networkPolicy.allowExternal")],
             "resource": np
         },
-        // from nested `if .Values.networkPolicy.ingressNSMatchLabels` inside the or block
         {
             "source_expr": "networkPolicy.ingressNSMatchLabels",
             "path": [],
@@ -206,10 +188,9 @@ fn fused_rust_ir_full() {
             ],
             "resource": np
         },
-        // from `range` inside the if block (deduped Or guard, new Truthy guard for range target)
         {
             "source_expr": "networkPolicy.ingressNSMatchLabels",
-            "path": [],
+            "path": ["spec", "ingress[*]", "from[*]"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
@@ -218,7 +199,6 @@ fn fused_rust_ir_full() {
             ],
             "resource": np
         },
-        // networkPolicy.ingressNSPodMatchLabels
         {
             "source_expr": "networkPolicy.ingressNSPodMatchLabels",
             "path": [],
@@ -238,7 +218,7 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "networkPolicy.ingressNSPodMatchLabels",
-            "path": [],
+            "path": ["spec", "ingress[*]", "from[*]"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
@@ -247,7 +227,6 @@ fn fused_rust_ir_full() {
             ],
             "resource": np
         },
-        // metrics namespace selector guards
         {
             "source_expr": "networkPolicy.metrics.allowExternal",
             "path": [],
@@ -274,7 +253,7 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "networkPolicy.metrics.ingressNSMatchLabels",
-            "path": [],
+            "path": ["spec", "ingress[*]", "from[*]"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
@@ -302,7 +281,7 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "path": [],
+            "path": ["spec", "ingress[*]", "from[*]"],
             "kind": "Scalar",
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
@@ -313,16 +292,16 @@ fn fused_rust_ir_full() {
         },
         {
             "source_expr": "sentinel.containerPorts.sentinel",
-            "path": ["port"],
+            "path": ["spec", "egress[*]", "ports[*]", "port"],
             "kind": "Scalar",
-            "guards": [t("networkPolicy.enabled"), t("sentinel.enabled")],
+            "guards": [t("networkPolicy.enabled"), eq("architecture", "replication"), t("sentinel.enabled")],
             "resource": np
         },
         {
             "source_expr": "sentinel.containerPorts.sentinel",
-            "path": ["port"],
+            "path": ["spec", "ingress[*]", "ports[*]", "port"],
             "kind": "Scalar",
-            "guards": [t("networkPolicy.enabled"), eq("architecture", "replication"), t("sentinel.enabled")],
+            "guards": [t("networkPolicy.enabled"), t("sentinel.enabled")],
             "resource": np
         },
         {

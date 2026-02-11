@@ -1,0 +1,109 @@
+{
+  "definitions": {
+    "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+      "type": "object",
+      "properties": {
+        "name": {"type": ["string", "null"]},
+        "namespace": {"type": ["string", "null"]},
+        "labels": {
+          "type": ["object", "null"],
+          "additionalProperties": {"type": "string"}
+        },
+        "annotations": {
+          "type": ["object", "null"],
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
+    "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
+      "type": "object",
+      "properties": {
+        "matchLabels": {
+          "type": ["object", "null"],
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
+    "io.k8s.apimachinery.pkg.util.intstr.IntOrString": {
+      "anyOf": [
+        {"type": "integer"},
+        {"type": "string"}
+      ]
+    },
+    "io.k8s.api.networking.v1.NetworkPolicyPort": {
+      "type": "object",
+      "properties": {
+        "port": {"$ref": "#/definitions/io.k8s.apimachinery.pkg.util.intstr.IntOrString"},
+        "protocol": {"type": "string"}
+      }
+    },
+    "io.k8s.api.networking.v1.IPBlock": {
+      "type": "object",
+      "properties": {
+        "cidr": {"type": "string"},
+        "except": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "io.k8s.api.networking.v1.NetworkPolicyPeer": {
+      "type": "object",
+      "properties": {
+        "podSelector": {
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "namespaceSelector": {
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "ipBlock": {"$ref": "#/definitions/io.k8s.api.networking.v1.IPBlock"}
+      }
+    },
+    "io.k8s.api.networking.v1.NetworkPolicyIngressRule": {
+      "type": "object",
+      "properties": {
+        "ports": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/io.k8s.api.networking.v1.NetworkPolicyPort"}
+        },
+        "from": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/io.k8s.api.networking.v1.NetworkPolicyPeer"}
+        }
+      }
+    },
+    "io.k8s.api.networking.v1.NetworkPolicyEgressRule": {
+      "type": "object",
+      "properties": {
+        "ports": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/io.k8s.api.networking.v1.NetworkPolicyPort"}
+        },
+        "to": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/io.k8s.api.networking.v1.NetworkPolicyPeer"}
+        }
+      }
+    },
+    "io.k8s.api.networking.v1.NetworkPolicySpec": {
+      "type": "object",
+      "properties": {
+        "podSelector": {
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "ingress": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/io.k8s.api.networking.v1.NetworkPolicyIngressRule"}
+        },
+        "egress": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/io.k8s.api.networking.v1.NetworkPolicyEgressRule"}
+        },
+        "policyTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Ingress", "Egress"]
+          }
+        }
+      }
+    }
+  }
+}

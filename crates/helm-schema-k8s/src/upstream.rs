@@ -6,7 +6,7 @@ use serde_json::{Map, Value};
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 
-use crate::{K8sSchemaProvider, filename_for_resource};
+use crate::{K8sSchemaProvider, candidate_filenames_for_resource, filename_for_resource};
 
 /// Fetches and caches Kubernetes JSON Schemas from the
 /// [yannh/kubernetes-json-schema](https://github.com/yannh/kubernetes-json-schema) repository.
@@ -52,27 +52,95 @@ impl UpstreamK8sSchemaProvider {
 
     /// Load the full schema for a resource type.
     pub fn schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let filename = filename_for_resource(resource);
-        let key = format!("{}/{}", self.version_dir, filename);
+        self.load_resource_doc(resource).map(|(_, v)| v)
+    }
 
-        if let Some(v) = self.mem.lock().ok()?.get(&key).cloned() {
-            return Some(v);
+    /// Load and fully expand a resource schema by resolving all reachable `$ref`s.
+    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
+        let (filename, root) = self.load_resource_doc(resource)?;
+        let mut ctx = ResolveCtx::new(self, filename.clone(), root);
+        let root_doc = ctx.doc(&filename)?.clone();
+        let (_, expanded) = expand_schema_node(&mut ctx, &filename, &root_doc, 0);
+        Some(expanded)
+    }
+
+    fn load_resource_doc(&self, resource: &ResourceRef) -> Option<(String, Value)> {
+        let mut candidates = candidate_filenames_for_resource(resource);
+        if candidates.is_empty() {
+            candidates.push(filename_for_resource(resource));
         }
 
-        let local = self.local_path_for(&filename);
-        if !local.exists() {
-            if !self.allow_download {
-                return None;
+        for filename in candidates {
+            let key = format!("{}/{}", self.version_dir, filename);
+            if let Some(v) = self.mem.lock().ok()?.get(&key).cloned() {
+                return Some((filename, v));
             }
-            self.download_to_cache(&filename, &local).ok()?;
+
+            let local = self.local_path_for(&filename);
+            if !local.exists() {
+                if !self.allow_download {
+                    continue;
+                }
+                if self.download_to_cache(&filename, &local).is_err() {
+                    continue;
+                }
+            }
+
+            let bytes = fs::read(&local).ok()?;
+            let v: Value = serde_json::from_slice(&bytes).ok()?;
+            if let Ok(mut guard) = self.mem.lock() {
+                guard.insert(key, v.clone());
+            }
+            return Some((filename, v));
         }
 
-        let bytes = fs::read(&local).ok()?;
-        let v: Value = serde_json::from_slice(&bytes).ok()?;
-        if let Ok(mut guard) = self.mem.lock() {
-            guard.insert(key, v.clone());
+        if resource.api_version.trim().is_empty() {
+            return self.load_resource_doc_by_kind_scan(&resource.kind);
         }
-        Some(v)
+
+        None
+    }
+
+    fn load_resource_doc_by_kind_scan(&self, kind: &str) -> Option<(String, Value)> {
+        let kind_lc = kind.to_ascii_lowercase();
+        let dir = self.cache_dir.join(&self.version_dir);
+        let entries = fs::read_dir(&dir).ok()?;
+
+        for ent in entries.flatten() {
+            let path = ent.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                continue;
+            }
+            let filename = path.file_name()?.to_string_lossy().to_string();
+            if !filename.starts_with(&format!("{kind_lc}-")) {
+                continue;
+            }
+            let bytes = fs::read(&path).ok()?;
+            let doc: Value = serde_json::from_slice(&bytes).ok()?;
+
+            let matches_kind = doc
+                .get("x-kubernetes-group-version-kind")
+                .and_then(|v| v.as_array())
+                .is_some_and(|arr| {
+                    arr.iter().any(|e| {
+                        e.get("kind")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|k| k == kind)
+                    })
+                });
+
+            if !matches_kind {
+                continue;
+            }
+
+            let key = format!("{}/{}", self.version_dir, filename);
+            if let Ok(mut guard) = self.mem.lock() {
+                guard.insert(key, doc.clone());
+            }
+            return Some((filename, doc));
+        }
+
+        None
     }
 
     fn local_path_for(&self, filename: &str) -> PathBuf {
@@ -107,16 +175,11 @@ impl K8sSchemaProvider for UpstreamK8sSchemaProvider {
     }
 
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        let root = self.schema_for_resource(resource)?;
-        let filename = filename_for_resource(resource);
+        let (filename, root) = self.load_resource_doc(resource)?;
         let mut ctx = ResolveCtx::new(self, filename.clone(), root);
         let (leaf_filename, leaf) = schema_at_ypath(&mut ctx, &filename, path)?;
         let (_, expanded) = expand_schema_node(&mut ctx, &leaf_filename, &leaf, 0);
         Some(expanded)
-    }
-
-    fn schema_for_path(&self, _path: &YamlPath) -> Option<Value> {
-        None
     }
 }
 

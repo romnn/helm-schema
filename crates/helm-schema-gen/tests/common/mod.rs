@@ -24,6 +24,14 @@ pub fn networkpolicy_src() -> String {
     std::fs::read_to_string(path).expect("read networkpolicy.yaml")
 }
 
+pub fn values_yaml_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/bitnami-redis/values.yaml"
+    );
+    std::fs::read_to_string(path).expect("read values.yaml")
+}
+
 pub fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
     let _ = idx.add_source(parser, &helpers_src());

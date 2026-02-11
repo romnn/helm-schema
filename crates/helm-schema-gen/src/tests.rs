@@ -1,7 +1,7 @@
 use crate::{DefaultValuesSchemaGenerator, ValuesSchemaGenerator};
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
-use helm_schema_ir::{DefaultIrGenerator, IrGenerator};
-use helm_schema_k8s::DefaultK8sSchemaProvider;
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
+use helm_schema_k8s::UpstreamK8sSchemaProvider;
 
 /// Simple template produces correct schema structure.
 #[test]
@@ -11,44 +11,28 @@ foo: {{ .Values.name }}
 replicas: {{ .Values.replicas }}
 {{- end }}
 "#;
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    let ir = DefaultIrGenerator.generate(&ast, &idx);
-    let schema = DefaultValuesSchemaGenerator.generate(&ir, &DefaultK8sSchemaProvider);
+    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
+        .with_cache_dir(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../testdata/kubernetes-json-schema"
+        ))
+        .with_allow_download(false);
+    let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
 
-    // enabled is a guard → boolean, name is scalar → string, replicas → integer
-    assert_eq!(
-        schema.get("$schema").and_then(|v| v.as_str()),
-        Some("http://json-schema.org/draft-07/schema#")
-    );
-
-    let props = schema
-        .get("properties")
-        .and_then(|p| p.as_object())
-        .expect("properties");
-    // Plain "enabled" (no parent path) is treated as a string scalar, not boolean.
-    // Boolean inference only applies to "*.enabled" patterns with a dot prefix.
-    assert_eq!(
-        props
-            .get("enabled")
-            .and_then(|v| v.get("type"))
-            .and_then(|t| t.as_str()),
-        Some("string")
-    );
-    assert_eq!(
-        props
-            .get("name")
-            .and_then(|v| v.get("type"))
-            .and_then(|t| t.as_str()),
-        Some("string")
-    );
-    assert_eq!(
-        props
-            .get("replicas")
-            .and_then(|v| v.get("type"))
-            .and_then(|t| t.as_str()),
-        Some("integer")
-    );
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "enabled": {"type": "boolean"},
+            "name": {},
+            "replicas": {}
+        }
+    });
+    similar_asserts::assert_eq!(schema, expected);
 }
 
 /// Guard-like values (*.enabled) get boolean type.
@@ -58,19 +42,31 @@ fn guard_values_get_boolean_type() {
 key: {{ .Values.feature.name }}
 {{- end }}
 "#;
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    let ir = DefaultIrGenerator.generate(&ast, &idx);
-    let schema = DefaultValuesSchemaGenerator.generate(&ir, &DefaultK8sSchemaProvider);
+    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
+        .with_cache_dir(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../testdata/kubernetes-json-schema"
+        ))
+        .with_allow_download(false);
+    let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
 
-    let enabled_schema = schema
-        .get("properties")
-        .and_then(|p| p.get("feature"))
-        .and_then(|f| f.get("properties"))
-        .and_then(|p| p.get("enabled"));
-
-    assert_eq!(
-        enabled_schema,
-        Some(&serde_json::json!({"type": "boolean"}))
-    );
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "feature": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "enabled": {"type": "boolean"},
+                    "name": {}
+                }
+            }
+        }
+    });
+    similar_asserts::assert_eq!(schema, expected);
 }
