@@ -23,3 +23,19 @@ pub fn networkpolicy_src() -> String {
     );
     std::fs::read_to_string(path).expect("read networkpolicy.yaml")
 }
+
+pub fn cert_manager_deployment_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/cert-manager/templates/deployment.yaml"
+    );
+    std::fs::read_to_string(path).expect("read cert-manager deployment.yaml")
+}
+
+pub fn cert_manager_helpers_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/cert-manager/templates/_helpers.tpl"
+    );
+    std::fs::read_to_string(path).expect("read cert-manager _helpers.tpl")
+}

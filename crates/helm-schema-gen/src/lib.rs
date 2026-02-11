@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{Guard, ValueUse};
+use helm_schema_ir::{Guard, ValueKind, ValueUse};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use merge::{merge_schema_list, merge_two_schemas};
@@ -50,6 +50,7 @@ pub fn generate_values_schema_with_values_yaml(
     values_yaml: Option<&str>,
 ) -> Value {
     let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
+    let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_boolish_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
@@ -60,6 +61,9 @@ pub fn generate_values_schema_with_values_yaml(
         }
 
         referenced_value_paths.insert(u.source_expr.clone());
+        if u.kind == ValueKind::Fragment {
+            value_paths_used_as_fragment.insert(u.source_expr.clone());
+        }
         for g in &u.guards {
             for path in g.value_paths() {
                 if path.trim().is_empty() {
@@ -98,6 +102,7 @@ pub fn generate_values_schema_with_values_yaml(
 
     let mut root_schema = object_schema(Map::new());
     for vp in referenced_value_paths {
+        let used_as_fragment = value_paths_used_as_fragment.contains(&vp);
         let provider_schema = provider_schemas_by_value_path
             .remove(&vp)
             .map(merge_schema_list)
@@ -120,6 +125,8 @@ pub fn generate_values_schema_with_values_yaml(
             provider_schema
         } else if !is_empty_schema(&values_yaml_schema) {
             values_yaml_schema
+        } else if used_as_fragment {
+            unknown_object_schema()
         } else if !is_empty_schema(&guard_boolish_schema) {
             guard_boolish_schema
         } else {

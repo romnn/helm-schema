@@ -28,6 +28,7 @@ struct SymbolicWalker<'a> {
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
     no_output_depth: usize,
+    dot_stack: Vec<Option<String>>,
     shape: Shape,
     resource_detector: ResourceDetector,
     text_spans: Vec<(usize, usize)>,
@@ -60,6 +61,73 @@ impl Default for Shape {
 enum Container {
     Mapping,
     Sequence,
+}
+
+fn rewrite_dot_expr_to_values(text: &str, dot_prefix: &str) -> String {
+    fn is_ident_start(b: u8) -> bool {
+        (b'A'..=b'Z').contains(&b) || (b'a'..=b'z').contains(&b) || b == b'_'
+    }
+
+    fn is_ident_continue(b: u8) -> bool {
+        is_ident_start(b) || (b'0'..=b'9').contains(&b)
+    }
+
+    let bytes = text.as_bytes();
+    let mut out = String::with_capacity(text.len() + dot_prefix.len() * 2);
+    let mut i = 0usize;
+    while i < bytes.len() {
+        if bytes[i] == b'.' {
+            let prev = if i == 0 { None } else { Some(bytes[i - 1]) };
+            let next = bytes.get(i + 1).copied();
+
+            let prev_ok = !matches!(
+                prev,
+                Some(b'$' | b'.')
+                    | Some(b'0'..=b'9')
+                    | Some(b'A'..=b'Z')
+                    | Some(b'a'..=b'z')
+                    | Some(b'_')
+            );
+
+            // Bare dot: `.` not followed by an identifier.
+            if prev_ok && next.is_some_and(|b| !is_ident_start(b)) {
+                out.push_str(".Values.");
+                out.push_str(dot_prefix);
+                i += 1;
+                continue;
+            }
+
+            // Dot selector: `.foo` or `.foo.bar`
+            if prev_ok && next.is_some_and(is_ident_start) {
+                let mut j = i + 1;
+                while j < bytes.len() {
+                    let b = bytes[j];
+                    if is_ident_continue(b) || b == b'.' {
+                        j += 1;
+                        continue;
+                    }
+                    break;
+                }
+                let sel = &text[i + 1..j];
+                if sel == "Values" {
+                    out.push('.');
+                    out.push_str(sel);
+                } else {
+                    out.push_str(".Values.");
+                    out.push_str(dot_prefix);
+                    out.push('.');
+                    out.push_str(sel);
+                }
+                i = j;
+                continue;
+            }
+        }
+
+        out.push(bytes[i] as char);
+        i += 1;
+    }
+
+    out
 }
 
 impl Shape {
@@ -296,6 +364,7 @@ impl<'a> SymbolicWalker<'a> {
             uses: Vec::new(),
             guards: Vec::new(),
             no_output_depth: 0,
+            dot_stack: Vec::new(),
             shape: Shape::default(),
             resource_detector: ResourceDetector::default(),
             text_spans: Vec::new(),
@@ -360,6 +429,7 @@ impl<'a> SymbolicWalker<'a> {
         self.resource_detector = ResourceDetector::default();
         self.shape = Shape::default();
         self.guards.clear();
+        self.dot_stack.clear();
         self.no_output_depth = 0;
     }
 
@@ -572,7 +642,13 @@ impl<'a> SymbolicWalker<'a> {
         } else {
             ValueKind::Scalar
         };
-        let values = extract_values_paths(text);
+        let mut values = extract_values_paths(text);
+        if values.is_empty() {
+            if let Some(Some(dot_prefix)) = self.dot_stack.last() {
+                let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
+                values = extract_values_paths(&rewritten);
+            }
+        }
         if values.is_empty() {
             return;
         }
@@ -605,7 +681,13 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn collect_if_with_guards(&mut self, cond_text: &str) {
-        let cond_guards = parse_condition(cond_text);
+        let mut cond_guards = parse_condition(cond_text);
+        if cond_guards.is_empty() {
+            if let Some(Some(dot_prefix)) = self.dot_stack.last() {
+                let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
+                cond_guards = parse_condition(&rewritten);
+            }
+        }
         for g in &cond_guards {
             for path in g.value_paths() {
                 self.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
@@ -613,6 +695,15 @@ impl<'a> SymbolicWalker<'a> {
             if !self.guards.contains(g) {
                 self.guards.push(g.clone());
             }
+        }
+    }
+
+    fn push_with_dot_binding(&mut self, header_text: &str) {
+        let values = extract_values_paths(header_text);
+        if values.len() == 1 {
+            self.dot_stack.push(Some(values[0].clone()));
+        } else {
+            self.dot_stack.push(None);
         }
     }
 
@@ -695,8 +786,10 @@ impl<'a> SymbolicWalker<'a> {
 
             "with_action" => {
                 let saved = self.guards.len();
+                let saved_dot = self.dot_stack.len();
                 if let Some(cond) = node.child_by_field_name("condition") {
                     if let Ok(txt) = cond.utf8_text(self.source.as_bytes()) {
+                        self.push_with_dot_binding(txt);
                         self.collect_if_with_guards(txt);
                     }
                 }
@@ -707,6 +800,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
 
                 self.guards.truncate(saved);
+                self.dot_stack.truncate(saved_dot);
 
                 let alternative = self.children_with_field(node, "alternative");
                 for ch in alternative {
@@ -717,6 +811,8 @@ impl<'a> SymbolicWalker<'a> {
 
             "range_action" => {
                 let saved = self.guards.len();
+                let saved_dot = self.dot_stack.len();
+                self.dot_stack.push(None);
                 if let Some(txt) = self.range_header_text(node) {
                     self.collect_range_guards(&txt);
                 }
@@ -727,6 +823,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
 
                 self.guards.truncate(saved);
+                self.dot_stack.truncate(saved_dot);
 
                 let alternative = self.children_with_field(node, "alternative");
                 for ch in alternative {

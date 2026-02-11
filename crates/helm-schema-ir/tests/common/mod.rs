@@ -24,6 +24,22 @@ pub fn networkpolicy_src() -> String {
     std::fs::read_to_string(path).expect("read networkpolicy.yaml")
 }
 
+pub fn cert_manager_deployment_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/cert-manager/templates/deployment.yaml"
+    );
+    std::fs::read_to_string(path).expect("read cert-manager deployment.yaml")
+}
+
+pub fn cert_manager_helpers_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/cert-manager/templates/_helpers.tpl"
+    );
+    std::fs::read_to_string(path).expect("read cert-manager _helpers.tpl")
+}
+
 pub fn common_helpers_srcs() -> Vec<String> {
     let base = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -48,5 +64,12 @@ pub fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     for src in common_helpers_srcs() {
         let _ = idx.add_source(parser, &src);
     }
+    idx
+}
+
+pub fn build_cert_manager_define_index(parser: &dyn HelmParser) -> DefineIndex {
+    let mut idx = DefineIndex::new();
+    idx.add_source(parser, &cert_manager_helpers_src())
+        .expect("cert-manager helpers");
     idx
 }
