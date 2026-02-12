@@ -39,3 +39,11 @@ pub fn cert_manager_helpers_src() -> String {
     );
     std::fs::read_to_string(path).expect("read cert-manager _helpers.tpl")
 }
+
+pub fn cert_manager_service_src() -> String {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/charts/cert-manager/templates/service.yaml"
+    );
+    std::fs::read_to_string(path).expect("read cert-manager service.yaml")
+}

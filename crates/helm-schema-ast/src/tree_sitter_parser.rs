@@ -6,6 +6,64 @@ use crate::{HelmAst, HelmParser, ParseError};
 /// `helm_template` grammar for re-parsing YAML fragments within text nodes.
 pub struct TreeSitterParser;
 
+fn is_template_delim_start(kind: &str) -> bool {
+    kind == "{{" || kind == "{{-"
+}
+
+fn is_silent_reassignment_expr(text: &str) -> bool {
+    let mut it = text.split_whitespace();
+    let Some(first) = it.next() else {
+        return false;
+    };
+    let Some(second) = it.next() else {
+        return false;
+    };
+    first.starts_with('$') && second == "="
+}
+
+fn is_fragment_injector_expr(text: &str) -> bool {
+    let mut it = text.split_whitespace();
+    let first = it.next().unwrap_or("");
+    let is_include_like = matches!(first, "include" | "template" | "tpl");
+    is_include_like
+        || text.contains("nindent")
+        || text.contains("indent")
+        || text.contains("toYaml")
+        || text.contains("fromYaml")
+}
+
+fn is_template_delim_end(kind: &str) -> bool {
+    kind == "}}" || kind == "-}}"
+}
+
+fn is_standalone_span(start: usize, end: usize, src: &str) -> bool {
+    let bytes = src.as_bytes();
+    let start = start.min(src.len());
+    let end = end.min(src.len());
+
+    let mut line_start = start;
+    while line_start > 0 {
+        if bytes[line_start - 1] == b'\n' {
+            break;
+        }
+        line_start -= 1;
+    }
+
+    let mut line_end = end;
+    while line_end < bytes.len() {
+        if bytes[line_end] == b'\n' {
+            break;
+        }
+        line_end += 1;
+    }
+
+    let prefix = &src[line_start..start];
+    let suffix = &src[end..line_end];
+
+    prefix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
+        && suffix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
+}
+
 impl HelmParser for TreeSitterParser {
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError> {
         let language =
@@ -25,8 +83,7 @@ impl HelmParser for TreeSitterParser {
         for ch in root.children(&mut c) {
             blocks.push(ch);
         }
-
-        let items = fuse_blocks(&blocks, src);
+        let items = fuse_blocks(&blocks, src, false);
         Ok(HelmAst::Document { items })
     }
 }
@@ -40,6 +97,37 @@ fn is_control_flow(kind: &str) -> bool {
         kind,
         "if_action" | "range_action" | "with_action" | "define_action" | "block_action"
     )
+}
+
+fn is_standalone_template_action(node: tree_sitter::Node<'_>, src: &str) -> bool {
+    if node.kind() != "template_action" {
+        return false;
+    }
+    let start = node.start_byte().min(src.len());
+    let end = node.end_byte().min(src.len());
+
+    let bytes = src.as_bytes();
+    let mut line_start = start;
+    while line_start > 0 {
+        if bytes[line_start - 1] == b'\n' {
+            break;
+        }
+        line_start -= 1;
+    }
+
+    let mut line_end = end;
+    while line_end < bytes.len() {
+        if bytes[line_end] == b'\n' {
+            break;
+        }
+        line_end += 1;
+    }
+
+    let prefix = &src[line_start..start];
+    let suffix = &src[end..line_end];
+
+    prefix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
+        && suffix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
 }
 
 fn children_with_field<'a>(node: tree_sitter::Node<'a>, field: &str) -> Vec<tree_sitter::Node<'a>> {
@@ -78,6 +166,10 @@ fn deindent_yaml_fragment(fragment: &str) -> String {
         if content.trim().is_empty() {
             continue;
         }
+        if content.trim_start().starts_with("{{") {
+            continue;
+        }
+
         let indent = content
             .chars()
             .take_while(|c| *c == ' ' || *c == '\t')
@@ -116,6 +208,41 @@ fn deindent_yaml_fragment(fragment: &str) -> String {
         out.push_str(&line[idx..]);
     }
     out
+}
+
+fn line_indent_at(pos: usize, src: &str) -> usize {
+    let bytes = src.as_bytes();
+    let pos = pos.min(src.len());
+    let mut line_start = pos;
+    while line_start > 0 {
+        if bytes[line_start - 1] == b'\n' {
+            break;
+        }
+        line_start -= 1;
+    }
+    src[line_start..pos]
+        .chars()
+        .take_while(|c| *c == ' ' || *c == '\t')
+        .count()
+}
+
+fn pending_open_key_indent(pending: &str) -> Option<usize> {
+    for line in pending.lines().rev() {
+        let line = line.trim_end_matches('\r');
+        if line.trim().is_empty() {
+            continue;
+        }
+        if line.trim_start().starts_with("{{") {
+            continue;
+        }
+        let indent = line.chars().take_while(|c| *c == ' ' || *c == '\t').count();
+        let content = line.trim_start();
+        if content.ends_with(':') {
+            return Some(indent);
+        }
+        return None;
+    }
+    None
 }
 
 /// Re-parse a YAML fragment using the fused helm_template grammar and convert to HelmAst nodes.
@@ -311,7 +438,7 @@ fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
 }
 
 /// Fuse a sequence of tree-sitter top-level nodes (text + control flow) into HelmAst nodes.
-fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str) -> Vec<HelmAst> {
+fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: bool) -> Vec<HelmAst> {
     let mut out: Vec<HelmAst> = Vec::new();
     let mut pending = String::new();
 
@@ -327,6 +454,62 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str) -> Vec<HelmAst> {
     let mut i = 0usize;
     while i < blocks.len() {
         let b = blocks[i];
+
+        if is_template_delim_start(b.kind()) {
+            let mut j = i + 1;
+            while j < blocks.len() {
+                if is_template_delim_end(blocks[j].kind()) {
+                    break;
+                }
+                j += 1;
+            }
+
+            if j < blocks.len() {
+                let start = blocks[i].start_byte();
+                let end = blocks[j].end_byte();
+                if is_standalone_span(start, end, src) {
+                    let comment_node = (i + 1..j)
+                        .filter_map(|k| blocks.get(k).copied())
+                        .find(|n| n.is_named() && n.kind() == "comment");
+                    if let Some(comment_node) = comment_node {
+                        flush_pending(&mut pending, &mut out);
+                        let comment_text = comment_node.utf8_text(src.as_bytes()).unwrap_or("");
+                        out.push(HelmAst::HelmComment {
+                            text: comment_text.to_string(),
+                        });
+                        i = j + 1;
+                        continue;
+                    }
+
+                    let action_indent = line_indent_at(start, src);
+                    let span_text = &src[start.min(src.len())..end.min(src.len())];
+                    let normalized = normalize_helm_template_text(span_text);
+
+                    if is_silent_reassignment_expr(&normalized) {
+                        i = j + 1;
+                        continue;
+                    }
+
+                    if !in_control_flow
+                        && action_indent > 0
+                        && is_fragment_injector_expr(&normalized)
+                    {
+                        i = j + 1;
+                        continue;
+                    }
+
+                    let open_key_indent = pending_open_key_indent(&pending);
+                    let is_yaml_value_continuation =
+                        open_key_indent.is_some_and(|k| action_indent > k);
+                    if !is_yaml_value_continuation {
+                        flush_pending(&mut pending, &mut out);
+                        out.push(HelmAst::HelmExpr { text: normalized });
+                        i = j + 1;
+                        continue;
+                    }
+                }
+            }
+        }
 
         // Detect comment actions: `{{` + `comment` node + `}}`
         if (b.kind() == "{{" || b.kind() == "{{-")
@@ -362,6 +545,27 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str) -> Vec<HelmAst> {
         if is_control_flow(b.kind()) {
             flush_pending(&mut pending, &mut out);
             out.push(fuse_control_flow(b, src));
+        } else if is_standalone_template_action(b, src) {
+            let open_key_indent = pending_open_key_indent(&pending);
+            let action_indent = line_indent_at(b.start_byte(), src);
+            let is_yaml_value_continuation = open_key_indent.is_some_and(|k| action_indent > k);
+            let text = b.utf8_text(src.as_bytes()).unwrap_or("");
+            let normalized = normalize_helm_template_text(text);
+
+            if is_silent_reassignment_expr(&normalized) {
+                // Ignore silent reassignments like `$x = ...`.
+            } else if !in_control_flow
+                && action_indent > 0
+                && is_fragment_injector_expr(&normalized)
+            {
+                // Skip top-level fragment injectors; they typically expand to YAML.
+            } else if is_yaml_value_continuation {
+                let r = b.byte_range();
+                pending.push_str(&src[r]);
+            } else {
+                flush_pending(&mut pending, &mut out);
+                out.push(HelmAst::HelmExpr { text: normalized });
+            }
         } else {
             let r = b.byte_range();
             pending.push_str(&src[r]);
@@ -388,8 +592,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
             let then_blocks = children_with_field(node, "consequence");
             let else_blocks = children_with_field(node, "alternative");
 
-            let then_items = fuse_blocks(&then_blocks, src);
-            let base_else_items = fuse_blocks(&else_blocks, src);
+            let then_items = fuse_blocks(&then_blocks, src, true);
+            let base_else_items = fuse_blocks(&else_blocks, src, true);
 
             // Handle `else if` chains: tree-sitter inlines them as repeated
             // condition/option fields. We lower them into nested If nodes.
@@ -426,7 +630,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
             } else {
                 let mut tail = base_else_items;
                 for (cnd, blocks) in else_if_pairs.into_iter().rev() {
-                    let opt_items = fuse_blocks(&blocks, src);
+                    let opt_items = fuse_blocks(&blocks, src, true);
                     tail = vec![HelmAst::If {
                         cond: cnd,
                         then_branch: opt_items,
@@ -465,8 +669,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 }
             };
 
-            let body = fuse_blocks(&children_with_field(node, "body"), src);
-            let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src);
+            let body = fuse_blocks(&children_with_field(node, "body"), src, true);
+            let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src, true);
 
             HelmAst::Range {
                 header,
@@ -482,8 +686,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .trim()
                 .to_string();
 
-            let body = fuse_blocks(&children_with_field(node, "consequence"), src);
-            let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src);
+            let body = fuse_blocks(&children_with_field(node, "consequence"), src, true);
+            let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src, true);
 
             HelmAst::With {
                 header,
@@ -500,7 +704,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .trim_matches('"')
                 .to_string();
 
-            let body = fuse_blocks(&children_with_field(node, "body"), src);
+            let body = fuse_blocks(&children_with_field(node, "body"), src, true);
 
             HelmAst::Define { name, body }
         }
@@ -522,7 +726,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 format!("{} {}", name_part.trim_matches('"'), arg_part)
             };
 
-            let body = fuse_blocks(&children_with_field(node, "body"), src);
+            let body = fuse_blocks(&children_with_field(node, "body"), src, true);
 
             HelmAst::Block { name, body }
         }

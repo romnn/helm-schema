@@ -873,7 +873,8 @@ fn rewrite_inline_block_value_fragments(fragment: &str) -> (String, HashMap<Stri
                 if next_indent > lhs.chars().take_while(|c| *c == ' ' || *c == '\t').count()
                     && next_after_indent.trim_start().starts_with("{{")
                 {
-                    if let Some((action, _rest)) = take_action_if_closed_on_line(next_after_indent) {
+                    if let Some((action, _rest)) = take_action_if_closed_on_line(next_after_indent)
+                    {
                         let likely_block = action.contains("nindent") || action.contains("indent");
                         if likely_block {
                             let expr_text = match parse_helm_template_text(&action) {
