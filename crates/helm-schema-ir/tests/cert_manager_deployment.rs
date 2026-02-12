@@ -22,6 +22,7 @@ fn resource_detection() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn symbolic_ir_full() {
     let src = common::cert_manager_deployment_src();
     let ast = TreeSitterParser.parse(&src).expect("parse");

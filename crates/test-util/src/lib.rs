@@ -17,6 +17,11 @@ pub mod prelude {
 //     paths.into_iter().map(|p| p.as_str()).collect()
 // }
 
+/// Write `data` into the virtual filesystem at `path`, creating parent directories as needed.
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be created or written to.
 pub fn write(path: &VfsPath, data: impl AsRef<[u8]>) -> eyre::Result<VfsPath> {
     // let path: &VfsPath = path.as_ref();
     let _ = path.parent().create_dir_all();
@@ -60,9 +65,13 @@ impl Default for Builder {
 }
 
 impl Builder {
-    /// Initialize test
+    /// Initialize test.
     ///
     /// This ensures `color_eyre` is setup once and env variables are read.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `color_eyre` installation fails.
     pub fn build(self) -> TestGuard {
         let test_guard = TestGuard::default();
 
@@ -97,16 +106,11 @@ impl Builder {
     }
 
     /// Toggle log level for tracing inside the test.
+    #[must_use]
     pub fn with_log_level(mut self, log_level: impl Into<LogLevel>) -> Self {
         self.log_level = log_level.into();
         self
     }
-
-    // /// Set color choice for tracing.
-    // pub fn with_color_choice(mut self, color_choice: impl Into<ColorChoice>) -> Self {
-    //     self.color_choice = color_choice.into();
-    //     self
-    // }
 
     /// Toggle installation of `color_eyre`.
     #[must_use]
@@ -118,7 +122,7 @@ impl Builder {
     /// Configure the tracing subscribers env filter.
     ///
     /// Requires tracing to be enabled with `Self::with_tracing`.
-    // pub fn with_env_filter(mut self, filter: Option<impl Into<String>>) -> Self {
+    #[must_use]
     pub fn with_env_filter(mut self, filter: impl Into<String>) -> Self {
         self.env_filter = Some(filter.into());
         self

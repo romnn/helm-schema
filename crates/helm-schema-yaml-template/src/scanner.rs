@@ -142,6 +142,7 @@ impl SimpleKey {
 }
 
 #[derive(Debug)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Scanner<T> {
     rdr: T,
     mark: Marker,
@@ -207,11 +208,7 @@ fn is_digit(c: char) -> bool {
 }
 #[inline]
 fn is_alpha(c: char) -> bool {
-    match c {
-        '0'..='9' | 'a'..='z' | 'A'..='Z' => true,
-        '_' | '-' => true,
-        _ => false,
-    }
+    matches!(c, '0'..='9' | 'a'..='z' | 'A'..='Z' | '_' | '-')
 }
 #[inline]
 fn is_hex(c: char) -> bool {
@@ -228,10 +225,7 @@ fn as_hex(c: char) -> u32 {
 }
 #[inline]
 fn is_flow(c: char) -> bool {
-    match c {
-        ',' | '[' | ']' | '{' | '}' => true,
-        _ => false,
-    }
+    matches!(c, ',' | '[' | ']' | '{' | '}')
 }
 
 pub type ScanResult = Result<(), ScanError>;
@@ -361,6 +355,12 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         self.simple_key_allowed = false;
     }
 
+    /// Fetch the next token from the input stream.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the input contains invalid YAML syntax.
+    #[allow(clippy::cast_possible_wrap)]
     pub fn fetch_next_token(&mut self) -> ScanResult {
         self.lookahead(1);
         // println!("--> fetch_next_token Cur {:?} {:?}", self.mark, self.ch());
@@ -881,6 +881,15 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         true
     }
 
+    /// Return the next token, or `None` if the stream has ended.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the input contains invalid YAML syntax.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal token queue is empty when a token is expected.
     pub fn next_token(&mut self) -> Result<Option<Token>, ScanError> {
         if self.stream_end_produced {
             return Ok(None);
@@ -899,6 +908,11 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         Ok(Some(t))
     }
 
+    /// Ensure at least one token is available in the queue.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the input contains invalid YAML syntax.
     pub fn fetch_more_tokens(&mut self) -> ScanResult {
         let mut need_more;
         loop {
@@ -1603,6 +1617,11 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         Ok(())
     }
 
+    #[allow(
+        clippy::too_many_lines,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     fn scan_block_scalar(&mut self, literal: bool) -> Result<Token, ScanError> {
         let start_mark = self.mark;
         let mut chomping: i32 = 0;
@@ -1688,7 +1707,10 @@ impl<T: Iterator<Item = char>> Scanner<T> {
 
         if increment > 0 {
             indent = if self.indent >= 0 {
-                (self.indent + increment as isize) as usize
+                #[allow(clippy::cast_sign_loss)]
+                {
+                    (self.indent + increment as isize) as usize
+                }
             } else {
                 increment
             }
@@ -1763,6 +1785,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         }
     }
 
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn block_scalar_breaks(&mut self, indent: &mut usize, breaks: &mut String) -> ScanResult {
         let mut max_indent = 0;
         loop {
@@ -1818,6 +1841,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         Ok(())
     }
 
+    #[allow(clippy::too_many_lines)]
     fn scan_flow_scalar(&mut self, single: bool) -> Result<Token, ScanError> {
         let start_mark = self.mark;
 
@@ -1938,12 +1962,9 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                                 value = (value << 4) + as_hex(self.buffer[i]);
                             }
 
-                            let ch = match char::from_u32(value) {
-                                Some(v) => v,
-                                None => {
-                                    return Err(ScanError::new(start_mark,
+                            let Some(ch) = char::from_u32(value) else {
+                                return Err(ScanError::new(start_mark,
                                         "while parsing a quoted scalar, found invalid Unicode character escape code"));
-                                }
                             };
                             string.push(ch);
 
@@ -2038,6 +2059,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         Ok(())
     }
 
+    #[allow(clippy::too_many_lines, clippy::cast_possible_wrap)]
     fn scan_plain_scalar(&mut self) -> Result<Token, ScanError> {
         let indent = self.indent + 1;
         let start_mark = self.mark;
@@ -2250,6 +2272,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         Ok(())
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     fn roll_indent(&mut self, col: usize, number: Option<usize>, tok: TokenType, mark: Marker) {
         if self.flow_level > 0 {
             return;
@@ -2276,6 +2299,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         }
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     fn save_simple_key(&mut self) -> Result<(), ScanError> {
         let required = self.flow_level > 0 && self.indent == (self.mark.col as isize);
         if self.simple_key_allowed {

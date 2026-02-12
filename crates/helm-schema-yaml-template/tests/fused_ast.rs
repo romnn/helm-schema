@@ -37,6 +37,7 @@ fn if_else_end_with_yaml_branches() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn redis_prometheus_rule_yaml() {
     let src = indoc! {r#"
         {{- /*

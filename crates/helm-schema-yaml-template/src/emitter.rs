@@ -131,6 +131,12 @@ impl<'a> YamlEmitter<'a> {
         self.compact
     }
 
+    /// Serialize a YAML document to the underlying writer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`EmitError`] if writing fails or the document contains
+    /// an unsupported hashmap key type.
     pub fn dump(&mut self, doc: &Yaml) -> EmitResult {
         // write DocumentStart
         writeln!(self.writer, "---")?;
@@ -183,7 +189,7 @@ impl<'a> YamlEmitter<'a> {
                 Ok(())
             }
             // XXX(chenyh) Alias
-            _ => Ok(()),
+            Yaml::Alias(_) => Ok(()),
         }
     }
 
@@ -211,10 +217,7 @@ impl<'a> YamlEmitter<'a> {
         } else {
             self.level += 1;
             for (cnt, (k, v)) in h.iter().enumerate() {
-                let complex_key = match *k {
-                    Yaml::Hash(_) | Yaml::Array(_) => true,
-                    _ => false,
-                };
+                let complex_key = matches!(*k, Yaml::Hash(_) | Yaml::Array(_));
                 if cnt > 0 {
                     writeln!(self.writer)?;
                     self.write_indent()?;
@@ -275,9 +278,9 @@ impl<'a> YamlEmitter<'a> {
 
 /// Check if the string requires quoting.
 /// Strings starting with any of the following characters must be quoted.
-/// :, &, *, ?, |, -, <, >, =, !, %, @
+/// `:`, `&`, `*`, `?`, `|`, `-`, `<`, `>`, `=`, `!`, `%`, `@`
 /// Strings containing any of the following characters must be quoted.
-/// {, }, [, ], ,, #, `
+/// `{`, `}`, `[`, `]`, `,`, `#`, `` ` ``
 ///
 /// If the string contains any of the following control characters, it must be escaped with double quotes:
 /// \0, \x01, \x02, \x03, \x04, \x05, \x06, \a, \b, \t, \n, \v, \f, \r, \x0e, \x0f, \x10, \x11, \x12, \x13, \x14, \x15, \x16, \x17, \x18, \x19, \x1a, \e, \x1c, \x1d, \x1e, \x1f, \N, \_, \L, \P
@@ -294,12 +297,9 @@ fn need_quotes(string: &str) -> bool {
 
     string.is_empty()
         || need_quotes_spaces(string)
-        || string.starts_with(|character: char| match character {
-            '&' | '*' | '?' | '|' | '-' | '<' | '>' | '=' | '!' | '%' | '@' => true,
-            _ => false,
-        })
-        || string.contains(|character: char| match character {
-            ':'
+        || string.starts_with(['&', '*', '?', '|', '-', '<', '>', '=', '!', '%', '@'])
+        || string.contains(|character: char| {
+            matches!(character, ':'
             | '{'
             | '}'
             | '['
@@ -307,7 +307,7 @@ fn need_quotes(string: &str) -> bool {
             | ','
             | '#'
             | '`'
-            | '\"'
+            | '"'
             | '\''
             | '\\'
             | '\0'..='\x06'
@@ -315,8 +315,7 @@ fn need_quotes(string: &str) -> bool {
             | '\n'
             | '\r'
             | '\x0e'..='\x1a'
-            | '\x1c'..='\x1f' => true,
-            _ => false,
+            | '\x1c'..='\x1f')
         })
         || [
             // http://yaml.org/type/bool.html
@@ -336,6 +335,7 @@ fn need_quotes(string: &str) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::similar_names)]
 mod test {
     use super::*;
     use crate::YamlLoader;

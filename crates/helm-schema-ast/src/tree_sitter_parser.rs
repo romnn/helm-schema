@@ -137,7 +137,7 @@ fn children_with_field<'a>(node: tree_sitter::Node<'a>, field: &str) -> Vec<tree
         let Some(ch) = node.child(i) else {
             continue;
         };
-        if node.field_name_for_child(i as u32) != Some(field) {
+        if node.field_name_for_child(u32::try_from(i).unwrap()) != Some(field) {
             continue;
         }
         out.push(ch);
@@ -289,6 +289,7 @@ fn parse_yaml_items(src: &str) -> Vec<HelmAst> {
 }
 
 /// Convert a single tree-sitter YAML/Helm node into `HelmAst`.
+#[allow(clippy::too_many_lines, clippy::match_same_arms)]
 fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
     match node.kind() {
         "block_node" | "flow_node" => {
@@ -333,14 +334,14 @@ fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
             HelmAst::Mapping { items: kids }
         }
         "block_mapping_pair" | "flow_pair" => {
-            let key = node
-                .child_by_field_name("key")
-                .map(|n| Box::new(yaml_node_to_ast(n, src)))
-                .unwrap_or_else(|| {
+            let key = node.child_by_field_name("key").map_or_else(
+                || {
                     Box::new(HelmAst::Scalar {
                         text: String::new(),
                     })
-                });
+                },
+                |n| Box::new(yaml_node_to_ast(n, src)),
+            );
             let value = node
                 .child_by_field_name("value")
                 .map(|n| Box::new(yaml_node_to_ast(n, src)));
@@ -438,6 +439,7 @@ fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
 }
 
 /// Fuse a sequence of tree-sitter top-level nodes (text + control flow) into `HelmAst` nodes.
+#[allow(clippy::too_many_lines)]
 fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: bool) -> Vec<HelmAst> {
     let mut out: Vec<HelmAst> = Vec::new();
     let mut pending = String::new();
@@ -579,6 +581,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
 }
 
 /// Convert a tree-sitter control-flow node into `HelmAst`.
+#[allow(clippy::too_many_lines)]
 fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
     match node.kind() {
         "if_action" => {
@@ -603,7 +606,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 let Some(ch) = node.child(i) else {
                     continue;
                 };
-                match node.field_name_for_child(i as u32) {
+                match node.field_name_for_child(u32::try_from(i).unwrap()) {
                     Some("condition") => {
                         if seen_main_condition {
                             let cnd = ch

@@ -2,8 +2,6 @@ use crate::parser::{Event, MarkedEventReceiver, Parser};
 use crate::scanner::{Marker, ScanError, TScalarStyle, TokenType};
 use linked_hash_map::LinkedHashMap;
 use std::collections::BTreeMap;
-use std::f64;
-use std::i64;
 use std::mem;
 use std::ops::Index;
 use std::string;
@@ -186,6 +184,11 @@ impl YamlLoader {
         }
     }
 
+    /// Load YAML documents from a string.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the input contains invalid YAML.
     pub fn load_from_str(source: &str) -> Result<Vec<Yaml>, ScanError> {
         let mut loader = YamlLoader {
             docs: Vec::new(),
@@ -248,26 +251,17 @@ impl Yaml {
 
     #[must_use]
     pub fn is_null(&self) -> bool {
-        match *self {
-            Yaml::Null => true,
-            _ => false,
-        }
+        matches!(*self, Yaml::Null)
     }
 
     #[must_use]
     pub fn is_badvalue(&self) -> bool {
-        match *self {
-            Yaml::BadValue => true,
-            _ => false,
-        }
+        matches!(*self, Yaml::BadValue)
     }
 
     #[must_use]
     pub fn is_array(&self) -> bool {
-        match *self {
-            Yaml::Array(_) => true,
-            _ => false,
-        }
+        matches!(*self, Yaml::Array(_))
     }
 
     #[must_use]
@@ -287,24 +281,28 @@ impl Yaml {
     }
 }
 
-#[cfg_attr(clippy, allow(should_implement_trait))]
+#[allow(clippy::should_implement_trait)]
 impl Yaml {
     // Not implementing FromStr because there is no possibility of Error.
     // This function falls back to Yaml::String if nothing else matches.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic; all inputs produce a valid `Yaml` value.
     #[must_use]
     pub fn from_str(v: &str) -> Yaml {
-        if v.starts_with("0x") {
-            if let Ok(i) = i64::from_str_radix(&v[2..], 16) {
+        if let Some(hex) = v.strip_prefix("0x") {
+            if let Ok(i) = i64::from_str_radix(hex, 16) {
                 return Yaml::Integer(i);
             }
         }
-        if v.starts_with("0o") {
-            if let Ok(i) = i64::from_str_radix(&v[2..], 8) {
+        if let Some(oct) = v.strip_prefix("0o") {
+            if let Ok(i) = i64::from_str_radix(oct, 8) {
                 return Yaml::Integer(i);
             }
         }
-        if v.starts_with('+') {
-            if let Ok(i) = v[1..].parse::<i64>() {
+        if let Some(rest) = v.strip_prefix('+') {
+            if let Ok(i) = rest.parse::<i64>() {
                 return Yaml::Integer(i);
             }
         }
@@ -336,6 +334,7 @@ impl<'a> Index<&'a str> for Yaml {
 impl Index<usize> for Yaml {
     type Output = Yaml;
 
+    #[allow(clippy::cast_possible_wrap)]
     fn index(&self, idx: usize) -> &Yaml {
         if let Some(v) = self.as_vec() {
             v.get(idx).unwrap_or(&BAD_VALUE)
@@ -372,9 +371,9 @@ impl Iterator for YamlIter {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod test {
     use crate::yaml::*;
-    use std::f64;
     #[test]
     fn test_coerce() {
         let s = "---

@@ -180,6 +180,11 @@ fn merge_scalar_like_schemas(a: &Value, b: &Value) -> Option<Value> {
     Some(Value::Object(out))
 }
 
+#[allow(
+    clippy::too_many_lines,
+    clippy::items_after_statements,
+    clippy::match_same_arms
+)]
 fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     let mut out = a.as_object()?.clone();
     let bobj = b.as_object()?;

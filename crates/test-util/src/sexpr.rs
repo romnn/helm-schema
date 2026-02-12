@@ -1,5 +1,6 @@
 use lexpr::Value;
 use std::fmt;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum ParseError {
@@ -61,14 +62,23 @@ pub enum SExpr {
     Node { kind: String, children: Vec<SExpr> },
 }
 
-impl SExpr {
-    pub fn from_str(text: &str) -> Result<Self, ParseError> {
+impl FromStr for SExpr {
+    type Err = ParseError;
+
+    /// Parse an s-expression from a string.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ParseError`] if the input is not a valid s-expression.
+    fn from_str(text: &str) -> Result<Self, ParseError> {
         let options = lexpr::parse::Options::default()
             .with_keyword_syntax(lexpr::parse::KeywordSyntax::ColonPrefix);
         let value = lexpr::from_str_custom(text, options)?;
         convert_lexpr_to_sexpr(&value)
     }
+}
 
+impl SExpr {
     #[must_use]
     pub fn to_string_pretty(&self) -> String {
         let mut out = String::new();

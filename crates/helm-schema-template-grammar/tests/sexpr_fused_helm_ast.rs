@@ -1,4 +1,5 @@
 use indoc::indoc;
+use std::str::FromStr;
 use test_util::sexpr::SExpr;
 
 fn deindent_yaml_fragment(fragment: &str) -> String {
@@ -109,6 +110,7 @@ fn parse_yaml_items(src: &str) -> Vec<SExpr> {
     out
 }
 
+#[allow(clippy::too_many_lines, clippy::match_same_arms)]
 fn yaml_node_to_sexpr(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
     match node.kind() {
         "block_node" | "flow_node" => {
@@ -327,7 +329,7 @@ fn children_with_field<'a>(node: tree_sitter::Node<'a>, field: &str) -> Vec<tree
         let Some(ch) = node.child(i) else {
             continue;
         };
-        if node.field_name_for_child(i as u32) != Some(field) {
+        if node.field_name_for_child(u32::try_from(i).unwrap()) != Some(field) {
             continue;
         }
         out.push(ch);
@@ -343,6 +345,7 @@ fn is_control_flow(kind: &str) -> bool {
 }
 
 fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
+    #![allow(clippy::needless_pass_by_value)]
     let mut out: Vec<SExpr> = Vec::new();
     let mut pending = String::new();
 
@@ -410,6 +413,7 @@ fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
     out
 }
 
+#[allow(clippy::too_many_lines)]
 fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
     match node.kind() {
         "if_action" => {
@@ -437,7 +441,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 let Some(ch) = node.child(i) else {
                     continue;
                 };
-                match node.field_name_for_child(i as u32) {
+                match node.field_name_for_child(u32::try_from(i).unwrap()) {
                     Some("condition") => {
                         if seen_main_condition {
                             let cnd = ch
@@ -727,6 +731,7 @@ fn parse_fused_template(src: &str) -> SExpr {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn if_else_end_with_yaml_branches() {
     let src = indoc! {r"
         {{- if .Values.enabled }}
@@ -761,6 +766,7 @@ fn if_else_end_with_yaml_branches() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn redis_prometheus_rule_yaml() {
     let src = indoc! {r#"
         {{- /*

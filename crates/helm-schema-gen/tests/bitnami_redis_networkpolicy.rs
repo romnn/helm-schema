@@ -13,6 +13,7 @@ use helm_schema_k8s::UpstreamK8sSchemaProvider;
 /// networkpolicy template and produce a well-structured JSON schema that a
 /// devops engineer would recognize as describing the values.yaml structure.
 #[test]
+#[allow(clippy::too_many_lines)]
 fn schema_fused_rust() {
     let src = common::networkpolicy_src();
     let values_yaml = common::values_yaml_src();

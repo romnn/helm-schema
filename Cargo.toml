@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "crates/clippy-wrapper",
   "crates/test-util",
   "crates/helm-schema-yaml-template",
   "crates/helm-schema-template-grammar",
@@ -9,6 +10,27 @@ members = [
   "crates/helm-schema-k8s",
   "crates/helm-schema-gen",
 ]
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+opt-level = 3
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_must_use = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used      = "deny"
+expect_used      = "deny"
+panic            = "deny"
+unreachable      = "deny"
+unimplemented    = "deny"
+todo             = "deny"
+indexing_slicing = "deny"
+missing_errors_doc = "warn"
 
 [workspace.package]
 version = "0.0.1"
@@ -22,12 +44,6 @@ categories = [
   "development-tools",
   "development-tools::build-utils",
 ]
-
-[profile.release]
-lto = true
-strip = true
-codegen-units = 1
-opt-level = 3
 
 [workspace.dependencies]
 color-eyre = "0"

@@ -207,9 +207,7 @@ fn lookup_values_yaml_schema(doc: &YamlValue, vp: &str) -> Option<Value> {
     if parts.is_empty() {
         return None;
     }
-    let Some(v) = lookup_values_yaml_value(doc, &parts) else {
-        return None;
-    };
+    let v = lookup_values_yaml_value(doc, &parts)?;
     Some(schema_from_yaml_value(v))
 }
 
@@ -229,7 +227,7 @@ fn lookup_values_yaml_value<'a>(doc: &'a YamlValue, parts: &[&str]) -> Option<&'
 
 fn schema_from_yaml_value(v: &YamlValue) -> Value {
     match v {
-        YamlValue::Null => empty_schema(),
+        YamlValue::Null | YamlValue::Tagged(_) => empty_schema(),
         YamlValue::Bool(_) => type_schema("boolean"),
         YamlValue::Number(n) => {
             if n.as_i64().is_some() || n.as_u64().is_some() {
@@ -267,7 +265,6 @@ fn schema_from_yaml_value(v: &YamlValue) -> Value {
             }
             object_schema(props)
         }
-        _ => empty_schema(),
     }
 }
 

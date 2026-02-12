@@ -34,16 +34,19 @@ impl UpstreamK8sSchemaProvider {
         }
     }
 
+    #[must_use]
     pub fn with_cache_dir(mut self, dir: impl Into<PathBuf>) -> Self {
         self.cache_dir = dir.into();
         self
     }
 
+    #[must_use]
     pub fn with_allow_download(mut self, allow: bool) -> Self {
         self.allow_download = allow;
         self
     }
 
+    #[must_use]
     pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
         self.base_url = base_url.into();
         self

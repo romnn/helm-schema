@@ -6,20 +6,20 @@ use yaml_rust::scanner::Scanner;
 use yaml_rust::YamlLoader;
 
 fn is_yaml_template_file(path: &Path) -> bool {
-    match path.extension().and_then(|s| s.to_str()) {
-        Some("yaml" | "yml") => true,
-        _ => false,
-    }
+    matches!(
+        path.extension().and_then(|s| s.to_str()),
+        Some("yaml" | "yml")
+    )
 }
 
 fn is_non_yaml_template_file(path: &Path) -> bool {
     if path.file_name() == Some(OsStr::new("NOTES.txt")) {
         return true;
     }
-    match path.extension().and_then(|s| s.to_str()) {
-        Some("tpl" | "txt") => true,
-        _ => false,
-    }
+    matches!(
+        path.extension().and_then(|s| s.to_str()),
+        Some("tpl" | "txt")
+    )
 }
 
 fn has_templates_dir_component(path: &Path) -> bool {
@@ -32,16 +32,14 @@ fn collect_template_files(root: &Path, predicate: fn(&Path) -> bool) -> Vec<Path
     let mut stack = vec![root.to_path_buf()];
 
     while let Some(dir) = stack.pop() {
-        let entries = match fs::read_dir(&dir) {
-            Ok(e) => e,
-            Err(_) => continue,
+        let Ok(entries) = fs::read_dir(&dir) else {
+            continue;
         };
 
         for ent in entries.flatten() {
             let path = ent.path();
-            let ft = match ent.file_type() {
-                Ok(t) => t,
-                Err(_) => continue,
+            let Ok(ft) = ent.file_type() else {
+                continue;
             };
 
             if ft.is_dir() {

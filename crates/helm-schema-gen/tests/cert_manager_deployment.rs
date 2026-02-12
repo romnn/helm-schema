@@ -8,6 +8,7 @@ use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 use helm_schema_k8s::UpstreamK8sSchemaProvider;
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn schema_fused_rust() {
     let src = common::cert_manager_deployment_src();
     let values_yaml = common::cert_manager_values_yaml_src();

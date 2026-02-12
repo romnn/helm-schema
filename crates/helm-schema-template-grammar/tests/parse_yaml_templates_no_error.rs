@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::fmt::Write;
 use std::path::{Path, PathBuf};
 
 fn is_template_yaml(path: &Path) -> bool {
@@ -349,6 +350,7 @@ fn contains_kind(root: tree_sitter::Node<'_>, kind: &str) -> bool {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn parses_all_testdata_yaml_templates_best_effort() {
     let yaml_language = tree_sitter::Language::new(helm_schema_template_grammar::yaml::language());
     let gotmpl_language =
@@ -473,7 +475,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
                     ep,
                     node.to_sexp(),
                 );
-                extra.push_str(&format!("snippet_around_error_start=\n{snippet}\n"));
+                let _ = write!(extra, "snippet_around_error_start=\n{snippet}\n");
             }
 
             panic!(

@@ -98,6 +98,13 @@ impl fmt::Display for FusedNode {
     }
 }
 
+/// Parse a Helm template source into a fused YAML/Helm AST.
+///
+/// # Errors
+///
+/// Returns a [`FusedParseError`] if the input contains malformed YAML or
+/// unbalanced Helm control-flow blocks.
+#[allow(clippy::too_many_lines)]
 pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
     let mut out: Vec<FusedNode> = Vec::new();
     let mut stack: Vec<ControlFrame> = Vec::new();
@@ -151,14 +158,14 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
             pending_yaml.push_str(line);
             continue;
         }
-        if let Some((raw_action, _indent_col)) = try_take_standalone_helm_action(line, &mut lines) {
+        if let Some((raw_action, indent_col)) = try_take_standalone_helm_action(line, &mut lines) {
             let tok = parse_helm_template_text(&raw_action);
 
             // If this is an indented YAML fragment injector (e.g. `{{- include ... | nindent N }}`)
             // and we're not inside control flow, keep it in the YAML fragment and let the YAML
             // layer skip it. This matches the tree-sitter parser behavior for cases like the
             // cert-manager `labels` injection.
-            if stack.is_empty() && _indent_col > 0 {
+            if stack.is_empty() && indent_col > 0 {
                 if let HelmTok::Expr { text } = &tok {
                     let is_injector = (text.contains("include")
                         || text.contains("tpl")
@@ -446,9 +453,7 @@ fn last_key_only_line(pending_yaml: &str) -> Option<(usize, String)> {
             .count();
         let after_indent = &line_no_nl[indent..];
 
-        let Some(colon_at) = after_indent.find(':') else {
-            return None;
-        };
+        let colon_at = after_indent.find(':')?;
         let (lhs, rhs_with_colon) = after_indent.split_at(colon_at);
         let key = lhs.trim();
         if key.is_empty() {
@@ -1047,7 +1052,7 @@ fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[HelmPlaceholder
             if let Some(idx) = parse_sole_placeholder(text) {
                 if let Some(original) = exprs.get(idx) {
                     if original.quoted {
-                        *text = original.raw.clone();
+                        text.clone_from(&original.raw);
                     } else {
                         let inner = extract_helm_expr_inner(&original.raw);
                         *node = FusedNode::HelmExpr {

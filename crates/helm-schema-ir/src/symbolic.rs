@@ -187,6 +187,7 @@ impl Shape {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn ingest(&mut self, text: &str) {
         fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
             let after = after.trim_end();
@@ -219,7 +220,7 @@ impl Shape {
         }
 
         fn clear_pending_at_indent(
-            stack: &mut Vec<(usize, Container, Option<String>)>,
+            stack: &mut [(usize, Container, Option<String>)],
             indent: usize,
         ) {
             for (top_indent, kind, pending) in stack.iter_mut().rev() {
@@ -577,7 +578,6 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn children_with_field<'n>(
-        &self,
         node: tree_sitter::Node<'n>,
         field: &str,
     ) -> Vec<tree_sitter::Node<'n>> {
@@ -762,7 +762,7 @@ impl<'a> SymbolicWalker<'a> {
                     self.collect_if_with_guards(txt);
                 }
 
-                let consequence = self.children_with_field(node, "consequence");
+                let consequence = Self::children_with_field(node, "consequence");
                 for ch in consequence {
                     self.walk(ch);
                 }
@@ -771,7 +771,7 @@ impl<'a> SymbolicWalker<'a> {
 
                 // Note: else-if chains are represented as repeated condition/option fields.
                 // For now, we only handle the plain else branch.
-                let alternative = self.children_with_field(node, "alternative");
+                let alternative = Self::children_with_field(node, "alternative");
                 for ch in alternative {
                     self.walk(ch);
                 }
@@ -788,7 +788,7 @@ impl<'a> SymbolicWalker<'a> {
                     self.collect_if_with_guards(txt);
                 }
 
-                let consequence = self.children_with_field(node, "consequence");
+                let consequence = Self::children_with_field(node, "consequence");
                 for ch in consequence {
                     self.walk(ch);
                 }
@@ -796,7 +796,7 @@ impl<'a> SymbolicWalker<'a> {
                 self.guards.truncate(saved);
                 self.dot_stack.truncate(saved_dot);
 
-                let alternative = self.children_with_field(node, "alternative");
+                let alternative = Self::children_with_field(node, "alternative");
                 for ch in alternative {
                     self.walk(ch);
                 }
@@ -811,7 +811,7 @@ impl<'a> SymbolicWalker<'a> {
                     self.collect_range_guards(&txt);
                 }
 
-                let body = self.children_with_field(node, "body");
+                let body = Self::children_with_field(node, "body");
                 for ch in body {
                     self.walk(ch);
                 }
@@ -819,7 +819,7 @@ impl<'a> SymbolicWalker<'a> {
                 self.guards.truncate(saved);
                 self.dot_stack.truncate(saved_dot);
 
-                let alternative = self.children_with_field(node, "alternative");
+                let alternative = Self::children_with_field(node, "alternative");
                 for ch in alternative {
                     self.walk(ch);
                 }

@@ -106,6 +106,11 @@ impl<T: Iterator<Item = char>> Parser<T> {
         }
     }
 
+    /// Peek at the next event without consuming it.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the underlying scanner encounters invalid input.
     pub fn peek(&mut self) -> Result<&(Event, Marker), ScanError> {
         if let Some(ref x) = self.current {
             Ok(x)
@@ -115,6 +120,16 @@ impl<T: Iterator<Item = char>> Parser<T> {
         }
     }
 
+    /// Consume and return the next event.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the underlying scanner encounters invalid input.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal state is inconsistent (should not happen in practice).
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> ParseResult {
         match self.current {
             None => self.parse(),
@@ -169,6 +184,16 @@ impl<T: Iterator<Item = char>> Parser<T> {
         Ok((ev, mark))
     }
 
+    /// Load YAML documents from the scanner, dispatching events to `recv`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ScanError`] if the input contains invalid YAML.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the document structure is malformed (e.g. missing
+    /// `DocumentStart` / `DocumentEnd` markers).
     pub fn load<R: MarkedEventReceiver>(
         &mut self,
         recv: &mut R,
@@ -351,7 +376,7 @@ impl<T: Iterator<Item = char>> Parser<T> {
                 | TokenType::DocumentStart,
             ) => {
                 // explicit document
-                self._explicit_document_start()
+                self.explicit_document_start()
             }
             Token(mark, _) if implicit => {
                 self.parser_process_directives()?;
@@ -361,7 +386,7 @@ impl<T: Iterator<Item = char>> Parser<T> {
             }
             _ => {
                 // explicit document
-                self._explicit_document_start()
+                self.explicit_document_start()
             }
         }
     }
@@ -387,7 +412,7 @@ impl<T: Iterator<Item = char>> Parser<T> {
         Ok(())
     }
 
-    fn _explicit_document_start(&mut self) -> ParseResult {
+    fn explicit_document_start(&mut self) -> ParseResult {
         self.parser_process_directives()?;
         match *self.peek_token()? {
             Token(mark, TokenType::DocumentStart) => {
@@ -437,6 +462,7 @@ impl<T: Iterator<Item = char>> Parser<T> {
         Ok((Event::DocumentEnd, marker))
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn register_anchor(&mut self, name: String, _: &Marker) -> Result<usize, ScanError> {
         // anchors can be overridden/reused
         // if self.anchors.contains_key(name) {
@@ -812,6 +838,7 @@ impl<T: Iterator<Item = char>> Parser<T> {
         }
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn flow_sequence_entry_mapping_end(&mut self) -> ParseResult {
         self.state = State::FlowSequenceEntry;
         Ok((Event::MappingEnd, self.scanner.mark()))

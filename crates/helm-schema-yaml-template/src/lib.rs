@@ -37,9 +37,9 @@
 //! ```
 
 #![doc(html_root_url = "https://docs.rs/yaml-rust/0.4.5")]
-#![cfg_attr(clippy, allow(renamed_and_removed_lints))]
-#![cfg_attr(clippy, warn(cyclomatic_complexity))]
-#![cfg_attr(clippy, allow(match_same_arms, should_implement_trait))]
+#![allow(clippy::renamed_and_removed_lints)]
+#![warn(clippy::cognitive_complexity)]
+#![allow(clippy::match_same_arms)]
 
 extern crate linked_hash_map;
 

@@ -10,6 +10,7 @@ fn test_cache_dir() -> String {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn materialize_networkpolicy_v1_35() {
     let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
         .with_cache_dir(test_cache_dir())

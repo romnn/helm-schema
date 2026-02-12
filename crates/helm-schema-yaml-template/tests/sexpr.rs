@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use test_util::sexpr::SExpr;
 
 use yaml_rust::scanner::ScanError;
@@ -68,6 +69,8 @@ pub fn yaml_stream_to_sexpr(docs: &[Yaml]) -> SExpr {
     }
 }
 
+/// # Panics
+/// Panics if parsing or comparison fails.
 pub fn assert_yaml_matches_sexpr(src: &str, want: &str) {
     let docs = YamlLoader::load_from_str(src).expect("parse yaml");
     let have = yaml_stream_to_sexpr(&docs);
@@ -75,6 +78,8 @@ pub fn assert_yaml_matches_sexpr(src: &str, want: &str) {
     similar_asserts::assert_eq!(have, want);
 }
 
+/// # Panics
+/// Panics if parsing or comparison fails.
 pub fn assert_yaml_doc_matches_sexpr(src: &str, want: &str) {
     let docs = YamlLoader::load_from_str(src).expect("parse yaml");
     assert_eq!(docs.len(), 1, "expected exactly one document");
@@ -83,11 +88,14 @@ pub fn assert_yaml_doc_matches_sexpr(src: &str, want: &str) {
     similar_asserts::assert_eq!(have, want);
 }
 
+/// # Errors
+/// Returns a [`ScanError`] if the YAML input is invalid.
 pub fn parse_yaml_doc_sexpr(src: &str) -> Result<SExpr, ScanError> {
     let docs = YamlLoader::load_from_str(src)?;
     Ok(yaml_stream_to_sexpr(&docs))
 }
 
+#[allow(clippy::too_many_lines)]
 fn fused_to_sexpr(node: &FusedNode) -> SExpr {
     match node {
         FusedNode::Stream { items } => SExpr::Node {
@@ -322,6 +330,8 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
     }
 }
 
+/// # Panics
+/// Panics if parsing or comparison fails.
 pub fn assert_fused_matches_sexpr(src: &str, want: &str) {
     let have = yaml_rust::parse_fused_yaml_helm(src).expect("parse fused");
     let have = fused_to_sexpr(&have);

@@ -5,6 +5,7 @@ pub use fused_rust::FusedRustParser;
 pub use tree_sitter_parser::TreeSitterParser;
 
 use std::collections::HashMap;
+use std::fmt::Write;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
@@ -82,11 +83,12 @@ impl HelmAst {
         buf
     }
 
+    #[allow(clippy::too_many_lines)]
     fn write_sexpr(&self, buf: &mut String, indent: usize) {
         let pad = "  ".repeat(indent);
         match self {
             HelmAst::Document { items } => {
-                buf.push_str(&format!("{pad}(Document"));
+                let _ = write!(buf, "{pad}(Document");
                 for item in items {
                     buf.push('\n');
                     item.write_sexpr(buf, indent + 1);
@@ -94,7 +96,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Mapping { items } => {
-                buf.push_str(&format!("{pad}(Mapping"));
+                let _ = write!(buf, "{pad}(Mapping");
                 for item in items {
                     buf.push('\n');
                     item.write_sexpr(buf, indent + 1);
@@ -102,7 +104,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Pair { key, value } => {
-                buf.push_str(&format!("{pad}(Pair"));
+                let _ = write!(buf, "{pad}(Pair");
                 buf.push('\n');
                 key.write_sexpr(buf, indent + 1);
                 if let Some(v) = value {
@@ -112,7 +114,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Sequence { items } => {
-                buf.push_str(&format!("{pad}(Sequence"));
+                let _ = write!(buf, "{pad}(Sequence");
                 for item in items {
                     buf.push('\n');
                     item.write_sexpr(buf, indent + 1);
@@ -120,22 +122,22 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Scalar { text } => {
-                buf.push_str(&format!("{pad}(Scalar {text:?})"));
+                let _ = write!(buf, "{pad}(Scalar {text:?})");
             }
             HelmAst::HelmExpr { text } => {
-                buf.push_str(&format!("{pad}(HelmExpr {text:?})"));
+                let _ = write!(buf, "{pad}(HelmExpr {text:?})");
             }
             HelmAst::HelmComment { text } => {
-                buf.push_str(&format!("{pad}(HelmComment {text:?})"));
+                let _ = write!(buf, "{pad}(HelmComment {text:?})");
             }
             HelmAst::If {
                 cond,
                 then_branch,
                 else_branch,
             } => {
-                buf.push_str(&format!("{pad}(If {cond:?}"));
+                let _ = write!(buf, "{pad}(If {cond:?}");
                 if !then_branch.is_empty() {
-                    buf.push_str(&format!("\n{pad}  (then"));
+                    let _ = write!(buf, "\n{pad}  (then");
                     for item in then_branch {
                         buf.push('\n');
                         item.write_sexpr(buf, indent + 2);
@@ -143,7 +145,7 @@ impl HelmAst {
                     buf.push(')');
                 }
                 if !else_branch.is_empty() {
-                    buf.push_str(&format!("\n{pad}  (else"));
+                    let _ = write!(buf, "\n{pad}  (else");
                     for item in else_branch {
                         buf.push('\n');
                         item.write_sexpr(buf, indent + 2);
@@ -157,9 +159,9 @@ impl HelmAst {
                 body,
                 else_branch,
             } => {
-                buf.push_str(&format!("{pad}(Range {header:?}"));
+                let _ = write!(buf, "{pad}(Range {header:?}");
                 if !body.is_empty() {
-                    buf.push_str(&format!("\n{pad}  (body"));
+                    let _ = write!(buf, "\n{pad}  (body");
                     for item in body {
                         buf.push('\n');
                         item.write_sexpr(buf, indent + 2);
@@ -167,7 +169,7 @@ impl HelmAst {
                     buf.push(')');
                 }
                 if !else_branch.is_empty() {
-                    buf.push_str(&format!("\n{pad}  (else"));
+                    let _ = write!(buf, "\n{pad}  (else");
                     for item in else_branch {
                         buf.push('\n');
                         item.write_sexpr(buf, indent + 2);
@@ -181,9 +183,9 @@ impl HelmAst {
                 body,
                 else_branch,
             } => {
-                buf.push_str(&format!("{pad}(With {header:?}"));
+                let _ = write!(buf, "{pad}(With {header:?}");
                 if !body.is_empty() {
-                    buf.push_str(&format!("\n{pad}  (body"));
+                    let _ = write!(buf, "\n{pad}  (body");
                     for item in body {
                         buf.push('\n');
                         item.write_sexpr(buf, indent + 2);
@@ -191,7 +193,7 @@ impl HelmAst {
                     buf.push(')');
                 }
                 if !else_branch.is_empty() {
-                    buf.push_str(&format!("\n{pad}  (else"));
+                    let _ = write!(buf, "\n{pad}  (else");
                     for item in else_branch {
                         buf.push('\n');
                         item.write_sexpr(buf, indent + 2);
@@ -201,7 +203,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Define { name, body } => {
-                buf.push_str(&format!("{pad}(Define {name:?}"));
+                let _ = write!(buf, "{pad}(Define {name:?}");
                 if !body.is_empty() {
                     for item in body {
                         buf.push('\n');
@@ -211,7 +213,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Block { name, body } => {
-                buf.push_str(&format!("{pad}(Block {name:?}"));
+                let _ = write!(buf, "{pad}(Block {name:?}");
                 if !body.is_empty() {
                     for item in body {
                         buf.push('\n');
@@ -226,6 +228,11 @@ impl HelmAst {
 
 /// Trait for parsing Helm+YAML templates into a shared [`HelmAst`].
 pub trait HelmParser {
+    /// Parse Helm+YAML template source into a [`HelmAst`].
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ParseError`] if the input cannot be parsed.
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError>;
 }
 
@@ -244,6 +251,10 @@ impl DefineIndex {
     }
 
     /// Parse `src` with `parser` and collect all `Define` blocks into the index.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`ParseError`] if `parser` fails to parse `src`.
     pub fn add_source(&mut self, parser: &dyn HelmParser, src: &str) -> Result<(), ParseError> {
         let tree = parser.parse(src)?;
         self.collect_defines(&tree);
@@ -258,7 +269,9 @@ impl DefineIndex {
 
     fn collect_defines(&mut self, node: &HelmAst) {
         match node {
-            HelmAst::Document { items } | HelmAst::Mapping { items } => {
+            HelmAst::Document { items }
+            | HelmAst::Mapping { items }
+            | HelmAst::Sequence { items } => {
                 for item in items {
                     self.collect_defines(item);
                 }
@@ -275,11 +288,6 @@ impl DefineIndex {
                     self.collect_defines(item);
                 }
                 for item in else_branch {
-                    self.collect_defines(item);
-                }
-            }
-            HelmAst::Sequence { items } => {
-                for item in items {
                     self.collect_defines(item);
                 }
             }

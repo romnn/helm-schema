@@ -23,6 +23,7 @@ fn resource_detection() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn symbolic_ir_full() {
     let src = common::networkpolicy_src();
     let ast = TreeSitterParser.parse(&src).expect("parse");
