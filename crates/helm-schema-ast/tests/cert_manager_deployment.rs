@@ -479,11 +479,10 @@ const EXPECTED_SEXPR: &str = r#"(Document
 "#;
 
 #[test]
-#[ignore]
 fn fused_rust_ast() {
     let src = common::cert_manager_deployment_src();
     let ast = FusedRustParser.parse(&src).expect("parse");
-    let _ = ast;
+    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
 }
 
 #[test]

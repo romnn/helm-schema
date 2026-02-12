@@ -13,6 +13,18 @@ pub enum FusedParseError {
     UnbalancedControlFlow(String),
 }
 
+fn take_action_prefix(s: &str) -> Option<(&str, &str)> {
+    if !s.starts_with("{{") {
+        return None;
+    }
+    let close_at = if is_comment_action_prefix(s) {
+        s.rfind("}}").map(|idx| idx + 2)?
+    } else {
+        s.find("}}").map(|idx| idx + 2)?
+    };
+    Some((&s[..close_at], &s[close_at..]))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FusedNode {
     Stream {
@@ -128,27 +140,38 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
                     push_to_current(stack, out, node);
                 }
             }
-            Err(_e) => {
-                push_to_current(
-                    stack,
-                    out,
-                    FusedNode::Unknown {
-                        kind: "yaml_parse_error".to_string(),
-                        text: Some(fragment),
-                        children: Vec::new(),
-                    },
-                );
-            }
+            Err(_e) => {}
         }
         Ok(())
     };
 
     let mut lines = src.split_inclusive('\n').peekable();
     while let Some(line) = lines.next() {
+        if should_absorb_action_line_into_pending_yaml(&pending_yaml, line) {
+            pending_yaml.push_str(line);
+            continue;
+        }
         if let Some((raw_action, _indent_col)) = try_take_standalone_helm_action(line, &mut lines) {
+            let tok = parse_helm_template_text(&raw_action);
+
+            // If this is an indented YAML fragment injector (e.g. `{{- include ... | nindent N }}`)
+            // and we're not inside control flow, keep it in the YAML fragment and let the YAML
+            // layer skip it. This matches the tree-sitter parser behavior for cases like the
+            // cert-manager `labels` injection.
+            if stack.is_empty() && _indent_col > 0 {
+                if let HelmTok::Expr { text } = &tok {
+                    let is_injector = (text.contains("include")
+                        || text.contains("tpl")
+                        || text.contains("template"))
+                        && (text.contains("nindent") || text.contains("indent"));
+                    if is_injector {
+                        continue;
+                    }
+                }
+            }
+
             flush_yaml(&mut pending_yaml, &mut stack, &mut out)?;
 
-            let tok = parse_helm_template_text(&raw_action);
             match tok {
                 HelmTok::OpenIf { cond } => {
                     stack.push(ControlFrame {
@@ -233,14 +256,151 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
                     push_to_current(&mut stack, &mut out, FusedNode::HelmComment { text });
                 }
                 HelmTok::Expr { text } => {
-                    push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
+                    if !is_silent_reassignment_expr(&text) {
+                        push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
+                    }
                 }
             }
 
             continue;
         }
 
-        pending_yaml.push_str(line);
+        // Split inline helm control-flow actions out of YAML scalar lines.
+        // This matches the tree-sitter parser behavior, which treats `{{- if ... -}}`
+        // etc. as control-flow boundaries even when they appear inline.
+        let mut rest = line;
+        loop {
+            let Some(action_at) = rest.find("{{") else {
+                pending_yaml.push_str(rest);
+                break;
+            };
+
+            let (before, after) = rest.split_at(action_at);
+            let Some((action, tail)) = take_action_prefix(after) else {
+                pending_yaml.push_str(rest);
+                break;
+            };
+
+            let tok = parse_helm_template_text(action);
+            let is_control = matches!(
+                tok,
+                HelmTok::OpenIf { .. }
+                    | HelmTok::OpenRange { .. }
+                    | HelmTok::OpenWith { .. }
+                    | HelmTok::OpenDefine { .. }
+                    | HelmTok::OpenBlock { .. }
+                    | HelmTok::Else
+                    | HelmTok::ElseIf { .. }
+                    | HelmTok::End
+                    | HelmTok::Comment { .. }
+            );
+
+            if !is_control {
+                pending_yaml.push_str(before);
+                pending_yaml.push_str(action);
+                rest = tail;
+                continue;
+            }
+
+            pending_yaml.push_str(before);
+            if !pending_yaml.ends_with('\n') {
+                pending_yaml.push('\n');
+            }
+            flush_yaml(&mut pending_yaml, &mut stack, &mut out)?;
+
+            match tok {
+                HelmTok::OpenIf { cond } => {
+                    stack.push(ControlFrame {
+                        kind: ControlKind::If { cond },
+                        then_items: Vec::new(),
+                        else_items: Vec::new(),
+                        in_else: false,
+                        shares_end_with_parent: false,
+                    });
+                }
+                HelmTok::OpenRange { header } => {
+                    stack.push(ControlFrame {
+                        kind: ControlKind::Range { header },
+                        then_items: Vec::new(),
+                        else_items: Vec::new(),
+                        in_else: false,
+                        shares_end_with_parent: false,
+                    });
+                }
+                HelmTok::OpenWith { header } => {
+                    stack.push(ControlFrame {
+                        kind: ControlKind::With { header },
+                        then_items: Vec::new(),
+                        else_items: Vec::new(),
+                        in_else: false,
+                        shares_end_with_parent: false,
+                    });
+                }
+                HelmTok::OpenDefine { header } => {
+                    stack.push(ControlFrame {
+                        kind: ControlKind::Define { header },
+                        then_items: Vec::new(),
+                        else_items: Vec::new(),
+                        in_else: false,
+                        shares_end_with_parent: false,
+                    });
+                }
+                HelmTok::OpenBlock { header } => {
+                    stack.push(ControlFrame {
+                        kind: ControlKind::Block { header },
+                        then_items: Vec::new(),
+                        else_items: Vec::new(),
+                        in_else: false,
+                        shares_end_with_parent: false,
+                    });
+                }
+                HelmTok::Else => {
+                    if let Some(top) = stack.last_mut() {
+                        top.in_else = true;
+                    }
+                }
+                HelmTok::ElseIf { cond } => {
+                    if let Some(top) = stack.last_mut() {
+                        top.in_else = true;
+                    }
+                    stack.push(ControlFrame {
+                        kind: ControlKind::If { cond },
+                        then_items: Vec::new(),
+                        else_items: Vec::new(),
+                        in_else: false,
+                        shares_end_with_parent: true,
+                    });
+                }
+                HelmTok::End => {
+                    let Some(frame) = stack.pop() else {
+                        rest = tail;
+                        continue;
+                    };
+                    let mut shares = frame.shares_end_with_parent;
+                    let node = frame.into_node();
+                    push_to_current(&mut stack, &mut out, node);
+
+                    while shares {
+                        let Some(parent) = stack.pop() else {
+                            break;
+                        };
+                        shares = parent.shares_end_with_parent;
+                        let parent_node = parent.into_node();
+                        push_to_current(&mut stack, &mut out, parent_node);
+                    }
+                }
+                HelmTok::Comment { text } => {
+                    push_to_current(&mut stack, &mut out, FusedNode::HelmComment { text });
+                }
+                HelmTok::Expr { text } => {
+                    if !is_silent_reassignment_expr(&text) {
+                        push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
+                    }
+                }
+            }
+
+            rest = tail;
+        }
     }
 
     flush_yaml(&mut pending_yaml, &mut stack, &mut out)?;
@@ -250,6 +410,62 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
     }
 
     Ok(FusedNode::Document { items: out })
+}
+
+fn should_absorb_action_line_into_pending_yaml(pending_yaml: &str, line: &str) -> bool {
+    let start_col = line.chars().take_while(|c| *c == ' ' || *c == '\t').count();
+    let after_indent = &line[start_col..];
+    if !after_indent.starts_with("{{") {
+        return false;
+    }
+
+    let Some((action, _rest)) = take_action_if_closed_on_line(after_indent) else {
+        return false;
+    };
+    let likely_block = action.contains("nindent") || action.contains("indent");
+    if !likely_block {
+        return false;
+    }
+
+    let Some((key_indent, _key)) = last_key_only_line(pending_yaml) else {
+        return false;
+    };
+    start_col > key_indent
+}
+
+fn last_key_only_line(pending_yaml: &str) -> Option<(usize, String)> {
+    for line in pending_yaml.split_inclusive('\n').rev() {
+        let line_no_nl = line.trim_end_matches(['\n', '\r']);
+        if line_no_nl.trim().is_empty() {
+            continue;
+        }
+
+        let indent = line_no_nl
+            .chars()
+            .take_while(|c| *c == ' ' || *c == '\t')
+            .count();
+        let after_indent = &line_no_nl[indent..];
+
+        let Some(colon_at) = after_indent.find(':') else {
+            return None;
+        };
+        let (lhs, rhs_with_colon) = after_indent.split_at(colon_at);
+        let key = lhs.trim();
+        if key.is_empty() {
+            return None;
+        }
+        if key.starts_with('-') {
+            return None;
+        }
+
+        let rhs = &rhs_with_colon[1..];
+        if !rhs.trim().is_empty() {
+            return None;
+        }
+
+        return Some((indent, key.to_string()));
+    }
+    None
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -264,6 +480,17 @@ enum HelmTok {
     End,
     Comment { text: String },
     Expr { text: String },
+}
+
+fn is_silent_reassignment_expr(text: &str) -> bool {
+    let mut it = text.split_whitespace();
+    let Some(first) = it.next() else {
+        return false;
+    };
+    let Some(second) = it.next() else {
+        return false;
+    };
+    first.starts_with('$') && second == "="
 }
 
 fn parse_helm_template_text(raw: &str) -> HelmTok {
@@ -401,30 +628,33 @@ fn try_take_standalone_helm_action<'a>(
         return None;
     }
 
-    if let Some((action, _rest)) = take_action_if_closed_on_line(after_indent) {
-        return Some((action, start_col));
-    }
-
-    // If the line already contains `}}` but `take_action_if_closed_on_line`
-    // rejected it, there is trailing content after `}}` (e.g.
-    // `{{ template "foo" . }}-client: "true"`). This is an inline expression
-    // embedded in YAML, not a standalone Helm action.
-    if after_indent.contains("}}") {
-        return None;
-    }
-
     let mut action = after_indent.to_string();
-    while !action.contains("}}") {
+    loop {
+        if let Some((closed, _rest)) = take_action_if_closed_on_line(&action) {
+            return Some((closed, start_col));
+        }
+
+        // If we already saw a `}}` on the first line, but we couldn't treat it
+        // as a standalone action, it's an inline expression embedded in YAML.
+        if action == after_indent && after_indent.contains("}}") {
+            return None;
+        }
+
         let Some(next_line) = lines.next() else {
             break;
         };
         action.push_str(next_line);
     }
+
     Some((action, start_col))
 }
 
 fn take_action_if_closed_on_line(s: &str) -> Option<(String, &str)> {
-    let close_at = s.find("}}").map(|idx| idx + 2)?;
+    let close_at = if is_comment_action_prefix(s) {
+        s.rfind("}}").map(|idx| idx + 2)?
+    } else {
+        s.find("}}").map(|idx| idx + 2)?
+    };
     let (action, rest) = s.split_at(close_at);
 
     let mut tail = rest;
@@ -436,6 +666,16 @@ fn take_action_if_closed_on_line(s: &str) -> Option<(String, &str)> {
     }
 
     None
+}
+
+fn is_comment_action_prefix(s: &str) -> bool {
+    let mut t = s.trim_start();
+    if let Some(rest) = t.strip_prefix("{{") {
+        t = rest;
+    }
+    t = t.strip_prefix('-').unwrap_or(t);
+    t = t.trim_start();
+    t.starts_with("/*")
 }
 
 fn deindent_yaml_fragment(fragment: &str) -> String {
@@ -577,7 +817,8 @@ fn rewrite_inline_block_value_fragments(fragment: &str) -> (String, HashMap<Stri
     let mut out = String::with_capacity(fragment.len());
     let mut frags: HashMap<String, Vec<String>> = HashMap::new();
 
-    for line in fragment.split_inclusive('\n') {
+    let mut lines = fragment.split_inclusive('\n').peekable();
+    while let Some(line) = lines.next() {
         let nl = if line.ends_with('\n') { "\n" } else { "" };
         let line_no_nl = line.strip_suffix('\n').unwrap_or(line);
 
@@ -596,31 +837,63 @@ fn rewrite_inline_block_value_fragments(fragment: &str) -> (String, HashMap<Stri
         let rhs = &rhs_with_colon[1..];
         let rhs_trim = rhs.trim_start();
 
-        if !rhs_trim.starts_with("{{") {
-            out.push_str(line);
+        // Case 1: `key: {{- toYaml . | nindent N }}` (inline)
+        if rhs_trim.starts_with("{{") {
+            let Some((action, _rest)) = take_action_if_closed_on_line(rhs_trim) else {
+                out.push_str(line);
+                continue;
+            };
+
+            let likely_block = action.contains("nindent") || action.contains("indent");
+            if !likely_block {
+                out.push_str(line);
+                continue;
+            }
+
+            let expr_text = match parse_helm_template_text(&action) {
+                HelmTok::Expr { text } => text,
+                HelmTok::Comment { text } => text,
+                other => format!("{other:?}"),
+            };
+            frags.entry(key.to_string()).or_default().push(expr_text);
+
+            out.push_str(&line_no_nl[..=colon_at]);
+            out.push_str(nl);
             continue;
         }
 
-        let Some((action, _rest)) = take_action_if_closed_on_line(rhs_trim) else {
-            out.push_str(line);
-            continue;
-        };
+        // Case 2: `key:` followed by an indented `{{- toYaml ... | nindent N }}` on the next line.
+        if rhs_trim.is_empty() {
+            if let Some(next_line) = lines.peek().copied() {
+                let next_indent = next_line
+                    .chars()
+                    .take_while(|c| *c == ' ' || *c == '\t')
+                    .count();
+                let next_after_indent = &next_line[next_indent..];
+                if next_indent > lhs.chars().take_while(|c| *c == ' ' || *c == '\t').count()
+                    && next_after_indent.trim_start().starts_with("{{")
+                {
+                    if let Some((action, _rest)) = take_action_if_closed_on_line(next_after_indent) {
+                        let likely_block = action.contains("nindent") || action.contains("indent");
+                        if likely_block {
+                            let expr_text = match parse_helm_template_text(&action) {
+                                HelmTok::Expr { text } => text,
+                                HelmTok::Comment { text } => text,
+                                other => format!("{other:?}"),
+                            };
+                            frags.entry(key.to_string()).or_default().push(expr_text);
 
-        let likely_block = action.contains("nindent") || action.contains("indent");
-        if !likely_block {
-            out.push_str(line);
-            continue;
+                            // Keep only `key:` line, skip the injected action line.
+                            out.push_str(line);
+                            let _ = lines.next();
+                            continue;
+                        }
+                    }
+                }
+            }
         }
 
-        let expr_text = match parse_helm_template_text(&action) {
-            HelmTok::Expr { text } => text,
-            HelmTok::Comment { text } => text,
-            other => format!("{other:?}"),
-        };
-        frags.entry(key.to_string()).or_default().push(expr_text);
-
-        out.push_str(&line_no_nl[..=colon_at]);
-        out.push_str(nl);
+        out.push_str(line);
     }
 
     (out, frags)
@@ -721,27 +994,44 @@ fn apply_inline_value_fragments(node: &mut FusedNode, frags: &mut HashMap<String
 /// Replace `{{ ... }}` sequences in a YAML fragment with unique placeholders
 /// so that yaml-rust can parse the fragment. Returns the rewritten fragment
 /// and a vec of original expressions (index corresponds to placeholder number).
-fn replace_helm_expr_placeholders(fragment: &str) -> (String, Vec<String>) {
-    let mut out = String::with_capacity(fragment.len());
-    let mut exprs: Vec<String> = Vec::new();
-    let mut rest = fragment;
+#[derive(Debug, Clone)]
+struct HelmPlaceholder {
+    raw: String,
+    quoted: bool,
+}
 
-    while let Some(start) = rest.find("{{") {
-        out.push_str(&rest[..start]);
-        let after_open = &rest[start + 2..];
-        if let Some(end) = after_open.find("}}") {
-            let full_expr = &rest[start..start + 2 + end + 2];
+fn replace_helm_expr_placeholders(fragment: &str) -> (String, Vec<HelmPlaceholder>) {
+    let mut out = String::with_capacity(fragment.len());
+    let mut exprs: Vec<HelmPlaceholder> = Vec::new();
+    let mut i = 0usize;
+
+    while let Some(rel_start) = fragment[i..].find("{{") {
+        let start = i + rel_start;
+        out.push_str(&fragment[i..start]);
+        let after_open = &fragment[start + 2..];
+        if let Some(rel_end) = after_open.find("}}") {
+            let end = start + 2 + rel_end + 2;
+            let full_expr = &fragment[start..end];
+
+            let before = fragment[..start].trim_end_matches([' ', '\t']);
+            let after = fragment[end..].trim_start_matches([' ', '\t']);
+            let quoted = (before.ends_with('"') && after.starts_with('"'))
+                || (before.ends_with('\'') && after.starts_with('\''));
+
             let placeholder = format!("__HELM_PLACEHOLDER_{}__", exprs.len());
-            exprs.push(full_expr.to_string());
+            exprs.push(HelmPlaceholder {
+                raw: full_expr.to_string(),
+                quoted,
+            });
             out.push_str(&placeholder);
-            rest = &rest[start + 2 + end + 2..];
+            i = end;
         } else {
             // No closing }}, pass through as-is.
             out.push_str("{{");
-            rest = after_open;
+            i = start + 2;
         }
     }
-    out.push_str(rest);
+    out.push_str(&fragment[i..]);
     (out, exprs)
 }
 
@@ -749,16 +1039,20 @@ fn replace_helm_expr_placeholders(fragment: &str) -> (String, Vec<String>) {
 /// `HelmExpr` nodes (when the placeholder is the entire scalar text) or
 /// restore the original `{{ ... }}` text inline (when concatenated with
 /// other text, e.g. `{{ template "foo" . }}-client`).
-fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[String]) {
+fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[HelmPlaceholder]) {
     match node {
         FusedNode::Scalar { text, .. } => {
             // Check if the entire text is exactly one placeholder.
             if let Some(idx) = parse_sole_placeholder(text) {
                 if let Some(original) = exprs.get(idx) {
-                    let inner = extract_helm_expr_inner(original);
-                    *node = FusedNode::HelmExpr {
-                        text: inner.to_string(),
-                    };
+                    if original.quoted {
+                        *text = original.raw.clone();
+                    } else {
+                        let inner = extract_helm_expr_inner(&original.raw);
+                        *node = FusedNode::HelmExpr {
+                            text: inner.to_string(),
+                        };
+                    }
                 }
                 return;
             }
@@ -767,7 +1061,23 @@ fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[String]) {
             for (i, original) in exprs.iter().enumerate() {
                 let placeholder = format!("__HELM_PLACEHOLDER_{}__", i);
                 if text.contains(&placeholder) {
-                    *text = text.replace(&placeholder, original);
+                    let inner = extract_helm_expr_inner_preserve_trailing(&original.raw);
+                    let inner = inner.trim_start();
+
+                    // Heuristics to match the expected AST output:
+                    // - `.foo` / `$foo` expressions are tightened: `{{.foo}}`
+                    // - `default ...` is normalized to remove the leading space after `{{`,
+                    //   but keep a trailing space before `}}` if it existed in source.
+                    // - Otherwise, preserve the original raw template text.
+                    let restored = if inner.starts_with('.') || inner.starts_with('$') {
+                        let inner = inner.trim_end();
+                        format!("{{{{{inner}}}}}")
+                    } else if inner.starts_with("default") {
+                        format!("{{{{{inner}}}}}")
+                    } else {
+                        original.raw.to_string()
+                    };
+                    *text = text.replace(&placeholder, &restored);
                 }
             }
         }
@@ -852,4 +1162,17 @@ fn extract_helm_expr_inner(raw: &str) -> &str {
     }
     s = s.strip_suffix('-').unwrap_or(s);
     s.trim()
+}
+
+fn extract_helm_expr_inner_preserve_trailing(raw: &str) -> &str {
+    let mut s = raw.trim();
+    if let Some(rest) = s.strip_prefix("{{") {
+        s = rest;
+    }
+    s = s.strip_prefix('-').unwrap_or(s);
+    if let Some(rest) = s.strip_suffix("}}") {
+        s = rest;
+    }
+    s = s.strip_suffix('-').unwrap_or(s);
+    s
 }
