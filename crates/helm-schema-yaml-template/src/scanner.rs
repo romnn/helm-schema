@@ -30,14 +30,17 @@ impl Marker {
         Marker { index, line, col }
     }
 
+    #[must_use]
     pub fn index(&self) -> usize {
         self.index
     }
 
+    #[must_use]
     pub fn line(&self) -> usize {
         self.line
     }
 
+    #[must_use]
     pub fn col(&self) -> usize {
         self.col
     }
@@ -50,6 +53,7 @@ pub struct ScanError {
 }
 
 impl ScanError {
+    #[must_use]
     pub fn new(loc: Marker, info: &str) -> ScanError {
         ScanError {
             mark: loc,
@@ -57,6 +61,7 @@ impl ScanError {
         }
     }
 
+    #[must_use]
     pub fn marker(&self) -> &Marker {
         &self.mark
     }
@@ -198,7 +203,7 @@ fn is_blankz(c: char) -> bool {
 }
 #[inline]
 fn is_digit(c: char) -> bool {
-    c >= '0' && c <= '9'
+    c.is_ascii_digit()
 }
 #[inline]
 fn is_alpha(c: char) -> bool {
@@ -210,7 +215,7 @@ fn is_alpha(c: char) -> bool {
 }
 #[inline]
 fn is_hex(c: char) -> bool {
-    (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+    c.is_ascii_digit() || ('a'..='f').contains(&c) || ('A'..='F').contains(&c)
 }
 #[inline]
 fn as_hex(c: char) -> u32 {
@@ -259,10 +264,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     }
     #[inline]
     pub fn get_error(&self) -> Option<ScanError> {
-        match self.error {
-            None => None,
-            Some(ref e) => Some(e.clone()),
-        }
+        self.error.clone()
     }
 
     #[inline]
@@ -464,7 +466,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             ':' | '?' if !is_blankz(nc) && self.flow_level == 0 => self.fetch_plain_scalar(),
             '%' | '@' | '`' => Err(ScanError::new(
                 self.mark,
-                &format!("unexpected character: `{}'", c),
+                &format!("unexpected character: `{c}'"),
             )),
             _ => self.fetch_plain_scalar(),
         }
@@ -1221,7 +1223,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         }
 
         let is_secondary = handle == "!!";
-        let prefix = self.scan_tag_uri(true, is_secondary, &String::new(), mark)?;
+        let prefix = self.scan_tag_uri(true, is_secondary, "", mark)?;
 
         self.lookahead(1);
 
@@ -1257,7 +1259,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             // Eat '!<'
             self.skip();
             self.skip();
-            suffix = self.scan_tag_uri(false, false, &String::new(), &start_mark)?;
+            suffix = self.scan_tag_uri(false, false, "", &start_mark)?;
 
             if self.ch() != '>' {
                 return Err(ScanError::new(
@@ -1275,7 +1277,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                 if handle == "!!" {
                     secondary = true;
                 }
-                suffix = self.scan_tag_uri(false, secondary, &String::new(), &start_mark)?;
+                suffix = self.scan_tag_uri(false, secondary, "", &start_mark)?;
             } else {
                 suffix = self.scan_tag_uri(false, false, &handle, &start_mark)?;
                 handle = "!".to_owned();

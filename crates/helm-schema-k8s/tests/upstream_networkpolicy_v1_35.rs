@@ -232,7 +232,7 @@ fn networkpolicy_by_kind_scan_when_api_version_missing() {
         .with_allow_download(false);
 
     let r = ResourceRef {
-        api_version: "".to_string(),
+        api_version: String::new(),
         kind: "NetworkPolicy".to_string(),
     };
 

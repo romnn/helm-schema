@@ -56,10 +56,10 @@ pub fn common_helpers_srcs() -> Vec<String> {
     let mut srcs = Vec::new();
     if let Ok(entries) = std::fs::read_dir(base) {
         for entry in entries.flatten() {
-            if entry.path().extension().map_or(false, |e| e == "tpl") {
-                if let Ok(content) = std::fs::read_to_string(entry.path()) {
-                    srcs.push(content);
-                }
+            if entry.path().extension().is_some_and(|e| e == "tpl")
+                && let Ok(content) = std::fs::read_to_string(entry.path())
+            {
+                srcs.push(content);
             }
         }
     }

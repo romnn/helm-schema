@@ -54,6 +54,7 @@ pub fn yaml_to_sexpr(doc: &Yaml) -> SExpr {
     }
 }
 
+#[must_use]
 pub fn yaml_stream_to_sexpr(docs: &[Yaml]) -> SExpr {
     SExpr::Node {
         kind: "stream".to_string(),

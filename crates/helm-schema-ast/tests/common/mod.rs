@@ -1,5 +1,3 @@
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-
 pub fn prometheusrule_src() -> String {
     let path = concat!(
         env!("CARGO_MANIFEST_DIR"),

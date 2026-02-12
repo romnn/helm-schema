@@ -181,12 +181,10 @@ fn yaml_node_to_sexpr(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
         "block_mapping_pair" | "flow_pair" => {
             let key = node
                 .child_by_field_name("key")
-                .map(|n| yaml_node_to_sexpr(n, src))
-                .unwrap_or(SExpr::Empty);
+                .map_or(SExpr::Empty, |n| yaml_node_to_sexpr(n, src));
             let value = node
                 .child_by_field_name("value")
-                .map(|n| yaml_node_to_sexpr(n, src))
-                .unwrap_or(SExpr::Empty);
+                .map_or(SExpr::Empty, |n| yaml_node_to_sexpr(n, src));
 
             SExpr::Node {
                 kind: "entry".to_string(),
@@ -344,7 +342,7 @@ fn is_control_flow(kind: &str) -> bool {
     )
 }
 
-fn fuse_blocks<'a>(blocks: Vec<tree_sitter::Node<'a>>, src: &str) -> Vec<SExpr> {
+fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
     let mut out: Vec<SExpr> = Vec::new();
     let mut pending = String::new();
 
@@ -385,7 +383,7 @@ fn fuse_blocks<'a>(blocks: Vec<tree_sitter::Node<'a>>, src: &str) -> Vec<SExpr> 
             // Skip any immediate whitespace token(s) before a trim-right delimiter `-}}`.
             while i < blocks.len()
                 && !blocks[i].is_named()
-                && blocks[i].kind().chars().all(|c| c.is_whitespace())
+                && blocks[i].kind().chars().all(char::is_whitespace)
             {
                 i += 1;
             }
@@ -441,15 +439,15 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 };
                 match node.field_name_for_child(i as u32) {
                     Some("condition") => {
-                        if !seen_main_condition {
-                            seen_main_condition = true;
-                        } else {
+                        if seen_main_condition {
                             let cnd = ch
                                 .utf8_text(src.as_bytes())
                                 .unwrap_or("")
                                 .trim()
                                 .to_string();
                             else_if_pairs.push((cnd, Vec::new()));
+                        } else {
+                            seen_main_condition = true;
                         }
                     }
                     Some("option") => {
@@ -730,13 +728,13 @@ fn parse_fused_template(src: &str) -> SExpr {
 
 #[test]
 fn if_else_end_with_yaml_branches() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         foo: bar
         {{- else }}
         {}
         {{- end }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc
@@ -878,7 +876,7 @@ fn redis_prometheus_rule_yaml() {
 
 #[test]
 fn else_if_chain_is_nested_if_in_else_branch() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .A }}
         foo: 1
         {{- else if .B }}
@@ -886,7 +884,7 @@ fn else_if_chain_is_nested_if_in_else_branch() {
         {{- else }}
         foo: 3
         {{- end }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc
@@ -932,11 +930,11 @@ fn else_if_chain_is_nested_if_in_else_branch() {
 
 #[test]
 fn range_action_body_contains_yaml_and_inline_exprs() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- range .Values.items }}
         - name: {{ .name }}
         {{- end }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc
@@ -964,9 +962,9 @@ fn range_action_body_contains_yaml_and_inline_exprs() {
 
 #[test]
 fn inline_helm_expr_is_part_of_yaml_structure() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         name: {{ .Release.Name }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc

@@ -65,11 +65,11 @@ enum Container {
 
 fn rewrite_dot_expr_to_values(text: &str, dot_prefix: &str) -> String {
     fn is_ident_start(b: u8) -> bool {
-        (b'A'..=b'Z').contains(&b) || (b'a'..=b'z').contains(&b) || b == b'_'
+        b.is_ascii_uppercase() || b.is_ascii_lowercase() || b == b'_'
     }
 
     fn is_ident_continue(b: u8) -> bool {
-        is_ident_start(b) || (b'0'..=b'9').contains(&b)
+        is_ident_start(b) || b.is_ascii_digit()
     }
 
     let bytes = text.as_bytes();
@@ -82,11 +82,7 @@ fn rewrite_dot_expr_to_values(text: &str, dot_prefix: &str) -> String {
 
             let prev_ok = !matches!(
                 prev,
-                Some(b'$' | b'.')
-                    | Some(b'0'..=b'9')
-                    | Some(b'A'..=b'Z')
-                    | Some(b'a'..=b'z')
-                    | Some(b'_')
+                Some(b'$' | b'.' | b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'_')
             );
 
             // Bare dot: `.` not followed by an identifier.
@@ -137,7 +133,7 @@ impl Shape {
             match (kind, pending_key) {
                 (Container::Mapping, Some(k)) => {
                     if !k.is_empty() {
-                        out.push(k.clone())
+                        out.push(k.clone());
                     }
                 }
                 (Container::Mapping, None) => {}
@@ -168,27 +164,25 @@ impl Shape {
             }
         }
 
-        if col > indent {
-            if self.clear_pending_on_newline_at_indent.is_none() {
-                let mut candidate: Option<usize> = None;
-                for (top_indent, kind, pending) in self.stack.iter().rev() {
-                    if *kind != Container::Mapping {
-                        continue;
-                    }
-                    if pending.is_none() {
-                        continue;
-                    }
-                    if *top_indent < indent {
-                        break;
-                    }
-                    if *top_indent <= col {
-                        candidate = Some(*top_indent);
-                        break;
-                    }
+        if col > indent && self.clear_pending_on_newline_at_indent.is_none() {
+            let mut candidate: Option<usize> = None;
+            for (top_indent, kind, pending) in self.stack.iter().rev() {
+                if *kind != Container::Mapping {
+                    continue;
                 }
-                if let Some(i) = candidate {
-                    self.clear_pending_on_newline_at_indent = Some(i);
+                if pending.is_none() {
+                    continue;
                 }
+                if *top_indent < indent {
+                    break;
+                }
+                if *top_indent <= col {
+                    candidate = Some(*top_indent);
+                    break;
+                }
+            }
+            if let Some(i) = candidate {
+                self.clear_pending_on_newline_at_indent = Some(i);
             }
         }
     }
@@ -241,10 +235,10 @@ impl Shape {
         for raw in text.split_inclusive('\n') {
             let is_newline_terminated = raw.ends_with('\n');
             if !self.at_line_start {
-                if is_newline_terminated {
-                    if let Some(indent) = self.clear_pending_on_newline_at_indent.take() {
-                        clear_pending_at_indent(&mut self.stack, indent);
-                    }
+                if is_newline_terminated
+                    && let Some(indent) = self.clear_pending_on_newline_at_indent.take()
+                {
+                    clear_pending_at_indent(&mut self.stack, indent);
                 }
                 self.at_line_start = is_newline_terminated;
                 continue;
@@ -643,23 +637,23 @@ impl<'a> SymbolicWalker<'a> {
             ValueKind::Scalar
         };
         let mut values = extract_values_paths(text);
-        if values.is_empty() {
-            if let Some(Some(dot_prefix)) = self.dot_stack.last() {
-                let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
-                values = extract_values_paths(&rewritten);
-            }
+        if values.is_empty()
+            && let Some(Some(dot_prefix)) = self.dot_stack.last()
+        {
+            let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
+            values = extract_values_paths(&rewritten);
         }
         if values.is_empty() {
             return;
         }
         let mut path = self.shape.current_path();
         if kind == ValueKind::Fragment {
-            if let Some(last) = path.0.last_mut() {
-                if let Some(stripped) = last.strip_suffix("[*]") {
-                    *last = stripped.to_string();
-                }
+            if let Some(last) = path.0.last_mut()
+                && let Some(stripped) = last.strip_suffix("[*]")
+            {
+                *last = stripped.to_string();
             }
-            if matches!(path.0.last().map(|s| s.as_str()), Some("")) {
+            if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
                 path.0.pop();
             }
         }
@@ -682,11 +676,11 @@ impl<'a> SymbolicWalker<'a> {
 
     fn collect_if_with_guards(&mut self, cond_text: &str) {
         let mut cond_guards = parse_condition(cond_text);
-        if cond_guards.is_empty() {
-            if let Some(Some(dot_prefix)) = self.dot_stack.last() {
-                let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
-                cond_guards = parse_condition(&rewritten);
-            }
+        if cond_guards.is_empty()
+            && let Some(Some(dot_prefix)) = self.dot_stack.last()
+        {
+            let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
+            cond_guards = parse_condition(&rewritten);
         }
         for g in &cond_guards {
             for path in g.value_paths() {
@@ -709,7 +703,7 @@ impl<'a> SymbolicWalker<'a> {
 
     fn collect_range_guards(&mut self, header_text: &str) {
         let values = extract_values_paths(header_text);
-        let mut path = self.shape.current_path();
+        let path = self.shape.current_path();
         for v in values {
             self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
             let g = Guard::Truthy { path: v };
@@ -728,13 +722,13 @@ impl<'a> SymbolicWalker<'a> {
         }
         let mut w = node.walk();
         for ch in node.named_children(&mut w) {
-            if ch.kind() == "range_variable_definition" {
-                if let Some(p) = ch.child_by_field_name("range") {
-                    return p
-                        .utf8_text(self.source.as_bytes())
-                        .ok()
-                        .map(|s| s.trim().to_string());
-                }
+            if ch.kind() == "range_variable_definition"
+                && let Some(p) = ch.child_by_field_name("range")
+            {
+                return p
+                    .utf8_text(self.source.as_bytes())
+                    .ok()
+                    .map(|s| s.trim().to_string());
             }
         }
         None
@@ -762,10 +756,10 @@ impl<'a> SymbolicWalker<'a> {
 
             "if_action" => {
                 let saved = self.guards.len();
-                if let Some(cond) = node.child_by_field_name("condition") {
-                    if let Ok(txt) = cond.utf8_text(self.source.as_bytes()) {
-                        self.collect_if_with_guards(txt);
-                    }
+                if let Some(cond) = node.child_by_field_name("condition")
+                    && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
+                {
+                    self.collect_if_with_guards(txt);
                 }
 
                 let consequence = self.children_with_field(node, "consequence");
@@ -787,11 +781,11 @@ impl<'a> SymbolicWalker<'a> {
             "with_action" => {
                 let saved = self.guards.len();
                 let saved_dot = self.dot_stack.len();
-                if let Some(cond) = node.child_by_field_name("condition") {
-                    if let Ok(txt) = cond.utf8_text(self.source.as_bytes()) {
-                        self.push_with_dot_binding(txt);
-                        self.collect_if_with_guards(txt);
-                    }
+                if let Some(cond) = node.child_by_field_name("condition")
+                    && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
+                {
+                    self.push_with_dot_binding(txt);
+                    self.collect_if_with_guards(txt);
                 }
 
                 let consequence = self.children_with_field(node, "consequence");
@@ -924,7 +918,7 @@ impl ResourceDetector {
         self.buf.push_str(text);
         while let Some(nl) = self.buf.find('\n') {
             let line = self.buf[..nl].to_string();
-            self.buf.drain(..nl + 1);
+            self.buf.drain(..=nl);
             process_line(self, &line);
         }
     }

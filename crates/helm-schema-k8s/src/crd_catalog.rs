@@ -52,6 +52,7 @@ impl CrdCatalogSchemaProvider {
         Some(doc)
     }
 
+    #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
         let root = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
@@ -146,9 +147,10 @@ fn expand_local_refs(
         stack.insert(r.to_string());
 
         let out = if let Some(ptr) = r.strip_prefix('#') {
-            root.pointer(ptr)
-                .map(|target| expand_local_refs(root, target, depth + 1, stack))
-                .unwrap_or_else(|| strip_ref(schema))
+            root.pointer(ptr).map_or_else(
+                || strip_ref(schema),
+                |target| expand_local_refs(root, target, depth + 1, stack),
+            )
         } else {
             strip_ref(schema)
         };
@@ -192,13 +194,13 @@ fn expand_local_refs(
         "else",
         "additionalProperties",
     ] {
-        if let Some(v) = out.get(single_key).cloned() {
-            if !v.is_boolean() {
-                out.insert(
-                    single_key.to_string(),
-                    expand_local_refs(root, &v, depth + 1, stack),
-                );
-            }
+        if let Some(v) = out.get(single_key).cloned()
+            && !v.is_boolean()
+        {
+            out.insert(
+                single_key.to_string(),
+                expand_local_refs(root, &v, depth + 1, stack),
+            );
         }
     }
 

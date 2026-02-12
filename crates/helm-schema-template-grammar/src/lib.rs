@@ -12,7 +12,7 @@ pub mod yaml {
     /// The content of the [`node-types.json`][] file for the yaml grammar.
     ///
     /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers#static-node-types
-    pub const NODE_TYPES: &'static str = include_str!(concat!(
+    pub const NODE_TYPES: &str = include_str!(concat!(
         env!("OUT_DIR"),
         "/vendor/tree-sitter-yaml/src/node-types.json"
     ));
@@ -40,7 +40,7 @@ pub mod go_template {
     /// The content of the [`node-types.json`][] file for the go template grammar.
     ///
     /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers#static-node-types
-    pub const NODE_TYPES: &'static str = include_str!(concat!(
+    pub const NODE_TYPES: &str = include_str!(concat!(
         env!("OUT_DIR"),
         "/vendor/tree-sitter-go-template/src/node-types.json"
     ));
@@ -65,7 +65,7 @@ pub mod helm_template {
         unsafe { tree_sitter_language::LanguageFn::from_raw(tree_sitter_helm_template) }
     }
 
-    pub const NODE_TYPES: &'static str = include_str!(concat!(
+    pub const NODE_TYPES: &str = include_str!(concat!(
         env!("OUT_DIR"),
         "/vendor/tree-sitter-helm-template/src/node-types.json"
     ));

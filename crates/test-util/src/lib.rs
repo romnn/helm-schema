@@ -90,6 +90,7 @@ impl Builder {
     }
 
     /// Toggle setting up tracing inside the test.
+    #[must_use]
     pub fn with_tracing(mut self, enabled: bool) -> Self {
         self.setup_tracing = enabled;
         self
@@ -108,6 +109,7 @@ impl Builder {
     // }
 
     /// Toggle installation of `color_eyre`.
+    #[must_use]
     pub fn with_eyre(mut self, enabled: bool) -> Self {
         self.install_eyre = enabled;
         self
@@ -124,21 +126,24 @@ impl Builder {
 }
 
 /// Create a new builder.
+#[must_use]
 pub fn builder() -> Builder {
     Builder::default()
 }
 
 pub mod matchers {
-    use googletest::matchers::*;
+    use googletest::matchers::{ContainsMatcher, contains, predicate};
     use vfs::VfsPath;
 
-    pub fn contains_path<'a>(
-        path: &'a str,
-    ) -> ContainsMatcher<impl googletest::matcher::Matcher<&'a VfsPath>> {
+    #[must_use]
+    pub fn contains_path(
+        path: &str,
+    ) -> ContainsMatcher<impl googletest::matcher::Matcher<&VfsPath>> {
         contains(matches_path(path))
     }
 
-    pub fn matches_path<'a>(path: &'a str) -> impl googletest::matcher::Matcher<&'a VfsPath> {
+    #[must_use]
+    pub fn matches_path(path: &str) -> impl googletest::matcher::Matcher<&VfsPath> {
         predicate(move |p: &VfsPath| p.as_str() == path)
     }
 }

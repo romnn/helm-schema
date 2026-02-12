@@ -27,8 +27,7 @@ impl UpstreamK8sSchemaProvider {
             cache_dir: default_k8s_schema_cache_dir(),
             allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
                 .ok()
-                .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-                .unwrap_or(false),
+                .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true")),
             base_url: "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
                 .to_string(),
             mem: std::sync::Mutex::new(HashMap::new()),
@@ -396,11 +395,11 @@ fn expand_schema_node(
 
     if let Some(r) = schema.get("$ref").and_then(|v| v.as_str()) {
         let key = if let Some(ptr) = r.strip_prefix('#') {
-            (current_filename.to_string(), format!("#{}", ptr))
+            (current_filename.to_string(), format!("#{ptr}"))
         } else {
             let (file, ptr) = r.split_once('#').unwrap_or((r, ""));
             let filename = ResolveCtx::normalize_ref_filename(current_filename, file);
-            (filename, format!("#{}", ptr))
+            (filename, format!("#{ptr}"))
         };
 
         if ctx.stack.contains(&key) {
@@ -479,14 +478,14 @@ fn expand_schema_node(
         obj.insert("dependentSchemas".to_string(), Value::Object(out));
     }
 
-    if let Some(ap) = obj.get("additionalProperties") {
-        if !ap.is_boolean() {
-            let ap = ap.clone();
-            obj.insert(
-                "additionalProperties".to_string(),
-                expand_schema_node(ctx, current_filename, &ap, depth + 1).1,
-            );
-        }
+    if let Some(ap) = obj.get("additionalProperties")
+        && !ap.is_boolean()
+    {
+        let ap = ap.clone();
+        obj.insert(
+            "additionalProperties".to_string(),
+            expand_schema_node(ctx, current_filename, &ap, depth + 1).1,
+        );
     }
 
     (current_filename.to_string(), Value::Object(obj))
@@ -555,7 +554,7 @@ fn well_known_filenames_for_kind(kind: &str) -> Vec<String> {
     }
 
     // As a last resort, try just `<kind>-v1.json` (covers core resources).
-    let fallback = format!("{}-v1.json", kind_lc);
+    let fallback = format!("{kind_lc}-v1.json");
     if !candidates.contains(&fallback) {
         candidates.push(fallback);
     }

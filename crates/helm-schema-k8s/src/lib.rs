@@ -47,22 +47,24 @@ where
 // Helpers
 // ---------------------------------------------------------------------------
 
+#[must_use]
 pub fn type_schema(ty: &str) -> Value {
     let mut m = serde_json::Map::new();
     m.insert("type".to_string(), Value::String(ty.to_string()));
     Value::Object(m)
 }
 
+#[must_use]
 pub fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
     let kind = resource.kind.to_ascii_lowercase();
     let (group, version) = match resource.api_version.split_once('/') {
         Some((g, v)) => (g.to_ascii_lowercase(), v.to_ascii_lowercase()),
-        None => ("".to_string(), resource.api_version.to_ascii_lowercase()),
+        None => (String::new(), resource.api_version.to_ascii_lowercase()),
     };
 
     let mut out = Vec::new();
     if group.is_empty() {
-        out.push(format!("{}-{}.json", kind, version));
+        out.push(format!("{kind}-{version}.json"));
         return out;
     }
 
@@ -70,18 +72,19 @@ pub fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
     let group_prefix = group.split('.').next().unwrap_or(&group).to_string();
 
     if group.ends_with(".k8s.io") {
-        out.push(format!("{}-{}-{}.json", kind, group_prefix, version));
+        out.push(format!("{kind}-{group_prefix}-{version}.json"));
     }
 
-    out.push(format!("{}-{}-{}.json", kind, dashed_full_group, version));
+    out.push(format!("{kind}-{dashed_full_group}-{version}.json"));
 
     if !group.ends_with(".k8s.io") {
-        out.push(format!("{}-{}-{}.json", kind, group_prefix, version));
+        out.push(format!("{kind}-{group_prefix}-{version}.json"));
     }
 
     out
 }
 
+#[must_use]
 pub fn filename_for_resource(resource: &ResourceRef) -> String {
     candidate_filenames_for_resource(resource)
         .into_iter()

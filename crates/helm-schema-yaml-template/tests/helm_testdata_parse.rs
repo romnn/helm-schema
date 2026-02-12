@@ -7,7 +7,7 @@ use yaml_rust::YamlLoader;
 
 fn is_yaml_template_file(path: &Path) -> bool {
     match path.extension().and_then(|s| s.to_str()) {
-        Some("yaml") | Some("yml") => true,
+        Some("yaml" | "yml") => true,
         _ => false,
     }
 }
@@ -17,7 +17,7 @@ fn is_non_yaml_template_file(path: &Path) -> bool {
         return true;
     }
     match path.extension().and_then(|s| s.to_str()) {
-        Some("tpl") | Some("txt") => true,
+        Some("tpl" | "txt") => true,
         _ => false,
     }
 }
@@ -125,7 +125,7 @@ fn parse_representative_yaml_template_to_mapping() {
             let min_line = e.marker().line().saturating_sub(5);
             let max_line = e.marker().line() + 5;
             let mut sc = Scanner::new(src.chars());
-            while let Some(tok) = sc.next() {
+            for tok in sc.by_ref() {
                 let line = tok.0.line();
                 if line < min_line || line > max_line {
                     continue;
@@ -166,7 +166,7 @@ fn parse_networkpolicy_yaml_template() {
             let min_line = e.marker().line().saturating_sub(5);
             let max_line = e.marker().line() + 5;
             let mut sc = Scanner::new(src.chars());
-            while let Some(tok) = sc.next() {
+            for tok in sc.by_ref() {
                 let line = tok.0.line();
                 if line < min_line || line > max_line {
                     continue;
@@ -204,7 +204,7 @@ fn parse_ports_configmap_yaml_template() {
             let min_line = e.marker().line().saturating_sub(10);
             let max_line = e.marker().line() + 10;
             let mut sc = Scanner::new(src.chars());
-            while let Some(tok) = sc.next() {
+            for tok in sc.by_ref() {
                 let line = tok.0.line();
                 if line < min_line || line > max_line {
                     continue;
@@ -238,7 +238,7 @@ fn scan_all_testdata_non_yaml_templates() {
     for p in files {
         let src = fs::read_to_string(&p).expect("read non-yaml template");
         let mut sc = Scanner::new(src.chars());
-        while let Some(_tok) = sc.next() {}
+        for _tok in sc.by_ref() {}
         let _ = sc.get_error();
     }
 }

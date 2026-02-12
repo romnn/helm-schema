@@ -6,13 +6,13 @@ use sexpr::assert_fused_matches_sexpr;
 
 #[test]
 fn if_else_end_with_yaml_branches() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         foo: bar
         {{- else }}
         {}
         {{- end }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc
@@ -149,7 +149,7 @@ fn redis_prometheus_rule_yaml() {
 
 #[test]
 fn else_if_chain_is_nested_if_in_else_branch() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .A }}
         foo: 1
         {{- else if .B }}
@@ -157,7 +157,7 @@ fn else_if_chain_is_nested_if_in_else_branch() {
         {{- else }}
         foo: 3
         {{- end }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc
@@ -201,13 +201,13 @@ fn else_if_chain_is_nested_if_in_else_branch() {
 
 #[test]
 fn range_else_end_wraps_yaml_body_and_else_branch() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- range .Values.items }}
         name: {{ .name }}
         {{- else }}
         {}
         {{- end }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (doc

@@ -69,6 +69,7 @@ impl SExpr {
         convert_lexpr_to_sexpr(&value)
     }
 
+    #[must_use]
     pub fn to_string_pretty(&self) -> String {
         let mut out = String::new();
         let _ = self.write_with_indent(0, &mut out);
@@ -93,7 +94,7 @@ impl SExpr {
             SExpr::Node { kind, children } => {
                 write!(w, "{indent_str}({kind}")?;
                 for child in children {
-                    write!(w, "\n")?;
+                    writeln!(w)?;
                     child.write_with_indent(indent + 2, w)?;
                 }
                 write!(w, "\n{indent_str})")
@@ -160,7 +161,7 @@ fn convert_lexpr_to_sexpr(value: &Value) -> Result<SExpr, ParseError> {
     };
 
     let children: Vec<SExpr> = items
-        .map(|item| item.car())
+        .map(lexpr::Cons::car)
         .map(convert_lexpr_to_sexpr)
         .collect::<Result<_, _>>()?;
 

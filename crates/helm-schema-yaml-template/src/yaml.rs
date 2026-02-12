@@ -1,4 +1,4 @@
-use crate::parser::*;
+use crate::parser::{Event, MarkedEventReceiver, Parser};
 use crate::scanner::{Marker, ScanError, TScalarStyle, TokenType};
 use linked_hash_map::LinkedHashMap;
 use std::collections::BTreeMap;
@@ -28,7 +28,7 @@ use std::vec;
 #[derive(Clone, PartialEq, PartialOrd, Debug, Eq, Ord, Hash)]
 pub enum Yaml {
     /// Float types are stored as String and parsed on demand.
-    /// Note that f64 does NOT implement Eq trait and can NOT be stored in BTreeMap.
+    /// Note that f64 does NOT implement Eq trait and can NOT be stored in `BTreeMap`.
     Real(string::String),
     /// YAML int is stored as i64.
     Integer(i64),
@@ -246,6 +246,7 @@ impl Yaml {
     define_into!(into_hash, Hash, Hash);
     define_into!(into_vec, Array, Array);
 
+    #[must_use]
     pub fn is_null(&self) -> bool {
         match *self {
             Yaml::Null => true,
@@ -253,6 +254,7 @@ impl Yaml {
         }
     }
 
+    #[must_use]
     pub fn is_badvalue(&self) -> bool {
         match *self {
             Yaml::BadValue => true,
@@ -260,6 +262,7 @@ impl Yaml {
         }
     }
 
+    #[must_use]
     pub fn is_array(&self) -> bool {
         match *self {
             Yaml::Array(_) => true,
@@ -267,6 +270,7 @@ impl Yaml {
         }
     }
 
+    #[must_use]
     pub fn as_f64(&self) -> Option<f64> {
         match *self {
             Yaml::Real(ref v) => parse_f64(v),
@@ -274,6 +278,7 @@ impl Yaml {
         }
     }
 
+    #[must_use]
     pub fn into_f64(self) -> Option<f64> {
         match self {
             Yaml::Real(ref v) => parse_f64(v),
@@ -282,10 +287,11 @@ impl Yaml {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(should_implement_trait))]
+#[cfg_attr(clippy, allow(should_implement_trait))]
 impl Yaml {
     // Not implementing FromStr because there is no possibility of Error.
     // This function falls back to Yaml::String if nothing else matches.
+    #[must_use]
     pub fn from_str(v: &str) -> Yaml {
         if v.starts_with("0x") {
             if let Ok(i) = i64::from_str_radix(&v[2..], 16) {
@@ -348,7 +354,7 @@ impl IntoIterator for Yaml {
 
     fn into_iter(self) -> Self::IntoIter {
         YamlIter {
-            yaml: self.into_vec().unwrap_or_else(Vec::new).into_iter(),
+            yaml: self.into_vec().unwrap_or_default().into_iter(),
         }
     }
 }
@@ -376,7 +382,7 @@ a: 1
 b: 2.2
 c: [1, 2]
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let doc = &out[0];
         assert_eq!(doc["a"].as_i64().unwrap(), 1i64);
         assert_eq!(doc["b"].as_f64().unwrap(), 2.2f64);
@@ -386,7 +392,7 @@ c: [1, 2]
 
     #[test]
     fn test_empty_doc() {
-        let s: String = "".to_owned();
+        let s: String = String::new();
         YamlLoader::load_from_str(&s).unwrap();
         let s: String = "---".to_owned();
         assert_eq!(YamlLoader::load_from_str(&s).unwrap()[0], Yaml::Null);
@@ -425,7 +431,7 @@ a7: 你好
 ---
 'a scalar'
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         assert_eq!(out.len(), 3);
     }
 
@@ -437,7 +443,7 @@ a1: &DEFAULT
     b2: d
 a2: *DEFAULT
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let doc = &out[0];
         assert_eq!(doc["a2"]["b1"].as_i64().unwrap(), 4);
     }
@@ -449,7 +455,7 @@ a1: &DEFAULT
     b1: 4
     b2: *DEFAULT
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let doc = &out[0];
         assert_eq!(doc["a1"]["b2"], Yaml::BadValue);
     }
@@ -458,7 +464,7 @@ a1: &DEFAULT
     fn test_github_27() {
         // https://github.com/chyh1990/yaml-rust/issues/27
         let s = "&a";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let doc = &out[0];
         assert_eq!(doc.as_str().unwrap(), "");
     }
@@ -494,7 +500,7 @@ a1: &DEFAULT
 - +12345
 - [ true, false ]
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let doc = &out[0];
 
         assert_eq!(doc[0].as_str().unwrap(), "string");
@@ -506,14 +512,14 @@ a1: &DEFAULT
         assert_eq!(doc[6].as_f64().unwrap(), -1e4);
         assert!(doc[7].is_null());
         assert!(doc[8].is_null());
-        assert_eq!(doc[9].as_bool().unwrap(), true);
-        assert_eq!(doc[10].as_bool().unwrap(), false);
+        assert!(doc[9].as_bool().unwrap());
+        assert!(!doc[10].as_bool().unwrap());
         assert_eq!(doc[11].as_str().unwrap(), "0");
         assert_eq!(doc[12].as_i64().unwrap(), 100);
         assert_eq!(doc[13].as_f64().unwrap(), 2.0);
         assert!(doc[14].is_null());
-        assert_eq!(doc[15].as_bool().unwrap(), true);
-        assert_eq!(doc[16].as_bool().unwrap(), false);
+        assert!(doc[15].as_bool().unwrap());
+        assert!(!doc[16].as_bool().unwrap());
         assert_eq!(doc[17].as_i64().unwrap(), 255);
         assert!(doc[18].is_badvalue());
         assert!(doc[19].is_badvalue());
@@ -531,14 +537,14 @@ a1: &DEFAULT
     fn test_bad_hyphen() {
         // See: https://github.com/chyh1990/yaml-rust/issues/23
         let s = "{-";
-        assert!(YamlLoader::load_from_str(&s).is_err());
+        assert!(YamlLoader::load_from_str(s).is_err());
     }
 
     #[test]
     fn test_issue_65() {
         // See: https://github.com/chyh1990/yaml-rust/issues/65
         let b = "\n\"ll\\\"ll\\\r\n\"ll\\\"ll\\\r\r\r\rU\r\r\rU";
-        assert!(YamlLoader::load_from_str(&b).is_err());
+        assert!(YamlLoader::load_from_str(b).is_err());
     }
 
     #[test]
@@ -582,7 +588,7 @@ a1: &DEFAULT
 - .NAN
 - !!float .INF
 ";
-        let mut out = YamlLoader::load_from_str(&s).unwrap().into_iter();
+        let mut out = YamlLoader::load_from_str(s).unwrap().into_iter();
         let mut doc = out.next().unwrap().into_iter();
 
         assert_eq!(doc.next().unwrap().into_string().unwrap(), "string");
@@ -592,13 +598,13 @@ a1: &DEFAULT
         assert_eq!(doc.next().unwrap().into_i64().unwrap(), -321);
         assert_eq!(doc.next().unwrap().into_f64().unwrap(), 1.23);
         assert_eq!(doc.next().unwrap().into_f64().unwrap(), -1e4);
-        assert_eq!(doc.next().unwrap().into_bool().unwrap(), true);
-        assert_eq!(doc.next().unwrap().into_bool().unwrap(), false);
+        assert!(doc.next().unwrap().into_bool().unwrap());
+        assert!(!doc.next().unwrap().into_bool().unwrap());
         assert_eq!(doc.next().unwrap().into_string().unwrap(), "0");
         assert_eq!(doc.next().unwrap().into_i64().unwrap(), 100);
         assert_eq!(doc.next().unwrap().into_f64().unwrap(), 2.0);
-        assert_eq!(doc.next().unwrap().into_bool().unwrap(), true);
-        assert_eq!(doc.next().unwrap().into_bool().unwrap(), false);
+        assert!(doc.next().unwrap().into_bool().unwrap());
+        assert!(!doc.next().unwrap().into_bool().unwrap());
         assert_eq!(doc.next().unwrap().into_i64().unwrap(), 255);
         assert_eq!(doc.next().unwrap().into_i64().unwrap(), 63);
         assert_eq!(doc.next().unwrap().into_i64().unwrap(), 12345);
@@ -614,7 +620,7 @@ b: ~
 a: ~
 c: ~
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let first = out.into_iter().next().unwrap();
         let mut iter = first.into_hash().unwrap().into_iter();
         assert_eq!(
@@ -640,19 +646,19 @@ c: ~
 1:
     important: false
 ";
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let first = out.into_iter().next().unwrap();
-        assert_eq!(first[0]["important"].as_bool().unwrap(), true);
+        assert!(first[0]["important"].as_bool().unwrap());
     }
 
     #[test]
     fn test_indentation_equality() {
         let four_spaces = YamlLoader::load_from_str(
-            r#"
+            r"
 hash:
     with:
         indentations
-"#,
+",
         )
         .unwrap()
         .into_iter()
@@ -660,11 +666,11 @@ hash:
         .unwrap();
 
         let two_spaces = YamlLoader::load_from_str(
-            r#"
+            r"
 hash:
   with:
     indentations
-"#,
+",
         )
         .unwrap()
         .into_iter()
@@ -672,11 +678,11 @@ hash:
         .unwrap();
 
         let one_space = YamlLoader::load_from_str(
-            r#"
+            r"
 hash:
  with:
   indentations
-"#,
+",
         )
         .unwrap()
         .into_iter()
@@ -684,11 +690,11 @@ hash:
         .unwrap();
 
         let mixed_spaces = YamlLoader::load_from_str(
-            r#"
+            r"
 hash:
      with:
                indentations
-"#,
+",
         )
         .unwrap()
         .into_iter()
@@ -704,7 +710,7 @@ hash:
     fn test_two_space_indentations() {
         // https://github.com/kbknapp/clap-rs/issues/965
 
-        let s = r#"
+        let s = r"
 subcommands:
   - server:
     about: server related commands
@@ -714,12 +720,12 @@ subcommands2:
 subcommands3:
  - server:
     about: server related commands
-            "#;
+            ";
 
-        let out = YamlLoader::load_from_str(&s).unwrap();
+        let out = YamlLoader::load_from_str(s).unwrap();
         let doc = &out.into_iter().next().unwrap();
 
-        println!("{:#?}", doc);
+        println!("{doc:#?}");
         assert_eq!(doc["subcommands"][0]["server"], Yaml::Null);
         assert!(doc["subcommands2"][0]["server"].as_hash().is_some());
         assert!(doc["subcommands3"][0]["server"].as_hash().is_some());

@@ -6,11 +6,11 @@ use helm_schema_k8s::UpstreamK8sSchemaProvider;
 /// Simple template produces correct schema structure.
 #[test]
 fn simple_template_schema() {
-    let src = r#"{{- if .Values.enabled }}
+    let src = r"{{- if .Values.enabled }}
 foo: {{ .Values.name }}
 replicas: {{ .Values.replicas }}
 {{- end }}
-"#;
+";
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
@@ -38,10 +38,10 @@ replicas: {{ .Values.replicas }}
 /// Guard-like values (*.enabled) get boolean type.
 #[test]
 fn guard_values_get_boolean_type() {
-    let src = r#"{{- if .Values.feature.enabled }}
+    let src = r"{{- if .Values.feature.enabled }}
 key: {{ .Values.feature.name }}
 {{- end }}
-"#;
+";
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);

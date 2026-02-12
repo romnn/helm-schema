@@ -36,7 +36,7 @@ fn find_first<'a>(root: tree_sitter::Node<'a>, kind: &str) -> Option<tree_sitter
     None
 }
 
-fn has_any<'a>(root: tree_sitter::Node<'a>, kind: &str) -> bool {
+fn has_any(root: tree_sitter::Node<'_>, kind: &str) -> bool {
     find_first(root, kind).is_some()
 }
 
@@ -47,21 +47,20 @@ fn find_mapping_pair_with_plain_key<'a>(
 ) -> Option<tree_sitter::Node<'a>> {
     let mut stack = vec![root];
     while let Some(n) = stack.pop() {
-        if n.kind() == "block_mapping_pair" {
-            if let Some(key) = n.child_by_field_name("key") {
-                let key_scalar = if key.kind() == "plain_scalar" {
-                    Some(key)
-                } else {
-                    find_first(key, "plain_scalar")
-                };
+        if n.kind() == "block_mapping_pair"
+            && let Some(key) = n.child_by_field_name("key")
+        {
+            let key_scalar = if key.kind() == "plain_scalar" {
+                Some(key)
+            } else {
+                find_first(key, "plain_scalar")
+            };
 
-                if let Some(key_scalar) = key_scalar {
-                    if let Ok(t) = key_scalar.utf8_text(src.as_bytes()) {
-                        if t.trim() == key_text {
-                            return Some(n);
-                        }
-                    }
-                }
+            if let Some(key_scalar) = key_scalar
+                && let Ok(t) = key_scalar.utf8_text(src.as_bytes())
+                && t.trim() == key_text
+            {
+                return Some(n);
             }
         }
         let mut c = n.walk();

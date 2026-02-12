@@ -103,7 +103,7 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
     let mut stack: Vec<ControlFrame> = Vec::new();
     let mut pending_yaml = String::new();
 
-    let mut push_to_current =
+    let push_to_current =
         |stack: &mut Vec<ControlFrame>, out: &mut Vec<FusedNode>, node: FusedNode| {
             if let Some(top) = stack.last_mut() {
                 top.push_item(node);
@@ -112,9 +112,9 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
             }
         };
 
-    let mut flush_yaml = |pending_yaml: &mut String,
-                          stack: &mut Vec<ControlFrame>,
-                          out: &mut Vec<FusedNode>|
+    let flush_yaml = |pending_yaml: &mut String,
+                      stack: &mut Vec<ControlFrame>,
+                      out: &mut Vec<FusedNode>|
      -> Result<(), FusedParseError> {
         if pending_yaml.trim().is_empty() {
             pending_yaml.clear();
@@ -1060,7 +1060,7 @@ fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[HelmPlaceholder
             // Otherwise, restore any embedded placeholders back to their
             // original `{{ ... }}` text so the scalar preserves them inline.
             for (i, original) in exprs.iter().enumerate() {
-                let placeholder = format!("__HELM_PLACEHOLDER_{}__", i);
+                let placeholder = format!("__HELM_PLACEHOLDER_{i}__");
                 if text.contains(&placeholder) {
                     let inner = extract_helm_expr_inner_preserve_trailing(&original.raw);
                     let inner = inner.trim_start();
@@ -1076,7 +1076,7 @@ fn restore_helm_expr_placeholders(node: &mut FusedNode, exprs: &[HelmPlaceholder
                     } else if inner.starts_with("default") {
                         format!("{{{{{inner}}}}}")
                     } else {
-                        original.raw.to_string()
+                        original.raw.clone()
                     };
                     *text = text.replace(&placeholder, &restored);
                 }

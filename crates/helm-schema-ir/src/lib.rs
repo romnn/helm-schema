@@ -60,12 +60,13 @@ pub enum Guard {
 
 impl Guard {
     /// Return all `.Values.*` paths referenced by this guard.
+    #[must_use]
     pub fn value_paths(&self) -> Vec<&str> {
         match self {
             Guard::Truthy { path } | Guard::Not { path } | Guard::Eq { path, .. } => {
                 vec![path.as_str()]
             }
-            Guard::Or { paths } => paths.iter().map(|s| s.as_str()).collect(),
+            Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
         }
     }
 }
@@ -120,16 +121,16 @@ fn scan_for_resource(node: &HelmAst, api_version: &mut Option<String>, kind: &mu
             }
         }
         HelmAst::Pair { key, value } => {
-            if let HelmAst::Scalar { text: key_text } = key.as_ref() {
-                if let Some(val_text) = value.as_ref().and_then(|v| match v.as_ref() {
+            if let HelmAst::Scalar { text: key_text } = key.as_ref()
+                && let Some(val_text) = value.as_ref().and_then(|v| match v.as_ref() {
                     HelmAst::Scalar { text } => Some(text.as_str()),
                     _ => None,
-                }) {
-                    if key_text == "apiVersion" {
-                        *api_version = Some(val_text.to_string());
-                    } else if key_text == "kind" {
-                        *kind = Some(val_text.to_string());
-                    }
+                })
+            {
+                if key_text == "apiVersion" {
+                    *api_version = Some(val_text.to_string());
+                } else if key_text == "kind" {
+                    *kind = Some(val_text.to_string());
                 }
             }
         }

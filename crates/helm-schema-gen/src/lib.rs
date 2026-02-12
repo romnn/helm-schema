@@ -86,13 +86,13 @@ pub fn generate_values_schema_with_values_yaml(
             }
         }
 
-        if !u.path.0.is_empty() {
-            if let Some(schema) = provider.schema_for_use(u) {
-                provider_schemas_by_value_path
-                    .entry(u.source_expr.clone())
-                    .or_default()
-                    .push(schema);
-            }
+        if !u.path.0.is_empty()
+            && let Some(schema) = provider.schema_for_use(u)
+        {
+            provider_schemas_by_value_path
+                .entry(u.source_expr.clone())
+                .or_default()
+                .push(schema);
         }
     }
 
@@ -105,21 +105,18 @@ pub fn generate_values_schema_with_values_yaml(
         let used_as_fragment = value_paths_used_as_fragment.contains(&vp);
         let provider_schema = provider_schemas_by_value_path
             .remove(&vp)
-            .map(merge_schema_list)
-            .unwrap_or_else(empty_schema);
+            .map_or_else(empty_schema, merge_schema_list);
 
         let values_yaml_schema =
             lookup_values_yaml_schema(&values_yaml_doc, &vp).unwrap_or_else(empty_schema);
 
         let guard_boolish_schema = guard_boolish_by_value_path
             .remove(&vp)
-            .map(merge_schema_list)
-            .unwrap_or_else(empty_schema);
+            .map_or_else(empty_schema, merge_schema_list);
 
         let guard_constraint_schema = guard_constraints_by_value_path
             .remove(&vp)
-            .map(merge_schema_list)
-            .unwrap_or_else(empty_schema);
+            .map_or_else(empty_schema, merge_schema_list);
 
         let base = if !is_empty_schema(&provider_schema) {
             provider_schema
@@ -167,7 +164,7 @@ pub fn generate_values_schema_with_values_yaml(
 // ---------------------------------------------------------------------------
 
 fn is_empty_schema(v: &Value) -> bool {
-    v.as_object().is_some_and(|o| o.is_empty())
+    v.as_object().is_some_and(serde_json::Map::is_empty)
 }
 
 fn empty_schema() -> Value {
@@ -318,7 +315,7 @@ fn ensure_object_schema(v: &mut Value) {
             obj.insert("type".to_string(), Value::String("object".to_string()));
             obj.entry("properties".to_string())
                 .or_insert_with(|| Value::Object(Map::new()));
-            if !obj.get("properties").and_then(|p| p.as_object()).is_some() {
+            if obj.get("properties").and_then(|p| p.as_object()).is_none() {
                 obj.insert("properties".to_string(), Value::Object(Map::new()));
             }
             obj.entry("additionalProperties".to_string())
@@ -340,7 +337,7 @@ fn ensure_object_schema(v: &mut Value) {
             let ap_is_empty_schema = obj
                 .get("additionalProperties")
                 .and_then(|v| v.as_object())
-                .is_some_and(|m| m.is_empty());
+                .is_some_and(serde_json::Map::is_empty);
 
             if has_structure && ap_is_empty_schema {
                 obj.insert("additionalProperties".to_string(), Value::Bool(false));

@@ -4,10 +4,10 @@ use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 /// Simple template IR generation test.
 #[test]
 fn simple_template_ir() {
-    let src = r#"{{- if .Values.enabled }}
+    let src = r"{{- if .Values.enabled }}
 foo: {{ .Values.name }}
 {{- end }}
-"#;
+";
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);

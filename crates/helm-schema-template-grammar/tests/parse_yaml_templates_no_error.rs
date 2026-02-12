@@ -26,8 +26,7 @@ fn fill_empty_mapping_values_with_placeholder(text: &str, placeholder: &str) -> 
     for (idx, line) in lines.iter().enumerate() {
         let (content, has_nl) = line
             .strip_suffix('\n')
-            .map(|c| (c, true))
-            .unwrap_or((*line, false));
+            .map_or((*line, false), |c| (c, true));
 
         let content = content.strip_suffix('\r').unwrap_or(content);
         let trimmed = content.trim();
@@ -115,17 +114,15 @@ fn strip_whitespace_only_lines(text: &str) -> String {
     let mut block_scalar_header_indent: usize = 0;
 
     for line in text.split_inclusive('\n') {
-        let (content, has_nl) = line
-            .strip_suffix('\n')
-            .map(|c| (c, true))
-            .unwrap_or((line, false));
+        let (content, has_nl) = line.strip_suffix('\n').map_or((line, false), |c| (c, true));
 
         let content = content.strip_suffix('\r').unwrap_or(content);
 
-        if in_block_scalar {
-            if !content.trim().is_empty() && indent_len(content) <= block_scalar_header_indent {
-                in_block_scalar = false;
-            }
+        if in_block_scalar
+            && !content.trim().is_empty()
+            && indent_len(content) <= block_scalar_header_indent
+        {
+            in_block_scalar = false;
         }
 
         if !in_block_scalar {
@@ -251,7 +248,7 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
         let prefix_ends_with_mapping_colon = prefix
             .iter()
             .rposition(|b| !b.is_ascii_whitespace())
-            .is_some_and(|idx| prefix[idx] == b':' && !prefix[..idx].iter().any(|b| *b == b':'));
+            .is_some_and(|idx| prefix[idx] == b':' && !prefix[..idx].contains(&b':'));
 
         let mut j = end;
         while j < line_end && out[j].is_ascii_whitespace() {
@@ -443,7 +440,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
                 .and_then(|s| s.to_str())
                 .unwrap_or("template.yaml");
             let dump_path =
-                PathBuf::from("/tmp").join(format!("helm-schema-sanitized-{}", file_name));
+                PathBuf::from("/tmp").join(format!("helm-schema-sanitized-{file_name}"));
             let _ = std::fs::write(&dump_path, &sanitized);
         }
 
@@ -476,7 +473,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
                     ep,
                     node.to_sexp(),
                 );
-                extra.push_str(&format!("snippet_around_error_start=\n{}\n", snippet));
+                extra.push_str(&format!("snippet_around_error_start=\n{snippet}\n"));
             }
 
             panic!(
@@ -492,8 +489,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
     if only.is_none() {
         assert_eq!(
             parsed_files, total_files,
-            "expected to parse all discovered charts/**/templates YAML files (found={}, parsed={})",
-            total_files, parsed_files
+            "expected to parse all discovered charts/**/templates YAML files (found={total_files}, parsed={parsed_files})"
         );
     }
 

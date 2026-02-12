@@ -5,7 +5,7 @@ use helm_schema_ir::{
     DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
 };
 
-/// DefaultResourceDetector finds the PrometheusRule resource type.
+/// `DefaultResourceDetector` finds the `PrometheusRule` resource type.
 #[test]
 fn resource_detection() {
     let src = common::prometheusrule_src();

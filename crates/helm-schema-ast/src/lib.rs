@@ -75,6 +75,7 @@ pub enum HelmAst {
 
 impl HelmAst {
     /// Render this AST as a pretty-printed S-expression string.
+    #[must_use]
     pub fn to_sexpr(&self) -> String {
         let mut buf = String::new();
         self.write_sexpr(&mut buf, 0);
@@ -119,20 +120,20 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Scalar { text } => {
-                buf.push_str(&format!("{pad}(Scalar {:?})", text));
+                buf.push_str(&format!("{pad}(Scalar {text:?})"));
             }
             HelmAst::HelmExpr { text } => {
-                buf.push_str(&format!("{pad}(HelmExpr {:?})", text));
+                buf.push_str(&format!("{pad}(HelmExpr {text:?})"));
             }
             HelmAst::HelmComment { text } => {
-                buf.push_str(&format!("{pad}(HelmComment {:?})", text));
+                buf.push_str(&format!("{pad}(HelmComment {text:?})"));
             }
             HelmAst::If {
                 cond,
                 then_branch,
                 else_branch,
             } => {
-                buf.push_str(&format!("{pad}(If {:?}", cond));
+                buf.push_str(&format!("{pad}(If {cond:?}"));
                 if !then_branch.is_empty() {
                     buf.push_str(&format!("\n{pad}  (then"));
                     for item in then_branch {
@@ -156,7 +157,7 @@ impl HelmAst {
                 body,
                 else_branch,
             } => {
-                buf.push_str(&format!("{pad}(Range {:?}", header));
+                buf.push_str(&format!("{pad}(Range {header:?}"));
                 if !body.is_empty() {
                     buf.push_str(&format!("\n{pad}  (body"));
                     for item in body {
@@ -180,7 +181,7 @@ impl HelmAst {
                 body,
                 else_branch,
             } => {
-                buf.push_str(&format!("{pad}(With {:?}", header));
+                buf.push_str(&format!("{pad}(With {header:?}"));
                 if !body.is_empty() {
                     buf.push_str(&format!("\n{pad}  (body"));
                     for item in body {
@@ -200,7 +201,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Define { name, body } => {
-                buf.push_str(&format!("{pad}(Define {:?}", name));
+                buf.push_str(&format!("{pad}(Define {name:?}"));
                 if !body.is_empty() {
                     for item in body {
                         buf.push('\n');
@@ -210,7 +211,7 @@ impl HelmAst {
                 buf.push(')');
             }
             HelmAst::Block { name, body } => {
-                buf.push_str(&format!("{pad}(Block {:?}", name));
+                buf.push_str(&format!("{pad}(Block {name:?}"));
                 if !body.is_empty() {
                     for item in body {
                         buf.push('\n');
@@ -237,6 +238,7 @@ pub struct DefineIndex {
 }
 
 impl DefineIndex {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -249,8 +251,9 @@ impl DefineIndex {
     }
 
     /// Look up a named template definition.
+    #[must_use]
     pub fn get(&self, name: &str) -> Option<&[HelmAst]> {
-        self.defines.get(name).map(|v| v.as_slice())
+        self.defines.get(name).map(std::vec::Vec::as_slice)
     }
 
     fn collect_defines(&mut self, node: &HelmAst) {

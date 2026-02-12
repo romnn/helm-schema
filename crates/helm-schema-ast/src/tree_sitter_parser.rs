@@ -245,7 +245,7 @@ fn pending_open_key_indent(pending: &str) -> Option<usize> {
     None
 }
 
-/// Re-parse a YAML fragment using the fused helm_template grammar and convert to HelmAst nodes.
+/// Re-parse a YAML fragment using the fused `helm_template` grammar and convert to `HelmAst` nodes.
 fn parse_yaml_items(src: &str) -> Vec<HelmAst> {
     let src = deindent_yaml_fragment(src);
     if src.trim().is_empty() {
@@ -288,7 +288,7 @@ fn parse_yaml_items(src: &str) -> Vec<HelmAst> {
     out
 }
 
-/// Convert a single tree-sitter YAML/Helm node into HelmAst.
+/// Convert a single tree-sitter YAML/Helm node into `HelmAst`.
 fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
     match node.kind() {
         "block_node" | "flow_node" => {
@@ -437,7 +437,7 @@ fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
     }
 }
 
-/// Fuse a sequence of tree-sitter top-level nodes (text + control flow) into HelmAst nodes.
+/// Fuse a sequence of tree-sitter top-level nodes (text + control flow) into `HelmAst` nodes.
 fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: bool) -> Vec<HelmAst> {
     let mut out: Vec<HelmAst> = Vec::new();
     let mut pending = String::new();
@@ -530,7 +530,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
             // Skip whitespace tokens before closing delimiter.
             while i < blocks.len()
                 && !blocks[i].is_named()
-                && blocks[i].kind().chars().all(|c| c.is_whitespace())
+                && blocks[i].kind().chars().all(char::is_whitespace)
             {
                 i += 1;
             }
@@ -578,7 +578,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
     out
 }
 
-/// Convert a tree-sitter control-flow node into HelmAst.
+/// Convert a tree-sitter control-flow node into `HelmAst`.
 fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
     match node.kind() {
         "if_action" => {
@@ -605,15 +605,15 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 };
                 match node.field_name_for_child(i as u32) {
                     Some("condition") => {
-                        if !seen_main_condition {
-                            seen_main_condition = true;
-                        } else {
+                        if seen_main_condition {
                             let cnd = ch
                                 .utf8_text(src.as_bytes())
                                 .unwrap_or("")
                                 .trim()
                                 .to_string();
                             else_if_pairs.push((cnd, Vec::new()));
+                        } else {
+                            seen_main_condition = true;
                         }
                     }
                     Some("option") => {

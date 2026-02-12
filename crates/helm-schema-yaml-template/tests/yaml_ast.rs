@@ -6,9 +6,9 @@ use sexpr::{assert_yaml_doc_matches_sexpr, assert_yaml_matches_sexpr};
 
 #[test]
 fn yaml_scalar_string_plain() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         foo: bar
-    "#};
+    "};
     let want = indoc! {r#"
         (map
           (entry
@@ -40,12 +40,12 @@ fn literal_unterminated_helm_open_is_plain_text() {
 
 #[test]
 fn skip_template_comment_block_then_yaml() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- /*
         some template comment
         */}}
         foo: bar
-    "#};
+    "};
 
     let want = indoc! {r#"
         (map
@@ -61,14 +61,14 @@ fn skip_template_comment_block_then_yaml() {
 
 #[test]
 fn skip_multiline_action_at_line_start_then_yaml() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if and
               .Values.enabled
               (eq 1 1)
         -}}
         foo: bar
         {{- end -}}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (map
@@ -84,14 +84,14 @@ fn skip_multiline_action_at_line_start_then_yaml() {
 
 #[test]
 fn block_scalar_can_contain_template_lines_with_less_indentation() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         script: |
           echo start
         {{- if .Values.enabled }}
           echo enabled
         {{- end }}
           echo done
-    "#};
+    "};
 
     let want = indoc! {r#"
         (map
@@ -132,10 +132,10 @@ fn skip_fragment_injector_line_inside_mapping_body() {
 
 #[test]
 fn malformed_range_dot_syntax_is_skipped_as_control_line() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- range.spec.ports }}
         foo: bar
-    "#};
+    "};
 
     let want = indoc! {r#"
         (map
@@ -151,9 +151,9 @@ fn malformed_range_dot_syntax_is_skipped_as_control_line() {
 
 #[test]
 fn helm_action_used_as_mapping_key() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{ $key | quote }}: {{ $value | quote }}
-    "#};
+    "};
 
     let want = indoc! {r#"
         (map
@@ -169,9 +169,9 @@ fn helm_action_used_as_mapping_key() {
 
 #[test]
 fn flow_sequence_with_unquoted_helm_action_item() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         items: [{{ .Values.a }}, 2]
-    "#};
+    "};
 
     let want = indoc! {r#"
         (map
@@ -262,11 +262,11 @@ fn skip_inline_value_fragment_with_nindent_allows_nested_mapping_value() {
 
 #[test]
 fn parse_multi_document_stream() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         a: 1
         ---
         b: 2
-    "#};
+    "};
 
     let want = indoc! {r#"
         (stream

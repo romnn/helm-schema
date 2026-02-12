@@ -1,7 +1,7 @@
 use serde_json::{Map, Value};
 
 pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
-    schemas.sort_by(|a, b| canonical_json_string(a).cmp(&canonical_json_string(b)));
+    schemas.sort_by_key(canonical_json_string);
     schemas.dedup();
     let mut it = schemas.into_iter();
     let Some(first) = it.next() else {
@@ -15,10 +15,10 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
         return a;
     }
 
-    if a.as_object().is_some_and(|o| o.is_empty()) {
+    if a.as_object().is_some_and(serde_json::Map::is_empty) {
         return b;
     }
-    if b.as_object().is_some_and(|o| o.is_empty()) {
+    if b.as_object().is_some_and(serde_json::Map::is_empty) {
         return a;
     }
 
@@ -29,7 +29,7 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     let mut out: Vec<Value> = Vec::new();
     out.extend(flatten_anyof(a));
     out.extend(flatten_anyof(b));
-    out.sort_by(|x, y| canonical_json_string(x).cmp(&canonical_json_string(y)));
+    out.sort_by_key(canonical_json_string);
     out.dedup();
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
@@ -43,10 +43,10 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
 }
 
 fn flatten_anyof(v: Value) -> Vec<Value> {
-    if let Value::Object(obj) = &v {
-        if let Some(arr) = obj.get("anyOf").and_then(|x| x.as_array()) {
-            return arr.clone();
-        }
+    if let Value::Object(obj) = &v
+        && let Some(arr) = obj.get("anyOf").and_then(|x| x.as_array())
+    {
+        return arr.clone();
     }
     vec![v]
 }
@@ -110,8 +110,8 @@ fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {
         _ => {}
     }
 
-    let out_items_is_null = out.get("items").is_some_and(|v| v.is_null());
-    let b_items_is_null = bobj.get("items").is_some_and(|v| v.is_null());
+    let out_items_is_null = out.get("items").is_some_and(serde_json::Value::is_null);
+    let b_items_is_null = bobj.get("items").is_some_and(serde_json::Value::is_null);
     if out_items_is_null && !b_items_is_null {
         out.insert(
             "items".to_string(),
@@ -149,7 +149,7 @@ fn merge_scalar_like_schemas(a: &Value, b: &Value) -> Option<Value> {
     ) {
         (Some(ae), Some(be)) => {
             let mut inter: Vec<Value> = ae.into_iter().filter(|v| be.contains(v)).collect();
-            inter.sort_by(|x, y| x.to_string().cmp(&y.to_string()));
+            inter.sort_by_key(std::string::ToString::to_string);
             inter.dedup();
             if inter.is_empty() {
                 return None;
@@ -194,7 +194,7 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 .is_some_and(|m| !m.is_empty())
             || obj
                 .get("additionalProperties")
-                .is_some_and(|v| v.is_object())
+                .is_some_and(serde_json::Value::is_object)
             || obj
                 .get("required")
                 .and_then(|v| v.as_array())
@@ -236,11 +236,11 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     let a_map_like = !a_fixed
         && out
             .get("additionalProperties")
-            .is_some_and(|v| v.is_object());
+            .is_some_and(serde_json::Value::is_object);
     let b_map_like = !b_fixed
         && bobj
             .get("additionalProperties")
-            .is_some_and(|v| v.is_object());
+            .is_some_and(serde_json::Value::is_object);
 
     match (
         out.get("additionalProperties").cloned(),
@@ -288,7 +288,7 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
         .and_then(|v| v.as_array())
         .map(|arr| {
             arr.iter()
-                .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                .filter_map(|x| x.as_str().map(std::string::ToString::to_string))
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();

@@ -7,14 +7,14 @@ fn roundtrip(original: &Yaml) {
     YamlEmitter::new(&mut emitted).dump(original).unwrap();
 
     let documents = YamlLoader::load_from_str(&emitted).unwrap();
-    println!("emitted {}", emitted);
+    println!("emitted {emitted}");
 
     assert_eq!(documents.len(), 1);
     assert_eq!(documents[0], *original);
 }
 
 fn double_roundtrip(original: &str) {
-    let parsed = YamlLoader::load_from_str(&original).unwrap();
+    let parsed = YamlLoader::load_from_str(original).unwrap();
 
     let mut serialized = String::new();
     YamlEmitter::new(&mut serialized).dump(&parsed[0]).unwrap();
@@ -50,11 +50,11 @@ fn test_numberlike_strings() {
 
     for doc in &docs {
         roundtrip(&Yaml::String(doc.to_string()));
-        double_roundtrip(&doc);
+        double_roundtrip(doc);
     }
 }
 
-/// Example from https://github.com/chyh1990/yaml-rust/issues/133
+/// Example from <https://github.com/chyh1990/yaml-rust/issues/133>
 #[test]
 fn test_issue133() {
     let doc = YamlLoader::load_from_str("\"0x123\"")
