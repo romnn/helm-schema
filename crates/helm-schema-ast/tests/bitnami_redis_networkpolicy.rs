@@ -1,5 +1,3 @@
-mod common;
-
 use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
 
 // Both parsers produce identical AST for the networkpolicy template.
@@ -232,14 +230,14 @@ const EXPECTED_SEXPR: &str = r#"(Document
 
 #[test]
 fn fused_rust_ast() {
-    let src = common::networkpolicy_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let ast = FusedRustParser.parse(&src).expect("parse");
     similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR);
 }
 
 #[test]
 fn tree_sitter_ast() {
-    let src = common::networkpolicy_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR);
 }

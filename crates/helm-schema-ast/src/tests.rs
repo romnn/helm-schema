@@ -33,11 +33,7 @@ fn tree_sitter_ast_simple() {
 
 #[test]
 fn define_index_from_helpers() {
-    let helpers_path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../testdata/charts/bitnami-redis/templates/_helpers.tpl"
-    );
-    let helpers = std::fs::read_to_string(helpers_path).expect("read _helpers.tpl");
+    let helpers = test_util::read_testdata("charts/bitnami-redis/templates/_helpers.tpl");
 
     let mut idx_rust = DefineIndex::new();
     idx_rust

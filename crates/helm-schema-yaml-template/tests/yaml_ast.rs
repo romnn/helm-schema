@@ -1,8 +1,86 @@
-mod sexpr;
+use std::str::FromStr;
 
 use indoc::indoc;
+use test_util::sexpr::SExpr;
+use yaml_rust::{Yaml, YamlLoader};
 
-use sexpr::{assert_yaml_doc_matches_sexpr, assert_yaml_matches_sexpr};
+fn yaml_to_sexpr(doc: &Yaml) -> SExpr {
+    match doc {
+        Yaml::Null => SExpr::Leaf {
+            kind: "null".to_string(),
+            text: None,
+        },
+        Yaml::Boolean(b) => SExpr::Leaf {
+            kind: "bool".to_string(),
+            text: Some(b.to_string()),
+        },
+        Yaml::Integer(i) => SExpr::Leaf {
+            kind: "int".to_string(),
+            text: Some(i.to_string()),
+        },
+        Yaml::Real(s) => SExpr::Leaf {
+            kind: "real".to_string(),
+            text: Some(s.clone()),
+        },
+        Yaml::String(s) => SExpr::Leaf {
+            kind: "str".to_string(),
+            text: Some(s.clone()),
+        },
+        Yaml::Array(items) => SExpr::Node {
+            kind: "seq".to_string(),
+            children: items.iter().map(yaml_to_sexpr).collect(),
+        },
+        Yaml::Hash(h) => {
+            let children = h
+                .iter()
+                .map(|(k, v)| SExpr::Node {
+                    kind: "entry".to_string(),
+                    children: vec![yaml_to_sexpr(k), yaml_to_sexpr(v)],
+                })
+                .collect();
+            SExpr::Node {
+                kind: "map".to_string(),
+                children,
+            }
+        }
+        Yaml::Alias(id) => SExpr::Leaf {
+            kind: "alias".to_string(),
+            text: Some(id.to_string()),
+        },
+        Yaml::BadValue => SExpr::Leaf {
+            kind: "bad".to_string(),
+            text: None,
+        },
+    }
+}
+
+fn yaml_stream_to_sexpr(docs: &[Yaml]) -> SExpr {
+    SExpr::Node {
+        kind: "stream".to_string(),
+        children: docs
+            .iter()
+            .map(|doc| SExpr::Node {
+                kind: "doc".to_string(),
+                children: vec![yaml_to_sexpr(doc)],
+            })
+            .collect(),
+    }
+}
+
+fn assert_yaml_matches_sexpr(src: &str, want: &str) {
+    let docs = YamlLoader::load_from_str(src).expect("parse yaml");
+    let have = yaml_stream_to_sexpr(&docs);
+    let want = SExpr::from_str(want).expect("parse expected sexpr");
+    similar_asserts::assert_eq!(have, want);
+}
+
+fn assert_yaml_doc_matches_sexpr(src: &str, want: &str) {
+    let docs = YamlLoader::load_from_str(src).expect("parse yaml");
+    assert_eq!(docs.len(), 1, "expected exactly one document");
+    let have = yaml_to_sexpr(&docs[0]);
+    let want = SExpr::from_str(want).expect("parse expected sexpr");
+    similar_asserts::assert_eq!(have, want);
+}
 
 #[test]
 fn yaml_scalar_string_plain() {

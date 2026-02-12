@@ -1,5 +1,3 @@
-mod common;
-
 use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
 
 const EXPECTED_SEXPR: &str = r#"(Document
@@ -52,14 +50,14 @@ const EXPECTED_SEXPR: &str = r#"(Document
 
 #[test]
 fn fused_rust_ast() {
-    let src = common::prometheusrule_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let ast = FusedRustParser.parse(&src).expect("parse");
     similar_asserts::assert_eq!(ast.to_sexpr(), EXPECTED_SEXPR.trim_end());
 }
 
 #[test]
 fn tree_sitter_ast() {
-    let src = common::prometheusrule_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     similar_asserts::assert_eq!(ast.to_sexpr(), EXPECTED_SEXPR.trim_end());
 }

@@ -37,7 +37,7 @@
 //! ```
 
 #![doc(html_root_url = "https://docs.rs/yaml-rust/0.4.5")]
-#![allow(clippy::renamed_and_removed_lints)]
+#![allow(renamed_and_removed_lints)]
 #![warn(clippy::cognitive_complexity)]
 #![allow(clippy::match_same_arms)]
 
@@ -51,7 +51,7 @@ pub mod yaml;
 
 // reexport key APIs
 pub use crate::emitter::{EmitError, YamlEmitter};
-pub use crate::fused::{parse_fused_yaml_helm, FusedNode, FusedParseError};
+pub use crate::fused::{FusedNode, FusedParseError, parse_fused_yaml_helm};
 pub use crate::parser::Event;
 pub use crate::scanner::ScanError;
 pub use crate::yaml::{Yaml, YamlLoader};

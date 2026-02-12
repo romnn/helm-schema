@@ -1294,7 +1294,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                 suffix = self.scan_tag_uri(false, secondary, "", &start_mark)?;
             } else {
                 suffix = self.scan_tag_uri(false, false, &handle, &start_mark)?;
-                handle = "!".to_owned();
+                "!".clone_into(&mut handle);
                 // A special case: the '!' tag.  Set the handle to '' and the
                 // suffix to '!'.
                 if suffix.is_empty() {
@@ -1492,7 +1492,10 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                 _ => true,
             }
         {
-            return Err(ScanError::new(start_mark, "while scanning an anchor or alias, did not find expected alphabetic or numeric character"));
+            return Err(ScanError::new(
+                start_mark,
+                "while scanning an anchor or alias, did not find expected alphabetic or numeric character",
+            ));
         }
 
         if alias {
@@ -1801,8 +1804,10 @@ impl<T: Iterator<Item = char>> Scanner<T> {
 
             // Check for a tab character messing the indentation.
             if (*indent == 0 || self.mark.col < *indent) && self.buffer[0] == '\t' {
-                return Err(ScanError::new(self.mark,
-                        "while scanning a block scalar, found a tab character where an indentation space is expected"));
+                return Err(ScanError::new(
+                    self.mark,
+                    "while scanning a block scalar, found a tab character where an indentation space is expected",
+                ));
             }
 
             if !is_break(self.ch()) {
@@ -1945,7 +1950,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                                 return Err(ScanError::new(
                                     start_mark,
                                     "while parsing a quoted scalar, found unknown escape character",
-                                ))
+                                ));
                             }
                         }
                         self.skip();
@@ -1956,15 +1961,19 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                             let mut value = 0u32;
                             for i in 0..code_length {
                                 if !is_hex(self.buffer[i]) {
-                                    return Err(ScanError::new(start_mark,
-                                        "while parsing a quoted scalar, did not find expected hexadecimal number"));
+                                    return Err(ScanError::new(
+                                        start_mark,
+                                        "while parsing a quoted scalar, did not find expected hexadecimal number",
+                                    ));
                                 }
                                 value = (value << 4) + as_hex(self.buffer[i]);
                             }
 
                             let Some(ch) = char::from_u32(value) else {
-                                return Err(ScanError::new(start_mark,
-                                        "while parsing a quoted scalar, found invalid Unicode character escape code"));
+                                return Err(ScanError::new(
+                                    start_mark,
+                                    "while parsing a quoted scalar, found invalid Unicode character escape code",
+                                ));
                             };
                             string.push(ch);
 
@@ -2458,6 +2467,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)]
     fn test_block_sequences() {
         let s = "
 - item 1
@@ -2500,6 +2510,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)]
     fn test_block_mappings() {
         let s = "
 a simple key: a value   # The KEY token is produced here.
@@ -2573,6 +2584,7 @@ key:
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)]
     fn test_collections_in_sequence() {
         let s = "
 - - item 1
@@ -2616,6 +2628,7 @@ key:
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)]
     fn test_collections_in_mapping() {
         let s = "
 ? a sequence
@@ -2679,6 +2692,7 @@ key:
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)]
     fn test_plain_scalar_starting_with_indicators_in_flow() {
         // "Plain scalars must not begin with most indicators, as this would cause ambiguity with
         // other YAML constructs. However, the “:”, “?” and “-” indicators may be used as the first

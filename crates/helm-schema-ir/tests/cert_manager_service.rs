@@ -1,15 +1,23 @@
 #![recursion_limit = "1024"]
 
-mod common;
-
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
     DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
 };
 
+fn build_cert_manager_define_index(parser: &dyn HelmParser) -> DefineIndex {
+    let mut idx = DefineIndex::new();
+    idx.add_source(
+        parser,
+        &test_util::read_testdata("charts/cert-manager/templates/_helpers.tpl"),
+    )
+    .expect("cert-manager helpers");
+    idx
+}
+
 #[test]
 fn resource_detection() {
-    let src = common::cert_manager_service_src();
+    let src = test_util::read_testdata("charts/cert-manager/templates/service.yaml");
     let ast = FusedRustParser.parse(&src).expect("parse");
     let resource = DefaultResourceDetector.detect(&ast);
     assert_eq!(
@@ -23,9 +31,9 @@ fn resource_detection() {
 
 #[test]
 fn symbolic_ir_full() {
-    let src = common::cert_manager_service_src();
+    let src = test_util::read_testdata("charts/cert-manager/templates/service.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
-    let idx = common::build_cert_manager_define_index(&TreeSitterParser);
+    let idx = build_cert_manager_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");

@@ -291,20 +291,20 @@ impl Yaml {
     /// Does not panic; all inputs produce a valid `Yaml` value.
     #[must_use]
     pub fn from_str(v: &str) -> Yaml {
-        if let Some(hex) = v.strip_prefix("0x") {
-            if let Ok(i) = i64::from_str_radix(hex, 16) {
-                return Yaml::Integer(i);
-            }
+        if let Some(hex) = v.strip_prefix("0x")
+            && let Ok(i) = i64::from_str_radix(hex, 16)
+        {
+            return Yaml::Integer(i);
         }
-        if let Some(oct) = v.strip_prefix("0o") {
-            if let Ok(i) = i64::from_str_radix(oct, 8) {
-                return Yaml::Integer(i);
-            }
+        if let Some(oct) = v.strip_prefix("0o")
+            && let Ok(i) = i64::from_str_radix(oct, 8)
+        {
+            return Yaml::Integer(i);
         }
-        if let Some(rest) = v.strip_prefix('+') {
-            if let Ok(i) = rest.parse::<i64>() {
-                return Yaml::Integer(i);
-            }
+        if let Some(rest) = v.strip_prefix('+')
+            && let Ok(i) = rest.parse::<i64>()
+        {
+            return Yaml::Integer(i);
         }
         match v {
             "~" | "null" => Yaml::Null,
@@ -469,6 +469,7 @@ a1: &DEFAULT
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)]
     fn test_plain_datatype() {
         let s = "
 - 'string'

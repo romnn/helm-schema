@@ -6,7 +6,7 @@ use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 pub struct SymbolicIrGenerator;
 
 impl IrGenerator for SymbolicIrGenerator {
-    fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse> {
+    fn generate(&self, src: &str, _ast: &HelmAst, _defines: &DefineIndex) -> Vec<ValueUse> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
         let mut parser = tree_sitter::Parser::new();
@@ -17,14 +17,13 @@ impl IrGenerator for SymbolicIrGenerator {
             return Vec::new();
         };
 
-        let mut w = SymbolicWalker::new(src, defines);
+        let mut w = SymbolicWalker::new(src);
         w.run(&tree)
     }
 }
 
 struct SymbolicWalker<'a> {
     source: &'a str,
-    defines: &'a DefineIndex,
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
     no_output_depth: usize,
@@ -352,10 +351,9 @@ impl Shape {
 }
 
 impl<'a> SymbolicWalker<'a> {
-    fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
+    fn new(source: &'a str) -> Self {
         Self {
             source,
-            defines,
             uses: Vec::new(),
             guards: Vec::new(),
             no_output_depth: 0,

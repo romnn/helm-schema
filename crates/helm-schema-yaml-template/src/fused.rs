@@ -165,15 +165,15 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
             // and we're not inside control flow, keep it in the YAML fragment and let the YAML
             // layer skip it. This matches the tree-sitter parser behavior for cases like the
             // cert-manager `labels` injection.
-            if stack.is_empty() && indent_col > 0 {
-                if let HelmTok::Expr { text } = &tok {
-                    let is_injector = (text.contains("include")
-                        || text.contains("tpl")
-                        || text.contains("template"))
+            if stack.is_empty()
+                && indent_col > 0
+                && let HelmTok::Expr { text } = &tok
+            {
+                let is_injector =
+                    (text.contains("include") || text.contains("tpl") || text.contains("template"))
                         && (text.contains("nindent") || text.contains("indent"));
-                    if is_injector {
-                        continue;
-                    }
+                if is_injector {
+                    continue;
                 }
             }
 
@@ -868,33 +868,31 @@ fn rewrite_inline_block_value_fragments(fragment: &str) -> (String, HashMap<Stri
         }
 
         // Case 2: `key:` followed by an indented `{{- toYaml ... | nindent N }}` on the next line.
-        if rhs_trim.is_empty() {
-            if let Some(next_line) = lines.peek().copied() {
-                let next_indent = next_line
-                    .chars()
-                    .take_while(|c| *c == ' ' || *c == '\t')
-                    .count();
-                let next_after_indent = &next_line[next_indent..];
-                if next_indent > lhs.chars().take_while(|c| *c == ' ' || *c == '\t').count()
-                    && next_after_indent.trim_start().starts_with("{{")
-                {
-                    if let Some((action, _rest)) = take_action_if_closed_on_line(next_after_indent)
-                    {
-                        let likely_block = action.contains("nindent") || action.contains("indent");
-                        if likely_block {
-                            let expr_text = match parse_helm_template_text(&action) {
-                                HelmTok::Expr { text } => text,
-                                HelmTok::Comment { text } => text,
-                                other => format!("{other:?}"),
-                            };
-                            frags.entry(key.to_string()).or_default().push(expr_text);
+        if rhs_trim.is_empty()
+            && let Some(next_line) = lines.peek().copied()
+        {
+            let next_indent = next_line
+                .chars()
+                .take_while(|c| *c == ' ' || *c == '\t')
+                .count();
+            let next_after_indent = &next_line[next_indent..];
+            if next_indent > lhs.chars().take_while(|c| *c == ' ' || *c == '\t').count()
+                && next_after_indent.trim_start().starts_with("{{")
+                && let Some((action, _rest)) = take_action_if_closed_on_line(next_after_indent)
+            {
+                let likely_block = action.contains("nindent") || action.contains("indent");
+                if likely_block {
+                    let expr_text = match parse_helm_template_text(&action) {
+                        HelmTok::Expr { text } => text,
+                        HelmTok::Comment { text } => text,
+                        other => format!("{other:?}"),
+                    };
+                    frags.entry(key.to_string()).or_default().push(expr_text);
 
-                            // Keep only `key:` line, skip the injected action line.
-                            out.push_str(line);
-                            let _ = lines.next();
-                            continue;
-                        }
-                    }
+                    // Keep only `key:` line, skip the injected action line.
+                    out.push_str(line);
+                    let _ = lines.next();
+                    continue;
                 }
             }
         }
@@ -938,11 +936,11 @@ fn apply_inline_value_fragments(node: &mut FusedNode, frags: &mut HashMap<String
                 return;
             }
 
-            if let Some(exprs) = frags.get_mut(text) {
-                if !exprs.is_empty() {
-                    let expr = exprs.remove(0);
-                    *value = Some(Box::new(FusedNode::HelmExpr { text: expr }));
-                }
+            if let Some(exprs) = frags.get_mut(text)
+                && !exprs.is_empty()
+            {
+                let expr = exprs.remove(0);
+                *value = Some(Box::new(FusedNode::HelmExpr { text: expr }));
             }
         }
         FusedNode::Sequence { items } => {

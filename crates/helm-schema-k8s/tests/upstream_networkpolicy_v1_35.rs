@@ -1,19 +1,11 @@
 use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{K8sSchemaProvider, UpstreamK8sSchemaProvider};
 
-fn test_cache_dir() -> String {
-    concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../testdata/kubernetes-json-schema"
-    )
-    .to_string()
-}
-
 #[test]
 #[allow(clippy::too_many_lines)]
 fn materialize_networkpolicy_v1_35() {
     let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
-        .with_cache_dir(test_cache_dir())
+        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
 
     let r = ResourceRef {
@@ -198,7 +190,7 @@ fn materialize_networkpolicy_v1_35() {
 #[test]
 fn networkpolicy_leaf_schema_matchlabels() {
     let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
-        .with_cache_dir(test_cache_dir())
+        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
 
     let r = ResourceRef {
@@ -229,7 +221,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
 #[test]
 fn networkpolicy_by_kind_scan_when_api_version_missing() {
     let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
-        .with_cache_dir(test_cache_dir())
+        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
 
     let r = ResourceRef {

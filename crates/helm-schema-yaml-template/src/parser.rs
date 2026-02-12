@@ -67,7 +67,6 @@ pub struct Parser<T> {
     scanner: Scanner<T>,
     states: Vec<State>,
     state: State,
-    marks: Vec<Marker>,
     token: Option<Token>,
     current: Option<(Event, Marker)>,
     anchors: HashMap<String, usize>,
@@ -96,7 +95,6 @@ impl<T: Iterator<Item = char>> Parser<T> {
             scanner: Scanner::new(src),
             states: Vec::new(),
             state: State::StreamStart,
-            marks: Vec::new(),
             token: None,
             current: None,
 
@@ -487,7 +485,7 @@ impl<T: Iterator<Item = char>> Parser<T> {
                             return Err(ScanError::new(
                                 mark,
                                 "while parsing node, found unknown anchor",
-                            ))
+                            ));
                         }
                         Some(id) => return Ok((Event::Alias(*id), mark)),
                     }
@@ -569,7 +567,6 @@ impl<T: Iterator<Item = char>> Parser<T> {
         // skip BlockMappingStart
         if first {
             let _ = self.peek_token()?;
-            //self.marks.push(tok.0);
             self.skip();
         }
         match *self.peek_token()? {
@@ -638,10 +635,12 @@ impl<T: Iterator<Item = char>> Parser<T> {
                     if !first {
                         match *self.peek_token()? {
                             Token(_, TokenType::FlowEntry) => self.skip(),
-                            Token(mark, _) => return Err(ScanError::new(
-                                mark,
-                                "while parsing a flow mapping, did not find expected ',' or '}'",
-                            )),
+                            Token(mark, _) => {
+                                return Err(ScanError::new(
+                                    mark,
+                                    "while parsing a flow mapping, did not find expected ',' or '}'",
+                                ));
+                            }
                         }
                     }
 
@@ -711,7 +710,6 @@ impl<T: Iterator<Item = char>> Parser<T> {
         // skip FlowMappingStart
         if first {
             let _ = self.peek_token()?;
-            //self.marks.push(tok.0);
             self.skip();
         }
         match *self.peek_token()? {
@@ -775,7 +773,6 @@ impl<T: Iterator<Item = char>> Parser<T> {
         // BLOCK-SEQUENCE-START
         if first {
             let _ = self.peek_token()?;
-            //self.marks.push(tok.0);
             self.skip();
         }
         match *self.peek_token()? {

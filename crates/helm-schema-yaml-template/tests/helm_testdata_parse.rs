@@ -2,8 +2,8 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use yaml_rust::scanner::Scanner;
 use yaml_rust::YamlLoader;
+use yaml_rust::scanner::Scanner;
 
 fn is_yaml_template_file(path: &Path) -> bool {
     matches!(
@@ -66,17 +66,10 @@ fn collect_template_files(root: &Path, predicate: fn(&Path) -> bool) -> Vec<Path
 
 #[test]
 fn parse_all_testdata_helm_yaml_templates() {
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("..")
-        .join("testdata");
+    let root = test_util::workspace_testdata();
 
     let files = collect_template_files(&root, is_yaml_template_file);
-    assert!(
-        !files.is_empty(),
-        "no template files found under {:?}",
-        root
-    );
+    assert!(!files.is_empty(), "no template files found under {root:?}");
 
     let mut failures: Vec<String> = Vec::new();
     for p in files {
@@ -103,14 +96,8 @@ fn parse_all_testdata_helm_yaml_templates() {
 
 #[test]
 fn parse_representative_yaml_template_to_mapping() {
-    let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("testdata")
-        .join("charts")
-        .join("bitnami-redis")
-        .join("templates")
-        .join("master")
-        .join("application.yaml");
+    let p = test_util::workspace_testdata()
+        .join("charts/bitnami-redis/templates/master/application.yaml");
 
     let src = fs::read_to_string(&p).expect("read representative template");
 
@@ -134,7 +121,7 @@ fn parse_representative_yaml_template_to_mapping() {
                 eprintln!("scanner error: {se}");
             }
 
-            panic!("parse representative template: {}", e);
+            panic!("parse representative template: {e}");
         }
     };
     assert!(!docs.is_empty(), "expected at least one YAML document");
@@ -146,13 +133,8 @@ fn parse_representative_yaml_template_to_mapping() {
 
 #[test]
 fn parse_networkpolicy_yaml_template() {
-    let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("testdata")
-        .join("charts")
-        .join("bitnami-redis")
-        .join("templates")
-        .join("networkpolicy.yaml");
+    let p =
+        test_util::workspace_testdata().join("charts/bitnami-redis/templates/networkpolicy.yaml");
 
     let src = fs::read_to_string(&p).expect("read networkpolicy template");
 
@@ -174,7 +156,7 @@ fn parse_networkpolicy_yaml_template() {
             if let Some(se) = sc.get_error() {
                 eprintln!("scanner error: {se}");
             }
-            panic!("parse networkpolicy template: {}", e);
+            panic!("parse networkpolicy template: {e}");
         }
     };
 
@@ -183,14 +165,8 @@ fn parse_networkpolicy_yaml_template() {
 
 #[test]
 fn parse_ports_configmap_yaml_template() {
-    let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("testdata")
-        .join("charts")
-        .join("bitnami-redis")
-        .join("templates")
-        .join("sentinel")
-        .join("ports-configmap.yaml");
+    let p = test_util::workspace_testdata()
+        .join("charts/bitnami-redis/templates/sentinel/ports-configmap.yaml");
 
     let src = fs::read_to_string(&p).expect("read ports-configmap template");
 
@@ -212,7 +188,7 @@ fn parse_ports_configmap_yaml_template() {
             if let Some(se) = sc.get_error() {
                 eprintln!("scanner error: {se}");
             }
-            panic!("parse ports-configmap template: {}", e);
+            panic!("parse ports-configmap template: {e}");
         }
     };
 
@@ -221,16 +197,12 @@ fn parse_ports_configmap_yaml_template() {
 
 #[test]
 fn scan_all_testdata_non_yaml_templates() {
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("..")
-        .join("testdata");
+    let root = test_util::workspace_testdata();
 
     let files = collect_template_files(&root, is_non_yaml_template_file);
     assert!(
         !files.is_empty(),
-        "no non-yaml template files found under {:?}",
-        root
+        "no non-yaml template files found under {root:?}"
     );
 
     for p in files {

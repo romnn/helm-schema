@@ -185,7 +185,7 @@ impl UpstreamK8sSchemaProvider {
 
         let url = format!("{}/{}/{}", self.base_url, self.version_dir, filename);
         let resp = ureq::get(&url).call()?;
-        let mut reader = resp.into_reader();
+        let mut reader = resp.into_body().into_reader();
         let tmp = local.with_extension("json.tmp");
         {
             let mut f = fs::File::create(&tmp)?;

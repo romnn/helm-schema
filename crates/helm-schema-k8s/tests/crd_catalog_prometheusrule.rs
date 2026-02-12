@@ -1,13 +1,12 @@
 use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdCatalogSchemaProvider, K8sSchemaProvider};
 
-fn test_crd_dir() -> String {
-    concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/crds-catalog").to_string()
-}
-
 #[test]
+#[allow(clippy::too_many_lines)]
 fn materialize_prometheusrule_from_catalog() {
-    let provider = CrdCatalogSchemaProvider::new(test_crd_dir()).expect("provider");
+    let provider =
+        CrdCatalogSchemaProvider::new(test_util::workspace_testdata().join("crds-catalog"))
+            .expect("provider");
 
     let r = ResourceRef {
         api_version: "monitoring.coreos.com/v1".to_string(),
@@ -114,7 +113,9 @@ fn materialize_prometheusrule_from_catalog() {
 
 #[test]
 fn prometheusrule_leaf_schema_rules_items() {
-    let provider = CrdCatalogSchemaProvider::new(test_crd_dir()).expect("provider");
+    let provider =
+        CrdCatalogSchemaProvider::new(test_util::workspace_testdata().join("crds-catalog"))
+            .expect("provider");
 
     let r = ResourceRef {
         api_version: "monitoring.coreos.com/v1".to_string(),

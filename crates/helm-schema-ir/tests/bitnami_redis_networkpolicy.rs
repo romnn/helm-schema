@@ -1,14 +1,25 @@
-mod common;
-
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
     DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
 };
 
+fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
+    let mut idx = DefineIndex::new();
+    idx.add_source(
+        parser,
+        &test_util::read_testdata("charts/bitnami-redis/templates/_helpers.tpl"),
+    )
+    .expect("helpers");
+    for src in test_util::read_testdata_dir("charts/bitnami-redis/charts/common/templates", "tpl") {
+        let _ = idx.add_source(parser, &src);
+    }
+    idx
+}
+
 /// Resource detection for networkpolicy (kind is scalar, apiVersion is template).
 #[test]
 fn resource_detection() {
-    let src = common::networkpolicy_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let ast = FusedRustParser.parse(&src).expect("parse");
     let resource = DefaultResourceDetector.detect(&ast);
     // apiVersion is a template call, not a scalar, so it won't be detected.
@@ -25,9 +36,9 @@ fn resource_detection() {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn symbolic_ir_full() {
-    let src = common::networkpolicy_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
-    let idx = common::build_define_index(&TreeSitterParser);
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");

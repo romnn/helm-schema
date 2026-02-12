@@ -99,9 +99,3 @@ pub fn is_fragment_expr(text: &str) -> bool {
                 && (text.contains("nindent") || text.contains("toYaml"))
         }
 }
-
-/// Extract the template name from `include "name" ctx` or `template "name" ctx`.
-pub fn parse_include_name(text: &str) -> Option<String> {
-    let re = Regex::new(r#"(?:include|template)\s+"([^"]+)""#).unwrap();
-    re.captures(text).map(|c| c[1].to_string())
-}

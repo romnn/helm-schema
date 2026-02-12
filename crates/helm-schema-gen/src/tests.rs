@@ -15,10 +15,7 @@ replicas: {{ .Values.replicas }}
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
     let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
-        .with_cache_dir(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../testdata/kubernetes-json-schema"
-        ))
+        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
     let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
 
@@ -46,10 +43,7 @@ key: {{ .Values.feature.name }}
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
     let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
-        .with_cache_dir(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../testdata/kubernetes-json-schema"
-        ))
+        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
     let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
 

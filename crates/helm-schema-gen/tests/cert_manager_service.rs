@@ -1,18 +1,25 @@
 #![recursion_limit = "512"]
 
-mod common;
-
-use helm_schema_ast::{FusedRustParser, HelmParser};
+use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 use helm_schema_k8s::UpstreamK8sSchemaProvider;
 
+fn build_cert_manager_define_index(parser: &dyn HelmParser) -> DefineIndex {
+    let mut idx = DefineIndex::new();
+    let _ = idx.add_source(
+        parser,
+        &test_util::read_testdata("charts/cert-manager/templates/_helpers.tpl"),
+    );
+    idx
+}
+
 #[test]
 fn schema_fused_rust() {
-    let src = common::cert_manager_service_src();
-    let values_yaml = common::cert_manager_values_yaml_src();
+    let src = test_util::read_testdata("charts/cert-manager/templates/service.yaml");
+    let values_yaml = test_util::read_testdata("charts/cert-manager/values.yaml");
     let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = common::build_cert_manager_define_index(&FusedRustParser);
+    let idx = build_cert_manager_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));

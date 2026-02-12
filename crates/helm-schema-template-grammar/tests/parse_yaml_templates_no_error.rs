@@ -359,10 +359,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
     let only = std::env::var("HELM_SCHEMA_TEST_ONLY").ok();
     let dump_sanitized = std::env::var("HELM_SCHEMA_DUMP_SANITIZED").ok();
 
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("testdata")
-        .join("charts");
+    let root = test_util::workspace_testdata().join("charts");
 
     let mut files = Vec::new();
     collect_yaml_files(&root, &mut files);

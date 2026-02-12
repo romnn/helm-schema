@@ -1,24 +1,28 @@
-mod common;
-
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 use helm_schema_k8s::{ChainSchemaProvider, CrdCatalogSchemaProvider, UpstreamK8sSchemaProvider};
 
+fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
+    let mut idx = DefineIndex::new();
+    let _ = idx.add_source(
+        parser,
+        &test_util::read_testdata("charts/bitnami-redis/templates/_helpers.tpl"),
+    );
+    idx
+}
+
 /// Full schema generation for prometheusrule using fused-Rust parser.
 #[test]
 fn schema_fused_rust() {
-    let src = common::prometheusrule_src();
-    let values_yaml = common::values_yaml_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
+    let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
     let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = common::build_define_index(&FusedRustParser);
+    let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let upstream = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
-    let crds = CrdCatalogSchemaProvider::new(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../testdata/crds-catalog"
-    ))
-    .expect("crd catalog");
+    let crds = CrdCatalogSchemaProvider::new(test_util::workspace_testdata().join("crds-catalog"))
+        .expect("crd catalog");
     let provider = ChainSchemaProvider {
         first: upstream,
         second: crds,
@@ -85,19 +89,19 @@ fn schema_fused_rust() {
 /// Schema generation using tree-sitter parser should produce same result.
 #[test]
 fn schema_both_parsers_same() {
-    let src = common::prometheusrule_src();
-    let values_yaml = common::values_yaml_src();
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
+    let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
 
     let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
 
     let rust_ast = FusedRustParser.parse(&src).expect("fused rust");
-    let rust_idx = common::build_define_index(&FusedRustParser);
+    let rust_idx = build_define_index(&FusedRustParser);
     let rust_ir = SymbolicIrGenerator.generate(&src, &rust_ast, &rust_idx);
     let rust_schema =
         generate_values_schema_with_values_yaml(&rust_ir, &provider, Some(&values_yaml));
 
     let ts_ast = TreeSitterParser.parse(&src).expect("tree-sitter");
-    let ts_idx = common::build_define_index(&TreeSitterParser);
+    let ts_idx = build_define_index(&TreeSitterParser);
     let ts_ir = SymbolicIrGenerator.generate(&src, &ts_ast, &ts_idx);
     let ts_schema = generate_values_schema_with_values_yaml(&ts_ir, &provider, Some(&values_yaml));
 
