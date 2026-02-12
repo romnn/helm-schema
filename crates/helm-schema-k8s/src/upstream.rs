@@ -104,43 +104,69 @@ impl UpstreamK8sSchemaProvider {
     fn load_resource_doc_by_kind_scan(&self, kind: &str) -> Option<(String, Value)> {
         let kind_lc = kind.to_ascii_lowercase();
         let dir = self.cache_dir.join(&self.version_dir);
-        let entries = fs::read_dir(&dir).ok()?;
 
-        for ent in entries.flatten() {
-            let path = ent.path();
-            if path.extension().and_then(|s| s.to_str()) != Some("json") {
-                continue;
+        // First, scan local cache for files matching the kind.
+        if let Ok(entries) = fs::read_dir(&dir) {
+            for ent in entries.flatten() {
+                let path = ent.path();
+                if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                    continue;
+                }
+                let filename = path.file_name()?.to_string_lossy().to_string();
+                if !filename.starts_with(&format!("{kind_lc}-")) {
+                    continue;
+                }
+                if let Some(result) = self.try_load_kind_file(&filename, kind) {
+                    return Some(result);
+                }
             }
-            let filename = path.file_name()?.to_string_lossy().to_string();
-            if !filename.starts_with(&format!("{kind_lc}-")) {
-                continue;
-            }
-            let bytes = fs::read(&path).ok()?;
-            let doc: Value = serde_json::from_slice(&bytes).ok()?;
+        }
 
-            let matches_kind = doc
-                .get("x-kubernetes-group-version-kind")
-                .and_then(|v| v.as_array())
-                .is_some_and(|arr| {
-                    arr.iter().any(|e| {
-                        e.get("kind")
-                            .and_then(|v| v.as_str())
-                            .is_some_and(|k| k == kind)
-                    })
-                });
-
-            if !matches_kind {
-                continue;
+        // If downloads are enabled and nothing was found locally, try well-known
+        // apiVersion patterns for this kind and attempt to download each candidate.
+        if self.allow_download {
+            for candidate in well_known_filenames_for_kind(kind) {
+                let local = self.local_path_for(&candidate);
+                if local.exists() {
+                    continue; // already checked above
+                }
+                if self.download_to_cache(&candidate, &local).is_err() {
+                    continue;
+                }
+                if let Some(result) = self.try_load_kind_file(&candidate, kind) {
+                    return Some(result);
+                }
             }
-
-            let key = format!("{}/{}", self.version_dir, filename);
-            if let Ok(mut guard) = self.mem.lock() {
-                guard.insert(key, doc.clone());
-            }
-            return Some((filename, doc));
         }
 
         None
+    }
+
+    fn try_load_kind_file(&self, filename: &str, kind: &str) -> Option<(String, Value)> {
+        let local = self.local_path_for(filename);
+        let bytes = fs::read(&local).ok()?;
+        let doc: Value = serde_json::from_slice(&bytes).ok()?;
+
+        let matches_kind = doc
+            .get("x-kubernetes-group-version-kind")
+            .and_then(|v| v.as_array())
+            .is_some_and(|arr| {
+                arr.iter().any(|e| {
+                    e.get("kind")
+                        .and_then(|v| v.as_str())
+                        .is_some_and(|k| k == kind)
+                })
+            });
+
+        if !matches_kind {
+            return None;
+        }
+
+        let key = format!("{}/{}", self.version_dir, filename);
+        if let Ok(mut guard) = self.mem.lock() {
+            guard.insert(key, doc.clone());
+        }
+        Some((filename.to_string(), doc))
     }
 
     fn local_path_for(&self, filename: &str) -> PathBuf {
@@ -464,6 +490,77 @@ fn expand_schema_node(
     }
 
     (current_filename.to_string(), Value::Object(obj))
+}
+
+/// When the apiVersion is unknown (empty), generate candidate filenames by
+/// trying common API group + version combinations for the given kind.
+fn well_known_filenames_for_kind(kind: &str) -> Vec<String> {
+    let kind_lc = kind.to_ascii_lowercase();
+
+    // Well-known apiVersion mappings for core K8s resource kinds.
+    let api_versions: &[&str] = match kind {
+        // Core API (v1)
+        "Service"
+        | "ConfigMap"
+        | "Secret"
+        | "Pod"
+        | "Namespace"
+        | "Node"
+        | "PersistentVolume"
+        | "PersistentVolumeClaim"
+        | "ServiceAccount"
+        | "Endpoints"
+        | "Event"
+        | "LimitRange"
+        | "ResourceQuota"
+        | "ReplicationController" => &["v1"],
+
+        // apps/v1
+        "Deployment" | "StatefulSet" | "DaemonSet" | "ReplicaSet" => &["apps/v1"],
+
+        // batch/v1
+        "Job" | "CronJob" => &["batch/v1"],
+
+        // networking.k8s.io/v1
+        "NetworkPolicy" | "Ingress" | "IngressClass" => &["networking.k8s.io/v1"],
+
+        // rbac.authorization.k8s.io/v1
+        "Role" | "RoleBinding" | "ClusterRole" | "ClusterRoleBinding" => {
+            &["rbac.authorization.k8s.io/v1"]
+        }
+
+        // policy/v1
+        "PodDisruptionBudget" => &["policy/v1"],
+
+        // autoscaling/v2
+        "HorizontalPodAutoscaler" => &["autoscaling/v2", "autoscaling/v1"],
+
+        // storage.k8s.io/v1
+        "StorageClass" => &["storage.k8s.io/v1"],
+
+        _ => &[],
+    };
+
+    let mut candidates = Vec::new();
+    for api_version in api_versions {
+        let resource = ResourceRef {
+            api_version: api_version.to_string(),
+            kind: kind.to_string(),
+        };
+        for f in candidate_filenames_for_resource(&resource) {
+            if !candidates.contains(&f) {
+                candidates.push(f);
+            }
+        }
+    }
+
+    // As a last resort, try just `<kind>-v1.json` (covers core resources).
+    let fallback = format!("{}-v1.json", kind_lc);
+    if !candidates.contains(&fallback) {
+        candidates.push(fallback);
+    }
+
+    candidates
 }
 
 fn default_k8s_schema_cache_dir() -> PathBuf {

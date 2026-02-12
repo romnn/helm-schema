@@ -13,12 +13,7 @@ fn schema_fused_rust() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = common::build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let upstream = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
-        .with_cache_dir(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../testdata/kubernetes-json-schema"
-        ))
-        .with_allow_download(false);
+    let upstream = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
     let crds = CrdCatalogSchemaProvider::new(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../../testdata/crds-catalog"
@@ -31,6 +26,13 @@ fn schema_fused_rust() {
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
+
+    if std::env::var("SCHEMA_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&actual).expect("pretty json")
+        );
+    }
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -86,12 +88,7 @@ fn schema_both_parsers_same() {
     let src = common::prometheusrule_src();
     let values_yaml = common::values_yaml_src();
 
-    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
-        .with_cache_dir(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../testdata/kubernetes-json-schema"
-        ))
-        .with_allow_download(false);
+    let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
 
     let rust_ast = FusedRustParser.parse(&src).expect("fused rust");
     let rust_idx = common::build_define_index(&FusedRustParser);
