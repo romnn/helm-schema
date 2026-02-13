@@ -135,6 +135,13 @@ fn symbolic_ir_full() {
         "source_expr": "auth.client.enabled"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "auth.client.existingSecret"
+      },
+      {
         "guards": [
           {
             "path": "auth.client.enabled",
@@ -182,6 +189,13 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.enabled"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "auth.quorum.existingSecret"
       },
       {
         "guards": [
@@ -318,7 +332,8 @@ fn symbolic_ir_full() {
         ],
         "kind": "Fragment",
         "path": [
-          "metadata"
+          "metadata",
+          "labels"
         ],
         "resource": {
           "api_version": "",
@@ -947,6 +962,13 @@ fn symbolic_ir_full() {
         "guards": [],
         "kind": "Scalar",
         "path": [],
+        "resource": null,
+        "source_expr": "existingConfigmap"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
         "resource": {
           "api_version": "v1",
           "kind": "StatefulSet"
@@ -1179,6 +1201,20 @@ fn symbolic_ir_full() {
         "source_expr": "fourlwCommandsWhitelist"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "fullnameOverride"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "global"
+      },
+      {
         "guards": [
           {
             "path": "persistence.dataLogDir.existingClaim",
@@ -1292,6 +1328,13 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "hostAliases"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "image"
       },
       {
         "guards": [],
@@ -1591,6 +1634,20 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "minServerId"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "nameOverride"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "namespaceOverride"
       },
       {
         "guards": [],
@@ -2512,7 +2569,8 @@ fn symbolic_ir_full() {
         "path": [
           "spec",
           "template",
-          "metadata"
+          "metadata",
+          "labels"
         ],
         "resource": {
           "api_version": "",
@@ -2775,6 +2833,20 @@ fn symbolic_ir_full() {
         "guards": [],
         "kind": "Scalar",
         "path": [],
+        "resource": null,
+        "source_expr": "serviceAccount.create"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "serviceAccount.name"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
         "resource": {
           "api_version": "v1",
           "kind": "StatefulSet"
@@ -2950,6 +3022,13 @@ fn symbolic_ir_full() {
         "source_expr": "tls.client.enabled"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.client.existingSecret"
+      },
+      {
         "guards": [
           {
             "path": "tls.client.enabled",
@@ -2987,6 +3066,20 @@ fn symbolic_ir_full() {
         "source_expr": "tls.client.keystorePath"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.client.passwordsSecretKeystoreKey"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.client.passwordsSecretName"
+      },
+      {
         "guards": [
           {
             "path": "tls.client.enabled",
@@ -3018,6 +3111,13 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.passwordsSecretName"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.client.passwordsSecretTruststoreKey"
       },
       {
         "guards": [
@@ -3154,6 +3254,13 @@ fn symbolic_ir_full() {
         "source_expr": "tls.quorum.enabled"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.quorum.existingSecret"
+      },
+      {
         "guards": [
           {
             "path": "tls.quorum.enabled",
@@ -3191,6 +3298,20 @@ fn symbolic_ir_full() {
         "source_expr": "tls.quorum.keystorePath"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.quorum.passwordsSecretKeystoreKey"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.quorum.passwordsSecretName"
+      },
+      {
         "guards": [
           {
             "path": "tls.quorum.enabled",
@@ -3222,6 +3343,13 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.passwordsSecretName"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "tls.quorum.passwordsSecretTruststoreKey"
       },
       {
         "guards": [
@@ -3456,6 +3584,13 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.enabled"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "volumePermissions.image"
       },
       {
         "guards": [

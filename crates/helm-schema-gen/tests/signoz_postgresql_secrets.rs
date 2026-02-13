@@ -58,6 +58,7 @@ fn schema_fused_rust() {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
+                    "database": { "type": "string" },
                     "enablePostgresUser": { "type": "boolean" },
                     "password": { "type": "string" },
                     "postgresPassword": { "type": "string" },
@@ -69,7 +70,8 @@ fn schema_fused_rust() {
                             "replicationPasswordKey": { "type": "string" },
                             "userPasswordKey": { "type": "string" }
                         }
-                    }
+                    },
+                    "username": { "type": "string" }
                 }
             },
             "commonAnnotations": {
@@ -82,6 +84,8 @@ fn schema_fused_rust() {
                 "additionalProperties": { "type": "string" },
                 "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels"
             },
+            "enabled": {},
+            "fullnameOverride": { "type": "string" },
             "global": {
                 "type": "object",
                 "additionalProperties": false,
@@ -94,6 +98,7 @@ fn schema_fused_rust() {
                                 "type": "object",
                                 "additionalProperties": false,
                                 "properties": {
+                                    "database": { "type": "string" },
                                     "password": { "type": "string" },
                                     "postgresPassword": { "type": "string" },
                                     "secretKeys": {
@@ -103,6 +108,20 @@ fn schema_fused_rust() {
                                             "adminPasswordKey": { "type": "string" },
                                             "replicationPasswordKey": { "type": "string" },
                                             "userPasswordKey": { "type": "string" }
+                                        }
+                                    },
+                                    "username": { "type": "string" }
+                                }
+                            },
+                            "service": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "ports": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "postgresql": { "type": "string" }
                                         }
                                     }
                                 }
@@ -118,6 +137,27 @@ fn schema_fused_rust() {
                     "bind_password": { "type": "boolean" },
                     "bindpw": { "type": "string" },
                     "enabled": { "type": "boolean" }
+                }
+            },
+            "nameOverride": { "type": "string" },
+            "primary": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "name": { "type": "string" },
+                    "service": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "ports": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "postgresql": { "type": "integer" }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             "serviceBindings": {

@@ -1,3 +1,5 @@
+use std::collections::{BTreeSet, HashMap, HashSet};
+
 use helm_schema_ast::{DefineIndex, HelmAst};
 
 use crate::walker::{extract_values_paths, is_fragment_expr, parse_condition};
@@ -6,7 +8,7 @@ use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 pub struct SymbolicIrGenerator;
 
 impl IrGenerator for SymbolicIrGenerator {
-    fn generate(&self, src: &str, _ast: &HelmAst, _defines: &DefineIndex) -> Vec<ValueUse> {
+    fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
         let mut parser = tree_sitter::Parser::new();
@@ -17,13 +19,14 @@ impl IrGenerator for SymbolicIrGenerator {
             return Vec::new();
         };
 
-        let mut w = SymbolicWalker::new(src);
+        let mut w = SymbolicWalker::new(src, defines);
         w.run(&tree)
     }
 }
 
 struct SymbolicWalker<'a> {
     source: &'a str,
+    defines: &'a DefineIndex,
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
     no_output_depth: usize,
@@ -33,6 +36,14 @@ struct SymbolicWalker<'a> {
     text_spans: Vec<(usize, usize)>,
     text_span_idx: usize,
     text_pos: usize,
+
+    define_value_cache: HashMap<String, DefineValues>,
+}
+
+#[derive(Clone, Debug, Default)]
+struct DefineValues {
+    output: Vec<String>,
+    guards: Vec<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -150,7 +161,7 @@ impl Shape {
         YamlPath(out)
     }
 
-    fn sync_action_position(&mut self, indent: usize, col: usize) {
+    fn sync_action_position(&mut self, indent: usize, col: usize, allow_clear_pending: bool) {
         let effective = std::cmp::max(indent, col);
         while let Some((top_indent, _, _)) = self.stack.last().cloned() {
             if top_indent > effective {
@@ -163,7 +174,8 @@ impl Shape {
             }
         }
 
-        if col > indent && self.clear_pending_on_newline_at_indent.is_none() {
+        if allow_clear_pending && col > indent && self.clear_pending_on_newline_at_indent.is_none()
+        {
             let mut candidate: Option<usize> = None;
             for (top_indent, kind, pending) in self.stack.iter().rev() {
                 if *kind != Container::Mapping {
@@ -202,8 +214,16 @@ impl Shape {
                     }
                     let rest = chars.as_str();
                     let rest = rest.trim_start();
-                    let is_block =
-                        rest.is_empty() || rest.starts_with('|') || rest.starts_with('>');
+                    let is_template = rest.starts_with("{{");
+                    let is_template_fragment = is_template
+                        && (rest.contains("toYaml")
+                            || rest.contains("nindent")
+                            || rest.contains("indent")
+                            || rest.contains("tpl"));
+                    let is_block = rest.is_empty()
+                        || rest.starts_with('|')
+                        || rest.starts_with('>')
+                        || is_template_fragment;
                     return Some((key.trim().to_string(), !is_block));
                 }
                 if c.is_whitespace() {
@@ -351,9 +371,10 @@ impl Shape {
 }
 
 impl<'a> SymbolicWalker<'a> {
-    fn new(source: &'a str) -> Self {
+    fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
         Self {
             source,
+            defines,
             uses: Vec::new(),
             guards: Vec::new(),
             no_output_depth: 0,
@@ -363,7 +384,155 @@ impl<'a> SymbolicWalker<'a> {
             text_spans: Vec::new(),
             text_span_idx: 0,
             text_pos: 0,
+
+            define_value_cache: HashMap::new(),
         }
+    }
+
+    fn literal_template_calls(text: &str) -> Vec<String> {
+        let mut out = Vec::new();
+        let toks: Vec<&str> = text.split_whitespace().collect();
+        for i in 0..toks.len().saturating_sub(1) {
+            let head = toks[i];
+            if head != "include" && head != "template" {
+                continue;
+            }
+            let arg = toks[i + 1];
+            if !arg.starts_with('"') {
+                continue;
+            }
+            let end = arg.rfind('"');
+            if end.is_none() || end == Some(0) {
+                continue;
+            }
+            let end = end.unwrap();
+            if end <= 1 {
+                continue;
+            }
+            let name = &arg[1..end];
+            if !name.is_empty() {
+                out.push(name.to_string());
+            }
+        }
+        out.sort();
+        out.dedup();
+        out
+    }
+
+    fn collect_values_from_ast(
+        node: &HelmAst,
+        defines: &DefineIndex,
+        visited: &mut HashSet<String>,
+        output: &mut BTreeSet<String>,
+        guards: &mut BTreeSet<String>,
+    ) {
+        match node {
+            HelmAst::Document { items }
+            | HelmAst::Mapping { items }
+            | HelmAst::Sequence { items }
+            | HelmAst::Define { body: items, .. }
+            | HelmAst::Block { body: items, .. } => {
+                for it in items {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+            }
+            HelmAst::Pair { key, value } => {
+                Self::collect_values_from_ast(key, defines, visited, output, guards);
+                if let Some(v) = value {
+                    Self::collect_values_from_ast(v, defines, visited, output, guards);
+                }
+            }
+            HelmAst::HelmExpr { text } => {
+                for v in extract_values_paths(text) {
+                    output.insert(v);
+                }
+                for name in Self::literal_template_calls(text) {
+                    if !visited.insert(name.clone()) {
+                        continue;
+                    }
+                    if let Some(body) = defines.get(&name) {
+                        for it in body {
+                            Self::collect_values_from_ast(it, defines, visited, output, guards);
+                        }
+                    }
+                }
+            }
+            HelmAst::If {
+                cond,
+                then_branch,
+                else_branch,
+            } => {
+                for v in extract_values_paths(cond) {
+                    guards.insert(v);
+                }
+                for it in then_branch {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+                for it in else_branch {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+            }
+            HelmAst::Range {
+                header,
+                body,
+                else_branch,
+            } => {
+                for v in extract_values_paths(header) {
+                    guards.insert(v);
+                }
+                for it in body {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+                for it in else_branch {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+            }
+            HelmAst::With {
+                header,
+                body,
+                else_branch,
+            } => {
+                for v in extract_values_paths(header) {
+                    guards.insert(v);
+                }
+                for it in body {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+                for it in else_branch {
+                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                }
+            }
+            HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
+        }
+    }
+
+    fn values_from_define(&mut self, name: &str) -> DefineValues {
+        if let Some(v) = self.define_value_cache.get(name).cloned() {
+            return v;
+        }
+
+        let mut output = BTreeSet::<String>::new();
+        let mut guards = BTreeSet::<String>::new();
+        let mut visited = HashSet::<String>::new();
+        visited.insert(name.to_string());
+        if let Some(body) = self.defines.get(name) {
+            for it in body {
+                Self::collect_values_from_ast(
+                    it,
+                    self.defines,
+                    &mut visited,
+                    &mut output,
+                    &mut guards,
+                );
+            }
+        }
+
+        let v = DefineValues {
+            output: output.into_iter().collect(),
+            guards: guards.into_iter().collect(),
+        };
+        self.define_value_cache.insert(name.to_string(), v.clone());
+        v
     }
 
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
@@ -572,7 +741,22 @@ impl<'a> SymbolicWalker<'a> {
         }
 
         let (indent, col) = self.line_indent_and_col(pos);
-        self.shape.sync_action_position(indent, col);
+
+        // Only clear a pending mapping key at end-of-line when this looks like an inline scalar
+        // value (e.g. `name: {{ ... }}`), not when the template action expands to a YAML fragment
+        // via `nindent` / `toYaml` / `tpl`.
+        let allow_clear_pending = if node.kind() == "template_action" {
+            if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
+                !is_fragment_expr(text)
+            } else {
+                true
+            }
+        } else {
+            false
+        };
+
+        self.shape
+            .sync_action_position(indent, col, allow_clear_pending);
     }
 
     fn children_with_field<'n>(
@@ -612,6 +796,19 @@ impl<'a> SymbolicWalker<'a> {
         });
     }
 
+    fn emit_helper_use(&mut self, source_expr: String) {
+        if source_expr.trim().is_empty() {
+            return;
+        }
+        self.uses.push(ValueUse {
+            source_expr,
+            path: YamlPath(Vec::new()),
+            kind: ValueKind::Scalar,
+            guards: Vec::new(),
+            resource: None,
+        });
+    }
+
     fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
         let Ok(text) = node.utf8_text(self.source.as_bytes()) else {
             return;
@@ -634,6 +831,7 @@ impl<'a> SymbolicWalker<'a> {
         } else {
             ValueKind::Scalar
         };
+
         let mut values = extract_values_paths(text);
         if values.is_empty()
             && let Some(Some(dot_prefix)) = self.dot_stack.last()
@@ -641,9 +839,25 @@ impl<'a> SymbolicWalker<'a> {
             let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
             values = extract_values_paths(&rewritten);
         }
-        if values.is_empty() {
+
+        let mut helper_output_values: Vec<String> = Vec::new();
+        let mut helper_guard_values: Vec<String> = Vec::new();
+        if kind == ValueKind::Scalar {
+            for name in Self::literal_template_calls(text) {
+                let v = self.values_from_define(&name);
+                helper_output_values.extend(v.output);
+                helper_guard_values.extend(v.guards);
+            }
+            helper_output_values.sort();
+            helper_output_values.dedup();
+            helper_guard_values.sort();
+            helper_guard_values.dedup();
+        }
+
+        if values.is_empty() && helper_output_values.is_empty() && helper_guard_values.is_empty() {
             return;
         }
+
         let mut path = self.shape.current_path();
         if kind == ValueKind::Fragment {
             if let Some(last) = path.0.last_mut()
@@ -669,6 +883,14 @@ impl<'a> SymbolicWalker<'a> {
                 eprintln!("symbolic: use={v} kind={kind:?} path={:?}", path.0);
             }
             self.emit_use(v, path.clone(), kind);
+        }
+
+        for v in helper_output_values {
+            self.emit_helper_use(v);
+        }
+
+        for v in helper_guard_values {
+            self.emit_helper_use(v);
         }
     }
 

@@ -50,6 +50,27 @@ fn symbolic_ir_full() {
 
     let expected = serde_json::json!([
         {
+            "source_expr": "fullnameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "nameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "namespace",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "prometheus.enabled",
             "path": [],
             "kind": "Scalar",

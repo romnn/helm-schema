@@ -37,6 +37,11 @@ fn schema_fused_rust() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
+            "fullnameOverride": {},
+            "nameOverride": {},
+            "namespace": {
+                "type": "string"
+            },
             "prometheus": {
                 "additionalProperties": false,
                 "properties": {

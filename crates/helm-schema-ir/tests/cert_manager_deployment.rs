@@ -242,6 +242,13 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "fullnameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "global",
             "path": [],
             "kind": "Scalar",
@@ -445,6 +452,20 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "nameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "namespace",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "no_proxy",
             "path": [],
             "kind": "Scalar",
@@ -579,7 +600,21 @@ fn symbolic_ir_full() {
             "path": [],
             "kind": "Scalar",
             "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "serviceAccount.create",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
             "resource": dep
+        },
+        {
+            "source_expr": "serviceAccount.name",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "strategy",

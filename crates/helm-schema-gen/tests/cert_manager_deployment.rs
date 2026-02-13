@@ -877,6 +877,7 @@ fn schema_fused_rust() {
             "featureGates": {
                 "type": "string"
             },
+            "fullnameOverride": {},
             "global": {
                 "additionalProperties": false,
                 "properties": {
@@ -1049,6 +1050,10 @@ fn schema_fused_rust() {
                 "type": "object"
             },
             "maxConcurrentChallenges": {
+                "type": "string"
+            },
+            "nameOverride": {},
+            "namespace": {
                 "type": "string"
             },
             "no_proxy": {},
@@ -1344,7 +1349,8 @@ Localhost - a profile defined in a file on the node should be used. RuntimeDefau
                 "properties": {
                     "create": {
                         "type": "boolean"
-                    }
+                    },
+                    "name": {}
                 },
                 "type": "object"
             },

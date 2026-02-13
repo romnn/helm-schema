@@ -66,6 +66,13 @@ fn symbolic_ir_full() {
             "resource": null
         },
         {
+            "source_expr": "auth.database",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "auth.enablePostgresUser",
             "path": [],
             "kind": "Scalar",
@@ -102,6 +109,13 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "auth.secretKeys.userPasswordKey",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "auth.username",
             "path": [],
             "kind": "Scalar",
             "guards": [],
@@ -150,6 +164,27 @@ fn symbolic_ir_full() {
             "resource": secret
         },
         {
+            "source_expr": "enabled",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "fullnameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "global.postgresql.auth.database",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "global.postgresql.auth.password",
             "path": [],
             "kind": "Scalar",
@@ -185,6 +220,20 @@ fn symbolic_ir_full() {
             "resource": null
         },
         {
+            "source_expr": "global.postgresql.auth.username",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "global.postgresql.service.ports.postgresql",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "ldap.bind_password",
             "path": [],
             "kind": "Scalar",
@@ -239,6 +288,27 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [t("ldap.bind_password"), t("ldap.bindpw")],
             "resource": secret
+        },
+        {
+            "source_expr": "nameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "primary.name",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "primary.service.ports.postgresql",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "serviceBindings.enabled",
