@@ -1,3 +1,5 @@
+mod common;
+
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
@@ -84,6 +86,31 @@ fn schema_fused_rust() {
     });
 
     similar_asserts::assert_eq!(actual, expected);
+}
+
+#[test]
+fn schema_validates_values_yaml() {
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
+    let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
+    let ast = FusedRustParser.parse(&src).expect("parse");
+    let idx = build_define_index(&FusedRustParser);
+    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let upstream = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let crds = CrdCatalogSchemaProvider::new(test_util::workspace_testdata().join("crds-catalog"))
+        .expect("crd catalog");
+    let provider = ChainSchemaProvider {
+        first: upstream,
+        second: crds,
+    };
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+
+    let errors = common::validate_values_yaml(&values_yaml, &schema);
+    assert!(
+        errors.is_empty(),
+        "values.yaml failed schema validation with {} error(s):\n{}",
+        errors.len(),
+        errors.join("\n")
+    );
 }
 
 /// Schema generation using tree-sitter parser should produce same result.

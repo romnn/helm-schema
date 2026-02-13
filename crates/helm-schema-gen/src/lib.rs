@@ -118,8 +118,68 @@ pub fn generate_values_schema_with_values_yaml(
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
 
+        fn schema_type(v: &Value) -> Option<&str> {
+            v.as_object()?.get("type")?.as_str()
+        }
+
+        fn is_scalar_schema(v: &Value) -> bool {
+            matches!(
+                schema_type(v),
+                Some("string" | "integer" | "number" | "boolean")
+            )
+        }
+
+        fn is_object_or_array_schema(v: &Value) -> bool {
+            matches!(schema_type(v), Some("object" | "array"))
+        }
+
+        fn schema_allows_scalar_type(schema: &Value, scalar_ty: &str) -> bool {
+            if let Some(ty) = schema_type(schema) {
+                return ty == scalar_ty;
+            }
+
+            let Some(obj) = schema.as_object() else {
+                return false;
+            };
+
+            for key in ["oneOf", "anyOf"] {
+                if let Some(Value::Array(variants)) = obj.get(key) {
+                    if variants
+                        .iter()
+                        .any(|v| schema_allows_scalar_type(v, scalar_ty))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            false
+        }
+
         let base = if !is_empty_schema(&provider_schema) {
-            provider_schema
+            if !is_empty_schema(&values_yaml_schema) {
+                // Some charts use scalar "preset" values that are fed into helpers which
+                // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
+                // In these cases the *input* type in values.yaml is the scalar, not the output
+                // object type, so prefer the values.yaml scalar schema.
+                if used_as_fragment
+                    && is_scalar_schema(&values_yaml_schema)
+                    && is_object_or_array_schema(&provider_schema)
+                {
+                    values_yaml_schema
+                } else if is_scalar_schema(&values_yaml_schema)
+                    && schema_allows_scalar_type(
+                        &provider_schema,
+                        schema_type(&values_yaml_schema).expect("scalar schema has type"),
+                    )
+                {
+                    provider_schema
+                } else {
+                    merge_two_schemas(provider_schema, values_yaml_schema)
+                }
+            } else {
+                provider_schema
+            }
         } else if !is_empty_schema(&values_yaml_schema) {
             values_yaml_schema
         } else if used_as_fragment {

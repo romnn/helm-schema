@@ -336,6 +336,16 @@ impl Shape {
             }
 
             if let Some((key, scalar_value_present)) = parse_yaml_key(after) {
+                // If we were in a sequence at this indent and now see a mapping key,
+                // treat it as ending the sequence and starting a sibling mapping entry.
+                //
+                // This matters for some Helm templates where list items appear at the same
+                // indentation level as the parent key due to whitespace trimming.
+                if let Some((top_indent, Container::Sequence, _)) = self.stack.last() {
+                    if *top_indent == indent {
+                        self.stack.pop();
+                    }
+                }
                 match self.stack.last_mut() {
                     Some((top_indent, Container::Mapping, pending)) if *top_indent == indent => {
                         *pending = Some(key);
@@ -476,18 +486,8 @@ impl<'a> SymbolicWalker<'a> {
                 header,
                 body,
                 else_branch,
-            } => {
-                for v in extract_values_paths(header) {
-                    guards.insert(v);
-                }
-                for it in body {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
-                }
-                for it in else_branch {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
-                }
             }
-            HelmAst::With {
+            | HelmAst::With {
                 header,
                 body,
                 else_branch,

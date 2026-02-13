@@ -145,7 +145,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "containerSecurityContext",
-            "path": ["spec", "template", "spec", "containers[*]", "args"],
+            "path": ["spec", "template", "spec", "containers[*]", "securityContext"],
             "kind": "Fragment",
             "guards": [t("containerSecurityContext")],
             "resource": dep
@@ -222,7 +222,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "extraEnv",
-            "path": ["spec", "template", "spec", "containers[*]", "args"],
+            "path": ["spec", "template", "spec", "containers[*]", "env"],
             "kind": "Fragment",
             "guards": [t("extraEnv")],
             "resource": dep
@@ -576,7 +576,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "resources",
-            "path": ["spec", "template", "spec", "containers[*]", "args"],
+            "path": ["spec", "template", "spec", "containers[*]", "resources"],
             "kind": "Fragment",
             "guards": [t("resources")],
             "resource": dep
@@ -674,7 +674,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "volumeMounts",
-            "path": ["spec", "template", "spec", "containers[*]", "args"],
+            "path": ["spec", "template", "spec", "containers[*]", "volumeMounts"],
             "kind": "Fragment",
             "guards": [o("config", "volumeMounts"), t("volumeMounts")],
             "resource": dep

@@ -1,5 +1,7 @@
 #![recursion_limit = "4096"]
 
+mod common;
+
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
@@ -34,7 +36,8 @@ fn schema_fused_rust() {
         );
     }
 
-    let expected = serde_json::json!({
+    #[cfg(any())]
+    let _expected_inline = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
@@ -3195,5 +3198,28 @@ The contents of the target Secret's Data field will be presented in a volume as 
         "type": "object"
     });
 
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/cert_manager_deployment.schema.json"))
+            .expect("expected schema json");
+
     similar_asserts::assert_eq!(actual, expected);
+}
+
+#[test]
+fn schema_validates_values_yaml() {
+    let src = test_util::read_testdata("charts/cert-manager/templates/deployment.yaml");
+    let values_yaml = test_util::read_testdata("charts/cert-manager/values.yaml");
+    let ast = FusedRustParser.parse(&src).expect("parse");
+    let idx = build_cert_manager_define_index(&FusedRustParser);
+    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+
+    let errors = common::validate_values_yaml(&values_yaml, &schema);
+    assert!(
+        errors.is_empty(),
+        "values.yaml failed schema validation with {} error(s):\n{}",
+        errors.len(),
+        errors.join("\n")
+    );
 }

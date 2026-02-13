@@ -1,5 +1,7 @@
 #![recursion_limit = "512"]
 
+mod common;
+
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
@@ -50,6 +52,7 @@ fn schema_fused_rust() {
             "commonAnnotations": {
                 "additionalProperties": { "type": "string" },
                 "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "properties": {},
                 "type": "object"
             },
             "commonLabels": {
@@ -386,11 +389,13 @@ fn schema_fused_rust() {
                     "ingressNSMatchLabels": {
                         "additionalProperties": { "type": "string" },
                         "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                        "properties": {},
                         "type": "object"
                     },
                     "ingressNSPodMatchLabels": {
                         "additionalProperties": { "type": "string" },
                         "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                        "properties": {},
                         "type": "object"
                     },
                     "metrics": {
@@ -400,11 +405,13 @@ fn schema_fused_rust() {
                             "ingressNSMatchLabels": {
                                 "additionalProperties": { "type": "string" },
                                 "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                "properties": {},
                                 "type": "object"
                             },
                             "ingressNSPodMatchLabels": {
                                 "additionalProperties": { "type": "string" },
                                 "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                "properties": {},
                                 "type": "object"
                             }
                         },
@@ -437,4 +444,23 @@ fn schema_fused_rust() {
     });
 
     similar_asserts::assert_eq!(schema, expected);
+}
+
+#[test]
+fn schema_validates_values_yaml() {
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
+    let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
+    let ast = FusedRustParser.parse(&src).expect("parse");
+    let idx = build_define_index(&FusedRustParser);
+    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+
+    let errors = common::validate_values_yaml(&values_yaml, &schema);
+    assert!(
+        errors.is_empty(),
+        "values.yaml failed schema validation with {} error(s):\n{}",
+        errors.len(),
+        errors.join("\n")
+    );
 }
