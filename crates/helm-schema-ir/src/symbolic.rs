@@ -341,10 +341,10 @@ impl Shape {
                 //
                 // This matters for some Helm templates where list items appear at the same
                 // indentation level as the parent key due to whitespace trimming.
-                if let Some((top_indent, Container::Sequence, _)) = self.stack.last() {
-                    if *top_indent == indent {
-                        self.stack.pop();
-                    }
+                if let Some((top_indent, Container::Sequence, _)) = self.stack.last()
+                    && *top_indent == indent
+                {
+                    self.stack.pop();
                 }
                 match self.stack.last_mut() {
                     Some((top_indent, Container::Mapping, pending)) if *top_indent == indent => {

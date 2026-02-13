@@ -143,13 +143,12 @@ pub fn generate_values_schema_with_values_yaml(
             };
 
             for key in ["oneOf", "anyOf"] {
-                if let Some(Value::Array(variants)) = obj.get(key) {
-                    if variants
+                if let Some(Value::Array(variants)) = obj.get(key)
+                    && variants
                         .iter()
                         .any(|v| schema_allows_scalar_type(v, scalar_ty))
-                    {
-                        return true;
-                    }
+                {
+                    return true;
                 }
             }
 
@@ -157,7 +156,9 @@ pub fn generate_values_schema_with_values_yaml(
         }
 
         let base = if !is_empty_schema(&provider_schema) {
-            if !is_empty_schema(&values_yaml_schema) {
+            if is_empty_schema(&values_yaml_schema) {
+                provider_schema
+            } else {
                 // Some charts use scalar "preset" values that are fed into helpers which
                 // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
                 // In these cases the *input* type in values.yaml is the scalar, not the output
@@ -177,8 +178,6 @@ pub fn generate_values_schema_with_values_yaml(
                 } else {
                     merge_two_schemas(provider_schema, values_yaml_schema)
                 }
-            } else {
-                provider_schema
             }
         } else if !is_empty_schema(&values_yaml_schema) {
             values_yaml_schema
