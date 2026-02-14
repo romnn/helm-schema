@@ -82,6 +82,7 @@ fn main() {
         let mut build = cc::Build::new();
         build
             .include(gdir.join("src"))
+            .flag_if_supported("-w")
             .flag_if_supported("-Wno-unused-parameter")
             .flag_if_supported("-Wno-unused-but-set-variable")
             .flag_if_supported("-Wno-trigraphs");

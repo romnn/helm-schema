@@ -44,6 +44,12 @@ pub fn generate_values_schema(uses: &[ValueUse], provider: &dyn K8sSchemaProvide
     generate_values_schema_with_values_yaml(uses, provider, None)
 }
 
+/// Generate a JSON Schema for Helm values.
+///
+/// If `values_yaml` is provided, it is used as an additional type signal:
+/// scalar types found in `values.yaml` may be preferred over provider-derived
+/// schemas in some cases (e.g. when values are scalar presets expanded into
+/// full objects by templates).
 pub fn generate_values_schema_with_values_yaml(
     uses: &[ValueUse],
     provider: &dyn K8sSchemaProvider,
@@ -118,84 +124,13 @@ pub fn generate_values_schema_with_values_yaml(
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
 
-        fn schema_type(v: &Value) -> Option<&str> {
-            v.as_object()?.get("type")?.as_str()
-        }
-
-        fn is_scalar_schema(v: &Value) -> bool {
-            matches!(
-                schema_type(v),
-                Some("string" | "integer" | "number" | "boolean")
-            )
-        }
-
-        fn is_object_or_array_schema(v: &Value) -> bool {
-            matches!(schema_type(v), Some("object" | "array"))
-        }
-
-        fn schema_allows_scalar_type(schema: &Value, scalar_ty: &str) -> bool {
-            if let Some(ty) = schema_type(schema) {
-                return ty == scalar_ty;
-            }
-
-            let Some(obj) = schema.as_object() else {
-                return false;
-            };
-
-            for key in ["oneOf", "anyOf"] {
-                if let Some(Value::Array(variants)) = obj.get(key)
-                    && variants
-                        .iter()
-                        .any(|v| schema_allows_scalar_type(v, scalar_ty))
-                {
-                    return true;
-                }
-            }
-
-            false
-        }
-
-        let base = if !is_empty_schema(&provider_schema) {
-            if is_empty_schema(&values_yaml_schema) {
-                provider_schema
-            } else {
-                // Some charts use scalar "preset" values that are fed into helpers which
-                // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
-                // In these cases the *input* type in values.yaml is the scalar, not the output
-                // object type, so prefer the values.yaml scalar schema.
-                if used_as_fragment
-                    && is_scalar_schema(&values_yaml_schema)
-                    && is_object_or_array_schema(&provider_schema)
-                {
-                    values_yaml_schema
-                } else if is_scalar_schema(&values_yaml_schema)
-                    && schema_allows_scalar_type(
-                        &provider_schema,
-                        schema_type(&values_yaml_schema).expect("scalar schema has type"),
-                    )
-                {
-                    provider_schema
-                } else {
-                    merge_two_schemas(provider_schema, values_yaml_schema)
-                }
-            }
-        } else if !is_empty_schema(&values_yaml_schema) {
-            values_yaml_schema
-        } else if used_as_fragment {
-            unknown_object_schema()
-        } else if !is_empty_schema(&guard_boolish_schema) {
-            guard_boolish_schema
-        } else {
-            empty_schema()
-        };
-
-        let merged = if is_empty_schema(&guard_constraint_schema) {
-            base
-        } else if is_empty_schema(&base) {
-            guard_constraint_schema
-        } else {
-            merge_two_schemas(base, guard_constraint_schema)
-        };
+        let merged = resolve_schema_for_value_path(
+            used_as_fragment,
+            provider_schema,
+            values_yaml_schema,
+            guard_boolish_schema,
+            guard_constraint_schema,
+        );
 
         insert_schema_at_value_path(&mut root_schema, &vp, merged, false);
     }
@@ -221,6 +156,91 @@ pub fn generate_values_schema_with_values_yaml(
 // ---------------------------------------------------------------------------
 // Inference helpers
 // ---------------------------------------------------------------------------
+
+fn schema_type(v: &Value) -> Option<&str> {
+    v.as_object()?.get("type")?.as_str()
+}
+
+fn is_scalar_schema(v: &Value) -> bool {
+    matches!(
+        schema_type(v),
+        Some("string" | "integer" | "number" | "boolean")
+    )
+}
+
+fn is_object_or_array_schema(v: &Value) -> bool {
+    matches!(schema_type(v), Some("object" | "array"))
+}
+
+fn schema_allows_scalar_type(schema: &Value, scalar_ty: &str) -> bool {
+    if let Some(ty) = schema_type(schema) {
+        return ty == scalar_ty;
+    }
+
+    let Some(obj) = schema.as_object() else {
+        return false;
+    };
+
+    for key in ["oneOf", "anyOf"] {
+        if let Some(Value::Array(variants)) = obj.get(key)
+            && variants
+                .iter()
+                .any(|v| schema_allows_scalar_type(v, scalar_ty))
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn resolve_schema_for_value_path(
+    used_as_fragment: bool,
+    provider_schema: Value,
+    values_yaml_schema: Value,
+    guard_boolish_schema: Value,
+    guard_constraint_schema: Value,
+) -> Value {
+    let base = if !is_empty_schema(&provider_schema) {
+        if is_empty_schema(&values_yaml_schema) {
+            provider_schema
+        } else {
+            // Some charts use scalar "preset" values that are fed into helpers which
+            // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
+            // In these cases the *input* type in values.yaml is the scalar, not the output
+            // object type, so prefer the values.yaml scalar schema.
+            if used_as_fragment
+                && is_scalar_schema(&values_yaml_schema)
+                && is_object_or_array_schema(&provider_schema)
+            {
+                values_yaml_schema
+            } else if let Some(values_yaml_ty) = schema_type(&values_yaml_schema)
+                && is_scalar_schema(&values_yaml_schema)
+                && schema_allows_scalar_type(&provider_schema, values_yaml_ty)
+            {
+                provider_schema
+            } else {
+                merge_two_schemas(provider_schema, values_yaml_schema)
+            }
+        }
+    } else if !is_empty_schema(&values_yaml_schema) {
+        values_yaml_schema
+    } else if used_as_fragment {
+        unknown_object_schema()
+    } else if !is_empty_schema(&guard_boolish_schema) {
+        guard_boolish_schema
+    } else {
+        empty_schema()
+    };
+
+    if is_empty_schema(&guard_constraint_schema) {
+        base
+    } else if is_empty_schema(&base) {
+        guard_constraint_schema
+    } else {
+        merge_two_schemas(base, guard_constraint_schema)
+    }
+}
 
 fn is_empty_schema(v: &Value) -> bool {
     v.as_object().is_some_and(serde_json::Map::is_empty)
