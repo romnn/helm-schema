@@ -933,6 +933,24 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn sync_action_for_node(&mut self, node: tree_sitter::Node<'_>) {
+        fn parse_indent_width(text: &str) -> Option<usize> {
+            for kw in ["nindent", "indent"] {
+                let Some(idx) = text.rfind(kw) else {
+                    continue;
+                };
+                let after = &text[idx + kw.len()..];
+                let after = after.trim_start();
+                let digits: String = after.chars().take_while(char::is_ascii_digit).collect();
+                if digits.is_empty() {
+                    continue;
+                }
+                if let Ok(n) = digits.parse::<usize>() {
+                    return Some(n);
+                }
+            }
+            None
+        }
+
         if matches!(node.kind(), "text" | "yaml_no_injection_text") {
             return;
         }
@@ -951,8 +969,6 @@ impl<'a> SymbolicWalker<'a> {
                 | "template_action"
                 | "define_action"
                 | "block_action"
-                | "{{"
-                | "{{-"
         ) {
             return;
         }
@@ -994,6 +1010,19 @@ impl<'a> SymbolicWalker<'a> {
             }
         } else {
             false
+        };
+
+        let (indent, col) = if node.kind() == "template_action" && !allow_clear_pending {
+            if let Ok(text) = node.utf8_text(self.source.as_bytes())
+                && let Some(virtual_indent) = parse_indent_width(text)
+                && virtual_indent > indent
+            {
+                (virtual_indent, virtual_indent)
+            } else {
+                (indent, col)
+            }
+        } else {
+            (indent, col)
         };
 
         self.shape
