@@ -1,0 +1,37 @@
+{{- $kind := ternary "Role" "ClusterRole" .Values.namespaced -}}
+{{- $kindSuffix := ternary "role" "cluster-role" .Values.namespaced -}}
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "jsc.serviceAccountName" . }}
+  namespace: {{ include "jsc.namespace" . }}
+  labels:
+    {{- include "jsc.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ $kind }}
+metadata:
+  name: {{ template "jsc.serviceAccountName" . }}-{{ $kindSuffix }}
+  namespace: {{ include "jsc.namespace" . }}
+  labels:
+    {{- include "jsc.labels" . | nindent 4 }}
+{{ tpl .Values.rbacRules . }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ printf "%sBinding" $kind}}
+metadata:
+  name: {{ template "jsc.serviceAccountName" . }}-{{ $kindSuffix }}-binding
+  namespace: {{ include "jsc.namespace" . }}
+  labels:
+    {{- include "jsc.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "jsc.serviceAccountName" . }}
+  namespace: {{ include "jsc.namespace" . }}
+roleRef:
+  kind: {{ $kind }}
+  name: {{ template "jsc.serviceAccountName" . }}-{{ $kindSuffix }}
+  apiGroup: rbac.authorization.k8s.io

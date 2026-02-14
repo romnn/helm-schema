@@ -1,0 +1,177 @@
+{{- include "jsc.fixImage" .Values.jetstream -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "jsc.name" . }}
+  namespace: {{ include "jsc.namespace" . }}
+  labels:
+    {{- include "jsc.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "jsc.selectorLabels" . | nindent 6 }}
+
+  # Singleton Replica per JetStream controller
+  replicas: 1
+
+  template:
+    metadata:
+      {{- if .Values.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "jsc.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name : runtime
+        emptyDir : {}
+      {{- if and .Values.jetstream.tls.enabled .Values.jetstream.tls.secretName }}
+      - name: jsc-client-tls-volume
+        secret:
+          secretName: {{ .Values.jetstream.tls.secretName }}
+      {{- end }}
+
+      {{- if .Values.jetstream.nats.credentials }}
+      - name: jsc-sys-creds
+        secret:
+          secretName: {{ .Values.jetstream.nats.credentials.secret.name }}
+      {{- end }}
+
+      {{- with .Values.jetstream.nats.nkey }}
+      - name: jsc-sys-nkey
+        secret:
+          secretName: {{ .secret.name }}
+      {{- end}}
+      {{- if .Values.additionalVolumes }}
+      {{- toYaml .Values.additionalVolumes | nindent 6 }}
+      {{- end }}
+
+{{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 6 }}
+{{- end }}
+
+      serviceAccountName: {{ template "jsc.serviceAccountName" . }}
+      {{- if hasKey .Values "automountServiceAccountToken" }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- end }}
+      containers:
+        - name: jsc
+          image: {{ include "jsc.image" . }}
+          imagePullPolicy: {{ .Values.jetstream.image.pullPolicy }}
+          workingDir: /nack
+          command:
+          - /jetstream-controller
+          args:
+          {{- if .Values.jetstream.klogLevel }}
+          - -v={{ .Values.jetstream.klogLevel }}
+          {{- end }}
+          {{- if .Values.jetstream.nats.url }}
+          - -s={{ .Values.jetstream.nats.url }}
+          {{- else }}
+          - -crd-connect
+          {{- end }}
+          {{- with .Values.jetstream.nats.credentials }}
+          - --creds=/etc/jsc-creds/{{ .secret.key }}
+          {{- end }}
+          {{- with .Values.jetstream.nats.nkey }}
+          - --nkey=/etc/jsc-nkey/{{ .secret.key }}
+          {{- end }}
+          {{- if .Values.namespaced }}
+          - --namespace={{ template "jsc.namespace" . }}
+          {{- end }}
+          {{- if and .Values.jetstream.tls.enabled .Values.jetstream.tls.settings.client_cert }}
+          - --tlscert={{ .Values.jetstream.tls.settings.client_cert }}
+          {{- end }}
+          {{- if and .Values.jetstream.tls.enabled .Values.jetstream.tls.settings.client_key }}
+          - --tlskey={{ .Values.jetstream.tls.settings.client_key }}
+          {{- end }}
+          {{- if and .Values.jetstream.tls.enabled .Values.jetstream.tls.settings.client_ca }}
+          - --tlsca={{ .Values.jetstream.tls.settings.client_ca }}
+          {{- end }}
+          {{- if .Values.jetstream.tls.tlsFirst }}
+          - --tlsfirst={{ .Values.jetstream.tls.tlsFirst }}
+          {{- end }}
+          {{- if or .Values.jetstream.controlLoop (has "--control-loop" .Values.jetstream.additionalArgs) }}
+          - --health-probe-bind-address=:8081
+          {{- if not (has "--control-loop" .Values.jetstream.additionalArgs) }} # Do not duplicate the flag for upgrading users
+          - --control-loop
+          {{- end }}
+          {{- end }}
+          {{- with .Values.jetstream.additionalArgs }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.readOnly }}
+          - --read-only={{ . }}
+          {{- end }}
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          {{- if or .Values.jetstream.controlLoop (has "--control-loop" .Values.jetstream.additionalArgs) }}
+          livenessProbe:
+            httpGet:
+                path: /healthz
+                port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+                path: /readyz
+                port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - name: runtime
+            mountPath: /nack
+          {{- if and .Values.jetstream.tls.enabled .Values.jetstream.tls.secretName }}
+          - name: jsc-client-tls-volume
+            mountPath: /etc/nats/certs
+          {{- end }}
+          {{- if .Values.jetstream.nats.credentials }}
+          - name: jsc-sys-creds
+            mountPath: /etc/jsc-creds
+          {{- end }}
+          {{- if .Values.jetstream.nats.nkey }}
+          - name: jsc-sys-nkey
+            mountPath: /etc/jsc-nkey
+          {{- end }}
+          {{- if .Values.additionalVolumeMounts }}
+          {{- toYaml .Values.additionalVolumeMounts | nindent 10 }}
+          {{- end }}

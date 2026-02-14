@@ -109,6 +109,56 @@ fn fill_empty_mapping_values_with_placeholder(text: &str, placeholder: &str) -> 
     out
 }
 
+fn dedent_suspiciously_indented_keys(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut last_nonempty_indent: Option<usize> = None;
+    let mut last_nonempty_had_scalar_value = false;
+
+    for line in text.split_inclusive('\n') {
+        let (content, has_nl) = line.strip_suffix('\n').map_or((line, false), |c| (c, true));
+        let content = content.strip_suffix('\r').unwrap_or(content);
+
+        let trimmed = content.trim();
+        if trimmed.is_empty() {
+            out.push_str(content);
+            if has_nl {
+                out.push('\n');
+            }
+            continue;
+        }
+
+        let indent = indent_len(content);
+        let looks_like_key = trimmed
+            .split_once(':')
+            .is_some_and(|(k, _)| !k.trim().is_empty());
+
+        let mut used_indent = indent;
+        if let Some(prev) = last_nonempty_indent {
+            let suspiciously_deeper = indent.saturating_sub(prev) > 16;
+            if suspiciously_deeper && last_nonempty_had_scalar_value && looks_like_key {
+                used_indent = prev;
+            }
+        }
+
+        if used_indent == indent {
+            out.push_str(content);
+        } else {
+            out.push_str(&" ".repeat(used_indent));
+            out.push_str(trimmed);
+        }
+        if has_nl {
+            out.push('\n');
+        }
+
+        last_nonempty_indent = Some(used_indent);
+        last_nonempty_had_scalar_value = trimmed
+            .split_once(':')
+            .is_some_and(|(_, v)| !v.trim().is_empty());
+    }
+
+    out
+}
+
 fn strip_whitespace_only_lines(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut in_block_scalar = false;
@@ -422,6 +472,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
 
             let sanitized = sanitize_yaml_for_parse_from_gotmpl_tree(&gotmpl_tree, &src);
             let sanitized = strip_whitespace_only_lines(&sanitized);
+            let sanitized = dedent_suspiciously_indented_keys(&sanitized);
             fill_empty_mapping_values_with_placeholder(&sanitized, "0")
         } else {
             src.clone()

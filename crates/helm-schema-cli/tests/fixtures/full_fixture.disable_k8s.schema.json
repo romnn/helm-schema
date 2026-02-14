@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "affinity": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "configChecksum": {
+      "type": "string"
+    },
+    "containerPort": {
+      "type": "integer"
+    },
+    "extraEnv": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "pullPolicy": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ingress": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "className": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "hosts": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "paths": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "pathType": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "podSecurityContext": {
+      "additionalProperties": false,
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "replicaCount": {
+      "type": "integer"
+    },
+    "securityContext": {
+      "additionalProperties": false,
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

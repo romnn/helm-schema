@@ -1,0 +1,33 @@
+[package]
+name = "helm-schema-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "helm-schema"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+color-eyre.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+flate2 = "1"
+tar = "0.4"
+tempfile = "3"
+
+helm-schema-ast.workspace = true
+helm-schema-gen.workspace = true
+helm-schema-ir.workspace = true
+helm-schema-k8s.workspace = true
+
+[dev-dependencies]
+similar-asserts = "1"
+test-util.workspace = true
