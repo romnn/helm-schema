@@ -466,10 +466,10 @@ impl<'a> SymbolicWalker<'a> {
 
         let mut out = Vec::new();
         for t in toks.iter().skip(list_pos + 1) {
-            if let Some(s) = t.strip_prefix('"').and_then(|x| x.strip_suffix('"')) {
-                if !s.is_empty() {
-                    out.push(s.to_string());
-                }
+            if let Some(s) = t.strip_prefix('"').and_then(|x| x.strip_suffix('"'))
+                && !s.is_empty()
+            {
+                out.push(s.to_string());
             }
         }
         if out.is_empty() {
@@ -511,27 +511,27 @@ impl<'a> SymbolicWalker<'a> {
         Some((var, GetBinding { base, key_var }))
     }
 
+    fn eq_literals_for_var(text: &str, var: &str) -> Vec<String> {
+        let needle = format!("eq ${var} \"");
+        let mut lits = Vec::new();
+        let mut rest = text;
+        while let Some(i) = rest.find(&needle) {
+            let after = &rest[(i + needle.len())..];
+            if let Some(end) = after.find('"') {
+                let lit = &after[..end];
+                if !lit.is_empty() {
+                    lits.push(lit.to_string());
+                }
+                rest = &after[end..];
+            } else {
+                break;
+            }
+        }
+        lits
+    }
+
     fn extract_bound_values(&self, text: &str) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
-
-        fn eq_literals_for_var(text: &str, var: &str) -> Vec<String> {
-            let needle = format!("eq ${var} \"");
-            let mut lits = Vec::new();
-            let mut rest = text;
-            while let Some(i) = rest.find(&needle) {
-                let after = &rest[(i + needle.len())..];
-                if let Some(end) = after.find('"') {
-                    let lit = &after[..end];
-                    if !lit.is_empty() {
-                        lits.push(lit.to_string());
-                    }
-                    rest = &after[end..];
-                } else {
-                    break;
-                }
-            }
-            lits
-        }
 
         // Very small heuristic parser for `$var.field[.subfield]...` patterns.
         // This is used for templates that bind `$var := get $.Values.someMap $key`.
@@ -558,7 +558,7 @@ impl<'a> SymbolicWalker<'a> {
 
             let mut skip_literals: HashSet<String> = HashSet::new();
             if rest == "enabled" && binding.base == "config" {
-                for lit in eq_literals_for_var(text, &binding.key_var) {
+                for lit in Self::eq_literals_for_var(text, &binding.key_var) {
                     skip_literals.insert(lit);
                 }
             }
@@ -1221,122 +1221,48 @@ impl<'a> SymbolicWalker<'a> {
         self.ingest_text_up_to(node.start_byte());
         self.sync_action_for_node(node);
 
+        if self.walk_control_node(node) {
+            return;
+        }
+        if self.walk_action_node(node) {
+            return;
+        }
+
+        let mut c = node.walk();
+        for ch in node.children(&mut c) {
+            self.walk(ch);
+        }
+    }
+
+    fn walk_control_node(&mut self, node: tree_sitter::Node<'_>) -> bool {
         match node.kind() {
             "text" | "yaml_no_injection_text" => {
                 self.ingest_text_up_to(node.end_byte());
-                return;
+                true
             }
+            "define_action" | "block_action" => true,
+            _ => false,
+        }
+    }
 
+    fn walk_action_node(&mut self, node: tree_sitter::Node<'_>) -> bool {
+        match node.kind() {
             "variable_definition" | "assignment" => {
-                if let Ok(txt) = node.utf8_text(self.source.as_bytes())
-                    && let Some((var, binding)) = Self::parse_get_binding(txt)
-                {
-                    self.get_bindings.insert(var, binding);
-                }
-                self.no_output_depth += 1;
-                let mut c = node.walk();
-                for ch in node.children(&mut c) {
-                    self.walk(ch);
-                }
-                self.no_output_depth = self.no_output_depth.saturating_sub(1);
-                return;
+                self.handle_variable_definition_or_assignment(node);
+                true
             }
-
             "if_action" => {
-                let saved = self.guards.len();
-                let saved_domains = self.range_domains.clone();
-                let saved_bindings = self.get_bindings.clone();
-                if let Some(cond) = node.child_by_field_name("condition")
-                    && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
-                {
-                    self.collect_if_with_guards(txt);
-                }
-
-                let consequence = Self::children_with_field(node, "consequence");
-                for ch in consequence {
-                    self.walk(ch);
-                }
-
-                self.guards.truncate(saved);
-
-                self.range_domains = saved_domains;
-                self.get_bindings = saved_bindings;
-
-                // Note: else-if chains are represented as repeated condition/option fields.
-                // For now, we only handle the plain else branch.
-                let alternative = Self::children_with_field(node, "alternative");
-                for ch in alternative {
-                    self.walk(ch);
-                }
-                return;
+                self.handle_if_action(node);
+                true
             }
-
             "with_action" => {
-                let saved = self.guards.len();
-                let saved_dot = self.dot_stack.len();
-                let saved_domains = self.range_domains.clone();
-                let saved_bindings = self.get_bindings.clone();
-                if let Some(cond) = node.child_by_field_name("condition")
-                    && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
-                {
-                    self.push_with_dot_binding(txt);
-                    self.collect_if_with_guards(txt);
-                }
-
-                let consequence = Self::children_with_field(node, "consequence");
-                for ch in consequence {
-                    self.walk(ch);
-                }
-
-                self.guards.truncate(saved);
-                self.dot_stack.truncate(saved_dot);
-
-                self.range_domains = saved_domains;
-                self.get_bindings = saved_bindings;
-
-                let alternative = Self::children_with_field(node, "alternative");
-                for ch in alternative {
-                    self.walk(ch);
-                }
-                return;
+                self.handle_with_action(node);
+                true
             }
-
             "range_action" => {
-                let saved = self.guards.len();
-                let saved_dot = self.dot_stack.len();
-
-                let saved_domains = self.range_domains.clone();
-                let saved_bindings = self.get_bindings.clone();
-                self.dot_stack.push(None);
-                if let Some(txt) = self.range_header_text(node) {
-                    if let Some((var, lits)) = Self::parse_literal_list_range(&txt) {
-                        self.range_domains.insert(var, lits);
-                    }
-                    self.collect_range_guards(&txt);
-                }
-
-                let body = Self::children_with_field(node, "body");
-                for ch in body {
-                    self.walk(ch);
-                }
-
-                self.guards.truncate(saved);
-                self.dot_stack.truncate(saved_dot);
-
-                self.range_domains = saved_domains;
-                self.get_bindings = saved_bindings;
-
-                let alternative = Self::children_with_field(node, "alternative");
-                for ch in alternative {
-                    self.walk(ch);
-                }
-                return;
+                self.handle_range_action(node);
+                true
             }
-
-            "define_action" | "block_action" => {
-                return;
-            }
-
             "template_action"
             | "chained_pipeline"
             | "parenthesized_pipeline"
@@ -1344,14 +1270,110 @@ impl<'a> SymbolicWalker<'a> {
             | "function_call"
             | "method_call" => {
                 self.handle_output_node(node);
-                return;
+                true
             }
+            _ => false,
+        }
+    }
 
-            _ => {}
+    fn handle_variable_definition_or_assignment(&mut self, node: tree_sitter::Node<'_>) {
+        if let Ok(txt) = node.utf8_text(self.source.as_bytes())
+            && let Some((var, binding)) = Self::parse_get_binding(txt)
+        {
+            self.get_bindings.insert(var, binding);
         }
 
+        self.no_output_depth += 1;
         let mut c = node.walk();
         for ch in node.children(&mut c) {
+            self.walk(ch);
+        }
+        self.no_output_depth = self.no_output_depth.saturating_sub(1);
+    }
+
+    fn handle_if_action(&mut self, node: tree_sitter::Node<'_>) {
+        let saved = self.guards.len();
+        let saved_domains = self.range_domains.clone();
+        let saved_bindings = self.get_bindings.clone();
+
+        if let Some(cond) = node.child_by_field_name("condition")
+            && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
+        {
+            self.collect_if_with_guards(txt);
+        }
+
+        let consequence = Self::children_with_field(node, "consequence");
+        for ch in consequence {
+            self.walk(ch);
+        }
+
+        self.guards.truncate(saved);
+        self.range_domains = saved_domains;
+        self.get_bindings = saved_bindings;
+
+        // Note: else-if chains are represented as repeated condition/option fields.
+        // For now, we only handle the plain else branch.
+        let alternative = Self::children_with_field(node, "alternative");
+        for ch in alternative {
+            self.walk(ch);
+        }
+    }
+
+    fn handle_with_action(&mut self, node: tree_sitter::Node<'_>) {
+        let saved = self.guards.len();
+        let saved_dot = self.dot_stack.len();
+        let saved_domains = self.range_domains.clone();
+        let saved_bindings = self.get_bindings.clone();
+
+        if let Some(cond) = node.child_by_field_name("condition")
+            && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
+        {
+            self.push_with_dot_binding(txt);
+            self.collect_if_with_guards(txt);
+        }
+
+        let consequence = Self::children_with_field(node, "consequence");
+        for ch in consequence {
+            self.walk(ch);
+        }
+
+        self.guards.truncate(saved);
+        self.dot_stack.truncate(saved_dot);
+        self.range_domains = saved_domains;
+        self.get_bindings = saved_bindings;
+
+        let alternative = Self::children_with_field(node, "alternative");
+        for ch in alternative {
+            self.walk(ch);
+        }
+    }
+
+    fn handle_range_action(&mut self, node: tree_sitter::Node<'_>) {
+        let saved = self.guards.len();
+        let saved_dot = self.dot_stack.len();
+        let saved_domains = self.range_domains.clone();
+        let saved_bindings = self.get_bindings.clone();
+
+        self.dot_stack.push(None);
+        if let Some(txt) = self.range_header_text(node) {
+            if let Some((var, lits)) = Self::parse_literal_list_range(&txt) {
+                self.range_domains.insert(var, lits);
+            }
+            self.collect_range_guards(&txt);
+        }
+
+        let body = Self::children_with_field(node, "body");
+        for ch in body {
+            self.walk(ch);
+        }
+
+        self.guards.truncate(saved);
+        self.dot_stack.truncate(saved_dot);
+        self.range_domains = saved_domains;
+        self.get_bindings = saved_bindings;
+
+        let alternative = Self::children_with_field(node, "alternative");
+        for ch in alternative {
             self.walk(ch);
         }
     }
