@@ -242,12 +242,22 @@ pub trait HelmParser {
 #[derive(Default, Debug, Clone)]
 pub struct DefineIndex {
     defines: HashMap<String, Vec<HelmAst>>,
+    files: HashMap<String, String>,
 }
 
 impl DefineIndex {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn add_file_source(&mut self, path: &str, src: &str) {
+        self.files.insert(path.to_string(), src.to_string());
+    }
+
+    #[must_use]
+    pub fn get_file(&self, path: &str) -> Option<&str> {
+        self.files.get(path).map(std::string::String::as_str)
     }
 
     /// Parse `src` with `parser` and collect all `Define` blocks into the index.

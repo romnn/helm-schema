@@ -235,9 +235,62 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
             path.open_file()?.read_to_string(&mut src)?;
             idx.add_source(&TreeSitterParser, &src)?;
         }
+
+        // Some charts render manifests by loading YAML fragments from `files/` via `.Files.Get`.
+        // Collect those sources so downstream IR generation can statically inline them when the
+        // file path is a literal.
+        for path in list_chart_files_sources(&c.chart_dir)? {
+            let mut src = String::new();
+            path.open_file()?.read_to_string(&mut src)?;
+            let abs = path.as_str();
+            let root = c.chart_dir.as_str().trim_end_matches('/');
+            let rel = abs
+                .strip_prefix(root)
+                .and_then(|s| s.strip_prefix('/'))
+                .or_else(|| abs.find("/files/").map(|i| &abs[(i + 1)..]))
+                .or_else(|| abs.find("files/").map(|i| &abs[i..]))
+                .unwrap_or(abs);
+            idx.add_file_source(rel, &src);
+        }
     }
 
     Ok(idx)
+}
+
+fn list_chart_files_sources(chart_dir: &VfsPath) -> CliResult<Vec<VfsPath>> {
+    let files_dir = chart_dir.join("files")?;
+    if !files_dir.is_dir()? {
+        return Ok(Vec::new());
+    }
+
+    let mut out = Vec::new();
+    list_files_recursive(&files_dir, &mut out)?;
+
+    out.retain(|p| {
+        let file_name = p.filename();
+        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
+        ext.is_some_and(|e| {
+            e.eq_ignore_ascii_case("yaml")
+                || e.eq_ignore_ascii_case("yml")
+                || e.eq_ignore_ascii_case("tpl")
+        })
+    });
+
+    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+    out.dedup_by(|a, b| a.as_str() == b.as_str());
+    Ok(out)
+}
+
+fn list_files_recursive(dir: &VfsPath, out: &mut Vec<VfsPath>) -> CliResult<()> {
+    for ent in dir.read_dir()? {
+        if ent.is_dir()? {
+            list_files_recursive(&ent, out)?;
+        } else if ent.is_file()? {
+            out.push(ent);
+        }
+    }
+
+    Ok(())
 }
 
 pub fn list_manifest_templates(

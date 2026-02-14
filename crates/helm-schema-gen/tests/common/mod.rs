@@ -34,6 +34,29 @@ pub fn values_yaml_to_json(values_yaml: &str) -> Value {
     yaml
 }
 
+fn drop_nulls(v: &Value) -> Value {
+    match v {
+        Value::Null => Value::Null,
+        Value::Bool(_) | Value::Number(_) | Value::String(_) => v.clone(),
+        Value::Array(arr) => Value::Array(
+            arr.iter()
+                .filter(|x| !x.is_null())
+                .map(drop_nulls)
+                .collect(),
+        ),
+        Value::Object(map) => {
+            let mut out = serde_json::Map::new();
+            for (k, v) in map {
+                if v.is_null() {
+                    continue;
+                }
+                out.insert(k.clone(), drop_nulls(v));
+            }
+            Value::Object(out)
+        }
+    }
+}
+
 /// Validate a JSON value against a JSON schema.
 ///
 /// Returns a list of human-readable validation error strings.
@@ -54,7 +77,7 @@ pub fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<Str
 /// values for other templates don't cause false positives. Returns a list of
 /// validation errors (empty = pass).
 pub fn validate_values_yaml(values_yaml: &str, schema: &Value) -> Vec<String> {
-    let json_values = values_yaml_to_json(values_yaml);
+    let json_values = drop_nulls(&values_yaml_to_json(values_yaml));
     let relaxed = relax_schema(schema);
     validate_json_against_schema(&json_values, &relaxed)
 }

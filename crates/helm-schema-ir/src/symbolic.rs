@@ -29,6 +29,7 @@ struct SymbolicWalker<'a> {
     defines: &'a DefineIndex,
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
+    seed_guards: Vec<Guard>,
     no_output_depth: usize,
     dot_stack: Vec<Option<String>>,
     shape: Shape,
@@ -38,6 +39,19 @@ struct SymbolicWalker<'a> {
     text_pos: usize,
 
     define_value_cache: HashMap<String, DefineValues>,
+
+    inline_stack: Vec<String>,
+
+    range_domains: HashMap<String, Vec<String>>,
+    get_bindings: HashMap<String, GetBinding>,
+
+    inline_helpers_in_fragments: bool,
+}
+
+#[derive(Clone, Debug)]
+struct GetBinding {
+    base: String,
+    key_var: String,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -387,6 +401,7 @@ impl<'a> SymbolicWalker<'a> {
             defines,
             uses: Vec::new(),
             guards: Vec::new(),
+            seed_guards: Vec::new(),
             no_output_depth: 0,
             dot_stack: Vec::new(),
             shape: Shape::default(),
@@ -396,7 +411,233 @@ impl<'a> SymbolicWalker<'a> {
             text_pos: 0,
 
             define_value_cache: HashMap::new(),
+
+            inline_stack: Vec::new(),
+
+            range_domains: HashMap::new(),
+            get_bindings: HashMap::new(),
+
+            inline_helpers_in_fragments: false,
         }
+    }
+
+    fn with_initial_guards(mut self, guards: Vec<Guard>) -> Self {
+        self.seed_guards = guards;
+        self.guards = self.seed_guards.clone();
+        self
+    }
+
+    fn with_inline_stack(mut self, stack: Vec<String>) -> Self {
+        self.inline_stack = stack;
+        self
+    }
+
+    fn with_inline_helpers_in_fragments(mut self, enabled: bool) -> Self {
+        self.inline_helpers_in_fragments = enabled;
+        self
+    }
+
+    fn parse_go_template(src: &str) -> Option<tree_sitter::Tree> {
+        let language =
+            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+        let mut parser = tree_sitter::Parser::new();
+        if parser.set_language(&language).is_err() {
+            return None;
+        }
+        parser.parse(src, None)
+    }
+
+    fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
+        if !header.contains("list") {
+            return None;
+        }
+
+        let toks: Vec<&str> = header.split_whitespace().collect();
+        let list_pos = toks.iter().position(|t| *t == "list")?;
+
+        // `range $k := list ...` or `$k := list ...` or `list ...` (in some tree-sitter nodes).
+        // We only care about the bound variable name and the literal domain.
+        let var = toks
+            .iter()
+            .take(list_pos)
+            .find_map(|t| t.strip_prefix('$'))
+            .filter(|v| !v.is_empty() && !v.contains('.') && !v.contains('/') && !v.contains('('))
+            .map(std::string::ToString::to_string)?;
+
+        let mut out = Vec::new();
+        for t in toks.iter().skip(list_pos + 1) {
+            if let Some(s) = t.strip_prefix('"').and_then(|x| x.strip_suffix('"')) {
+                if !s.is_empty() {
+                    out.push(s.to_string());
+                }
+            }
+        }
+        if out.is_empty() {
+            None
+        } else {
+            Some((var, out))
+        }
+    }
+
+    fn parse_get_binding(text: &str) -> Option<(String, GetBinding)> {
+        // Patterns like:
+        //   $x := get $.Values.foo.bar $k
+        //   $x = get $.Values.foo $k
+        let toks: Vec<&str> = text.split_whitespace().collect();
+        let get_pos = toks.iter().position(|t| *t == "get")?;
+        if get_pos < 2 {
+            return None;
+        }
+        if get_pos + 2 >= toks.len() {
+            return None;
+        }
+
+        let op = toks[get_pos - 1];
+        if op != ":=" && op != "=" {
+            return None;
+        }
+
+        let var_tok = toks[get_pos - 2];
+        let var = var_tok.strip_prefix('$')?.to_string();
+
+        let base_tok = toks[get_pos + 1];
+        let base = base_tok
+            .strip_prefix("$.Values.")
+            .or_else(|| base_tok.strip_prefix(".Values."))?
+            .to_string();
+
+        let key_tok = toks[get_pos + 2];
+        let key_var = key_tok.strip_prefix('$')?.to_string();
+        Some((var, GetBinding { base, key_var }))
+    }
+
+    fn extract_bound_values(&self, text: &str) -> Vec<String> {
+        let mut out: Vec<String> = Vec::new();
+
+        fn eq_literals_for_var(text: &str, var: &str) -> Vec<String> {
+            let needle = format!("eq ${var} \"");
+            let mut lits = Vec::new();
+            let mut rest = text;
+            while let Some(i) = rest.find(&needle) {
+                let after = &rest[(i + needle.len())..];
+                if let Some(end) = after.find('"') {
+                    let lit = &after[..end];
+                    if !lit.is_empty() {
+                        lits.push(lit.to_string());
+                    }
+                    rest = &after[end..];
+                } else {
+                    break;
+                }
+            }
+            lits
+        }
+
+        // Very small heuristic parser for `$var.field[.subfield]...` patterns.
+        // This is used for templates that bind `$var := get $.Values.someMap $key`.
+        for tok in text.split_whitespace() {
+            let Some(tok) = tok.strip_prefix('$') else {
+                continue;
+            };
+            let Some((var, rest)) = tok.split_once('.') else {
+                continue;
+            };
+
+            let rest = rest
+                .trim_end_matches(',')
+                .trim_end_matches(')')
+                .trim_end_matches('}')
+                .trim_end_matches('|');
+
+            let Some(binding) = self.get_bindings.get(var) else {
+                continue;
+            };
+            let Some(domain) = self.range_domains.get(&binding.key_var) else {
+                continue;
+            };
+
+            let mut skip_literals: HashSet<String> = HashSet::new();
+            if rest == "enabled" && binding.base == "config" {
+                for lit in eq_literals_for_var(text, &binding.key_var) {
+                    skip_literals.insert(lit);
+                }
+            }
+            for v in domain {
+                if skip_literals.contains(v) {
+                    continue;
+                }
+                out.push(format!("{}.{}.{}", binding.base, v, rest));
+            }
+        }
+
+        out.sort();
+        out.dedup();
+        out
+    }
+
+    fn extract_next_quoted_string_after(text: &str, key: &str) -> Option<String> {
+        let needle = format!("\"{key}\"");
+        let idx = text.find(&needle)? + needle.len();
+        let rest = &text[idx..];
+        let q1 = rest.find('"')?;
+        let rest2 = &rest[(q1 + 1)..];
+        let q2 = rest2.find('"')?;
+        Some(rest2[..q2].to_string())
+    }
+
+    fn maybe_inline_nats_load_merge_patch(&mut self, text: &str) {
+        if !Self::literal_template_calls(text)
+            .iter()
+            .any(|c| c == "nats.loadMergePatch")
+        {
+            return;
+        }
+
+        // `nats.loadMergePatch` reads `.merge` and `.patch` from its argument.
+        // When called under a `with .Values.X` block, the argument is usually `.`.
+        // Emit those value paths so schema generation includes them.
+        if let Some(Some(prefix)) = self.dot_stack.last().cloned() {
+            self.emit_use(
+                format!("{prefix}.merge"),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+            );
+            self.emit_use(
+                format!("{prefix}.patch"),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+            );
+        }
+
+        let Some(file) = Self::extract_next_quoted_string_after(text, "file") else {
+            return;
+        };
+        let path = if file.contains('/') {
+            file
+        } else {
+            format!("files/{file}")
+        };
+
+        if self.inline_stack.iter().any(|p| p == &path) {
+            return;
+        }
+        let Some(src) = self.defines.get_file(&path) else {
+            return;
+        };
+
+        let Some(tree) = Self::parse_go_template(src) else {
+            return;
+        };
+
+        let mut stack = self.inline_stack.clone();
+        stack.push(path);
+        let mut nested = SymbolicWalker::new(src, self.defines)
+            .with_initial_guards(self.guards.clone())
+            .with_inline_stack(stack)
+            .with_inline_helpers_in_fragments(true);
+
+        let uses = nested.run(&tree);
+        self.uses.extend(uses);
     }
 
     fn literal_template_calls(text: &str) -> Vec<String> {
@@ -590,7 +831,7 @@ impl<'a> SymbolicWalker<'a> {
         self.text_pos = 0;
         self.resource_detector = ResourceDetector::default();
         self.shape = Shape::default();
-        self.guards.clear();
+        self.guards = self.seed_guards.clone();
         self.dot_stack.clear();
         self.no_output_depth = 0;
     }
@@ -814,6 +1055,8 @@ impl<'a> SymbolicWalker<'a> {
             return;
         };
 
+        self.maybe_inline_nats_load_merge_patch(text);
+
         if std::env::var("SYMBOLIC_DEBUG").is_ok()
             && (text.contains("containerPorts")
                 || text.contains("commonAnnotations")
@@ -840,10 +1083,17 @@ impl<'a> SymbolicWalker<'a> {
             values = extract_values_paths(&rewritten);
         }
 
+        let bound_values = self.extract_bound_values(text);
+
         let mut helper_output_values: Vec<String> = Vec::new();
         let mut helper_guard_values: Vec<String> = Vec::new();
-        if kind == ValueKind::Scalar {
+        if kind == ValueKind::Scalar
+            || (self.inline_helpers_in_fragments && kind == ValueKind::Fragment)
+        {
             for name in Self::literal_template_calls(text) {
+                if name.ends_with(".defaultValues") {
+                    continue;
+                }
                 let v = self.values_from_define(&name);
                 helper_output_values.extend(v.output);
                 helper_guard_values.extend(v.guards);
@@ -854,7 +1104,11 @@ impl<'a> SymbolicWalker<'a> {
             helper_guard_values.dedup();
         }
 
-        if values.is_empty() && helper_output_values.is_empty() && helper_guard_values.is_empty() {
+        if values.is_empty()
+            && bound_values.is_empty()
+            && helper_output_values.is_empty()
+            && helper_guard_values.is_empty()
+        {
             return;
         }
 
@@ -885,6 +1139,10 @@ impl<'a> SymbolicWalker<'a> {
             self.emit_use(v, path.clone(), kind);
         }
 
+        for v in bound_values {
+            self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
+        }
+
         for v in helper_output_values {
             self.emit_helper_use(v);
         }
@@ -902,6 +1160,11 @@ impl<'a> SymbolicWalker<'a> {
             let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
             cond_guards = parse_condition(&rewritten);
         }
+
+        for v in self.extract_bound_values(cond_text) {
+            self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
+        }
+
         for g in &cond_guards {
             for path in g.value_paths() {
                 self.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
@@ -965,6 +1228,11 @@ impl<'a> SymbolicWalker<'a> {
             }
 
             "variable_definition" | "assignment" => {
+                if let Ok(txt) = node.utf8_text(self.source.as_bytes())
+                    && let Some((var, binding)) = Self::parse_get_binding(txt)
+                {
+                    self.get_bindings.insert(var, binding);
+                }
                 self.no_output_depth += 1;
                 let mut c = node.walk();
                 for ch in node.children(&mut c) {
@@ -976,6 +1244,8 @@ impl<'a> SymbolicWalker<'a> {
 
             "if_action" => {
                 let saved = self.guards.len();
+                let saved_domains = self.range_domains.clone();
+                let saved_bindings = self.get_bindings.clone();
                 if let Some(cond) = node.child_by_field_name("condition")
                     && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
                 {
@@ -989,6 +1259,9 @@ impl<'a> SymbolicWalker<'a> {
 
                 self.guards.truncate(saved);
 
+                self.range_domains = saved_domains;
+                self.get_bindings = saved_bindings;
+
                 // Note: else-if chains are represented as repeated condition/option fields.
                 // For now, we only handle the plain else branch.
                 let alternative = Self::children_with_field(node, "alternative");
@@ -1001,6 +1274,8 @@ impl<'a> SymbolicWalker<'a> {
             "with_action" => {
                 let saved = self.guards.len();
                 let saved_dot = self.dot_stack.len();
+                let saved_domains = self.range_domains.clone();
+                let saved_bindings = self.get_bindings.clone();
                 if let Some(cond) = node.child_by_field_name("condition")
                     && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
                 {
@@ -1016,6 +1291,9 @@ impl<'a> SymbolicWalker<'a> {
                 self.guards.truncate(saved);
                 self.dot_stack.truncate(saved_dot);
 
+                self.range_domains = saved_domains;
+                self.get_bindings = saved_bindings;
+
                 let alternative = Self::children_with_field(node, "alternative");
                 for ch in alternative {
                     self.walk(ch);
@@ -1026,8 +1304,14 @@ impl<'a> SymbolicWalker<'a> {
             "range_action" => {
                 let saved = self.guards.len();
                 let saved_dot = self.dot_stack.len();
+
+                let saved_domains = self.range_domains.clone();
+                let saved_bindings = self.get_bindings.clone();
                 self.dot_stack.push(None);
                 if let Some(txt) = self.range_header_text(node) {
+                    if let Some((var, lits)) = Self::parse_literal_list_range(&txt) {
+                        self.range_domains.insert(var, lits);
+                    }
                     self.collect_range_guards(&txt);
                 }
 
@@ -1038,6 +1322,9 @@ impl<'a> SymbolicWalker<'a> {
 
                 self.guards.truncate(saved);
                 self.dot_stack.truncate(saved_dot);
+
+                self.range_domains = saved_domains;
+                self.get_bindings = saved_bindings;
 
                 let alternative = Self::children_with_field(node, "alternative");
                 for ch in alternative {
