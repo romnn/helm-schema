@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
-use color_eyre::eyre::{Result, eyre};
 use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdCatalogSchemaProvider, K8sSchemaProvider, UpstreamK8sSchemaProvider};
 use serde_json::Value;
+
+use crate::error::{CliError, CliResult};
 
 #[derive(Debug, Clone)]
 pub struct ProviderOptions {
@@ -14,12 +15,13 @@ pub struct ProviderOptions {
     pub crd_catalog_dir: Option<PathBuf>,
 }
 
-pub fn build_provider(opts: &ProviderOptions) -> Result<Box<dyn K8sSchemaProvider>> {
+pub fn build_provider(opts: &ProviderOptions) -> CliResult<Box<dyn K8sSchemaProvider>> {
     let mut providers: Vec<Box<dyn K8sSchemaProvider>> = Vec::new();
 
     if let Some(dir) = &opts.crd_catalog_dir {
-        let p = CrdCatalogSchemaProvider::new(dir)
-            .ok_or_else(|| eyre!("failed to load CRD catalog from {}", dir.display()))?;
+        let p = CrdCatalogSchemaProvider::new(dir).ok_or_else(|| CliError::CrdCatalogLoad {
+            dir: dir.display().to_string(),
+        })?;
         providers.push(Box::new(p));
     }
 

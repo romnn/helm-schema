@@ -1,12 +1,16 @@
 use std::path::Path;
 
 use clap::Parser;
-use color_eyre::eyre::{Result, WrapErr, eyre};
+use color_eyre::eyre::{WrapErr, eyre};
 use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
 use vfs::VfsPath;
 
+fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
+    e.into()
+}
+
 #[test]
-fn cli_parses_defaults() -> Result<()> {
+fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     let cli =
         Cli::try_parse_from(["helm-schema", "/tmp/chart"]).map_err(|e| eyre!(e.to_string()))?;
 
@@ -23,7 +27,7 @@ fn cli_parses_defaults() -> Result<()> {
 }
 
 #[test]
-fn generates_schema_for_fixture_chart_without_k8s_provider() -> Result<()> {
+fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata().join("fixture-charts/full-fixture");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
@@ -41,7 +45,9 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> Result<()> {
         },
     };
 
-    let actual = generate_values_schema_for_chart(&opts).wrap_err("generate schema")?;
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
 
     let expected: serde_json::Value = serde_json::from_str(include_str!(
         "fixtures/full_fixture.disable_k8s.schema.json"
@@ -53,7 +59,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> Result<()> {
 }
 
 #[test]
-fn subchart_values_are_scoped_and_global_is_merged() -> Result<()> {
+fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result<()> {
     let dir = tempfile::tempdir().wrap_err("tempdir")?;
     let root = dir.path();
 
@@ -94,7 +100,9 @@ fn subchart_values_are_scoped_and_global_is_merged() -> Result<()> {
         },
     };
 
-    let actual = generate_values_schema_for_chart(&opts).wrap_err("generate schema")?;
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
 
     let expected = serde_json::json!({
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -126,7 +134,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> Result<()> {
     Ok(())
 }
 
-fn write_file(path: &Path, content: &str) -> Result<()> {
+fn write_file(path: &Path, content: &str) -> color_eyre::eyre::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).wrap_err("create parent dir")?;
     }

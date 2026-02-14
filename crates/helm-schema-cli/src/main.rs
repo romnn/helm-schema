@@ -1,9 +1,9 @@
 use clap::Parser;
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 
-fn main() -> Result<()> {
+fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
     let cli = helm_schema_cli::Cli::parse();
-    helm_schema_cli::run(cli)
+    helm_schema_cli::run(cli).map_err(Into::into)
 }

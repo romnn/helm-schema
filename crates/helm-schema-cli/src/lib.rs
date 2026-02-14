@@ -1,4 +1,5 @@
 mod chart;
+mod error;
 mod provider;
 mod schema_override;
 
@@ -6,13 +7,15 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use clap::{Args, Parser};
-use color_eyre::eyre::{Result, WrapErr, eyre};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{Guard, IrGenerator, SymbolicIrGenerator, ValueUse};
 use serde_json::Value;
 use vfs::VfsPath;
 
+use crate::error::CliResult;
+
+pub use error::CliError;
 pub use provider::ProviderOptions;
 
 #[derive(Parser, Debug, Clone)]
@@ -87,7 +90,7 @@ pub struct GenerateOptions {
 ///
 /// Returns an error if chart discovery fails, a template/values file cannot be
 /// read/parsed, the schema cannot be generated, or output cannot be written.
-pub fn run(cli: Cli) -> Result<()> {
+pub fn run(cli: Cli) -> CliResult<()> {
     let chart_dir_str = cli.chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
 
@@ -107,29 +110,32 @@ pub fn run(cli: Cli) -> Result<()> {
     let mut schema = generate_values_schema_for_chart(&opts)?;
 
     if let Some(path) = cli.override_schema {
-        let override_schema = load_json_file(&path)
-            .wrap_err_with(|| format!("read override schema: {}", path.display()))?;
+        let override_schema = load_json_file(&path)?;
         schema = schema_override::apply_schema_override(schema, override_schema);
     }
 
     let json = if cli.output.compact {
-        serde_json::to_vec(&schema).wrap_err("serialize schema json")?
+        serde_json::to_vec(&schema)?
     } else {
-        serde_json::to_vec_pretty(&schema).wrap_err("serialize schema json")?
+        serde_json::to_vec_pretty(&schema)?
     };
 
     if let Some(path) = cli.output.output {
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .wrap_err_with(|| format!("create output directory: {}", parent.display()))?;
+            std::fs::create_dir_all(parent).map_err(|e| CliError::CreateOutputDir {
+                path: parent.to_path_buf(),
+                source: e,
+            })?;
         }
-        std::fs::write(&path, json)
-            .wrap_err_with(|| format!("write output: {}", path.display()))?;
+        std::fs::write(&path, json).map_err(|e| CliError::WriteOutput {
+            path: path.clone(),
+            source: e,
+        })?;
     } else {
         use std::io::Write;
         let mut out = std::io::stdout().lock();
-        out.write_all(&json).wrap_err("write stdout")?;
-        out.write_all(b"\n").wrap_err("write stdout")?;
+        out.write_all(&json)?;
+        out.write_all(b"\n")?;
     }
 
     Ok(())
@@ -145,21 +151,17 @@ pub fn run(cli: Cli) -> Result<()> {
 ///
 /// Returns an error if charts cannot be discovered, files cannot be read, or
 /// templates/values cannot be parsed.
-pub fn generate_values_schema_for_chart(opts: &GenerateOptions) -> Result<Value> {
-    let discovery = chart::discover_chart_contexts(&opts.chart_dir)
-        .wrap_err_with(|| format!("discover charts: {}", opts.chart_dir.as_str()))?;
+pub fn generate_values_schema_for_chart(opts: &GenerateOptions) -> CliResult<Value> {
+    let discovery = chart::discover_chart_contexts(&opts.chart_dir)?;
     let charts = &discovery.charts;
 
-    let defines =
-        chart::build_define_index(charts, opts.include_tests).wrap_err("build define index")?;
+    let defines = chart::build_define_index(charts, opts.include_tests)?;
 
-    let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)
-        .wrap_err("read values.yaml")?;
+    let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
 
-    let uses =
-        collect_ir_for_charts(charts, &defines, opts.include_tests).wrap_err("collect IR")?;
+    let uses = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
 
-    let provider = provider::build_provider(&opts.provider).wrap_err("build k8s provider")?;
+    let provider = provider::build_provider(&opts.provider)?;
 
     Ok(generate_values_schema_with_values_yaml(
         &uses,
@@ -172,7 +174,7 @@ fn collect_ir_for_charts(
     charts: &[chart::ChartContext],
     defines: &DefineIndex,
     include_tests: bool,
-) -> Result<Vec<ValueUse>> {
+) -> CliResult<Vec<ValueUse>> {
     let mut out: Vec<ValueUse> = Vec::new();
 
     for c in charts {
@@ -180,19 +182,13 @@ fn collect_ir_for_charts(
             continue;
         }
 
-        let manifests = chart::list_manifest_templates(&c.chart_dir, include_tests)
-            .wrap_err_with(|| format!("list templates: {}", c.chart_dir.as_str()))?;
+        let manifests = chart::list_manifest_templates(&c.chart_dir, include_tests)?;
 
         for path in manifests {
             let mut src = String::new();
-            path.open_file()
-                .map_err(|e| eyre!(e.to_string()))?
-                .read_to_string(&mut src)
-                .wrap_err_with(|| format!("read template: {}", path.as_str()))?;
+            path.open_file()?.read_to_string(&mut src)?;
 
-            let ast = TreeSitterParser
-                .parse(&src)
-                .map_err(|e| eyre!("parse {}: {e}", path.as_str()))?;
+            let ast = TreeSitterParser.parse(&src)?;
 
             let uses = SymbolicIrGenerator.generate(&src, &ast, defines);
             for u in uses {
@@ -254,8 +250,8 @@ fn scope_values_path(path: &str, prefix: &[String]) -> String {
     format!("{pfx}.{path}")
 }
 
-fn load_json_file(path: &Path) -> Result<Value> {
-    let bytes = std::fs::read(path).wrap_err("read file")?;
-    let v: Value = serde_json::from_slice(&bytes).wrap_err("parse json")?;
+fn load_json_file(path: &Path) -> CliResult<Value> {
+    let bytes = std::fs::read(path)?;
+    let v: Value = serde_json::from_slice(&bytes)?;
     Ok(v)
 }
