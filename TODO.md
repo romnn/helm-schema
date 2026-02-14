@@ -1,3 +1,8 @@
+- that weird nats template should be parseable by our parsers i think right? control directives just "disappear"
+- use VFS for readonly without writing temp files
+- add some of the hard nats patch applying test cases.
+
+
 I’ll compare your two schemas quantitatively (what keys/paths are missing, what types differ), then cross-check against the actual SigNoz chart templates/values in `test-data/charts/signoz-signoz` to identify *why* our pipeline missed them. From that, I’ll propose a concrete “next implementation steps” plan that targets the biggest completeness gaps first (e.g. missed `.Values` usages in `tpl`/`include`, dynamic keys, `fromYaml`/`toYaml` fragments, subchart values, etc.). I’m going to start by loading both JSON files and computing a “missing JSON-pointer paths” report.
 
 

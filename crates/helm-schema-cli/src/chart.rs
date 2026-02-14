@@ -1,17 +1,17 @@
 use std::collections::HashMap;
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::io::Read;
+use std::path::Path;
 
 use color_eyre::eyre::{Result, WrapErr, eyre};
 use flate2::read::GzDecoder;
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use serde::Deserialize;
 use serde_yaml::Value as YamlValue;
-use tempfile::TempDir;
+use vfs::VfsPath;
 
 #[derive(Debug, Clone)]
 pub struct ChartContext {
-    pub chart_dir: PathBuf,
+    pub chart_dir: VfsPath,
     pub values_prefix: Vec<String>,
     pub is_library: bool,
 }
@@ -49,7 +49,6 @@ fn merge_global_values(root: &mut YamlValue, global_doc: YamlValue) {
 #[derive(Debug)]
 pub struct ChartDiscovery {
     pub charts: Vec<ChartContext>,
-    _temp_dirs: Vec<TempDir>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -68,24 +67,23 @@ struct ChartDependency {
     alias: Option<String>,
 }
 
-pub fn discover_chart_contexts(root_chart_dir: &Path) -> Result<ChartDiscovery> {
+fn vfs<T>(res: std::result::Result<T, vfs::VfsError>) -> Result<T> {
+    res.map_err(|e| eyre!(e.to_string()))
+}
+
+pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> Result<ChartDiscovery> {
     let mut out = Vec::new();
-    let mut temp_dirs = Vec::new();
-    discover_chart_contexts_inner(root_chart_dir, &[], &mut out, &mut temp_dirs)?;
-    Ok(ChartDiscovery {
-        charts: out,
-        _temp_dirs: temp_dirs,
-    })
+    discover_chart_contexts_inner(root_chart_dir, &[], &mut out)?;
+    Ok(ChartDiscovery { charts: out })
 }
 
 fn discover_chart_contexts_inner(
-    chart_dir: &Path,
+    chart_dir: &VfsPath,
     parent_prefix: &[String],
     out: &mut Vec<ChartContext>,
-    temp_dirs: &mut Vec<TempDir>,
 ) -> Result<()> {
     let chart_yaml = read_chart_yaml(chart_dir)
-        .wrap_err_with(|| format!("read Chart.yaml: {}", chart_dir.display()))?;
+        .wrap_err_with(|| format!("read Chart.yaml: {}", chart_dir.as_str()))?;
 
     let is_library = chart_yaml
         .chart_type
@@ -93,72 +91,62 @@ fn discover_chart_contexts_inner(
         .is_some_and(|t| t.eq_ignore_ascii_case("library"));
 
     out.push(ChartContext {
-        chart_dir: chart_dir.to_path_buf(),
+        chart_dir: chart_dir.clone(),
         values_prefix: parent_prefix.to_vec(),
         is_library,
     });
 
     let dep_key_by_name = dependency_key_map(&chart_yaml);
 
-    let vendor_charts_dir = chart_dir.join("charts");
-    if !vendor_charts_dir.is_dir() {
+    let vendor_charts_dir = vfs(chart_dir.join("charts")).wrap_err("join charts/")?;
+    if !vfs(vendor_charts_dir.is_dir()).wrap_err("stat charts/")? {
         return Ok(());
     }
 
-    for ent in std::fs::read_dir(&vendor_charts_dir).wrap_err("read charts/ dir")? {
-        let ent = ent.wrap_err("read charts/ entry")?;
-        let path = ent.path();
-        let ty = ent.file_type().wrap_err("read file type")?;
-
-        let sub_dir = if ty.is_dir() {
-            if !path.join("Chart.yaml").is_file() {
+    for ent in vfs(vendor_charts_dir.read_dir()).wrap_err("read charts/ dir")? {
+        let sub_dir = if vfs(ent.is_dir()).wrap_err("stat charts/ entry")? {
+            let chart_yaml_path = vfs(ent.join("Chart.yaml")).wrap_err("join Chart.yaml")?;
+            if !vfs(chart_yaml_path.is_file()).wrap_err("stat Chart.yaml")? {
                 continue;
             }
-            path
-        } else if ty.is_file() {
-            let file_name = path
-                .file_name()
-                .and_then(OsStr::to_str)
-                .unwrap_or_default();
-            let is_tgz = std::path::Path::new(file_name)
+            ent
+        } else if vfs(ent.is_file()).wrap_err("stat charts/ entry")? {
+            let file_name = ent.filename();
+            let p = Path::new(&file_name);
+            let is_tgz = p
                 .extension()
+                .and_then(|ext| ext.to_str())
                 .is_some_and(|ext| ext.eq_ignore_ascii_case("tgz"));
-            let is_tar_gz = std::path::Path::new(file_name)
+            let is_tar_gz = p
                 .extension()
+                .and_then(|ext| ext.to_str())
                 .is_some_and(|ext| ext.eq_ignore_ascii_case("gz"))
-                && std::path::Path::new(file_name)
-                    .file_stem()
-                    .and_then(|stem| std::path::Path::new(stem).extension())
+                && p.file_stem()
+                    .and_then(|stem| Path::new(stem).extension())
+                    .and_then(|ext| ext.to_str())
                     .is_some_and(|ext| ext.eq_ignore_ascii_case("tar"));
 
             if !(is_tgz || is_tar_gz) {
                 continue;
             }
 
-            let extracted = extract_chart_archive(&path)
-                .wrap_err_with(|| format!("extract chart archive: {}", path.display()))?;
-            let extracted_dir = extracted
-                .chart_dir
-                .clone();
-            temp_dirs.push(extracted.temp_dir);
-            extracted_dir
+            extract_chart_archive(&ent)
+                .wrap_err_with(|| format!("extract chart archive: {}", ent.as_str()))?
         } else {
             continue;
         };
 
         let sub_chart_yaml = read_chart_yaml(&sub_dir)
-            .wrap_err_with(|| format!("read Chart.yaml: {}", sub_dir.display()))?;
+            .wrap_err_with(|| format!("read Chart.yaml: {}", sub_dir.as_str()))?;
 
         let sub_name = sub_chart_yaml
             .name
             .clone()
             .or_else(|| {
-                sub_dir
-                    .file_name()
-                    .and_then(OsStr::to_str)
-                    .map(std::string::ToString::to_string)
+                let name = sub_dir.filename();
+                if name.is_empty() { None } else { Some(name) }
             })
-            .ok_or_else(|| eyre!("subchart name missing for {}", sub_dir.display()))?;
+            .ok_or_else(|| eyre!("subchart name missing for {}", sub_dir.as_str()))?;
 
         let key = dep_key_by_name
             .get(&sub_name)
@@ -168,58 +156,58 @@ fn discover_chart_contexts_inner(
         let mut prefix = parent_prefix.to_vec();
         prefix.push(key);
 
-        discover_chart_contexts_inner(&sub_dir, &prefix, out, temp_dirs)?;
+        discover_chart_contexts_inner(&sub_dir, &prefix, out)?;
     }
 
     Ok(())
 }
 
-struct ExtractedChart {
-    chart_dir: PathBuf,
-    temp_dir: TempDir,
-}
+fn extract_chart_archive(path: &VfsPath) -> Result<VfsPath> {
+    let mut bytes = Vec::new();
+    vfs(path.open_file())
+        .wrap_err_with(|| format!("open archive: {}", path.as_str()))?
+        .read_to_end(&mut bytes)
+        .wrap_err_with(|| format!("read archive: {}", path.as_str()))?;
 
-fn extract_chart_archive(path: &Path) -> Result<ExtractedChart> {
-    let file = std::fs::File::open(path)
-        .wrap_err_with(|| format!("open archive: {}", path.display()))?;
-    let gz = GzDecoder::new(file);
+    let gz = GzDecoder::new(bytes.as_slice());
     let mut archive = tar::Archive::new(gz);
 
-    let tmp = tempfile::tempdir().wrap_err("create temp dir")?;
+    let root = VfsPath::new(vfs::MemoryFS::new());
     for entry in archive.entries().wrap_err("read tar entries")? {
-        let mut entry = entry.wrap_err("read tar entry")?;
-        entry.unpack_in(tmp.path()).wrap_err("unpack tar entry")?;
+        let mut e = entry.wrap_err("read tar entry")?;
+        let p = e.path().wrap_err("read tar entry path")?;
+        let path_str = p.to_string_lossy();
+        let out = vfs(root.join(path_str.as_ref())).wrap_err("join unpack path")?;
+        if e.header().entry_type().is_dir() {
+            vfs(out.create_dir_all()).wrap_err("create dir")?;
+        } else {
+            vfs(out.parent().create_dir_all()).wrap_err("create parent dirs")?;
+            let mut f = vfs(out.create_file()).wrap_err("create file")?;
+            std::io::copy(&mut e, &mut f).wrap_err("copy entry")?;
+        }
     }
 
-    let chart_dir = find_chart_dir(tmp.path())
-        .ok_or_else(|| eyre!("no Chart.yaml found in {}", path.display()))?;
-
-    Ok(ExtractedChart {
-        chart_dir,
-        temp_dir: tmp,
-    })
+    find_chart_dir(&root)?.ok_or_else(|| eyre!("no Chart.yaml found in {}", path.as_str()))
 }
 
-fn find_chart_dir(root: &Path) -> Option<PathBuf> {
-    let direct = root.join("Chart.yaml");
-    if direct.is_file() {
-        return Some(root.to_path_buf());
+fn find_chart_dir(root: &VfsPath) -> Result<Option<VfsPath>> {
+    let direct = vfs(root.join("Chart.yaml")).wrap_err("join Chart.yaml")?;
+    if vfs(direct.is_file()).wrap_err("stat Chart.yaml")? {
+        return Ok(Some(root.clone()));
     }
 
-    let Ok(entries) = std::fs::read_dir(root) else {
-        return None;
-    };
-    for ent in entries.flatten() {
-        let path = ent.path();
-        if !path.is_dir() {
+    let entries = vfs(root.read_dir()).wrap_err("read extracted root")?;
+    for ent in entries {
+        if !vfs(ent.is_dir()).wrap_err("stat extracted entry")? {
             continue;
         }
-        if path.join("Chart.yaml").is_file() {
-            return Some(path);
+        let chart_yaml = vfs(ent.join("Chart.yaml")).wrap_err("join Chart.yaml")?;
+        if vfs(chart_yaml.is_file()).wrap_err("stat Chart.yaml")? {
+            return Ok(Some(ent));
         }
     }
 
-    None
+    Ok(None)
 }
 
 fn dependency_key_map(chart_yaml: &ChartYaml) -> HashMap<String, String> {
@@ -234,12 +222,16 @@ fn dependency_key_map(chart_yaml: &ChartYaml) -> HashMap<String, String> {
     out
 }
 
-fn read_chart_yaml(chart_dir: &Path) -> Result<ChartYaml> {
-    let path = chart_dir.join("Chart.yaml");
-    let bytes = std::fs::read(&path)
-        .wrap_err_with(|| format!("read Chart.yaml: {}", path.display()))?;
+fn read_chart_yaml(chart_dir: &VfsPath) -> Result<ChartYaml> {
+    let path = vfs(chart_dir.join("Chart.yaml")).wrap_err("join Chart.yaml")?;
+    let mut bytes = Vec::new();
+    vfs(path.open_file())
+        .wrap_err_with(|| format!("open Chart.yaml: {}", path.as_str()))?
+        .read_to_end(&mut bytes)
+        .wrap_err_with(|| format!("read Chart.yaml: {}", path.as_str()))?;
+
     let doc: ChartYaml = serde_yaml::from_slice(&bytes)
-        .wrap_err_with(|| format!("parse Chart.yaml: {}", path.display()))?;
+        .wrap_err_with(|| format!("parse Chart.yaml: {}", path.as_str()))?;
     Ok(doc)
 }
 
@@ -248,19 +240,22 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> Resul
 
     for c in charts {
         for path in list_template_sources_for_define_index(&c.chart_dir, include_tests)? {
-            let src = std::fs::read_to_string(&path)
-                .wrap_err_with(|| format!("read template: {}", path.display()))?;
+            let mut src = String::new();
+            vfs(path.open_file())
+                .wrap_err_with(|| format!("open template: {}", path.as_str()))?
+                .read_to_string(&mut src)
+                .wrap_err_with(|| format!("read template: {}", path.as_str()))?;
             idx.add_source(&TreeSitterParser, &src)
-                .wrap_err_with(|| format!("parse define source: {}", path.display()))?;
+                .wrap_err_with(|| format!("parse define source: {}", path.as_str()))?;
         }
     }
 
     Ok(idx)
 }
 
-pub fn list_manifest_templates(chart_dir: &Path, include_tests: bool) -> Result<Vec<PathBuf>> {
-    let templates_dir = chart_dir.join("templates");
-    if !templates_dir.is_dir() {
+pub fn list_manifest_templates(chart_dir: &VfsPath, include_tests: bool) -> Result<Vec<VfsPath>> {
+    let templates_dir = vfs(chart_dir.join("templates")).wrap_err("join templates/")?;
+    if !vfs(templates_dir.is_dir()).wrap_err("stat templates/")? {
         return Ok(Vec::new());
     }
 
@@ -268,20 +263,18 @@ pub fn list_manifest_templates(chart_dir: &Path, include_tests: bool) -> Result<
     list_templates_recursive(&templates_dir, include_tests, &mut out)?;
 
     out.retain(|p| {
-        let file_name = p
-            .file_name()
-            .and_then(OsStr::to_str)
-            .unwrap_or_default();
-
-        if file_name.starts_with('_') {
+        let file_name = p.filename();
+        let lower = file_name.to_ascii_lowercase();
+        if lower.starts_with('_') {
             return false;
         }
 
-        matches!(p.extension().and_then(OsStr::to_str), Some("yaml" | "yml"))
+        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
+        ext.is_some_and(|e| e.eq_ignore_ascii_case("yaml") || e.eq_ignore_ascii_case("yml"))
     });
 
-    out.sort();
-    out.dedup();
+    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+    out.dedup_by(|a, b| a.as_str() == b.as_str());
     Ok(out)
 }
 
@@ -293,12 +286,15 @@ pub fn build_composed_values_yaml(
         .first()
         .ok_or_else(|| eyre!("no charts discovered"))?;
 
-    let root_values_path = root.chart_dir.join("values.yaml");
-    let mut doc = if root_values_path.is_file() {
-        let bytes = std::fs::read(&root_values_path)
-            .wrap_err_with(|| format!("read values.yaml: {}", root_values_path.display()))?;
+    let root_values_path = vfs(root.chart_dir.join("values.yaml")).wrap_err("join values.yaml")?;
+    let mut doc = if vfs(root_values_path.is_file()).wrap_err("stat values.yaml")? {
+        let mut bytes = Vec::new();
+        vfs(root_values_path.open_file())
+            .wrap_err_with(|| format!("open values.yaml: {}", root_values_path.as_str()))?
+            .read_to_end(&mut bytes)
+            .wrap_err_with(|| format!("read values.yaml: {}", root_values_path.as_str()))?;
         serde_yaml::from_slice::<YamlValue>(&bytes)
-            .wrap_err_with(|| format!("parse values.yaml: {}", root_values_path.display()))?
+            .wrap_err_with(|| format!("parse values.yaml: {}", root_values_path.as_str()))?
     } else {
         YamlValue::Mapping(serde_yaml::Mapping::default())
     };
@@ -309,15 +305,18 @@ pub fn build_composed_values_yaml(
                 continue;
             }
 
-            let path = c.chart_dir.join("values.yaml");
-            if !path.is_file() {
+            let path = vfs(c.chart_dir.join("values.yaml")).wrap_err("join values.yaml")?;
+            if !vfs(path.is_file()).wrap_err("stat values.yaml")? {
                 continue;
             }
 
-            let bytes = std::fs::read(&path)
-                .wrap_err_with(|| format!("read values.yaml: {}", path.display()))?;
+            let mut bytes = Vec::new();
+            vfs(path.open_file())
+                .wrap_err_with(|| format!("open values.yaml: {}", path.as_str()))?
+                .read_to_end(&mut bytes)
+                .wrap_err_with(|| format!("read values.yaml: {}", path.as_str()))?;
             let mut sub_doc: YamlValue = serde_yaml::from_slice(&bytes)
-                .wrap_err_with(|| format!("parse values.yaml: {}", path.display()))?;
+                .wrap_err_with(|| format!("parse values.yaml: {}", path.as_str()))?;
 
             // Helm merges subchart defaults under the subchart key, except `global`,
             // which is merged into the top-level `.Values.global` for all charts.
@@ -338,11 +337,11 @@ pub fn build_composed_values_yaml(
 }
 
 fn list_template_sources_for_define_index(
-    chart_dir: &Path,
+    chart_dir: &VfsPath,
     include_tests: bool,
-) -> Result<Vec<PathBuf>> {
-    let templates_dir = chart_dir.join("templates");
-    if !templates_dir.is_dir() {
+) -> Result<Vec<VfsPath>> {
+    let templates_dir = vfs(chart_dir.join("templates")).wrap_err("join templates/")?;
+    if !vfs(templates_dir.is_dir()).wrap_err("stat templates/")? {
         return Ok(Vec::new());
     }
 
@@ -350,41 +349,42 @@ fn list_template_sources_for_define_index(
     list_templates_recursive(&templates_dir, include_tests, &mut out)?;
 
     out.retain(|p| {
-        matches!(
-            p.extension().and_then(OsStr::to_str),
-            Some("tpl" | "yaml" | "yml")
-        )
+        let file_name = p.filename();
+        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
+        ext.is_some_and(|e| {
+            e.eq_ignore_ascii_case("tpl")
+                || e.eq_ignore_ascii_case("yaml")
+                || e.eq_ignore_ascii_case("yml")
+        })
     });
 
-    out.sort();
-    out.dedup();
+    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+    out.dedup_by(|a, b| a.as_str() == b.as_str());
     Ok(out)
 }
 
-fn list_templates_recursive(dir: &Path, include_tests: bool, out: &mut Vec<PathBuf>) -> Result<()> {
-    for ent in std::fs::read_dir(dir)
-        .wrap_err_with(|| format!("read templates dir: {}", dir.display()))?
+fn list_templates_recursive(
+    dir: &VfsPath,
+    include_tests: bool,
+    out: &mut Vec<VfsPath>,
+) -> Result<()> {
+    for ent in
+        vfs(dir.read_dir()).wrap_err_with(|| format!("read templates dir: {}", dir.as_str()))?
     {
-        let ent = ent.wrap_err("read dir entry")?;
-        let path = ent.path();
-        let ty = ent.file_type().wrap_err("read file type")?;
-
-        if ty.is_dir() {
-            if !include_tests
-                && let Some(name) = path.file_name().and_then(OsStr::to_str)
-                && name.eq_ignore_ascii_case("tests")
-                && path
-                    .parent()
-                    .and_then(|p| p.file_name())
-                    .and_then(OsStr::to_str)
-                    .is_some_and(|p| p.eq_ignore_ascii_case("templates"))
-            {
-                continue;
+        if vfs(ent.is_dir()).wrap_err("stat template entry")? {
+            if !include_tests {
+                let name = ent.filename();
+                let parent_name = ent.parent().filename();
+                if name.eq_ignore_ascii_case("tests")
+                    && parent_name.eq_ignore_ascii_case("templates")
+                {
+                    continue;
+                }
             }
 
-            list_templates_recursive(&path, include_tests, out)?;
-        } else if ty.is_file() {
-            out.push(path);
+            list_templates_recursive(&ent, include_tests, out)?;
+        } else if vfs(ent.is_file()).wrap_err("stat template entry")? {
+            out.push(ent);
         }
     }
 

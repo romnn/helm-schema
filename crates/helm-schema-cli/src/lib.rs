@@ -2,6 +2,7 @@ mod chart;
 mod provider;
 mod schema_override;
 
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use clap::{Args, Parser};
@@ -10,11 +11,15 @@ use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{Guard, IrGenerator, SymbolicIrGenerator, ValueUse};
 use serde_json::Value;
+use vfs::VfsPath;
 
 pub use provider::ProviderOptions;
 
 #[derive(Parser, Debug, Clone)]
-#[command(name = "helm-schema", about = "Generate JSON schema for Helm values.yaml")]
+#[command(
+    name = "helm-schema",
+    about = "Generate JSON schema for Helm values.yaml"
+)]
 pub struct Cli {
     #[arg(value_name = "CHART_DIR")]
     pub chart_dir: PathBuf,
@@ -50,10 +55,10 @@ pub struct K8sArgs {
     pub k8s_schema_cache_dir: Option<PathBuf>,
 
     #[arg(long)]
-    pub allow_net: bool,
+    pub offline: bool,
 
     #[arg(long)]
-    pub disable_k8s_schemas: bool,
+    pub no_k8s_schemas: bool,
 
     #[arg(long)]
     pub crd_catalog_dir: Option<PathBuf>,
@@ -62,7 +67,7 @@ pub struct K8sArgs {
 #[derive(Args, Debug, Clone)]
 pub struct ChartArgs {
     #[arg(long)]
-    pub include_tests: bool,
+    pub exclude_tests: bool,
 
     #[arg(long)]
     pub no_subchart_values: bool,
@@ -70,7 +75,7 @@ pub struct ChartArgs {
 
 #[derive(Debug, Clone)]
 pub struct GenerateOptions {
-    pub chart_dir: PathBuf,
+    pub chart_dir: VfsPath,
     pub include_tests: bool,
     pub include_subchart_values: bool,
     pub provider: ProviderOptions,
@@ -83,15 +88,18 @@ pub struct GenerateOptions {
 /// Returns an error if chart discovery fails, a template/values file cannot be
 /// read/parsed, the schema cannot be generated, or output cannot be written.
 pub fn run(cli: Cli) -> Result<()> {
+    let chart_dir_str = cli.chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+
     let opts = GenerateOptions {
-        chart_dir: cli.chart_dir.clone(),
-        include_tests: cli.chart.include_tests,
+        chart_dir,
+        include_tests: !cli.chart.exclude_tests,
         include_subchart_values: !cli.chart.no_subchart_values,
         provider: ProviderOptions {
             k8s_version: cli.k8s.k8s_version,
             k8s_schema_cache_dir: cli.k8s.k8s_schema_cache_dir,
-            allow_net: cli.k8s.allow_net,
-            disable_k8s_schemas: cli.k8s.disable_k8s_schemas,
+            allow_net: !cli.k8s.offline,
+            disable_k8s_schemas: cli.k8s.no_k8s_schemas,
             crd_catalog_dir: cli.k8s.crd_catalog_dir,
         },
     };
@@ -115,7 +123,8 @@ pub fn run(cli: Cli) -> Result<()> {
             std::fs::create_dir_all(parent)
                 .wrap_err_with(|| format!("create output directory: {}", parent.display()))?;
         }
-        std::fs::write(&path, json).wrap_err_with(|| format!("write output: {}", path.display()))?;
+        std::fs::write(&path, json)
+            .wrap_err_with(|| format!("write output: {}", path.display()))?;
     } else {
         use std::io::Write;
         let mut out = std::io::stdout().lock();
@@ -138,17 +147,17 @@ pub fn run(cli: Cli) -> Result<()> {
 /// templates/values cannot be parsed.
 pub fn generate_values_schema_for_chart(opts: &GenerateOptions) -> Result<Value> {
     let discovery = chart::discover_chart_contexts(&opts.chart_dir)
-        .wrap_err_with(|| format!("discover charts: {}", opts.chart_dir.display()))?;
+        .wrap_err_with(|| format!("discover charts: {}", opts.chart_dir.as_str()))?;
     let charts = &discovery.charts;
 
-    let defines = chart::build_define_index(charts, opts.include_tests)
-        .wrap_err("build define index")?;
+    let defines =
+        chart::build_define_index(charts, opts.include_tests).wrap_err("build define index")?;
 
     let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)
         .wrap_err("read values.yaml")?;
 
-    let uses = collect_ir_for_charts(charts, &defines, opts.include_tests)
-        .wrap_err("collect IR")?;
+    let uses =
+        collect_ir_for_charts(charts, &defines, opts.include_tests).wrap_err("collect IR")?;
 
     let provider = provider::build_provider(&opts.provider).wrap_err("build k8s provider")?;
 
@@ -172,15 +181,18 @@ fn collect_ir_for_charts(
         }
 
         let manifests = chart::list_manifest_templates(&c.chart_dir, include_tests)
-            .wrap_err_with(|| format!("list templates: {}", c.chart_dir.display()))?;
+            .wrap_err_with(|| format!("list templates: {}", c.chart_dir.as_str()))?;
 
         for path in manifests {
-            let src = std::fs::read_to_string(&path)
-                .wrap_err_with(|| format!("read template: {}", path.display()))?;
+            let mut src = String::new();
+            path.open_file()
+                .map_err(|e| eyre!(e.to_string()))?
+                .read_to_string(&mut src)
+                .wrap_err_with(|| format!("read template: {}", path.as_str()))?;
 
             let ast = TreeSitterParser
                 .parse(&src)
-                .map_err(|e| eyre!("parse {}: {e}", path.display()))?;
+                .map_err(|e| eyre!("parse {}: {e}", path.as_str()))?;
 
             let uses = SymbolicIrGenerator.generate(&src, &ast, defines);
             for u in uses {
