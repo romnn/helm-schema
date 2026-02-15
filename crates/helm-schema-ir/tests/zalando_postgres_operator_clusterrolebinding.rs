@@ -27,6 +27,7 @@ fn resource_detection() {
         Some(ResourceRef {
             api_version: "rbac.authorization.k8s.io/v1".to_string(),
             kind: "ClusterRoleBinding".to_string(),
+            api_version_candidates: Vec::new(),
         })
     );
 }

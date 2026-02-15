@@ -27,6 +27,7 @@ fn resource_detection() {
         Some(ResourceRef {
             api_version: "monitoring.coreos.com/v1".to_string(),
             kind: "PrometheusRule".to_string(),
+            api_version_candidates: Vec::new(),
         })
     );
 }

@@ -11,6 +11,7 @@ fn materialize_networkpolicy_v1_35() {
     let r = ResourceRef {
         api_version: "networking.k8s.io/v1".to_string(),
         kind: "NetworkPolicy".to_string(),
+        api_version_candidates: Vec::new(),
     };
 
     let schema = provider
@@ -196,6 +197,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
     let r = ResourceRef {
         api_version: "networking.k8s.io/v1".to_string(),
         kind: "NetworkPolicy".to_string(),
+        api_version_candidates: Vec::new(),
     };
 
     let path = YamlPath(vec![
@@ -227,6 +229,7 @@ fn networkpolicy_by_kind_scan_when_api_version_missing() {
     let r = ResourceRef {
         api_version: String::new(),
         kind: "NetworkPolicy".to_string(),
+        api_version_candidates: Vec::new(),
     };
 
     let schema = provider

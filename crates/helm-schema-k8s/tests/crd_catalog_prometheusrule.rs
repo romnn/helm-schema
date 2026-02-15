@@ -11,6 +11,7 @@ fn materialize_prometheusrule_from_catalog() {
     let r = ResourceRef {
         api_version: "monitoring.coreos.com/v1".to_string(),
         kind: "PrometheusRule".to_string(),
+        api_version_candidates: Vec::new(),
     };
 
     let schema = provider
@@ -120,6 +121,7 @@ fn prometheusrule_leaf_schema_rules_items() {
     let r = ResourceRef {
         api_version: "monitoring.coreos.com/v1".to_string(),
         kind: "PrometheusRule".to_string(),
+        api_version_candidates: Vec::new(),
     };
 
     let path = YamlPath(vec![

@@ -26,6 +26,7 @@ fn resource_detection() {
         Some(ResourceRef {
             api_version: "rbac.authorization.k8s.io/v1".to_string(),
             kind: "ClusterRole".to_string(),
+            api_version_candidates: Vec::new(),
         })
     );
 }
@@ -48,8 +49,10 @@ fn symbolic_ir_full() {
         );
     }
 
-    let cluster_role =
-        serde_json::json!({"api_version": "rbac.authorization.k8s.io/v1", "kind": "ClusterRole"});
+    let cluster_role = serde_json::json!({
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
+    });
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
 
     let expected = serde_json::json!([

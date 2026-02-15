@@ -1410,8 +1410,8 @@ impl<'a> SymbolicWalker<'a> {
 
 #[derive(Default, Clone, Debug)]
 struct ResourceDetector {
-    api_version: Option<String>,
     kind: Option<String>,
+    api_versions: BTreeSet<String>,
     current: Option<ResourceRef>,
     buf: String,
 }
@@ -1422,6 +1422,46 @@ impl ResourceDetector {
     }
 
     fn ingest(&mut self, text: &str) {
+        fn api_version_rank(api_version: &str) -> (u8, i32) {
+            // Lower is better.
+            // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
+            // For the second component, we prefer higher major versions.
+            let (_, ver) = api_version.split_once('/').unwrap_or(("", api_version));
+
+            let stability = if ver.contains("alpha") {
+                2u8
+            } else if ver.contains("beta") {
+                1u8
+            } else if ver.starts_with('v')
+                && ver[1..].chars().next().is_some_and(|c| c.is_ascii_digit())
+                && ver[1..].chars().all(|c| c.is_ascii_digit())
+            {
+                0u8
+            } else {
+                3u8
+            };
+
+            let major = ver
+                .strip_prefix('v')
+                .and_then(|s| {
+                    s.chars()
+                        .take_while(char::is_ascii_digit)
+                        .collect::<String>()
+                        .parse::<i32>()
+                        .ok()
+                })
+                .unwrap_or(0);
+
+            (stability, -major)
+        }
+
+        fn preferred_api_version(api_versions: &BTreeSet<String>) -> Option<String> {
+            api_versions
+                .iter()
+                .min_by_key(|v| api_version_rank(v))
+                .cloned()
+        }
+
         fn parse_literal_value(line: &str, key: &str) -> Option<String> {
             let rest = line.strip_prefix(key)?;
             let rest = rest.trim_start();
@@ -1452,23 +1492,32 @@ impl ResourceDetector {
                 return;
             }
             if trimmed == "---" || trimmed == "..." {
-                det.api_version = None;
                 det.kind = None;
+                det.api_versions.clear();
                 det.current = None;
                 return;
             }
 
             if let Some(v) = parse_literal_value(trimmed, "apiVersion") {
-                det.api_version = Some(v);
+                det.api_versions.insert(v);
             }
-            if let Some(v) = parse_literal_value(trimmed, "kind") {
-                det.kind = Some(v);
-            }
+            if det.kind.is_none()
+                && let Some(v) = parse_literal_value(trimmed, "kind") {
+                    det.kind = Some(v);
+                }
 
             if let Some(kind) = &det.kind {
+                let api_version = preferred_api_version(&det.api_versions).unwrap_or_default();
+                let api_version_candidates = det
+                    .api_versions
+                    .iter()
+                    .filter(|v| **v != api_version)
+                    .cloned()
+                    .collect::<Vec<_>>();
                 det.current = Some(ResourceRef {
-                    api_version: det.api_version.clone().unwrap_or_default(),
+                    api_version,
                     kind: kind.clone(),
+                    api_version_candidates,
                 });
             }
         }

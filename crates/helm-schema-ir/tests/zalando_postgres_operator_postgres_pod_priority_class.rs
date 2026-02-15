@@ -27,6 +27,7 @@ fn resource_detection() {
         Some(ResourceRef {
             api_version: "scheduling.k8s.io/v1".to_string(),
             kind: "PriorityClass".to_string(),
+            api_version_candidates: Vec::new(),
         })
     );
 }
@@ -50,7 +51,10 @@ fn symbolic_ir_full() {
         );
     }
 
-    let pc = serde_json::json!({"api_version": "scheduling.k8s.io/v1", "kind": "PriorityClass"});
+    let pc = serde_json::json!({
+        "api_version": "scheduling.k8s.io/v1",
+        "kind": "PriorityClass"
+    });
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
 
     let expected = serde_json::json!([

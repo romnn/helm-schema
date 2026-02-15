@@ -32,6 +32,7 @@ fn resource_detection() {
         Some(ResourceRef {
             api_version: "v1".to_string(),
             kind: "Secret".to_string(),
+            api_version_candidates: Vec::new(),
         })
     );
 }

@@ -18,8 +18,81 @@ use serde_json::Value;
 pub trait K8sSchemaProvider {
     /// Schema for a specific value use (resource + YAML path).
     fn schema_for_use(&self, u: &ValueUse) -> Option<Value> {
+        fn api_version_rank(api_version: &str) -> (u8, u8, i32, i32) {
+            // Lower is better.
+            // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
+            // Prefer non-extensions API groups when all else is equal.
+            // Prefer higher major versions, and higher beta/alpha iterations.
+            let (group, ver) = api_version.split_once('/').unwrap_or(("", api_version));
+
+            let is_extensions = u8::from(group == "extensions");
+
+            let (stability, pre_iter) = if ver.contains("alpha") {
+                let it = ver
+                    .split("alpha")
+                    .nth(1)
+                    .and_then(|s| s.parse::<i32>().ok())
+                    .unwrap_or(0);
+                (2u8, it)
+            } else if ver.contains("beta") {
+                let it = ver
+                    .split("beta")
+                    .nth(1)
+                    .and_then(|s| s.parse::<i32>().ok())
+                    .unwrap_or(0);
+                (1u8, it)
+            } else if ver.starts_with('v')
+                && ver[1..].chars().next().is_some_and(|c| c.is_ascii_digit())
+                && ver[1..].chars().all(|c| c.is_ascii_digit())
+            {
+                (0u8, 0)
+            } else {
+                (3u8, 0)
+            };
+
+            let major = ver
+                .strip_prefix('v')
+                .and_then(|s| {
+                    s.chars()
+                        .take_while(char::is_ascii_digit)
+                        .collect::<String>()
+                        .parse::<i32>()
+                        .ok()
+                })
+                .unwrap_or(0);
+
+            (stability, is_extensions, -major, -pre_iter)
+        }
+
         let r = u.resource.as_ref()?;
-        self.schema_for_resource_path(r, &u.path)
+
+        let mut versions: Vec<&str> = Vec::new();
+        if !r.api_version.trim().is_empty() {
+            versions.push(r.api_version.as_str());
+        }
+        for v in &r.api_version_candidates {
+            if !v.trim().is_empty() {
+                versions.push(v.as_str());
+            }
+        }
+        if versions.is_empty() {
+            versions.push(r.api_version.as_str());
+        }
+        versions.sort_by_key(|v| api_version_rank(v));
+        versions.dedup();
+
+        for v in versions {
+            let rr = ResourceRef {
+                api_version: v.to_string(),
+                kind: r.kind.clone(),
+                api_version_candidates: Vec::new(),
+            };
+            if let Some(schema) = self.schema_for_resource_path(&rr, &u.path) {
+                return Some(schema);
+            }
+        }
+
+        None
     }
 
     /// Schema for a specific resource type + YAML path.
@@ -102,6 +175,7 @@ mod tests {
         let r = ResourceRef {
             api_version: "v1".to_string(),
             kind: "Service".to_string(),
+            api_version_candidates: Vec::new(),
         };
         assert_eq!(filename_for_resource(&r), "service-v1.json");
     }
@@ -111,6 +185,7 @@ mod tests {
         let r = ResourceRef {
             api_version: "monitoring.coreos.com/v1".to_string(),
             kind: "PrometheusRule".to_string(),
+            api_version_candidates: Vec::new(),
         };
         assert_eq!(
             filename_for_resource(&r),
@@ -123,6 +198,7 @@ mod tests {
         let r = ResourceRef {
             api_version: "networking.k8s.io/v1".to_string(),
             kind: "NetworkPolicy".to_string(),
+            api_version_candidates: Vec::new(),
         };
         assert_eq!(
             filename_for_resource(&r),

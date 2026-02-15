@@ -42,6 +42,8 @@ pub enum ValueKind {
 pub struct ResourceRef {
     pub api_version: String,
     pub kind: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub api_version_candidates: Vec<String>,
 }
 
 /// A guard condition from an `if`, `with`, or `range` block.
@@ -101,12 +103,14 @@ impl ResourceDetector for DefaultResourceDetector {
             (Some(av), Some(k)) => Some(ResourceRef {
                 api_version: av,
                 kind: k,
+                api_version_candidates: Vec::new(),
             }),
             // Many Helm charts use `{{ template "..." }}` for apiVersion,
             // so we still detect the resource if only `kind` is found.
             (None, Some(k)) => Some(ResourceRef {
                 api_version: String::new(),
                 kind: k,
+                api_version_candidates: Vec::new(),
             }),
             _ => None,
         }
