@@ -1,4 +1,5 @@
 - that weird nats template should be parseable by our parsers i think right? control directives just "disappear"
+- clusterrole.yaml in zalando-postgres-operator uses `{{- if toString .Values.configGeneral.enable_crd_registration | eq "true" }}` - we could broaden the schema here to allow either bool or `enum: ["true", "false"]`?
 - DONE: use VFS for readonly without writing temp files
 - DONE: add some of the hard nats patch applying test cases.
 
