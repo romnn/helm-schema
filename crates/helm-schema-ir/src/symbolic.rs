@@ -1502,9 +1502,10 @@ impl ResourceDetector {
                 det.api_versions.insert(v);
             }
             if det.kind.is_none()
-                && let Some(v) = parse_literal_value(trimmed, "kind") {
-                    det.kind = Some(v);
-                }
+                && let Some(v) = parse_literal_value(trimmed, "kind")
+            {
+                det.kind = Some(v);
+            }
 
             if let Some(kind) = &det.kind {
                 let api_version = preferred_api_version(&det.api_versions).unwrap_or_default();
