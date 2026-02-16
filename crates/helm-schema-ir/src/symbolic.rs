@@ -1224,7 +1224,7 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn collect_range_guards(&mut self, header_text: &str, path: YamlPath) {
+    fn collect_range_guards(&mut self, header_text: &str, path: &YamlPath) {
         let values = extract_values_paths(header_text);
         for v in values {
             self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
@@ -1432,7 +1432,7 @@ impl<'a> SymbolicWalker<'a> {
             } else {
                 YamlPath(Vec::new())
             };
-            self.collect_range_guards(&txt, guard_path);
+            self.collect_range_guards(&txt, &guard_path);
         }
 
         // If the range header is a single `.Values.*` path, treat `.` inside the range body as an
