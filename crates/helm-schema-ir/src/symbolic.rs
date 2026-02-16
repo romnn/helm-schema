@@ -1153,6 +1153,17 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
         for v in values {
+            let in_sequence_item = path
+                .0
+                .last()
+                .map(std::string::String::as_str)
+                .is_some_and(|s| s.ends_with("[*]"));
+
+            let emit_path = if v.ends_with(".*") && !in_sequence_item {
+                YamlPath(Vec::new())
+            } else {
+                path.clone()
+            };
             if std::env::var("SYMBOLIC_DEBUG").is_ok()
                 && matches!(
                     v.as_str(),
@@ -1163,9 +1174,9 @@ impl<'a> SymbolicWalker<'a> {
                         | "commonLabels"
                 )
             {
-                eprintln!("symbolic: use={v} kind={kind:?} path={:?}", path.0);
+                eprintln!("symbolic: use={v} kind={kind:?} path={:?}", emit_path.0);
             }
-            self.emit_use(v, path.clone(), kind);
+            self.emit_use(v, emit_path, kind);
         }
 
         for v in bound_values {
@@ -1213,9 +1224,8 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn collect_range_guards(&mut self, header_text: &str) {
+    fn collect_range_guards(&mut self, header_text: &str, path: YamlPath) {
         let values = extract_values_paths(header_text);
-        let path = self.shape.current_path();
         for v in values {
             self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
             let g = Guard::Truthy { path: v };
@@ -1383,13 +1393,63 @@ impl<'a> SymbolicWalker<'a> {
         let saved_domains = self.range_domains.clone();
         let saved_bindings = self.get_bindings.clone();
 
-        self.dot_stack.push(None);
+        let mut header_text: Option<String> = None;
+        let mut has_variable_definition = false;
+        {
+            let mut w = node.walk();
+            for ch in node.named_children(&mut w) {
+                if ch.kind() == "range_variable_definition" {
+                    has_variable_definition = true;
+                    break;
+                }
+            }
+        }
+
+        let mut body_emits_sequence_item = false;
+        if !has_variable_definition {
+            for ch in Self::children_with_field(node, "body") {
+                if let Ok(txt) = ch.utf8_text(self.source.as_bytes()) {
+                    for line in txt.lines() {
+                        let t = line.trim_start();
+                        if t.starts_with("- ") || t == "-" {
+                            body_emits_sequence_item = true;
+                            break;
+                        }
+                    }
+                }
+                if body_emits_sequence_item {
+                    break;
+                }
+            }
+        }
         if let Some(txt) = self.range_header_text(node) {
+            header_text = Some(txt.clone());
             if let Some((var, lits)) = Self::parse_literal_list_range(&txt) {
                 self.range_domains.insert(var, lits);
             }
-            self.collect_range_guards(&txt);
+            let guard_path = if has_variable_definition || body_emits_sequence_item {
+                self.shape.current_path()
+            } else {
+                YamlPath(Vec::new())
+            };
+            self.collect_range_guards(&txt, guard_path);
         }
+
+        // If the range header is a single `.Values.*` path, treat `.` inside the range body as an
+        // item of that array and rewrite `.foo` to `.Values.<path>.*.foo`.
+        //
+        // This is a best-effort heuristic that improves inference for common patterns like:
+        //   {{- range .Values.someList }}
+        //     {{ .name }}
+        //   {{- end }}
+        let dot_prefix = header_text
+            .as_deref()
+            .map(extract_values_paths)
+            .filter(|v| v.len() == 1)
+            .and_then(|v| v.into_iter().next())
+            .map(|p| format!("{p}.*"));
+
+        self.dot_stack.push(dot_prefix);
 
         let body = Self::children_with_field(node, "body");
         for ch in body {

@@ -96,6 +96,13 @@ fn symbolic_ir_full() {
             "resource": ingress
         },
         {
+            "source_expr": "ingress.hosts.*.host",
+            "path": ["spec", "rules[*]", "host"],
+            "kind": "Scalar",
+            "guards": [t("ingress.enabled"), t("ingress.hosts")],
+            "resource": ingress
+        },
+        {
             "source_expr": "ingress.ingressClassName",
             "path": [],
             "kind": "Scalar",

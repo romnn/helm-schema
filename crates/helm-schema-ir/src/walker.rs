@@ -4,7 +4,7 @@ use crate::Guard;
 
 /// Extract `.Values.foo.bar` references → `["foo.bar"]`.
 pub fn extract_values_paths(text: &str) -> Vec<String> {
-    let re = Regex::new(r"\.Values\.([\w]+(?:\.[\w]+)*)").unwrap();
+    let re = Regex::new(r"\.Values\.([\w]+(?:\.(?:[\w]+|\*))*)").unwrap();
     let mut result: Vec<String> = re.captures_iter(text).map(|c| c[1].to_string()).collect();
     result.sort();
     result.dedup();

@@ -286,22 +286,41 @@ fn lookup_values_yaml_schema(doc: &YamlValue, vp: &str) -> Option<Value> {
     if parts.is_empty() {
         return None;
     }
-    let v = lookup_values_yaml_value(doc, &parts)?;
-    Some(schema_from_yaml_value(v))
+
+    let values = lookup_values_yaml_values(doc, &parts)?;
+    if values.is_empty() {
+        return None;
+    }
+
+    let schemas: Vec<Value> = values.into_iter().map(schema_from_yaml_value).collect();
+    Some(merge_schema_list(schemas))
 }
 
-fn lookup_values_yaml_value<'a>(doc: &'a YamlValue, parts: &[&str]) -> Option<&'a YamlValue> {
-    let mut cur = doc;
-    for p in parts {
-        match cur {
-            YamlValue::Mapping(m) => {
-                let k = YamlValue::String((*p).to_string());
-                cur = m.get(&k)?;
-            }
-            _ => return None,
-        }
+fn lookup_values_yaml_values<'a>(doc: &'a YamlValue, parts: &[&str]) -> Option<Vec<&'a YamlValue>> {
+    if parts.is_empty() {
+        return Some(vec![doc]);
     }
-    Some(cur)
+
+    let head = parts[0];
+    let tail = &parts[1..];
+
+    match doc {
+        YamlValue::Mapping(m) => {
+            let k = YamlValue::String(head.to_string());
+            let next = m.get(&k)?;
+            lookup_values_yaml_values(next, tail)
+        }
+        YamlValue::Sequence(seq) if head == "*" => {
+            let mut out: Vec<&'a YamlValue> = Vec::new();
+            for it in seq {
+                if let Some(mut child) = lookup_values_yaml_values(it, tail) {
+                    out.append(&mut child);
+                }
+            }
+            if out.is_empty() { None } else { Some(out) }
+        }
+        _ => None,
+    }
 }
 
 fn schema_from_yaml_value(v: &YamlValue) -> Value {

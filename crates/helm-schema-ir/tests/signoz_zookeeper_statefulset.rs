@@ -1877,6 +1877,78 @@ fn symbolic_ir_full() {
           {
             "path": "dataLogDir",
             "type": "truthy"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "truthy"
+          }
+        ],
+        "kind": "Scalar",
+        "path": [
+          "spec",
+          "volumeClaimTemplates[*]",
+          "spec",
+          "accessModes[*]"
+        ],
+        "resource": {
+          "api_version": "",
+          "kind": "StatefulSet"
+        },
+        "source_expr": "persistence.accessModes.*"
+      },
+      {
+        "guards": [
+          {
+            "path": "persistence.dataLogDir.existingClaim",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "not"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "truthy"
+          }
+        ],
+        "kind": "Scalar",
+        "path": [
+          "spec",
+          "volumeClaimTemplates[*]",
+          "spec",
+          "accessModes[*]"
+        ],
+        "resource": {
+          "api_version": "",
+          "kind": "StatefulSet"
+        },
+        "source_expr": "persistence.accessModes.*"
+      },
+      {
+        "guards": [
+          {
+            "path": "persistence.dataLogDir.existingClaim",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "truthy"
+          },
+          {
+            "path": "dataLogDir",
+            "type": "truthy"
           }
         ],
         "kind": "Scalar",
