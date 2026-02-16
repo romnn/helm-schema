@@ -103,7 +103,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.clientUser"
@@ -113,7 +113,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.enabled"
@@ -130,7 +130,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.enabled"
@@ -159,7 +159,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.serverUsers"
@@ -169,7 +169,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.enabled"
@@ -186,7 +186,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.enabled"
@@ -215,7 +215,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.learnerUser"
@@ -237,7 +237,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.serverUsers"
@@ -254,7 +254,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "autopurge.purgeInterval"
@@ -271,7 +271,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "autopurge.snapRetainCount"
@@ -281,7 +281,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "clusterDomain"
@@ -347,7 +347,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "configuration"
@@ -364,7 +364,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.client"
@@ -386,7 +386,7 @@ fn symbolic_ir_full() {
           "containerPort"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.client"
@@ -396,7 +396,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.election"
@@ -413,7 +413,7 @@ fn symbolic_ir_full() {
           "containerPort"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.election"
@@ -423,7 +423,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.follower"
@@ -440,7 +440,7 @@ fn symbolic_ir_full() {
           "containerPort"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.follower"
@@ -462,7 +462,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.tls"
@@ -484,7 +484,7 @@ fn symbolic_ir_full() {
           "containerPort"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.tls"
@@ -505,7 +505,7 @@ fn symbolic_ir_full() {
           "securityContext"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext"
@@ -539,6 +539,16 @@ fn symbolic_ir_full() {
         "source_expr": "containerSecurityContext"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": {
+          "api_version": "",
+          "kind": "StatefulSet"
+        },
+        "source_expr": "containerSecurityContext.enabled"
+      },
+      {
         "guards": [
           {
             "paths": [
@@ -552,16 +562,6 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
-          "kind": "StatefulSet"
-        },
-        "source_expr": "containerSecurityContext.enabled"
-      },
-      {
-        "guards": [],
-        "kind": "Scalar",
-        "path": [],
-        "resource": {
-          "api_version": "v1",
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext.enabled"
@@ -630,7 +630,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "customLivenessProbe"
@@ -655,7 +655,7 @@ fn symbolic_ir_full() {
           "livenessProbe"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "customLivenessProbe"
@@ -670,7 +670,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "customReadinessProbe"
@@ -695,7 +695,7 @@ fn symbolic_ir_full() {
           "readinessProbe"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "customReadinessProbe"
@@ -710,7 +710,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "customStartupProbe"
@@ -735,10 +735,43 @@ fn symbolic_ir_full() {
           "startupProbe"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "customStartupProbe"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": {
+          "api_version": "",
+          "kind": "StatefulSet"
+        },
+        "source_expr": "dataLogDir"
+      },
+      {
+        "guards": [
+          {
+            "path": "persistence.dataLogDir.existingClaim",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "truthy"
+          }
+        ],
+        "kind": "Scalar",
+        "path": [],
+        "resource": {
+          "api_version": "",
+          "kind": "StatefulSet"
+        },
+        "source_expr": "dataLogDir"
       },
       {
         "guards": [
@@ -762,39 +795,6 @@ fn symbolic_ir_full() {
       {
         "guards": [],
         "kind": "Scalar",
-        "path": [],
-        "resource": {
-          "api_version": "v1",
-          "kind": "StatefulSet"
-        },
-        "source_expr": "dataLogDir"
-      },
-      {
-        "guards": [
-          {
-            "path": "persistence.dataLogDir.existingClaim",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.existingClaim",
-            "type": "truthy"
-          }
-        ],
-        "kind": "Scalar",
-        "path": [],
-        "resource": {
-          "api_version": "v1",
-          "kind": "StatefulSet"
-        },
-        "source_expr": "dataLogDir"
-      },
-      {
-        "guards": [],
-        "kind": "Scalar",
         "path": [
           "spec",
           "template",
@@ -804,7 +804,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -826,7 +826,7 @@ fn symbolic_ir_full() {
           "mountPath"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -906,7 +906,7 @@ fn symbolic_ir_full() {
           "args"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.args"
@@ -927,7 +927,7 @@ fn symbolic_ir_full() {
           "command"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.command"
@@ -937,7 +937,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.enabled"
@@ -954,7 +954,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.enabled"
@@ -971,7 +971,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "existingConfigmap"
@@ -981,7 +981,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVars"
@@ -1002,7 +1002,7 @@ fn symbolic_ir_full() {
           "env"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVars"
@@ -1012,7 +1012,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsCM"
@@ -1030,7 +1030,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsCM"
@@ -1060,7 +1060,7 @@ fn symbolic_ir_full() {
           "name"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsCM"
@@ -1070,7 +1070,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsSecret"
@@ -1088,7 +1088,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsSecret"
@@ -1118,7 +1118,7 @@ fn symbolic_ir_full() {
           "name"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsSecret"
@@ -1128,7 +1128,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumeMounts"
@@ -1149,7 +1149,7 @@ fn symbolic_ir_full() {
           "volumeMounts"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumeMounts"
@@ -1159,7 +1159,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumes"
@@ -1179,7 +1179,7 @@ fn symbolic_ir_full() {
           "volumes"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumes"
@@ -1196,7 +1196,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "fourlwCommandsWhitelist"
@@ -1244,7 +1244,7 @@ fn symbolic_ir_full() {
           "storage"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "global"
@@ -1278,7 +1278,7 @@ fn symbolic_ir_full() {
           "storage"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "global"
@@ -1295,7 +1295,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "heapSize"
@@ -1349,7 +1349,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "image.debug"
@@ -1365,7 +1365,7 @@ fn symbolic_ir_full() {
           "imagePullPolicy"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "image.pullPolicy"
@@ -1399,7 +1399,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "initContainers"
@@ -1419,7 +1419,7 @@ fn symbolic_ir_full() {
           "initContainers"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "initContainers"
@@ -1436,7 +1436,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "initLimit"
@@ -1446,7 +1446,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "jvmFlags"
@@ -1468,7 +1468,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "jvmFlags"
@@ -1478,7 +1478,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "lifecycleHooks"
@@ -1499,7 +1499,7 @@ fn symbolic_ir_full() {
           "lifecycle"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "lifecycleHooks"
@@ -1516,7 +1516,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "listenOnAllIPs"
@@ -1533,7 +1533,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "logLevel"
@@ -1550,7 +1550,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "maxClientCnxns"
@@ -1567,7 +1567,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "maxSessionTimeout"
@@ -1589,7 +1589,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "metrics.containerPort"
@@ -1611,7 +1611,7 @@ fn symbolic_ir_full() {
           "containerPort"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "metrics.containerPort"
@@ -1621,7 +1621,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "metrics.enabled"
@@ -1631,7 +1631,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "minServerId"
@@ -1757,7 +1757,7 @@ fn symbolic_ir_full() {
           "storage"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence"
@@ -1791,7 +1791,7 @@ fn symbolic_ir_full() {
           "storage"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence"
@@ -1823,7 +1823,7 @@ fn symbolic_ir_full() {
           "accessModes"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.accessModes"
@@ -1855,7 +1855,7 @@ fn symbolic_ir_full() {
           "accessModes"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.accessModes"
@@ -1882,7 +1882,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -1909,7 +1909,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -1945,7 +1945,7 @@ fn symbolic_ir_full() {
           "annotations"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -1981,7 +1981,7 @@ fn symbolic_ir_full() {
           "annotations"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -1991,7 +1991,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.existingClaim"
@@ -2018,7 +2018,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.existingClaim"
@@ -2044,7 +2044,7 @@ fn symbolic_ir_full() {
           "claimName"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.existingClaim"
@@ -2071,7 +2071,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.selector"
@@ -2107,7 +2107,7 @@ fn symbolic_ir_full() {
           "selector"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.selector"
@@ -2141,7 +2141,7 @@ fn symbolic_ir_full() {
           "storage"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.size"
@@ -2157,16 +2157,6 @@ fn symbolic_ir_full() {
         "source_expr": "persistence.enabled"
       },
       {
-        "guards": [],
-        "kind": "Scalar",
-        "path": [],
-        "resource": {
-          "api_version": "v1",
-          "kind": "StatefulSet"
-        },
-        "source_expr": "persistence.enabled"
-      },
-      {
         "guards": [
           {
             "path": "persistence.dataLogDir.existingClaim",
@@ -2176,7 +2166,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.enabled"
@@ -2195,7 +2185,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2218,7 +2208,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2233,7 +2223,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2259,7 +2249,7 @@ fn symbolic_ir_full() {
           "claimName"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2286,7 +2276,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2313,7 +2303,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2349,7 +2339,7 @@ fn symbolic_ir_full() {
           "labels"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2385,7 +2375,7 @@ fn symbolic_ir_full() {
           "labels"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2412,7 +2402,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.selector"
@@ -2448,7 +2438,7 @@ fn symbolic_ir_full() {
           "selector"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.selector"
@@ -2482,7 +2472,7 @@ fn symbolic_ir_full() {
           "storage"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.size"
@@ -2688,7 +2678,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "preAllocSize"
@@ -2728,7 +2718,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "replicaCount"
@@ -2751,7 +2741,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "resources"
@@ -2772,7 +2762,7 @@ fn symbolic_ir_full() {
           "resources"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "resources"
@@ -2812,7 +2802,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "service.disableBaseClientPort"
@@ -2849,7 +2839,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "sidecars"
@@ -2869,7 +2859,7 @@ fn symbolic_ir_full() {
           "containers"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "sidecars"
@@ -2886,7 +2876,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "snapCount"
@@ -2903,7 +2893,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "syncLimit"
@@ -2920,7 +2910,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tickTime"
@@ -2942,7 +2932,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.auth"
@@ -2957,7 +2947,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.autoGenerated"
@@ -2968,16 +2958,6 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
-          "kind": "StatefulSet"
-        },
-        "source_expr": "tls.client.enabled"
-      },
-      {
-        "guards": [],
-        "kind": "Scalar",
-        "path": [],
-        "resource": {
-          "api_version": "v1",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.enabled"
@@ -2995,7 +2975,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.enabled"
@@ -3017,7 +2997,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.enabled"
@@ -3039,7 +3019,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.keystorePassword"
@@ -3061,7 +3041,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.keystorePath"
@@ -3090,7 +3070,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.passwordsSecretName"
@@ -3108,7 +3088,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.passwordsSecretName"
@@ -3130,7 +3110,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.truststorePassword"
@@ -3152,7 +3132,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.truststorePath"
@@ -3174,7 +3154,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.auth"
@@ -3189,7 +3169,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.autoGenerated"
@@ -3200,16 +3180,6 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
-          "kind": "StatefulSet"
-        },
-        "source_expr": "tls.quorum.enabled"
-      },
-      {
-        "guards": [],
-        "kind": "Scalar",
-        "path": [],
-        "resource": {
-          "api_version": "v1",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.enabled"
@@ -3227,7 +3197,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.enabled"
@@ -3249,7 +3219,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.enabled"
@@ -3271,7 +3241,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.keystorePassword"
@@ -3293,7 +3263,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.keystorePath"
@@ -3322,7 +3292,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.passwordsSecretName"
@@ -3340,7 +3310,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.passwordsSecretName"
@@ -3362,7 +3332,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.truststorePassword"
@@ -3384,7 +3354,7 @@ fn symbolic_ir_full() {
           "value"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.truststorePath"
@@ -3402,7 +3372,7 @@ fn symbolic_ir_full() {
         "kind": "Scalar",
         "path": [],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.resources"
@@ -3430,7 +3400,7 @@ fn symbolic_ir_full() {
           "resources"
         ],
         "resource": {
-          "api_version": "v1",
+          "api_version": "",
           "kind": "StatefulSet"
         },
         "source_expr": "tls.resources"

@@ -7,6 +7,55 @@ pub use upstream::UpstreamK8sSchemaProvider;
 use helm_schema_ir::{ResourceRef, ValueUse, YamlPath};
 use serde_json::Value;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SchemaWarning {
+    pub kind: String,
+    pub api_version: String,
+    pub k8s_version: String,
+    pub tried_filenames: Vec<String>,
+    pub available_in_cache_versions: Vec<String>,
+    pub suggested_k8s_version: Option<String>,
+    pub hint: Option<String>,
+}
+
+pub type WarningSink = std::sync::Arc<std::sync::Mutex<Vec<SchemaWarning>>>;
+
+impl std::fmt::Display for SchemaWarning {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.api_version.trim().is_empty() {
+            write!(
+                f,
+                "no upstream Kubernetes JSON schema found for {} (apiVersion unknown) in {}",
+                self.kind, self.k8s_version
+            )?;
+        } else {
+            write!(
+                f,
+                "no upstream Kubernetes JSON schema found for {} ({}) in {}",
+                self.kind, self.api_version, self.k8s_version
+            )?;
+        }
+
+        if !self.available_in_cache_versions.is_empty() {
+            write!(
+                f,
+                "; available in local cache for: {}",
+                self.available_in_cache_versions.join(", ")
+            )?;
+        }
+
+        if let Some(s) = &self.suggested_k8s_version {
+            write!(f, "; try --k8s-version {s}")?;
+        }
+
+        if let Some(h) = &self.hint {
+            write!(f, "; {h}")?;
+        }
+
+        Ok(())
+    }
+}
+
 fn api_version_rank(api_version: &str) -> (u8, u8, i32, i32) {
     // Lower is better.
     // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
@@ -158,6 +207,7 @@ pub fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
         out.push(format!("{kind}-{group_prefix}-{version}.json"));
     }
 
+    out.dedup();
     out
 }
 

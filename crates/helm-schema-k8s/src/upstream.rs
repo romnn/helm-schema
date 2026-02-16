@@ -6,7 +6,10 @@ use serde_json::{Map, Value};
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 
-use crate::{K8sSchemaProvider, candidate_filenames_for_resource, filename_for_resource};
+use crate::{
+    K8sSchemaProvider, SchemaWarning, WarningSink, candidate_filenames_for_resource,
+    filename_for_resource,
+};
 
 /// Fetches and caches Kubernetes JSON Schemas from the
 /// [yannh/kubernetes-json-schema](https://github.com/yannh/kubernetes-json-schema) repository.
@@ -17,7 +20,10 @@ pub struct UpstreamK8sSchemaProvider {
     pub allow_download: bool,
     pub base_url: String,
 
+    pub warning_sink: Option<WarningSink>,
+
     mem: std::sync::Mutex<HashMap<String, Value>>,
+    warned_missing: std::sync::Mutex<HashSet<(String, String)>>,
 }
 
 impl UpstreamK8sSchemaProvider {
@@ -30,7 +36,9 @@ impl UpstreamK8sSchemaProvider {
                 .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true")),
             base_url: "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
                 .to_string(),
+            warning_sink: None,
             mem: std::sync::Mutex::new(HashMap::new()),
+            warned_missing: std::sync::Mutex::new(HashSet::new()),
         }
     }
 
@@ -49,6 +57,12 @@ impl UpstreamK8sSchemaProvider {
     #[must_use]
     pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
         self.base_url = base_url.into();
+        self
+    }
+
+    #[must_use]
+    pub fn with_warning_sink(mut self, sink: WarningSink) -> Self {
+        self.warning_sink = Some(sink);
         self
     }
 
@@ -72,18 +86,18 @@ impl UpstreamK8sSchemaProvider {
             candidates.push(filename_for_resource(resource));
         }
 
-        for filename in candidates {
+        for filename in &candidates {
             let key = format!("{}/{}", self.version_dir, filename);
             if let Some(v) = self.mem.lock().ok()?.get(&key).cloned() {
-                return Some((filename, v));
+                return Some((filename.clone(), v));
             }
 
-            let local = self.local_path_for(&filename);
+            let local = self.local_path_for(filename);
             if !local.exists() {
                 if !self.allow_download {
                     continue;
                 }
-                if self.download_to_cache(&filename, &local).is_err() {
+                if self.download_to_cache(filename, &local).is_err() {
                     continue;
                 }
             }
@@ -93,14 +107,71 @@ impl UpstreamK8sSchemaProvider {
             if let Ok(mut guard) = self.mem.lock() {
                 guard.insert(key, v.clone());
             }
-            return Some((filename, v));
+            return Some((filename.clone(), v));
         }
 
         if resource.api_version.trim().is_empty() {
-            return self.load_resource_doc_by_kind_scan(&resource.kind);
+            if let Some(found) = self.load_resource_doc_by_kind_scan(&resource.kind) {
+                return Some(found);
+            }
         }
 
+        self.warn_missing_schema(resource, &candidates);
         None
+    }
+
+    fn warn_missing_schema(&self, resource: &ResourceRef, tried_filenames: &[String]) {
+        let Some(sink) = self.warning_sink.as_ref() else {
+            return;
+        };
+
+        let key = (resource.kind.clone(), resource.api_version.clone());
+        if let Ok(mut warned) = self.warned_missing.lock() {
+            if !warned.insert(key) {
+                return;
+            }
+        }
+
+        let mut available_in_cache_versions = Vec::new();
+        if let Ok(entries) = fs::read_dir(&self.cache_dir) {
+            for ent in entries.flatten() {
+                let path = ent.path();
+                if !path.is_dir() {
+                    continue;
+                }
+                let version = ent.file_name().to_string_lossy().to_string();
+                if version == self.version_dir {
+                    continue;
+                }
+
+                if tried_filenames
+                    .iter()
+                    .any(|f| self.cache_dir.join(&version).join(f).exists())
+                {
+                    available_in_cache_versions.push(version);
+                }
+            }
+        }
+        available_in_cache_versions.sort();
+        available_in_cache_versions.dedup();
+
+        let suggested_k8s_version = available_in_cache_versions.first().cloned();
+
+        let hint = missing_schema_hint(&self.version_dir, resource);
+
+        let w = SchemaWarning {
+            kind: resource.kind.clone(),
+            api_version: resource.api_version.clone(),
+            k8s_version: self.version_dir.clone(),
+            tried_filenames: tried_filenames.to_vec(),
+            available_in_cache_versions,
+            suggested_k8s_version,
+            hint,
+        };
+
+        if let Ok(mut guard) = sink.lock() {
+            guard.push(w);
+        }
     }
 
     fn load_resource_doc_by_kind_scan(&self, kind: &str) -> Option<(String, Value)> {
@@ -196,10 +267,38 @@ impl UpstreamK8sSchemaProvider {
     }
 }
 
+fn parse_k8s_semver(version_dir: &str) -> Option<(u32, u32, u32)> {
+    let v = version_dir.trim().trim_start_matches('v');
+    let v = v.split('-').next().unwrap_or(v);
+    let mut it = v.split('.');
+    let major = it.next()?.parse().ok()?;
+    let minor = it.next()?.parse().ok()?;
+    let patch = it.next().unwrap_or("0").parse().ok()?;
+    Some((major, minor, patch))
+}
+
+fn missing_schema_hint(version_dir: &str, resource: &ResourceRef) -> Option<String> {
+    let (major, minor, _patch) = parse_k8s_semver(version_dir)?;
+
+    if resource.kind == "HorizontalPodAutoscaler"
+        && resource.api_version == "autoscaling/v2beta1"
+        && major == 1
+        && minor >= 25
+    {
+        return Some(
+            "autoscaling/v2beta1 HorizontalPodAutoscaler was removed in Kubernetes v1.25+"
+                .to_string(),
+        );
+    }
+
+    None
+}
+
 impl K8sSchemaProvider for UpstreamK8sSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
         let (filename, root) = self.load_resource_doc(resource)?;
         let mut ctx = ResolveCtx::new(self, filename.clone(), root);
+
         let (leaf_filename, leaf) = schema_at_ypath(&mut ctx, &filename, path)?;
         let (_, expanded) = expand_schema_node(&mut ctx, &leaf_filename, &leaf, 0);
         Some(expanded)

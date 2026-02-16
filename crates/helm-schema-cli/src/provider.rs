@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
 use helm_schema_ir::{ResourceRef, YamlPath};
-use helm_schema_k8s::{CrdCatalogSchemaProvider, K8sSchemaProvider, UpstreamK8sSchemaProvider};
+use helm_schema_k8s::{
+    CrdCatalogSchemaProvider, K8sSchemaProvider, UpstreamK8sSchemaProvider, WarningSink,
+};
 use serde_json::Value;
 
 use crate::error::{CliError, CliResult};
@@ -15,7 +17,10 @@ pub struct ProviderOptions {
     pub crd_catalog_dir: Option<PathBuf>,
 }
 
-pub fn build_provider(opts: &ProviderOptions) -> CliResult<Box<dyn K8sSchemaProvider>> {
+pub fn build_provider(
+    opts: &ProviderOptions,
+    warning_sink: Option<WarningSink>,
+) -> CliResult<Box<dyn K8sSchemaProvider>> {
     let mut providers: Vec<Box<dyn K8sSchemaProvider>> = Vec::new();
 
     if let Some(dir) = &opts.crd_catalog_dir {
@@ -28,6 +33,10 @@ pub fn build_provider(opts: &ProviderOptions) -> CliResult<Box<dyn K8sSchemaProv
     if !opts.disable_k8s_schemas {
         let mut upstream = UpstreamK8sSchemaProvider::new(opts.k8s_version.clone())
             .with_allow_download(opts.allow_net);
+
+        if let Some(sink) = warning_sink.clone() {
+            upstream = upstream.with_warning_sink(sink);
+        }
 
         if let Some(dir) = &opts.k8s_schema_cache_dir {
             upstream = upstream.with_cache_dir(dir);

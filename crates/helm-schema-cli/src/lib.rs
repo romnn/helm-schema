@@ -10,6 +10,7 @@ use clap::{Args, Parser};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{Guard, IrGenerator, SymbolicIrGenerator, ValueUse};
+use helm_schema_k8s::WarningSink;
 use serde_json::Value;
 use vfs::VfsPath;
 
@@ -107,7 +108,8 @@ pub fn run(cli: Cli) -> CliResult<()> {
         },
     };
 
-    let mut schema = generate_values_schema_for_chart(&opts)?;
+    let warnings: WarningSink = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let mut schema = generate_values_schema_for_chart_with_warnings(&opts, Some(warnings.clone()))?;
 
     if let Some(path) = cli.override_schema {
         let override_schema = load_json_file(&path)?;
@@ -119,6 +121,12 @@ pub fn run(cli: Cli) -> CliResult<()> {
     } else {
         serde_json::to_vec_pretty(&schema)?
     };
+
+    if let Ok(guard) = warnings.lock() {
+        for w in guard.iter() {
+            eprintln!("warning: {w}");
+        }
+    }
 
     if let Some(path) = cli.output.output {
         if let Some(parent) = path.parent() {
@@ -152,6 +160,13 @@ pub fn run(cli: Cli) -> CliResult<()> {
 /// Returns an error if charts cannot be discovered, files cannot be read, or
 /// templates/values cannot be parsed.
 pub fn generate_values_schema_for_chart(opts: &GenerateOptions) -> CliResult<Value> {
+    generate_values_schema_for_chart_with_warnings(opts, None)
+}
+
+pub fn generate_values_schema_for_chart_with_warnings(
+    opts: &GenerateOptions,
+    warning_sink: Option<WarningSink>,
+) -> CliResult<Value> {
     let discovery = chart::discover_chart_contexts(&opts.chart_dir)?;
     let charts = &discovery.charts;
 
@@ -161,7 +176,7 @@ pub fn generate_values_schema_for_chart(opts: &GenerateOptions) -> CliResult<Val
 
     let uses = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
 
-    let provider = provider::build_provider(&opts.provider)?;
+    let provider = provider::build_provider(&opts.provider, warning_sink)?;
 
     Ok(generate_values_schema_with_values_yaml(
         &uses,

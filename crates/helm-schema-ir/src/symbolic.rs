@@ -1413,6 +1413,7 @@ struct ResourceDetector {
     kind: Option<String>,
     api_versions: BTreeSet<String>,
     current: Option<ResourceRef>,
+    header_done: bool,
     buf: String,
 }
 
@@ -1495,16 +1496,43 @@ impl ResourceDetector {
                 det.kind = None;
                 det.api_versions.clear();
                 det.current = None;
+                det.header_done = false;
                 return;
             }
 
-            if let Some(v) = parse_literal_value(trimmed, "apiVersion") {
-                det.api_versions.insert(v);
+            if indent != 0 {
+                return;
             }
-            if det.kind.is_none()
-                && let Some(v) = parse_literal_value(trimmed, "kind")
-            {
-                det.kind = Some(v);
+
+            // Only consider resource identity fields (`apiVersion`/`kind`) in the document
+            // header before we've entered the first top-level object (e.g. `metadata:`, `spec:`).
+            // This avoids picking up nested keys like `fieldRef.apiVersion: v1`.
+            if det.header_done {
+                if det.kind.is_none() {
+                    if let Some(v) = parse_literal_value(trimmed, "kind") {
+                        det.kind = Some(v);
+                    }
+                }
+            } else {
+                if det.kind.is_none() {
+                    if let Some(v) = parse_literal_value(trimmed, "apiVersion") {
+                        det.api_versions.insert(v);
+                    }
+                }
+
+                if det.kind.is_none()
+                    && let Some(v) = parse_literal_value(trimmed, "kind")
+                {
+                    det.kind = Some(v);
+                }
+
+                // Once we see any other top-level key, stop scanning for apiVersion/kind.
+                if det.kind.is_some()
+                    && !trimmed.starts_with("apiVersion")
+                    && !trimmed.starts_with("kind")
+                {
+                    det.header_done = true;
+                }
             }
 
             if let Some(kind) = &det.kind {
