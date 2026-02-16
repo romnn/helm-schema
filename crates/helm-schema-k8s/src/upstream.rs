@@ -110,10 +110,10 @@ impl UpstreamK8sSchemaProvider {
             return Some((filename.clone(), v));
         }
 
-        if resource.api_version.trim().is_empty() {
-            if let Some(found) = self.load_resource_doc_by_kind_scan(&resource.kind) {
-                return Some(found);
-            }
+        if resource.api_version.trim().is_empty()
+            && let Some(found) = self.load_resource_doc_by_kind_scan(&resource.kind)
+        {
+            return Some(found);
         }
 
         self.warn_missing_schema(resource, &candidates);
@@ -126,10 +126,10 @@ impl UpstreamK8sSchemaProvider {
         };
 
         let key = (resource.kind.clone(), resource.api_version.clone());
-        if let Ok(mut warned) = self.warned_missing.lock() {
-            if !warned.insert(key) {
-                return;
-            }
+        if let Ok(mut warned) = self.warned_missing.lock()
+            && !warned.insert(key)
+        {
+            return;
         }
 
         let mut available_in_cache_versions = Vec::new();

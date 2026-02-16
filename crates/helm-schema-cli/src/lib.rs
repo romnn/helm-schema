@@ -109,7 +109,7 @@ pub fn run(cli: Cli) -> CliResult<()> {
     };
 
     let warnings: WarningSink = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-    let mut schema = generate_values_schema_for_chart_with_warnings(&opts, Some(warnings.clone()))?;
+    let mut schema = generate_values_schema_for_chart_with_warnings(&opts, Some(&warnings))?;
 
     if let Some(path) = cli.override_schema {
         let override_schema = load_json_file(&path)?;
@@ -163,9 +163,19 @@ pub fn generate_values_schema_for_chart(opts: &GenerateOptions) -> CliResult<Val
     generate_values_schema_for_chart_with_warnings(opts, None)
 }
 
+/// Generate a values JSON schema for a full Helm chart, collecting warnings.
+///
+/// This walks the root chart and all vendored dependencies under `charts/`,
+/// collects `.Values.*` usages across all manifest templates, and produces a
+/// single JSON schema.
+///
+/// # Errors
+///
+/// Returns an error if charts cannot be discovered, files cannot be read, or
+/// templates/values cannot be parsed.
 pub fn generate_values_schema_for_chart_with_warnings(
     opts: &GenerateOptions,
-    warning_sink: Option<WarningSink>,
+    warning_sink: Option<&WarningSink>,
 ) -> CliResult<Value> {
     let discovery = chart::discover_chart_contexts(&opts.chart_dir)?;
     let charts = &discovery.charts;

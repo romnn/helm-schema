@@ -1422,140 +1422,140 @@ impl ResourceDetector {
         self.current.clone()
     }
 
-    fn ingest(&mut self, text: &str) {
-        fn api_version_rank(api_version: &str) -> (u8, i32) {
-            // Lower is better.
-            // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
-            // For the second component, we prefer higher major versions.
-            let (_, ver) = api_version.split_once('/').unwrap_or(("", api_version));
+    fn api_version_rank(api_version: &str) -> (u8, i32) {
+        // Lower is better.
+        // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
+        // For the second component, we prefer higher major versions.
+        let (_, ver) = api_version.split_once('/').unwrap_or(("", api_version));
 
-            let stability = if ver.contains("alpha") {
-                2u8
-            } else if ver.contains("beta") {
-                1u8
-            } else if ver.starts_with('v')
-                && ver[1..].chars().next().is_some_and(|c| c.is_ascii_digit())
-                && ver[1..].chars().all(|c| c.is_ascii_digit())
+        let stability = if ver.contains("alpha") {
+            2u8
+        } else if ver.contains("beta") {
+            1u8
+        } else if ver.starts_with('v')
+            && ver[1..].chars().next().is_some_and(|c| c.is_ascii_digit())
+            && ver[1..].chars().all(|c| c.is_ascii_digit())
+        {
+            0u8
+        } else {
+            3u8
+        };
+
+        let major = ver
+            .strip_prefix('v')
+            .and_then(|s| {
+                s.chars()
+                    .take_while(char::is_ascii_digit)
+                    .collect::<String>()
+                    .parse::<i32>()
+                    .ok()
+            })
+            .unwrap_or(0);
+
+        (stability, -major)
+    }
+
+    fn preferred_api_version(api_versions: &BTreeSet<String>) -> Option<String> {
+        api_versions
+            .iter()
+            .min_by_key(|v| Self::api_version_rank(v))
+            .cloned()
+    }
+
+    fn parse_literal_value(line: &str, key: &str) -> Option<String> {
+        let rest = line.strip_prefix(key)?;
+        let rest = rest.trim_start();
+        let rest = rest.strip_prefix(':')?.trim_start();
+        if rest.is_empty() {
+            return None;
+        }
+        if rest.contains("{{") {
+            return None;
+        }
+        let val = rest
+            .trim_matches('"')
+            .trim_matches('\'')
+            .split_whitespace()
+            .next()
+            .unwrap_or("")
+            .to_string();
+        if val.is_empty() { None } else { Some(val) }
+    }
+
+    fn process_line(det: &mut ResourceDetector, line: &str) {
+        let line = line.trim_end_matches('\r');
+        let indent = line.chars().take_while(|&c| c == ' ').count();
+        let after = &line[indent..];
+        let trimmed = after.trim_end();
+
+        if trimmed.is_empty() {
+            return;
+        }
+        if trimmed == "---" || trimmed == "..." {
+            det.kind = None;
+            det.api_versions.clear();
+            det.current = None;
+            det.header_done = false;
+            return;
+        }
+
+        if indent != 0 {
+            return;
+        }
+
+        // Only consider resource identity fields (`apiVersion`/`kind`) in the document
+        // header before we've entered the first top-level object (e.g. `metadata:`, `spec:`).
+        // This avoids picking up nested keys like `fieldRef.apiVersion: v1`.
+        if det.header_done {
+            if det.kind.is_none()
+                && let Some(v) = Self::parse_literal_value(trimmed, "kind")
             {
-                0u8
-            } else {
-                3u8
-            };
+                det.kind = Some(v);
+            }
+        } else {
+            if det.kind.is_none()
+                && let Some(v) = Self::parse_literal_value(trimmed, "apiVersion")
+            {
+                det.api_versions.insert(v);
+            }
 
-            let major = ver
-                .strip_prefix('v')
-                .and_then(|s| {
-                    s.chars()
-                        .take_while(char::is_ascii_digit)
-                        .collect::<String>()
-                        .parse::<i32>()
-                        .ok()
-                })
-                .unwrap_or(0);
+            if det.kind.is_none()
+                && let Some(v) = Self::parse_literal_value(trimmed, "kind")
+            {
+                det.kind = Some(v);
+            }
 
-            (stability, -major)
+            // Once we see any other top-level key, stop scanning for apiVersion/kind.
+            if det.kind.is_some()
+                && !trimmed.starts_with("apiVersion")
+                && !trimmed.starts_with("kind")
+            {
+                det.header_done = true;
+            }
         }
 
-        fn preferred_api_version(api_versions: &BTreeSet<String>) -> Option<String> {
-            api_versions
+        if let Some(kind) = &det.kind {
+            let api_version = Self::preferred_api_version(&det.api_versions).unwrap_or_default();
+            let api_version_candidates = det
+                .api_versions
                 .iter()
-                .min_by_key(|v| api_version_rank(v))
+                .filter(|v| **v != api_version)
                 .cloned()
+                .collect::<Vec<_>>();
+            det.current = Some(ResourceRef {
+                api_version,
+                kind: kind.clone(),
+                api_version_candidates,
+            });
         }
+    }
 
-        fn parse_literal_value(line: &str, key: &str) -> Option<String> {
-            let rest = line.strip_prefix(key)?;
-            let rest = rest.trim_start();
-            let rest = rest.strip_prefix(':')?.trim_start();
-            if rest.is_empty() {
-                return None;
-            }
-            if rest.contains("{{") {
-                return None;
-            }
-            let val = rest
-                .trim_matches('"')
-                .trim_matches('\'')
-                .split_whitespace()
-                .next()
-                .unwrap_or("")
-                .to_string();
-            if val.is_empty() { None } else { Some(val) }
-        }
-
-        fn process_line(det: &mut ResourceDetector, line: &str) {
-            let line = line.trim_end_matches('\r');
-            let indent = line.chars().take_while(|&c| c == ' ').count();
-            let after = &line[indent..];
-            let trimmed = after.trim_end();
-
-            if trimmed.is_empty() {
-                return;
-            }
-            if trimmed == "---" || trimmed == "..." {
-                det.kind = None;
-                det.api_versions.clear();
-                det.current = None;
-                det.header_done = false;
-                return;
-            }
-
-            if indent != 0 {
-                return;
-            }
-
-            // Only consider resource identity fields (`apiVersion`/`kind`) in the document
-            // header before we've entered the first top-level object (e.g. `metadata:`, `spec:`).
-            // This avoids picking up nested keys like `fieldRef.apiVersion: v1`.
-            if det.header_done {
-                if det.kind.is_none() {
-                    if let Some(v) = parse_literal_value(trimmed, "kind") {
-                        det.kind = Some(v);
-                    }
-                }
-            } else {
-                if det.kind.is_none() {
-                    if let Some(v) = parse_literal_value(trimmed, "apiVersion") {
-                        det.api_versions.insert(v);
-                    }
-                }
-
-                if det.kind.is_none()
-                    && let Some(v) = parse_literal_value(trimmed, "kind")
-                {
-                    det.kind = Some(v);
-                }
-
-                // Once we see any other top-level key, stop scanning for apiVersion/kind.
-                if det.kind.is_some()
-                    && !trimmed.starts_with("apiVersion")
-                    && !trimmed.starts_with("kind")
-                {
-                    det.header_done = true;
-                }
-            }
-
-            if let Some(kind) = &det.kind {
-                let api_version = preferred_api_version(&det.api_versions).unwrap_or_default();
-                let api_version_candidates = det
-                    .api_versions
-                    .iter()
-                    .filter(|v| **v != api_version)
-                    .cloned()
-                    .collect::<Vec<_>>();
-                det.current = Some(ResourceRef {
-                    api_version,
-                    kind: kind.clone(),
-                    api_version_candidates,
-                });
-            }
-        }
-
+    fn ingest(&mut self, text: &str) {
         self.buf.push_str(text);
         while let Some(nl) = self.buf.find('\n') {
             let line = self.buf[..nl].to_string();
             self.buf.drain(..=nl);
-            process_line(self, &line);
+            Self::process_line(self, &line);
         }
     }
 }

@@ -19,7 +19,7 @@ pub struct ProviderOptions {
 
 pub fn build_provider(
     opts: &ProviderOptions,
-    warning_sink: Option<WarningSink>,
+    warning_sink: Option<&WarningSink>,
 ) -> CliResult<Box<dyn K8sSchemaProvider>> {
     let mut providers: Vec<Box<dyn K8sSchemaProvider>> = Vec::new();
 
@@ -34,8 +34,8 @@ pub fn build_provider(
         let mut upstream = UpstreamK8sSchemaProvider::new(opts.k8s_version.clone())
             .with_allow_download(opts.allow_net);
 
-        if let Some(sink) = warning_sink.clone() {
-            upstream = upstream.with_warning_sink(sink);
+        if let Some(sink) = warning_sink {
+            upstream = upstream.with_warning_sink(sink.clone());
         }
 
         if let Some(dir) = &opts.k8s_schema_cache_dir {
