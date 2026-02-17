@@ -5,7 +5,7 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
-use helm_schema_k8s::UpstreamK8sSchemaProvider;
+use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
 const TEMPLATE_PATH: &str =
     "charts/zalando-postgres-operator/templates/postgres-pod-priority-class.yaml";
@@ -28,7 +28,7 @@ fn schema_fused_rust() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
@@ -75,7 +75,7 @@ fn schema_validates_values_yaml() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = UpstreamK8sSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);

@@ -186,7 +186,7 @@ pub fn generate_values_schema_for_chart_with_warnings(
 
     let uses = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
 
-    let provider = provider::build_provider(&opts.provider, warning_sink)?;
+    let provider = provider::build_provider(&opts.provider, warning_sink);
 
     Ok(generate_values_schema_with_values_yaml(
         &uses,

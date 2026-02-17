@@ -14,7 +14,7 @@ use crate::{
 /// Fetches and caches Kubernetes JSON Schemas from the
 /// [yannh/kubernetes-json-schema](https://github.com/yannh/kubernetes-json-schema) repository.
 #[derive(Debug)]
-pub struct UpstreamK8sSchemaProvider {
+pub struct KubernetesJsonSchemaProvider {
     pub version_dir: String,
     pub cache_dir: PathBuf,
     pub allow_download: bool,
@@ -26,7 +26,7 @@ pub struct UpstreamK8sSchemaProvider {
     warned_missing: std::sync::Mutex<HashSet<(String, String)>>,
 }
 
-impl UpstreamK8sSchemaProvider {
+impl KubernetesJsonSchemaProvider {
     pub fn new(version_dir: impl Into<String>) -> Self {
         Self {
             version_dir: version_dir.into(),
@@ -294,7 +294,7 @@ fn missing_schema_hint(version_dir: &str, resource: &ResourceRef) -> Option<Stri
     None
 }
 
-impl K8sSchemaProvider for UpstreamK8sSchemaProvider {
+impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
         let (filename, root) = self.load_resource_doc(resource)?;
         let mut ctx = ResolveCtx::new(self, filename.clone(), root);
@@ -310,14 +310,14 @@ impl K8sSchemaProvider for UpstreamK8sSchemaProvider {
 // ---------------------------------------------------------------------------
 
 struct ResolveCtx<'a> {
-    provider: &'a UpstreamK8sSchemaProvider,
+    provider: &'a KubernetesJsonSchemaProvider,
     docs: HashMap<String, Value>,
     stack: HashSet<(String, String)>,
 }
 
 impl<'a> ResolveCtx<'a> {
     fn new(
-        provider: &'a UpstreamK8sSchemaProvider,
+        provider: &'a KubernetesJsonSchemaProvider,
         root_filename: String,
         root_doc: Value,
     ) -> Self {

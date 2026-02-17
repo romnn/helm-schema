@@ -1,8 +1,10 @@
-mod crd_catalog;
-mod upstream;
+mod crds_catalog;
+mod kubernetes_json_schema;
+mod local;
 
-pub use crd_catalog::CrdCatalogSchemaProvider;
-pub use upstream::UpstreamK8sSchemaProvider;
+pub use crds_catalog::CrdsCatalogSchemaProvider;
+pub use kubernetes_json_schema::KubernetesJsonSchemaProvider;
+pub use local::LocalSchemaProvider;
 
 use helm_schema_ir::{ResourceRef, ValueUse, YamlPath};
 use serde_json::Value;

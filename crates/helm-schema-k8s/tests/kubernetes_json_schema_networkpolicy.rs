@@ -1,10 +1,10 @@
 use helm_schema_ir::{ResourceRef, YamlPath};
-use helm_schema_k8s::{K8sSchemaProvider, UpstreamK8sSchemaProvider};
+use helm_schema_k8s::{K8sSchemaProvider, KubernetesJsonSchemaProvider};
 
 #[test]
 #[allow(clippy::too_many_lines)]
 fn materialize_networkpolicy_v1_35() {
-    let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
 
@@ -190,7 +190,7 @@ fn materialize_networkpolicy_v1_35() {
 
 #[test]
 fn networkpolicy_leaf_schema_matchlabels() {
-    let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
 
@@ -222,7 +222,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
 
 #[test]
 fn networkpolicy_by_kind_scan_when_api_version_missing() {
-    let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
 

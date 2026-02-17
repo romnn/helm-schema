@@ -5,7 +5,7 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
-use helm_schema_k8s::{UpstreamK8sSchemaProvider, WarningSink};
+use helm_schema_k8s::{KubernetesJsonSchemaProvider, WarningSink};
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -33,7 +33,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
 
     let warnings: WarningSink = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
-    let provider = UpstreamK8sSchemaProvider::new("v1.35.0")
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false)
         .with_warning_sink(warnings.clone());
@@ -115,7 +115,7 @@ fn schema_fused_rust() {
     // Upstream Kubernetes removed autoscaling/v2beta1 for HorizontalPodAutoscaler in newer
     // releases, so we must validate/generate against an upstream schema bundle that still
     // contains that apiVersion.
-    let provider = UpstreamK8sSchemaProvider::new("v1.24.0").with_allow_download(true);
+    let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
@@ -152,7 +152,7 @@ fn schema_validates_values_yaml() {
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     // See comment in `schema_fused_rust`.
-    let provider = UpstreamK8sSchemaProvider::new("v1.24.0").with_allow_download(true);
+    let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
@@ -195,7 +195,7 @@ fn rendered_hpa_validates_against_upstream_k8s_schema() {
     // The Surveyor chart template hardcodes autoscaling/v2beta1, which was removed from newer
     // Kubernetes releases, so we validate it against an upstream schema bundle where
     // autoscaling/v2beta1 is still present.
-    let provider = UpstreamK8sSchemaProvider::new("v1.24.0").with_allow_download(true);
+    let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
     let schema = provider
         .materialize_schema_for_resource(&resource)
         .expect("load upstream k8s schema for rendered resource");

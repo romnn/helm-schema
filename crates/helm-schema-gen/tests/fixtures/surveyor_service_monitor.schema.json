@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "fullnameOverride": {
+      "type": "string"
+    },
+    "nameOverride": {
+      "type": "string"
+    },
+    "serviceMonitor": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "metricRelabelings": {
+          "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+          "items": {
+            "additionalProperties": false,
+            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+            "properties": {
+              "action": {
+                "default": "replace",
+                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                "enum": [
+                  "replace",
+                  "Replace",
+                  "keep",
+                  "Keep",
+                  "drop",
+                  "Drop",
+                  "hashmod",
+                  "HashMod",
+                  "labelmap",
+                  "LabelMap",
+                  "labeldrop",
+                  "LabelDrop",
+                  "labelkeep",
+                  "LabelKeep",
+                  "lowercase",
+                  "Lowercase",
+                  "uppercase",
+                  "Uppercase",
+                  "keepequal",
+                  "KeepEqual",
+                  "dropequal",
+                  "DropEqual"
+                ],
+                "type": "string"
+              },
+              "modulus": {
+                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "regex": {
+                "description": "regex defines the regular expression against which the extracted value is matched.",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                "type": "string"
+              },
+              "separator": {
+                "description": "separator defines the string between concatenated SourceLabels.",
+                "type": "string"
+              },
+              "sourceLabels": {
+                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                "items": {
+                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "targetLabel": {
+                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "relabelings": {
+          "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+          "items": {
+            "additionalProperties": false,
+            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+            "properties": {
+              "action": {
+                "default": "replace",
+                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                "enum": [
+                  "replace",
+                  "Replace",
+                  "keep",
+                  "Keep",
+                  "drop",
+                  "Drop",
+                  "hashmod",
+                  "HashMod",
+                  "labelmap",
+                  "LabelMap",
+                  "labeldrop",
+                  "LabelDrop",
+                  "labelkeep",
+                  "LabelKeep",
+                  "lowercase",
+                  "Lowercase",
+                  "uppercase",
+                  "Uppercase",
+                  "keepequal",
+                  "KeepEqual",
+                  "dropequal",
+                  "DropEqual"
+                ],
+                "type": "string"
+              },
+              "modulus": {
+                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "regex": {
+                "description": "regex defines the regular expression against which the extracted value is matched.",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                "type": "string"
+              },
+              "separator": {
+                "description": "separator defines the string between concatenated SourceLabels.",
+                "type": "string"
+              },
+              "sourceLabels": {
+                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                "items": {
+                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "targetLabel": {
+                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "scrapeTimeout": {
+          "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

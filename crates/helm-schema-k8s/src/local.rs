@@ -1,52 +1,44 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 use helm_schema_ir::{ResourceRef, YamlPath};
-use serde::Deserialize;
 use serde_json::Value;
 
 use crate::K8sSchemaProvider;
 
 #[derive(Debug, Clone)]
-pub struct CrdCatalogSchemaProvider {
+pub struct LocalSchemaProvider {
     root_dir: PathBuf,
-    index: HashMap<String, HashMap<String, String>>, // apiVersion -> kind -> filename
 }
 
-impl CrdCatalogSchemaProvider {
-    pub fn new(root_dir: impl Into<PathBuf>) -> Option<Self> {
-        let root_dir = root_dir.into();
-        let index_path = root_dir.join("index.yaml");
-        let bytes = std::fs::read(&index_path).ok()?;
-        let index_yaml: IndexYaml = serde_yaml::from_slice(&bytes).ok()?;
-
-        let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
-        for (_group, entries) in index_yaml.0 {
-            for e in entries {
-                index
-                    .entry(e.api_version.clone())
-                    .or_default()
-                    .insert(e.kind.clone(), e.filename.clone());
-            }
+impl LocalSchemaProvider {
+    #[must_use]
+    pub fn new(root_dir: impl Into<PathBuf>) -> Self {
+        Self {
+            root_dir: root_dir.into(),
         }
-
-        Some(Self { root_dir, index })
     }
 
-    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<Value> {
+    fn relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
         let api_version = resource.api_version.trim();
         let kind = resource.kind.trim();
         if api_version.is_empty() || kind.is_empty() {
             return None;
         }
 
-        let filename = self
-            .index
-            .get(api_version)
-            .and_then(|m| m.get(kind))
-            .cloned()?;
+        let (group, version) = api_version.split_once('/')?;
+        let group = group.trim();
+        let version = version.trim();
+        if group.is_empty() || version.is_empty() {
+            return None;
+        }
 
-        let local = self.root_dir.join(filename);
+        let kind_lc = kind.to_ascii_lowercase();
+        Some(format!("{group}/{kind_lc}_{version}.json"))
+    }
+
+    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<Value> {
+        let relative = Self::relative_path_for_resource(resource)?;
+        let local = self.root_dir.join(relative);
         let bytes = std::fs::read(local).ok()?;
         let doc: Value = serde_json::from_slice(&bytes).ok()?;
         Some(doc)
@@ -60,25 +52,14 @@ impl CrdCatalogSchemaProvider {
     }
 }
 
-impl K8sSchemaProvider for CrdCatalogSchemaProvider {
+impl K8sSchemaProvider for LocalSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
         let root = self.materialize_schema_for_resource(resource)?;
         descend_schema_path(&root, &path.0)
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct IndexEntry {
-    #[serde(rename = "apiVersion")]
-    api_version: String,
-    filename: String,
-    kind: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct IndexYaml(HashMap<String, Vec<IndexEntry>>);
-
-fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
+pub(crate) fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
     let mut current = schema.clone();
     for seg in path {
         current = descend_one(&current, seg)?;
@@ -130,7 +111,7 @@ fn descend_one(schema: &Value, seg: &str) -> Option<Value> {
     Some(next)
 }
 
-fn expand_local_refs(
+pub(crate) fn expand_local_refs(
     root: &Value,
     schema: &Value,
     depth: usize,

@@ -26,9 +26,6 @@ pub enum CliError {
     #[error("no Chart.yaml found in archive {archive}")]
     NoChartYamlInArchive { archive: String },
 
-    #[error("failed to load CRD catalog from {dir}")]
-    CrdCatalogLoad { dir: String },
-
     #[error("failed to create output directory {path}")]
     CreateOutputDir {
         path: PathBuf,

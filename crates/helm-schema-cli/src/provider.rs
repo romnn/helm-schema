@@ -2,11 +2,10 @@ use std::path::PathBuf;
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
-    CrdCatalogSchemaProvider, K8sSchemaProvider, UpstreamK8sSchemaProvider, WarningSink,
+    CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
+    LocalSchemaProvider, WarningSink,
 };
 use serde_json::Value;
-
-use crate::error::{CliError, CliResult};
 
 #[derive(Debug, Clone)]
 pub struct ProviderOptions {
@@ -20,18 +19,19 @@ pub struct ProviderOptions {
 pub fn build_provider(
     opts: &ProviderOptions,
     warning_sink: Option<&WarningSink>,
-) -> CliResult<Box<dyn K8sSchemaProvider>> {
+) -> Box<dyn K8sSchemaProvider> {
     let mut providers: Vec<Box<dyn K8sSchemaProvider>> = Vec::new();
 
     if let Some(dir) = &opts.crd_catalog_dir {
-        let p = CrdCatalogSchemaProvider::new(dir).ok_or_else(|| CliError::CrdCatalogLoad {
-            dir: dir.display().to_string(),
-        })?;
-        providers.push(Box::new(p));
+        providers.push(Box::new(LocalSchemaProvider::new(dir)));
     }
 
+    providers.push(Box::new(
+        CrdsCatalogSchemaProvider::new().with_allow_download(opts.allow_net),
+    ));
+
     if !opts.disable_k8s_schemas {
-        let mut upstream = UpstreamK8sSchemaProvider::new(opts.k8s_version.clone())
+        let mut upstream = KubernetesJsonSchemaProvider::new(opts.k8s_version.clone())
             .with_allow_download(opts.allow_net);
 
         if let Some(sink) = warning_sink {
@@ -49,7 +49,7 @@ pub fn build_provider(
         providers.push(Box::new(NullProvider));
     }
 
-    Ok(Box::new(MultiProvider { providers }))
+    Box::new(MultiProvider { providers })
 }
 
 struct NullProvider;

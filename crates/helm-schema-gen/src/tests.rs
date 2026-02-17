@@ -1,7 +1,7 @@
 use crate::{DefaultValuesSchemaGenerator, ValuesSchemaGenerator};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
-use helm_schema_k8s::UpstreamK8sSchemaProvider;
+use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
 /// Simple template produces correct schema structure.
 #[test]
@@ -14,7 +14,7 @@ replicas: {{ .Values.replicas }}
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
-    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
+    let provider = KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
         .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
     let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
@@ -42,7 +42,7 @@ key: {{ .Values.feature.name }}
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
-    let provider = UpstreamK8sSchemaProvider::new("v1.29.0-standalone-strict")
+    let provider = KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
         .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
         .with_allow_download(false);
     let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
