@@ -14,9 +14,7 @@ replicas: {{ .Values.replicas }}
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
-        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
-        .with_allow_download(false);
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
 
     let expected = serde_json::json!({
@@ -42,9 +40,7 @@ key: {{ .Values.feature.name }}
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
-        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
-        .with_allow_download(false);
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = DefaultValuesSchemaGenerator.generate(&ir, &provider);
 
     let expected = serde_json::json!({

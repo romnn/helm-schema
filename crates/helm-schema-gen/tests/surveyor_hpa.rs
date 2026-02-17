@@ -34,8 +34,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let warnings: WarningSink = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
-        .with_cache_dir(test_util::workspace_testdata().join("kubernetes-json-schema"))
-        .with_allow_download(false)
+        .with_allow_download(true)
         .with_warning_sink(warnings.clone());
 
     let _schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
