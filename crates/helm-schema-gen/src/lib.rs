@@ -510,6 +510,119 @@ fn is_array_like_schema(v: &Value) -> bool {
     }
 }
 
+fn union_key(obj: &Map<String, Value>) -> Option<&'static str> {
+    if obj.get("anyOf").and_then(Value::as_array).is_some() {
+        Some("anyOf")
+    } else if obj.get("oneOf").and_then(Value::as_array).is_some() {
+        Some("oneOf")
+    } else {
+        None
+    }
+}
+
+fn take_union_variants(obj: &mut Map<String, Value>, key: &str) -> Option<Vec<Value>> {
+    let Value::Array(variants) = obj.remove(key).unwrap_or_else(|| Value::Array(Vec::new())) else {
+        return None;
+    };
+    Some(variants)
+}
+
+fn push_union_structural_constraints_down(obj: &mut Map<String, Value>, variants: &mut [Value]) {
+    let structural_keys = [
+        "type",
+        "properties",
+        "additionalProperties",
+        "patternProperties",
+        "required",
+        "items",
+    ];
+    let mut structural = Map::new();
+    for k in structural_keys {
+        if let Some(v) = obj.remove(k) {
+            structural.insert(k.to_string(), v);
+        }
+    }
+
+    if structural.is_empty() {
+        return;
+    }
+
+    let structural_schema = Value::Object(structural);
+    for v in variants {
+        let compatible = if is_array_like_schema(&structural_schema) {
+            is_array_like_schema(v)
+        } else {
+            is_object_like_schema(v)
+        };
+
+        if compatible {
+            let existing = std::mem::replace(v, Value::Null);
+            *v = merge_two_schemas(existing, structural_schema.clone());
+        }
+    }
+}
+
+fn insert_schema_into_union_variants(
+    variants: &mut [Value],
+    parts: &[&str],
+    leaf: &Value,
+    required: bool,
+) -> bool {
+    let head = parts[0];
+    let mut touched = false;
+    for v in variants {
+        let compatible = if head == "*" {
+            is_array_like_schema(v)
+        } else {
+            is_object_like_schema(v)
+        };
+
+        if compatible {
+            insert_schema_at_parts(v, parts, leaf.clone(), required);
+            touched = true;
+        }
+    }
+    touched
+}
+
+fn new_union_variant_for_head(head: &str) -> Value {
+    if head == "*" {
+        Value::Object(
+            [
+                ("type".to_string(), Value::String("array".to_string())),
+                ("items".to_string(), Value::Null),
+            ]
+            .into_iter()
+            .collect(),
+        )
+    } else {
+        object_schema(Map::new())
+    }
+}
+
+fn insert_schema_at_union(
+    obj: &mut Map<String, Value>,
+    key: &'static str,
+    parts: &[&str],
+    leaf: Value,
+    required: bool,
+) {
+    let Some(mut variants) = take_union_variants(obj, key) else {
+        return;
+    };
+
+    push_union_structural_constraints_down(obj, &mut variants);
+
+    let touched = insert_schema_into_union_variants(&mut variants, parts, &leaf, required);
+    if !touched {
+        let mut new_variant = new_union_variant_for_head(parts[0]);
+        insert_schema_at_parts(&mut new_variant, parts, leaf, required);
+        variants.push(new_variant);
+    }
+
+    obj.insert(key.to_string(), Value::Array(variants));
+}
+
 fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, required: bool) {
     if parts.is_empty() {
         return;
@@ -518,97 +631,11 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, require
     // Union-aware insertion: when a value path is a union (e.g. `anyOf: [object, string]`),
     // inserting nested schemas must update the appropriate variant(s) rather than forcing the
     // union node itself into an object/array schema.
-    if let Value::Object(obj) = node {
-        let union_key = if obj.get("anyOf").and_then(Value::as_array).is_some() {
-            Some("anyOf")
-        } else if obj.get("oneOf").and_then(Value::as_array).is_some() {
-            Some("oneOf")
-        } else {
-            None
-        };
-
-        if let Some(key) = union_key {
-            let Value::Array(mut variants) = obj
-                .remove(key)
-                .unwrap_or_else(|| Value::Array(Vec::new()))
-            else {
-                return;
-            };
-
-            // If the union node has accumulated structural constraints (e.g. from earlier
-            // insertions that assumed an object/array), push those constraints down into
-            // compatible variants and remove them from the union node.
-            //
-            // In JSON Schema, `anyOf`/`oneOf` is combined with sibling keywords via AND, so a
-            // union node like `{ type: object, additionalProperties: false, anyOf: [object, string] }`
-            // accidentally forbids the string variant and/or rejects object properties.
-            let structural_keys = [
-                "type",
-                "properties",
-                "additionalProperties",
-                "patternProperties",
-                "required",
-                "items",
-            ];
-            let mut structural = Map::new();
-            for k in structural_keys {
-                if let Some(v) = obj.remove(k) {
-                    structural.insert(k.to_string(), v);
-                }
-            }
-            if !structural.is_empty() {
-                let structural_schema = Value::Object(structural);
-                for v in variants.iter_mut() {
-                    let compatible = if is_array_like_schema(&structural_schema) {
-                        is_array_like_schema(v)
-                    } else {
-                        is_object_like_schema(v)
-                    };
-
-                    if compatible {
-                        let existing = std::mem::replace(v, Value::Null);
-                        *v = merge_two_schemas(existing, structural_schema.clone());
-                    }
-                }
-            }
-
-            let head = parts[0];
-            let mut touched = false;
-            for v in variants.iter_mut() {
-                let compatible = if head == "*" {
-                    is_array_like_schema(v)
-                } else {
-                    // property segment or map wildcard: requires object-ish schema
-                    is_object_like_schema(v)
-                };
-
-                if compatible {
-                    insert_schema_at_parts(v, parts, leaf.clone(), required);
-                    touched = true;
-                }
-            }
-
-            if !touched {
-                let mut new_variant = if head == "*" {
-                    Value::Object(
-                        [
-                            ("type".to_string(), Value::String("array".to_string())),
-                            ("items".to_string(), Value::Null),
-                        ]
-                        .into_iter()
-                        .collect(),
-                    )
-                } else {
-                    object_schema(Map::new())
-                };
-
-                insert_schema_at_parts(&mut new_variant, parts, leaf, required);
-                variants.push(new_variant);
-            }
-
-            obj.insert(key.to_string(), Value::Array(variants));
-            return;
-        }
+    if let Value::Object(obj) = node
+        && let Some(key) = union_key(obj)
+    {
+        insert_schema_at_union(obj, key, parts, leaf, required);
+        return;
     }
 
     if parts[0] == MAP_WILDCARD_SEGMENT {

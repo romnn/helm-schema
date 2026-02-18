@@ -5,10 +5,10 @@ use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_f
 use serde_json::Value;
 use vfs::VfsPath;
 
-fn chart_dir(chart: &str) -> std::result::Result<VfsPath, Report> {
+fn chart_dir(chart: &str) -> VfsPath {
     let chart_dir = test_util::workspace_testdata().join("charts").join(chart);
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
-    Ok(VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str)))
+    VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str))
 }
 
 fn read_values_yaml(chart_dir: &VfsPath) -> std::result::Result<String, Report> {
@@ -60,7 +60,7 @@ fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<String>
 pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<(), Report> {
     let _guard = test_util::builder().with_tracing(false).build();
 
-    let chart_dir = chart_dir(chart).wrap_err("chart_dir")?;
+    let chart_dir = chart_dir(chart);
 
     let opts = GenerateOptions {
         chart_dir: chart_dir.clone(),
@@ -69,11 +69,14 @@ pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<()
         provider: ProviderOptions {
             k8s_version: "v1.29.0-standalone-strict".to_string(),
             k8s_schema_cache_dir: Some(
-                test_util::workspace_root().join("deprecated/crates/helm-schema-mapper/testdata/kubernetes-json-schema"),
+                test_util::workspace_root()
+                    .join("deprecated/crates/helm-schema-mapper/testdata/kubernetes-json-schema"),
             ),
             allow_net: false,
             disable_k8s_schemas: false,
-            crd_catalog_dir: Some(test_util::workspace_root().join("target/helm-schema-test-crds-catalog-cache")),
+            crd_catalog_dir: Some(
+                test_util::workspace_root().join("target/helm-schema-test-crds-catalog-cache"),
+            ),
         },
     };
 
