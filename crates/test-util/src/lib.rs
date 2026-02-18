@@ -43,7 +43,9 @@ pub fn workspace_testdata() -> PathBuf {
 #[must_use]
 pub fn read_testdata(relative_path: &str) -> String {
     let path = workspace_testdata().join(relative_path);
-    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
+    let s =
+        std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+    s.replace("\r\n", "\n")
 }
 
 /// Reads all files with the given extension from a directory relative to
@@ -61,7 +63,7 @@ pub fn read_testdata_dir(relative_dir: &str, extension: &str) -> Vec<String> {
         if entry.path().extension().is_some_and(|e| e == extension)
             && let Ok(content) = std::fs::read_to_string(entry.path())
         {
-            out.push(content);
+            out.push(content.replace("\r\n", "\n"));
         }
     }
     out

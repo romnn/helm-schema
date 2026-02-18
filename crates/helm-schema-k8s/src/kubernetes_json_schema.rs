@@ -97,13 +97,25 @@ impl KubernetesJsonSchemaProvider {
                 if !self.allow_download {
                     continue;
                 }
-                if self.download_to_cache(filename, &local).is_err() {
+                if self.download_to_cache(filename, &local).is_err() && !local.exists() {
                     continue;
                 }
             }
 
-            let bytes = fs::read(&local).ok()?;
-            let v: Value = serde_json::from_slice(&bytes).ok()?;
+            let Ok(bytes) = fs::read(&local) else {
+                continue;
+            };
+            let mut v_res = serde_json::from_slice::<Value>(&bytes);
+            if v_res.is_err() && self.allow_download {
+                let _ = fs::remove_file(&local);
+                let _ = self.download_to_cache(filename, &local);
+                if let Ok(bytes) = fs::read(&local) {
+                    v_res = serde_json::from_slice::<Value>(&bytes);
+                }
+            }
+            let Ok(v) = v_res else {
+                continue;
+            };
             if let Ok(mut guard) = self.mem.lock() {
                 guard.insert(key, v.clone());
             }
@@ -257,13 +269,26 @@ impl KubernetesJsonSchemaProvider {
         let url = format!("{}/{}/{}", self.base_url, self.version_dir, filename);
         let resp = ureq::get(&url).call()?;
         let mut reader = resp.into_body().into_reader();
-        let tmp = local.with_extension("json.tmp");
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let tmp = local.with_extension(format!("json.tmp.{}.{}", std::process::id(), unique));
         {
             let mut f = fs::File::create(&tmp)?;
             std::io::copy(&mut reader, &mut f)?;
         }
-        fs::rename(&tmp, local)?;
-        Ok(())
+        match fs::rename(&tmp, local) {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                if local.exists() {
+                    let _ = fs::remove_file(&tmp);
+                    Ok(())
+                } else {
+                    Err(Box::new(e))
+                }
+            }
+        }
     }
 }
 
