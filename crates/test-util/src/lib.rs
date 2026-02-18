@@ -1,21 +1,78 @@
-use color_eyre::eyre;
+use std::path::PathBuf;
 use std::sync::Once;
+
+use color_eyre::eyre;
 use vfs::VfsPath;
+
+pub mod sexpr;
 
 pub mod prelude {
     pub use crate::matchers::*;
+    pub use crate::sexpr::{ParseError as SExprParseError, SExpr};
     pub use crate::write;
     pub use crate::{Builder, LogLevel};
     pub use googletest::{assert_that, matcher::MatcherBase, matchers::*};
     pub use similar_asserts::assert_eq as sim_assert_eq;
 }
 
-// fn str_paths<'a>(paths: impl IntoIterator<Item = &'a VfsPath>) -> Vec<&'a str> {
-//     paths.into_iter().map(|p| p.as_str()).collect()
-// }
+/// Returns the workspace root directory via the `CARGO_WORKSPACE_DIR` env var
+/// set in `.cargo/config.toml`.
+///
+/// # Panics
+///
+/// Panics if `CARGO_WORKSPACE_DIR` is not set.
+#[must_use]
+pub fn workspace_root() -> PathBuf {
+    PathBuf::from(
+        std::env::var("CARGO_WORKSPACE_DIR")
+            .expect("CARGO_WORKSPACE_DIR must be set in .cargo/config.toml"),
+    )
+}
 
+/// Returns the path to the workspace `testdata/` directory.
+#[must_use]
+pub fn workspace_testdata() -> PathBuf {
+    workspace_root().join("testdata")
+}
+
+/// Reads a file relative to the workspace `testdata/` directory.
+///
+/// # Panics
+///
+/// Panics if the file cannot be read.
+#[must_use]
+pub fn read_testdata(relative_path: &str) -> String {
+    let path = workspace_testdata().join(relative_path);
+    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
+}
+
+/// Reads all files with the given extension from a directory relative to
+/// the workspace `testdata/` directory.
+///
+/// Returns an empty `Vec` if the directory does not exist.
+#[must_use]
+pub fn read_testdata_dir(relative_dir: &str, extension: &str) -> Vec<String> {
+    let dir = workspace_testdata().join(relative_dir);
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for entry in entries.flatten() {
+        if entry.path().extension().is_some_and(|e| e == extension)
+            && let Ok(content) = std::fs::read_to_string(entry.path())
+        {
+            out.push(content);
+        }
+    }
+    out
+}
+
+/// Write `data` into the virtual filesystem at `path`, creating parent directories as needed.
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be created or written to.
 pub fn write(path: &VfsPath, data: impl AsRef<[u8]>) -> eyre::Result<VfsPath> {
-    // let path: &VfsPath = path.as_ref();
     let _ = path.parent().create_dir_all();
     let mut file = path.create_file()?;
     file.write_all(data.as_ref())?;
@@ -57,9 +114,13 @@ impl Default for Builder {
 }
 
 impl Builder {
-    /// Initialize test
+    /// Initialize test.
     ///
     /// This ensures `color_eyre` is setup once and env variables are read.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `color_eyre` installation fails.
     pub fn build(self) -> TestGuard {
         let test_guard = TestGuard::default();
 
@@ -87,24 +148,21 @@ impl Builder {
     }
 
     /// Toggle setting up tracing inside the test.
+    #[must_use]
     pub fn with_tracing(mut self, enabled: bool) -> Self {
         self.setup_tracing = enabled;
         self
     }
 
     /// Toggle log level for tracing inside the test.
+    #[must_use]
     pub fn with_log_level(mut self, log_level: impl Into<LogLevel>) -> Self {
         self.log_level = log_level.into();
         self
     }
 
-    // /// Set color choice for tracing.
-    // pub fn with_color_choice(mut self, color_choice: impl Into<ColorChoice>) -> Self {
-    //     self.color_choice = color_choice.into();
-    //     self
-    // }
-
     /// Toggle installation of `color_eyre`.
+    #[must_use]
     pub fn with_eyre(mut self, enabled: bool) -> Self {
         self.install_eyre = enabled;
         self
@@ -113,7 +171,7 @@ impl Builder {
     /// Configure the tracing subscribers env filter.
     ///
     /// Requires tracing to be enabled with `Self::with_tracing`.
-    // pub fn with_env_filter(mut self, filter: Option<impl Into<String>>) -> Self {
+    #[must_use]
     pub fn with_env_filter(mut self, filter: impl Into<String>) -> Self {
         self.env_filter = Some(filter.into());
         self
@@ -121,21 +179,24 @@ impl Builder {
 }
 
 /// Create a new builder.
+#[must_use]
 pub fn builder() -> Builder {
     Builder::default()
 }
 
 pub mod matchers {
-    use googletest::matchers::*;
+    use googletest::matchers::{ContainsMatcher, contains, predicate};
     use vfs::VfsPath;
 
-    pub fn contains_path<'a>(
-        path: &'a str,
-    ) -> ContainsMatcher<impl googletest::matcher::Matcher<&'a VfsPath>> {
+    #[must_use]
+    pub fn contains_path(
+        path: &str,
+    ) -> ContainsMatcher<impl googletest::matcher::Matcher<&VfsPath>> {
         contains(matches_path(path))
     }
 
-    pub fn matches_path<'a>(path: &'a str) -> impl googletest::matcher::Matcher<&'a VfsPath> {
+    #[must_use]
+    pub fn matches_path(path: &str) -> impl googletest::matcher::Matcher<&VfsPath> {
         predicate(move |p: &VfsPath| p.as_str() == path)
     }
 }

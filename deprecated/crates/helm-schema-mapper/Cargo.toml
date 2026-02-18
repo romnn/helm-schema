@@ -1,0 +1,51 @@
+[package]
+name = "helm-schema-mapper"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[dependencies]
+color-eyre.workspace = true
+thiserror.workspace = true
+
+# error diagnostics
+miette = { version = "7", features = ["fancy"] }
+
+# regex
+regex = "1"
+
+# colors
+owo-colors = "4"
+
+# serialization
+serde.workspace = true
+serde_yaml.workspace = true
+serde_json.workspace = true
+
+# optional HTTP downloader for upstream kubernetes-json-schema cache
+ureq = { version = "3", default-features = true }
+
+# virtual file system
+vfs.workspace = true
+
+# template parser
+tree-sitter.workspace = true
+helm-schema-template.workspace = true
+helm-schema-template-grammar.workspace = true
+
+# fused yaml+helm parser
+yaml-rust.workspace = true
+
+# chart loader/model
+helm-schema-chart.workspace = true
+
+[dev-dependencies]
+color-eyre.workspace = true
+test-util.workspace = true
+indoc.workspace = true
+similar-asserts = "1"

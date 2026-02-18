@@ -1,0 +1,700 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "commonAnnotations": {
+      "additionalProperties": false,
+      "properties": {
+        "spec": {
+          "properties": {
+            "replicas": {
+              "type": "integer"
+            },
+            "template": {
+              "properties": {
+                "spec": {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAntiAffinity": {
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "containers": {
+                      "items": {
+                        "properties": {
+                          "image": {
+                            "type": "string"
+                          },
+                          "imagePullPolicy": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ports": {
+                            "items": {
+                              "properties": {
+                                "containerPort": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "securityContext": {
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "type": "boolean"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "volumeMounts": {
+                            "items": {
+                              "properties": {
+                                "mountPath": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "initContainers": {
+                      "items": {
+                        "properties": {
+                          "image": {
+                            "type": "string"
+                          },
+                          "imagePullPolicy": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ports": {
+                            "items": {
+                              "properties": {
+                                "containerPort": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "securityContext": {
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "type": "boolean"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "volumeMounts": {
+                            "items": {
+                              "properties": {
+                                "mountPath": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "securityContext": {
+                      "properties": {
+                        "runAsNonRoot": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "volumes": {
+                      "items": {
+                        "properties": {
+                          "emptyDir": {
+                            "type": "object"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "containers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "image": {
+            "type": "string"
+          },
+          "imagePullPolicy": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ports": {
+            "items": {
+              "properties": {
+                "containerPort": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "securityContext": {
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "type": "boolean"
+              },
+              "readOnlyRootFilesystem": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "volumeMounts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "mountPath": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "extraConfig": {
+      "type": "string"
+    },
+    "extraLabels": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "initContainers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "image": {
+            "type": "string"
+          },
+          "imagePullPolicy": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ports": {
+            "items": {
+              "properties": {
+                "containerPort": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "securityContext": {
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "type": "boolean"
+              },
+              "readOnlyRootFilesystem": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "volumeMounts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "mountPath": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "podAnnotations": {
+      "additionalProperties": false,
+      "properties": {
+        "spec": {
+          "properties": {
+            "replicas": {
+              "type": "integer"
+            },
+            "template": {
+              "properties": {
+                "spec": {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAntiAffinity": {
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "containers": {
+                      "items": {
+                        "properties": {
+                          "image": {
+                            "type": "string"
+                          },
+                          "imagePullPolicy": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ports": {
+                            "items": {
+                              "properties": {
+                                "containerPort": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "securityContext": {
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "type": "boolean"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "volumeMounts": {
+                            "items": {
+                              "properties": {
+                                "mountPath": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "initContainers": {
+                      "items": {
+                        "properties": {
+                          "image": {
+                            "type": "string"
+                          },
+                          "imagePullPolicy": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ports": {
+                            "items": {
+                              "properties": {
+                                "containerPort": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "securityContext": {
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "type": "boolean"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "volumeMounts": {
+                            "items": {
+                              "properties": {
+                                "mountPath": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "securityContext": {
+                      "properties": {
+                        "runAsNonRoot": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "volumes": {
+                      "items": {
+                        "properties": {
+                          "emptyDir": {
+                            "type": "object"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "podExtra": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeSelector": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "spec": {
+          "properties": {
+            "replicas": {
+              "type": "integer"
+            },
+            "template": {
+              "properties": {
+                "spec": {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAntiAffinity": {
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "containers": {
+                      "items": {
+                        "properties": {
+                          "image": {
+                            "type": "string"
+                          },
+                          "imagePullPolicy": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ports": {
+                            "items": {
+                              "properties": {
+                                "containerPort": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "securityContext": {
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "type": "boolean"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "volumeMounts": {
+                            "items": {
+                              "properties": {
+                                "mountPath": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "initContainers": {
+                      "items": {
+                        "properties": {
+                          "image": {
+                            "type": "string"
+                          },
+                          "imagePullPolicy": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ports": {
+                            "items": {
+                              "properties": {
+                                "containerPort": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "securityContext": {
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "type": "boolean"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "volumeMounts": {
+                            "items": {
+                              "properties": {
+                                "mountPath": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "securityContext": {
+                      "properties": {
+                        "runAsNonRoot": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "volumes": {
+                      "items": {
+                        "properties": {
+                          "emptyDir": {
+                            "type": "object"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tolerations": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "replicaCount": {
+      "type": "integer"
+    },
+    "secret": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "stringData": {
+          "additionalProperties": false,
+          "properties": {
+            "password": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "volumes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "emptyDir": {
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "commonAnnotations",
+    "extraConfig",
+    "podAnnotations",
+    "replicaCount"
+  ],
+  "type": "object"
+}

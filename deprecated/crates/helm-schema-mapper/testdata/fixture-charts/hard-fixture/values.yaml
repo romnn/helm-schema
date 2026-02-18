@@ -1,0 +1,54 @@
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: "1.25"
+
+podExtra:
+  nodeSelector:
+    kubernetes.io/os: linux
+  tolerations:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "batch"
+      effect: "NoSchedule"
+
+extraLabels:
+  team: platform
+  tier: backend
+
+commonAnnotations:
+  owner: "team-a"
+
+podAnnotations:
+  checksum/config: "abc123"
+
+extraConfig: |
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: "{{ .Release.Name }}-embedded"
+  data:
+    value: "{{ .Values.replicaCount }}"
+
+initContainers:
+  - name: init-one
+    image: busybox
+    volumeMounts:
+      - name: data
+        mountPath: /data
+
+containers:
+  - name: main
+    volumeMounts:
+      - name: data
+        mountPath: /data
+
+volumes:
+  - name: data
+    emptyDir: {}
+
+secret:
+  enabled: true
+  stringData:
+    password: "changeme"

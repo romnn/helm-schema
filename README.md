@@ -41,6 +41,48 @@ Below is a concrete, implementable plan for a Rust CLI that does what you want: 
    * **Transforms**: `toYaml`, `quote`, `tpl`, `include`, `nindent`, `merge`, etc. (as abstract ops with partial semantics)
    * **Context**: dot (`.`) rebinding via `with`/`range`, captured variables (`$`, loop vars).
 
+## Interpreting VYT IR snapshots (`*.ir.json`)
+
+Some tests write an IR snapshot file like:
+
+`crates/helm-schema-mapper/tests/snapshots/signoz-otel-gateway.ir.json`
+
+This snapshot is an ordered list of "value uses" discovered by the VYT (Values-YAML-Template) interpreter while walking Helm templates.
+
+Each entry has the following meaning:
+
+- **`source_expr`**
+  The `.Values` path that was read, normalized to a dot-separated path (for example, `replicaCount`, `config.create`).
+  For `range` loops, you may see a wildcard form like `args.*`, meaning "an element of the list at `args`".
+- **`path`**
+  The YAML location in the rendered Kubernetes manifest where that value is used.
+  This is a best-effort path reconstructed from indentation and YAML keys in the template.
+  Arrays are shown using `[*]` (for example `containers[*].securityContext`, `volumeMounts[*]`).
+  An empty path (`""`) typically means "this value was used in a control-flow header or assignment", not at a concrete YAML field.
+- **`kind`**
+  - `Scalar`: a "direct" value read (string/number/bool) or a presence check.
+  - `Fragment`: the value is treated as a YAML fragment injected into the document (for example `toYaml .Values.resources | nindent 12`).
+    In practice you may see both a `Fragment` and a `Scalar` entry for the same `source_expr` and `path`; the mapper can use the `Fragment` signal to treat the value as structured YAML.
+- **`guards`**
+  A stack of `.Values` paths that were active guard conditions at the time the use was recorded.
+  Typical sources are `if .Values.x` / `with .Values.x` / `range .Values.x`.
+  Example: inside `{{- with .Values.affinity }}` all reads in the block will include `affinity` in `guards`.
+- **`resource`**
+  Best-effort detection of the Kubernetes resource (`apiVersion`, `kind`) for the current YAML document.
+  This is used later to enrich types from Kubernetes JSON schemas.
+
+Manual verification workflow:
+
+- **Step 1**: pick a template (for example `.../templates/deployment.yaml`).
+- **Step 2**: find `.Values` references (including inside `with`/`if`/`range`).
+- **Step 3**: confirm the IR contains matching `source_expr` entries.
+- **Step 4**: confirm `path` matches the YAML field being populated.
+  - Example: `replicas: {{ .Values.replicaCount }}` should yield `source_expr=replicaCount` and `path=spec.replicas`.
+  - Example: `{{- with .Values.nodeSelector }} nodeSelector: {{- toYaml . | nindent 8 }} {{- end }}` should yield a guarded entry with `source_expr=nodeSelector` and `path=nodeSelector`.
+- **Step 5**: sanity-check `kind`:
+  - `toYaml`/`fromYaml` patterns usually imply `Fragment`.
+  - inline scalars like `replicas: {{ ... }}` are `Scalar`.
+
 4. **K8s/CRD schema provider**
 
    * Local cache of **kubernetes-json-schema** (yannh fork), version selected via a flag (`--k8s 1.30.0`) or inferred from `.Capabilities.KubeVersion` if specified. ([GitHub][4])

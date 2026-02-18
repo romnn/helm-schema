@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "spec": {
+      "type": "object",
+      "properties": {
+        "replicas": {"type": "integer"},
+        "template": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "type": "object",
+              "properties": {
+                "securityContext": {
+                  "$ref": "defs.json#/definitions/PodSecurityContext"
+                },
+                "affinity": {"$ref": "defs.json#/definitions/Affinity"},
+                "volumes": {
+                  "type": "array",
+                  "items": {"$ref": "defs.json#/definitions/Volume"}
+                },
+                "initContainers": {
+                  "type": "array",
+                  "items": {"$ref": "defs.json#/definitions/Container"}
+                },
+                "containers": {
+                  "type": "array",
+                  "items": {"$ref": "defs.json#/definitions/Container"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

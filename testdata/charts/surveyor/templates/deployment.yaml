@@ -1,0 +1,236 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "surveyor.fullname" . }}
+  labels:
+    {{- include "surveyor.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "surveyor.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "surveyor.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "surveyor.serviceAccountName" . }}
+      {{- if hasKey .Values "automountServiceAccountToken" }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "surveyor.image" .Values.image }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - -p
+            - "7777"
+           {{- with .Values.config }}
+           {{- with .credentials }}
+            - --creds=/creds/{{ .secret.key }}
+           {{- end }}
+
+           {{- with .nkey }}
+            - --nkey=/nkey/{{ .secret.key }}
+           {{- end }}
+
+           {{- with .servers }}
+            - -s={{ . }}
+           {{- end }}
+
+           {{- with .accounts }}
+            - --accounts
+           {{- end }}
+
+           {{- with .accountsDetailed }}
+            - --accounts-detailed
+           {{- end }}
+
+           {{- with .jsz }}
+            - --jsz={{ . }}
+           {{- end }}
+
+           {{- if .jszLeadersOnly }}
+            - --jsz-leaders-only
+           {{- end }}
+
+           {{- with .timeout }}
+            - --timeout={{ . }}
+           {{- end }}
+
+           {{- with .expectedServers }}
+            - -c={{ . }}
+           {{- end }}
+
+           {{- with .tls }}
+           {{- if .ca }}
+            - --tlscacert=/etc/nats-certs/clients/{{ .ca }}
+           {{- end }}
+            - --tlskey=/etc/nats-certs/clients/{{ .key }}
+            - --tlscert=/etc/nats-certs/clients/{{ .cert }}
+           {{- end }}
+
+           {{- with .tokenFile }}
+           {{- if .enabled }}
+            - --token-file={{ .mountPath }}/{{ .filename }}
+           {{- end }}
+           {{- end }}
+           {{- end }}
+
+           {{- if .Values.config.jetstream.enabled }}
+            - --jetstream=/jetstream
+           {{- end }}
+          ports:
+            - name: http
+              containerPort: 7777
+              protocol: TCP
+          env:
+            {{- if .Values.config.user }}
+            - name: NATS_SURVEYOR_USER
+              value: {{ .Values.config.user }}
+            {{- end }}
+            {{- if .Values.config.password }}
+            - name: NATS_SURVEYOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.password.secret.name }}
+                  key: {{ .Values.config.password.secret.key }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          volumeMounts:
+            {{- with .Values.config.credentials }}
+            - name: creds
+              mountPath: /creds/
+              readOnly: true
+            {{- end }}
+            {{- with .Values.config.nkey }}
+            - name: nkey
+              mountPath: /nkey/
+              readOnly: true
+            {{- end }}
+            {{- with .Values.config.tls }}
+            - name: {{ .secret.name }}-volume
+              mountPath: /etc/nats-certs/clients/
+              readOnly: true
+            {{- end }}
+
+            {{- if .Values.config.jetstream.enabled }}
+            {{- with .Values.config.jetstream.accounts }}
+
+            {{- range . }}
+            # Mount every account tls certificate
+            {{- if .tls }}
+            - name: {{ .tls.secret.name }}-volume
+              mountPath: /etc/nats-certs/accounts/{{ .name }}
+            {{- end }}
+            {{- end }}
+
+            # Mount accounts configmap
+            - name: accounts-config-map
+              mountPath: /jetstream
+            {{- end }}
+            {{- end }}
+
+            {{- with .Values.config.tokenFile }}
+            {{- if .enabled }}
+            - name: {{ default "nats-token" .volumeName }}
+              mountPath: {{ .mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- end }}
+
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12}}
+            {{- end }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        {{- with .Values.config.credentials }}
+        - name: creds
+          secret:
+            secretName: {{ .secret.name }}
+        {{- end }}
+        {{- with .Values.config.nkey }}
+        - name: nkey
+          secret:
+            secretName: {{ .secret.name }}
+        {{- end }}
+        {{- with .Values.config.tls }}
+        - name: {{ .secret.name }}-volume
+          secret:
+            secretName: {{ .secret.name }}
+        {{- end }}
+
+        {{- if .Values.config.jetstream.enabled }}
+        {{- with .Values.config.jetstream.accounts }}
+
+        {{- range . }}
+        # Mount every account tls certificate
+        {{- with .tls }}
+        - name: {{ .secret.name }}-volume
+          secret:
+            secretName: {{ .secret.name }}
+        {{- end }}
+        {{- end }}
+
+        # Mount accounts configmap
+        - name: accounts-config-map
+          configMap:
+            name: {{ include "surveyor.fullname" $ }}-accounts
+        {{- end }}
+        {{- end }}
+
+        {{- with .Values.config.tokenFile }}
+        {{- if .enabled }}
+        - name: {{ default "nats-token" .volumeName }}
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: {{ .filename }}
+                  {{- if .audience }}
+                  audience: {{ .audience }}
+                  {{- end }}
+                  {{- if .expirationSeconds }}
+                  expirationSeconds: {{ .expirationSeconds }}
+                  {{- end }}
+        {{- end }}
+        {{- end }}
+
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

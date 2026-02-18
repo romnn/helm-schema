@@ -9,21 +9,28 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+[[bin]]
+name = "helm-schema"
+path = "src/main.rs"
+
 [dependencies]
-color-eyre.workspace = true
-
-# virtual file system
-vfs.workspace = true
-camino.workspace = true
-
-# serialization
-serde_json.workspace = true
-
-# cli
 clap = { version = "4", features = ["derive"] }
+color-eyre.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+flate2 = "1"
+tar = "0.4"
+vfs.workspace = true
 
-# tracing
-tracing.workspace = true
-tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+helm-schema-ast.workspace = true
+helm-schema-gen.workspace = true
+helm-schema-ir.workspace = true
+helm-schema-k8s.workspace = true
 
-helm-schema-chart.workspace = true
+[dev-dependencies]
+similar-asserts = "1"
+test-util.workspace = true
+tempfile = "3"
+jsonschema.workspace = true

@@ -1,16 +1,40 @@
 [workspace]
 resolver = "2"
 members = [
-  # "crates/*",
+  "crates/clippy-wrapper",
   "crates/test-util",
-  "crates/helm-schema-core",
-  "crates/helm-schema-chart",
-  "crates/helm-schema-cli",
-  "crates/helm-schema-vfs-walk",
+  "crates/helm-schema-yaml-template",
   "crates/helm-schema-template-grammar",
-  "crates/helm-schema-template", 
-  "crates/helm-schema-mapper",
+  "crates/helm-schema-ast",
+  "crates/helm-schema-ir",
+  "crates/helm-schema-k8s",
+  "crates/helm-schema-gen",
+  "crates/helm-schema-cli",
 ]
+default-members = [
+  "crates/helm-schema-cli",
+]
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+opt-level = 3
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_must_use = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used      = "deny"
+expect_used      = "deny"
+panic            = "deny"
+unreachable      = "deny"
+unimplemented    = "deny"
+todo             = "deny"
+indexing_slicing = "deny"
+missing_errors_doc = "warn"
 
 [workspace.package]
 version = "0.0.1"
@@ -25,12 +49,6 @@ categories = [
   "development-tools::build-utils",
 ]
 
-[profile.release]
-lto = true
-strip = true
-codegen-units = 1
-opt-level = 3
-
 [workspace.dependencies]
 color-eyre = "0"
 thiserror = "2"
@@ -43,6 +61,12 @@ camino = "1"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0"
 serde_json = "1"
+
+# regex
+regex = "1"
+
+# json schema validation
+jsonschema = "0.28"
 
 # async runtime
 tokio = { version = "1", features = ["full"] }
@@ -57,12 +81,11 @@ tracing = "0.1"
 # tree sitter parser
 tree-sitter = "0.25"
 
-# local charts
+# local crates
 test-util = { path = "crates/test-util" }
-helm-schema-core = { path = "crates/helm-schema-core" }
-helm-schema-chart = { path = "crates/helm-schema-chart" }
-helm-schema-cli = { path = "crates/helm-schema-cli" }
-helm-schema-vfs-walk = { path = "crates/helm-schema-vfs-walk" }
+yaml-rust = { path = "crates/helm-schema-yaml-template" }
 helm-schema-template-grammar = { path = "crates/helm-schema-template-grammar" }
-helm-schema-template = { path = "crates/helm-schema-template" }
-helm-schema-mapper = { path = "crates/helm-schema-mapper" }
+helm-schema-ast = { path = "crates/helm-schema-ast" }
+helm-schema-ir = { path = "crates/helm-schema-ir" }
+helm-schema-k8s = { path = "crates/helm-schema-k8s" }
+helm-schema-gen = { path = "crates/helm-schema-gen" }

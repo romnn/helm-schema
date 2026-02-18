@@ -1,0 +1,389 @@
+[
+  {
+    "guards": [],
+    "kind": "Fragment",
+    "path": "spec.template.spec.affinity",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "affinity"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.affinity",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "affinity"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.metadata.annotations.checksum/config",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "configChecksum"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.ports[*].targetPort",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "containerPort"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].ports[*].containerPort",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "containerPort"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].env",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "extraEnv"
+  },
+  {
+    "guards": [
+      "extraEnv"
+    ],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].env[*].name",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "extraEnv.*.name"
+  },
+  {
+    "guards": [
+      "extraEnv"
+    ],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].env[*].value",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "extraEnv.*.value"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].image",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].imagePullPolicy",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].imagePullPolicy",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image.pullPolicy"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].image",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image.repository"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].image",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "image.tag"
+  },
+  {
+    "guards": [
+      "ingress.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "metadata.annotations",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress"
+  },
+  {
+    "guards": [
+      "ingress.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "spec.ingressClassName",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress"
+  },
+  {
+    "guards": [
+      "ingress.enabled"
+    ],
+    "kind": "Fragment",
+    "path": "metadata.annotations",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.annotations"
+  },
+  {
+    "guards": [
+      "ingress.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "metadata.annotations",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.annotations"
+  },
+  {
+    "guards": [
+      "ingress.enabled"
+    ],
+    "kind": "Scalar",
+    "path": "spec.ingressClassName",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.className"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "",
+    "resource": null,
+    "source_expr": "ingress.enabled"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.rules",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.hosts"
+  },
+  {
+    "guards": [
+      "ingress.enabled",
+      "ingress.hosts"
+    ],
+    "kind": "Scalar",
+    "path": "spec.rules[*].host",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.hosts.*.host"
+  },
+  {
+    "guards": [
+      "ingress.enabled",
+      "ingress.hosts"
+    ],
+    "kind": "Scalar",
+    "path": "spec.rules[*].http.paths[*].path",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.hosts.*.paths.*.path"
+  },
+  {
+    "guards": [
+      "ingress.enabled",
+      "ingress.hosts"
+    ],
+    "kind": "Scalar",
+    "path": "spec.rules[*].http.paths[*].pathType",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "ingress.hosts.*.paths.*.pathType"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.securityContext.runAsNonRoot",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podSecurityContext"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.securityContext.runAsNonRoot",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "podSecurityContext.runAsNonRoot"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.replicas",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "replicaCount"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].securityContext.allowPrivilegeEscalation",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "securityContext"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].securityContext.readOnlyRootFilesystem",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "securityContext"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].securityContext.allowPrivilegeEscalation",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "securityContext.allowPrivilegeEscalation"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.template.spec.containers[*].securityContext.readOnlyRootFilesystem",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "securityContext.readOnlyRootFilesystem"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.ports[*].port",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service"
+  },
+  {
+    "guards": [
+      "ingress.enabled",
+      "ingress.hosts"
+    ],
+    "kind": "Scalar",
+    "path": "spec.rules[*].http.paths[*].backend.service.port.number",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "service"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.type",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.ports[*].port",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.port"
+  },
+  {
+    "guards": [
+      "ingress.enabled",
+      "ingress.hosts"
+    ],
+    "kind": "Scalar",
+    "path": "spec.rules[*].http.paths[*].backend.service.port.number",
+    "resource": {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress"
+    },
+    "source_expr": "service.port"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": "spec.type",
+    "resource": {
+      "apiVersion": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.type"
+  }
+]
+ 
