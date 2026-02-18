@@ -1,9 +1,7 @@
-extern crate yaml_rust;
-
+use helm_schema_yaml_template::yaml;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-use yaml_rust::yaml;
 
 fn print_indent(indent: usize) {
     for _ in 0..indent {

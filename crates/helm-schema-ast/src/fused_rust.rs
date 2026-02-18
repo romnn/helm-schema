@@ -1,4 +1,4 @@
-use yaml_rust::fused::{FusedNode, parse_fused_yaml_helm};
+use helm_schema_yaml_template::fused::{FusedNode, parse_fused_yaml_helm};
 
 use crate::{HelmAst, HelmParser, ParseError};
 

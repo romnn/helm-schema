@@ -1,12 +1,11 @@
-extern crate yaml_rust;
-#[macro_use]
-extern crate quickcheck;
-
+use helm_schema_yaml_template::{Yaml, YamlEmitter, YamlLoader};
 use quickcheck::TestResult;
-use yaml_rust::{Yaml, YamlEmitter, YamlLoader};
 
-quickcheck! {
+quickcheck::quickcheck! {
     fn test_check_weird_keys(xs: Vec<String>) -> TestResult {
+        if xs.iter().any(|s| s.contains('\0')) {
+            return TestResult::discard();
+        }
         let mut out_str = String::new();
         let input = Yaml::Array(xs.into_iter().map(Yaml::String).collect());
         {

@@ -1,9 +1,8 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
-extern crate yaml_rust;
 
-use yaml_rust::parser::{Event, EventReceiver, Parser};
-use yaml_rust::scanner::TScalarStyle;
+use helm_schema_yaml_template::parser::{Event, EventReceiver, Parser};
+use helm_schema_yaml_template::scanner::TScalarStyle;
 
 // These names match the names used in the C++ test suite.
 #[allow(clippy::enum_variant_names)]
@@ -76,8 +75,8 @@ include!("spec_test.rs.inc");
 
 #[test]
 fn test_mapvec_legal() {
-    use yaml_rust::yaml::{Hash, Yaml};
-    use yaml_rust::{YamlEmitter, YamlLoader};
+    use helm_schema_yaml_template::yaml::{Hash, Yaml};
+    use helm_schema_yaml_template::{YamlEmitter, YamlLoader};
 
     // Emitting a `map<map<seq<_>>, _>` should result in legal yaml that
     // we can parse.

@@ -10,7 +10,7 @@ use std::fmt::Write;
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
     #[error("fused parser error: {0}")]
-    FusedParse(#[from] yaml_rust::fused::FusedParseError),
+    FusedParse(#[from] helm_schema_yaml_template::fused::FusedParseError),
 
     #[error("tree-sitter parse failed")]
     TreeSitterParseFailed,

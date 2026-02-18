@@ -5,18 +5,12 @@
 //!
 //! # Usage
 //!
-//! This crate is [on github](https://github.com/chyh1990/yaml-rust) and can be
-//! used by adding `yaml-rust` to the dependencies in your project's `Cargo.toml`.
+//! This crate is based on `yaml-rust` and can be
+//! used by adding `helm-schema-yaml-template` to the dependencies in your project's `Cargo.toml`.
 //!
 //! ```toml
 //! [dependencies]
-//! yaml-rust = "0.4"
-//! ```
-//!
-//! And this in your crate root:
-//!
-//! ```rust
-//! extern crate yaml_rust;
+//! helm-schema-yaml-template = "0"
 //! ```
 //!
 //! Parse a string into `Vec<Yaml>` and then serialize it as a YAML string.
@@ -24,7 +18,7 @@
 //! # Examples
 //!
 //! ```
-//! use yaml_rust::{YamlLoader, YamlEmitter};
+//! use helm_schema_yaml_template::{YamlEmitter, YamlLoader};
 //!
 //! let docs = YamlLoader::load_from_str("[1, 2, 3]").unwrap();
 //! let doc = &docs[0]; // select the first document
@@ -36,7 +30,7 @@
 //!
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/yaml-rust/0.4.5")]
+#![doc(html_root_url = "https://docs.rs/helm-schema-yaml-template")]
 #![allow(renamed_and_removed_lints)]
 #![warn(clippy::cognitive_complexity)]
 #![allow(clippy::match_same_arms)]

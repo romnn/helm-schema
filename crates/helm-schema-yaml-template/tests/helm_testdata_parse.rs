@@ -2,8 +2,8 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use yaml_rust::YamlLoader;
-use yaml_rust::scanner::Scanner;
+use helm_schema_yaml_template::YamlLoader;
+use helm_schema_yaml_template::scanner::Scanner;
 
 fn is_yaml_template_file(path: &Path) -> bool {
     matches!(

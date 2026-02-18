@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
+use helm_schema_yaml_template::FusedNode;
 use indoc::indoc;
 use test_util::sexpr::SExpr;
-use yaml_rust::FusedNode;
 
 #[allow(clippy::too_many_lines)]
 fn fused_to_sexpr(node: &FusedNode) -> SExpr {
@@ -240,7 +240,7 @@ fn fused_to_sexpr(node: &FusedNode) -> SExpr {
 }
 
 fn assert_fused_matches_sexpr(src: &str, want: &str) {
-    let have = yaml_rust::parse_fused_yaml_helm(src).expect("parse fused");
+    let have = helm_schema_yaml_template::parse_fused_yaml_helm(src).expect("parse fused");
     let have = fused_to_sexpr(&have);
     let want = SExpr::from_str(want).expect("parse expected sexpr");
     similar_asserts::assert_eq!(have, want);

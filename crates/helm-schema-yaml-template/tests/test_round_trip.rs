@@ -1,6 +1,4 @@
-extern crate yaml_rust;
-
-use yaml_rust::{Yaml, YamlEmitter, YamlLoader};
+use helm_schema_yaml_template::{Yaml, YamlEmitter, YamlLoader};
 
 fn roundtrip(original: &Yaml) {
     let mut emitted = String::new();

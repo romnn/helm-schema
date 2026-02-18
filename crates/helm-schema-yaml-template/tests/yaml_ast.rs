@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
+use helm_schema_yaml_template::{Yaml, YamlLoader};
 use indoc::indoc;
 use test_util::sexpr::SExpr;
-use yaml_rust::{Yaml, YamlLoader};
 
 fn yaml_to_sexpr(doc: &Yaml) -> SExpr {
     match doc {

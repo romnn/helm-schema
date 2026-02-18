@@ -13,7 +13,7 @@ use std::vec;
 /// # Examples
 ///
 /// ```
-/// use yaml_rust::Yaml;
+/// use helm_schema_yaml_template::Yaml;
 /// let foo = Yaml::from_str("-123"); // convert the string to the appropriate YAML type
 /// assert_eq!(foo.as_i64().unwrap(), -123);
 ///
