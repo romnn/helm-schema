@@ -1442,12 +1442,28 @@ impl<'a> SymbolicWalker<'a> {
         //   {{- range .Values.someList }}
         //     {{ .name }}
         //   {{- end }}
-        let dot_prefix = header_text
-            .as_deref()
-            .map(extract_values_paths)
-            .filter(|v| v.len() == 1)
-            .and_then(|v| v.into_iter().next())
-            .map(|p| format!("{p}.*"));
+        let dot_prefix = header_text.as_deref().and_then(|raw| {
+            let mut txt = raw.trim();
+            loop {
+                let t = txt.trim();
+                if t.len() >= 2 && t.starts_with('(') && t.ends_with(')') {
+                    txt = &t[1..t.len() - 1];
+                    continue;
+                }
+                break;
+            }
+
+            let mut paths = extract_values_paths(txt);
+            if paths.len() != 1 {
+                return None;
+            }
+            let p = paths.pop().expect("len == 1");
+            if txt.trim() == format!(".Values.{p}") {
+                Some(format!("{p}.*"))
+            } else {
+                None
+            }
+        });
 
         self.dot_stack.push(dot_prefix);
 

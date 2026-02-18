@@ -26,9 +26,11 @@ pub fn build_provider(
         providers.push(Box::new(LocalSchemaProvider::new(dir)));
     }
 
-    providers.push(Box::new(
-        CrdsCatalogSchemaProvider::new().with_allow_download(opts.allow_net),
-    ));
+    let mut crds_catalog = CrdsCatalogSchemaProvider::new().with_allow_download(opts.allow_net);
+    if let Some(dir) = &opts.crd_catalog_dir {
+        crds_catalog = crds_catalog.with_cache_dir(dir.clone());
+    }
+    providers.push(Box::new(crds_catalog));
 
     if !opts.disable_k8s_schemas {
         let mut upstream = KubernetesJsonSchemaProvider::new(opts.k8s_version.clone())

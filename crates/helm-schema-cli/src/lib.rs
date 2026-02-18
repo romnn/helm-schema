@@ -12,6 +12,7 @@ use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{Guard, IrGenerator, SymbolicIrGenerator, ValueUse};
 use helm_schema_k8s::WarningSink;
 use serde_json::Value;
+use serde_yaml::Value as YamlValue;
 use vfs::VfsPath;
 
 use crate::error::CliResult;
@@ -184,7 +185,8 @@ pub fn generate_values_schema_for_chart_with_warnings(
 
     let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
 
-    let uses = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
+    let mut uses = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
+    seed_top_level_values_yaml_keys(&mut uses, values_yaml.as_deref());
 
     let provider = provider::build_provider(&opts.provider, warning_sink);
 
@@ -193,6 +195,36 @@ pub fn generate_values_schema_for_chart_with_warnings(
         provider.as_ref(),
         values_yaml.as_deref(),
     ))
+}
+
+fn seed_top_level_values_yaml_keys(uses: &mut Vec<ValueUse>, values_yaml: Option<&str>) {
+    let Some(values_yaml) = values_yaml else {
+        return;
+    };
+    let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
+        return;
+    };
+    let YamlValue::Mapping(m) = doc else {
+        return;
+    };
+
+    for (k, _) in m {
+        let Some(key) = k.as_str() else {
+            continue;
+        };
+        let key = key.trim();
+        if key.is_empty() {
+            continue;
+        }
+
+        uses.push(ValueUse {
+            source_expr: key.to_string(),
+            path: helm_schema_ir::YamlPath(Vec::new()),
+            kind: helm_schema_ir::ValueKind::Scalar,
+            guards: Vec::new(),
+            resource: None,
+        });
+    }
 }
 
 fn collect_ir_for_charts(

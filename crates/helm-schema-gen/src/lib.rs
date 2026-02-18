@@ -489,9 +489,126 @@ fn ensure_required_contains(node: &mut Value, key: &str) {
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 
+fn is_object_like_schema(v: &Value) -> bool {
+    match schema_type(v) {
+        Some("object") => true,
+        Some(_) => false,
+        None => v.as_object().is_some_and(|o| {
+            o.contains_key("properties")
+                || o.contains_key("additionalProperties")
+                || o.contains_key("patternProperties")
+                || o.contains_key("required")
+        }),
+    }
+}
+
+fn is_array_like_schema(v: &Value) -> bool {
+    match schema_type(v) {
+        Some("array") => true,
+        Some(_) => false,
+        None => v.as_object().is_some_and(|o| o.contains_key("items")),
+    }
+}
+
 fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, required: bool) {
     if parts.is_empty() {
         return;
+    }
+
+    // Union-aware insertion: when a value path is a union (e.g. `anyOf: [object, string]`),
+    // inserting nested schemas must update the appropriate variant(s) rather than forcing the
+    // union node itself into an object/array schema.
+    if let Value::Object(obj) = node {
+        let union_key = if obj.get("anyOf").and_then(Value::as_array).is_some() {
+            Some("anyOf")
+        } else if obj.get("oneOf").and_then(Value::as_array).is_some() {
+            Some("oneOf")
+        } else {
+            None
+        };
+
+        if let Some(key) = union_key {
+            let Value::Array(mut variants) = obj
+                .remove(key)
+                .unwrap_or_else(|| Value::Array(Vec::new()))
+            else {
+                return;
+            };
+
+            // If the union node has accumulated structural constraints (e.g. from earlier
+            // insertions that assumed an object/array), push those constraints down into
+            // compatible variants and remove them from the union node.
+            //
+            // In JSON Schema, `anyOf`/`oneOf` is combined with sibling keywords via AND, so a
+            // union node like `{ type: object, additionalProperties: false, anyOf: [object, string] }`
+            // accidentally forbids the string variant and/or rejects object properties.
+            let structural_keys = [
+                "type",
+                "properties",
+                "additionalProperties",
+                "patternProperties",
+                "required",
+                "items",
+            ];
+            let mut structural = Map::new();
+            for k in structural_keys {
+                if let Some(v) = obj.remove(k) {
+                    structural.insert(k.to_string(), v);
+                }
+            }
+            if !structural.is_empty() {
+                let structural_schema = Value::Object(structural);
+                for v in variants.iter_mut() {
+                    let compatible = if is_array_like_schema(&structural_schema) {
+                        is_array_like_schema(v)
+                    } else {
+                        is_object_like_schema(v)
+                    };
+
+                    if compatible {
+                        let existing = std::mem::replace(v, Value::Null);
+                        *v = merge_two_schemas(existing, structural_schema.clone());
+                    }
+                }
+            }
+
+            let head = parts[0];
+            let mut touched = false;
+            for v in variants.iter_mut() {
+                let compatible = if head == "*" {
+                    is_array_like_schema(v)
+                } else {
+                    // property segment or map wildcard: requires object-ish schema
+                    is_object_like_schema(v)
+                };
+
+                if compatible {
+                    insert_schema_at_parts(v, parts, leaf.clone(), required);
+                    touched = true;
+                }
+            }
+
+            if !touched {
+                let mut new_variant = if head == "*" {
+                    Value::Object(
+                        [
+                            ("type".to_string(), Value::String("array".to_string())),
+                            ("items".to_string(), Value::Null),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    )
+                } else {
+                    object_schema(Map::new())
+                };
+
+                insert_schema_at_parts(&mut new_variant, parts, leaf, required);
+                variants.push(new_variant);
+            }
+
+            obj.insert(key.to_string(), Value::Array(variants));
+            return;
+        }
     }
 
     if parts[0] == MAP_WILDCARD_SEGMENT {

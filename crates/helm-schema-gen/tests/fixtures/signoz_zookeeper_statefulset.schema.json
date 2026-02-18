@@ -5340,33 +5340,92 @@
       "x-kubernetes-map-type": "atomic"
     },
     "persistence": {
-      "additionalProperties": false,
       "anyOf": [
         {
           "additionalProperties": false,
           "properties": {
             "accessModes": {
+              "description": "accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1",
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
             },
             "annotations": {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
               "type": "object"
             },
             "dataLogDir": {
               "additionalProperties": false,
               "properties": {
                 "existingClaim": {
+                  "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
                   "type": "string"
                 },
                 "selector": {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
+                  "properties": {
+                    "matchExpressions": {
+                      "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                      "items": {
+                        "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                        "properties": {
+                          "key": {
+                            "description": "key is the label key that the selector applies to.",
+                            "type": "string"
+                          },
+                          "operator": {
+                            "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                            "type": "string"
+                          },
+                          "values": {
+                            "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "operator"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "matchLabels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                      "type": "object"
+                    }
+                  },
                   "type": "object"
                 },
                 "size": {
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 }
               },
               "type": "object"
@@ -5375,63 +5434,18 @@
               "type": "boolean"
             },
             "existingClaim": {
-              "type": "string"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "selector": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "size": {
-              "type": "string"
-            },
-            "storageClass": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ]
-        }
-      ],
-      "properties": {
-        "accessModes": {
-          "description": "accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1",
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "x-kubernetes-list-type": "atomic"
-        },
-        "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "properties": {},
-          "type": "object"
-        },
-        "dataLogDir": {
-          "additionalProperties": false,
-          "properties": {
-            "existingClaim": {
               "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
               "type": "string"
             },
+            "labels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
+            },
             "selector": {
               "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
               "properties": {
                 "matchExpressions": {
                   "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -5472,84 +5486,32 @@
                   "type": "object"
                 }
               },
-              "type": "object",
-              "x-kubernetes-map-type": "atomic"
+              "type": "object"
             },
             "size": {
-              "oneOf": [
+              "anyOf": [
                 {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
-              ]
-            }
-          },
-          "type": "object"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "existingClaim": {
-          "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
-          "type": "string"
-        },
-        "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
-          "type": "object"
-        },
-        "selector": {
-          "additionalProperties": false,
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
+                  "oneOf": [
+                    {
                       "type": "string"
                     },
-                    "type": "array",
-                    "x-kubernetes-list-type": "atomic"
-                  }
+                    {
+                      "type": "number"
+                    }
+                  ]
                 },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": "object"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
+                {
+                  "type": "string"
+                }
+              ]
             },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": "object"
+            "storageClass": {
+              "type": "string"
             }
           },
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
+          "type": "object"
         },
-        "size": {
+        {
           "oneOf": [
             {
               "type": "string"
@@ -5559,8 +5521,7 @@
             }
           ]
         }
-      },
-      "type": "object"
+      ]
     },
     "podAffinityPreset": {
       "type": "string"

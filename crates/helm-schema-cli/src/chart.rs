@@ -102,7 +102,8 @@ fn discover_chart_contexts_inner(
     for ent in vendor_charts_dir.read_dir()? {
         let sub_dir = if ent.is_dir()? {
             let chart_yaml_path = ent.join("Chart.yaml")?;
-            if !chart_yaml_path.is_file()? {
+            let chart_template_yaml_path = ent.join("Chart.template.yaml")?;
+            if !chart_yaml_path.is_file()? && !chart_template_yaml_path.is_file()? {
                 continue;
             }
             ent
@@ -187,7 +188,8 @@ fn extract_chart_archive(path: &VfsPath) -> CliResult<VfsPath> {
 
 fn find_chart_dir(root: &VfsPath) -> CliResult<Option<VfsPath>> {
     let direct = root.join("Chart.yaml")?;
-    if direct.is_file()? {
+    let direct_template = root.join("Chart.template.yaml")?;
+    if direct.is_file()? || direct_template.is_file()? {
         return Ok(Some(root.clone()));
     }
 
@@ -197,7 +199,8 @@ fn find_chart_dir(root: &VfsPath) -> CliResult<Option<VfsPath>> {
             continue;
         }
         let chart_yaml = ent.join("Chart.yaml")?;
-        if chart_yaml.is_file()? {
+        let chart_template_yaml = ent.join("Chart.template.yaml")?;
+        if chart_yaml.is_file()? || chart_template_yaml.is_file()? {
             return Ok(Some(ent));
         }
     }
@@ -218,7 +221,17 @@ fn dependency_key_map(chart_yaml: &ChartYaml) -> HashMap<String, String> {
 }
 
 fn read_chart_yaml(chart_dir: &VfsPath) -> CliResult<ChartYaml> {
-    let path = chart_dir.join("Chart.yaml")?;
+    let chart_yaml = chart_dir.join("Chart.yaml")?;
+    let chart_template_yaml = chart_dir.join("Chart.template.yaml")?;
+
+    let path = if chart_yaml.is_file()? {
+        chart_yaml
+    } else if chart_template_yaml.is_file()? {
+        chart_template_yaml
+    } else {
+        chart_yaml
+    };
+
     let mut bytes = Vec::new();
     path.open_file()?.read_to_end(&mut bytes)?;
 
