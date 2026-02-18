@@ -1,0 +1,81 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+dist: goreleaser-dist
+
+before:
+  hooks:
+    - rustup default stable
+    - cargo install --locked --force cargo-zigbuild
+
+homebrew_casks:
+  - name: &helm-schema helm-schema
+    ids:
+      - *helm-schema
+    description: "helm-schema generates a JSON schema for a helm chart's values.yaml by analyzing the chart's templates"
+    directory: Casks
+    commit_author:
+      name: romnn
+      email: contact@romnn.com
+    repository:
+      owner: romnn
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: false
+    hooks:
+      post:
+        install: |
+          if OS.mac? && File.exist?("/usr/bin/xattr")
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/helm-schema"]
+          end
+
+builds:
+  - id: *helm-schema
+    builder: rust
+    binary: *helm-schema
+    targets:
+      # linux
+      - x86_64-unknown-linux-musl
+      - aarch64-unknown-linux-musl
+      # - x86_64-unknown-linux-gnu
+      # - aarch64-unknown-linux-gnu
+      # apple
+      - x86_64-apple-darwin
+      - aarch64-apple-darwin
+      # windows
+      - x86_64-pc-windows-gnu
+      - aarch64-pc-windows-gnullvm
+    dir: ./
+    tool: cargo
+    command: zigbuild
+    flags:
+      - "--release"
+      - "--package=helm-schema-cli"
+
+archives:
+  - id: *helm-schema
+    formats: ["tar.gz"]
+    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    ids:
+      - *helm-schema
+    files:
+      - LICENSE
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - "^ci:"
+      - "^docs:"
+      - "^test:"
+
+release:
+  draft: false

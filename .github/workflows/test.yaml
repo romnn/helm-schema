@@ -1,0 +1,56 @@
+name: test
+on:
+  push: {}
+  workflow_call: {}
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  schedule:
+    # 8AM first day of the month in JAN and JUNE to keep workflow badges up-to-date
+    - cron: "0 8 1 1,6 *"
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-24.04, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: romnn/cargo-feature-combinations@main
+      - name: Test
+        run: cargo fc test --all-targets
+
+  doc-tests:
+    name: doc-tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-24.04, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: romnn/cargo-feature-combinations@main
+      - name: Doc-tests
+        run: cargo fc test --only-packages-with-lib-target --doc
+
+  publish:
+    name: publish (dry-run)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Publish crates (dry-run)
+        uses: romnn/publish-crates@main
+        with:
+          dry-run: true
+          resolve-versions: true

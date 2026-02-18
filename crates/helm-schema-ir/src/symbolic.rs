@@ -513,21 +513,21 @@ impl<'a> SymbolicWalker<'a> {
 
     fn eq_literals_for_var(text: &str, var: &str) -> Vec<String> {
         let needle = format!("eq ${var} \"");
-        let mut lits = Vec::new();
+        let mut literals = Vec::new();
         let mut rest = text;
         while let Some(i) = rest.find(&needle) {
             let after = &rest[(i + needle.len())..];
             if let Some(end) = after.find('"') {
                 let lit = &after[..end];
                 if !lit.is_empty() {
-                    lits.push(lit.to_string());
+                    literals.push(lit.to_string());
                 }
                 rest = &after[end..];
             } else {
                 break;
             }
         }
-        lits
+        literals
     }
 
     fn extract_bound_values(&self, text: &str) -> Vec<String> {
@@ -1424,8 +1424,8 @@ impl<'a> SymbolicWalker<'a> {
         }
         if let Some(txt) = self.range_header_text(node) {
             header_text = Some(txt.clone());
-            if let Some((var, lits)) = Self::parse_literal_list_range(&txt) {
-                self.range_domains.insert(var, lits);
+            if let Some((var, literals)) = Self::parse_literal_list_range(&txt) {
+                self.range_domains.insert(var, literals);
             }
             let guard_path = if has_variable_definition || body_emits_sequence_item {
                 self.shape.current_path()

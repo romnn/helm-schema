@@ -82,7 +82,7 @@ In the normalized comparison we also had a lot of “extra” paths (not in the 
 - `...delay`, `...endpoint`, etc. showing up as if they were values keys
 - large swaths like `clickhouse.nameOverride.spec.template.spec...` (K8s manifest-ish paths) appearing under values keys
 
-This implies **we are sometimes mis-attributing non-values identifiers / YAML keys / Helm objects** as `.Values` paths (or incorrectly binding `.` / `$` inside `with`/`range`/`include` contexts).
+This implies **we are sometimes miss-attributing non-values identifiers / YAML keys / Helm objects** as `.Values` paths (or incorrectly binding `.` / `$` inside `with`/`range`/`include` contexts).
 
 That’s a fundamental correctness issue for completeness too, because “noise” makes it harder to see what’s missing, and also causes wrong merges.
 
@@ -115,7 +115,7 @@ Even within parent chart templates, we’ll miss or degrade in cases like:
 - `tpl` + `fromYaml` + `toYaml` pipelines where structure is indirect
 - dynamically computed value paths (e.g. `index .Values $k`, [get](cci:1://file:///home/roman/dev/helm-schema/crates/helm-schema-mapper/src/vyt.rs:123:4-125:5), `pluck`)
 - values passed through helper templates where binding isn’t attributed cleanly
-- `with`/`range` scoping where `.` changes and we mis-bind it (which also causes the **junk** paths above)
+- `with`/`range` scoping where `.` changes and we miss-bind it (which also causes the **junk** paths above)
 
 **Consequence:** missing “deep fields” under otherwise-present roots (e.g. under `signoz.*`, `otelCollector.*`).
 

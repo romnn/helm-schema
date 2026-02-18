@@ -1,6 +1,10 @@
 use clap::Parser;
 use color_eyre::eyre;
 
+#[cfg(target_env = "musl")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
