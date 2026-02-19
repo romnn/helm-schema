@@ -78,6 +78,15 @@ tasks:
     cmds:
       - cargo clean {{.CLI_ARGS}}
 
+  clean:zig-garbage:
+    desc: "remove zigbuild/cc probe garbage object files"
+    cmds:
+      - >-
+        find .
+        -type f
+        \( -name '.intentionally-empty-file.o' -o -name '*detect_compiler_family.o' \)
+        -delete
+
   docs:
     desc: "open documentation preview"
     env:
