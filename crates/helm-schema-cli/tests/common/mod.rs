@@ -53,7 +53,7 @@ fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<String>
 
     validator
         .iter_errors(instance)
-        .map(|e| format!("{path}: {msg}", path = e.instance_path, msg = e))
+        .map(|e| format!("{path}: {msg}", path = e.instance_path(), msg = e))
         .collect()
 }
 

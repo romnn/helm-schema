@@ -124,39 +124,23 @@ tasks:
   test:fc:
     desc: "test cargo workspace for all combinations of features"
     cmds:
-      - cargo fc test --workspace --all-targets {{.CLI_ARGS}}
+      - cargo fc test --all-targets {{.CLI_ARGS}}
 
   lint:
     desc: "lint cargo workspace"
     cmds:
-      # prettier-ignore
-      - >-
-        cargo clippy
-        --workspace --all-targets --all-features
-        {{.CLI_ARGS}}
-        -- -Dclippy::all -Dclippy::pedantic
+      - cargo lint {{.CLI_ARGS}}
 
   lint:fc:
     desc: "lint cargo workspace for all combinations of features"
     cmds:
-      # prettier-ignore
-      - >-
-        cargo fc clippy
-        --workspace --all-targets
-        {{.CLI_ARGS}}
-        -- -Dclippy::all -Dclippy::pedantic
+      - cargo fc lint {{.CLI_ARGS}}
 
   lint:fix:
     desc: "lint and fix cargo workspace"
     aliases: [fix]
     cmds:
-      # prettier-ignore
-      - >-
-        cargo clippy
-        --fix --allow-dirty --allow-staged
-        --workspace --all-targets --all-features
-        {{.CLI_ARGS}}
-        -- -Dclippy::all -Dclippy::pedantic
+      - cargo fixit {{.CLI_ARGS}}
 
   lint:actions:
     desc: "lint github actions"

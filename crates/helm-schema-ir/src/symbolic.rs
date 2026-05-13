@@ -1033,22 +1033,10 @@ impl<'a> SymbolicWalker<'a> {
         node: tree_sitter::Node<'n>,
         field: &str,
     ) -> Vec<tree_sitter::Node<'n>> {
-        let mut out = Vec::new();
-        for i in 0..node.child_count() {
-            let Some(ch) = node.child(i) else {
-                continue;
-            };
-            if !ch.is_named() {
-                continue;
-            }
-            let Ok(i) = u32::try_from(i) else {
-                continue;
-            };
-            if node.field_name_for_child(i) == Some(field) {
-                out.push(ch);
-            }
-        }
-        out
+        let mut cursor = node.walk();
+        node.children_by_field_name(field, &mut cursor)
+            .filter(tree_sitter::Node::is_named)
+            .collect()
     }
 
     fn emit_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {

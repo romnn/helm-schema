@@ -323,18 +323,8 @@ fn yaml_node_to_sexpr(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
 }
 
 fn children_with_field<'a>(node: tree_sitter::Node<'a>, field: &str) -> Vec<tree_sitter::Node<'a>> {
-    let mut out = Vec::new();
-    let child_count = node.child_count();
-    for i in 0..child_count {
-        let Some(ch) = node.child(i) else {
-            continue;
-        };
-        if node.field_name_for_child(u32::try_from(i).unwrap()) != Some(field) {
-            continue;
-        }
-        out.push(ch);
-    }
-    out
+    let mut cursor = node.walk();
+    node.children_by_field_name(field, &mut cursor).collect()
 }
 
 fn is_control_flow(kind: &str) -> bool {
@@ -437,29 +427,33 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
             // pure-rust fused AST behavior.
             let mut else_if_pairs: Vec<(String, Vec<tree_sitter::Node<'_>>)> = Vec::new();
             let mut seen_main_condition = false;
-            for i in 0..node.child_count() {
-                let Some(ch) = node.child(i) else {
-                    continue;
-                };
-                match node.field_name_for_child(u32::try_from(i).unwrap()) {
-                    Some("condition") => {
-                        if seen_main_condition {
-                            let cnd = ch
-                                .utf8_text(src.as_bytes())
-                                .unwrap_or("")
-                                .trim()
-                                .to_string();
-                            else_if_pairs.push((cnd, Vec::new()));
-                        } else {
-                            seen_main_condition = true;
+            let mut walker = node.walk();
+            if walker.goto_first_child() {
+                loop {
+                    let ch = walker.node();
+                    match walker.field_name() {
+                        Some("condition") => {
+                            if seen_main_condition {
+                                let cnd = ch
+                                    .utf8_text(src.as_bytes())
+                                    .unwrap_or("")
+                                    .trim()
+                                    .to_string();
+                                else_if_pairs.push((cnd, Vec::new()));
+                            } else {
+                                seen_main_condition = true;
+                            }
                         }
-                    }
-                    Some("option") => {
-                        if let Some((_, blocks)) = else_if_pairs.last_mut() {
-                            blocks.push(ch);
+                        Some("option") => {
+                            if let Some((_, blocks)) = else_if_pairs.last_mut() {
+                                blocks.push(ch);
+                            }
                         }
+                        _ => {}
                     }
-                    _ => {}
+                    if !walker.goto_next_sibling() {
+                        break;
+                    }
                 }
             }
 

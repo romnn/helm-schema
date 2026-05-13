@@ -27,6 +27,8 @@ unused_must_use = "deny"
 missing_docs = "warn"
 
 [workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
 unwrap_used      = "deny"
 expect_used      = "deny"
 panic            = "deny"
@@ -35,6 +37,11 @@ unimplemented    = "deny"
 todo             = "deny"
 indexing_slicing = "deny"
 missing_errors_doc = "warn"
+
+# Allowed
+map_unwrap_or = "allow"
+assigning_clones = "allow"
+struct_excessive_bools = "allow"
 
 [workspace.package]
 version = "0.0.1"
@@ -63,7 +70,7 @@ serde_json = "1"
 regex = "1"
 
 # json schema validation
-jsonschema = "0.28"
+jsonschema = "0.46"
 
 # virtual file system
 vfs = "0"
@@ -72,7 +79,7 @@ vfs = "0"
 tracing = "0.1"
 
 # tree sitter parser
-tree-sitter = "0.25"
+tree-sitter = "0.26"
 
 # local crates
 test-util = { path = "crates/test-util" }
