@@ -39,6 +39,15 @@ pub enum CliError {
         #[source]
         source: std::io::Error,
     },
+
+    /// Wraps any failure surfaced by the `jsonschema` / `referencing`
+    /// dereference pass: file-not-found, JSON parse error, malformed
+    /// URI, pointer-to-nowhere, missing anchor, etc. The wrapped variant
+    /// carries the structured cause so callers can pattern-match on the
+    /// underlying problem (e.g. `Unretrievable { uri, source }` vs
+    /// `PointerToNowhere { pointer }`) rather than parsing a string.
+    #[error("$ref resolution failed: {0}")]
+    Referencing(#[from] jsonschema::ReferencingError),
 }
 
 pub type CliResult<T> = std::result::Result<T, CliError>;

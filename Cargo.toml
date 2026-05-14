@@ -69,8 +69,10 @@ serde_json = "1"
 # regex
 regex = "1"
 
-# json schema validation
-jsonschema = "0.46"
+# json schema validation. Disable default features to drop reqwest/rustls/tower-http
+# — we don't use the validator's built-in HTTP retriever (we have our own
+# ureq-based one in helm-schema-cli/src/flatten.rs).
+jsonschema = { version = "0.46", default-features = false, features = ["resolve-file"] }
 
 # virtual file system
 vfs = "0"

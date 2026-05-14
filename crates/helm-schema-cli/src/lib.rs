@@ -1,7 +1,8 @@
 mod chart;
 mod error;
+pub mod flatten;
 mod provider;
-mod schema_override;
+pub mod schema_override;
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -49,6 +50,13 @@ pub struct OutputArgs {
 
     #[arg(long)]
     pub compact: bool,
+
+    /// Leave file/URL `$ref` strings in the generated schema as-is.
+    /// By default, the final output pass walks the merged schema and
+    /// inlines every file `$ref` (and, unless `--offline`, every URL
+    /// `$ref`), recursively, with cycle detection.
+    #[arg(long)]
+    pub keep_refs: bool,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -115,6 +123,18 @@ pub fn run(cli: Cli) -> CliResult<()> {
     if let Some(path) = cli.override_schema {
         let override_schema = load_json_file(&path)?;
         schema = schema_override::apply_schema_override(schema, override_schema);
+    }
+
+    // Final output pass: inline `$ref`s so the artifact is flat and
+    // directly comparable to a fully-resolved schema. Skip when
+    // --keep-refs is set (callers who want to bundle later).
+    if !cli.output.keep_refs {
+        let allow_net = !cli.k8s.offline;
+        schema = flatten::flatten_refs(
+            schema,
+            &cli.chart_dir,
+            &flatten::FlattenOptions { allow_net },
+        )?;
     }
 
     let json = if cli.output.compact {
