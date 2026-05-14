@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use clap::Parser;
 use color_eyre::eyre::{WrapErr, eyre};
 use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
@@ -60,35 +58,29 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
 
 #[test]
 fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result<()> {
-    let dir = tempfile::tempdir().wrap_err("tempdir")?;
-    let root = dir.path();
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
-    write_file(
-        &root.join("Chart.yaml"),
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
         "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
     )?;
-    write_file(&root.join("values.yaml"), "{}\n")?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
 
-    let child = root.join("charts").join("child");
-    std::fs::create_dir_all(child.join("templates")).wrap_err("create dirs")?;
-
-    write_file(
-        &child.join("Chart.yaml"),
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
         "apiVersion: v2\nname: child\nversion: 0.1.0\n",
     )?;
-
-    write_file(&child.join("values.yaml"), "foo: 1\nglobal:\n  bar: true\n")?;
-
-    write_file(
-        &child.join("templates").join("configmap.yaml"),
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        "foo: 1\nglobal:\n  bar: true\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/configmap.yaml")?,
         "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: test\ndata:\n  foo: {{ .Values.foo | quote }}\n  bar: {{ .Values.global.bar | quote }}\n",
     )?;
 
     let opts = GenerateOptions {
-        chart_dir: {
-            let s = root.to_string_lossy().to_string();
-            VfsPath::new(vfs::PhysicalFS::new(&s))
-        },
+        chart_dir,
         include_tests: false,
         include_subchart_values: true,
         provider: ProviderOptions {
@@ -131,13 +123,5 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
     });
 
     similar_asserts::assert_eq!(actual, expected);
-    Ok(())
-}
-
-fn write_file(path: &Path, content: &str) -> color_eyre::eyre::Result<()> {
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).wrap_err("create parent dir")?;
-    }
-    std::fs::write(path, content).wrap_err("write file")?;
     Ok(())
 }

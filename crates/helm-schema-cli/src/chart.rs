@@ -169,16 +169,18 @@ fn extract_chart_archive(path: &VfsPath) -> CliResult<VfsPath> {
     let root = VfsPath::new(vfs::MemoryFS::new());
     for entry in archive.entries()? {
         let mut e = entry?;
+        // Skip non-file entries: directory entries have paths ending in `/`
+        // which `VfsPath::join` rejects, and file entries below create their
+        // own parents via `out.parent().create_dir_all()`.
+        if !e.header().entry_type().is_file() {
+            continue;
+        }
         let p = e.path()?;
         let path_str = p.to_string_lossy();
         let out = root.join(path_str.as_ref())?;
-        if e.header().entry_type().is_dir() {
-            out.create_dir_all()?;
-        } else {
-            out.parent().create_dir_all()?;
-            let mut f = out.create_file()?;
-            std::io::copy(&mut e, &mut f)?;
-        }
+        out.parent().create_dir_all()?;
+        let mut f = out.create_file()?;
+        std::io::copy(&mut e, &mut f)?;
     }
 
     find_chart_dir(&root)?.ok_or_else(|| CliError::NoChartYamlInArchive {
