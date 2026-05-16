@@ -7,3 +7,9 @@ clippy-wrapper = "run --package clippy-wrapper --"
 # linting
 lint = "clippy-wrapper lint"
 fixit = "clippy-wrapper fixit"
+
+# Link with clang + mold on Linux to lower link CPU. Requires `clang` and
+# `mold` on PATH.
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
