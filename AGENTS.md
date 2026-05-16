@@ -1,5 +1,9 @@
 # Agents
 
+## Running tests
+
+- Use `cargo nextest run --workspace` (debug mode) for the full suite. Do not use `--release`.
+
 ## Schema tests
 
 - Schema integration tests must assert full JSON schema equality using diff-based assertions (e.g. `similar_asserts::assert_eq!(actual, expected)`).
