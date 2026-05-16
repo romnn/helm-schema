@@ -99,7 +99,21 @@ fn discover_chart_contexts_inner(
         return Ok(());
     }
 
-    for ent in vendor_charts_dir.read_dir()? {
+    // `read_dir` order is unspecified across VFS backends — `MemoryFS`
+    // sorts alphabetically but `PhysicalFS` returns ext4/btrfs hash
+    // order. Sort entries explicitly here so that downstream consumers
+    // see a deterministic chart sequence. This matters for
+    // last-write-wins resolution in both `DefineIndex` and
+    // `HelperCallGraph`: identical inputs must produce identical
+    // outputs regardless of the underlying filesystem.
+    //
+    // Sorting by filename matches the alphabetical convention already
+    // used by `list_template_sources_for_define_index` for per-chart
+    // template files.
+    let mut vendor_entries: Vec<VfsPath> = vendor_charts_dir.read_dir()?.collect();
+    vendor_entries.sort_by_key(VfsPath::filename);
+
+    for ent in vendor_entries {
         let sub_dir = if ent.is_dir()? {
             let chart_yaml_path = ent.join("Chart.yaml")?;
             let chart_template_yaml_path = ent.join("Chart.template.yaml")?;
@@ -195,7 +209,10 @@ fn find_chart_dir(root: &VfsPath) -> CliResult<Option<VfsPath>> {
         return Ok(Some(root.clone()));
     }
 
-    let entries = root.read_dir()?;
+    // Sort by filename so multi-chart archives (rare but possible)
+    // pick a stable winner across filesystems.
+    let mut entries: Vec<VfsPath> = root.read_dir()?.collect();
+    entries.sort_by_key(VfsPath::filename);
     for ent in entries {
         if !ent.is_dir()? {
             continue;
@@ -384,7 +401,7 @@ pub fn build_composed_values_yaml(
     }
 }
 
-fn list_template_sources_for_define_index(
+pub fn list_template_sources_for_define_index(
     chart_dir: &VfsPath,
     include_tests: bool,
 ) -> CliResult<Vec<VfsPath>> {

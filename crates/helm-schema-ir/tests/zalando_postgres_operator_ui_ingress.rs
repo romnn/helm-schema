@@ -58,6 +58,7 @@ fn symbolic_ir_full() {
         ]
     });
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
     let expected = serde_json::json!([
         {
@@ -71,14 +72,14 @@ fn symbolic_ir_full() {
             "source_expr": "ingress.annotations",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("ingress.enabled")],
+            "guards": [t("ingress.enabled"), w("ingress.annotations")],
             "resource": ingress
         },
         {
             "source_expr": "ingress.annotations",
             "path": ["metadata", "annotations"],
             "kind": "Fragment",
-            "guards": [t("ingress.enabled"), t("ingress.annotations")],
+            "guards": [t("ingress.enabled"), w("ingress.annotations")],
             "resource": ingress
         },
         {

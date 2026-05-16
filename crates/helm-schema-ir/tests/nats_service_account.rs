@@ -54,6 +54,7 @@ fn symbolic_ir_full() {
 
     let sa = serde_json::json!({"api_version": "v1", "kind": "ServiceAccount"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
     let expected = serde_json::json!([
         {
@@ -81,42 +82,42 @@ fn symbolic_ir_full() {
             "source_expr": "serviceAccount",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("serviceAccount")],
             "resource": null
         },
         {
             "source_expr": "serviceAccount",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceAccount"), t("serviceAccount.enabled")],
+            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
             "resource": null
         },
         {
             "source_expr": "serviceAccount.enabled",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceAccount")],
+            "guards": [w("serviceAccount")],
             "resource": null
         },
         {
             "source_expr": "serviceAccount.merge",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceAccount"), t("serviceAccount.enabled")],
+            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
             "resource": null
         },
         {
             "source_expr": "serviceAccount.name",
             "path": ["metadata", "name"],
             "kind": "Scalar",
-            "guards": [t("serviceAccount"), t("serviceAccount.enabled")],
+            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
             "resource": sa
         },
         {
             "source_expr": "serviceAccount.patch",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceAccount"), t("serviceAccount.enabled")],
+            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
             "resource": null
         }
     ]);

@@ -66,6 +66,7 @@ pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<()
         chart_dir: chart_dir.clone(),
         include_tests: false,
         include_subchart_values: true,
+        infer_required: false,
         provider: ProviderOptions {
             k8s_version: "v1.29.0-standalone-strict".to_string(),
             k8s_schema_cache_dir: Some(

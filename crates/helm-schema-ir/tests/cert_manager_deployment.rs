@@ -49,6 +49,7 @@ fn symbolic_ir_full() {
 
     let dep = serde_json::json!({"api_version": "apps/v1", "kind": "Deployment"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
     let n = |p: &str| serde_json::json!({"type": "not", "path": p});
     let o = |a: &str, b: &str| serde_json::json!({"type": "or", "paths": [a, b]});
 
@@ -57,42 +58,42 @@ fn symbolic_ir_full() {
             "source_expr": "acmesolver.image",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("acmesolver.image")],
             "resource": dep
         },
         {
             "source_expr": "acmesolver.image.digest",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("acmesolver.image")],
+            "guards": [w("acmesolver.image")],
             "resource": dep
         },
         {
             "source_expr": "acmesolver.image.registry",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("acmesolver.image")],
+            "guards": [w("acmesolver.image")],
             "resource": dep
         },
         {
             "source_expr": "acmesolver.image.tag",
             "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
             "kind": "Scalar",
-            "guards": [t("acmesolver.image")],
+            "guards": [w("acmesolver.image")],
             "resource": dep
         },
         {
             "source_expr": "affinity",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("affinity")],
             "resource": dep
         },
         {
             "source_expr": "affinity",
             "path": ["spec", "template", "spec", "affinity"],
             "kind": "Fragment",
-            "guards": [t("affinity")],
+            "guards": [w("affinity")],
             "resource": dep
         },
         {
@@ -141,28 +142,28 @@ fn symbolic_ir_full() {
             "source_expr": "containerSecurityContext",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("containerSecurityContext")],
             "resource": dep
         },
         {
             "source_expr": "containerSecurityContext",
             "path": ["spec", "template", "spec", "containers[*]", "securityContext"],
             "kind": "Fragment",
-            "guards": [t("containerSecurityContext")],
+            "guards": [w("containerSecurityContext")],
             "resource": dep
         },
         {
             "source_expr": "deploymentAnnotations",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("deploymentAnnotations")],
             "resource": dep
         },
         {
             "source_expr": "deploymentAnnotations",
             "path": ["metadata", "annotations"],
             "kind": "Fragment",
-            "guards": [t("deploymentAnnotations")],
+            "guards": [w("deploymentAnnotations")],
             "resource": dep
         },
         {
@@ -176,7 +177,7 @@ fn symbolic_ir_full() {
             "source_expr": "dns01RecursiveNameservers",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("dns01RecursiveNameservers")],
             "resource": dep
         },
         {
@@ -204,28 +205,28 @@ fn symbolic_ir_full() {
             "source_expr": "extraArgs",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("extraArgs")],
             "resource": dep
         },
         {
             "source_expr": "extraArgs",
             "path": ["spec", "template", "spec", "containers[*]", "args"],
             "kind": "Fragment",
-            "guards": [t("extraArgs")],
+            "guards": [w("extraArgs")],
             "resource": dep
         },
         {
             "source_expr": "extraEnv",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("extraEnv")],
             "resource": dep
         },
         {
             "source_expr": "extraEnv",
             "path": ["spec", "template", "spec", "containers[*]", "env"],
             "kind": "Fragment",
-            "guards": [t("extraEnv")],
+            "guards": [w("extraEnv")],
             "resource": dep
         },
         {
@@ -267,42 +268,42 @@ fn symbolic_ir_full() {
             "source_expr": "global.imagePullSecrets",
             "path": [],
             "kind": "Scalar",
-            "guards": [n("serviceAccount.create")],
+            "guards": [n("serviceAccount.create"), w("global.imagePullSecrets")],
             "resource": dep
         },
         {
             "source_expr": "global.imagePullSecrets",
             "path": ["spec", "template", "spec", "imagePullSecrets"],
             "kind": "Fragment",
-            "guards": [n("serviceAccount.create"), t("global.imagePullSecrets")],
+            "guards": [n("serviceAccount.create"), w("global.imagePullSecrets")],
             "resource": dep
         },
         {
             "source_expr": "global.leaderElection",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("global.leaderElection")],
             "resource": dep
         },
         {
             "source_expr": "global.leaderElection.leaseDuration",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("global.leaderElection")],
+            "guards": [w("global.leaderElection")],
             "resource": dep
         },
         {
             "source_expr": "global.leaderElection.renewDeadline",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("global.leaderElection")],
+            "guards": [w("global.leaderElection")],
             "resource": dep
         },
         {
             "source_expr": "global.leaderElection.retryPeriod",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("global.leaderElection")],
+            "guards": [w("global.leaderElection")],
             "resource": dep
         },
         {
@@ -330,14 +331,14 @@ fn symbolic_ir_full() {
             "source_expr": "global.priorityClassName",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("global.priorityClassName")],
             "resource": dep
         },
         {
             "source_expr": "global.priorityClassName",
             "path": ["spec", "template", "spec", "priorityClassName"],
             "kind": "Scalar",
-            "guards": [t("global.priorityClassName")],
+            "guards": [w("global.priorityClassName")],
             "resource": dep
         },
         {
@@ -358,28 +359,28 @@ fn symbolic_ir_full() {
             "source_expr": "hostAliases",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("hostAliases")],
             "resource": dep
         },
         {
             "source_expr": "hostAliases",
             "path": ["spec", "template", "spec", "hostAliases"],
             "kind": "Fragment",
-            "guards": [t("hostAliases")],
+            "guards": [w("hostAliases")],
             "resource": dep
         },
         {
             "source_expr": "http_proxy",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("http_proxy")],
             "resource": dep
         },
         {
             "source_expr": "https_proxy",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("https_proxy")],
             "resource": dep
         },
         {
@@ -400,42 +401,42 @@ fn symbolic_ir_full() {
             "source_expr": "ingressShim",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("ingressShim")],
             "resource": dep
         },
         {
             "source_expr": "ingressShim.defaultIssuerGroup",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("ingressShim")],
+            "guards": [w("ingressShim")],
             "resource": dep
         },
         {
             "source_expr": "ingressShim.defaultIssuerKind",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("ingressShim")],
+            "guards": [w("ingressShim")],
             "resource": dep
         },
         {
             "source_expr": "ingressShim.defaultIssuerName",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("ingressShim")],
+            "guards": [w("ingressShim")],
             "resource": dep
         },
         {
             "source_expr": "livenessProbe",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("livenessProbe")],
             "resource": dep
         },
         {
             "source_expr": "livenessProbe.enabled",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("livenessProbe")],
+            "guards": [w("livenessProbe")],
             "resource": dep
         },
         {
@@ -470,7 +471,7 @@ fn symbolic_ir_full() {
             "source_expr": "no_proxy",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("no_proxy")],
             "resource": dep
         },
         {
@@ -484,60 +485,56 @@ fn symbolic_ir_full() {
             "source_expr": "podAnnotations",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), t("prometheus.servicemonitor.enabled")],
             "resource": dep
         },
         {
             "source_expr": "podAnnotations",
             "path": [],
             "kind": "Scalar",
-            "guards": [
-                t("prometheus.enabled"),
-                t("prometheus.podmonitor.enabled"),
-                t("prometheus.servicemonitor.enabled")
-            ],
+            "guards": [w("podAnnotations")],
             "resource": dep
         },
         {
             "source_expr": "podAnnotations",
             "path": ["spec", "template", "metadata", "annotations"],
             "kind": "Fragment",
-            "guards": [t("podAnnotations")],
+            "guards": [w("podAnnotations")],
             "resource": dep
         },
         {
             "source_expr": "podDnsConfig",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("podDnsConfig")],
             "resource": dep
         },
         {
             "source_expr": "podDnsConfig",
             "path": ["spec", "template", "spec", "dnsConfig"],
             "kind": "Fragment",
-            "guards": [t("podDnsConfig")],
+            "guards": [w("podDnsConfig")],
             "resource": dep
         },
         {
             "source_expr": "podDnsPolicy",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("podDnsPolicy")],
             "resource": dep
         },
         {
             "source_expr": "podLabels",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("podLabels")],
             "resource": dep
         },
         {
             "source_expr": "podLabels",
             "path": ["spec", "template", "metadata", "labels"],
             "kind": "Fragment",
-            "guards": [t("podLabels")],
+            "guards": [w("podLabels")],
             "resource": dep
         },
         {
@@ -572,28 +569,28 @@ fn symbolic_ir_full() {
             "source_expr": "resources",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("resources")],
             "resource": dep
         },
         {
             "source_expr": "resources",
             "path": ["spec", "template", "spec", "containers[*]", "resources"],
             "kind": "Fragment",
-            "guards": [t("resources")],
+            "guards": [w("resources")],
             "resource": dep
         },
         {
             "source_expr": "securityContext",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("securityContext")],
             "resource": dep
         },
         {
             "source_expr": "securityContext",
             "path": ["spec", "template", "spec", "securityContext"],
             "kind": "Fragment",
-            "guards": [t("securityContext")],
+            "guards": [w("securityContext")],
             "resource": dep
         },
         {
@@ -621,42 +618,42 @@ fn symbolic_ir_full() {
             "source_expr": "strategy",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("strategy")],
             "resource": dep
         },
         {
             "source_expr": "strategy",
             "path": ["spec", "strategy"],
             "kind": "Fragment",
-            "guards": [t("strategy")],
+            "guards": [w("strategy")],
             "resource": dep
         },
         {
             "source_expr": "tolerations",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("tolerations")],
             "resource": dep
         },
         {
             "source_expr": "tolerations",
             "path": ["spec", "template", "spec", "tolerations"],
             "kind": "Fragment",
-            "guards": [t("tolerations")],
+            "guards": [w("tolerations")],
             "resource": dep
         },
         {
             "source_expr": "topologySpreadConstraints",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [w("topologySpreadConstraints")],
             "resource": dep
         },
         {
             "source_expr": "topologySpreadConstraints",
             "path": ["spec", "template", "spec", "topologySpreadConstraints"],
             "kind": "Fragment",
-            "guards": [t("topologySpreadConstraints")],
+            "guards": [w("topologySpreadConstraints")],
             "resource": dep
         },
         {
@@ -670,14 +667,14 @@ fn symbolic_ir_full() {
             "source_expr": "volumeMounts",
             "path": [],
             "kind": "Scalar",
-            "guards": [o("config", "volumeMounts")],
+            "guards": [o("config", "volumeMounts"), w("volumeMounts")],
             "resource": dep
         },
         {
             "source_expr": "volumeMounts",
             "path": ["spec", "template", "spec", "containers[*]", "volumeMounts"],
             "kind": "Fragment",
-            "guards": [o("config", "volumeMounts"), t("volumeMounts")],
+            "guards": [o("config", "volumeMounts"), w("volumeMounts")],
             "resource": dep
         },
         {
@@ -691,14 +688,14 @@ fn symbolic_ir_full() {
             "source_expr": "volumes",
             "path": [],
             "kind": "Scalar",
-            "guards": [o("config", "volumes")],
+            "guards": [o("config", "volumes"), w("volumes")],
             "resource": dep
         },
         {
             "source_expr": "volumes",
             "path": ["spec", "template", "spec", "volumes"],
             "kind": "Fragment",
-            "guards": [o("config", "volumes"), t("volumes")],
+            "guards": [o("config", "volumes"), w("volumes")],
             "resource": dep
         }
     ]);

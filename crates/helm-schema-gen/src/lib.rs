@@ -1,4 +1,5 @@
 mod merge;
+pub mod required_inference;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -55,6 +56,33 @@ pub fn generate_values_schema_with_values_yaml(
     provider: &dyn K8sSchemaProvider,
     values_yaml: Option<&str>,
 ) -> Value {
+    generate_values_schema_full(uses, provider, values_yaml, &BTreeMap::new())
+}
+
+/// Generate a JSON Schema with all available signals.
+///
+/// Extends [`generate_values_schema_with_values_yaml`] with one extra
+/// input:
+///
+/// - `type_hints`: per-path JSON Schema fragments inferred from `default
+///   <literal> .Values.X` patterns in templates (see
+///   [`helm_schema_ir::extract_default_type_hints`]). When values.yaml ships a
+///   null default for a hinted path, the null is preserved alongside the
+///   hint, producing a nullable union. Literal-only because we need the
+///   type to build the schema fragment.
+///
+/// The output schema has no `required` arrays inferred by helm-schema;
+/// callers that want that behaviour layer
+/// [`required_inference::apply_required_inference`] on top of the
+/// returned schema. Keeping required-inference outside this function
+/// isolates a heuristic feature from the core schema-generation
+/// pipeline.
+pub fn generate_values_schema_full(
+    uses: &[ValueUse],
+    provider: &dyn K8sSchemaProvider,
+    values_yaml: Option<&str>,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+) -> Value {
     let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
@@ -102,6 +130,8 @@ pub fn generate_values_schema_with_values_yaml(
         }
     }
 
+    let nullable_with_fragment_paths = collect_nullable_with_fragment_paths(uses);
+
     let values_yaml_doc = values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
         .unwrap_or(YamlValue::Null);
@@ -113,8 +143,19 @@ pub fn generate_values_schema_with_values_yaml(
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
 
-        let values_yaml_schema =
-            lookup_values_yaml_schema(&values_yaml_doc, &vp).unwrap_or_else(empty_schema);
+        // Preserve a null values.yaml default when the template signals that
+        // null is contractually valid: either a `with`-fragment splat
+        // (`with .Values.X` body uses `toYaml .`) or a `default <literal>
+        // .Values.X` pattern. Otherwise the null is dropped and the path is
+        // typed solely by the literal/provider signal.
+        let path_is_nullable =
+            nullable_with_fragment_paths.contains(&vp) || type_hints.contains_key(&vp);
+        let values_yaml_schema = if path_is_nullable && is_null_at_value_path(&values_yaml_doc, &vp)
+        {
+            type_schema("null")
+        } else {
+            lookup_values_yaml_schema(&values_yaml_doc, &vp).unwrap_or_else(empty_schema)
+        };
 
         let guard_boolish_schema = guard_boolish_by_value_path
             .remove(&vp)
@@ -124,15 +165,21 @@ pub fn generate_values_schema_with_values_yaml(
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
 
+        let type_hint_schema = type_hints
+            .get(&vp)
+            .cloned()
+            .map_or_else(empty_schema, merge_schema_list);
+
         let merged = resolve_schema_for_value_path(
             used_as_fragment,
             provider_schema,
             values_yaml_schema,
             guard_boolish_schema,
             guard_constraint_schema,
+            type_hint_schema,
         );
 
-        insert_schema_at_value_path(&mut root_schema, &vp, merged, false);
+        insert_schema_at_value_path(&mut root_schema, &vp, merged);
     }
 
     let mut out = Map::new();
@@ -200,6 +247,7 @@ fn resolve_schema_for_value_path(
     values_yaml_schema: Value,
     guard_boolish_schema: Value,
     guard_constraint_schema: Value,
+    type_hint_schema: Value,
 ) -> Value {
     let base = if !is_empty_schema(&provider_schema) {
         if is_empty_schema(&values_yaml_schema) {
@@ -233,6 +281,14 @@ fn resolve_schema_for_value_path(
         empty_schema()
     };
 
+    let base = if is_empty_schema(&type_hint_schema) {
+        base
+    } else if is_empty_schema(&base) {
+        type_hint_schema
+    } else {
+        merge_two_schemas(base, type_hint_schema)
+    };
+
     if is_empty_schema(&guard_constraint_schema) {
         base
     } else if is_empty_schema(&base) {
@@ -252,7 +308,11 @@ fn empty_schema() -> Value {
 
 fn infer_guard_boolish_schema(guard: &Guard) -> Option<Value> {
     match guard {
-        Guard::Eq { .. } => None,
+        // `with .Values.X` accepts any non-empty value (string, list, map,
+        // number, bool, …), not just booleans, so it must not contribute a
+        // boolean type hint. `eq` constrains the value but the constraint is
+        // emitted separately by `infer_guard_constraint_schema`.
+        Guard::Eq { .. } | Guard::With { .. } => None,
         _ => Some(type_schema("boolean")),
     }
 }
@@ -294,6 +354,74 @@ fn lookup_values_yaml_schema(doc: &YamlValue, vp: &str) -> Option<Value> {
 
     let schemas: Vec<Value> = values.into_iter().map(schema_from_yaml_value).collect();
     Some(merge_schema_list(schemas))
+}
+
+/// True when the value at `vp` resolves to YAML null in the document.
+///
+/// Returns false for missing keys or non-mapping intermediate nodes — only an
+/// explicit `null` at the leaf qualifies.
+fn is_null_at_value_path(doc: &YamlValue, vp: &str) -> bool {
+    let parts: Vec<&str> = vp.split('.').filter(|s| !s.is_empty()).collect();
+    if parts.is_empty() {
+        return false;
+    }
+    is_null_at_parts(doc, &parts)
+}
+
+fn is_null_at_parts(doc: &YamlValue, parts: &[&str]) -> bool {
+    if parts.is_empty() {
+        return matches!(doc, YamlValue::Null);
+    }
+    let head = parts[0];
+    let tail = &parts[1..];
+    match doc {
+        YamlValue::Mapping(m) => {
+            let k = YamlValue::String(head.to_string());
+            m.get(&k).is_some_and(|next| is_null_at_parts(next, tail))
+        }
+        _ => false,
+    }
+}
+
+/// Identify paths that are used as YAML fragments inside `with` blocks and
+/// whose only scalar uses are with-header bindings. For these paths, a `null`
+/// values.yaml default is contractually valid (`with nil` skips the body) and
+/// must survive into the generated schema.
+fn collect_nullable_with_fragment_paths(uses: &[ValueUse]) -> BTreeSet<String> {
+    #[derive(Default)]
+    struct PathInfo {
+        has_fragment: bool,
+        has_with_header_scalar: bool,
+        has_non_header_scalar: bool,
+    }
+    let mut by_path: BTreeMap<&str, PathInfo> = BTreeMap::new();
+    for u in uses {
+        if u.source_expr.trim().is_empty() {
+            continue;
+        }
+        let info = by_path.entry(u.source_expr.as_str()).or_default();
+        match u.kind {
+            ValueKind::Fragment => info.has_fragment = true,
+            ValueKind::Scalar => {
+                let is_with_header = u.path.0.is_empty()
+                    && u.guards
+                        .iter()
+                        .any(|g| matches!(g, Guard::With { path } if path == &u.source_expr));
+                if is_with_header {
+                    info.has_with_header_scalar = true;
+                } else {
+                    info.has_non_header_scalar = true;
+                }
+            }
+        }
+    }
+    by_path
+        .into_iter()
+        .filter_map(|(path, info)| {
+            (info.has_fragment && info.has_with_header_scalar && !info.has_non_header_scalar)
+                .then(|| path.to_string())
+        })
+        .collect()
 }
 
 fn lookup_values_yaml_values<'a>(doc: &'a YamlValue, parts: &[&str]) -> Option<Vec<&'a YamlValue>> {
@@ -396,12 +524,12 @@ fn unknown_object_schema() -> Value {
     )
 }
 
-fn insert_schema_at_value_path(root: &mut Value, vp: &str, leaf: Value, required: bool) {
+fn insert_schema_at_value_path(root: &mut Value, vp: &str, leaf: Value) {
     let parts: Vec<&str> = vp.split('.').filter(|s| !s.is_empty()).collect();
     if parts.is_empty() {
         return;
     }
-    insert_schema_at_parts(root, &parts, leaf, required);
+    insert_schema_at_parts(root, &parts, leaf);
 }
 
 fn ensure_object_schema(v: &mut Value) {
@@ -468,23 +596,6 @@ fn ensure_items_schema(array_schema: &mut Value) -> &mut Value {
         .as_object_mut()
         .and_then(|o| o.get_mut("items"))
         .expect("array schema must have items")
-}
-
-fn ensure_required_contains(node: &mut Value, key: &str) {
-    ensure_object_schema(node);
-    let obj = node.as_object_mut().expect("object schema");
-    let req = obj
-        .entry("required")
-        .or_insert_with(|| Value::Array(Vec::new()));
-    let Some(arr) = req.as_array_mut() else {
-        *req = Value::Array(Vec::new());
-        return ensure_required_contains(node, key);
-    };
-    if !arr.iter().any(|v| v.as_str() == Some(key)) {
-        arr.push(Value::String(key.to_string()));
-    }
-    arr.sort_by(|a, b| a.as_str().unwrap_or("").cmp(b.as_str().unwrap_or("")));
-    arr.dedup();
 }
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
@@ -562,12 +673,7 @@ fn push_union_structural_constraints_down(obj: &mut Map<String, Value>, variants
     }
 }
 
-fn insert_schema_into_union_variants(
-    variants: &mut [Value],
-    parts: &[&str],
-    leaf: &Value,
-    required: bool,
-) -> bool {
+fn insert_schema_into_union_variants(variants: &mut [Value], parts: &[&str], leaf: &Value) -> bool {
     let head = parts[0];
     let mut touched = false;
     for v in variants {
@@ -578,7 +684,7 @@ fn insert_schema_into_union_variants(
         };
 
         if compatible {
-            insert_schema_at_parts(v, parts, leaf.clone(), required);
+            insert_schema_at_parts(v, parts, leaf.clone());
             touched = true;
         }
     }
@@ -605,7 +711,6 @@ fn insert_schema_at_union(
     key: &'static str,
     parts: &[&str],
     leaf: Value,
-    required: bool,
 ) {
     let Some(mut variants) = take_union_variants(obj, key) else {
         return;
@@ -613,17 +718,17 @@ fn insert_schema_at_union(
 
     push_union_structural_constraints_down(obj, &mut variants);
 
-    let touched = insert_schema_into_union_variants(&mut variants, parts, &leaf, required);
+    let touched = insert_schema_into_union_variants(&mut variants, parts, &leaf);
     if !touched {
         let mut new_variant = new_union_variant_for_head(parts[0]);
-        insert_schema_at_parts(&mut new_variant, parts, leaf, required);
+        insert_schema_at_parts(&mut new_variant, parts, leaf);
         variants.push(new_variant);
     }
 
     obj.insert(key.to_string(), Value::Array(variants));
 }
 
-fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, required: bool) {
+fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value) {
     if parts.is_empty() {
         return;
     }
@@ -634,7 +739,7 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, require
     if let Value::Object(obj) = node
         && let Some(key) = union_key(obj)
     {
-        insert_schema_at_union(obj, key, parts, leaf, required);
+        insert_schema_at_union(obj, key, parts, leaf);
         return;
     }
 
@@ -654,7 +759,7 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, require
                 other => merge_two_schemas(other, leaf),
             };
         } else {
-            insert_schema_at_parts(ap, &parts[1..], leaf, false);
+            insert_schema_at_parts(ap, &parts[1..], leaf);
         }
         return;
     }
@@ -669,15 +774,12 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, require
                 other => merge_two_schemas(other, leaf),
             };
         } else {
-            insert_schema_at_parts(items, &parts[1..], leaf, required);
+            insert_schema_at_parts(items, &parts[1..], leaf);
         }
         return;
     }
 
     ensure_object_schema(node);
-    if required {
-        ensure_required_contains(node, parts[0]);
-    }
     let props = node
         .as_object_mut()
         .and_then(|o| o.get_mut("properties"))
@@ -701,7 +803,7 @@ fn insert_schema_at_parts(node: &mut Value, parts: &[&str], leaf: Value, require
     let child = props
         .entry(key)
         .or_insert_with(|| object_schema(Map::new()));
-    insert_schema_at_parts(child, &parts[1..], leaf, required);
+    insert_schema_at_parts(child, &parts[1..], leaf);
 }
 
 #[cfg(test)]

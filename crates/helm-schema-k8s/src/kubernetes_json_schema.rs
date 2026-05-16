@@ -258,6 +258,33 @@ impl KubernetesJsonSchemaProvider {
         self.cache_dir.join(&self.version_dir).join(filename)
     }
 
+    /// Cheap check for "is this resource resolvable by the upstream K8s
+    /// JSON schemas cache?" — does not warn, does not materialise.
+    /// Returns true when any candidate filename exists in the local
+    /// cache OR can be downloaded.
+    #[must_use]
+    pub fn has_resource_file(&self, resource: &ResourceRef) -> bool {
+        let mut candidates = candidate_filenames_for_resource(resource);
+        if candidates.is_empty() {
+            candidates.push(filename_for_resource(resource));
+        }
+        for filename in &candidates {
+            if self.local_path_for(filename).exists() {
+                return true;
+            }
+        }
+        if !self.allow_download {
+            return false;
+        }
+        for filename in &candidates {
+            let local = self.local_path_for(filename);
+            if self.download_to_cache(filename, &local).is_ok() && local.exists() {
+                return true;
+            }
+        }
+        false
+    }
+
     fn download_to_cache(
         &self,
         filename: &str,
@@ -327,6 +354,10 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         let (leaf_filename, leaf) = schema_at_ypath(&mut ctx, &filename, path)?;
         let (_, expanded) = expand_schema_node(&mut ctx, &leaf_filename, &leaf, 0);
         Some(expanded)
+    }
+
+    fn has_resource(&self, resource: &ResourceRef) -> bool {
+        self.has_resource_file(resource)
     }
 }
 

@@ -49,6 +49,7 @@ fn symbolic_ir_full() {
 
     let svc = serde_json::json!({"api_version": "v1", "kind": "Service"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
     let expected = serde_json::json!([
         {
@@ -97,14 +98,14 @@ fn symbolic_ir_full() {
             "source_expr": "serviceAnnotations",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled")],
+            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceAnnotations")],
             "resource": svc
         },
         {
             "source_expr": "serviceAnnotations",
             "path": ["metadata", "annotations"],
             "kind": "Fragment",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), t("serviceAnnotations")],
+            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceAnnotations")],
             "resource": svc
         },
         {
@@ -139,14 +140,14 @@ fn symbolic_ir_full() {
             "source_expr": "serviceLabels",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled")],
+            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceLabels")],
             "resource": svc
         },
         {
             "source_expr": "serviceLabels",
             "path": ["metadata", "labels"],
             "kind": "Fragment",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), t("serviceLabels")],
+            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceLabels")],
             "resource": svc
         }
     ]);

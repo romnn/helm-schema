@@ -1,7 +1,11 @@
+pub mod required_inference;
 mod symbolic;
 mod walker;
 
 pub use symbolic::SymbolicIrGenerator;
+pub use walker::{
+    DefineBlock, extract_default_type_hints, extract_define_blocks, extract_helper_calls,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -58,6 +62,10 @@ pub enum Guard {
     Eq { path: String, value: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
+    /// Body of `with .Values.X` block — distinguishes header binding from
+    /// `if`-style truthy checks. The bound path is null-tolerant by
+    /// construction (`with nil` skips the body).
+    With { path: String },
 }
 
 impl Guard {
@@ -65,7 +73,10 @@ impl Guard {
     #[must_use]
     pub fn value_paths(&self) -> Vec<&str> {
         match self {
-            Guard::Truthy { path } | Guard::Not { path } | Guard::Eq { path, .. } => {
+            Guard::Truthy { path }
+            | Guard::Not { path }
+            | Guard::Eq { path, .. }
+            | Guard::With { path } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),

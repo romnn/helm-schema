@@ -65,19 +65,47 @@ impl CrdsCatalogSchemaProvider {
             return None;
         }
 
+        // Built-in K8s API groups never live in the CRDs catalog — skip
+        // them to avoid pointless lookups for `apps/v1/Deployment` etc.
+        //
+        // Intentionally NOT skipping `.k8s.io`-suffix groups: many real
+        // CRDs use that suffix
+        // (`autoscaling.k8s.io/VerticalPodAutoscaler`,
+        // `gateway.networking.k8s.io/HTTPRoute`, …). The catalog has
+        // them. The cost of a single file-existence check for genuine
+        // built-ins with `.k8s.io` suffix is small; the benefit of
+        // resolving these add-on CRDs is much larger.
         let group_lc = group.to_ascii_lowercase();
         if group_lc == "apps"
             || group_lc == "batch"
             || group_lc == "autoscaling"
             || group_lc == "policy"
             || group_lc == "extensions"
-            || group_lc.ends_with(".k8s.io")
         {
             return None;
         }
 
         let kind = kind.to_ascii_lowercase();
         Some(format!("{group}/{kind}_{version}.json"))
+    }
+
+    /// Cheap check for "does the CRDs catalog have this resource's
+    /// schema file?" — does not materialise or resolve paths. Returns
+    /// true when the file already exists in the local cache OR when
+    /// downloading would succeed (in `allow_download` mode).
+    #[must_use]
+    pub fn has_resource_file(&self, resource: &ResourceRef) -> bool {
+        let Some(relative_path) = Self::relative_path_for_resource(resource) else {
+            return false;
+        };
+        if self.local_path_for(&relative_path).exists() {
+            return true;
+        }
+        if !self.allow_download {
+            return false;
+        }
+        let local = self.local_path_for(&relative_path);
+        self.download_to_cache(&relative_path, &local).is_ok() && local.exists()
     }
 
     fn local_path_for(&self, relative_path: &str) -> PathBuf {
@@ -158,6 +186,10 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
         let root = self.materialize_schema_for_resource(resource)?;
         descend_schema_path(&root, &path.0)
+    }
+
+    fn has_resource(&self, resource: &ResourceRef) -> bool {
+        self.has_resource_file(resource)
     }
 }
 

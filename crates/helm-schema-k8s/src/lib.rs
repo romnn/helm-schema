@@ -152,6 +152,22 @@ pub trait K8sSchemaProvider {
 
     /// Schema for a specific resource type + YAML path.
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value>;
+
+    /// Cheap check for "does this provider own this resource type?" —
+    /// distinct from "can this provider resolve this specific path within
+    /// the resource". Chain providers use this to commit to the first
+    /// provider that owns the resource instead of falling through on path
+    /// misses (which would emit misleading "no schema found" warnings
+    /// from a downstream provider).
+    ///
+    /// Default impl: assume yes when `schema_for_resource_path` with an
+    /// empty path returns `Some` — works for trivially-cached providers
+    /// but is too expensive (and warning-noisy) for real ones, which
+    /// should override with a file-existence check.
+    fn has_resource(&self, resource: &ResourceRef) -> bool {
+        self.schema_for_resource_path(resource, &YamlPath(Vec::new()))
+            .is_some()
+    }
 }
 
 pub struct ChainSchemaProvider<A, B> {

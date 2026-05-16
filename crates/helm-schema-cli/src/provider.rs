@@ -68,11 +68,34 @@ struct MultiProvider {
 
 impl K8sSchemaProvider for MultiProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+        // Commit to the first provider that *owns* the resource (has its
+        // schema file), even if it can't resolve this specific path —
+        // falling through to the next provider on a path miss would emit
+        // misleading "no schema found" warnings from that provider when
+        // the resource is actually handled fine here. Path-resolution
+        // failures inside an owning provider are silent gaps in coverage,
+        // not missing-schema errors.
+        for p in &self.providers {
+            if p.has_resource(resource) {
+                return p.schema_for_resource_path(resource, path);
+            }
+        }
+
+        // No provider owns the resource. Fall back to the legacy "ask
+        // each provider in turn" path so a downstream provider that
+        // doesn't implement `has_resource` precisely (or any chain
+        // surprises) still gets a chance to answer. The K8s OpenAPI
+        // provider's warning fires here, which is the right place for
+        // genuinely-unrecognised resources.
         for p in &self.providers {
             if let Some(v) = p.schema_for_resource_path(resource, path) {
                 return Some(v);
             }
         }
         None
+    }
+
+    fn has_resource(&self, resource: &ResourceRef) -> bool {
+        self.providers.iter().any(|p| p.has_resource(resource))
     }
 }

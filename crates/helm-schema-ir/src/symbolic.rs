@@ -1203,6 +1203,68 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
+    fn collect_with_guards(&mut self, cond_text: &str) {
+        let mut cond_guards = parse_condition(cond_text);
+        if cond_guards.is_empty()
+            && let Some(Some(dot_prefix)) = self.dot_stack.last()
+        {
+            let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
+            cond_guards = parse_condition(&rewritten);
+        }
+
+        // In a `with` block, every path that contributes to the binding is
+        // null-tolerant (`with nil` skips the body). Tag each such path with
+        // `Guard::With { path }` so downstream consumers can identify
+        // with-bound paths uniformly:
+        //
+        //   `with .Values.X`           → Truthy{X}      → With{X}
+        //   `with or .A .B`            → Or{[A,B]}      → With{A}, With{B}, Or{[A,B]}
+        //   `with and (.A) (.B)`       → Truthy{A,B}    → With{A}, With{B}
+        //
+        // For non-trivial control flow (`Or`, `Not`, `Eq`) we KEEP the
+        // original guard alongside the per-path `With` so downstream
+        // consumers retain exact semantics. `Truthy { path }` is fully
+        // subsumed by `With { path }` and is dropped.
+        let cond_guards: Vec<Guard> = cond_guards
+            .into_iter()
+            .flat_map(|g| match g {
+                Guard::Truthy { path } => vec![Guard::With { path }],
+                Guard::Or { ref paths } => {
+                    let mut out: Vec<Guard> = paths
+                        .iter()
+                        .map(|p| Guard::With { path: p.clone() })
+                        .collect();
+                    out.push(g);
+                    out
+                }
+                Guard::Not { ref path } | Guard::Eq { ref path, .. } => {
+                    vec![Guard::With { path: path.clone() }, g]
+                }
+                Guard::With { .. } => vec![g],
+            })
+            .collect();
+
+        // Push the With guards before emitting header scalar uses so the
+        // emitted uses themselves carry the With guard. This lets the schema
+        // generator identify with-header uses by the presence of a matching
+        // `Guard::With { path: source_expr }` in the use's guard list.
+        for g in &cond_guards {
+            if !self.guards.contains(g) {
+                self.guards.push(g.clone());
+            }
+        }
+
+        for v in self.extract_bound_values(cond_text) {
+            self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
+        }
+
+        for g in &cond_guards {
+            for path in g.value_paths() {
+                self.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
+            }
+        }
+    }
+
     fn push_with_dot_binding(&mut self, header_text: &str) {
         let values = extract_values_paths(header_text);
         if values.len() == 1 {
@@ -1356,7 +1418,7 @@ impl<'a> SymbolicWalker<'a> {
             && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
         {
             self.push_with_dot_binding(txt);
-            self.collect_if_with_guards(txt);
+            self.collect_with_guards(txt);
         }
 
         let consequence = Self::children_with_field(node, "consequence");

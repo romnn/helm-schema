@@ -144,6 +144,7 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        infer_required: false,
         provider: ProviderOptions {
             k8s_version: "v1.35.0".to_string(),
             k8s_schema_cache_dir: None,

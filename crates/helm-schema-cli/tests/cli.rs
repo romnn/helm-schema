@@ -34,6 +34,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        infer_required: false,
         provider: ProviderOptions {
             k8s_version: "v1.35.0".to_string(),
             k8s_schema_cache_dir: None,
@@ -83,6 +84,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        infer_required: false,
         provider: ProviderOptions {
             k8s_version: "v1.35.0".to_string(),
             k8s_schema_cache_dir: None,

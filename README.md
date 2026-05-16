@@ -111,6 +111,48 @@ If schema sources are missing or incomplete, the CLI may emit warnings to stderr
   - Do not scan `templates/tests/**`.
 - `--no-subchart-values`
   - Do not include vendored subchart values under `charts/` in the composed values.
+- `--infer-required`
+  - Mark paths that the chart checks unconditionally at the top of a
+    template (`{{- if .Values.X }}` / `{{- eq .Values.X "..." }}` with no
+    enclosing guard) as `required` on their parent object. Paths reachable
+    via any `default <expr> .Values.X` fallback (literal or non-literal,
+    e.g. `default .Chart.Name .Values.nameOverride`) are excluded because
+    the chart explicitly handles them being unset. Off by default — the
+    generated schema stays as permissive as the template logic allows.
+
+### Default-value type inference
+
+When a template uses `default <literal> .Values.X` (or the pipeline form
+`.Values.X | default <literal>`), `helm-schema` infers `X`'s type from the
+literal — string, integer, number, or boolean. Combined with a `null` (or
+absent) value in `values.yaml`, the inferred schema becomes a nullable
+union: `anyOf: [{type: null}, {type: <literal-type>}]`. This catches the
+common Helm pattern of "ship a `null` placeholder, fall back to a literal
+at render time" without surfacing it as a schema validation error.
+
+Non-literal fallbacks (`default .Chart.Name .Values.X`, `default (printf
+"%s" .Y) .Values.X`) don't get a type hint — we can't statically infer the
+type — but they still suppress `--infer-required` for `X`.
+
+#### Scoping for library (`type: library`) subcharts
+
+Library charts have no value scope of their own — their helpers run in
+the caller's scope, with `.Values.X` resolving against the chart that
+`include`s the helper. `helm-schema` builds a per-helper call graph
+across every chart's templates: nodes are individual `{{ define
+"name" }}` blocks plus per-chart "chart-direct" pseudo-nodes for text
+outside any define, edges are `{{ include "callee" ... }}` /
+`{{ template "callee" ... }}` references.
+
+When a non-library chart's schema is generated, the helpers reachable
+from that chart's chart-direct includes — followed transitively through
+the graph — are the helpers whose signals (type hints and
+`default`-fallback paths used by `--infer-required`) apply at that
+chart's value prefix. The resolution is helper-granular, not library-
+name-granular: a library that defines both a helper the app includes
+and another helper the app never references will only contribute the
+included helper's signals. Transitive chains (`app → libA.X → libB.Y`)
+carry signals from the deepest helper back to the app.
 
 ### Applying a schema override
 

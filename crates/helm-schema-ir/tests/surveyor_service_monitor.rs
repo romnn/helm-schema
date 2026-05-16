@@ -52,6 +52,7 @@ fn symbolic_ir_full() {
     let sm =
         serde_json::json!({"api_version": "monitoring.coreos.com/v1", "kind": "ServiceMonitor"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
     let expected = serde_json::json!([
         {
@@ -72,14 +73,14 @@ fn symbolic_ir_full() {
             "source_expr": "serviceMonitor.annotations",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.annotations")],
             "resource": sm
         },
         {
             "source_expr": "serviceMonitor.annotations",
             "path": ["metadata", "annotations"],
             "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), t("serviceMonitor.annotations")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.annotations")],
             "resource": sm
         },
         {
@@ -107,42 +108,42 @@ fn symbolic_ir_full() {
             "source_expr": "serviceMonitor.labels",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.labels")],
             "resource": sm
         },
         {
             "source_expr": "serviceMonitor.labels",
             "path": ["metadata", "labels"],
             "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), t("serviceMonitor.labels")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.labels")],
             "resource": sm
         },
         {
             "source_expr": "serviceMonitor.metricRelabelings",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.metricRelabelings")],
             "resource": sm
         },
         {
             "source_expr": "serviceMonitor.metricRelabelings",
             "path": ["spec", "endpoints[*]", "metricRelabelings"],
             "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), t("serviceMonitor.metricRelabelings")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.metricRelabelings")],
             "resource": sm
         },
         {
             "source_expr": "serviceMonitor.relabelings",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.relabelings")],
             "resource": sm
         },
         {
             "source_expr": "serviceMonitor.relabelings",
             "path": ["spec", "endpoints[*]", "relabelings"],
             "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), t("serviceMonitor.relabelings")],
+            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.relabelings")],
             "resource": sm
         },
         {
