@@ -28,131 +28,138 @@ impl DefaultLiteralType {
     }
 }
 
-fn classify_default_literal(lit: &str) -> Option<DefaultLiteralType> {
-    let lit = lit.trim();
-    if lit.len() >= 2 && lit.starts_with('"') && lit.ends_with('"') {
-        return Some(DefaultLiteralType::String);
-    }
-    if lit == "true" || lit == "false" {
-        return Some(DefaultLiteralType::Boolean);
-    }
-    if lit.parse::<i64>().is_ok() || lit.parse::<u64>().is_ok() {
-        return Some(DefaultLiteralType::Integer);
-    }
-    if lit.parse::<f64>().is_ok() {
-        return Some(DefaultLiteralType::Number);
-    }
-    None
-}
-
 /// Extract type hints implied by `default <literal> .Values.X` and
 /// `.Values.X | default <literal>` patterns in template text.
 ///
-/// Returns pairs of `(values_path, schema_fragment)` where `schema_fragment`
-/// reflects the literal's JSON type (string/integer/number/boolean). Patterns
-/// where the first argument to `default` is a non-literal (function call,
-/// computed expression) are skipped.
+/// Returns pairs of `(values_path, schema_fragment)` where
+/// `schema_fragment` reflects the literal's JSON type
+/// (`string`/`integer`/`number`/`boolean`). Patterns where the first
+/// argument to `default` is a non-literal (function call, computed
+/// expression) are skipped — the broader "has *some* fallback"
+/// classification lives in
+/// [`crate::required_inference::extract_default_fallback_paths`].
 ///
-/// Pre-filtering before regex match:
-/// 1. Lines that are YAML comments (start with `#`) are dropped — the
-///    template engine never executes them, so any `default ...` syntax
-///    they contain is descriptive text.
-/// 2. Helm comments `{{/* ... */}}` are dropped — same reason.
-/// 3. Go string literals inside template actions are replaced with `""`,
-///    so a `default 5 .Values.x` substring living inside a Go string
-///    doesn't produce a hint, while `default "fallback" .Values.x` (where
-///    `"fallback"` is the literal arg) still classifies correctly as a
-///    string literal.
+/// Parses each `{{ ... }}` action via the
+/// [`helm_schema_ast::parse_action_expressions`] typed AST, then walks
+/// for two shapes:
+///   - `Call { function: "default", args: [Literal(lit), <.Values.X>] }`
+///   - `Pipeline([<.Values.X>, Call { function: "default", args: [Literal(lit)] }])`
+///
+/// Because the AST distinguishes string literals from raw expression
+/// text, a `default 5 .Values.x` substring living inside a quoted
+/// payload (e.g. `{{ "default 5 .Values.x" | quote }}`) is parsed as
+/// `Literal::String` and never produces a phantom hint.
+///
+/// Lines that are YAML comments (start with `#`, possibly indented)
+/// are stripped from `text` *before* parsing. Helm WILL execute any
+/// `{{ ... }}` action embedded in such a line, but the surrounding
+/// `# example: ...` convention strongly signals "this is documentation,
+/// not a real binding" — we preserve that intent.
 #[must_use]
 pub fn extract_default_type_hints(text: &str) -> Vec<(String, Value)> {
-    let cleaned = preprocess_for_hint_extraction(text);
-    static_re().captures_iter_for(&cleaned)
+    use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+
+    let cleaned = strip_yaml_comment_lines(text);
+    let mut out: Vec<(String, Value)> = Vec::new();
+    for top in parse_action_expressions(&cleaned) {
+        top.walk(|expr| match expr {
+            // Prefix form: `default LIT .Values.X`.
+            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
+                let TemplateExpr::Literal(lit) = &args[0] else {
+                    return;
+                };
+                let Some(ty) = classify_literal_type(lit) else {
+                    return;
+                };
+                let Some(path) = values_path_from_expr(&args[1]) else {
+                    return;
+                };
+                out.push((path, ty.schema()));
+            }
+            // Pipeline form: `.Values.X | default LIT`.
+            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
+                for window in stages.windows(2) {
+                    let Some(path) = values_path_from_expr(&window[0]) else {
+                        continue;
+                    };
+                    let TemplateExpr::Call { function, args } = &window[1] else {
+                        continue;
+                    };
+                    if function != "default" || args.len() != 1 {
+                        continue;
+                    }
+                    let TemplateExpr::Literal(lit) = &args[0] else {
+                        continue;
+                    };
+                    let Some(ty) = classify_literal_type(lit) else {
+                        continue;
+                    };
+                    out.push((path, ty.schema()));
+                }
+            }
+            _ => {}
+        });
+    }
+    out
 }
 
-pub(crate) fn preprocess_for_hint_extraction(src: &str) -> String {
-    let no_yaml_comments: String = src
-        .lines()
+/// Map an AST [`helm_schema_ast::Literal`] to the corresponding
+/// JSON Schema scalar type. Returns `None` for `Nil`.
+fn classify_literal_type(lit: &helm_schema_ast::Literal) -> Option<DefaultLiteralType> {
+    match lit {
+        helm_schema_ast::Literal::String(_) | helm_schema_ast::Literal::RawString(_) => {
+            Some(DefaultLiteralType::String)
+        }
+        helm_schema_ast::Literal::Int(_) => Some(DefaultLiteralType::Integer),
+        helm_schema_ast::Literal::Float(_) => Some(DefaultLiteralType::Number),
+        helm_schema_ast::Literal::Bool(_) => Some(DefaultLiteralType::Boolean),
+        helm_schema_ast::Literal::Nil => None,
+    }
+}
+
+/// Strip YAML-comment lines (those whose first non-whitespace char is
+/// `#`) from `src`. Pure-comment lines never produce real YAML keys at
+/// render time; any `{{ ... }}` action embedded in them is documentation
+/// by convention. Called before [`parse_action_expressions`] so the
+/// downstream extractors don't pick up phantom signals from example
+/// snippets in docstring-style comments.
+pub(crate) fn strip_yaml_comment_lines(src: &str) -> String {
+    src.lines()
         .filter(|line| !line.trim_start().starts_with('#'))
         .collect::<Vec<_>>()
-        .join("\n");
-
-    let helm_comment_re = helm_comment_regex();
-    let no_helm_comments = helm_comment_re.replace_all(&no_yaml_comments, " ");
-
-    let string_lit_re = go_string_literal_regex();
-    string_lit_re
-        .replace_all(&no_helm_comments, "\"\"")
-        .into_owned()
+        .join("\n")
 }
 
-fn helm_comment_regex() -> &'static Regex {
-    use std::sync::OnceLock;
-    static R: OnceLock<Regex> = OnceLock::new();
-    R.get_or_init(|| Regex::new(r"(?s)\{\{-?\s*/\*.*?\*/\s*-?\}\}").expect("helm comment regex"))
-}
-
-fn go_string_literal_regex() -> &'static Regex {
-    use std::sync::OnceLock;
-    static R: OnceLock<Regex> = OnceLock::new();
-    // Match string literals containing `default` or `.Values.` — these are
-    // the ones that would mislead the regex. Leave other strings (including
-    // legitimate `default "fallback"` literal args) alone so they continue
-    // to classify as String.
-    R.get_or_init(|| {
-        Regex::new(r#""[^"\n]*(?:default|\.Values\.)[^"\n]*""#).expect("go string literal regex")
-    })
-}
-
-/// Holds compiled regexes; one set is sufficient for the whole process.
-struct DefaultHintRegexes {
-    prefix: Regex,
-    pipeline: Regex,
-}
-
-fn static_re() -> &'static DefaultHintRegexes {
-    use std::sync::OnceLock;
-    static R: OnceLock<DefaultHintRegexes> = OnceLock::new();
-    R.get_or_init(|| {
-        // Literal: quoted string, signed integer/float, or `true`/`false`.
-        let lit = r#"(?:"[^"]*"|-?\d+(?:\.\d+)?|true|false)"#;
-        let path = r#"[\w]+(?:\.[\w]+)*"#;
-        // Optional `$` or `$varname` prefix on `.Values.`. Covers the
-        // common rooted forms used inside `range`/`with` bodies where `.`
-        // has been rebound:
-        //   `.Values.X`            (root context)
-        //   `$.Values.X`           (`$` is the root scope)
-        //   `$root.Values.X`       (chart-defined `$root := .` alias)
-        let values_prefix = r"(?:\$\w*)?\.Values\.";
-        DefaultHintRegexes {
-            // `default LIT .Values.PATH` (or rooted variants)
-            prefix: Regex::new(&format!(
-                r"\bdefault\s+(?P<lit>{lit})\s+{values_prefix}(?P<path>{path})"
-            ))
-            .expect("default-prefix regex"),
-            // `.Values.PATH | default LIT` (or rooted variants)
-            pipeline: Regex::new(&format!(
-                r"{values_prefix}(?P<path>{path})\s*\|\s*default\s+(?P<lit>{lit})"
-            ))
-            .expect("default-pipeline regex"),
-        }
-    })
-}
-
-impl DefaultHintRegexes {
-    fn captures_iter_for(&self, text: &str) -> Vec<(String, Value)> {
-        let mut out: Vec<(String, Value)> = Vec::new();
-        for caps in self.prefix.captures_iter(text) {
-            if let Some(ty) = classify_default_literal(&caps["lit"]) {
-                out.push((caps["path"].to_string(), ty.schema()));
+/// If `expr` is a `.Values.X.Y…` reference (root context or via a
+/// `$` / `$root` variable), return the dotted path with the leading
+/// `Values.` stripped (`"X.Y..."`). Otherwise returns `None`. Used by
+/// both `extract_default_type_hints` and
+/// `crate::required_inference::extract_default_fallback_paths`.
+pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
+    use helm_schema_ast::TemplateExpr as E;
+    let segments: &[String] = match expr {
+        E::Field(path) => path,
+        E::Selector { operand, path } => {
+            // Accept `$.Values.X` and `$name.Values.X` — variable
+            // operands stand in for a re-rooted context, matching the
+            // chart-helper idiom `{{- $root := . -}}`.
+            if !matches!(operand.as_ref(), E::Variable(_)) {
+                return None;
             }
+            path
         }
-        for caps in self.pipeline.captures_iter(text) {
-            if let Some(ty) = classify_default_literal(&caps["lit"]) {
-                out.push((caps["path"].to_string(), ty.schema()));
-            }
-        }
-        out
+        _ => return None,
+    };
+    let mut iter = segments.iter();
+    let head = iter.next()?;
+    if head != "Values" {
+        return None;
     }
+    let tail: Vec<String> = iter.cloned().collect();
+    if tail.is_empty() {
+        return None;
+    }
+    Some(tail.join("."))
 }
 
 /// Extract `.Values.foo.bar` references → `["foo.bar"]`.
@@ -345,43 +352,47 @@ pub fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {
 /// returned in source order (with duplicates collapsed) so the caller
 /// can build a per-source call graph without further dedup.
 ///
-/// Comment text is skipped so `{{/* include "X" */}}` doesn't produce
-/// a false edge.
-///
-/// Go string literals inside template actions are also skipped via
-/// regex alternation, so a quoted payload like
-/// `{{ "include \"X\"" | quote }}` doesn't produce a false edge. The
-/// alternation engine consumes the string span before the helper-call
-/// alternative gets a chance to match the bytes inside it. Action
-/// interiors are raw text in the parser AST (`HelmAst::HelmExpr`), so
-/// without this we'd let phantom calls flow into the cross-chart
-/// helper call graph and contaminate downstream type-hint extraction.
+/// Parses each `{{ ... }}` action via the
+/// [`helm_schema_ast::parse_action_expressions`] typed AST, then walks
+/// the tree for `Call { function: "include" | "template", … }` nodes
+/// whose first argument is a string literal. Because the AST tokenizes
+/// string literals as `Literal::String` rather than raw bytes, a
+/// quoted payload like `{{ "include \"X\"" | quote }}` produces a
+/// `Literal::String("include \"X\"")` — never a phantom call to `X`.
+/// `template_action` (`{{ template "name" . }}`) is normalized into
+/// the same `Call` shape so both keyword forms surface identically.
 #[must_use]
 pub fn extract_helper_calls(src: &str) -> Vec<String> {
-    let preserved = mask_helm_comments(src);
-    let action_re = template_action_regex();
-    let call_re = helper_call_regex();
+    use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
-    let mut seen = std::collections::HashSet::new();
-    let mut out = Vec::new();
-    for cap in action_re.captures_iter(&preserved) {
-        let inner = cap.get(1).expect("re capture group 1").as_str();
-        for call in call_re.captures_iter(inner) {
-            // The combined regex has three alternations: double-quoted
-            // string, backtick raw string, and the actual helper call.
-            // Only the helper-call branch has a `name` capture group.
-            // The other branches match (so the engine consumes those
-            // spans and skips past them) but produce no name.
-            let Some(name) = call.name("name") else {
-                continue;
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut out: Vec<String> = Vec::new();
+    for top in parse_action_expressions(src) {
+        top.walk(|expr| {
+            let TemplateExpr::Call { function, args } = expr else {
+                return;
             };
-            let name = name.as_str().to_string();
-            if seen.insert(name.clone()) {
-                out.push(name);
+            if function != "include" && function != "template" {
+                return;
             }
-        }
+            let Some(TemplateExpr::Literal(lit)) = args.first() else {
+                return;
+            };
+            let Some(name) = lit.as_string() else {
+                return;
+            };
+            if seen.insert(name.to_string()) {
+                out.push(name.to_string());
+            }
+        });
     }
     out
+}
+
+fn helm_comment_regex() -> &'static Regex {
+    use std::sync::OnceLock;
+    static R: OnceLock<Regex> = OnceLock::new();
+    R.get_or_init(|| Regex::new(r"(?s)\{\{-?\s*/\*.*?\*/\s*-?\}\}").expect("helm comment regex"))
 }
 
 /// Replace each `{{/* ... */}}` Helm comment in `src` with spaces of
@@ -410,33 +421,6 @@ fn template_action_regex() -> &'static Regex {
     // `(?s)` so `.` matches newlines (multi-line actions are valid).
     // Non-greedy body so adjacent actions don't merge.
     R.get_or_init(|| Regex::new(r"(?s)\{\{-?(.*?)-?\}\}").expect("template action regex"))
-}
-
-fn helper_call_regex() -> &'static Regex {
-    use std::sync::OnceLock;
-    static R: OnceLock<Regex> = OnceLock::new();
-    // Three alternations, tried left-to-right at each position:
-    //
-    //   1. A double-quoted Go string literal (with `\"`/`\\` escapes).
-    //   2. A backtick-quoted Go raw string literal.
-    //   3. The actual helper-call pattern `include "name"` /
-    //      `template "name"`, captured into the `name` group.
-    //
-    // The regex engine's leftmost-first matching means a string-literal
-    // span at position p is consumed before alternation 3 ever gets a
-    // chance to scan the bytes inside it. So `"include \"X\""` inside
-    // a `{{ ... }}` action no longer produces a phantom call to `X` —
-    // the outer quoted string is matched and skipped first.
-    //
-    // Helper-define names allow `.`, `_`, `-`, alphanumerics.
-    R.get_or_init(|| {
-        Regex::new(concat!(
-            r#""(?:[^"\\]|\\.)*""#,
-            r"|`[^`]*`",
-            r#"|\b(?:include|template)\s+"(?P<name>[A-Za-z0-9._-]+)""#,
-        ))
-        .expect("helper call regex")
-    })
 }
 
 fn parse_define_directive(inner: &str) -> Option<String> {
@@ -511,5 +495,154 @@ mod helper_call_tests {
             extract_helper_calls(src),
             vec!["a".to_string(), "b".to_string()],
         );
+    }
+
+    #[test]
+    fn dedup_preserves_first_occurrence_order() {
+        // Two calls to `a`, one to `b`. Output should have each name
+        // once, in first-occurrence order.
+        let src = r#"{{ include "a" . }}{{ include "b" . }}{{ include "a" . }}"#;
+        assert_eq!(
+            extract_helper_calls(src),
+            vec!["a".to_string(), "b".to_string()],
+        );
+    }
+
+    #[test]
+    fn extracts_helper_inside_control_flow_body() {
+        // Helper call buried inside `{{ if ... }}` body must still
+        // surface — extractors are about reachable references, not
+        // just top-level ones.
+        let src = r#"{{ if .X }}{{ include "deep" . }}{{ end }}"#;
+        assert_eq!(extract_helper_calls(src), vec!["deep".to_string()]);
+    }
+
+    #[test]
+    fn extracts_helper_inside_range_destructure_header() {
+        // `{{ range $i, $v := include "src" . }}` — the include call
+        // lives in the range header's destructuring assignment. It
+        // must be discovered because the helper IS executed at
+        // render time.
+        let src = r#"{{ range $i, $v := include "src" . }}{{ end }}"#;
+        assert_eq!(extract_helper_calls(src), vec!["src".to_string()]);
+    }
+}
+
+#[cfg(test)]
+mod default_type_hint_tests {
+    use super::extract_default_type_hints;
+    use serde_json::json;
+
+    fn hints(src: &str) -> Vec<(String, serde_json::Value)> {
+        extract_default_type_hints(src)
+    }
+
+    #[test]
+    fn prefix_literal_emits_typed_hint() {
+        assert_eq!(
+            hints(r#"{{ default 5 .Values.replicas }}"#),
+            vec![("replicas".to_string(), json!({"type": "integer"}))],
+        );
+    }
+
+    #[test]
+    fn pipeline_literal_emits_typed_hint() {
+        assert_eq!(
+            hints(r#"{{ .Values.replicas | default 5 }}"#),
+            vec![("replicas".to_string(), json!({"type": "integer"}))],
+        );
+    }
+
+    #[test]
+    fn nested_default_inner_emits_hint_outer_does_not() {
+        // `default 5 (default "x" .Values.X)` — the OUTER call has
+        // args [Int, Parenthesized(...)], where args[1] is not a
+        // `.Values.X` reference (it's a wrapped expression). So no
+        // hint for the outer. The INNER call IS a direct `default LIT
+        // .Values.X` pattern → hint emitted with String type.
+        assert_eq!(
+            hints(r#"{{ default 5 (default "x" .Values.X) }}"#),
+            vec![("X".to_string(), json!({"type": "string"}))],
+        );
+    }
+
+    #[test]
+    fn chained_defaults_emit_one_hint_for_innermost_path() {
+        // `.Values.X | default 5 | default 10` — only the first pipe
+        // pair `(.Values.X, default 5)` matches the pattern. The
+        // second pair `(default 5, default 10)` has a Call as its
+        // first stage, not a `.Values.X` path, so it doesn't match.
+        assert_eq!(
+            hints(r#"{{ .Values.X | default 5 | default 10 }}"#),
+            vec![("X".to_string(), json!({"type": "integer"}))],
+        );
+    }
+
+    #[test]
+    fn intervening_call_breaks_pipeline_pattern() {
+        // `.Values.X | required "msg" | default 5` — `required` sits
+        // between the path and `default`. The pattern matcher only
+        // pairs adjacent stages, and `(required, default)` has a
+        // non-Field first half, so no hint is emitted. Helm semantics
+        // agree: `default 5` fires on `required(...)`'s return value,
+        // not on `.Values.X` directly.
+        assert!(hints(r#"{{ .Values.X | required "msg" | default 5 }}"#).is_empty(),);
+    }
+
+    #[test]
+    fn rooted_dollar_dotvalues_path_is_recognised() {
+        // `$.Values.X` should resolve to path "X" — the `$` is a bare
+        // variable rebinding the root scope.
+        assert_eq!(
+            hints(r#"{{ default 5 $.Values.X }}"#),
+            vec![("X".to_string(), json!({"type": "integer"}))],
+        );
+    }
+
+    #[test]
+    fn rooted_named_variable_dotvalues_path_is_recognised() {
+        // `$root.Values.X` — `$root := .` is a common chart-helper
+        // idiom inside range/with bodies where `.` has been rebound.
+        assert_eq!(
+            hints(r#"{{ default 5 $root.Values.X }}"#),
+            vec![("X".to_string(), json!({"type": "integer"}))],
+        );
+    }
+
+    #[test]
+    fn default_with_non_values_target_no_hint() {
+        // `default 5 .NotValues.X` — second arg's head is not "Values",
+        // so no hint.
+        assert!(hints(r#"{{ default 5 .NotValues.X }}"#).is_empty());
+    }
+
+    #[test]
+    fn default_with_dot_only_no_hint() {
+        // `default 5 .` — second arg is the bare context, not a
+        // Values path.
+        assert!(hints(r#"{{ default 5 . }}"#).is_empty());
+    }
+
+    #[test]
+    fn default_with_parenthesised_first_arg_no_hint() {
+        // First arg is not a literal — it's a Parenthesized call. The
+        // type cannot be inferred from a non-literal default value.
+        // (The path X is still a real *use*, but the hint feature is
+        // literal-only by design.)
+        assert!(hints(r#"{{ default (printf "%s" .Y) .Values.X }}"#).is_empty());
+    }
+
+    #[test]
+    fn bool_literal_classified_as_boolean() {
+        assert_eq!(
+            hints(r#"{{ default true .Values.enabled }}"#),
+            vec![("enabled".to_string(), json!({"type": "boolean"}))],
+        );
+    }
+
+    #[test]
+    fn nil_literal_emits_no_hint() {
+        // `default nil` doesn't constrain the type at all.
+        assert!(hints(r#"{{ default nil .Values.X }}"#).is_empty());
     }
 }

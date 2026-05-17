@@ -1,6 +1,8 @@
+pub mod expr;
 mod fused_rust;
 mod tree_sitter_parser;
 
+pub use expr::{Literal, TemplateExpr, parse_action_expressions};
 pub use fused_rust::FusedRustParser;
 pub use tree_sitter_parser::TreeSitterParser;
 
