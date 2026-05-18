@@ -152,6 +152,7 @@ fn validate_rendered_docs(rendered_yaml: &str) {
             api_version: api_version.to_string(),
             kind: kind.to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         };
 
         if let Some(schema) = provider.materialize_schema_for_resource(&resource) {

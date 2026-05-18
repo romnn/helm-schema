@@ -12,7 +12,7 @@ fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     let cli =
         Cli::try_parse_from(["helm-schema", "/tmp/chart"]).map_err(|e| eyre!(e.to_string()))?;
 
-    assert_eq!(cli.k8s.k8s_version, "v1.35.0");
+    assert_eq!(cli.k8s.k8s_version, vec!["v1.35.0".to_string()]);
     assert!(cli.output.output.is_none());
     assert!(!cli.k8s.offline);
     assert!(!cli.k8s.no_k8s_schemas);
@@ -36,11 +36,12 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
         include_subchart_values: true,
         infer_required: false,
         provider: ProviderOptions {
-            k8s_version: "v1.35.0".to_string(),
+            k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: true,
             disable_k8s_schemas: true,
-            crd_catalog_dir: None,
+            crd_override_dir: None,
+            ..Default::default()
         },
     };
 
@@ -86,11 +87,12 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         include_subchart_values: true,
         infer_required: false,
         provider: ProviderOptions {
-            k8s_version: "v1.35.0".to_string(),
+            k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: true,
             disable_k8s_schemas: true,
-            crd_catalog_dir: None,
+            crd_override_dir: None,
+            ..Default::default()
         },
     };
 

@@ -2,6 +2,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, HelmAst};
 
+use crate::helper_eval::{CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput};
 use crate::walker::{extract_values_paths, is_fragment_expr, parse_condition};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 
@@ -842,7 +843,14 @@ impl<'a> SymbolicWalker<'a> {
             return;
         }
 
-        let mut buf = String::new();
+        // Two parallel buffers — `shape_buf` keeps the gap content
+        // sanitized to whitespace (so the indent/shape tracker doesn't
+        // see template actions as YAML keys), `detector_buf` keeps the
+        // raw gap content (so the resource detector can see helper
+        // calls like `apiVersion: {{ template "X" . }}` and resolve
+        // them statically via `helper_literal_outputs`).
+        let mut shape_buf = String::new();
+        let mut detector_buf = String::new();
 
         while self.text_span_idx < self.text_spans.len() {
             let (s, e) = self.text_spans[self.text_span_idx];
@@ -852,14 +860,54 @@ impl<'a> SymbolicWalker<'a> {
                 continue;
             }
             if s >= target {
+                // The gap from text_pos up to target is purely
+                // non-span (template actions etc.). Feed it raw to the
+                // detector before bailing so helper-returned
+                // apiVersions in that region still get resolved.
+                if self.text_pos < target {
+                    let gap = &self.source[self.text_pos..target];
+                    let mut sanitized = String::with_capacity(gap.len());
+                    for ch in gap.chars() {
+                        if ch == '\n' || ch == ' ' || ch == '\t' {
+                            sanitized.push(ch);
+                        }
+                    }
+                    if !sanitized.is_empty() {
+                        shape_buf.push_str(&sanitized);
+                    }
+                    detector_buf.push_str(gap);
+                    self.text_pos = target;
+                }
                 break;
+            }
+
+            // Fill the leading gap (from text_pos to current span's
+            // start) before processing the span itself. Previous
+            // calls to `ingest_text_up_to` may have left text_pos in
+            // the middle of an inter-span gap; the detector needs to
+            // see the template actions in that gap to resolve
+            // helper-returned apiVersions correctly.
+            if self.text_pos < s {
+                let gap = &self.source[self.text_pos..s];
+                let mut sanitized = String::with_capacity(gap.len());
+                for ch in gap.chars() {
+                    if ch == '\n' || ch == ' ' || ch == '\t' {
+                        sanitized.push(ch);
+                    }
+                }
+                if !sanitized.is_empty() {
+                    shape_buf.push_str(&sanitized);
+                }
+                detector_buf.push_str(gap);
+                self.text_pos = s;
             }
 
             let start = s.max(self.text_pos);
             let end = e.min(target);
             if start < end {
                 let txt = &self.source[start..end];
-                buf.push_str(txt);
+                shape_buf.push_str(txt);
+                detector_buf.push_str(txt);
                 self.text_pos = end;
             }
 
@@ -884,8 +932,14 @@ impl<'a> SymbolicWalker<'a> {
                             }
                         }
                         if !sanitized.is_empty() {
-                            buf.push_str(&sanitized);
+                            shape_buf.push_str(&sanitized);
                         }
+                        // Raw gap text for the detector: this is where
+                        // template actions (`{{ template "X" . }}`)
+                        // sit, and the detector needs to see them
+                        // verbatim to resolve helper-returned
+                        // apiVersions.
+                        detector_buf.push_str(gap);
                         self.text_pos = end;
                     }
                 }
@@ -893,10 +947,11 @@ impl<'a> SymbolicWalker<'a> {
                 self.text_pos = target;
             }
 
-            if buf.len() > 4096 {
-                self.shape.ingest(&buf);
-                self.resource_detector.ingest(&buf);
-                buf.clear();
+            if shape_buf.len() > 4096 || detector_buf.len() > 4096 {
+                self.shape.ingest(&shape_buf);
+                self.resource_detector.ingest(&detector_buf, self.defines);
+                shape_buf.clear();
+                detector_buf.clear();
             }
         }
 
@@ -904,9 +959,11 @@ impl<'a> SymbolicWalker<'a> {
             self.text_pos = target;
         }
 
-        if !buf.is_empty() {
-            self.shape.ingest(&buf);
-            self.resource_detector.ingest(&buf);
+        if !shape_buf.is_empty() {
+            self.shape.ingest(&shape_buf);
+        }
+        if !detector_buf.is_empty() {
+            self.resource_detector.ingest(&detector_buf, self.defines);
         }
     }
 
@@ -992,7 +1049,7 @@ impl<'a> SymbolicWalker<'a> {
             }
             if !sanitized.is_empty() {
                 self.shape.ingest(&sanitized);
-                self.resource_detector.ingest(&sanitized);
+                self.resource_detector.ingest(&sanitized, self.defines);
                 self.text_pos = pos;
             }
         }
@@ -1074,18 +1131,6 @@ impl<'a> SymbolicWalker<'a> {
 
         self.maybe_inline_nats_load_merge_patch(text);
 
-        if std::env::var("SYMBOLIC_DEBUG").is_ok()
-            && (text.contains("containerPorts")
-                || text.contains("commonAnnotations")
-                || text.contains("extraIngress")
-                || text.contains("extraEgress"))
-        {
-            eprintln!(
-                "symbolic: output_node kind={} text={}",
-                node.kind(),
-                text.replace('\n', "\\n")
-            );
-        }
         let kind = if is_fragment_expr(text) {
             ValueKind::Fragment
         } else {
@@ -1152,18 +1197,6 @@ impl<'a> SymbolicWalker<'a> {
             } else {
                 path.clone()
             };
-            if std::env::var("SYMBOLIC_DEBUG").is_ok()
-                && matches!(
-                    v.as_str(),
-                    "metrics.containerPorts.http"
-                        | "master.containerPorts.redis"
-                        | "networkPolicy.extraIngress"
-                        | "commonAnnotations"
-                        | "commonLabels"
-                )
-            {
-                eprintln!("symbolic: use={v} kind={kind:?} path={:?}", emit_path.0);
-            }
             self.emit_use(v, emit_path, kind);
         }
 
@@ -1537,10 +1570,136 @@ impl<'a> SymbolicWalker<'a> {
 #[derive(Default, Clone, Debug)]
 struct ResourceDetector {
     kind: Option<String>,
-    api_versions: BTreeSet<String>,
+    /// Insertion-ordered, dedup'd list of apiVersions observed in the
+    /// current document header. Source order matters for attribution:
+    /// the first apiVersion the template author writes is the primary
+    /// (their stated intent). Generic "stable beats beta" ranking is
+    /// wrong for resource detection — `PodSecurityPolicy` only exists
+    /// at `policy/v1beta1`, so ranking would pick `policy/v1` (stable)
+    /// from a multi-branch helper and produce misleading
+    /// `MissingSchema(policy/v1)` diagnostics.
+    api_versions: Vec<String>,
+    /// `true` when at least one `apiVersion:` line in this document's
+    /// header was resolved from a helper or inline `if` chain that
+    /// produced MULTIPLE literal outputs. Branches are NOT
+    /// undifferentiated literals: the choice is conditioned on
+    /// `.Capabilities.APIVersions.Has` — the chain layer evaluates
+    /// those guards against its K8s version cache and picks the live
+    /// branch. Picking a primary via source-order would be heuristic
+    /// collapse.
+    multi_branch_helper: bool,
+    /// Typed branch structure observed in this document's apiVersion
+    /// resolution: either harvested from a helper body via
+    /// `helper_evaluate` returning `HelperOutput::Branched`, or from
+    /// inline `{{- if .Capabilities.APIVersions.Has "X" -}}` /
+    /// `{{- else -}}` lines wrapping a literal `apiVersion:` line in
+    /// the document header. Populated for the elasticsearch PSP shape
+    /// (inline if/else around `apiVersion:`) and the grafana HPA shape
+    /// (helper-returned multi-branch apiVersion).
+    api_version_branches: Vec<HelperBranch>,
+    /// State machine for tracking the innermost inline `if` whose
+    /// condition is a decodable `Capabilities.APIVersions.Has` guard.
+    /// When active, literal `apiVersion:` values seen while inside the
+    /// if/else/end block are attributed to the current branch.
+    inline_if: Option<InlineIfState>,
+    /// Depth of nested `{{- if X -}}` / `{{- with X -}}` / `{{- range X -}}`
+    /// blocks. Used to match `{{- else }}` / `{{- end }}` directives to
+    /// the right opening directive, so a `{{- else }}` for a nested if
+    /// doesn't accidentally close the tracked branch.
+    inline_block_depth: usize,
     current: Option<ResourceRef>,
     header_done: bool,
     buf: String,
+}
+
+/// Branch-capture state for inline `{{- if Capabilities.APIVersions.Has "X" -}}`
+/// chains that decide which `apiVersion:` literal the template emits.
+#[derive(Clone, Debug)]
+struct InlineIfState {
+    /// `inline_block_depth` at the moment this tracker started (i.e.
+    /// after the opening `{{- if -}}` incremented depth). Matching
+    /// `{{- else }}` / `{{- end }}` are recognised by being seen at
+    /// this exact depth — nested ifs / withs / ranges at deeper depths
+    /// don't affect the tracker.
+    start_depth: usize,
+    /// Branches accumulated so far. The last entry is the open branch
+    /// that subsequent literals get attributed to. `{{- else if X }}`
+    /// and `{{- else }}` close the current branch and open a new one
+    /// (with a new guard or unguarded, respectively).
+    branches: Vec<HelperBranch>,
+}
+
+/// Classification of a single Go-template directive line (the body
+/// between `{{` and `}}` after stripping trim modifiers). Only the
+/// subset of directives that affects block nesting or apiVersion
+/// branch attribution is recognised — everything else is `Other` and
+/// has no inline-branch effect.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ActionDirective {
+    /// `if <cond>` — captured for branch tracking when `cond` decodes
+    /// to a `Capabilities.APIVersions.Has` guard.
+    If(String),
+    /// `else if <cond>` — same condition extraction as `If`.
+    ElseIf(String),
+    /// `else`
+    Else,
+    /// `end`
+    End,
+    /// `with <expr>` — opens a block (depth +1).
+    With,
+    /// `range <expr>` — opens a block (depth +1).
+    Range,
+    /// `define "<name>"` — opens a block (depth +1).
+    Define,
+    /// `block "<name>" <pipeline>` — opens a block (depth +1).
+    Block,
+    /// Any other expression / value substitution / pipeline. No
+    /// effect on block depth or branch tracking.
+    Other,
+}
+
+impl ActionDirective {
+    fn parse(body: &str) -> Self {
+        let trimmed = body.trim();
+        if trimmed == "end" {
+            return ActionDirective::End;
+        }
+        if trimmed == "else" {
+            return ActionDirective::Else;
+        }
+        if let Some(rest) = strip_keyword(trimmed, "else if") {
+            return ActionDirective::ElseIf(rest.to_string());
+        }
+        if let Some(rest) = strip_keyword(trimmed, "if") {
+            return ActionDirective::If(rest.to_string());
+        }
+        if strip_keyword(trimmed, "with").is_some() {
+            return ActionDirective::With;
+        }
+        if strip_keyword(trimmed, "range").is_some() {
+            return ActionDirective::Range;
+        }
+        if strip_keyword(trimmed, "define").is_some() {
+            return ActionDirective::Define;
+        }
+        if strip_keyword(trimmed, "block").is_some() {
+            return ActionDirective::Block;
+        }
+        ActionDirective::Other
+    }
+}
+
+/// Match a leading go-template keyword followed by whitespace, and
+/// return the remainder. Whitespace-required so `iframe` doesn't
+/// match `if`, etc.
+fn strip_keyword<'a>(body: &'a str, keyword: &str) -> Option<&'a str> {
+    let rest = body.strip_prefix(keyword)?;
+    let next = rest.chars().next()?;
+    if next.is_whitespace() {
+        Some(rest.trim_start())
+    } else {
+        None
+    }
 }
 
 impl ResourceDetector {
@@ -1548,44 +1707,133 @@ impl ResourceDetector {
         self.current.clone()
     }
 
-    fn api_version_rank(api_version: &str) -> (u8, i32) {
-        // Lower is better.
-        // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
-        // For the second component, we prefer higher major versions.
-        let (_, ver) = api_version.split_once('/').unwrap_or(("", api_version));
-
-        let stability = if ver.contains("alpha") {
-            2u8
-        } else if ver.contains("beta") {
-            1u8
-        } else if ver.starts_with('v')
-            && ver[1..].chars().next().is_some_and(|c| c.is_ascii_digit())
-            && ver[1..].chars().all(|c| c.is_ascii_digit())
-        {
-            0u8
-        } else {
-            3u8
-        };
-
-        let major = ver
-            .strip_prefix('v')
-            .and_then(|s| {
-                s.chars()
-                    .take_while(char::is_ascii_digit)
-                    .collect::<String>()
-                    .parse::<i32>()
-                    .ok()
-            })
-            .unwrap_or(0);
-
-        (stability, -major)
+    /// Insert `v` into `api_versions` only if not already present
+    /// (dedup), preserving source order.
+    fn insert_api_version(&mut self, v: String) {
+        if !v.is_empty() && !self.api_versions.contains(&v) {
+            self.api_versions.push(v);
+        }
     }
 
-    fn preferred_api_version(api_versions: &BTreeSet<String>) -> Option<String> {
-        api_versions
-            .iter()
-            .min_by_key(|v| Self::api_version_rank(v))
-            .cloned()
+    fn first_seen_api_version(&self) -> Option<String> {
+        self.api_versions.first().cloned()
+    }
+
+    /// Record a literal apiVersion value from the document header. If
+    /// an inline `if .Capabilities.APIVersions.Has` branch is active,
+    /// also attribute the literal to the current branch so the chain
+    /// layer can resolve the apiVersion structurally.
+    fn attribute_api_version_literal(&mut self, v: String) {
+        if v.is_empty() {
+            return;
+        }
+        if let Some(state) = self.inline_if.as_mut()
+            && let Some(branch) = state.branches.last_mut()
+            && let HelperBranchBody::Literals { values } = &mut branch.body
+            && !values.contains(&v)
+        {
+            values.push(v.clone());
+            // Two literals in the same branch (e.g. someone wrote
+            // `apiVersion:` twice inside the same if) or one literal
+            // each in then/else makes this multi-branch.
+            let multi = state.branches.len() > 1
+                || state.branches.iter().any(|b| match &b.body {
+                    HelperBranchBody::Literals { values } => values.len() > 1,
+                    HelperBranchBody::Nested { .. } => true,
+                });
+            if multi {
+                self.multi_branch_helper = true;
+            }
+        }
+        self.insert_api_version(v);
+    }
+
+    /// Process a directive line (`{{- if … }}`, `{{- else }}`, …) for
+    /// inline-branch tracking. Maintains `inline_block_depth` and the
+    /// `inline_if` state machine.
+    fn process_action_directive(det: &mut ResourceDetector, line: &str) {
+        let Some(action) = Self::strip_action_wrapping(line) else {
+            return;
+        };
+        let directive = ActionDirective::parse(&action);
+        match directive {
+            ActionDirective::If(cond) => {
+                det.inline_block_depth += 1;
+                if det.inline_if.is_none() {
+                    let guard = crate::helper_eval::decode_guard(&cond);
+                    if matches!(
+                        guard,
+                        CapabilityGuard::Has { .. } | CapabilityGuard::NotHas { .. }
+                    ) {
+                        det.inline_if = Some(InlineIfState {
+                            start_depth: det.inline_block_depth,
+                            branches: vec![HelperBranch::with_literals(Some(guard), Vec::new())],
+                        });
+                    }
+                }
+            }
+            ActionDirective::ElseIf(cond) => {
+                if let Some(state) = det.inline_if.as_mut()
+                    && state.start_depth == det.inline_block_depth
+                {
+                    let guard = crate::helper_eval::decode_guard(&cond);
+                    state
+                        .branches
+                        .push(HelperBranch::with_literals(Some(guard), Vec::new()));
+                }
+            }
+            ActionDirective::Else => {
+                if let Some(state) = det.inline_if.as_mut()
+                    && state.start_depth == det.inline_block_depth
+                {
+                    state
+                        .branches
+                        .push(HelperBranch::with_literals(None, Vec::new()));
+                }
+            }
+            ActionDirective::End => {
+                if let Some(state) = det.inline_if.as_ref()
+                    && state.start_depth == det.inline_block_depth
+                {
+                    let mut branches = det.inline_if.take().unwrap().branches;
+                    // Drop branches that ended up with no body content
+                    // AND no guard (purely structural empty branches
+                    // add no information). Branches with a guard but
+                    // no literals carry information (the guard might
+                    // gate apiVersion from a helper or other source),
+                    // so keep them.
+                    branches.retain(|b| !b.body.is_empty() || b.guard.is_some());
+                    if !branches.is_empty() {
+                        det.api_version_branches.extend(branches);
+                        det.multi_branch_helper = true;
+                    }
+                }
+                if det.inline_block_depth > 0 {
+                    det.inline_block_depth -= 1;
+                }
+            }
+            ActionDirective::With | ActionDirective::Range => {
+                det.inline_block_depth += 1;
+            }
+            ActionDirective::Define | ActionDirective::Block => {
+                det.inline_block_depth += 1;
+            }
+            ActionDirective::Other => {}
+        }
+    }
+
+    /// Strip the `{{`, `}}`, leading `-`, trailing `-`, and outer
+    /// whitespace from a directive line, returning the inner body
+    /// (e.g. `"if .Foo"`, `"else"`, `"end"`). Returns `None` for
+    /// lines that don't start with `{{` or are otherwise malformed —
+    /// they're treated as `Other` (no inline-branch effect).
+    fn strip_action_wrapping(line: &str) -> Option<String> {
+        let after_open = line.trim_start().strip_prefix("{{")?;
+        let close_at = after_open.find("}}")?;
+        let body = &after_open[..close_at];
+        let body = body.strip_prefix('-').unwrap_or(body);
+        let body = body.strip_suffix('-').unwrap_or(body);
+        Some(body.trim().to_string())
     }
 
     fn parse_literal_value(line: &str, key: &str) -> Option<String> {
@@ -1608,7 +1856,59 @@ impl ResourceDetector {
         if val.is_empty() { None } else { Some(val) }
     }
 
-    fn process_line(det: &mut ResourceDetector, line: &str) {
+    /// Extract a helper invocation name from
+    /// `<key>: {{ template "NAME" … }}` / `<key>: {{ include "NAME" … }}`
+    /// (with optional `-` trim modifiers, either quote style,
+    /// arbitrary trailing args, and pipelines). Returns `None` if the
+    /// value isn't a helper call.
+    ///
+    /// Uses the shared tree-sitter-based action parser so quoting,
+    /// pipelines, and nested calls in arg positions are handled
+    /// structurally — this used to be a hand-rolled `strip_prefix` /
+    /// `find` chain that would have missed perfectly valid header
+    /// shapes (`{{ template "X" . | quote }}`,
+    /// `{{ include "X" (dict ...) }}`, etc.).
+    fn parse_helper_call_value(line: &str, key: &str) -> Option<String> {
+        let rest = line.strip_prefix(key)?;
+        let rest = rest.trim_start();
+        let rest = rest.strip_prefix(':')?.trim_start();
+        if !rest.starts_with("{{") {
+            return None;
+        }
+        // Find the closing `}}` so we don't drag a trailing YAML comment
+        // or sibling key into the parse. parse_action_expressions
+        // accepts a body, but we want only the first `{{ … }}` action.
+        let close_at = rest.find("}}")?;
+        let action = &rest[..close_at + 2];
+        let exprs = helm_schema_ast::parse_action_expressions(action);
+
+        // Walk every expression and every sub-expression looking for
+        // `template "NAME" …` / `include "NAME" …`. `walk` is preorder
+        // and visits args too, so it catches nested forms like
+        // `{{ printf "%s" (template "X" .) }}`.
+        let mut found: Option<String> = None;
+        for expr in &exprs {
+            if found.is_some() {
+                break;
+            }
+            expr.walk(|node| {
+                if found.is_some() {
+                    return;
+                }
+                if let helm_schema_ast::TemplateExpr::Call { function, args } = node
+                    && matches!(function.as_str(), "template" | "include")
+                    && let Some(helm_schema_ast::TemplateExpr::Literal(lit)) = args.first()
+                    && let Some(name) = lit.as_string()
+                    && !name.is_empty()
+                {
+                    found = Some(name.to_string());
+                }
+            });
+        }
+        found
+    }
+
+    fn process_line(det: &mut ResourceDetector, helpers: &DefineIndex, line: &str) {
         let line = line.trim_end_matches('\r');
         let indent = line.chars().take_while(|&c| c == ' ').count();
         let after = &line[indent..];
@@ -1620,12 +1920,33 @@ impl ResourceDetector {
         if trimmed == "---" || trimmed == "..." {
             det.kind = None;
             det.api_versions.clear();
+            det.multi_branch_helper = false;
+            det.api_version_branches.clear();
+            det.inline_if = None;
+            det.inline_block_depth = 0;
             det.current = None;
             det.header_done = false;
             return;
         }
 
         if indent != 0 {
+            return;
+        }
+
+        // Helm template-directive lines (`{{- if … }}`, `{{- else }}`,
+        // `{{- end }}`, `{{- range … }}`, `{{ define … }}`, …) are
+        // control flow that wraps header fields, not header content.
+        // Two responsibilities here:
+        //   1. Track inline branch state for `apiVersion:` lines that
+        //      are gated by `{{- if .Capabilities.APIVersions.Has … -}}`
+        //      (the elasticsearch PSP shape) so the chain layer can
+        //      evaluate the guard against its K8s cache and pick the
+        //      live branch instead of treating mutually-exclusive
+        //      alternatives as peer candidates.
+        //   2. Otherwise pass through unchanged — directive lines
+        //      never advance `header_done`, never set `kind`, etc.
+        if trimmed.starts_with("{{") {
+            Self::process_action_directive(det, trimmed);
             return;
         }
 
@@ -1639,10 +1960,57 @@ impl ResourceDetector {
                 det.kind = Some(v);
             }
         } else {
-            if det.kind.is_none()
-                && let Some(v) = Self::parse_literal_value(trimmed, "apiVersion")
-            {
-                det.api_versions.insert(v);
+            // `apiVersion` and `kind` can appear in EITHER order in a
+            // K8s YAML document header; neither field gates the other.
+            // The old code guarded apiVersion parsing on
+            // `det.kind.is_none()`, which silently dropped apiVersion
+            // any time `kind:` happened to appear first — exactly the
+            // shape `kind: NetworkPolicy\napiVersion:
+            // networking.k8s.io/v1` that Temporal's templates ship,
+            // producing `api_version=""` resources that then leaked
+            // through the chain as `MissingSchema(kind=..., api_version=)`.
+            if let Some(v) = Self::parse_literal_value(trimmed, "apiVersion") {
+                det.attribute_api_version_literal(v);
+            } else if let Some(name) = Self::parse_helper_call_value(trimmed, "apiVersion") {
+                // Round-5 Finding 1: `apiVersion: {{ template "X" . }}`
+                // and `apiVersion: {{ include "X" . }}` — statically
+                // resolve the helper to its typed output so the
+                // detector no longer silently drops apiVersion when
+                // vendored charts use the common
+                // `<chart>.<resource>.apiVersion` helper pattern.
+                let output = crate::helper_eval::helper_evaluate(&name, helpers);
+                match output {
+                    HelperOutput::Literals(literals) => {
+                        if literals.len() > 1 {
+                            det.multi_branch_helper = true;
+                        }
+                        for candidate in literals {
+                            det.insert_api_version(candidate);
+                        }
+                    }
+                    HelperOutput::Branched { branches } => {
+                        // Round-7 Finding 2/3: helper body has typed
+                        // branch structure. Propagate the branches
+                        // verbatim — the chain will evaluate guards
+                        // against its K8s cache and pick the first
+                        // live branch. Also flatten into api_versions
+                        // for back-compat with callers that don't
+                        // honour the branch structure (the typed
+                        // chain path will short-circuit before they
+                        // see the resource).
+                        det.multi_branch_helper = branches.len() > 1
+                            || branches.iter().any(|b| match &b.body {
+                                HelperBranchBody::Literals { values } => values.len() > 1,
+                                HelperBranchBody::Nested { .. } => true,
+                            });
+                        for branch in &branches {
+                            for lit in branch.body.all_literals() {
+                                det.insert_api_version(lit);
+                            }
+                        }
+                        det.api_version_branches.extend(branches);
+                    }
+                }
             }
 
             if det.kind.is_none()
@@ -1651,7 +2019,11 @@ impl ResourceDetector {
                 det.kind = Some(v);
             }
 
-            // Once we see any other top-level key, stop scanning for apiVersion/kind.
+            // Once we see any other top-level key, stop scanning for
+            // apiVersion/kind — but only after BOTH have had a chance
+            // to land (we wait for kind because kind-only is the
+            // single-shot identifier; further apiVersion lines after
+            // a non-header key are unusual and ignored).
             if det.kind.is_some()
                 && !trimmed.starts_with("apiVersion")
                 && !trimmed.starts_with("kind")
@@ -1661,27 +2033,216 @@ impl ResourceDetector {
         }
 
         if let Some(kind) = &det.kind {
-            let api_version = Self::preferred_api_version(&det.api_versions).unwrap_or_default();
-            let api_version_candidates = det
-                .api_versions
-                .iter()
-                .filter(|v| **v != api_version)
-                .cloned()
-                .collect::<Vec<_>>();
+            // Round-7 Finding 2/3: when typed branches are present
+            // (helper returned `HelperOutput::Branched` or inline
+            // `{{- if .Capabilities.APIVersions.Has "X" -}}` chains
+            // around `apiVersion:` produced HelperBranch entries), the
+            // chain layer evaluates guards against its K8s cache and
+            // selects the live branch. Round-6 Finding 2: when only a
+            // flat list of multi-branch literals is available (no
+            // decoded guard), preserve ALL alternatives as candidates
+            // with an EMPTY primary so the chain can pick whichever
+            // resolves. Source-order primary collapse would be a
+            // heuristic guess.
+            let (api_version, api_version_candidates) = if det.multi_branch_helper {
+                (String::new(), det.api_versions.clone())
+            } else {
+                let primary = det.first_seen_api_version().unwrap_or_default();
+                let candidates = det
+                    .api_versions
+                    .iter()
+                    .filter(|v| **v != primary)
+                    .cloned()
+                    .collect::<Vec<_>>();
+                (primary, candidates)
+            };
             det.current = Some(ResourceRef {
                 api_version,
                 kind: kind.clone(),
                 api_version_candidates,
+                api_version_branches: det.api_version_branches.clone(),
             });
         }
     }
 
-    fn ingest(&mut self, text: &str) {
+    fn ingest(&mut self, text: &str, helpers: &DefineIndex) {
         self.buf.push_str(text);
         while let Some(nl) = self.buf.find('\n') {
             let line = self.buf[..nl].to_string();
             self.buf.drain(..=nl);
-            Self::process_line(self, &line);
+            Self::process_line(self, helpers, &line);
         }
+    }
+}
+
+#[cfg(test)]
+mod detector_unit_tests {
+    use super::ResourceDetector;
+    use helm_schema_ast::{DefineIndex, TreeSitterParser};
+
+    #[test]
+    fn helper_returned_api_version_resolves_via_detector_directly() {
+        let helpers_src = r#"{{- define "x.apiVersion" -}}
+{{- print "apps/v1" -}}
+{{- end -}}"#;
+        let mut idx = DefineIndex::new();
+        idx.add_source(&TreeSitterParser, helpers_src)
+            .expect("parse helpers");
+        let mut det = ResourceDetector::default();
+        det.ingest(
+            "apiVersion: {{ template \"x.apiVersion\" . }}\nkind: Deployment\n",
+            &idx,
+        );
+        let r = det.current().expect("detector must produce a resource");
+        assert_eq!(r.kind, "Deployment");
+        assert_eq!(
+            r.api_version, "apps/v1",
+            "helper-returned apiVersion must resolve via parse_helper_call_value + helper_literal_outputs"
+        );
+    }
+
+    #[test]
+    fn parse_helper_call_value_extracts_template_name() {
+        let name = ResourceDetector::parse_helper_call_value(
+            "apiVersion: {{ template \"x.apiVersion\" . }}",
+            "apiVersion",
+        );
+        assert_eq!(name.as_deref(), Some("x.apiVersion"));
+    }
+
+    #[test]
+    fn parse_helper_call_value_extracts_include_name() {
+        let name = ResourceDetector::parse_helper_call_value(
+            "apiVersion: {{ include \"grafana.hpa.apiVersion\" . }}",
+            "apiVersion",
+        );
+        assert_eq!(name.as_deref(), Some("grafana.hpa.apiVersion"));
+    }
+
+    /// Round-7 Finding 2/3: the elasticsearch PSP template uses an
+    /// inline `{{- if .Capabilities.APIVersions.Has "policy/v1" -}}` /
+    /// `{{- else }}` chain around the literal `apiVersion:` line. The
+    /// detector must capture both literals as typed branches so the
+    /// chain layer can attribute MissingSchema to the else branch
+    /// (the conservative runtime fallback) instead of emitting one
+    /// diagnostic per mutually-exclusive alternative.
+    #[test]
+    fn inline_if_else_around_api_version_produces_typed_branches() {
+        let idx = DefineIndex::new();
+        let mut det = ResourceDetector::default();
+        det.ingest(
+            "{{- if .Capabilities.APIVersions.Has \"policy/v1\" -}}\n\
+             apiVersion: policy/v1\n\
+             {{- else }}\n\
+             apiVersion: policy/v1beta1\n\
+             {{- end }}\n\
+             kind: PodSecurityPolicy\n",
+            &idx,
+        );
+        let r = det.current().expect("detector must produce a resource");
+        assert_eq!(r.kind, "PodSecurityPolicy");
+        assert_eq!(
+            r.api_version_branches.len(),
+            2,
+            "expected 2 typed branches; got {:?}",
+            r.api_version_branches
+        );
+        // First branch: CapabilityHas guard + the then-branch literal.
+        assert_eq!(
+            r.api_version_branches[0].guard,
+            Some(crate::CapabilityGuard::Has {
+                api: "policy/v1".to_string()
+            }),
+        );
+        assert_eq!(
+            r.api_version_branches[0].body,
+            crate::HelperBranchBody::Literals {
+                values: vec!["policy/v1".to_string()]
+            }
+        );
+        // Second branch: unguarded else, the fallback literal.
+        assert_eq!(r.api_version_branches[1].guard, None);
+        assert_eq!(
+            r.api_version_branches[1].body,
+            crate::HelperBranchBody::Literals {
+                values: vec!["policy/v1beta1".to_string()]
+            }
+        );
+        // The flat candidate list still carries both, so chain
+        // iteration tries each — the typed branches only affect
+        // MissingSchema attribution, not the resolution attempt.
+        assert!(r.api_version_candidates.contains(&"policy/v1".to_string()));
+        assert!(
+            r.api_version_candidates
+                .contains(&"policy/v1beta1".to_string())
+        );
+    }
+
+    /// Round-7: when the wrapping `{{- if -}}` has an opaque condition
+    /// (e.g. `semverCompare ".Capabilities.KubeVersion.GitVersion"`),
+    /// the detector must NOT capture branches — there's no decodable
+    /// guard for the chain to act on, and the user-facing semantics
+    /// fall back to source-order primary plus candidate alternatives.
+    #[test]
+    fn inline_if_else_with_opaque_condition_does_not_produce_branches() {
+        let idx = DefineIndex::new();
+        let mut det = ResourceDetector::default();
+        det.ingest(
+            "{{- if semverCompare \"<1.14-0\" .Capabilities.KubeVersion.GitVersion -}}\n\
+             apiVersion: apps/v1beta1\n\
+             {{- else }}\n\
+             apiVersion: apps/v1\n\
+             {{- end }}\n\
+             kind: StatefulSet\n",
+            &idx,
+        );
+        let r = det.current().expect("detector must produce a resource");
+        assert_eq!(r.kind, "StatefulSet");
+        assert!(
+            r.api_version_branches.is_empty(),
+            "opaque guard must not create typed branches; got {:?}",
+            r.api_version_branches
+        );
+        // Both literals still in flat candidates so chain iteration
+        // can probe both.
+        assert!(
+            r.api_version_candidates
+                .contains(&"apps/v1beta1".to_string())
+                || r.api_version == "apps/v1beta1"
+        );
+        assert!(
+            r.api_version_candidates.contains(&"apps/v1".to_string()) || r.api_version == "apps/v1"
+        );
+    }
+
+    /// Round-7: nested `{{- if -}}` wrapping an inline branch chain
+    /// must not interfere — the outer condition is opaque (Values
+    /// reference) but the inner CapabilityHas-guarded chain still
+    /// produces typed branches. The depth counter is what makes this
+    /// work; `{{- end }}` of the outer if doesn't accidentally close
+    /// the inner branch tracker.
+    #[test]
+    fn nested_outer_opaque_if_inner_capability_if_captures_inner_branches() {
+        let idx = DefineIndex::new();
+        let mut det = ResourceDetector::default();
+        det.ingest(
+            "{{- if .Values.podSecurityPolicy.create -}}\n\
+             {{- if .Capabilities.APIVersions.Has \"policy/v1\" -}}\n\
+             apiVersion: policy/v1\n\
+             {{- else }}\n\
+             apiVersion: policy/v1beta1\n\
+             {{- end }}\n\
+             kind: PodSecurityPolicy\n\
+             {{- end }}\n",
+            &idx,
+        );
+        let r = det.current().expect("detector must produce a resource");
+        assert_eq!(r.kind, "PodSecurityPolicy");
+        assert_eq!(
+            r.api_version_branches.len(),
+            2,
+            "inner CapabilityHas if must produce 2 branches; got {:?}",
+            r.api_version_branches
+        );
     }
 }

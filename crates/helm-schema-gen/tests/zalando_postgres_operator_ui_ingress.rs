@@ -150,6 +150,7 @@ fn rendered_ingress_validates_against_upstream_k8s_schema() {
         api_version: api_version.to_string(),
         kind: kind.to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);

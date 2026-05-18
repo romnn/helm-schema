@@ -94,11 +94,12 @@ fn quoted_string_payload_does_not_create_phantom_helper_edge() -> color_eyre::ey
         include_subchart_values: true,
         infer_required: false,
         provider: ProviderOptions {
-            k8s_version: "v1.35.0".to_string(),
+            k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
             disable_k8s_schemas: true,
-            crd_catalog_dir: None,
+            crd_override_dir: None,
+            ..Default::default()
         },
     };
 

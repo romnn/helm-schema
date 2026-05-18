@@ -68,16 +68,17 @@ pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<()
         include_subchart_values: true,
         infer_required: false,
         provider: ProviderOptions {
-            k8s_version: "v1.29.0-standalone-strict".to_string(),
+            k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(
                 test_util::workspace_root()
                     .join("deprecated/crates/helm-schema-mapper/testdata/kubernetes-json-schema"),
             ),
             allow_net: false,
             disable_k8s_schemas: false,
-            crd_catalog_dir: Some(
+            crd_override_dir: Some(
                 test_util::workspace_root().join("target/helm-schema-test-crds-catalog-cache"),
             ),
+            ..Default::default()
         },
     };
 

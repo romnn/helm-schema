@@ -26,6 +26,7 @@ fn resource_detection() {
             api_version: "apps/v1".to_string(),
             kind: "Deployment".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         })
     );
 }

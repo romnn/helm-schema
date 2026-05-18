@@ -3,9 +3,7 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
-use helm_schema_k8s::{
-    ChainSchemaProvider, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider,
-};
+use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -27,10 +25,7 @@ fn schema_fused_rust() {
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
     let upstream = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
-    let provider = ChainSchemaProvider {
-        first: crds,
-        second: upstream,
-    };
+    let provider = Chain::new(vec![Box::new(crds), Box::new(upstream)]);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
@@ -138,10 +133,7 @@ fn schema_validates_values_yaml() {
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
     let upstream = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
-    let provider = ChainSchemaProvider {
-        first: crds,
-        second: upstream,
-    };
+    let provider = Chain::new(vec![Box::new(crds), Box::new(upstream)]);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);

@@ -1,0 +1,132 @@
+use helm_schema_ir::ResourceRef;
+
+use crate::builtin_groups::is_k8s_builtin_group;
+
+/// Compute the catalog-relative path `<group>/<kind_lc>_<version>.json`.
+/// Returns `None` for resources that don't belong in the CRD catalog —
+/// built-in K8s API groups (see [`is_k8s_builtin_group`]) plus anything
+/// without a group/version.
+#[must_use]
+pub fn relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
+    let api_version = resource.api_version.trim();
+    let kind = resource.kind.trim();
+    if api_version.is_empty() || kind.is_empty() {
+        return None;
+    }
+
+    let (group, version) = api_version.split_once('/')?;
+    let group = group.trim();
+    let version = version.trim();
+    if group.is_empty() || version.is_empty() {
+        return None;
+    }
+
+    if is_k8s_builtin_group(group) {
+        return None;
+    }
+
+    let kind = kind.to_ascii_lowercase();
+    Some(format!("{group}/{kind}_{version}.json"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn resource(api_version: &str, kind: &str) -> ResourceRef {
+        ResourceRef {
+            api_version: api_version.to_string(),
+            kind: kind.to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn third_party_crds_yield_relative_path() {
+        let r = resource("monitoring.coreos.com/v1", "ServiceMonitor");
+        assert_eq!(
+            relative_path_for_resource(&r),
+            Some("monitoring.coreos.com/servicemonitor_v1.json".to_string())
+        );
+    }
+
+    // Pins Finding 3 — every built-in K8s API group must be excluded
+    // from the CRD-catalog lookup path. Regression on this surface
+    // produces spurious CrdVersionNotFound diagnostics for built-in
+    // grouped resources (Ingress, NetworkPolicy, Role, RoleBinding,
+    // ClusterRole, ClusterRoleBinding, …).
+    #[test]
+    fn k8s_io_family_is_excluded_from_crd_catalog() {
+        for (api_version, kind) in [
+            ("networking.k8s.io/v1", "Ingress"),
+            ("networking.k8s.io/v1", "NetworkPolicy"),
+            ("rbac.authorization.k8s.io/v1", "Role"),
+            ("rbac.authorization.k8s.io/v1", "RoleBinding"),
+            ("rbac.authorization.k8s.io/v1", "ClusterRole"),
+            ("rbac.authorization.k8s.io/v1", "ClusterRoleBinding"),
+            ("storage.k8s.io/v1", "StorageClass"),
+            ("coordination.k8s.io/v1", "Lease"),
+            ("events.k8s.io/v1", "Event"),
+            (
+                "admissionregistration.k8s.io/v1",
+                "ValidatingWebhookConfiguration",
+            ),
+            ("apiextensions.k8s.io/v1", "CustomResourceDefinition"),
+        ] {
+            assert_eq!(
+                relative_path_for_resource(&resource(api_version, kind)),
+                None,
+                "{api_version}/{kind} must NOT be routed to the CRD catalog"
+            );
+        }
+    }
+
+    #[test]
+    fn legacy_short_groups_are_excluded() {
+        for (api_version, kind) in [
+            ("apps/v1", "Deployment"),
+            ("batch/v1", "Job"),
+            ("autoscaling/v2", "HorizontalPodAutoscaler"),
+            ("policy/v1", "PodDisruptionBudget"),
+            ("policy/v1beta1", "PodSecurityPolicy"),
+            ("extensions/v1beta1", "DaemonSet"),
+        ] {
+            assert_eq!(
+                relative_path_for_resource(&resource(api_version, kind)),
+                None,
+                "{api_version}/{kind} must NOT be routed to the CRD catalog"
+            );
+        }
+    }
+
+    // Pins Finding 2 (round 2) — CRDs that use a `.k8s.io` suffix must
+    // resolve to a relative path so the CRD-catalog lookup runs for
+    // them. The previously-shipped blanket `.ends_with(".k8s.io")`
+    // rule routed them to the built-in K8s path and produced spurious
+    // MissingSchema in the loose-mode Temporal acceptance run.
+    #[test]
+    fn k8s_io_crd_groups_yield_relative_path() {
+        // VPA — the canonical `.k8s.io`-suffixed CRD.
+        assert_eq!(
+            relative_path_for_resource(&resource("autoscaling.k8s.io/v1", "VerticalPodAutoscaler")),
+            Some("autoscaling.k8s.io/verticalpodautoscaler_v1.json".to_string())
+        );
+        // Gateway API — the canonical multi-resource CRD family
+        // under `.k8s.io`.
+        assert_eq!(
+            relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "HTTPRoute")),
+            Some("gateway.networking.k8s.io/httproute_v1.json".to_string())
+        );
+        assert_eq!(
+            relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "Gateway")),
+            Some("gateway.networking.k8s.io/gateway_v1.json".to_string())
+        );
+        // CSI snapshotter — distinct from the built-in
+        // `storage.k8s.io` group.
+        assert_eq!(
+            relative_path_for_resource(&resource("snapshot.storage.k8s.io/v1", "VolumeSnapshot")),
+            Some("snapshot.storage.k8s.io/volumesnapshot_v1.json".to_string())
+        );
+    }
+}

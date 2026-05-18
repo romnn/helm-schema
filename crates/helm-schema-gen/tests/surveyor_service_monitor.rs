@@ -5,9 +5,7 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
-use helm_schema_k8s::{
-    ChainSchemaProvider, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider,
-};
+use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -75,10 +73,7 @@ fn schema_fused_rust() {
 
     let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
     let upstream = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
-    let provider = ChainSchemaProvider {
-        first: crds,
-        second: upstream,
-    };
+    let provider = Chain::new(vec![Box::new(crds), Box::new(upstream)]);
 
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
@@ -143,6 +138,7 @@ fn rendered_service_monitor_validates_against_crd_schema() {
         api_version: api_version.to_string(),
         kind: kind.to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);

@@ -30,6 +30,7 @@ fn resource_detection() {
             api_version: String::new(),
             kind: "NetworkPolicy".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         })
     );
 }

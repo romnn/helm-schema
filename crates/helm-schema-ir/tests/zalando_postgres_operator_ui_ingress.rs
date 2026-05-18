@@ -27,6 +27,7 @@ fn resource_detection() {
             api_version: "networking.k8s.io/v1".to_string(),
             kind: "Ingress".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         })
     );
 }
@@ -49,12 +50,17 @@ fn symbolic_ir_full() {
         );
     }
 
+    // Source-order, not alphabetical: the chart's `if/else if/else`
+    // chain declares them in this sequence (primary → v1beta1 fallback
+    // → legacy extensions fallback). The detector preserves that
+    // order verbatim instead of imposing a generic stability rank
+    // (round-5 Finding 2 fix).
     let ingress = serde_json::json!({
         "api_version": "networking.k8s.io/v1",
         "kind": "Ingress",
         "api_version_candidates": [
-            "extensions/v1beta1",
-            "networking.k8s.io/v1beta1"
+            "networking.k8s.io/v1beta1",
+            "extensions/v1beta1"
         ]
     });
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});

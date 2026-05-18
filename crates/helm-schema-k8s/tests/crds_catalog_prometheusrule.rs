@@ -23,6 +23,7 @@ fn materialize_prometheusrule() {
         api_version: "monitoring.coreos.com/v1".to_string(),
         kind: "PrometheusRule".to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let upstream_materialized = provider
@@ -30,7 +31,7 @@ fn materialize_prometheusrule() {
         .expect("materialize");
 
     let relative_path = "monitoring.coreos.com/prometheusrule_v1.json";
-    let cached = provider.cache_dir.join(relative_path);
+    let cached = provider.cache_dir.join("default").join(relative_path);
     assert!(
         cached.exists(),
         "expected schema to be cached at {cached:?}"
@@ -55,6 +56,7 @@ fn prometheusrule_leaf_schema_rules_items() {
         api_version: "monitoring.coreos.com/v1".to_string(),
         kind: "PrometheusRule".to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let path = YamlPath(vec![
@@ -68,7 +70,7 @@ fn prometheusrule_leaf_schema_rules_items() {
         .expect("leaf schema");
 
     let relative_path = "monitoring.coreos.com/prometheusrule_v1.json";
-    let cached = provider.cache_dir.join(relative_path);
+    let cached = provider.cache_dir.join("default").join(relative_path);
     assert!(
         cached.exists(),
         "expected schema to be cached at {cached:?}"
@@ -98,6 +100,7 @@ fn has_resource_true_for_cached_crd() {
         api_version: "monitoring.coreos.com/v1".to_string(),
         kind: "PrometheusRule".to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
     let _ = provider.materialize_schema_for_resource(&r);
 
@@ -126,6 +129,7 @@ fn relative_path_handles_dot_k8s_io_suffix_groups() {
         api_version: "autoscaling.k8s.io/v1".to_string(),
         kind: "VerticalPodAutoscaler".to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let online = provider.has_resource(&r);
@@ -160,6 +164,7 @@ fn relative_path_skips_built_in_k8s_groups() {
             api_version: api_version.to_string(),
             kind: kind.to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         };
         assert!(
             !provider.has_resource(&r),

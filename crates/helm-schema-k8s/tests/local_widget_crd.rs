@@ -62,6 +62,7 @@ fn materialize_expands_refs() {
         api_version: api_version.to_string(),
         kind: kind.to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let actual = provider
@@ -159,6 +160,7 @@ fn leaf_schema() {
         api_version: api_version.to_string(),
         kind: kind.to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     let path = YamlPath(vec![
@@ -185,7 +187,58 @@ fn returns_none_for_missing_schema() {
         api_version: "acme.example.com/v1".to_string(),
         kind: "NonExistent".to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     assert!(provider.materialize_schema_for_resource(&r).is_none());
+}
+
+// Pins Finding (round 3) #4 — `LocalSchemaProvider` (a.k.a. the
+// `--crd-override-dir` layer) is general-purpose by design: it accepts
+// schemas for ANY grouped resource, including built-in K8s ones. The
+// docs were corrected to match this behavior. If anyone later tries
+// to restrict the override layer to "CRD-only" (e.g. by adding an
+// `is_k8s_builtin_group` guard), this test will fail and force them
+// to read the README's explicit power-user contract first.
+#[test]
+fn local_provider_accepts_builtin_k8s_resource_override() {
+    // Pin a custom (locally-modified) schema for the BUILT-IN
+    // `rbac.authorization.k8s.io/v1` `ClusterRole` resource.
+    let group = "rbac.authorization.k8s.io";
+    let api_version = "rbac.authorization.k8s.io/v1";
+    let kind = "ClusterRole";
+    let filename = "rbac.authorization.k8s.io/clusterrole_v1.json";
+
+    let root_dir = make_temp_dir(group);
+    let schema_doc = serde_json::json!({
+        "$schema": "http://json-schema.org/schema#",
+        "type": "object",
+        "title": "LOCAL_OVERRIDE_MARKER",
+        "properties": {
+            "apiVersion": {"type": ["string", "null"], "enum": [api_version]},
+            "kind": {"type": ["string", "null"], "enum": [kind]},
+        }
+    });
+    std::fs::write(
+        root_dir.join(filename),
+        serde_json::to_vec(&schema_doc).expect("schema bytes"),
+    )
+    .expect("write override");
+
+    let provider = LocalSchemaProvider::new(&root_dir);
+    let r = ResourceRef {
+        api_version: api_version.to_string(),
+        kind: kind.to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+    let actual = provider
+        .materialize_schema_for_resource(&r)
+        .expect("LocalSchemaProvider must answer for built-in group overrides");
+    assert_eq!(
+        actual.get("title").and_then(|v| v.as_str()),
+        Some("LOCAL_OVERRIDE_MARKER"),
+        "the local override layer must serve the user's custom schema for built-in K8s kinds; \
+         restricting it to CRD-only would silently fall through to the upstream schema"
+    );
 }

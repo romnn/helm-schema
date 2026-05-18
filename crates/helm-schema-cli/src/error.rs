@@ -48,6 +48,11 @@ pub enum CliError {
     /// `PointerToNowhere { pointer }`) rather than parsing a string.
     #[error("$ref resolution failed: {0}")]
     Referencing(#[from] jsonschema::ReferencingError),
+
+    /// Mutually-exclusive CLI flags or otherwise-invalid combination
+    /// detected after `clap` parsing succeeded.
+    #[error("invalid CLI options: {0}")]
+    CliValidation(String),
 }
 
 pub type CliResult<T> = std::result::Result<T, CliError>;

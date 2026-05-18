@@ -1,7 +1,12 @@
+pub mod helper_eval;
 pub mod required_inference;
 mod symbolic;
 mod walker;
 
+pub use helper_eval::{
+    CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
+    helper_literal_outputs,
+};
 pub use symbolic::SymbolicIrGenerator;
 pub use walker::{
     DefineBlock, extract_default_type_hints, extract_define_blocks, extract_helper_calls,
@@ -48,6 +53,24 @@ pub struct ResourceRef {
     pub kind: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub api_version_candidates: Vec<String>,
+    /// Typed branch structure when the apiVersion is decided by an
+    /// `if Capabilities.APIVersions.Has … else …` chain — either inside
+    /// a helper body or inline around the `apiVersion:` line in the
+    /// document header.
+    ///
+    /// The chain layer evaluates each branch's guard against its K8s
+    /// version cache (the actual capability oracle) and picks the
+    /// first live branch's literals for both resolution and diagnostic
+    /// attribution. Without this typed structure, mutually-exclusive
+    /// alternatives would have to be treated as peer candidates,
+    /// producing one `MissingSchema` per alternative when none resolve
+    /// — which is misleading because at runtime exactly ONE branch is
+    /// taken.
+    ///
+    /// Empty = no decodable branch structure; callers fall back to
+    /// `api_version` + `api_version_candidates`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub api_version_branches: Vec<HelperBranch>,
 }
 
 /// A guard condition from an `if`, `with`, or `range` block.
@@ -115,6 +138,7 @@ impl ResourceDetector for DefaultResourceDetector {
                 api_version: av,
                 kind: k,
                 api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
             }),
             // Many Helm charts use `{{ template "..." }}` for apiVersion,
             // so we still detect the resource if only `kind` is found.
@@ -122,6 +146,7 @@ impl ResourceDetector for DefaultResourceDetector {
                 api_version: String::new(),
                 kind: k,
                 api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
             }),
             _ => None,
         }

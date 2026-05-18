@@ -5,7 +5,7 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
-use helm_schema_k8s::{KubernetesJsonSchemaProvider, WarningSink};
+use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -31,21 +31,33 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
-    let warnings: WarningSink = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let diagnostics = DiagnosticSink::new();
 
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+    let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_allow_download(true)
-        .with_warning_sink(warnings.clone());
+        .with_diagnostic_sink(diagnostics.clone());
 
-    let _schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let actual = warnings.lock().expect("warnings lock").clone();
+    let _schema = generate_values_schema_with_values_yaml(&ir, &chain, Some(&values_yaml));
+
+    let actual = diagnostics.snapshot();
     let w = actual
         .iter()
-        .find(|w| {
-            w.kind == "HorizontalPodAutoscaler"
-                && w.api_version == "autoscaling/v2beta1"
-                && w.k8s_version == "v1.35.0"
+        .find_map(|d| match d {
+            Diagnostic::MissingSchema {
+                kind,
+                api_version,
+                k8s_versions_tried,
+                hint,
+                ..
+            } if kind == "HorizontalPodAutoscaler"
+                && api_version == "autoscaling/v2beta1"
+                && k8s_versions_tried.iter().any(|v| v == "v1.35.0") =>
+            {
+                Some(hint.clone())
+            }
+            _ => None,
         })
         .unwrap_or_else(|| {
             panic!(
@@ -54,8 +66,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
         });
 
     assert!(
-        w.hint
-            .as_deref()
+        w.as_deref()
             .is_some_and(|h| h.contains("removed in Kubernetes v1.25+")),
         "expected warning hint to mention removal in Kubernetes v1.25+; got: {w:?}"
     );
@@ -189,6 +200,7 @@ fn rendered_hpa_validates_against_upstream_k8s_schema() {
         api_version: api_version.to_string(),
         kind: kind.to_string(),
         api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
     };
 
     // The Surveyor chart template hardcodes autoscaling/v2beta1, which was removed from newer

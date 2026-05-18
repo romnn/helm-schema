@@ -3,11 +3,14 @@ use std::path::PathBuf;
 use helm_schema_ir::{ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::K8sSchemaProvider;
+use crate::inference::cache_scan::scan_crd_source_dir;
+use crate::inference::{ApiVersionCandidate, InferenceSource};
+use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 
 #[derive(Debug, Clone)]
 pub struct LocalSchemaProvider {
     root_dir: PathBuf,
+    allow_api_version_guess: bool,
 }
 
 impl LocalSchemaProvider {
@@ -15,7 +18,14 @@ impl LocalSchemaProvider {
     pub fn new(root_dir: impl Into<PathBuf>) -> Self {
         Self {
             root_dir: root_dir.into(),
+            allow_api_version_guess: false,
         }
+    }
+
+    #[must_use]
+    pub fn with_api_version_guess(mut self, enabled: bool) -> Self {
+        self.allow_api_version_guess = enabled;
+        self
     }
 
     fn relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
@@ -24,21 +34,25 @@ impl LocalSchemaProvider {
         if api_version.is_empty() || kind.is_empty() {
             return None;
         }
-
         let (group, version) = api_version.split_once('/')?;
         let group = group.trim();
         let version = version.trim();
         if group.is_empty() || version.is_empty() {
             return None;
         }
-
         let kind_lc = kind.to_ascii_lowercase();
         Some(format!("{group}/{kind_lc}_{version}.json"))
     }
 
+    fn override_file_for(&self, resource: &ResourceRef) -> Option<PathBuf> {
+        Some(
+            self.root_dir
+                .join(Self::relative_path_for_resource(resource)?),
+        )
+    }
+
     fn load_schema_doc(&self, resource: &ResourceRef) -> Option<Value> {
-        let relative = Self::relative_path_for_resource(resource)?;
-        let local = self.root_dir.join(relative);
+        let local = self.override_file_for(resource)?;
         let bytes = std::fs::read(local).ok()?;
         let doc: Value = serde_json::from_slice(&bytes).ok()?;
         Some(doc)
@@ -57,9 +71,64 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         let root = self.materialize_schema_for_resource(resource)?;
         descend_schema_path(&root, &path.0)
     }
+
+    fn origin(&self) -> ProviderOrigin {
+        ProviderOrigin::LocalOverride
+    }
+
+    fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
+        let Some(file) = self.override_file_for(resource) else {
+            return ProviderLookupResult::NotOwned;
+        };
+        if !file.exists() {
+            return ProviderLookupResult::NotOwned;
+        }
+        // Override is claimed; any read failure now is a hard error.
+        let source_path = file.display().to_string();
+        match std::fs::read(&file) {
+            Ok(bytes) => match serde_json::from_slice::<Value>(&bytes) {
+                Ok(root) => {
+                    let mut stack = std::collections::HashSet::new();
+                    let expanded = expand_local_refs(&root, &root, 0, &mut stack);
+                    match descend_schema_path(&expanded, &path.0) {
+                        Some(schema) => ProviderLookupResult::Found {
+                            schema,
+                            resolved_k8s_version: None,
+                        },
+                        None => ProviderLookupResult::PathUnresolved,
+                    }
+                }
+                Err(err) => ProviderLookupResult::ResourceDocMissing {
+                    io_error: err.to_string(),
+                    source_path,
+                },
+            },
+            Err(err) => ProviderLookupResult::ResourceDocMissing {
+                io_error: err.to_string(),
+                source_path,
+            },
+        }
+    }
+
+    fn has_resource(&self, resource: &ResourceRef) -> bool {
+        self.override_file_for(resource).is_some_and(|p| p.exists())
+    }
+
+    fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {
+        if !self.allow_api_version_guess {
+            return Vec::new();
+        }
+        let kind_lc = kind.to_ascii_lowercase();
+        let mut out = scan_crd_source_dir(&self.root_dir, &kind_lc, ProviderOrigin::LocalOverride);
+        // Override-as-shortlist: stamp source=Shortlist if found locally.
+        for c in &mut out {
+            c.source = InferenceSource::Shortlist;
+        }
+        out
+    }
 }
 
-pub(crate) fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
+pub fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
     let mut current = schema.clone();
     for seg in path {
         current = descend_one(&current, seg)?;
@@ -111,7 +180,7 @@ fn descend_one(schema: &Value, seg: &str) -> Option<Value> {
     Some(next)
 }
 
-pub(crate) fn expand_local_refs(
+pub fn expand_local_refs(
     root: &Value,
     schema: &Value,
     depth: usize,

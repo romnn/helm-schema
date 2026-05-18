@@ -1,240 +1,66 @@
-mod crds_catalog;
-mod kubernetes_json_schema;
-mod local;
+//! Kubernetes / CRD schema providers.
+//!
+//! Composed from these cross-cutting modules:
+//!   - [`fetch`]: HTTP seam (`HttpFetcher` trait + `UreqFetcher` /
+//!     `MockFetcher`).
+//!   - [`cache`]: per-source layout, marker-based invalidation,
+//!     negative cache.
+//!   - [`diagnostic`]: typed `Diagnostic` enum + `DiagnosticSink`.
+//!   - [`lookup`]: `K8sSchemaProvider` trait, `ProviderLookupResult`,
+//!     `ChainLookupOutcome`, `Chain`.
+//!   - [`inference`]: Feature D apiVersion guessing.
+//!
+//! The per-provider modules ([`kubernetes_openapi`], [`crds_catalog`],
+//! [`local_override`]) are slim composers of the above.
 
+pub mod builtin_groups;
+pub mod cache;
+pub mod capability_eval;
+pub mod crds_catalog;
+pub mod diagnostic;
+pub mod fetch;
+mod filename;
+pub mod inference;
+pub mod kubernetes_openapi;
+pub mod local_override;
+pub mod lookup;
+
+pub use builtin_groups::is_k8s_builtin_group;
+pub use cache::{
+    CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, LayoutCheckOutcome, LayoutChecker, NegativeCache,
+    default_source_id, source_id_for_url,
+};
+pub use capability_eval::{CapabilityOracle, StaticOracle, evaluate_guard, select_live_branch};
 pub use crds_catalog::CrdsCatalogSchemaProvider;
-pub use kubernetes_json_schema::KubernetesJsonSchemaProvider;
-pub use local::LocalSchemaProvider;
+pub use diagnostic::{
+    Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
+};
+pub use fetch::{FetchError, HttpFetcher, MockFetcher, MockResponse, UreqFetcher};
+pub use filename::{
+    candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
+};
+pub use inference::{
+    ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
+};
+pub use kubernetes_openapi::{
+    K8sMirrorChain, K8sSource, K8sVersionChain, KubernetesJsonSchemaProvider,
+};
+pub use local_override::LocalSchemaProvider;
+pub use lookup::{
+    Chain, ChainLookupOutcome, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
+};
 
-use helm_schema_ir::{ResourceRef, ValueUse, YamlPath};
+// ---------------------------------------------------------------------------
+// Convenience helpers
+// ---------------------------------------------------------------------------
+
 use serde_json::Value;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SchemaWarning {
-    pub kind: String,
-    pub api_version: String,
-    pub k8s_version: String,
-    pub tried_filenames: Vec<String>,
-    pub available_in_cache_versions: Vec<String>,
-    pub suggested_k8s_version: Option<String>,
-    pub hint: Option<String>,
-}
-
-pub type WarningSink = std::sync::Arc<std::sync::Mutex<Vec<SchemaWarning>>>;
-
-impl std::fmt::Display for SchemaWarning {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.api_version.trim().is_empty() {
-            write!(
-                f,
-                "no upstream Kubernetes JSON schema found for {} (apiVersion unknown) in {}",
-                self.kind, self.k8s_version
-            )?;
-        } else {
-            write!(
-                f,
-                "no upstream Kubernetes JSON schema found for {} ({}) in {}",
-                self.kind, self.api_version, self.k8s_version
-            )?;
-        }
-
-        if !self.available_in_cache_versions.is_empty() {
-            write!(
-                f,
-                "; available in local cache for: {}",
-                self.available_in_cache_versions.join(", ")
-            )?;
-        }
-
-        if let Some(s) = &self.suggested_k8s_version {
-            write!(f, "; try --k8s-version {s}")?;
-        }
-
-        if let Some(h) = &self.hint {
-            write!(f, "; {h}")?;
-        }
-
-        Ok(())
-    }
-}
-
-fn api_version_rank(api_version: &str) -> (u8, u8, i32, i32) {
-    // Lower is better.
-    // 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
-    // Prefer non-extensions API groups when all else is equal.
-    // Prefer higher major versions, and higher beta/alpha iterations.
-    let (group, ver) = api_version.split_once('/').unwrap_or(("", api_version));
-
-    let is_extensions = u8::from(group == "extensions");
-
-    let (stability, pre_iter) = if ver.contains("alpha") {
-        let it = ver
-            .split("alpha")
-            .nth(1)
-            .and_then(|s| s.parse::<i32>().ok())
-            .unwrap_or(0);
-        (2u8, it)
-    } else if ver.contains("beta") {
-        let it = ver
-            .split("beta")
-            .nth(1)
-            .and_then(|s| s.parse::<i32>().ok())
-            .unwrap_or(0);
-        (1u8, it)
-    } else if ver.starts_with('v')
-        && ver[1..].chars().next().is_some_and(|c| c.is_ascii_digit())
-        && ver[1..].chars().all(|c| c.is_ascii_digit())
-    {
-        (0u8, 0)
-    } else {
-        (3u8, 0)
-    };
-
-    let major = ver
-        .strip_prefix('v')
-        .and_then(|s| {
-            s.chars()
-                .take_while(char::is_ascii_digit)
-                .collect::<String>()
-                .parse::<i32>()
-                .ok()
-        })
-        .unwrap_or(0);
-
-    (stability, is_extensions, -major, -pre_iter)
-}
-
-fn ordered_api_versions_for_resource(r: &ResourceRef) -> Vec<&str> {
-    let mut versions: Vec<&str> = Vec::new();
-    if !r.api_version.trim().is_empty() {
-        versions.push(r.api_version.as_str());
-    }
-    for v in &r.api_version_candidates {
-        if !v.trim().is_empty() {
-            versions.push(v.as_str());
-        }
-    }
-    if versions.is_empty() {
-        versions.push(r.api_version.as_str());
-    }
-
-    versions.sort_by_key(|v| api_version_rank(v));
-    versions.dedup();
-    versions
-}
-
-// ---------------------------------------------------------------------------
-// Traits
-// ---------------------------------------------------------------------------
-
-/// Provides JSON Schema fragments for Kubernetes resource fields.
-///
-/// Given a [`ValueUse`] (which carries resource type + YAML path), returns the
-/// JSON Schema for that field in the upstream K8s API, if known.
-pub trait K8sSchemaProvider {
-    /// Schema for a specific value use (resource + YAML path).
-    fn schema_for_use(&self, u: &ValueUse) -> Option<Value> {
-        let r = u.resource.as_ref()?;
-
-        for v in ordered_api_versions_for_resource(r) {
-            let rr = ResourceRef {
-                api_version: v.to_string(),
-                kind: r.kind.clone(),
-                api_version_candidates: Vec::new(),
-            };
-            if let Some(schema) = self.schema_for_resource_path(&rr, &u.path) {
-                return Some(schema);
-            }
-        }
-
-        None
-    }
-
-    /// Schema for a specific resource type + YAML path.
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value>;
-
-    /// Cheap check for "does this provider own this resource type?" —
-    /// distinct from "can this provider resolve this specific path within
-    /// the resource". Chain providers use this to commit to the first
-    /// provider that owns the resource instead of falling through on path
-    /// misses (which would emit misleading "no schema found" warnings
-    /// from a downstream provider).
-    ///
-    /// Default impl: assume yes when `schema_for_resource_path` with an
-    /// empty path returns `Some` — works for trivially-cached providers
-    /// but is too expensive (and warning-noisy) for real ones, which
-    /// should override with a file-existence check.
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        self.schema_for_resource_path(resource, &YamlPath(Vec::new()))
-            .is_some()
-    }
-}
-
-pub struct ChainSchemaProvider<A, B> {
-    pub first: A,
-    pub second: B,
-}
-
-impl<A, B> K8sSchemaProvider for ChainSchemaProvider<A, B>
-where
-    A: K8sSchemaProvider,
-    B: K8sSchemaProvider,
-{
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        self.first
-            .schema_for_resource_path(resource, path)
-            .or_else(|| self.second.schema_for_resource_path(resource, path))
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 #[must_use]
 pub fn type_schema(ty: &str) -> Value {
     let mut m = serde_json::Map::new();
     m.insert("type".to_string(), Value::String(ty.to_string()));
     Value::Object(m)
-}
-
-#[must_use]
-pub fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
-    let kind = resource.kind.to_ascii_lowercase();
-    let (group, version) = match resource.api_version.split_once('/') {
-        Some((g, v)) => (g.to_ascii_lowercase(), v.to_ascii_lowercase()),
-        None => (String::new(), resource.api_version.to_ascii_lowercase()),
-    };
-
-    let mut out = Vec::new();
-    if group.is_empty() {
-        out.push(format!("{kind}-{version}.json"));
-        return out;
-    }
-
-    let dashed_full_group = group.replace('.', "-");
-    let group_prefix = group.split('.').next().unwrap_or(&group).to_string();
-
-    if group.ends_with(".k8s.io") {
-        out.push(format!("{kind}-{group_prefix}-{version}.json"));
-    }
-
-    out.push(format!("{kind}-{dashed_full_group}-{version}.json"));
-
-    if !group.ends_with(".k8s.io") {
-        out.push(format!("{kind}-{group_prefix}-{version}.json"));
-    }
-
-    out.dedup();
-    out
-}
-
-#[must_use]
-pub fn filename_for_resource(resource: &ResourceRef) -> String {
-    candidate_filenames_for_resource(resource)
-        .into_iter()
-        .next()
-        .unwrap_or_else(|| "unknown.json".to_string())
 }
 
 #[cfg(test)]
@@ -248,6 +74,7 @@ mod tests {
             api_version: "v1".to_string(),
             kind: "Service".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         };
         assert_eq!(filename_for_resource(&r), "service-v1.json");
     }
@@ -258,6 +85,7 @@ mod tests {
             api_version: "monitoring.coreos.com/v1".to_string(),
             kind: "PrometheusRule".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         };
         assert_eq!(
             filename_for_resource(&r),
@@ -271,6 +99,7 @@ mod tests {
             api_version: "networking.k8s.io/v1".to_string(),
             kind: "NetworkPolicy".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         };
         assert_eq!(
             filename_for_resource(&r),

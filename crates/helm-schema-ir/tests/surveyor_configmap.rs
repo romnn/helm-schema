@@ -28,6 +28,7 @@ fn resource_detection() {
             api_version: "v1".to_string(),
             kind: "ConfigMap".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         })
     );
 }

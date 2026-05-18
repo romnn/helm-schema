@@ -33,6 +33,7 @@ fn resource_detection() {
             api_version: String::new(),
             kind: "StatefulSet".to_string(),
             api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
         })
     );
 }
@@ -62,6 +63,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "affinity"
@@ -82,6 +84,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "affinity"
@@ -104,6 +107,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.clientUser"
@@ -114,6 +118,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.enabled"
@@ -131,6 +136,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.enabled"
@@ -160,6 +166,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.client.serverUsers"
@@ -170,6 +177,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.enabled"
@@ -187,6 +195,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.enabled"
@@ -216,6 +225,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.learnerUser"
@@ -238,6 +248,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "auth.quorum.serverUsers"
@@ -255,6 +266,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "autopurge.purgeInterval"
@@ -272,6 +284,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "autopurge.snapRetainCount"
@@ -282,6 +295,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "clusterDomain"
@@ -292,6 +306,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "commonAnnotations"
@@ -310,6 +325,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "commonAnnotations"
@@ -320,6 +336,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "commonLabels"
@@ -338,6 +355,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "commonLabels"
@@ -348,6 +366,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "configuration"
@@ -365,6 +384,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.client"
@@ -387,6 +407,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.client"
@@ -397,6 +418,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.election"
@@ -414,6 +436,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.election"
@@ -424,6 +447,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.follower"
@@ -441,6 +465,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.follower"
@@ -463,6 +488,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.tls"
@@ -485,6 +511,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerPorts.tls"
@@ -506,6 +533,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext"
@@ -534,6 +562,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext"
@@ -544,6 +573,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext.enabled"
@@ -562,6 +592,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext.enabled"
@@ -587,6 +618,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext.runAsUser"
@@ -616,6 +648,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "containerSecurityContext.runAsUser"
@@ -631,6 +664,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "customLivenessProbe"
@@ -656,6 +690,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "customLivenessProbe"
@@ -671,6 +706,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "customReadinessProbe"
@@ -696,6 +732,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "customReadinessProbe"
@@ -711,6 +748,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "customStartupProbe"
@@ -736,6 +774,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "customStartupProbe"
@@ -746,6 +785,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -769,6 +809,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -788,6 +829,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -805,6 +847,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -827,6 +870,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -856,6 +900,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -886,6 +931,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "dataLogDir"
@@ -907,6 +953,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.args"
@@ -928,6 +975,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.command"
@@ -938,6 +986,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.enabled"
@@ -955,6 +1004,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "diagnosticMode.enabled"
@@ -972,6 +1022,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "existingConfigmap"
@@ -982,6 +1033,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVars"
@@ -1003,6 +1055,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVars"
@@ -1013,6 +1066,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsCM"
@@ -1031,6 +1085,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsCM"
@@ -1061,6 +1116,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsCM"
@@ -1071,6 +1127,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsSecret"
@@ -1089,6 +1146,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsSecret"
@@ -1119,6 +1177,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraEnvVarsSecret"
@@ -1129,6 +1188,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumeMounts"
@@ -1150,6 +1210,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumeMounts"
@@ -1160,6 +1221,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumes"
@@ -1180,6 +1242,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "extraVolumes"
@@ -1197,6 +1260,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "fourlwCommandsWhitelist"
@@ -1245,6 +1309,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "global"
@@ -1279,6 +1344,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "global"
@@ -1296,6 +1362,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "heapSize"
@@ -1306,6 +1373,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "hostAliases"
@@ -1326,6 +1394,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "hostAliases"
@@ -1350,6 +1419,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "image.debug"
@@ -1366,6 +1436,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "image.pullPolicy"
@@ -1390,6 +1461,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "image.pullPolicy"
@@ -1400,6 +1472,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "initContainers"
@@ -1420,6 +1493,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "initContainers"
@@ -1437,6 +1511,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "initLimit"
@@ -1447,6 +1522,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "jvmFlags"
@@ -1469,6 +1545,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "jvmFlags"
@@ -1479,6 +1556,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "lifecycleHooks"
@@ -1500,6 +1578,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "lifecycleHooks"
@@ -1517,6 +1596,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "listenOnAllIPs"
@@ -1534,6 +1614,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "logLevel"
@@ -1551,6 +1632,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "maxClientCnxns"
@@ -1568,6 +1650,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "maxSessionTimeout"
@@ -1590,6 +1673,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "metrics.containerPort"
@@ -1612,6 +1696,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "metrics.containerPort"
@@ -1622,6 +1707,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "metrics.enabled"
@@ -1632,6 +1718,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "minServerId"
@@ -1662,6 +1749,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "nodeAffinityPreset.key"
@@ -1678,6 +1766,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "nodeAffinityPreset.type"
@@ -1694,6 +1783,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "nodeAffinityPreset.values"
@@ -1704,6 +1794,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "nodeSelector"
@@ -1724,6 +1815,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "nodeSelector"
@@ -1758,6 +1850,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence"
@@ -1792,6 +1885,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence"
@@ -1824,6 +1918,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.accessModes"
@@ -1856,6 +1951,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.accessModes"
@@ -1892,6 +1988,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.accessModes.*"
@@ -1928,6 +2025,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.accessModes.*"
@@ -1955,6 +2053,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -1982,6 +2081,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -2018,6 +2118,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -2054,6 +2155,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.annotations"
@@ -2064,6 +2166,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.existingClaim"
@@ -2091,6 +2194,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.existingClaim"
@@ -2117,6 +2221,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.existingClaim"
@@ -2144,6 +2249,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.selector"
@@ -2180,6 +2286,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.selector"
@@ -2214,6 +2321,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.dataLogDir.size"
@@ -2224,6 +2332,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.enabled"
@@ -2239,6 +2348,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.enabled"
@@ -2258,6 +2368,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2281,6 +2392,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2296,6 +2408,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2322,6 +2435,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.existingClaim"
@@ -2349,6 +2463,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2376,6 +2491,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2412,6 +2528,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2448,6 +2565,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.labels"
@@ -2475,6 +2593,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.selector"
@@ -2511,6 +2630,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.selector"
@@ -2545,6 +2665,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "persistence.size"
@@ -2561,6 +2682,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podAffinityPreset"
@@ -2571,6 +2693,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podAnnotations"
@@ -2591,6 +2714,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podAnnotations"
@@ -2607,6 +2731,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podAntiAffinityPreset"
@@ -2617,6 +2742,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podLabels"
@@ -2637,6 +2763,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podLabels"
@@ -2650,6 +2777,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podManagementPolicy"
@@ -2670,6 +2798,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podSecurityContext"
@@ -2680,6 +2809,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podSecurityContext.enabled"
@@ -2705,6 +2835,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podSecurityContext.fsGroup"
@@ -2734,6 +2865,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "podSecurityContext.fsGroup"
@@ -2751,6 +2883,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "preAllocSize"
@@ -2761,6 +2894,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "priorityClassName"
@@ -2781,6 +2915,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "priorityClassName"
@@ -2791,6 +2926,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "replicaCount"
@@ -2804,6 +2940,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "replicaCount"
@@ -2814,6 +2951,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "resources"
@@ -2835,6 +2973,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "resources"
@@ -2845,6 +2984,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "schedulerName"
@@ -2865,6 +3005,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "schedulerName"
@@ -2875,6 +3016,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "service.disableBaseClientPort"
@@ -2888,6 +3030,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "service.headless.servicenameOverride"
@@ -2912,6 +3055,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "sidecars"
@@ -2932,6 +3076,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "sidecars"
@@ -2949,6 +3094,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "snapCount"
@@ -2966,6 +3112,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "syncLimit"
@@ -2983,6 +3130,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tickTime"
@@ -3005,6 +3153,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.auth"
@@ -3020,6 +3169,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.autoGenerated"
@@ -3030,6 +3180,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.enabled"
@@ -3048,6 +3199,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.enabled"
@@ -3070,6 +3222,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.enabled"
@@ -3092,6 +3245,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.keystorePassword"
@@ -3114,6 +3268,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.keystorePath"
@@ -3143,6 +3298,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.passwordsSecretName"
@@ -3161,6 +3317,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.passwordsSecretName"
@@ -3183,6 +3340,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.truststorePassword"
@@ -3205,6 +3363,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.client.truststorePath"
@@ -3227,6 +3386,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.auth"
@@ -3242,6 +3402,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.autoGenerated"
@@ -3252,6 +3413,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.enabled"
@@ -3270,6 +3432,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.enabled"
@@ -3292,6 +3455,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.enabled"
@@ -3314,6 +3478,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.keystorePassword"
@@ -3336,6 +3501,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.keystorePath"
@@ -3365,6 +3531,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.passwordsSecretName"
@@ -3383,6 +3550,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.passwordsSecretName"
@@ -3405,6 +3573,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.truststorePassword"
@@ -3427,6 +3596,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.quorum.truststorePath"
@@ -3445,6 +3615,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.resources"
@@ -3473,6 +3644,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tls.resources"
@@ -3483,6 +3655,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tolerations"
@@ -3503,6 +3676,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "tolerations"
@@ -3513,6 +3687,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "topologySpreadConstraints"
@@ -3533,6 +3708,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "topologySpreadConstraints"
@@ -3543,6 +3719,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "updateStrategy"
@@ -3561,6 +3738,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "updateStrategy"
@@ -3590,6 +3768,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.containerSecurityContext"
@@ -3609,6 +3788,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.containerSecurityContext.enabled"
@@ -3624,6 +3804,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.enabled"
@@ -3656,6 +3837,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.image.pullPolicy"
@@ -3675,6 +3857,7 @@ fn symbolic_ir_full() {
         "path": [],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.resources"
@@ -3704,6 +3887,7 @@ fn symbolic_ir_full() {
         ],
         "resource": {
           "api_version": "",
+          "api_version_candidates": ["apps/v1beta1", "apps/v1"],
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.resources"
