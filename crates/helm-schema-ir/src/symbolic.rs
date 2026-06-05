@@ -49,6 +49,7 @@ struct SymbolicWalker<'a> {
     get_bindings: HashMap<String, GetBinding>,
 
     inline_helpers_in_fragments: bool,
+    root_bindings: HashMap<String, HelperBinding>,
 }
 
 #[derive(Clone, Debug)]
@@ -109,6 +110,76 @@ impl Default for Shape {
 enum Container {
     Mapping,
     Sequence,
+}
+
+fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
+    fn finalize_yaml_key(key: String, rest: &str) -> Option<(String, bool)> {
+        if key.is_empty() {
+            return None;
+        }
+        let rest = rest.trim_start();
+        let rest = rest.strip_prefix(':').unwrap_or(rest);
+        let rest = rest.trim_start();
+        let is_template = rest.starts_with("{{");
+        let is_template_fragment = is_template
+            && (rest.contains("toYaml")
+                || rest.contains("nindent")
+                || rest.contains("indent")
+                || rest.contains("tpl"));
+        let is_block = rest.is_empty()
+            || rest.starts_with('|')
+            || rest.starts_with('>')
+            || is_template_fragment;
+        Some((key, !is_block))
+    }
+
+    let after = after.trim_end();
+    if after.starts_with("{{") {
+        return None;
+    }
+
+    if let Some(quote) = after.chars().next().filter(|c| matches!(c, '"' | '\'')) {
+        let quoted = &after[quote.len_utf8()..];
+        let mut chars = quoted.char_indices().peekable();
+        let mut key = String::new();
+        while let Some((idx, ch)) = chars.next() {
+            match (quote, ch) {
+                ('"', '\\') => {
+                    let Some((_, escaped)) = chars.next() else {
+                        return None;
+                    };
+                    key.push(escaped);
+                }
+                ('\'', '\'') if chars.peek().is_some_and(|(_, next)| *next == '\'') => {
+                    let _ = chars.next();
+                    key.push('\'');
+                }
+                (_, ch) if ch == quote => {
+                    let rest = &quoted[(idx + ch.len_utf8())..];
+                    return finalize_yaml_key(key, rest);
+                }
+                _ => key.push(ch),
+            }
+        }
+        return None;
+    }
+
+    let mut chars = after.chars();
+    let mut key = String::new();
+    while let Some(c) = chars.next() {
+        if c == ':' {
+            return finalize_yaml_key(key.trim().to_string(), chars.as_str());
+        }
+        if c.is_whitespace() {
+            return None;
+        }
+        if c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/') {
+            key.push(c);
+            continue;
+        }
+        return None;
+    }
+    None
 }
 
 fn rewrite_dot_expr_to_values(text: &str, dot_prefix: &str) -> String {
@@ -238,76 +309,6 @@ impl Shape {
 
     #[allow(clippy::too_many_lines)]
     fn ingest(&mut self, text: &str) {
-        fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
-            fn finalize_yaml_key(key: String, rest: &str) -> Option<(String, bool)> {
-                if key.is_empty() {
-                    return None;
-                }
-                let rest = rest.trim_start();
-                let rest = rest.strip_prefix(':').unwrap_or(rest);
-                let rest = rest.trim_start();
-                let is_template = rest.starts_with("{{");
-                let is_template_fragment = is_template
-                    && (rest.contains("toYaml")
-                        || rest.contains("nindent")
-                        || rest.contains("indent")
-                        || rest.contains("tpl"));
-                let is_block = rest.is_empty()
-                    || rest.starts_with('|')
-                    || rest.starts_with('>')
-                    || is_template_fragment;
-                Some((key, !is_block))
-            }
-
-            let after = after.trim_end();
-            if after.starts_with("{{") {
-                return None;
-            }
-
-            if let Some(quote) = after.chars().next().filter(|c| matches!(c, '"' | '\'')) {
-                let quoted = &after[quote.len_utf8()..];
-                let mut chars = quoted.char_indices().peekable();
-                let mut key = String::new();
-                while let Some((idx, ch)) = chars.next() {
-                    match (quote, ch) {
-                        ('"', '\\') => {
-                            let Some((_, escaped)) = chars.next() else {
-                                return None;
-                            };
-                            key.push(escaped);
-                        }
-                        ('\'', '\'') if chars.peek().is_some_and(|(_, next)| *next == '\'') => {
-                            let _ = chars.next();
-                            key.push('\'');
-                        }
-                        (_, ch) if ch == quote => {
-                            let rest = &quoted[(idx + ch.len_utf8())..];
-                            return finalize_yaml_key(key, rest);
-                        }
-                        _ => key.push(ch),
-                    }
-                }
-                return None;
-            }
-
-            let mut chars = after.chars();
-            let mut key = String::new();
-            while let Some(c) = chars.next() {
-                if c == ':' {
-                    return finalize_yaml_key(key.trim().to_string(), chars.as_str());
-                }
-                if c.is_whitespace() {
-                    return None;
-                }
-                if c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/') {
-                    key.push(c);
-                    continue;
-                }
-                return None;
-            }
-            None
-        }
-
         fn clear_pending_at_indent(
             stack: &mut [(usize, Container, Option<String>)],
             indent: usize,
@@ -474,6 +475,7 @@ impl<'a> SymbolicWalker<'a> {
             get_bindings: HashMap::new(),
 
             inline_helpers_in_fragments: false,
+            root_bindings: HashMap::new(),
         }
     }
 
@@ -490,6 +492,11 @@ impl<'a> SymbolicWalker<'a> {
 
     fn with_inline_helpers_in_fragments(mut self, enabled: bool) -> Self {
         self.inline_helpers_in_fragments = enabled;
+        self
+    }
+
+    fn with_helper_bindings(mut self, bindings: HashMap<String, HelperBinding>) -> Self {
+        self.root_bindings = bindings;
         self
     }
 
@@ -1179,6 +1186,130 @@ impl<'a> SymbolicWalker<'a> {
         });
     }
 
+    fn resolved_values_paths_in_context(&self, text: &str) -> Vec<String> {
+        let mut paths: BTreeSet<String> = extract_values_paths(text).into_iter().collect();
+
+        if !self.root_bindings.is_empty() {
+            for expr in Self::parse_expr_text(text) {
+                expr.walk(|node| {
+                    if let Some(path) = Self::resolve_bound_path_expr(node, &self.root_bindings) {
+                        paths.insert(path);
+                    }
+                });
+            }
+        }
+
+        if paths.is_empty()
+            && let Some(Some(dot_prefix)) = self.dot_stack.last()
+        {
+            if text.trim() == "." {
+                paths.insert(dot_prefix.clone());
+            } else {
+                let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
+                paths.extend(extract_values_paths(&rewritten));
+            }
+        }
+
+        paths.into_iter().collect()
+    }
+
+    fn condition_guards_in_context(&self, text: &str) -> Vec<Guard> {
+        let cond_guards = parse_condition(text);
+        if !cond_guards.is_empty() {
+            return cond_guards;
+        }
+        self.resolved_values_paths_in_context(text)
+            .into_iter()
+            .map(|path| Guard::Truthy { path })
+            .collect()
+    }
+
+    fn single_resolved_values_path(&self, text: &str) -> Option<String> {
+        let mut paths = self.resolved_values_paths_in_context(text);
+        if paths.len() == 1 { paths.pop() } else { None }
+    }
+
+    fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, HelperBinding>) -> bool {
+        match expr {
+            TemplateExpr::Parenthesized(inner) => Self::is_direct_path_expr(inner, bindings),
+            TemplateExpr::Field(_) => true,
+            TemplateExpr::Selector { .. } => {
+                Self::resolve_bound_path_expr(expr, bindings).is_some()
+            }
+            _ => false,
+        }
+    }
+
+    fn single_direct_iterable_range_path(&self, text: &str) -> Option<String> {
+        let exprs = Self::parse_expr_text(text);
+        if exprs.len() != 1 || !Self::is_direct_path_expr(&exprs[0], &self.root_bindings) {
+            return None;
+        }
+        self.single_resolved_values_path(text)
+    }
+
+    fn define_body_source(&self, name: &str) -> Option<String> {
+        for (_path, src) in self.defines.file_sources() {
+            for block in crate::extract_define_blocks(src) {
+                if block.name == name {
+                    return Some(block.body);
+                }
+            }
+        }
+        None
+    }
+
+    fn define_body_resource(&self, name: &str) -> Option<ResourceRef> {
+        let body = self.defines.get(name)?;
+        let ast = HelmAst::Document {
+            items: body.to_vec(),
+        };
+        crate::ResourceDetector::detect(&crate::DefaultResourceDetector, &ast)
+    }
+
+    fn inline_exact_helper_call(&mut self, text: &str) -> bool {
+        let exprs = Self::parse_expr_text(text);
+        if exprs.len() != 1 {
+            return false;
+        }
+
+        let TemplateExpr::Call { function, args } = &exprs[0] else {
+            return false;
+        };
+        if !matches!(function.as_str(), "include" | "template") {
+            return false;
+        }
+        let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
+            return false;
+        };
+        if self.define_body_resource(name).is_none() {
+            return false;
+        }
+
+        let Some(src) = self.define_body_source(name) else {
+            return false;
+        };
+        let token = format!("define:{name}");
+        if self.inline_stack.iter().any(|entry| entry == &token) {
+            return false;
+        }
+        let Some(tree) = Self::parse_go_template(&src) else {
+            return false;
+        };
+
+        let bindings = Self::bindings_for_helper_arg(args.get(1), Some(&self.root_bindings));
+        let mut stack = self.inline_stack.clone();
+        stack.push(token);
+        let mut nested = SymbolicWalker::new(src.as_str(), self.defines)
+            .with_initial_guards(self.guards.clone())
+            .with_inline_stack(stack)
+            .with_inline_helpers_in_fragments(true)
+            .with_helper_bindings(bindings);
+        let uses = nested.run(&tree);
+        self.uses.extend(uses);
+        true
+    }
+
     fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
         let Ok(text) = node.utf8_text(self.source.as_bytes()) else {
             return;
@@ -1192,21 +1323,18 @@ impl<'a> SymbolicWalker<'a> {
             ValueKind::Scalar
         };
 
-        let mut values = extract_values_paths(text);
-        if values.is_empty()
-            && let Some(Some(dot_prefix)) = self.dot_stack.last()
-        {
-            let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
-            values = extract_values_paths(&rewritten);
-        }
+        let helper_inlined = self.inline_exact_helper_call(text);
+
+        let values = self.resolved_values_paths_in_context(text);
 
         let bound_values = self.extract_bound_values(text);
 
         let mut helper_output_values: Vec<String> = Vec::new();
         let mut helper_guard_values: Vec<String> = Vec::new();
         let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
-        if kind == ValueKind::Scalar
-            || (self.inline_helpers_in_fragments && kind == ValueKind::Fragment)
+        if !helper_inlined
+            && (kind == ValueKind::Scalar
+                || (self.inline_helpers_in_fragments && kind == ValueKind::Fragment))
         {
             for name in Self::literal_template_calls(text) {
                 if name.ends_with(".defaultValues") {
@@ -1577,13 +1705,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn collect_if_with_guards(&mut self, cond_text: &str) {
-        let mut cond_guards = parse_condition(cond_text);
-        if cond_guards.is_empty()
-            && let Some(Some(dot_prefix)) = self.dot_stack.last()
-        {
-            let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
-            cond_guards = parse_condition(&rewritten);
-        }
+        let cond_guards = self.condition_guards_in_context(cond_text);
 
         for v in self.extract_bound_values(cond_text) {
             self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
@@ -1600,13 +1722,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn collect_with_guards(&mut self, cond_text: &str) {
-        let mut cond_guards = parse_condition(cond_text);
-        if cond_guards.is_empty()
-            && let Some(Some(dot_prefix)) = self.dot_stack.last()
-        {
-            let rewritten = rewrite_dot_expr_to_values(cond_text, dot_prefix);
-            cond_guards = parse_condition(&rewritten);
-        }
+        let cond_guards = self.condition_guards_in_context(cond_text);
 
         // In a `with` block, every path that contributes to the binding is
         // null-tolerant (`with nil` skips the body). Tag each such path with
@@ -1636,6 +1752,7 @@ impl<'a> SymbolicWalker<'a> {
                 Guard::Not { ref path } | Guard::Eq { ref path, .. } => {
                     vec![Guard::With { path: path.clone() }, g]
                 }
+                Guard::Range { .. } => vec![g],
                 Guard::With { .. } => vec![g],
             })
             .collect();
@@ -1662,19 +1779,20 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn push_with_dot_binding(&mut self, header_text: &str) {
-        let values = extract_values_paths(header_text);
-        if values.len() == 1 {
-            self.dot_stack.push(Some(values[0].clone()));
+        if let Some(path) = self.single_resolved_values_path(header_text) {
+            self.dot_stack.push(Some(path));
         } else {
             self.dot_stack.push(None);
         }
     }
 
-    fn collect_range_guards(&mut self, header_text: &str, path: &YamlPath) {
+    fn collect_range_guards(&mut self, header_text: &str, path: &YamlPath, emit_use: bool) {
         let values = self.range_source_paths(header_text);
         for v in &values {
-            self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
-            let g = Guard::Truthy { path: v.clone() };
+            if emit_use {
+                self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
+            }
+            let g = Guard::Range { path: v.clone() };
             if !self.guards.contains(&g) {
                 self.guards.push(g);
             }
@@ -1682,16 +1800,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn range_source_paths(&self, header_text: &str) -> Vec<String> {
-        let mut values = extract_values_paths(header_text);
-        if values.is_empty()
-            && header_text.trim() == "."
-            && let Some(Some(dot_prefix)) = self.dot_stack.last()
-        {
-            values.push(dot_prefix.clone());
-        }
-        values.sort();
-        values.dedup();
-        values
+        self.resolved_values_paths_in_context(header_text)
     }
 
     fn range_header_text(&self, node: tree_sitter::Node<'_>) -> Option<String> {
@@ -1713,6 +1822,70 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
         None
+    }
+
+    fn range_body_uses_item_fields(&self, node: tree_sitter::Node<'_>) -> bool {
+        for body_node in Self::children_with_field(node, "body") {
+            let Ok(text) = body_node.utf8_text(self.source.as_bytes()) else {
+                continue;
+            };
+            for expr in Self::parse_expr_text(text) {
+                let mut uses_item_fields = false;
+                expr.walk(|inner| {
+                    if let TemplateExpr::Field(path) = inner
+                        && !path.is_empty()
+                        && path.first().map(String::as_str) != Some("Values")
+                    {
+                        uses_item_fields = true;
+                    }
+                });
+                if uses_item_fields {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn range_body_renders_scalar_sequence_items(&self, node: tree_sitter::Node<'_>) -> bool {
+        let mut saw_sequence_item = false;
+        let mut body_text = String::new();
+
+        for body_node in Self::children_with_field(node, "body") {
+            let Ok(text) = body_node.utf8_text(self.source.as_bytes()) else {
+                continue;
+            };
+            body_text.push_str(text);
+        }
+
+        for line in body_text.lines() {
+            let trimmed = line.trim_start();
+            let Some(rest) = trimmed.strip_prefix('-') else {
+                continue;
+            };
+            let rest = rest.trim_start();
+            saw_sequence_item = true;
+
+            if rest.is_empty() || parse_yaml_key(rest).is_some() || is_fragment_expr(rest) {
+                return false;
+            }
+        }
+
+        saw_sequence_item
+    }
+
+    fn direct_iterable_header_path(&self, header_text: &str) -> Option<String> {
+        let mut txt = header_text.trim();
+        loop {
+            let trimmed = txt.trim();
+            if trimmed.len() >= 2 && trimmed.starts_with('(') && trimmed.ends_with(')') {
+                txt = &trimmed[1..trimmed.len() - 1];
+                continue;
+            }
+            break;
+        }
+
+        self.single_direct_iterable_range_path(txt)
     }
 
     fn walk(&mut self, node: tree_sitter::Node<'_>) {
@@ -1826,8 +1999,8 @@ impl<'a> SymbolicWalker<'a> {
         if let Some(cond) = node.child_by_field_name("condition")
             && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
         {
-            self.push_with_dot_binding(txt);
             self.collect_with_guards(txt);
+            self.push_with_dot_binding(txt);
         }
 
         let consequence = Self::children_with_field(node, "consequence");
@@ -1879,12 +2052,17 @@ impl<'a> SymbolicWalker<'a> {
                 break;
             }
         }
+        let body_uses_item_fields =
+            !has_variable_definition && self.range_body_uses_item_fields(node);
+        let body_renders_scalar_sequence_items =
+            !has_variable_definition && self.range_body_renders_scalar_sequence_items(node);
         if let Some(txt) = self.range_header_text(node) {
             header_text = Some(txt.clone());
             if let Some((var, literals)) = Self::parse_literal_list_range(&txt) {
                 self.range_domains.insert(var, literals);
             }
             let current_path = self.shape.current_path();
+            let direct_iterable_header_path = self.direct_iterable_header_path(&txt);
             let guard_path = if has_variable_definition {
                 // Destructured range headers (`range $k, $v := .Values.map`) describe
                 // the INPUT collection, not the rendered YAML shape of each output item.
@@ -1894,12 +2072,24 @@ impl<'a> SymbolicWalker<'a> {
                 // `object | array` unions. Keep the header use pathless; values.yaml and
                 // body uses still carry the input contract.
                 YamlPath(Vec::new())
-            } else if body_emits_sequence_item {
+            } else if body_emits_sequence_item
+                && (body_uses_item_fields
+                    || (body_renders_scalar_sequence_items
+                        && direct_iterable_header_path.is_some()))
+            {
+                // A direct iterable source contributes the whole collection to the
+                // current YAML sequence field when each input item becomes the
+                // rendered sequence item (`- {{ . }}`) or when item field access
+                // proves the input items themselves are object-shaped.
                 self.shape.current_path()
             } else {
                 YamlPath(Vec::new())
             };
-            self.collect_range_guards(&txt, &guard_path);
+            let emit_header_use = has_variable_definition
+                || body_uses_item_fields
+                || !body_emits_sequence_item
+                || (body_renders_scalar_sequence_items && direct_iterable_header_path.is_some());
+            self.collect_range_guards(&txt, &guard_path, emit_header_use);
 
             let renders_mapping_entries = has_variable_definition
                 && !body_emits_sequence_item
@@ -1929,28 +2119,10 @@ impl<'a> SymbolicWalker<'a> {
         //   {{- range .Values.someList }}
         //     {{ .name }}
         //   {{- end }}
-        let dot_prefix = header_text.as_deref().and_then(|raw| {
-            let mut txt = raw.trim();
-            loop {
-                let t = txt.trim();
-                if t.len() >= 2 && t.starts_with('(') && t.ends_with(')') {
-                    txt = &t[1..t.len() - 1];
-                    continue;
-                }
-                break;
-            }
-
-            let mut paths = extract_values_paths(txt);
-            if paths.len() != 1 {
-                return None;
-            }
-            let p = paths.pop().expect("len == 1");
-            if txt.trim() == format!(".Values.{p}") {
-                Some(format!("{p}.*"))
-            } else {
-                None
-            }
-        });
+        let dot_prefix = header_text
+            .as_deref()
+            .and_then(|raw| self.direct_iterable_header_path(raw))
+            .map(|path| format!("{path}.*"));
 
         self.dot_stack.push(dot_prefix);
 

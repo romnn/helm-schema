@@ -54,6 +54,7 @@ fn symbolic_ir_full() {
 
     let np = serde_json::json!({"api_version": "", "kind": "NetworkPolicy"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let r = |p: &str| serde_json::json!({"type": "range", "path": p});
     let n = |p: &str| serde_json::json!({"type": "not", "path": p});
     let o = |a: &str, b: &str| serde_json::json!({"type": "or", "paths": [a, b]});
     let eq = |p: &str, v: &str| serde_json::json!({"type": "eq", "path": p, "value": v});
@@ -220,7 +221,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
                 o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
-                t("networkPolicy.ingressNSMatchLabels")
+                t("networkPolicy.ingressNSMatchLabels"), r("networkPolicy.ingressNSMatchLabels")
             ],
             "resource": np
         },
@@ -259,7 +260,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
                 o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
-                t("networkPolicy.ingressNSPodMatchLabels")
+                t("networkPolicy.ingressNSPodMatchLabels"), r("networkPolicy.ingressNSPodMatchLabels")
             ],
             "resource": np
         },
@@ -305,7 +306,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
                 o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
-                t("networkPolicy.metrics.ingressNSMatchLabels")
+                t("networkPolicy.metrics.ingressNSMatchLabels"), r("networkPolicy.metrics.ingressNSMatchLabels")
             ],
             "resource": np
         },
@@ -344,7 +345,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
                 o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
-                t("networkPolicy.metrics.ingressNSPodMatchLabels")
+                t("networkPolicy.metrics.ingressNSPodMatchLabels"), r("networkPolicy.metrics.ingressNSPodMatchLabels")
             ],
             "resource": np
         },

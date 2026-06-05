@@ -266,6 +266,13 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
             let mut src = String::new();
             path.open_file()?.read_to_string(&mut src)?;
             idx.add_source(&TreeSitterParser, &src)?;
+            let abs = path.as_str();
+            let root = c.chart_dir.as_str().trim_end_matches('/');
+            let rel = abs
+                .strip_prefix(root)
+                .and_then(|s| s.strip_prefix('/'))
+                .unwrap_or(abs);
+            idx.add_file_source(rel, &src);
         }
 
         // Some charts render manifests by loading YAML fragments from `files/` via `.Files.Get`.

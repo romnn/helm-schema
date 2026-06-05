@@ -85,6 +85,10 @@ pub enum Guard {
     Eq { path: String, value: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
+    /// Body of `range .Values.X` / `range .foo` block — the referenced path is
+    /// being iterated as a collection, not interpreted as a boolean-valued
+    /// scalar. This should not contribute a boolean type hint downstream.
+    Range { path: String },
     /// Body of `with .Values.X` block — distinguishes header binding from
     /// `if`-style truthy checks. The bound path is null-tolerant by
     /// construction (`with nil` skips the body).
@@ -99,6 +103,7 @@ impl Guard {
             Guard::Truthy { path }
             | Guard::Not { path }
             | Guard::Eq { path, .. }
+            | Guard::Range { path }
             | Guard::With { path } => {
                 vec![path.as_str()]
             }

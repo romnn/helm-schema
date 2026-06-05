@@ -1804,10 +1804,12 @@ fn schema_fused_rust() {
           "additionalProperties": false,
           "properties": {
             "accessModes": {
+              "description": "accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1",
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
             },
             "annotations": {
               "additionalProperties": {},

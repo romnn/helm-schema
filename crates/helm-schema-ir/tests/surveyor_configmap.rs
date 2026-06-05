@@ -52,6 +52,7 @@ fn symbolic_ir_full() {
 
     let cm = serde_json::json!({"api_version": "v1", "kind": "ConfigMap"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let r = |p: &str| serde_json::json!({"type": "range", "path": p});
 
     let expected = serde_json::json!([
         {
@@ -65,7 +66,7 @@ fn symbolic_ir_full() {
             "source_expr": "config.jetstream.accounts.*",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("config.jetstream.enabled"), t("config.jetstream.accounts")],
+            "guards": [t("config.jetstream.enabled"), r("config.jetstream.accounts")],
             "resource": cm
         },
         {
@@ -74,7 +75,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls"),
                 t("config.jetstream.accounts.*.tls.ca")
             ],
@@ -86,7 +87,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls"),
                 t("config.jetstream.accounts.*.tls.cert")
             ],
@@ -98,7 +99,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls"),
                 t("config.jetstream.accounts.*.tls.key")
             ],
@@ -108,7 +109,7 @@ fn symbolic_ir_full() {
             "source_expr": "config.jetstream.accounts.*.tls",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("config.jetstream.enabled"), t("config.jetstream.accounts")],
+            "guards": [t("config.jetstream.enabled"), r("config.jetstream.accounts")],
             "resource": cm
         },
         {
@@ -117,7 +118,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls")
             ],
             "resource": cm
@@ -128,7 +129,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls"),
                 t("config.jetstream.accounts.*.tls.ca")
             ],
@@ -140,7 +141,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls")
             ],
             "resource": cm
@@ -151,7 +152,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls"),
                 t("config.jetstream.accounts.*.tls.cert")
             ],
@@ -163,7 +164,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls")
             ],
             "resource": cm
@@ -174,7 +175,7 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
-                t("config.jetstream.accounts"),
+                r("config.jetstream.accounts"),
                 t("config.jetstream.accounts.*.tls"),
                 t("config.jetstream.accounts.*.tls.key")
             ],

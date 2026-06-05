@@ -354,7 +354,7 @@ fn infer_guard_boolish_schema(guard: &Guard) -> Option<Value> {
         // number, bool, …), not just booleans, so it must not contribute a
         // boolean type hint. `eq` constrains the value but the constraint is
         // emitted separately by `infer_guard_constraint_schema`.
-        Guard::Eq { .. } | Guard::With { .. } => None,
+        Guard::Eq { .. } | Guard::Range { .. } | Guard::With { .. } => None,
         _ => Some(type_schema("boolean")),
     }
 }

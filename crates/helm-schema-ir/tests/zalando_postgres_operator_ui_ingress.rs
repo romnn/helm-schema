@@ -64,6 +64,7 @@ fn symbolic_ir_full() {
         ]
     });
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let r = |p: &str| serde_json::json!({"type": "range", "path": p});
     let w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
     let expected = serde_json::json!([
@@ -106,7 +107,7 @@ fn symbolic_ir_full() {
             "source_expr": "ingress.hosts.*.host",
             "path": ["spec", "rules[*]", "host"],
             "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.hosts")],
+            "guards": [t("ingress.enabled"), r("ingress.hosts")],
             "resource": ingress
         },
         {
@@ -135,6 +136,20 @@ fn symbolic_ir_full() {
             "path": ["spec", "tls"],
             "kind": "Scalar",
             "guards": [t("ingress.enabled"), t("ingress.tls")],
+            "resource": ingress
+        },
+        {
+            "source_expr": "ingress.tls.*.hosts",
+            "path": ["spec", "tls[*]", "hosts"],
+            "kind": "Scalar",
+            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls")],
+            "resource": ingress
+        },
+        {
+            "source_expr": "ingress.tls.*.hosts.*",
+            "path": ["spec", "tls[*]", "hosts[*]"],
+            "kind": "Scalar",
+            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls"), r("ingress.tls.*.hosts")],
             "resource": ingress
         },
         {

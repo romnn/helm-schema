@@ -35,6 +35,12 @@ fn truthy(p: &str) -> Guard {
     }
 }
 
+fn range_guard(p: &str) -> Guard {
+    Guard::Range {
+        path: p.to_string(),
+    }
+}
+
 fn eq(p: &str, value: &str) -> Guard {
     Guard::Eq {
         path: p.to_string(),
@@ -96,8 +102,8 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
         })
         .expect("range fragment use present");
     assert!(
-        fragment_use.guards.contains(&truthy("map")),
-        "the fragment use should inherit Truthy(map); got guards: {:?}",
+        fragment_use.guards.contains(&range_guard("map")),
+        "the fragment use should inherit Range(map); got guards: {:?}",
         fragment_use.guards,
     );
 }
@@ -153,8 +159,8 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
         })
         .expect("range fragment use present");
     assert!(
-        fragment_use.guards.contains(&truthy("fallbackMap")),
-        "the fragment use should inherit Truthy(fallbackMap); got guards: {:?}",
+        fragment_use.guards.contains(&range_guard("fallbackMap")),
+        "the fragment use should inherit Range(fallbackMap); got guards: {:?}",
         fragment_use.guards,
     );
 
@@ -202,8 +208,8 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
         "expected exactly one `suffix` use inside range body; got: {ir:#?}",
     );
     assert!(
-        suffix_uses[0].guards.contains(&truthy("themap")),
-        "expected `suffix` use guarded by Truthy(themap); got: {:?}",
+        suffix_uses[0].guards.contains(&range_guard("themap")),
+        "expected `suffix` use guarded by Range(themap); got: {:?}",
         suffix_uses[0].guards,
     );
 
@@ -219,6 +225,106 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
             .all(|u| !u.guards.contains(&truthy("themap"))),
         "`fallback` use outside the range body must NOT inherit the \
          range's Truthy guard; got: {fallback_uses:#?}",
+    );
+}
+
+#[test]
+fn scalar_item_range_keeps_parent_collection_path() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: test
+        spec:
+          accessModes:
+          {{- range .Values.accessModes }}
+            - {{ . | quote }}
+          {{- end }}
+    "#};
+
+    let ir = generate(template, "");
+
+    let parent_use = ir
+        .iter()
+        .find(|use_| {
+            use_.source_expr == "accessModes"
+                && use_.path.0 == ["spec".to_string(), "accessModes".to_string()]
+                && use_.kind == helm_schema_ir::ValueKind::Scalar
+        })
+        .expect("scalar-item range should keep a collection-level parent use");
+    assert!(
+        parent_use.guards.is_empty(),
+        "the collection-level range header use must stay unconditional; got: {:?}",
+        parent_use.guards,
+    );
+
+    let item_use = ir
+        .iter()
+        .find(|use_| {
+            use_.source_expr == "accessModes.*"
+                && use_.path.0 == ["spec".to_string(), "accessModes[*]".to_string()]
+                && use_.kind == helm_schema_ir::ValueKind::Scalar
+        })
+        .expect("scalar-item range should still emit per-item uses");
+    assert!(
+        item_use.guards.contains(&range_guard("accessModes")),
+        "the item use should inherit Range(accessModes); got: {:?}",
+        item_use.guards,
+    );
+}
+
+#[test]
+fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
+    let template = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+        spec:
+          rules:
+          {{- range .Values.hosts }}
+            - host: {{ .host | quote }}
+              http:
+                paths:
+                {{- range .paths }}
+                  - path: {{ . | quote }}
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: app
+                        port:
+                          number: 80
+                {{- end }}
+          {{- end }}
+    "#};
+
+    let ir = generate(template, "");
+
+    assert!(
+        ir.iter().all(|use_| {
+            !(use_.source_expr == "hosts.*.paths"
+                && use_.path.0
+                    == [
+                        "spec".to_string(),
+                        "rules[*]".to_string(),
+                        "http".to_string(),
+                        "paths".to_string(),
+                    ])
+        }),
+        "the scalar input list should not be projected onto the output object array: {ir:#?}",
+    );
+
+    let leaf_use = ir
+        .iter()
+        .find(|use_| {
+            use_.source_expr == "hosts.*.paths.*" && use_.kind == helm_schema_ir::ValueKind::Scalar
+        })
+        .expect("scalar path item should still surface as a value use");
+    assert!(
+        leaf_use.guards.contains(&range_guard("hosts"))
+            && leaf_use.guards.contains(&range_guard("hosts.*.paths")),
+        "the wrapped scalar item use should retain both enclosing range guards; got: {:?}",
+        leaf_use.guards,
     );
 }
 

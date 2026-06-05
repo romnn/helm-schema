@@ -262,6 +262,12 @@ impl DefineIndex {
         self.files.get(path).map(std::string::String::as_str)
     }
 
+    pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.files
+            .iter()
+            .map(|(path, src)| (path.as_str(), src.as_str()))
+    }
+
     /// Parse `src` with `parser` and collect all `Define` blocks into the index.
     ///
     /// # Errors

@@ -2025,7 +2025,7 @@ fn symbolic_ir_full() {
           },
           {
             "path": "persistence.accessModes",
-            "type": "truthy"
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -2062,7 +2062,7 @@ fn symbolic_ir_full() {
           },
           {
             "path": "persistence.accessModes",
-            "type": "truthy"
+            "type": "range"
           }
         ],
         "kind": "Scalar",

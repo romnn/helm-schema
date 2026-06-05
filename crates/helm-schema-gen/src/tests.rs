@@ -25,6 +25,7 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
     let ast = TreeSitterParser.parse(src).expect("parse");
     let mut idx = DefineIndex::new();
     if !helpers.trim().is_empty() {
+        idx.add_file_source("helpers.tpl", helpers);
         idx.add_source(&TreeSitterParser, helpers)
             .expect("helpers parse");
     }
@@ -435,6 +436,113 @@ fn destructured_range_map_input_does_not_become_output_array() {
     );
 }
 
+/// A scalar-item range that directly renders the sequence items should keep the
+/// provider array metadata on the destination field, not collapse to a bare
+/// `items.type` array inferred only from the item uses.
+#[test]
+fn scalar_item_range_keeps_provider_array_metadata() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: test
+        spec:
+          accessModes:
+          {{- range .Values.accessModes }}
+            - {{ . | quote }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        accessModes:
+          - ReadWriteOnce
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let access_modes = schema
+        .pointer("/properties/accessModes")
+        .expect("accessModes present");
+    assert_eq!(
+        access_modes.get("type").and_then(Value::as_str),
+        Some("array"),
+        "accessModes should be an array, got {access_modes}"
+    );
+    assert_eq!(
+        access_modes.pointer("/items/type").and_then(Value::as_str),
+        Some("string"),
+        "accessModes items should stay strings, got {access_modes}"
+    );
+    assert!(
+        access_modes
+            .pointer("/description")
+            .and_then(Value::as_str)
+            .is_some(),
+        "accessModes should keep the provider description, got {access_modes}"
+    );
+    assert_eq!(
+        access_modes
+            .pointer("/x-kubernetes-list-type")
+            .and_then(Value::as_str),
+        Some("atomic"),
+        "accessModes should keep the provider list metadata, got {access_modes}"
+    );
+}
+
+/// A scalar input list that is wrapped into object-valued output items should
+/// stay a scalar values array and must not inherit the provider object-item
+/// schema for the rendered resource field.
+#[test]
+fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
+    let src = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+        spec:
+          rules:
+          {{- range .Values.hosts }}
+            - host: {{ .host | quote }}
+              http:
+                paths:
+                {{- range .paths }}
+                  - path: {{ . | quote }}
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: app
+                        port:
+                          number: 80
+                {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        hosts:
+          - host: example.test
+            paths:
+              - /
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let host_paths = schema
+        .pointer("/properties/hosts/items/properties/paths")
+        .expect("hosts[].paths present");
+    assert_eq!(
+        host_paths.get("type").and_then(Value::as_str),
+        Some("array"),
+        "hosts[].paths should stay an array input, got {host_paths}"
+    );
+    assert_eq!(
+        host_paths.pointer("/items/type").and_then(Value::as_str),
+        Some("string"),
+        "hosts[].paths items should stay strings, got {host_paths}"
+    );
+    assert!(
+        host_paths.pointer("/items/anyOf").is_none(),
+        "hosts[].paths should not widen to object|string items, got {host_paths}"
+    );
+}
+
 /// Passing a structured values object into a helper via `dict` should map the
 /// helper-local field accesses back to descendant values paths, not treat the
 /// parent object itself as a scalar leaf at the rendered output path.
@@ -502,8 +610,15 @@ fn with_bound_range_dot_annotations_stay_string_map() {
         annotations:
           foo: bar
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let ir = parse_ir(src);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::to_value(&ir).expect("ir json"))
+                .expect("pretty ir")
+        );
+    }
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
     let annotations = schema
         .pointer("/properties/annotations")
@@ -554,6 +669,91 @@ fn quoted_matchlabels_key_value_stays_string() {
     assert!(
         namespace.get("anyOf").is_none(),
         "quoted map-key value should not widen to object-or-string, got {namespace}"
+    );
+}
+
+#[test]
+fn exact_bound_helper_yaml_body_propagates_paths() {
+    let helpers = indoc! {r#"
+        {{- define "common.ingress" -}}
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+        spec:
+          {{- with .config.className }}
+          ingressClassName: {{ . }}
+          {{- end }}
+          {{- if .config.tls }}
+          tls:
+            {{- range .config.tls }}
+            - secretName: {{ .secretName }}
+            {{- end }}
+          {{- end }}
+          rules:
+            {{- range .config.hosts }}
+            - host: {{ .host | quote }}
+              http:
+                paths:
+                  {{- range .paths }}
+                  - path: {{ .path }}
+                    backend:
+                      service:
+                        port:
+                          {{- if .servicePort -}}
+                          {{- toYaml .servicePort | nindent 26 }}
+                          {{- else -}}
+                          number: {{ $.ctx.Values.service.port }}
+                          {{- end }}
+                  {{- end }}
+            {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{ include "common.ingress" (dict "ctx" $ "config" .Values.ingress) }}
+    "#};
+    let values_yaml = indoc! {"
+        ingress:
+          className: nginx
+          tls:
+            - secretName: ingress-tls
+          hosts:
+            - host: inbucket.local
+              paths:
+                - path: /
+        service:
+          port: 9000
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::to_value(&ir).expect("ir json"))
+                .expect("pretty ir")
+        );
+    }
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/className/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "helper body should propagate ingress.className, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/tls/items/properties/secretName/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "helper body should propagate ingress.tls[*].secretName, got {schema}"
+    );
+    assert!(
+        schema
+            .pointer("/properties/service/properties/port")
+            .is_some(),
+        "helper body should propagate service.port from $.ctx.Values.service.port, got {schema}"
     );
 }
 

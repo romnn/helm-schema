@@ -428,6 +428,9 @@ fn scope_guard(g: Guard, prefix: &[String]) -> Guard {
                 .map(|p| scope_values_path(&p, prefix))
                 .collect(),
         },
+        Guard::Range { path } => Guard::Range {
+            path: scope_values_path(&path, prefix),
+        },
         Guard::With { path } => Guard::With {
             path: scope_values_path(&path, prefix),
         },
