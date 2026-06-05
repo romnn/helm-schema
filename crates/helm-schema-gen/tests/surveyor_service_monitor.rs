@@ -5,7 +5,7 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
-use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
+use helm_schema_k8s::CrdsCatalogSchemaProvider;
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -71,9 +71,7 @@ fn schema_fused_rust() {
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
-    let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
-    let upstream = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
-    let provider = Chain::new(vec![Box::new(crds), Box::new(upstream)]);
+    let provider = common::production_crd_k8s_chain("v1.35.0");
 
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 

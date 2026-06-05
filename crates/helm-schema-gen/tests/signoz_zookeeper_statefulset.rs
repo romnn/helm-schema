@@ -5,7 +5,6 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
-use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml";
@@ -24,14 +23,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     idx
 }
 
-// Fixture pinned against the K8s schemas of when the test was
-// authored; upstream `apps/v1/StatefulSet` has since gained richer
-// inline descriptions and stricter `additionalProperties: false`.
-// The new cache layout (PR 0c) forces a re-download on first run, so
-// what was previously a stale-cache snapshot is now the live upstream
-// shape. The diff is purely additive (no asserted property removed),
-// but the inline literal predates it; ignored until refreshed.
-#[ignore = "stale inline fixture vs current upstream K8s StatefulSet schema; diff is additive"]
 #[test]
 #[allow(clippy::too_many_lines)]
 fn schema_fused_rust() {
@@ -40,7 +31,7 @@ fn schema_fused_rust() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
@@ -3371,7 +3362,7 @@ fn schema_validates_values_yaml() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);

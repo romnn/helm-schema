@@ -1,7 +1,51 @@
 mod common;
 
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
+
 #[test]
 fn signoz_signoz_values_yaml_validates() -> color_eyre::eyre::Result<()> {
     common::assert_chart_values_yaml_validates("signoz-signoz")?;
+    Ok(())
+}
+
+#[test]
+fn signoz_signoz_schema_fragments_match_fixture() -> eyre::Result<()> {
+    let schema = common::generate_chart_schema("signoz-signoz")?;
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))
+            .wrap_err("parse signoz fixture")?;
+
+    let mut actual_keys: Vec<String> = schema
+        .get("properties")
+        .and_then(serde_json::Value::as_object)
+        .ok_or_eyre("schema.properties must be an object")?
+        .keys()
+        .cloned()
+        .collect();
+    actual_keys.sort();
+
+    let mut expected_keys: Vec<String> = serde_json::from_value(
+        fixture
+            .get("top_level_keys")
+            .ok_or_eyre("fixture missing top_level_keys")?
+            .clone(),
+    )
+    .wrap_err("parse fixture top_level_keys")?;
+    expected_keys.sort();
+
+    similar_asserts::assert_eq!(actual_keys, expected_keys);
+
+    let pointers = fixture
+        .get("pointers")
+        .and_then(serde_json::Value::as_object)
+        .ok_or_eyre("fixture missing pointers object")?;
+
+    for (pointer, expected) in pointers {
+        let actual = schema
+            .pointer(pointer)
+            .ok_or_eyre(format!("schema missing pointer {pointer}"))?;
+        similar_asserts::assert_eq!(actual, expected, "schema mismatch at {pointer}");
+    }
+
     Ok(())
 }

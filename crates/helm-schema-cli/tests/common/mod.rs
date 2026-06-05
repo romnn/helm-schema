@@ -57,7 +57,7 @@ fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<String>
         .collect()
 }
 
-pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<(), Report> {
+pub fn generate_chart_schema(chart: &str) -> std::result::Result<Value, Report> {
     let _guard = test_util::builder().with_tracing(false).build();
 
     let chart_dir = chart_dir(chart);
@@ -82,9 +82,16 @@ pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<()
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    generate_values_schema_for_chart(&opts)
         .map_err(Report::from)
-        .wrap_err("generate schema")?;
+        .wrap_err("generate schema")
+}
+
+pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<(), Report> {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let chart_dir = chart_dir(chart);
+    let schema = generate_chart_schema(chart)?;
 
     let values_yaml = read_values_yaml(&chart_dir).wrap_err("read values.yaml")?;
     let values_json: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;

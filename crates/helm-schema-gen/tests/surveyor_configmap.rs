@@ -82,7 +82,7 @@ fn schema_fused_rust() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = common::production_k8s_chain("v1.35.0");
 
     // Provide a values.yaml signal that includes jetstream accounts so we can infer
     // account object shapes more precisely.

@@ -1,6 +1,34 @@
+use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
+
+/// Production-like K8s provider path for chart-level generator tests.
+///
+/// These tests are meant to approximate what end users run through the CLI,
+/// so they use the chain layer plus apiVersion inference instead of the older
+/// single-provider shortcut.
+#[allow(dead_code)]
+pub fn production_k8s_chain(version: &str) -> Chain {
+    let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
+        .with_allow_download(true)
+        .with_api_version_guess(true);
+    Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
+}
+
+/// Production-like CRD + K8s provider path for chart-level generator tests.
+///
+/// This keeps real-world CRD-consuming chart tests on the same resolution path
+/// as the CLI while leaving lower-layer provider-specific tests free to pin a
+/// single provider when that is the actual subject under test.
+#[allow(dead_code)]
+pub fn production_crd_k8s_chain(version: &str) -> Chain {
+    let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
+        .with_allow_download(true)
+        .with_api_version_guess(true);
+    Chain::new(vec![Box::new(crds), Box::new(k8s_provider)]).with_inference_enabled(true)
+}
 
 /// Recursively remove `"additionalProperties": false` from a JSON schema.
 ///

@@ -125,7 +125,7 @@ fn schema_fused_rust() {
     // Upstream Kubernetes removed autoscaling/v2beta1 for HorizontalPodAutoscaler in newer
     // releases, so we must validate/generate against an upstream schema bundle that still
     // contains that apiVersion.
-    let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
+    let provider = common::production_k8s_chain("v1.24.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
@@ -162,7 +162,7 @@ fn schema_validates_values_yaml() {
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     // See comment in `schema_fused_rust`.
-    let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
+    let provider = common::production_k8s_chain("v1.24.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);

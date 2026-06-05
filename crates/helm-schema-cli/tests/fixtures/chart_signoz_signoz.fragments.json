@@ -1,0 +1,356 @@
+{
+  "$comment": "Manual fixture for representative deep fragments of the generated signoz-signoz chart schema. Keep this curated; do not add any snapshot refresh workflow.",
+  "top_level_keys": [
+    "alertmanager",
+    "clickhouse",
+    "clusterName",
+    "externalClickhouse",
+    "fullnameOverride",
+    "global",
+    "imagePullSecrets",
+    "nameOverride",
+    "otelCollector",
+    "schemaMigrator",
+    "signoz",
+    "signoz-otel-gateway"
+  ],
+  "pointers": {
+    "/properties/clusterName": {
+      "type": "string"
+    },
+    "/properties/signoz/properties/serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "/properties/signoz/properties/smtpVars/properties/existingSecret": {
+      "additionalProperties": false,
+      "properties": {
+        "fromKey": {
+          "type": "string"
+        },
+        "hostKey": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "passwordKey": {
+          "type": "string"
+        },
+        "portKey": {
+          "type": "string"
+        },
+        "usernameKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/signoz/properties/service": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "internalNodePort": {
+          "type": "boolean"
+        },
+        "internalPort": {
+          "type": "integer"
+        },
+        "labels": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nodePort": {
+          "type": "boolean"
+        },
+        "opampInternalNodePort": {
+          "type": "boolean"
+        },
+        "opampPort": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/clickhouse/properties/clickhouseOperator/properties/image": {
+      "additionalProperties": false,
+      "properties": {
+        "pullPolicy": {
+          "type": "string"
+        },
+        "registry": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/signoz-otel-gateway/properties/postgresql/properties/auth": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "type": "string"
+        },
+        "enablePostgresUser": {
+          "type": "boolean"
+        },
+        "existingSecret": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "postgresPassword": {
+          "type": "string"
+        },
+        "replicationPassword": {
+          "type": "string"
+        },
+        "replicationUsername": {
+          "type": "string"
+        },
+        "secretKeys": {
+          "additionalProperties": false,
+          "properties": {
+            "adminPasswordKey": {
+              "type": "string"
+            },
+            "replicationPasswordKey": {
+              "type": "string"
+            },
+            "userPasswordKey": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "usePasswordFiles": {
+          "type": "boolean"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/signoz-otel-gateway/properties/serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "automount": {
+          "type": "boolean"
+        },
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/otelCollector/properties/ingress": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "className": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "hosts": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "paths": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "pathType": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "tls": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/otelCollector/properties/ports/properties/metrics": {
+      "additionalProperties": false,
+      "properties": {
+        "containerPort": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "nodePort": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "servicePort": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/schemaMigrator/properties/serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "/properties/alertmanager/properties/ingress": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "className": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "hosts": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "paths": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "pathType": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "tls": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/alertmanager/properties/serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    }
+  }
+}

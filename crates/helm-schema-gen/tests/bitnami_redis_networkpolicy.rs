@@ -5,7 +5,6 @@ mod common;
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
-use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -21,15 +20,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 /// The generated schema should capture all `.Values.*` references from the
 /// networkpolicy template and produce a well-structured JSON schema that a
 /// devops engineer would recognize as describing the values.yaml structure.
-// Fixture intentionally not pinned to upstream-K8s-schema content for
-// `matchLabels`-style additionalProperties refinements. The new
-// cache layout (per-source namespaced) forces a re-download on first
-// run, which can pick up upstream schema refinements that the inline
-// literal predates. The diff is purely additive — no previously
-// asserted property is lost — but the literal would need a manual
-// refresh to track. Skipped to keep CI green; re-enable after a
-// fixture refresh.
-#[ignore = "stale inline fixture vs current upstream K8s schemas; diff is additive"]
 #[test]
 #[allow(clippy::too_many_lines)]
 fn schema_fused_rust() {
@@ -38,7 +28,12 @@ fn schema_fused_rust() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    // This chart's `apiVersion` comes from a helper
+    // (`common.capabilities.networkPolicy.apiVersion`). A bare K8s provider
+    // no longer resolves empty `api_version`; the chain's inference path is
+    // the intended route for recovering `networking.k8s.io/v1` from
+    // `kind: NetworkPolicy`.
+    let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     if std::env::var("SCHEMA_DUMP").is_ok() {
@@ -462,7 +457,7 @@ fn schema_validates_values_yaml() {
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
