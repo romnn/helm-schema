@@ -239,30 +239,62 @@ impl Shape {
     #[allow(clippy::too_many_lines)]
     fn ingest(&mut self, text: &str) {
         fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
+            fn finalize_yaml_key(key: String, rest: &str) -> Option<(String, bool)> {
+                if key.is_empty() {
+                    return None;
+                }
+                let rest = rest.trim_start();
+                let rest = rest.strip_prefix(':').unwrap_or(rest);
+                let rest = rest.trim_start();
+                let is_template = rest.starts_with("{{");
+                let is_template_fragment = is_template
+                    && (rest.contains("toYaml")
+                        || rest.contains("nindent")
+                        || rest.contains("indent")
+                        || rest.contains("tpl"));
+                let is_block = rest.is_empty()
+                    || rest.starts_with('|')
+                    || rest.starts_with('>')
+                    || is_template_fragment;
+                Some((key, !is_block))
+            }
+
             let after = after.trim_end();
             if after.starts_with("{{") {
                 return None;
             }
+
+            if let Some(quote) = after.chars().next().filter(|c| matches!(c, '"' | '\'')) {
+                let quoted = &after[quote.len_utf8()..];
+                let mut chars = quoted.char_indices().peekable();
+                let mut key = String::new();
+                while let Some((idx, ch)) = chars.next() {
+                    match (quote, ch) {
+                        ('"', '\\') => {
+                            let Some((_, escaped)) = chars.next() else {
+                                return None;
+                            };
+                            key.push(escaped);
+                        }
+                        ('\'', '\'') if chars.peek().is_some_and(|(_, next)| *next == '\'') => {
+                            let _ = chars.next();
+                            key.push('\'');
+                        }
+                        (_, ch) if ch == quote => {
+                            let rest = &quoted[(idx + ch.len_utf8())..];
+                            return finalize_yaml_key(key, rest);
+                        }
+                        _ => key.push(ch),
+                    }
+                }
+                return None;
+            }
+
             let mut chars = after.chars();
             let mut key = String::new();
             while let Some(c) = chars.next() {
                 if c == ':' {
-                    if key.is_empty() {
-                        return None;
-                    }
-                    let rest = chars.as_str();
-                    let rest = rest.trim_start();
-                    let is_template = rest.starts_with("{{");
-                    let is_template_fragment = is_template
-                        && (rest.contains("toYaml")
-                            || rest.contains("nindent")
-                            || rest.contains("indent")
-                            || rest.contains("tpl"));
-                    let is_block = rest.is_empty()
-                        || rest.starts_with('|')
-                        || rest.starts_with('>')
-                        || is_template_fragment;
-                    return Some((key.trim().to_string(), !is_block));
+                    return finalize_yaml_key(key.trim().to_string(), chars.as_str());
                 }
                 if c.is_whitespace() {
                     return None;

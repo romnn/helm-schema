@@ -517,6 +517,46 @@ fn with_bound_range_dot_annotations_stay_string_map() {
     );
 }
 
+/// A quoted YAML key inside a string-map field should still keep the concrete
+/// leaf path, so the map value is typed as the string entry schema instead of
+/// the parent object schema.
+#[test]
+fn quoted_matchlabels_key_value_stays_string() {
+    let src = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: test
+          namespace: "{{ .Values.networkPolicies.ingressController.namespace }}"
+        spec:
+          ingress:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      "kubernetes.io/metadata.name": "{{ .Values.networkPolicies.ingressController.namespace }}"
+    "#};
+    let values_yaml = indoc! {"
+        networkPolicies:
+          ingressController:
+            namespace: ingress-nginx
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let namespace = schema
+        .pointer("/properties/networkPolicies/properties/ingressController/properties/namespace")
+        .expect("namespace present");
+    assert_eq!(
+        namespace.get("type").and_then(Value::as_str),
+        Some("string"),
+        "quoted map-key value should stay string-valued, got {namespace}"
+    );
+    assert!(
+        namespace.get("anyOf").is_none(),
+        "quoted map-key value should not widen to object-or-string, got {namespace}"
+    );
+}
+
 /// Step 2: negative-integer literal still recognised, type hint is integer.
 #[test]
 fn step2_default_negative_integer_literal() {

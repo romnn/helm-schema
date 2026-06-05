@@ -273,6 +273,69 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
 }
 
 #[test]
+fn quoted_yaml_key_keeps_concrete_leaf_path() {
+    let template = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: test
+        spec:
+          ingress:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      "kubernetes.io/metadata.name": "{{ .Values.namespace }}"
+    "#};
+
+    let ir = generate(template, "");
+
+    let namespace_uses: Vec<&ValueUse> =
+        ir.iter().filter(|u| u.source_expr == "namespace").collect();
+    assert_eq!(
+        namespace_uses.len(),
+        1,
+        "expected exactly one `namespace` use; got: {ir:#?}",
+    );
+    let path = &namespace_uses[0].path.0;
+    assert!(
+        path.contains(&"namespaceSelector".to_string()),
+        "quoted YAML key path should still descend through namespaceSelector; got: {path:?}",
+    );
+    assert_eq!(
+        path.last().map(String::as_str),
+        Some("kubernetes.io/metadata.name"),
+        "quoted YAML key should become the concrete leaf path segment; got: {path:?}",
+    );
+}
+
+#[test]
+fn with_rewritten_selector_chain_does_not_emit_parent_suffix_path() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          ports:
+            {{- with .Values.service }}
+            - port: {{ .ports.http.port }}
+            {{- end }}
+    "#};
+
+    let ir = generate(template, "");
+
+    assert!(
+        ir.iter()
+            .any(|use_| use_.source_expr == "service.ports.http.port"),
+        "expected the full rewritten path to surface; got: {ir:#?}",
+    );
+    assert!(
+        ir.iter().all(|use_| use_.source_expr != "service.port"),
+        "rewritten selector chain should not leak a parent-suffix path; got: {ir:#?}",
+    );
+}
+
+#[test]
 fn helper_context_chain_in_condition_surfaces_referenced_value() {
     // Same context idiom inside an `if` condition — the typed walker's
     // parse_condition path must still surface the inner field as an
