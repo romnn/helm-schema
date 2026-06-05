@@ -7,7 +7,6 @@
          "type": "string"
        },
        "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-       "properties": {},
        "type": "object"
      },
      "commonLabels": {
@@ -15,7 +14,6 @@
          "type": "string"
        },
        "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-       "properties": {},
        "type": "object"
      },
      "fullnameOverride": {
@@ -30,14 +28,13 @@
      "service": {
        "additionalProperties": false,
        "properties": {
-         "annotations": {
-           "additionalProperties": {
-             "type": "string"
-           },
-           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-           "properties": {},
-           "type": "object"
-         },
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": "object"
+        },
          "clusterIP": {
            "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
            "type": "string"
@@ -173,9 +170,8 @@
            "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
            "type": "string"
          },
-         "sessionAffinityConfig": {
-           "additionalProperties": false,
-           "description": "SessionAffinityConfig represents the configurations of session affinity.",
+        "sessionAffinityConfig": {
+          "description": "SessionAffinityConfig represents the configurations of session affinity.",
            "properties": {
              "clientIP": {
                "description": "ClientIPConfig represents the configurations of Client IP based session affinity.",

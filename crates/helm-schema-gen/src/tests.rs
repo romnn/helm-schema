@@ -364,6 +364,39 @@ fn step_fragment_open_string_map_stays_open() {
     );
 }
 
+/// An empty-map placeholder in `values.yaml` (`annotations: {}`) still carries
+/// less information than the provider's label/annotation map schema. Fragment
+/// inputs should keep the provider's richer contract in that case too.
+#[test]
+fn step_fragment_empty_map_default_keeps_open_string_map() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+          {{- with .Values.annotations }}
+          annotations:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        annotations: {}
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let annotations = schema
+        .pointer("/properties/annotations")
+        .expect("annotations present");
+    assert_eq!(
+        annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "annotations should stay an open string map, got {annotations}"
+    );
+}
+
 /// Destructured map ranges should keep the chart input as a map, even when the
 /// rendered output lands in a K8s array field like `env:`.
 #[test]
@@ -445,6 +478,42 @@ fn dict_bound_helper_object_input_stays_object() {
     assert!(
         service_account.get("anyOf").is_none(),
         "serviceAccount should not widen to object-or-string, got {service_account}"
+    );
+}
+
+/// A destructured `range $k, $v := .` inside an outer `with .Values.X` should
+/// still attribute the rendered map field back to `X`, so provider schemas can
+/// type it as an open string map.
+#[test]
+fn with_bound_range_dot_annotations_stay_string_map() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+          {{- with .Values.annotations }}
+          annotations:
+            {{- range $key, $value := . }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        annotations:
+          foo: bar
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let annotations = schema
+        .pointer("/properties/annotations")
+        .expect("annotations present");
+    assert_eq!(
+        annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "annotations should stay an open string map, got {annotations}"
     );
 }
 

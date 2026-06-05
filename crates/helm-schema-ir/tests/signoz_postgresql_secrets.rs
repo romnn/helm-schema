@@ -82,6 +82,13 @@ fn symbolic_ir_full() {
             "resource": null
         },
         {
+            "source_expr": "auth.existingSecret",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "auth.password",
             "path": [],
             "kind": "Scalar",
@@ -181,6 +188,13 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "global.postgresql.auth.database",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "global.postgresql.auth.existingSecret",
             "path": [],
             "kind": "Scalar",
             "guards": [],
@@ -293,6 +307,13 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "nameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "namespaceOverride",
             "path": [],
             "kind": "Scalar",
             "guards": [],

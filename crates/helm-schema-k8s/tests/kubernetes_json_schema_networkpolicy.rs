@@ -1,5 +1,5 @@
-use helm_schema_ir::{ResourceRef, YamlPath};
-use helm_schema_k8s::{K8sSchemaProvider, KubernetesJsonSchemaProvider};
+use helm_schema_ir::{ResourceRef, ValueKind, ValueUse, YamlPath};
+use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider};
 
 #[test]
 fn materialize_networkpolicy_v1_35() {
@@ -53,6 +53,45 @@ fn networkpolicy_leaf_schema_matchlabels() {
     .expect("parse fixture");
 
     similar_asserts::assert_eq!(leaf, expected);
+}
+
+#[test]
+fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+        .with_allow_download(true)
+        .with_api_version_guess(true);
+    let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
+
+    let use_ = ValueUse {
+        source_expr: "networkPolicy.ingressNSMatchLabels".to_string(),
+        path: YamlPath(vec![
+            "spec".to_string(),
+            "ingress[*]".to_string(),
+            "from[*]".to_string(),
+            "namespaceSelector".to_string(),
+            "matchLabels".to_string(),
+        ]),
+        kind: ValueKind::Fragment,
+        guards: Vec::new(),
+        resource: Some(ResourceRef {
+            api_version: String::new(),
+            kind: "NetworkPolicy".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }),
+    };
+
+    let schema = chain
+        .schema_for_use(&use_)
+        .expect("chain should resolve inferred NetworkPolicy matchLabels schema");
+
+    assert_eq!(
+        schema
+            .pointer("/additionalProperties/type")
+            .and_then(serde_json::Value::as_str),
+        Some("string"),
+        "expected inferred matchLabels leaf schema, got {schema}"
+    );
 }
 
 /// The legacy `load_resource_doc_by_kind_scan` path is retired. The

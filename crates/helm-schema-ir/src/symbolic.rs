@@ -1639,14 +1639,27 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn collect_range_guards(&mut self, header_text: &str, path: &YamlPath) {
-        let values = extract_values_paths(header_text);
-        for v in values {
+        let values = self.range_source_paths(header_text);
+        for v in &values {
             self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
-            let g = Guard::Truthy { path: v };
+            let g = Guard::Truthy { path: v.clone() };
             if !self.guards.contains(&g) {
                 self.guards.push(g);
             }
         }
+    }
+
+    fn range_source_paths(&self, header_text: &str) -> Vec<String> {
+        let mut values = extract_values_paths(header_text);
+        if values.is_empty()
+            && header_text.trim() == "."
+            && let Some(Some(dot_prefix)) = self.dot_stack.last()
+        {
+            values.push(dot_prefix.clone());
+        }
+        values.sort();
+        values.dedup();
+        values
     }
 
     fn range_header_text(&self, node: tree_sitter::Node<'_>) -> Option<String> {
@@ -1820,20 +1833,18 @@ impl<'a> SymbolicWalker<'a> {
         }
 
         let mut body_emits_sequence_item = false;
-        if !has_variable_definition {
-            for ch in Self::children_with_field(node, "body") {
-                if let Ok(txt) = ch.utf8_text(self.source.as_bytes()) {
-                    for line in txt.lines() {
-                        let t = line.trim_start();
-                        if t.starts_with("- ") || t == "-" {
-                            body_emits_sequence_item = true;
-                            break;
-                        }
+        for ch in Self::children_with_field(node, "body") {
+            if let Ok(txt) = ch.utf8_text(self.source.as_bytes()) {
+                for line in txt.lines() {
+                    let trimmed = line.trim_start();
+                    if trimmed.starts_with("- ") || trimmed == "-" {
+                        body_emits_sequence_item = true;
+                        break;
                     }
                 }
-                if body_emits_sequence_item {
-                    break;
-                }
+            }
+            if body_emits_sequence_item {
+                break;
             }
         }
         if let Some(txt) = self.range_header_text(node) {
@@ -1841,6 +1852,7 @@ impl<'a> SymbolicWalker<'a> {
             if let Some((var, literals)) = Self::parse_literal_list_range(&txt) {
                 self.range_domains.insert(var, literals);
             }
+            let current_path = self.shape.current_path();
             let guard_path = if has_variable_definition {
                 // Destructured range headers (`range $k, $v := .Values.map`) describe
                 // the INPUT collection, not the rendered YAML shape of each output item.
@@ -1856,6 +1868,26 @@ impl<'a> SymbolicWalker<'a> {
                 YamlPath(Vec::new())
             };
             self.collect_range_guards(&txt, &guard_path);
+
+            let renders_mapping_entries = has_variable_definition
+                && !body_emits_sequence_item
+                && !current_path.0.is_empty()
+                && current_path
+                    .0
+                    .last()
+                    .is_some_and(|segment| !segment.ends_with("[*]"));
+            if renders_mapping_entries {
+                // A destructured map range under a concrete object field
+                // (`annotations:`, `matchLabels:`, ...) is effectively
+                // rendering a YAML fragment for the whole source map.
+                // Keep the header's scalar use pathless to avoid projecting
+                // array output shapes like `env:` back onto map inputs, and
+                // emit this separate fragment use so provider object schemas
+                // can still type the destination field precisely.
+                for source_path in self.range_source_paths(&txt) {
+                    self.emit_use(source_path, current_path.clone(), ValueKind::Fragment);
+                }
+            }
         }
 
         // If the range header is a single `.Values.*` path, treat `.` inside the range body as an

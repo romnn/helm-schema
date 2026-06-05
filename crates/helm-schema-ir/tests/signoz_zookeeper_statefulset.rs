@@ -1352,6 +1352,20 @@ fn symbolic_ir_full() {
       {
         "guards": [],
         "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "global.imageRegistry"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "global.kubeVersion"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
         "path": [
           "spec",
           "template",
@@ -1427,6 +1441,13 @@ fn symbolic_ir_full() {
       {
         "guards": [],
         "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "image.digest"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
         "path": [
           "spec",
           "template",
@@ -1465,6 +1486,27 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "image.pullPolicy"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "image.registry"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "image.repository"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "image.tag"
       },
       {
         "guards": [],
@@ -1549,6 +1591,13 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "jvmFlags"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "kubeVersion"
       },
       {
         "guards": [],
@@ -3817,6 +3866,13 @@ fn symbolic_ir_full() {
         "source_expr": "volumePermissions.image"
       },
       {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "volumePermissions.image.digest"
+      },
+      {
         "guards": [
           {
             "path": "persistence.enabled",
@@ -3841,6 +3897,27 @@ fn symbolic_ir_full() {
           "kind": "StatefulSet"
         },
         "source_expr": "volumePermissions.image.pullPolicy"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "volumePermissions.image.registry"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "volumePermissions.image.repository"
+      },
+      {
+        "guards": [],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "volumePermissions.image.tag"
       },
       {
         "guards": [

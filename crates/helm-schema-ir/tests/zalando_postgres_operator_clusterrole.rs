@@ -97,6 +97,13 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "path": [],
             "resource": null,
+            "source_expr": "fullnameOverride"
+        },
+        {
+            "guards": [],
+            "kind": "Scalar",
+            "path": [],
+            "resource": null,
             "source_expr": "nameOverride"
         },
         {

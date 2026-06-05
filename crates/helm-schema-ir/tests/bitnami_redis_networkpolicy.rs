@@ -204,8 +204,19 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.ingressNSMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]", "namespaceSelector", "matchLabels"],
+            "path": [],
             "kind": "Scalar",
+            "guards": [
+                t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
+                o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
+                t("networkPolicy.ingressNSMatchLabels")
+            ],
+            "resource": np
+        },
+        {
+            "source_expr": "networkPolicy.ingressNSMatchLabels",
+            "path": ["spec", "ingress[*]", "from[*]", "namespaceSelector", "matchLabels"],
+            "kind": "Fragment",
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
                 o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
@@ -232,8 +243,19 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.ingressNSPodMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
+            "path": [],
             "kind": "Scalar",
+            "guards": [
+                t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
+                o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
+                t("networkPolicy.ingressNSPodMatchLabels")
+            ],
+            "resource": np
+        },
+        {
+            "source_expr": "networkPolicy.ingressNSPodMatchLabels",
+            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
+            "kind": "Fragment",
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
                 o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
@@ -267,8 +289,19 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.metrics.ingressNSMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]", "namespaceSelector", "matchLabels"],
+            "path": [],
             "kind": "Scalar",
+            "guards": [
+                t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
+                o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
+                t("networkPolicy.metrics.ingressNSMatchLabels")
+            ],
+            "resource": np
+        },
+        {
+            "source_expr": "networkPolicy.metrics.ingressNSMatchLabels",
+            "path": ["spec", "ingress[*]", "from[*]", "namespaceSelector", "matchLabels"],
+            "kind": "Fragment",
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
                 o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
@@ -295,8 +328,19 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
+            "path": [],
             "kind": "Scalar",
+            "guards": [
+                t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
+                o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
+                t("networkPolicy.metrics.ingressNSPodMatchLabels")
+            ],
+            "resource": np
+        },
+        {
+            "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "path": ["spec", "ingress[*]", "from[*]", "podSelector", "matchLabels"],
+            "kind": "Fragment",
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
                 o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),

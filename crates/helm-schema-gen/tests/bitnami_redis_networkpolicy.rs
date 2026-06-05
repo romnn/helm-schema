@@ -56,7 +56,6 @@ fn schema_fused_rust() {
             "commonAnnotations": {
                 "additionalProperties": { "type": "string" },
                 "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                "properties": {},
                 "type": "object"
             },
             "commonLabels": {
@@ -391,25 +390,29 @@ fn schema_fused_rust() {
                         "x-kubernetes-list-type": "atomic"
                     },
                     "ingressNSMatchLabels": {
-                        "additionalProperties": {},
+                        "additionalProperties": { "type": "string" },
+                        "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
                         "type": "object"
                     },
                     "ingressNSPodMatchLabels": {
-                        "additionalProperties": {},
+                        "additionalProperties": { "type": "string" },
+                        "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
                         "type": "object"
                     },
                     "metrics": {
                         "additionalProperties": false,
                         "properties": {
                             "allowExternal": { "type": "boolean" },
-                        "ingressNSMatchLabels": {
-                            "additionalProperties": {},
-                            "type": "object"
-                        },
-                        "ingressNSPodMatchLabels": {
-                            "additionalProperties": {},
-                            "type": "object"
-                        }
+                            "ingressNSMatchLabels": {
+                                "additionalProperties": { "type": "string" },
+                                "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                "type": "object"
+                            },
+                            "ingressNSPodMatchLabels": {
+                                "additionalProperties": { "type": "string" },
+                                "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                "type": "object"
+                            }
                         },
                         "type": "object"
                     }

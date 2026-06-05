@@ -33,6 +33,12 @@ fn schema_fused_rust() {
             "{}",
             serde_json::to_string_pretty(&actual).expect("pretty json")
         );
+        let path = std::env::temp_dir().join("helm-schema.cert-manager.deployment.schema.json");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&actual).expect("json bytes"),
+        )
+        .expect("write schema dump");
     }
 
     #[cfg(any())]

@@ -153,6 +153,16 @@ pub fn generate_values_schema_full(
         let values_yaml_schema = if path_is_nullable && is_null_at_value_path(&values_yaml_doc, &vp)
         {
             type_schema("null")
+        } else if used_as_fragment
+            && schema_type(&provider_schema) == Some("object")
+            && is_empty_map_at_value_path(&values_yaml_doc, &vp)
+        {
+            // An empty mapping default (`foo: {}`) tells us that the chart value exists and is
+            // object-shaped, but it contributes no key/value contract of its own. When static
+            // analysis already proves the value is spliced as a YAML fragment into an object
+            // field, keep the richer provider object schema instead of degrading it to a generic
+            // open object.
+            empty_schema()
         } else {
             lookup_values_yaml_schema(&values_yaml_doc, &vp).unwrap_or_else(empty_schema)
         };
@@ -398,6 +408,20 @@ fn is_null_at_value_path(doc: &YamlValue, vp: &str) -> bool {
         return false;
     }
     is_null_at_parts(doc, &parts)
+}
+
+fn is_empty_map_at_value_path(doc: &YamlValue, vp: &str) -> bool {
+    let parts: Vec<&str> = vp.split('.').filter(|s| !s.is_empty()).collect();
+    if parts.is_empty() {
+        return false;
+    }
+    let Some(values) = lookup_values_yaml_values(doc, &parts) else {
+        return false;
+    };
+    !values.is_empty()
+        && values
+            .into_iter()
+            .all(|value| matches!(value, YamlValue::Mapping(map) if map.is_empty()))
 }
 
 fn is_null_at_parts(doc: &YamlValue, parts: &[&str]) -> bool {

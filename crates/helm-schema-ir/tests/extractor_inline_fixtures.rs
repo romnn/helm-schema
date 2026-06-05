@@ -66,20 +66,39 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
     let map_uses: Vec<&ValueUse> = ir.iter().filter(|u| u.source_expr == "map").collect();
     assert_eq!(
         map_uses.len(),
-        1,
-        "expected exactly one `map` use from the destructured range header; \
+        2,
+        "expected a header scalar use plus a fragment use for `map`; \
          got: {ir:#?}",
     );
 
-    // The header use is unconditional: SymbolicIrGenerator emits it
-    // BEFORE pushing the Truthy(map) guard, so the use itself must
-    // have no guards. A regression that attached Truthy(map) here
-    // would double-count `map` against itself.
+    let header_use = map_uses
+        .iter()
+        .copied()
+        .find(|use_| use_.path.0.is_empty() && use_.kind == helm_schema_ir::ValueKind::Scalar)
+        .expect("header scalar use present");
+
+    // The header scalar use is unconditional: SymbolicIrGenerator
+    // emits it BEFORE pushing the Truthy(map) guard, so the use
+    // itself must have no guards. A regression that attached
+    // Truthy(map) here would double-count `map` against itself.
     assert!(
-        map_uses[0].guards.is_empty(),
+        header_use.guards.is_empty(),
         "the destructured range header's source use must be unconditional, \
          but got guards: {:?}",
-        map_uses[0].guards,
+        header_use.guards,
+    );
+
+    let fragment_use = map_uses
+        .iter()
+        .copied()
+        .find(|use_| {
+            use_.path.0 == ["data".to_string()] && use_.kind == helm_schema_ir::ValueKind::Fragment
+        })
+        .expect("range fragment use present");
+    assert!(
+        fragment_use.guards.contains(&truthy("map")),
+        "the fragment use should inherit Truthy(map); got guards: {:?}",
+        fragment_use.guards,
     );
 }
 
@@ -108,17 +127,37 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
         .collect();
     assert_eq!(
         fallback_map_uses.len(),
-        1,
-        "expected exactly one `fallbackMap` use; got: {ir:#?}",
+        2,
+        "expected a header scalar use plus a fragment use for `fallbackMap`; got: {ir:#?}",
     );
-    // The header use is unconditional — same contract as the bare
-    // destructured header above.
+
+    let header_use = fallback_map_uses
+        .iter()
+        .copied()
+        .find(|use_| use_.path.0.is_empty() && use_.kind == helm_schema_ir::ValueKind::Scalar)
+        .expect("header scalar use present");
+    // The header scalar use is unconditional — same contract as the
+    // bare destructured header above.
     assert!(
-        fallback_map_uses[0].guards.is_empty(),
+        header_use.guards.is_empty(),
         "destructured range header use must be unconditional, but got \
          guards: {:?}",
-        fallback_map_uses[0].guards,
+        header_use.guards,
     );
+
+    let fragment_use = fallback_map_uses
+        .iter()
+        .copied()
+        .find(|use_| {
+            use_.path.0 == ["data".to_string()] && use_.kind == helm_schema_ir::ValueKind::Fragment
+        })
+        .expect("range fragment use present");
+    assert!(
+        fragment_use.guards.contains(&truthy("fallbackMap")),
+        "the fragment use should inherit Truthy(fallbackMap); got guards: {:?}",
+        fragment_use.guards,
+    );
+
     // No phantom paths from misparsing `default`, `(dict)`, etc.
     let phantoms: Vec<&str> = ir
         .iter()
