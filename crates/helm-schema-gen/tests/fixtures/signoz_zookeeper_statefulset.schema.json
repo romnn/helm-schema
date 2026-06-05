@@ -3387,12 +3387,13 @@
               "items": {},
               "type": "array"
             },
-            "imageRegistry": {
-              "type": "string"
-            },
-            "storageClass": {
-              "type": "string"
-            }
+                        "imageRegistry": {
+                            "type": "string"
+                        },
+                        "kubeVersion": {},
+                        "storageClass": {
+                            "type": "string"
+                        }
           },
           "type": "object"
         },
@@ -4826,13 +4827,16 @@
         }
       ]
     },
-    "jvmFlags": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
-    },
-    "lifecycleHooks": {
-      "additionalProperties": false,
-      "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
+        "jvmFlags": {
+            "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+            "type": "string"
+        },
+        "kubeVersion": {
+            "type": "string"
+        },
+        "lifecycleHooks": {
+            "additionalProperties": false,
+            "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
       "properties": {
         "postStart": {
           "description": "LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.",

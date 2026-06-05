@@ -1,9 +1,11 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, HelmAst};
+use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
 use crate::helper_eval::{CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput};
-use crate::walker::{extract_values_paths, is_fragment_expr, parse_condition};
+use crate::walker::{
+    extract_values_paths, is_fragment_expr, parse_condition, values_path_from_expr,
+};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 pub struct SymbolicIrGenerator;
@@ -59,6 +61,27 @@ struct GetBinding {
 struct DefineValues {
     output: Vec<String>,
     guards: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+enum HelperBinding {
+    ValuesPath(String),
+    RootContext,
+}
+
+#[derive(Default)]
+struct BoundHelperAnalysis {
+    output: BTreeSet<String>,
+    guards: BTreeSet<String>,
+    suppress_roots: BTreeSet<String>,
+}
+
+impl BoundHelperAnalysis {
+    fn extend(&mut self, other: Self) {
+        self.output.extend(other.output);
+        self.guards.extend(other.guards);
+        self.suppress_roots.extend(other.suppress_roots);
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -1149,6 +1172,7 @@ impl<'a> SymbolicWalker<'a> {
 
         let mut helper_output_values: Vec<String> = Vec::new();
         let mut helper_guard_values: Vec<String> = Vec::new();
+        let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
         if kind == ValueKind::Scalar
             || (self.inline_helpers_in_fragments && kind == ValueKind::Fragment)
         {
@@ -1160,6 +1184,10 @@ impl<'a> SymbolicWalker<'a> {
                 helper_output_values.extend(v.output);
                 helper_guard_values.extend(v.guards);
             }
+            let bound = self.analyze_bound_helper_calls(text);
+            helper_output_values.extend(bound.output);
+            helper_guard_values.extend(bound.guards);
+            suppress_direct_values.extend(bound.suppress_roots);
             helper_output_values.sort();
             helper_output_values.dedup();
             helper_guard_values.sort();
@@ -1186,6 +1214,10 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
         for v in values {
+            if suppress_direct_values.contains(&v) {
+                self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
+                continue;
+            }
             let in_sequence_item = path
                 .0
                 .last()
@@ -1210,6 +1242,305 @@ impl<'a> SymbolicWalker<'a> {
 
         for v in helper_guard_values {
             self.emit_helper_use(v);
+        }
+    }
+
+    fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
+        let trimmed = text.trim();
+        if trimmed.is_empty() {
+            return Vec::new();
+        }
+        if trimmed.starts_with("{{") {
+            parse_action_expressions(trimmed)
+        } else {
+            parse_action_expressions(&format!("{{{{ {trimmed} }}}}"))
+        }
+    }
+
+    fn resolve_bound_path_expr(
+        expr: &TemplateExpr,
+        bindings: &HashMap<String, HelperBinding>,
+    ) -> Option<String> {
+        if let Some(path) = values_path_from_expr(expr) {
+            return Some(path);
+        }
+
+        match expr {
+            TemplateExpr::Parenthesized(inner) => Self::resolve_bound_path_expr(inner, bindings),
+            TemplateExpr::Field(path) => Self::resolve_bound_segments(path, bindings),
+            TemplateExpr::Selector { operand, path } => {
+                if let TemplateExpr::Variable(var) = operand.as_ref()
+                    && let Some(binding) = bindings.get(var)
+                {
+                    return Self::apply_binding(binding, path);
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+
+    fn resolve_bound_segments(
+        segments: &[String],
+        bindings: &HashMap<String, HelperBinding>,
+    ) -> Option<String> {
+        let (first, rest) = segments.split_first()?;
+        let binding = bindings.get(first)?;
+        Self::apply_binding(binding, rest)
+    }
+
+    fn apply_binding(binding: &HelperBinding, rest: &[String]) -> Option<String> {
+        match binding {
+            HelperBinding::ValuesPath(prefix) => {
+                if rest.is_empty() {
+                    Some(prefix.clone())
+                } else {
+                    Some(format!("{prefix}.{}", rest.join(".")))
+                }
+            }
+            HelperBinding::RootContext => {
+                if rest.first().map(String::as_str) == Some("Values") && rest.len() > 1 {
+                    Some(rest[1..].join("."))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    fn binding_from_expr(
+        expr: &TemplateExpr,
+        outer: Option<&HashMap<String, HelperBinding>>,
+    ) -> Option<HelperBinding> {
+        if let Some(path) = values_path_from_expr(expr) {
+            return Some(HelperBinding::ValuesPath(path));
+        }
+
+        match expr {
+            TemplateExpr::Parenthesized(inner) => Self::binding_from_expr(inner, outer),
+            TemplateExpr::Field(path) if path.is_empty() => Some(HelperBinding::RootContext),
+            TemplateExpr::Variable(var) if var.is_empty() => Some(HelperBinding::RootContext),
+            _ => outer
+                .and_then(|bindings| Self::resolve_bound_path_expr(expr, bindings))
+                .map(HelperBinding::ValuesPath),
+        }
+    }
+
+    fn bindings_for_helper_arg(
+        arg: Option<&TemplateExpr>,
+        outer: Option<&HashMap<String, HelperBinding>>,
+    ) -> HashMap<String, HelperBinding> {
+        let Some(arg) = arg else {
+            return HashMap::new();
+        };
+
+        match arg {
+            TemplateExpr::Parenthesized(inner) => Self::bindings_for_helper_arg(Some(inner), outer),
+            TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
+            TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
+            TemplateExpr::Call { function, args } if function == "dict" => {
+                let mut bindings = HashMap::new();
+                let mut index = 0usize;
+                while index + 1 < args.len() {
+                    let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
+                        index += 1;
+                        continue;
+                    };
+                    if let Some(binding) = Self::binding_from_expr(&args[index + 1], outer) {
+                        bindings.insert(key.clone(), binding);
+                    }
+                    index += 2;
+                }
+                bindings
+            }
+            _ => HashMap::new(),
+        }
+    }
+
+    fn analyze_bound_helper_calls(&self, text: &str) -> BoundHelperAnalysis {
+        let mut seen = HashSet::new();
+        Self::analyze_bound_helper_calls_with_bindings(text, None, self.defines, &mut seen)
+    }
+
+    fn analyze_bound_helper_calls_with_bindings(
+        text: &str,
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        defines: &DefineIndex,
+        seen: &mut HashSet<String>,
+    ) -> BoundHelperAnalysis {
+        let mut analysis = BoundHelperAnalysis::default();
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| {
+                let TemplateExpr::Call { function, args } = node else {
+                    return;
+                };
+                if !matches!(function.as_str(), "include" | "template") {
+                    return;
+                }
+                let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
+                    return;
+                };
+                let nested =
+                    Self::analyze_bound_helper_call(name, args.get(1), bindings, defines, seen);
+                analysis.extend(nested);
+            });
+        }
+        analysis
+    }
+
+    fn analyze_bound_helper_call(
+        name: &str,
+        arg: Option<&TemplateExpr>,
+        outer_bindings: Option<&HashMap<String, HelperBinding>>,
+        defines: &DefineIndex,
+        seen: &mut HashSet<String>,
+    ) -> BoundHelperAnalysis {
+        if !seen.insert(name.to_string()) {
+            return BoundHelperAnalysis::default();
+        }
+
+        let bindings = Self::bindings_for_helper_arg(arg, outer_bindings);
+        let mut analysis = BoundHelperAnalysis::default();
+        if let Some(body) = defines.get(name) {
+            for node in body {
+                Self::collect_bound_helper_values_from_ast(
+                    node,
+                    &bindings,
+                    defines,
+                    seen,
+                    &mut analysis,
+                );
+            }
+        }
+
+        for binding in bindings.values() {
+            let HelperBinding::ValuesPath(root) = binding else {
+                continue;
+            };
+            let prefix = format!("{root}.");
+            if analysis
+                .output
+                .iter()
+                .chain(analysis.guards.iter())
+                .any(|path| path.starts_with(&prefix))
+            {
+                analysis.suppress_roots.insert(root.clone());
+            }
+        }
+
+        seen.remove(name);
+        analysis
+    }
+
+    fn collect_bound_paths_from_text(
+        text: &str,
+        bindings: &HashMap<String, HelperBinding>,
+        defines: &DefineIndex,
+        seen: &mut HashSet<String>,
+        into: &mut BTreeSet<String>,
+    ) {
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| {
+                if let Some(path) = Self::resolve_bound_path_expr(node, bindings) {
+                    into.insert(path);
+                }
+            });
+        }
+
+        let nested =
+            Self::analyze_bound_helper_calls_with_bindings(text, Some(bindings), defines, seen);
+        into.extend(nested.output);
+        into.extend(nested.guards);
+    }
+
+    fn collect_bound_helper_values_from_ast(
+        node: &HelmAst,
+        bindings: &HashMap<String, HelperBinding>,
+        defines: &DefineIndex,
+        seen: &mut HashSet<String>,
+        analysis: &mut BoundHelperAnalysis,
+    ) {
+        match node {
+            HelmAst::Document { items }
+            | HelmAst::Mapping { items }
+            | HelmAst::Sequence { items }
+            | HelmAst::Define { body: items, .. }
+            | HelmAst::Block { body: items, .. } => {
+                for item in items {
+                    Self::collect_bound_helper_values_from_ast(
+                        item, bindings, defines, seen, analysis,
+                    );
+                }
+            }
+            HelmAst::Pair { key, value } => {
+                Self::collect_bound_helper_values_from_ast(key, bindings, defines, seen, analysis);
+                if let Some(value) = value {
+                    Self::collect_bound_helper_values_from_ast(
+                        value, bindings, defines, seen, analysis,
+                    );
+                }
+            }
+            HelmAst::HelmExpr { text } => {
+                Self::collect_bound_paths_from_text(
+                    text,
+                    bindings,
+                    defines,
+                    seen,
+                    &mut analysis.output,
+                );
+            }
+            HelmAst::If {
+                cond,
+                then_branch,
+                else_branch,
+            } => {
+                Self::collect_bound_paths_from_text(
+                    cond,
+                    bindings,
+                    defines,
+                    seen,
+                    &mut analysis.guards,
+                );
+                for item in then_branch {
+                    Self::collect_bound_helper_values_from_ast(
+                        item, bindings, defines, seen, analysis,
+                    );
+                }
+                for item in else_branch {
+                    Self::collect_bound_helper_values_from_ast(
+                        item, bindings, defines, seen, analysis,
+                    );
+                }
+            }
+            HelmAst::Range {
+                header,
+                body,
+                else_branch,
+            }
+            | HelmAst::With {
+                header,
+                body,
+                else_branch,
+            } => {
+                Self::collect_bound_paths_from_text(
+                    header,
+                    bindings,
+                    defines,
+                    seen,
+                    &mut analysis.guards,
+                );
+                for item in body {
+                    Self::collect_bound_helper_values_from_ast(
+                        item, bindings, defines, seen, analysis,
+                    );
+                }
+                for item in else_branch {
+                    Self::collect_bound_helper_values_from_ast(
+                        item, bindings, defines, seen, analysis,
+                    );
+                }
+            }
+            HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
         }
     }
 
@@ -1510,7 +1841,16 @@ impl<'a> SymbolicWalker<'a> {
             if let Some((var, literals)) = Self::parse_literal_list_range(&txt) {
                 self.range_domains.insert(var, literals);
             }
-            let guard_path = if has_variable_definition || body_emits_sequence_item {
+            let guard_path = if has_variable_definition {
+                // Destructured range headers (`range $k, $v := .Values.map`) describe
+                // the INPUT collection, not the rendered YAML shape of each output item.
+                // Attaching the current rendered path here lets downstream provider
+                // schemas project output arrays (for example `env:`) back onto map-like
+                // chart inputs such as `.Values.environment`, producing bogus
+                // `object | array` unions. Keep the header use pathless; values.yaml and
+                // body uses still carry the input contract.
+                YamlPath(Vec::new())
+            } else if body_emits_sequence_item {
                 self.shape.current_path()
             } else {
                 YamlPath(Vec::new())

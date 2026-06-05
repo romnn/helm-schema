@@ -88,8 +88,6 @@ pub fn generate_chart_schema(chart: &str) -> std::result::Result<Value, Report> 
 }
 
 pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<(), Report> {
-    let _guard = test_util::builder().with_tracing(false).build();
-
     let chart_dir = chart_dir(chart);
     let schema = generate_chart_schema(chart)?;
 

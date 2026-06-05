@@ -219,6 +219,33 @@ fn is_object_or_array_schema(v: &Value) -> bool {
     matches!(schema_type(v), Some("object" | "array"))
 }
 
+fn is_fixed_object_schema(v: &Value) -> bool {
+    if schema_type(v) != Some("object") {
+        return false;
+    }
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+    obj.get("properties")
+        .and_then(Value::as_object)
+        .is_some_and(|props| !props.is_empty())
+        && obj.get("additionalProperties") == Some(&Value::Bool(false))
+}
+
+fn is_open_string_map_schema(v: &Value) -> bool {
+    if schema_type(v) != Some("object") {
+        return false;
+    }
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+    matches!(
+        obj.get("additionalProperties"),
+        Some(Value::Object(map))
+            if map.get("type").and_then(Value::as_str) == Some("string")
+    )
+}
+
 fn schema_allows_scalar_type(schema: &Value, scalar_ty: &str) -> bool {
     if let Some(ty) = schema_type(schema) {
         return ty == scalar_ty;
@@ -258,6 +285,11 @@ fn resolve_schema_for_value_path(
             // In these cases the *input* type in values.yaml is the scalar, not the output
             // object type, so prefer the values.yaml scalar schema.
             if used_as_fragment
+                && is_fixed_object_schema(&values_yaml_schema)
+                && is_open_string_map_schema(&provider_schema)
+            {
+                provider_schema
+            } else if used_as_fragment
                 && is_scalar_schema(&values_yaml_schema)
                 && is_object_or_array_schema(&provider_schema)
             {

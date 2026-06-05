@@ -21,6 +21,16 @@ fn parse_ir(src: &str) -> Vec<ValueUse> {
     SymbolicIrGenerator.generate(src, &ast, &idx)
 }
 
+fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let mut idx = DefineIndex::new();
+    if !helpers.trim().is_empty() {
+        idx.add_source(&TreeSitterParser, helpers)
+            .expect("helpers parse");
+    }
+    SymbolicIrGenerator.generate(src, &ast, &idx)
+}
+
 fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
     let mut hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     for (path, schema) in extract_default_type_hints(src) {
@@ -310,6 +320,131 @@ fn step1_with_fragment_non_null_default_not_widened() {
     assert!(
         !permits_null(extra),
         "non-null default must not be widened to nullable, got {extra}"
+    );
+}
+
+/// Fragment inputs that flow into K8s label/annotation maps should keep the
+/// provider's open string-map shape instead of being closed to whatever keys
+/// `values.yaml` happened to default.
+#[test]
+fn step_fragment_open_string_map_stays_open() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+          {{- with .Values.podLabels }}
+          labels:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        podLabels:
+          app: inbucket
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let pod_labels = schema
+        .pointer("/properties/podLabels")
+        .expect("podLabels present");
+    assert_eq!(
+        pod_labels
+            .get("additionalProperties")
+            .and_then(Value::as_object)
+            .and_then(|obj| obj.get("type"))
+            .and_then(Value::as_str),
+        Some("string"),
+        "podLabels should stay an open string map, got {pod_labels}"
+    );
+    assert_ne!(
+        pod_labels.get("additionalProperties"),
+        Some(&Value::Bool(false)),
+        "podLabels should not be closed to values.yaml keys, got {pod_labels}"
+    );
+}
+
+/// Destructured map ranges should keep the chart input as a map, even when the
+/// rendered output lands in a K8s array field like `env:`.
+#[test]
+fn destructured_range_map_input_does_not_become_output_array() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              env:
+                {{- range $key, $value := .Values.environment }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        environment:
+          INBUCKET_LOGLEVEL: debug
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let environment = schema
+        .pointer("/properties/environment")
+        .expect("environment present");
+    assert_eq!(
+        environment.get("type").and_then(Value::as_str),
+        Some("object"),
+        "environment should stay an object-valued input, got {environment}"
+    );
+    assert!(
+        environment.get("anyOf").is_none(),
+        "environment should not widen to object-or-array, got {environment}"
+    );
+}
+
+/// Passing a structured values object into a helper via `dict` should map the
+/// helper-local field accesses back to descendant values paths, not treat the
+/// parent object itself as a scalar leaf at the rendered output path.
+#[test]
+fn dict_bound_helper_object_input_stays_object() {
+    let helpers = indoc! {r#"
+        {{- define "common.serviceAccountName" -}}
+        {{- if .config.create -}}
+        {{- .config.name | default "generated" -}}
+        {{- else -}}
+        {{- .config.name | default "default" -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          serviceAccountName: {{ include "common.serviceAccountName" (dict "ctx" $ "config" .Values.serviceAccount) }}
+    "#};
+    let values_yaml = indoc! {"
+        serviceAccount:
+          create: true
+          name: workload
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let service_account = schema
+        .pointer("/properties/serviceAccount")
+        .expect("serviceAccount present");
+    assert_eq!(
+        service_account.get("type").and_then(Value::as_str),
+        Some("object"),
+        "serviceAccount should remain an object-valued input, got {service_account}"
+    );
+    assert!(
+        service_account.get("anyOf").is_none(),
+        "serviceAccount should not widen to object-or-string, got {service_account}"
     );
 }
 
