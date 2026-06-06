@@ -210,7 +210,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
                 o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
-                t("networkPolicy.ingressNSMatchLabels")
+                t("networkPolicy.ingressNSMatchLabels"), r("networkPolicy.ingressNSMatchLabels")
             ],
             "resource": np
         },
@@ -249,7 +249,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), n("networkPolicy.allowExternal"),
                 o("networkPolicy.ingressNSMatchLabels", "networkPolicy.ingressNSPodMatchLabels"),
-                t("networkPolicy.ingressNSPodMatchLabels")
+                t("networkPolicy.ingressNSPodMatchLabels"), r("networkPolicy.ingressNSPodMatchLabels")
             ],
             "resource": np
         },
@@ -295,7 +295,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
                 o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
-                t("networkPolicy.metrics.ingressNSMatchLabels")
+                t("networkPolicy.metrics.ingressNSMatchLabels"), r("networkPolicy.metrics.ingressNSMatchLabels")
             ],
             "resource": np
         },
@@ -334,7 +334,7 @@ fn symbolic_ir_full() {
             "guards": [
                 t("networkPolicy.enabled"), t("metrics.enabled"), n("networkPolicy.metrics.allowExternal"),
                 o("networkPolicy.metrics.ingressNSMatchLabels", "networkPolicy.metrics.ingressNSPodMatchLabels"),
-                t("networkPolicy.metrics.ingressNSPodMatchLabels")
+                t("networkPolicy.metrics.ingressNSPodMatchLabels"), r("networkPolicy.metrics.ingressNSPodMatchLabels")
             ],
             "resource": np
         },

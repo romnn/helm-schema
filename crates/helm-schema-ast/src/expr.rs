@@ -707,6 +707,69 @@ mod tests {
     }
 
     #[test]
+    fn raw_range_variable_definition_exposes_children() {
+        let src = "{{- range $key, $value := .Values.environment }}{{- end }}";
+        let language =
+            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(&language)
+            .expect("set go-template language");
+        let tree = parser.parse(src, None).expect("parse source");
+
+        let mut stack = vec![tree.root_node()];
+        let mut range_var = None;
+        while let Some(node) = stack.pop() {
+            if node.kind() == "range_variable_definition" {
+                range_var = Some(node);
+                break;
+            }
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                stack.push(child);
+            }
+        }
+
+        let range_var = range_var.expect("find range_variable_definition");
+        let mut children = Vec::new();
+        let mut cursor = range_var.walk();
+        for (index, child) in range_var.named_children(&mut cursor).enumerate() {
+            children.push((
+                child.kind().to_string(),
+                range_var
+                    .field_name_for_child(index as u32)
+                    .map(str::to_string),
+                child.utf8_text(src.as_bytes()).unwrap_or("").to_string(),
+            ));
+        }
+
+        if std::env::var("RANGE_VAR_DUMP").is_ok() {
+            eprintln!("{children:#?}");
+        }
+
+        assert!(
+            children
+                .iter()
+                .any(|(kind, _, text)| kind == "variable" && text == "$key"),
+            "expected range variable definition to expose first bound variable, got {children:#?}",
+        );
+        assert!(
+            children
+                .iter()
+                .any(|(kind, _, text)| kind == "variable" && text == "$value"),
+            "expected range variable definition to expose second bound variable, got {children:#?}",
+        );
+        assert!(
+            children.iter().any(|(kind, field, text)| {
+                kind == "selector_expression"
+                    && field.as_deref() == Some("element")
+                    && text == ".Values.environment"
+            }),
+            "expected range variable definition to expose the ranged expression as the element field, got {children:#?}",
+        );
+    }
+
+    #[test]
     fn pipeline_with_intervening_call_no_default_match() {
         // `.Values.X | upper | default 5` — the windows pattern matcher
         // should NOT pair `.Values.X` with `default` because `upper`

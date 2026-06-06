@@ -636,6 +636,10 @@ fn symbolic_ir_full() {
           {
             "path": "dataLogDir",
             "type": "truthy"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -797,6 +801,10 @@ fn symbolic_ir_full() {
           {
             "path": "persistence.existingClaim",
             "type": "truthy"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -851,6 +859,10 @@ fn symbolic_ir_full() {
           {
             "path": "dataLogDir",
             "type": "truthy"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -875,6 +887,10 @@ fn symbolic_ir_full() {
           {
             "path": "dataLogDir",
             "type": "truthy"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -1319,6 +1335,10 @@ fn symbolic_ir_full() {
           {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Fragment",
@@ -1909,6 +1929,10 @@ fn symbolic_ir_full() {
           {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Fragment",
@@ -1944,6 +1968,10 @@ fn symbolic_ir_full() {
           {
             "path": "dataLogDir",
             "type": "truthy"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -1977,6 +2005,10 @@ fn symbolic_ir_full() {
           {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",
@@ -2689,6 +2721,10 @@ fn symbolic_ir_full() {
           {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "path": "persistence.accessModes",
+            "type": "range"
           }
         ],
         "kind": "Scalar",

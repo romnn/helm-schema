@@ -84,6 +84,7 @@ pub fn generate_values_schema_full(
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> Value {
     let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
+    let mut ranged_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_boolish_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
@@ -119,6 +120,9 @@ pub fn generate_values_schema_full(
                     continue;
                 }
                 referenced_value_paths.insert(path.to_string());
+                if matches!(g, Guard::Range { .. }) {
+                    ranged_value_paths.insert(path.to_string());
+                }
 
                 if scalar_paths_with_self_truthy_output_use.contains(path) {
                     continue;
@@ -184,6 +188,13 @@ pub fn generate_values_schema_full(
             empty_schema()
         } else {
             lookup_values_yaml_schema(&values_yaml_doc, &vp).unwrap_or_else(empty_schema)
+        };
+        let values_yaml_schema = if ranged_value_paths.contains(&vp)
+            && is_mapping_at_value_path(&values_yaml_doc, &vp)
+        {
+            generalize_fixed_object_schema_to_open_map(values_yaml_schema)
+        } else {
+            values_yaml_schema
         };
 
         let guard_boolish_schema = guard_boolish_by_value_path
@@ -441,6 +452,37 @@ fn is_empty_map_at_value_path(doc: &YamlValue, vp: &str) -> bool {
         && values
             .into_iter()
             .all(|value| matches!(value, YamlValue::Mapping(map) if map.is_empty()))
+}
+
+fn is_mapping_at_value_path(doc: &YamlValue, vp: &str) -> bool {
+    let parts: Vec<&str> = vp.split('.').filter(|s| !s.is_empty()).collect();
+    if parts.is_empty() {
+        return false;
+    }
+    let Some(values) = lookup_values_yaml_values(doc, &parts) else {
+        return false;
+    };
+    !values.is_empty()
+        && values
+            .into_iter()
+            .all(|value| matches!(value, YamlValue::Mapping(_)))
+}
+
+fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
+    if !is_fixed_object_schema(&schema) {
+        return schema;
+    }
+    let Some(obj) = schema.as_object() else {
+        return schema;
+    };
+    let Some(properties) = obj.get("properties").and_then(Value::as_object) else {
+        return schema;
+    };
+
+    let merged_value_schema = merge_schema_list(properties.values().cloned().collect());
+    let mut out = obj.clone();
+    out.insert("additionalProperties".to_string(), merged_value_schema);
+    Value::Object(out)
 }
 
 fn is_null_at_parts(doc: &YamlValue, parts: &[&str]) -> bool {

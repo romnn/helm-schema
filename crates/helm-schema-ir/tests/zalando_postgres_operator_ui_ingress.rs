@@ -135,7 +135,7 @@ fn symbolic_ir_full() {
             "source_expr": "ingress.tls.*.hosts",
             "path": ["spec", "tls[*]", "hosts"],
             "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls")],
+            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls"), r("ingress.tls.*.hosts")],
             "resource": ingress
         },
         {

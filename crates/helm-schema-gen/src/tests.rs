@@ -445,9 +445,52 @@ fn destructured_range_map_input_does_not_become_output_array() {
         Some("object"),
         "environment should stay an object-valued input, got {environment}"
     );
+    assert_eq!(
+        environment
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "environment should generalize to an open string map when the chart ranges over its entries, got {environment}"
+    );
     assert!(
         environment.get("anyOf").is_none(),
         "environment should not widen to object-or-array, got {environment}"
+    );
+}
+
+#[test]
+fn destructured_range_map_with_len_guard_generalizes_to_open_string_map() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              {{- if (gt (len .Values.environment) 0) }}
+              env:
+                {{- range $key, $value := .Values.environment }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+              {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        environment:
+          INBUCKET_LOGLEVEL: debug
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let environment = schema
+        .pointer("/properties/environment")
+        .expect("environment present");
+    assert_eq!(
+        environment
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "len-guarded destructured range should still generalize to an open string map, got {environment}"
     );
 }
 

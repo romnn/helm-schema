@@ -84,14 +84,10 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
         .find(|use_| use_.path.0.is_empty() && use_.kind == helm_schema_ir::ValueKind::Scalar)
         .expect("header scalar use present");
 
-    // The header scalar use is unconditional: SymbolicIrGenerator
-    // emits it BEFORE pushing the Truthy(map) guard, so the use
-    // itself must have no guards. A regression that attached
-    // Truthy(map) here would double-count `map` against itself.
     assert!(
-        header_use.guards.is_empty(),
-        "the destructured range header's source use must be unconditional, \
-         but got guards: {:?}",
+        header_use.guards == [range_guard("map")],
+        "the destructured range header's source use should carry only Range(map); \
+         got guards: {:?}",
         header_use.guards,
     );
 
@@ -143,11 +139,9 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
         .copied()
         .find(|use_| use_.path.0.is_empty() && use_.kind == helm_schema_ir::ValueKind::Scalar)
         .expect("header scalar use present");
-    // The header scalar use is unconditional — same contract as the
-    // bare destructured header above.
     assert!(
-        header_use.guards.is_empty(),
-        "destructured range header use must be unconditional, but got \
+        header_use.guards == [range_guard("fallbackMap")],
+        "destructured range header use should carry only Range(fallbackMap), but got \
          guards: {:?}",
         header_use.guards,
     );
@@ -254,8 +248,8 @@ fn scalar_item_range_keeps_parent_collection_path() {
         })
         .expect("scalar-item range should keep a collection-level parent use");
     assert!(
-        parent_use.guards.is_empty(),
-        "the collection-level range header use must stay unconditional; got: {:?}",
+        parent_use.guards == [range_guard("accessModes")],
+        "the collection-level range header use should carry only Range(accessModes); got: {:?}",
         parent_use.guards,
     );
 

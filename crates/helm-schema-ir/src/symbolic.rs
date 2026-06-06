@@ -1246,6 +1246,35 @@ impl<'a> SymbolicWalker<'a> {
         });
     }
 
+    fn emit_use_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+    ) {
+        let path = if self.no_output_depth > 0 {
+            YamlPath(Vec::new())
+        } else {
+            path
+        };
+
+        let mut guards = self.guards.clone();
+        for guard in extra_guards {
+            if !guards.contains(guard) {
+                guards.push(guard.clone());
+            }
+        }
+
+        self.uses.push(ValueUse {
+            source_expr,
+            path,
+            kind,
+            guards,
+            resource: self.resource_detector.current(),
+        });
+    }
+
     fn emit_helper_use(&mut self, source_expr: String) {
         if source_expr.trim().is_empty() {
             return;
@@ -1934,12 +1963,17 @@ impl<'a> SymbolicWalker<'a> {
     fn collect_range_guards(&mut self, header_text: &str, path: &YamlPath, emit_use: bool) {
         let values = self.range_source_paths(header_text);
         for v in &values {
+            let guard = Guard::Range { path: v.clone() };
             if emit_use {
-                self.emit_use(v.clone(), path.clone(), ValueKind::Scalar);
+                self.emit_use_with_extra_guards(
+                    v.clone(),
+                    path.clone(),
+                    ValueKind::Scalar,
+                    std::slice::from_ref(&guard),
+                );
             }
-            let g = Guard::Range { path: v.clone() };
-            if !self.guards.contains(&g) {
-                self.guards.push(g);
+            if !self.guards.contains(&guard) {
+                self.guards.push(guard);
             }
         }
     }
