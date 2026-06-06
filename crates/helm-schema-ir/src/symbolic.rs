@@ -182,6 +182,59 @@ fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
     None
 }
 
+fn first_mapping_colon_offset(line: &str) -> Option<usize> {
+    // Find the first YAML mapping separator on the physical line while skipping
+    // quoted scalars and Helm actions. This lets us distinguish template output
+    // that contributes to a mapping key from output that contributes to the
+    // mapping value.
+    let bytes = line.as_bytes();
+    let mut idx = 0usize;
+    while idx < bytes.len() {
+        match bytes[idx] {
+            b'{' if bytes.get(idx + 1) == Some(&b'{') => {
+                idx += 2;
+                while idx + 1 < bytes.len() {
+                    if bytes[idx] == b'}' && bytes[idx + 1] == b'}' {
+                        idx += 2;
+                        break;
+                    }
+                    idx += 1;
+                }
+            }
+            b'"' => {
+                idx += 1;
+                while idx < bytes.len() {
+                    match bytes[idx] {
+                        b'\\' => idx += 2,
+                        b'"' => {
+                            idx += 1;
+                            break;
+                        }
+                        _ => idx += 1,
+                    }
+                }
+            }
+            b'\'' => {
+                idx += 1;
+                while idx < bytes.len() {
+                    if bytes[idx] == b'\'' {
+                        if bytes.get(idx + 1) == Some(&b'\'') {
+                            idx += 2;
+                            continue;
+                        }
+                        idx += 1;
+                        break;
+                    }
+                    idx += 1;
+                }
+            }
+            b':' => return Some(idx),
+            _ => idx += 1,
+        }
+    }
+    None
+}
+
 fn rewrite_dot_expr_to_values(text: &str, dot_prefix: &str) -> String {
     fn is_ident_start(b: u8) -> bool {
         b.is_ascii_uppercase() || b.is_ascii_lowercase() || b == b'_'
@@ -452,6 +505,41 @@ impl Shape {
 }
 
 impl<'a> SymbolicWalker<'a> {
+    fn shape_text_for_gap(gap: &str) -> String {
+        if !(gap.contains("{{") || gap.contains("}}")) {
+            gap.to_string()
+        } else {
+            // Preserve the literal YAML bytes around inline template actions so
+            // shape tracking still sees sequence markers, keys, and scalar
+            // prefixes on mixed text/template lines.
+            let mut sanitized = String::with_capacity(gap.len());
+            let bytes = gap.as_bytes();
+            let mut idx = 0usize;
+            let mut in_action = false;
+            while idx < bytes.len() {
+                if !in_action && bytes.get(idx..idx + 2) == Some(b"{{") {
+                    in_action = true;
+                    idx += 2;
+                    continue;
+                }
+                if in_action && bytes.get(idx..idx + 2) == Some(b"}}") {
+                    in_action = false;
+                    idx += 2;
+                    continue;
+                }
+
+                let Some(ch) = gap[idx..].chars().next() else {
+                    break;
+                };
+                if !in_action || matches!(ch, '\n' | ' ' | '\t') {
+                    sanitized.push(ch);
+                }
+                idx += ch.len_utf8();
+            }
+            sanitized
+        }
+    }
+
     fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
         Self {
             source,
@@ -928,14 +1016,9 @@ impl<'a> SymbolicWalker<'a> {
                 // apiVersions in that region still get resolved.
                 if self.text_pos < target {
                     let gap = &self.source[self.text_pos..target];
-                    let mut sanitized = String::with_capacity(gap.len());
-                    for ch in gap.chars() {
-                        if ch == '\n' || ch == ' ' || ch == '\t' {
-                            sanitized.push(ch);
-                        }
-                    }
-                    if !sanitized.is_empty() {
-                        shape_buf.push_str(&sanitized);
+                    let shape_gap = Self::shape_text_for_gap(gap);
+                    if !shape_gap.is_empty() {
+                        shape_buf.push_str(&shape_gap);
                     }
                     detector_buf.push_str(gap);
                     self.text_pos = target;
@@ -951,14 +1034,9 @@ impl<'a> SymbolicWalker<'a> {
             // helper-returned apiVersions correctly.
             if self.text_pos < s {
                 let gap = &self.source[self.text_pos..s];
-                let mut sanitized = String::with_capacity(gap.len());
-                for ch in gap.chars() {
-                    if ch == '\n' || ch == ' ' || ch == '\t' {
-                        sanitized.push(ch);
-                    }
-                }
-                if !sanitized.is_empty() {
-                    shape_buf.push_str(&sanitized);
+                let shape_gap = Self::shape_text_for_gap(gap);
+                if !shape_gap.is_empty() {
+                    shape_buf.push_str(&shape_gap);
                 }
                 detector_buf.push_str(gap);
                 self.text_pos = s;
@@ -987,14 +1065,9 @@ impl<'a> SymbolicWalker<'a> {
                     let end = ns.min(target);
                     if self.text_pos < end {
                         let gap = &self.source[self.text_pos..end];
-                        let mut sanitized = String::with_capacity(gap.len());
-                        for ch in gap.chars() {
-                            if ch == '\n' || ch == ' ' || ch == '\t' {
-                                sanitized.push(ch);
-                            }
-                        }
-                        if !sanitized.is_empty() {
-                            shape_buf.push_str(&sanitized);
+                        let shape_gap = Self::shape_text_for_gap(gap);
+                        if !shape_gap.is_empty() {
+                            shape_buf.push_str(&shape_gap);
                         }
                         // Raw gap text for the detector: this is where
                         // template actions (`{{ template "X" . }}`)
@@ -1195,9 +1268,10 @@ impl<'a> SymbolicWalker<'a> {
 
     fn resolved_values_paths_in_context(&self, text: &str) -> Vec<String> {
         let mut paths: BTreeSet<String> = extract_values_paths(text).into_iter().collect();
+        let exprs = Self::parse_expr_text(text);
 
         if !self.root_bindings.is_empty() {
-            for expr in Self::parse_expr_text(text) {
+            for expr in &exprs {
                 expr.walk(|node| {
                     if let Some(path) = Self::resolve_bound_path_expr(node, &self.root_bindings) {
                         paths.insert(path);
@@ -1209,7 +1283,12 @@ impl<'a> SymbolicWalker<'a> {
         if paths.is_empty()
             && let Some(Some(dot_prefix)) = self.dot_stack.last()
         {
-            if text.trim() == "." {
+            let is_bare_dot = exprs.len() == 1
+                && matches!(
+                    &exprs[0],
+                    TemplateExpr::Field(path) if path.is_empty()
+                );
+            if text.trim() == "." || is_bare_dot {
                 paths.insert(dot_prefix.clone());
             } else {
                 let rewritten = rewrite_dot_expr_to_values(text, dot_prefix);
@@ -1374,7 +1453,12 @@ impl<'a> SymbolicWalker<'a> {
             return;
         }
 
-        let mut path = self.shape.current_path();
+        let in_mapping_key = self.output_node_is_mapping_key_part(node);
+        let mut path = if in_mapping_key {
+            YamlPath(Vec::new())
+        } else {
+            self.shape.current_path()
+        };
         if kind == ValueKind::Fragment {
             if let Some(last) = path.0.last_mut()
                 && let Some(stripped) = last.strip_suffix("[*]")
@@ -1415,6 +1499,25 @@ impl<'a> SymbolicWalker<'a> {
         for v in helper_guard_values {
             self.emit_helper_use(v);
         }
+    }
+
+    fn output_node_is_mapping_key_part(&self, node: tree_sitter::Node<'_>) -> bool {
+        let start = node.start_byte();
+        let end = node.end_byte();
+        let line_start = self.source[..start].rfind('\n').map_or(0, |idx| idx + 1);
+        let line_end = self.source[end..]
+            .find('\n')
+            .map_or(self.source.len(), |idx| end + idx);
+        let line = &self.source[line_start..line_end];
+        let rel_start = start - line_start;
+        let rel_end = end - line_start;
+        let Some(colon_offset) = first_mapping_colon_offset(line) else {
+            return false;
+        };
+        // A template action used before the first mapping separator contributes
+        // to key construction (for example `{{ .name }}.json: ...`), not to the
+        // parent value slot.
+        rel_start < colon_offset && rel_end <= colon_offset
     }
 
     fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
@@ -1866,29 +1969,6 @@ impl<'a> SymbolicWalker<'a> {
         None
     }
 
-    fn range_body_uses_item_fields(&self, node: tree_sitter::Node<'_>) -> bool {
-        for body_node in Self::children_with_field(node, "body") {
-            let Ok(text) = body_node.utf8_text(self.source.as_bytes()) else {
-                continue;
-            };
-            for expr in Self::parse_expr_text(text) {
-                let mut uses_item_fields = false;
-                expr.walk(|inner| {
-                    if let TemplateExpr::Field(path) = inner
-                        && !path.is_empty()
-                        && path.first().map(String::as_str) != Some("Values")
-                    {
-                        uses_item_fields = true;
-                    }
-                });
-                if uses_item_fields {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-
     fn range_body_renders_scalar_sequence_items(&self, node: tree_sitter::Node<'_>) -> bool {
         let mut saw_sequence_item = false;
         let mut body_text = String::new();
@@ -1977,6 +2057,8 @@ impl<'a> SymbolicWalker<'a> {
                 true
             }
             "template_action"
+            | "dot"
+            | "field"
             | "chained_pipeline"
             | "parenthesized_pipeline"
             | "selector_expression"
@@ -2094,8 +2176,6 @@ impl<'a> SymbolicWalker<'a> {
                 break;
             }
         }
-        let body_uses_item_fields =
-            !has_variable_definition && self.range_body_uses_item_fields(node);
         let body_renders_scalar_sequence_items =
             !has_variable_definition && self.range_body_renders_scalar_sequence_items(node);
         if let Some(txt) = self.range_header_text(node) {
@@ -2115,20 +2195,17 @@ impl<'a> SymbolicWalker<'a> {
                 // body uses still carry the input contract.
                 YamlPath(Vec::new())
             } else if body_emits_sequence_item
-                && (body_uses_item_fields
-                    || (body_renders_scalar_sequence_items
-                        && direct_iterable_header_path.is_some()))
+                && body_renders_scalar_sequence_items
+                && direct_iterable_header_path.is_some()
             {
                 // A direct iterable source contributes the whole collection to the
-                // current YAML sequence field when each input item becomes the
-                // rendered sequence item (`- {{ . }}`) or when item field access
-                // proves the input items themselves are object-shaped.
+                // current YAML sequence field only when each input item becomes the
+                // rendered sequence item directly (`- {{ . }}`).
                 self.shape.current_path()
             } else {
                 YamlPath(Vec::new())
             };
             let emit_header_use = has_variable_definition
-                || body_uses_item_fields
                 || !body_emits_sequence_item
                 || (body_renders_scalar_sequence_items && direct_iterable_header_path.is_some());
             self.collect_range_guards(&txt, &guard_path, emit_header_use);

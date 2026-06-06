@@ -70,7 +70,28 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "acmesolver.image.digest",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [w("acmesolver.image"), t("acmesolver.image.digest")],
+            "resource": dep
+        },
+        {
             "source_expr": "acmesolver.image.registry",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [w("acmesolver.image")],
+            "resource": dep
+        },
+        {
+            "source_expr": "acmesolver.image.registry",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [w("acmesolver.image"), t("acmesolver.image.registry")],
+            "resource": dep
+        },
+        {
+            "source_expr": "acmesolver.image.repository",
             "path": [],
             "kind": "Scalar",
             "guards": [w("acmesolver.image")],
@@ -177,6 +198,13 @@ fn symbolic_ir_full() {
         {
             "source_expr": "dns01RecursiveNameservers",
             "path": [],
+            "kind": "Scalar",
+            "guards": [w("dns01RecursiveNameservers")],
+            "resource": dep
+        },
+        {
+            "source_expr": "dns01RecursiveNameservers",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
             "kind": "Scalar",
             "guards": [w("dns01RecursiveNameservers")],
             "resource": dep
@@ -294,6 +322,20 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "global.leaderElection.leaseDuration",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("global.leaderElection"), t("global.leaderElection.leaseDuration")],
+            "resource": dep
+        },
+        {
+            "source_expr": "global.leaderElection.namespace",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("global.leaderElection")],
+            "resource": dep
+        },
+        {
             "source_expr": "global.leaderElection.renewDeadline",
             "path": [],
             "kind": "Scalar",
@@ -301,10 +343,24 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "global.leaderElection.renewDeadline",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("global.leaderElection"), t("global.leaderElection.renewDeadline")],
+            "resource": dep
+        },
+        {
             "source_expr": "global.leaderElection.retryPeriod",
             "path": [],
             "kind": "Scalar",
             "guards": [w("global.leaderElection")],
+            "resource": dep
+        },
+        {
+            "source_expr": "global.leaderElection.retryPeriod",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("global.leaderElection"), t("global.leaderElection.retryPeriod")],
             "resource": dep
         },
         {
@@ -378,8 +434,22 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "http_proxy",
+            "path": ["spec", "template", "spec", "containers[*]", "env[*]", "value"],
+            "kind": "Scalar",
+            "guards": [w("http_proxy")],
+            "resource": dep
+        },
+        {
             "source_expr": "https_proxy",
             "path": [],
+            "kind": "Scalar",
+            "guards": [w("https_proxy")],
+            "resource": dep
+        },
+        {
+            "source_expr": "https_proxy",
+            "path": ["spec", "template", "spec", "containers[*]", "env[*]", "value"],
             "kind": "Scalar",
             "guards": [w("https_proxy")],
             "resource": dep
@@ -413,6 +483,13 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "ingressShim.defaultIssuerGroup",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("ingressShim"), t("ingressShim.defaultIssuerGroup")],
+            "resource": dep
+        },
+        {
             "source_expr": "ingressShim.defaultIssuerKind",
             "path": [],
             "kind": "Scalar",
@@ -420,10 +497,24 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "ingressShim.defaultIssuerKind",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("ingressShim"), t("ingressShim.defaultIssuerKind")],
+            "resource": dep
+        },
+        {
             "source_expr": "ingressShim.defaultIssuerName",
             "path": [],
             "kind": "Scalar",
             "guards": [w("ingressShim")],
+            "resource": dep
+        },
+        {
+            "source_expr": "ingressShim.defaultIssuerName",
+            "path": ["spec", "template", "spec", "containers[*]", "args[*]"],
+            "kind": "Scalar",
+            "guards": [w("ingressShim"), t("ingressShim.defaultIssuerName")],
             "resource": dep
         },
         {
@@ -438,6 +529,41 @@ fn symbolic_ir_full() {
             "path": [],
             "kind": "Scalar",
             "guards": [w("livenessProbe")],
+            "resource": dep
+        },
+        {
+            "source_expr": "livenessProbe.failureThreshold",
+            "path": ["spec", "template", "spec", "containers[*]", "livenessProbe", "failureThreshold"],
+            "kind": "Scalar",
+            "guards": [w("livenessProbe"), t("livenessProbe.enabled")],
+            "resource": dep
+        },
+        {
+            "source_expr": "livenessProbe.initialDelaySeconds",
+            "path": ["spec", "template", "spec", "containers[*]", "livenessProbe", "initialDelaySeconds"],
+            "kind": "Scalar",
+            "guards": [w("livenessProbe"), t("livenessProbe.enabled")],
+            "resource": dep
+        },
+        {
+            "source_expr": "livenessProbe.periodSeconds",
+            "path": ["spec", "template", "spec", "containers[*]", "livenessProbe", "periodSeconds"],
+            "kind": "Scalar",
+            "guards": [w("livenessProbe"), t("livenessProbe.enabled")],
+            "resource": dep
+        },
+        {
+            "source_expr": "livenessProbe.successThreshold",
+            "path": ["spec", "template", "spec", "containers[*]", "livenessProbe", "successThreshold"],
+            "kind": "Scalar",
+            "guards": [w("livenessProbe"), t("livenessProbe.enabled")],
+            "resource": dep
+        },
+        {
+            "source_expr": "livenessProbe.timeoutSeconds",
+            "path": ["spec", "template", "spec", "containers[*]", "livenessProbe", "timeoutSeconds"],
+            "kind": "Scalar",
+            "guards": [w("livenessProbe"), t("livenessProbe.enabled")],
             "resource": dep
         },
         {
@@ -471,6 +597,13 @@ fn symbolic_ir_full() {
         {
             "source_expr": "no_proxy",
             "path": [],
+            "kind": "Scalar",
+            "guards": [w("no_proxy")],
+            "resource": dep
+        },
+        {
+            "source_expr": "no_proxy",
+            "path": ["spec", "template", "spec", "containers[*]", "env[*]", "value"],
             "kind": "Scalar",
             "guards": [w("no_proxy")],
             "resource": dep
@@ -520,6 +653,13 @@ fn symbolic_ir_full() {
         {
             "source_expr": "podDnsPolicy",
             "path": [],
+            "kind": "Scalar",
+            "guards": [w("podDnsPolicy")],
+            "resource": dep
+        },
+        {
+            "source_expr": "podDnsPolicy",
+            "path": ["spec", "template", "spec", "dnsPolicy"],
             "kind": "Scalar",
             "guards": [w("podDnsPolicy")],
             "resource": dep

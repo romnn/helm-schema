@@ -688,6 +688,39 @@ fn quoted_matchlabels_key_value_stays_string() {
 }
 
 #[test]
+fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{ .Values.account.name }}.json: |
+            {}
+    "#};
+    let values_yaml = indoc! {"
+        account:
+          name: surveyor
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let name = schema
+        .pointer("/properties/account/properties/name")
+        .expect("account.name present");
+
+    assert_eq!(
+        name.get("type").and_then(Value::as_str),
+        Some("string"),
+        "mapping-key interpolation should keep account.name string-valued, got {name}"
+    );
+    assert!(
+        name.get("anyOf").is_none(),
+        "mapping-key interpolation must not widen account.name with ConfigMap.data provider shape, got {name}"
+    );
+}
+
+#[test]
 fn exact_bound_helper_yaml_body_propagates_paths() {
     let helpers = indoc! {r#"
         {{- define "common.ingress" -}}
@@ -872,6 +905,144 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
 }
 
 #[test]
+fn exact_bound_helper_with_bound_dot_arg_infers_classname_without_values_default() {
+    let helpers = indoc! {r#"
+        {{- define "common.ingress" -}}
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+        spec:
+          {{- with .config.className }}
+          ingressClassName: {{ . }}
+          {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- with .Values.ingress -}}
+        {{- if .enabled -}}
+        {{ include "common.ingress" (dict "ctx" $ "config" .) }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        ingress:
+          enabled: true
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/className/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "helper body should infer ingress.className from the output path even without a values.yaml example, got {schema}"
+    );
+}
+
+#[test]
+fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              args:
+              {{- with .Values.leaderElection }}
+              {{- if .leaseDuration }}
+              - --leader-election-lease-duration={{ .leaseDuration }}
+              {{- end }}
+              {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        leaderElection: {}
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    assert_eq!(
+        schema
+            .pointer("/properties/leaderElection/properties/leaseDuration/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "inline sequence scalar interpolation should infer leaderElection.leaseDuration as string, got {schema}"
+    );
+}
+
+#[test]
+fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              args:
+                - --image={{- if .Values.image.registry -}}{{ .Values.image.registry }}/{{- end -}}{{ .Values.image.repository }}{{- if .Values.image.digest -}}@{{ .Values.image.digest }}{{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          repository: jetstack/cert-manager-acmesolver
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    for pointer in [
+        "/properties/image/properties/registry/type",
+        "/properties/image/properties/repository/type",
+        "/properties/image/properties/digest/type",
+    ] {
+        assert_eq!(
+            schema.pointer(pointer).and_then(Value::as_str),
+            Some("string"),
+            "mixed inline template gaps should keep {pointer} string-valued, got {schema}"
+        );
+    }
+}
+
+#[test]
+fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              args:
+                {{- with .Values.image }}
+                - --image={{- if .registry -}}{{ .registry }}/{{- end -}}{{ .repository }}{{- if .digest -}}@{{ .digest }}{{- end -}}
+                {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          repository: jetstack/cert-manager-acmesolver
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    for pointer in [
+        "/properties/image/properties/registry/type",
+        "/properties/image/properties/repository/type",
+        "/properties/image/properties/digest/type",
+    ] {
+        assert_eq!(
+            schema.pointer(pointer).and_then(Value::as_str),
+            Some("string"),
+            "with-bound mixed inline template gaps should keep {pointer} string-valued, got {schema}"
+        );
+    }
+}
+
+#[test]
 fn exact_realistic_common_ingress_helper_propagates_paths() {
     let helpers = indoc! {r#"
         {{- define "common.fullname" -}}app{{- end -}}
@@ -984,6 +1155,18 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
             .and_then(Value::as_str),
         Some("string"),
         "realistic common.ingress helper should propagate ingress.hosts[*].host, got {schema}"
+    );
+    assert!(
+        schema
+            .pointer("/properties/ingress/properties/hosts/items/properties/http")
+            .is_none(),
+        "realistic common.ingress helper should keep hosts input-shaped instead of projecting rendered http blocks, got {schema}"
+    );
+    assert!(
+        schema
+            .pointer("/properties/ingress/properties/hosts/items/properties/paths/items/properties/backend")
+            .is_none(),
+        "realistic common.ingress helper should keep paths input-shaped instead of projecting rendered backend blocks, got {schema}"
     );
     assert!(
         schema

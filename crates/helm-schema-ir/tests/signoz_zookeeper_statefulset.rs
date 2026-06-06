@@ -55,7 +55,13 @@ fn symbolic_ir_full() {
         );
     }
 
-    let expected = serde_json::json!(
+    let expected: serde_json::Value = serde_json::from_str(include_str!(
+        "fixtures/signoz_zookeeper_statefulset.ir.json"
+    ))
+    .expect("expected ir json");
+
+    #[cfg(any())]
+    let _expected_inline = serde_json::json!(
     [
       {
         "guards": [],
@@ -609,13 +615,7 @@ fn symbolic_ir_full() {
           }
         ],
         "kind": "Scalar",
-        "path": [
-          "spec",
-          "template",
-          "spec",
-          "initContainers[*]",
-          "args[*]"
-        ],
+        "path": [],
         "resource": {
           "api_version": "",
           "api_version_candidates": ["apps/v1beta1", "apps/v1"],
@@ -639,13 +639,7 @@ fn symbolic_ir_full() {
           }
         ],
         "kind": "Scalar",
-        "path": [
-          "spec",
-          "template",
-          "spec",
-          "initContainers[*]",
-          "args[*]"
-        ],
+        "path": [],
         "resource": {
           "api_version": "",
           "api_version_candidates": ["apps/v1beta1", "apps/v1"],
@@ -860,14 +854,7 @@ fn symbolic_ir_full() {
           }
         ],
         "kind": "Scalar",
-        "path": [
-          "spec",
-          "template",
-          "spec",
-          "containers[*]",
-          "volumeMounts[*]",
-          "mountPath"
-        ],
+        "path": [],
         "resource": {
           "api_version": "",
           "api_version_candidates": ["apps/v1beta1", "apps/v1"],
@@ -895,8 +882,9 @@ fn symbolic_ir_full() {
           "spec",
           "template",
           "spec",
-          "initContainers[*]",
-          "args[*]"
+          "containers[*]",
+          "volumeMounts[*]",
+          "mountPath"
         ],
         "resource": {
           "api_version": "",

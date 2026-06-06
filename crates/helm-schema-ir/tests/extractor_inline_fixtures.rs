@@ -461,11 +461,22 @@ fn exact_helper_dict_dot_arg_uses_current_with_binding() {
     "#};
 
     let ir = generate(template, helpers);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!("{ir:#?}");
+    }
 
     assert!(
         ir.iter()
             .any(|use_| use_.source_expr == "ingress.className"),
         "expected helper body to resolve .config.className through current with-bound dot: {ir:#?}",
+    );
+    assert!(
+        ir.iter().any(|use_| {
+            use_.source_expr == "ingress.className"
+                && use_.path.0 == ["spec".to_string(), "ingressClassName".to_string()]
+                && use_.kind == helm_schema_ir::ValueKind::Scalar
+        }),
+        "expected helper body to attach ingress.className to spec.ingressClassName: {ir:#?}",
     );
     assert!(
         ir.iter()
@@ -480,6 +491,26 @@ fn exact_helper_dict_dot_arg_uses_current_with_binding() {
         ir.iter()
             .any(|use_| use_.source_expr == "ingress.hosts.*.host"),
         "expected helper body to resolve .config.hosts[*].host through current with-bound dot: {ir:#?}",
+    );
+    assert!(
+        ir.iter().all(|use_| {
+            !(use_.source_expr == "ingress.hosts"
+                && use_.path.0 == ["spec".to_string(), "rules".to_string()])
+        }),
+        "the hosts input should not be projected onto the full rendered IngressRule shape: {ir:#?}",
+    );
+    assert!(
+        ir.iter().all(|use_| {
+            !(use_.source_expr == "ingress.hosts.*.paths"
+                && use_.path.0
+                    == [
+                        "spec".to_string(),
+                        "rules[*]".to_string(),
+                        "http".to_string(),
+                        "paths".to_string(),
+                    ])
+        }),
+        "the nested paths input should not be projected onto the rendered http.paths collection: {ir:#?}",
     );
     assert!(
         ir.iter().any(|use_| use_.source_expr == "service.port"),
@@ -572,6 +603,97 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
         "no `.context.*` or `.Values.*`-prefixed paths should surface from \
          the helper-context condition; got: {phantoms:?}",
     );
+}
+
+#[test]
+fn template_action_used_in_mapping_key_does_not_project_to_parent_value_path() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{ .Values.account.name }}.json: |
+            {}
+    "#};
+
+    let ir = generate(template, "");
+
+    assert!(
+        ir.iter()
+            .any(|use_| { use_.source_expr == "account.name" && use_.path.0.is_empty() }),
+        "expected mapping-key interpolation to surface account.name as a pathless scalar use: {ir:#?}",
+    );
+    assert!(
+        ir.iter().all(|use_| {
+            !(use_.source_expr == "account.name" && use_.path.0 == ["data".to_string()])
+        }),
+        "mapping-key interpolation must not project account.name onto ConfigMap.data: {ir:#?}",
+    );
+}
+
+#[test]
+fn inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              args:
+                - --image={{- if .Values.image.registry -}}{{ .Values.image.registry }}/{{- end -}}{{ .Values.image.repository }}{{- if .Values.image.digest -}}@{{ .Values.image.digest }}{{- end -}}
+    "#};
+
+    let ir = generate(template, "");
+
+    for source_expr in ["image.registry", "image.repository", "image.digest"] {
+        assert!(
+            ir.iter().any(|use_| {
+                use_.source_expr == source_expr
+                    && use_.path.0
+                        == [
+                            "spec".to_string(),
+                            "containers[*]".to_string(),
+                            "args[*]".to_string(),
+                        ]
+            }),
+            "expected {source_expr} to stay attached to the args[*] scalar path despite mixed template gaps: {ir:#?}",
+        );
+    }
+}
+
+#[test]
+fn with_bound_inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              args:
+                {{- with .Values.image }}
+                - --image={{- if .registry -}}{{ .registry }}/{{- end -}}{{ .repository }}{{- if .digest -}}@{{ .digest }}{{- end -}}
+                {{- end }}
+    "#};
+
+    let ir = generate(template, "");
+
+    for source_expr in ["image.registry", "image.repository", "image.digest"] {
+        assert!(
+            ir.iter().any(|use_| {
+                use_.source_expr == source_expr
+                    && use_.path.0
+                        == [
+                            "spec".to_string(),
+                            "containers[*]".to_string(),
+                            "args[*]".to_string(),
+                        ]
+            }),
+            "expected {source_expr} to stay attached to the args[*] scalar path inside a with-bound mixed-gap line: {ir:#?}",
+        );
+    }
 }
 
 #[test]

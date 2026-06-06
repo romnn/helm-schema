@@ -217,13 +217,15 @@ fn parse_bare_expression_text(text: &str) -> Vec<helm_schema_ast::TemplateExpr> 
         return Vec::new();
     }
     let has_wildcards = trimmed.contains(".*");
-    let wrapped = if has_wildcards {
-        format!(
-            "{{{{ {} }}}}",
-            trimmed.replace(".*", &format!(".{WILDCARD_PLACEHOLDER}"))
-        )
+    let normalised = if has_wildcards {
+        trimmed.replace(".*", &format!(".{WILDCARD_PLACEHOLDER}"))
     } else {
-        format!("{{{{ {trimmed} }}}}")
+        trimmed.to_string()
+    };
+    let wrapped = if normalised.trim_start().starts_with("{{") {
+        normalised
+    } else {
+        format!("{{{{ {normalised} }}}}")
     };
     let mut exprs = helm_schema_ast::parse_action_expressions(&wrapped);
     if has_wildcards {

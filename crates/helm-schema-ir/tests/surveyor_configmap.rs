@@ -73,6 +73,13 @@ fn symbolic_ir_full() {
             "source_expr": "config.jetstream.accounts.*.name",
             "path": [],
             "kind": "Scalar",
+            "guards": [t("config.jetstream.enabled"), r("config.jetstream.accounts")],
+            "resource": cm
+        },
+        {
+            "source_expr": "config.jetstream.accounts.*.name",
+            "path": [],
+            "kind": "Scalar",
             "guards": [
                 t("config.jetstream.enabled"),
                 r("config.jetstream.accounts"),

@@ -1166,12 +1166,18 @@
         "leaderElection": {
           "additionalProperties": false,
           "properties": {
-            "leaseDuration": {},
+            "leaseDuration": {
+              "type": "string"
+            },
             "namespace": {
               "type": "string"
             },
-            "renewDeadline": {},
-            "retryPeriod": {}
+            "renewDeadline": {
+              "type": "string"
+            },
+            "retryPeriod": {
+              "type": "string"
+            }
           },
           "type": "object"
         },
@@ -1256,8 +1262,14 @@
       "x-kubernetes-patch-merge-key": "ip",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "http_proxy": {},
-    "https_proxy": {},
+    "http_proxy": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "https_proxy": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
     "image": {
       "anyOf": [
         {
@@ -1282,9 +1294,15 @@
     "ingressShim": {
       "additionalProperties": false,
       "properties": {
-        "defaultIssuerGroup": {},
-        "defaultIssuerKind": {},
-        "defaultIssuerName": {}
+        "defaultIssuerGroup": {
+          "type": "string"
+        },
+        "defaultIssuerKind": {
+          "type": "string"
+        },
+        "defaultIssuerName": {
+          "type": "string"
+        }
       },
       "type": "object"
     },
@@ -1295,18 +1313,28 @@
           "type": "boolean"
         },
         "failureThreshold": {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
           "type": "integer"
         },
         "initialDelaySeconds": {
+          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
           "type": "integer"
         },
         "periodSeconds": {
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+          "format": "int32",
           "type": "integer"
         },
         "successThreshold": {
+          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+          "format": "int32",
           "type": "integer"
         },
         "timeoutSeconds": {
+          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
           "type": "integer"
         }
       },
@@ -1326,7 +1354,10 @@
     "namespace": {
       "type": "string"
     },
-    "no_proxy": {},
+    "no_proxy": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
     "nodeSelector": {
       "additionalProperties": false,
       "properties": {
@@ -1384,7 +1415,10 @@
       },
       "type": "object"
     },
-    "podDnsPolicy": {},
+    "podDnsPolicy": {
+      "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
+      "type": "string"
+    },
     "podLabels": {
       "additionalProperties": {
         "type": "string"

@@ -88,6 +88,21 @@ pub fn generate_values_schema_full(
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_boolish_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    // When a value is rendered inside the body guarded by its own truthiness,
+    // that body use is stronger evidence than the guard itself. The guard only
+    // says "non-empty", while the body proves the value participates in a
+    // scalar rendering position and should not be forced to boolean from the
+    // control flow alone.
+    let scalar_paths_with_self_truthy_output_use: BTreeSet<String> = uses
+        .iter()
+        .filter(|u| {
+            u.kind == ValueKind::Scalar
+                && u.guards
+                    .iter()
+                    .any(|g| matches!(g, Guard::Truthy { path } if path == &u.source_expr))
+        })
+        .map(|u| u.source_expr.clone())
+        .collect();
 
     for u in uses {
         if u.source_expr.trim().is_empty() {
@@ -104,6 +119,10 @@ pub fn generate_values_schema_full(
                     continue;
                 }
                 referenced_value_paths.insert(path.to_string());
+
+                if scalar_paths_with_self_truthy_output_use.contains(path) {
+                    continue;
+                }
 
                 if let Some(schema) = infer_guard_boolish_schema(g) {
                     guard_boolish_by_value_path

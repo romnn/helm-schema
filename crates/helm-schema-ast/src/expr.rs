@@ -701,6 +701,12 @@ mod tests {
     }
 
     #[test]
+    fn bare_dot_parses_as_empty_field_path() {
+        let exprs = parse_action_expressions(r#"{{ . }}"#);
+        assert_eq!(exprs, vec![TemplateExpr::Field(Vec::new())]);
+    }
+
+    #[test]
     fn pipeline_with_intervening_call_no_default_match() {
         // `.Values.X | upper | default 5` — the windows pattern matcher
         // should NOT pair `.Values.X` with `default` because `upper`

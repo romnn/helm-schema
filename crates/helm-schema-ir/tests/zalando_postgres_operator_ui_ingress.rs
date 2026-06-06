@@ -97,17 +97,17 @@ fn symbolic_ir_full() {
             "resource": null
         },
         {
-            "source_expr": "ingress.hosts",
-            "path": ["spec", "rules"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled")],
-            "resource": ingress
-        },
-        {
             "source_expr": "ingress.hosts.*.host",
             "path": ["spec", "rules[*]", "host"],
             "kind": "Scalar",
             "guards": [t("ingress.enabled"), r("ingress.hosts")],
+            "resource": ingress
+        },
+        {
+            "source_expr": "ingress.hosts.*.paths.*",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [t("ingress.enabled"), r("ingress.hosts"), r("ingress.hosts.*.paths")],
             "resource": ingress
         },
         {
@@ -132,13 +132,6 @@ fn symbolic_ir_full() {
             "resource": ingress
         },
         {
-            "source_expr": "ingress.tls",
-            "path": ["spec", "tls"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.tls")],
-            "resource": ingress
-        },
-        {
             "source_expr": "ingress.tls.*.hosts",
             "path": ["spec", "tls[*]", "hosts"],
             "kind": "Scalar",
@@ -150,6 +143,13 @@ fn symbolic_ir_full() {
             "path": ["spec", "tls[*]", "hosts[*]"],
             "kind": "Scalar",
             "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls"), r("ingress.tls.*.hosts")],
+            "resource": ingress
+        },
+        {
+            "source_expr": "ingress.tls.*.secretName",
+            "path": ["spec", "tls[*]", "secretName"],
+            "kind": "Scalar",
+            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls")],
             "resource": ingress
         },
         {
