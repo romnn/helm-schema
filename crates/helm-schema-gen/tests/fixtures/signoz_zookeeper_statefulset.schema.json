@@ -3381,13 +3381,13 @@
               "items": {},
               "type": "array"
             },
-                        "imageRegistry": {
-                            "type": "string"
-                        },
-                        "kubeVersion": {},
-                        "storageClass": {
-                            "type": "string"
-                        }
+            "imageRegistry": {
+              "type": "string"
+            },
+            "kubeVersion": {},
+            "storageClass": {
+              "type": "string"
+            }
           },
           "type": "object"
         },
@@ -4821,15 +4821,15 @@
         }
       ]
     },
-        "jvmFlags": {
-            "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-            "type": "string"
-        },
-        "kubeVersion": {
-            "type": "string"
-        },
-        "lifecycleHooks": {
-            "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
+    "jvmFlags": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "kubeVersion": {
+      "type": "string"
+    },
+    "lifecycleHooks": {
+      "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
       "properties": {
         "postStart": {
           "description": "LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.",
@@ -5352,7 +5352,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "properties": {},
+              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
               "type": "object"
             },
             "dataLogDir": {
@@ -5363,7 +5363,7 @@
                   "type": "string"
                 },
                 "selector": {
-                  "additionalProperties": false,
+                  "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
                   "properties": {
                     "matchExpressions": {
                       "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -5404,7 +5404,8 @@
                       "type": "object"
                     }
                   },
-                  "type": "object"
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic"
                 },
                 "size": {
                   "anyOf": [
@@ -5437,11 +5438,11 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "properties": {},
+              "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
               "type": "object"
             },
             "selector": {
-              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
               "properties": {
                 "matchExpressions": {
                   "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -5482,7 +5483,8 @@
                   "type": "object"
                 }
               },
-              "type": "object"
+              "type": "object",
+              "x-kubernetes-map-type": "atomic"
             },
             "size": {
               "anyOf": [
@@ -5781,11 +5783,19 @@
             ]
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-          "properties": {},
           "type": "object"
         },
         "requests": {
-          "additionalProperties": false,
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "properties": {
             "cpu": {
@@ -7340,7 +7350,6 @@
                 ]
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "properties": {},
               "type": "object"
             },
             "requests": {
@@ -7355,7 +7364,6 @@
                 ]
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "properties": {},
               "type": "object"
             }
           },
@@ -7502,7 +7510,6 @@
       "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.",
       "properties": {
         "rollingUpdate": {
-          "additionalProperties": false,
           "description": "RollingUpdateStatefulSetStrategy is used to communicate parameter for RollingUpdateStatefulSetStrategyType.",
           "properties": {
             "maxUnavailable": {
@@ -7759,7 +7766,6 @@
                 ]
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "properties": {},
               "type": "object"
             },
             "requests": {
@@ -7774,7 +7780,6 @@
                 ]
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "properties": {},
               "type": "object"
             }
           },

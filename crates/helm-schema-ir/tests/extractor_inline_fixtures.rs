@@ -22,6 +22,7 @@ use indoc::indoc;
 fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
     let mut idx = DefineIndex::new();
     if !helpers.is_empty() {
+        idx.add_file_source("helpers.tpl", helpers);
         idx.add_source(&TreeSitterParser, helpers)
             .expect("helpers parse");
     }
@@ -411,6 +412,78 @@ fn quoted_yaml_key_keeps_concrete_leaf_path() {
         path.last().map(String::as_str),
         Some("kubernetes.io/metadata.name"),
         "quoted YAML key should become the concrete leaf path segment; got: {path:?}",
+    );
+}
+
+#[test]
+fn exact_helper_dict_dot_arg_uses_current_with_binding() {
+    let helpers = indoc! {r#"
+        {{- define "common.ingress" -}}
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+          {{- with .config.annotations }}
+          annotations:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+        spec:
+          {{- with .config.className }}
+          ingressClassName: {{ . }}
+          {{- end }}
+          {{- if .config.tls }}
+          tls:
+            {{- range .config.tls }}
+            - secretName: {{ .secretName }}
+            {{- end }}
+          {{- end }}
+          rules:
+            {{- range .config.hosts }}
+            - host: {{ .host | quote }}
+              http:
+                paths:
+                  {{- range .paths }}
+                  - path: {{ .path }}
+                    backend:
+                      service:
+                        port:
+                          number: {{ $.ctx.Values.service.port }}
+                  {{- end }}
+            {{- end }}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- with .Values.ingress -}}
+        {{- if .enabled -}}
+        {{ include "common.ingress" (dict "ctx" $ "config" .) }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+
+    let ir = generate(template, helpers);
+
+    assert!(
+        ir.iter()
+            .any(|use_| use_.source_expr == "ingress.className"),
+        "expected helper body to resolve .config.className through current with-bound dot: {ir:#?}",
+    );
+    assert!(
+        ir.iter()
+            .any(|use_| use_.source_expr == "ingress.annotations"),
+        "expected helper body to resolve .config.annotations through current with-bound dot: {ir:#?}",
+    );
+    assert!(
+        ir.iter().any(|use_| use_.source_expr == "ingress.tls"),
+        "expected helper body to resolve .config.tls through current with-bound dot: {ir:#?}",
+    );
+    assert!(
+        ir.iter()
+            .any(|use_| use_.source_expr == "ingress.hosts.*.host"),
+        "expected helper body to resolve .config.hosts[*].host through current with-bound dot: {ir:#?}",
+    );
+    assert!(
+        ir.iter().any(|use_| use_.source_expr == "service.port"),
+        "expected helper body to keep $.ctx.Values.service.port rooted to the caller context: {ir:#?}",
     );
 }
 

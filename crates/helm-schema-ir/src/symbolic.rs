@@ -1186,6 +1186,13 @@ impl<'a> SymbolicWalker<'a> {
         });
     }
 
+    fn current_dot_binding(&self) -> Option<HelperBinding> {
+        self.dot_stack
+            .last()
+            .and_then(|prefix| prefix.as_ref().cloned())
+            .map(HelperBinding::ValuesPath)
+    }
+
     fn resolved_values_paths_in_context(&self, text: &str) -> Vec<String> {
         let mut paths: BTreeSet<String> = extract_values_paths(text).into_iter().collect();
 
@@ -1297,7 +1304,12 @@ impl<'a> SymbolicWalker<'a> {
             return false;
         };
 
-        let bindings = Self::bindings_for_helper_arg(args.get(1), Some(&self.root_bindings));
+        let current_dot = self.current_dot_binding();
+        let bindings = Self::bindings_for_helper_arg(
+            args.get(1),
+            Some(&self.root_bindings),
+            current_dot.as_ref(),
+        );
         let mut stack = self.inline_stack.clone();
         stack.push(token);
         let mut nested = SymbolicWalker::new(src.as_str(), self.defines)
@@ -1471,14 +1483,19 @@ impl<'a> SymbolicWalker<'a> {
     fn binding_from_expr(
         expr: &TemplateExpr,
         outer: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
     ) -> Option<HelperBinding> {
         if let Some(path) = values_path_from_expr(expr) {
             return Some(HelperBinding::ValuesPath(path));
         }
 
         match expr {
-            TemplateExpr::Parenthesized(inner) => Self::binding_from_expr(inner, outer),
-            TemplateExpr::Field(path) if path.is_empty() => Some(HelperBinding::RootContext),
+            TemplateExpr::Parenthesized(inner) => {
+                Self::binding_from_expr(inner, outer, current_dot)
+            }
+            TemplateExpr::Field(path) if path.is_empty() => {
+                current_dot.cloned().or(Some(HelperBinding::RootContext))
+            }
             TemplateExpr::Variable(var) if var.is_empty() => Some(HelperBinding::RootContext),
             _ => outer
                 .and_then(|bindings| Self::resolve_bound_path_expr(expr, bindings))
@@ -1489,13 +1506,16 @@ impl<'a> SymbolicWalker<'a> {
     fn bindings_for_helper_arg(
         arg: Option<&TemplateExpr>,
         outer: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
     ) -> HashMap<String, HelperBinding> {
         let Some(arg) = arg else {
             return HashMap::new();
         };
 
         match arg {
-            TemplateExpr::Parenthesized(inner) => Self::bindings_for_helper_arg(Some(inner), outer),
+            TemplateExpr::Parenthesized(inner) => {
+                Self::bindings_for_helper_arg(Some(inner), outer, current_dot)
+            }
             TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
             TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
             TemplateExpr::Call { function, args } if function == "dict" => {
@@ -1506,7 +1526,9 @@ impl<'a> SymbolicWalker<'a> {
                         index += 1;
                         continue;
                     };
-                    if let Some(binding) = Self::binding_from_expr(&args[index + 1], outer) {
+                    if let Some(binding) =
+                        Self::binding_from_expr(&args[index + 1], outer, current_dot)
+                    {
                         bindings.insert(key.clone(), binding);
                     }
                     index += 2;
@@ -1519,12 +1541,20 @@ impl<'a> SymbolicWalker<'a> {
 
     fn analyze_bound_helper_calls(&self, text: &str) -> BoundHelperAnalysis {
         let mut seen = HashSet::new();
-        Self::analyze_bound_helper_calls_with_bindings(text, None, self.defines, &mut seen)
+        let current_dot = self.current_dot_binding();
+        Self::analyze_bound_helper_calls_with_bindings(
+            text,
+            None,
+            current_dot.as_ref(),
+            self.defines,
+            &mut seen,
+        )
     }
 
     fn analyze_bound_helper_calls_with_bindings(
         text: &str,
         bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
         defines: &DefineIndex,
         seen: &mut HashSet<String>,
     ) -> BoundHelperAnalysis {
@@ -1540,8 +1570,14 @@ impl<'a> SymbolicWalker<'a> {
                 let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
                     return;
                 };
-                let nested =
-                    Self::analyze_bound_helper_call(name, args.get(1), bindings, defines, seen);
+                let nested = Self::analyze_bound_helper_call(
+                    name,
+                    args.get(1),
+                    bindings,
+                    current_dot,
+                    defines,
+                    seen,
+                );
                 analysis.extend(nested);
             });
         }
@@ -1552,6 +1588,7 @@ impl<'a> SymbolicWalker<'a> {
         name: &str,
         arg: Option<&TemplateExpr>,
         outer_bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
         defines: &DefineIndex,
         seen: &mut HashSet<String>,
     ) -> BoundHelperAnalysis {
@@ -1559,7 +1596,7 @@ impl<'a> SymbolicWalker<'a> {
             return BoundHelperAnalysis::default();
         }
 
-        let bindings = Self::bindings_for_helper_arg(arg, outer_bindings);
+        let bindings = Self::bindings_for_helper_arg(arg, outer_bindings, current_dot);
         let mut analysis = BoundHelperAnalysis::default();
         if let Some(body) = defines.get(name) {
             for node in body {
@@ -1607,8 +1644,13 @@ impl<'a> SymbolicWalker<'a> {
             });
         }
 
-        let nested =
-            Self::analyze_bound_helper_calls_with_bindings(text, Some(bindings), defines, seen);
+        let nested = Self::analyze_bound_helper_calls_with_bindings(
+            text,
+            Some(bindings),
+            None,
+            defines,
+            seen,
+        );
         into.extend(nested.output);
         into.extend(nested.guards);
     }

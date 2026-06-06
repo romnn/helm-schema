@@ -21,11 +21,20 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn schema_fused_rust() {
+    // Keep this body touched when fixture snapshots change so incremental rebuilds
+    // definitely refresh the embedded expected schema.
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::to_value(&ir).expect("ir json"))
+                .expect("pretty ir")
+        );
+    }
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 

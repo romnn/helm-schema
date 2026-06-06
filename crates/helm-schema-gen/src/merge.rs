@@ -189,6 +189,12 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     let mut out = a.as_object()?.clone();
     let bobj = b.as_object()?;
 
+    fn has_meaningful_additional_properties(obj: &Map<String, Value>) -> bool {
+        obj.get("additionalProperties")
+            .and_then(|value| value.as_object())
+            .is_some_and(|map| !map.is_empty())
+    }
+
     fn is_structured_object(obj: &Map<String, Value>) -> bool {
         obj.get("properties")
             .and_then(|v| v.as_object())
@@ -197,9 +203,7 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 .get("patternProperties")
                 .and_then(|v| v.as_object())
                 .is_some_and(|m| !m.is_empty())
-            || obj
-                .get("additionalProperties")
-                .is_some_and(serde_json::Value::is_object)
+            || has_meaningful_additional_properties(obj)
             || obj
                 .get("required")
                 .and_then(|v| v.as_array())
@@ -215,45 +219,13 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
         return Some(Value::Object(out));
     }
 
-    fn has_nonempty_props(obj: &Map<String, Value>) -> bool {
-        obj.get("properties")
-            .and_then(|v| v.as_object())
-            .is_some_and(|m| !m.is_empty())
-    }
-
-    fn has_nonempty_pattern_props(obj: &Map<String, Value>) -> bool {
-        obj.get("patternProperties")
-            .and_then(|v| v.as_object())
-            .is_some_and(|m| !m.is_empty())
-    }
-
-    fn has_required(obj: &Map<String, Value>) -> bool {
-        obj.get("required")
-            .and_then(|v| v.as_array())
-            .is_some_and(|a| !a.is_empty())
-    }
-
-    let a_fixed =
-        has_nonempty_props(&out) || has_nonempty_pattern_props(&out) || has_required(&out);
-    let b_fixed =
-        has_nonempty_props(bobj) || has_nonempty_pattern_props(bobj) || has_required(bobj);
-
-    let a_map_like = !a_fixed
-        && out
-            .get("additionalProperties")
-            .is_some_and(serde_json::Value::is_object);
-    let b_map_like = !b_fixed
-        && bobj
-            .get("additionalProperties")
-            .is_some_and(serde_json::Value::is_object);
+    let a_map_like = has_meaningful_additional_properties(&out);
+    let b_map_like = has_meaningful_additional_properties(bobj);
 
     match (
         out.get("additionalProperties").cloned(),
         bobj.get("additionalProperties").cloned(),
     ) {
-        _ if a_fixed || b_fixed => {
-            out.insert("additionalProperties".to_string(), Value::Bool(false));
-        }
         (Some(ap_a), Some(ap_b)) if a_map_like && b_map_like => {
             out.insert(
                 "additionalProperties".to_string(),
@@ -363,4 +335,89 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     out.insert("type".to_string(), Value::String("object".to_string()));
 
     Some(Value::Object(out))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::merge_two_schemas;
+    use serde_json::json;
+
+    #[test]
+    fn merge_open_string_map_with_fixed_values_object_keeps_map_open() {
+        let open_map = json!({
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+        });
+        let fixed_values_object = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "cert-manager.io/cluster-issuer": { "type": "string" }
+            }
+        });
+
+        let merged = merge_two_schemas(open_map, fixed_values_object);
+
+        assert_eq!(
+            merged
+                .pointer("/additionalProperties/type")
+                .and_then(|value| value.as_str()),
+            Some("string"),
+        );
+        assert_eq!(
+            merged
+                .pointer("/properties/cert-manager.io~1cluster-issuer/type")
+                .and_then(|value| value.as_str()),
+            Some("string"),
+        );
+    }
+
+    #[test]
+    fn merge_nested_open_quantity_map_with_fixed_values_object_keeps_map_open() {
+        let provider = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "requests": {
+                    "type": "object",
+                    "description": "Requests describes the minimum amount of compute resources required.",
+                    "additionalProperties": {
+                        "oneOf": [
+                            { "type": "string" },
+                            { "type": "number" }
+                        ]
+                    }
+                }
+            }
+        });
+        let values_yaml = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "requests": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "cpu": { "type": "string" }
+                    }
+                }
+            }
+        });
+
+        let merged = merge_two_schemas(provider, values_yaml);
+
+        assert!(
+            merged
+                .pointer("/properties/requests/additionalProperties/oneOf")
+                .and_then(|value| value.as_array())
+                .is_some(),
+            "expected nested requests map to stay open, got {merged}",
+        );
+        assert_eq!(
+            merged
+                .pointer("/properties/requests/properties/cpu/type")
+                .and_then(|value| value.as_str()),
+            Some("string"),
+        );
+    }
 }

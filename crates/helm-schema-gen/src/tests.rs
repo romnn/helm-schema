@@ -7,16 +7,31 @@ use crate::{
     DefaultValuesSchemaGenerator, ValuesSchemaGenerator, generate_values_schema_full,
     generate_values_schema_with_values_yaml,
 };
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints};
-use helm_schema_k8s::KubernetesJsonSchemaProvider;
+use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ir::{
+    IrGenerator, ResourceRef, SymbolicIrGenerator, ValueUse, YamlPath, extract_default_type_hints,
+};
+use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
 fn provider() -> KubernetesJsonSchemaProvider {
     KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
 }
 
+fn production_chain_provider() -> Chain {
+    let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+        .with_allow_download(true)
+        .with_api_version_guess(true);
+    Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
+}
+
 fn parse_ir(src: &str) -> Vec<ValueUse> {
     let ast = TreeSitterParser.parse(src).expect("parse");
+    let idx = DefineIndex::new();
+    SymbolicIrGenerator.generate(src, &ast, &idx)
+}
+
+fn parse_ir_fused(src: &str) -> Vec<ValueUse> {
+    let ast = FusedRustParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     SymbolicIrGenerator.generate(src, &ast, &idx)
 }
@@ -754,6 +769,410 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
             .pointer("/properties/service/properties/port")
             .is_some(),
         "helper body should propagate service.port from $.ctx.Values.service.port, got {schema}"
+    );
+}
+
+#[test]
+fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
+    let helpers = indoc! {r#"
+        {{- define "common.ingress" -}}
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+          {{- with .config.annotations }}
+          annotations:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+        spec:
+          {{- with .config.className }}
+          ingressClassName: {{ . }}
+          {{- end }}
+          {{- if .config.tls }}
+          tls:
+            {{- range .config.tls }}
+            - secretName: {{ .secretName }}
+            {{- end }}
+          {{- end }}
+          rules:
+            {{- range .config.hosts }}
+            - host: {{ .host | quote }}
+              http:
+                paths:
+                  {{- range .paths }}
+                  - path: {{ .path }}
+                    backend:
+                      service:
+                        port:
+                          number: {{ $.ctx.Values.service.port }}
+                  {{- end }}
+            {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- with .Values.ingress -}}
+        {{- if .enabled -}}
+        {{ include "common.ingress" (dict "ctx" $ "config" .) }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt
+          tls:
+            - secretName: ingress-tls
+          hosts:
+            - host: inbucket.local
+              paths:
+                - path: /
+        service:
+          port: 9000
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/className/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "with-bound dot helper call should propagate ingress.className, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/annotations/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "with-bound dot helper call should propagate ingress.annotations, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/tls/items/properties/secretName/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "with-bound dot helper call should propagate ingress.tls[*].secretName, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/hosts/items/properties/host/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "with-bound dot helper call should propagate ingress.hosts[*].host, got {schema}"
+    );
+    assert!(
+        schema
+            .pointer("/properties/service/properties/port")
+            .is_some(),
+        "with-bound dot helper call should preserve $.ctx.Values.service.port, got {schema}"
+    );
+}
+
+#[test]
+fn exact_realistic_common_ingress_helper_propagates_paths() {
+    let helpers = indoc! {r#"
+        {{- define "common.fullname" -}}app{{- end -}}
+        {{- define "common.labels" -}}
+        app.kubernetes.io/name: app
+        {{- end -}}
+        {{- define "common.ingress" }}
+        ---
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: {{ include "common.fullname" .ctx }}
+          labels:
+            {{- include "common.labels" .ctx | nindent 4 }}
+          {{- with .config.annotations }}
+          annotations:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+        spec:
+          {{- with .config.className }}
+          ingressClassName: {{ . }}
+          {{- end }}
+          {{- if .config.tls }}
+          tls:
+            {{- range .config.tls }}
+            - hosts:
+                {{- range .hosts }}
+                - {{ . | quote }}
+                {{- end }}
+              secretName: {{ .secretName }}
+            {{- end }}
+          {{- end }}
+          rules:
+            {{- range .config.hosts }}
+            - host: {{ .host | quote }}
+              http:
+                paths:
+                  {{- range .paths }}
+                  - path: {{ .path }}
+                    {{- with .pathType }}
+                    pathType: {{ . }}
+                    {{- end }}
+                    backend:
+                      service:
+                        name: {{ .serviceName | default (include "common.fullname" $.ctx) }}
+                        {{ if .servicePort -}}
+                        port:
+                          {{- toYaml .servicePort | nindent 18 }}
+                        {{ else -}}
+                        port:
+                          number: {{ $.ctx.Values.service.port }}
+                        {{- end }}
+                  {{- end }}
+            {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- with .Values.ingress -}}
+        {{- if .enabled -}}
+        {{ include "common.ingress" (dict "ctx" $ "config" .) }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt
+          tls:
+            - hosts:
+                - inbucket.local
+              secretName: ingress-tls
+          hosts:
+            - host: inbucket.local
+              paths:
+                - path: /
+                  pathType: Prefix
+        service:
+          port: 9000
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/annotations/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "realistic common.ingress helper should keep ingress.annotations open, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/className/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "realistic common.ingress helper should propagate ingress.className, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/tls/items/properties/secretName/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "realistic common.ingress helper should propagate ingress.tls[*].secretName, got {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/ingress/properties/hosts/items/properties/host/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "realistic common.ingress helper should propagate ingress.hosts[*].host, got {schema}"
+    );
+    assert!(
+        schema
+            .pointer("/properties/service/properties/port")
+            .is_some(),
+        "realistic common.ingress helper should preserve $.ctx.Values.service.port, got {schema}"
+    );
+}
+
+#[test]
+fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              resources:
+        {{ toYaml .Values.resources | indent 16 }}
+    "#};
+    let values_yaml = indoc! {"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 250Mi
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let requests = schema
+        .pointer("/properties/resources/properties/requests")
+        .expect("resources.requests present");
+    assert!(
+        requests
+            .pointer("/additionalProperties/oneOf")
+            .and_then(Value::as_array)
+            .is_some(),
+        "resources.requests should stay an open quantity map, got {requests}"
+    );
+    let limits = schema
+        .pointer("/properties/resources/properties/limits")
+        .expect("resources.limits present");
+    assert!(
+        limits
+            .pointer("/additionalProperties/oneOf")
+            .and_then(Value::as_array)
+            .is_some(),
+        "resources.limits should stay an open quantity map, got {limits}"
+    );
+}
+
+#[test]
+fn direct_fragment_resource_requirements_keep_open_requests_and_limits_on_chain() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              resources:
+        {{ toYaml .Values.resources | indent 16 }}
+    "#};
+    let values_yaml = indoc! {"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 250Mi
+    "};
+
+    let provider = production_chain_provider();
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider, Some(values_yaml));
+
+    let requests = schema
+        .pointer("/properties/resources/properties/requests")
+        .expect("resources.requests present");
+    assert!(
+        requests
+            .pointer("/additionalProperties/oneOf")
+            .and_then(Value::as_array)
+            .is_some(),
+        "resources.requests should stay an open quantity map on the chain path, got {requests}"
+    );
+    let limits = schema
+        .pointer("/properties/resources/properties/limits")
+        .expect("resources.limits present");
+    assert!(
+        limits
+            .pointer("/additionalProperties/oneOf")
+            .and_then(Value::as_array)
+            .is_some(),
+        "resources.limits should stay an open quantity map on the chain path, got {limits}"
+    );
+}
+
+#[test]
+fn direct_fragment_resource_requirements_keep_open_requests_and_limits_on_chain_fused() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              resources:
+        {{ toYaml .Values.resources | indent 16 }}
+    "#};
+    let values_yaml = indoc! {"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 250Mi
+    "};
+
+    let provider = production_chain_provider();
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir_fused(src), &provider, Some(values_yaml));
+
+    let requests = schema
+        .pointer("/properties/resources/properties/requests")
+        .expect("resources.requests present");
+    assert!(
+        requests
+            .pointer("/additionalProperties/oneOf")
+            .and_then(Value::as_array)
+            .is_some(),
+        "resources.requests should stay an open quantity map on the fused parser path, got {requests}"
+    );
+    let limits = schema
+        .pointer("/properties/resources/properties/limits")
+        .expect("resources.limits present");
+    assert!(
+        limits
+            .pointer("/additionalProperties/oneOf")
+            .and_then(Value::as_array)
+            .is_some(),
+        "resources.limits should stay an open quantity map on the fused parser path, got {limits}"
+    );
+}
+
+#[test]
+fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
+    let provider = production_chain_provider();
+    let use_ = ValueUse {
+        source_expr: "resources".to_string(),
+        path: YamlPath(vec![
+            "spec".to_string(),
+            "template".to_string(),
+            "spec".to_string(),
+            "containers[*]".to_string(),
+            "resources".to_string(),
+        ]),
+        kind: helm_schema_ir::ValueKind::Fragment,
+        guards: Vec::new(),
+        resource: Some(ResourceRef {
+            api_version: "apps/v1".to_string(),
+            kind: "Deployment".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }),
+    };
+
+    let schema = provider
+        .schema_for_use(&use_)
+        .expect("provider schema for container resources");
+
+    assert!(
+        schema
+            .pointer("/properties/requests/additionalProperties")
+            .is_some(),
+        "provider should expose requests as an open quantity map, got {schema}"
+    );
+    assert!(
+        schema
+            .pointer("/properties/limits/additionalProperties")
+            .is_some(),
+        "provider should expose limits as an open quantity map, got {schema}"
     );
 }
 

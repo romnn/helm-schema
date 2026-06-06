@@ -26,11 +26,20 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn schema_fused_rust() {
+    // Keep this body touched when fixture snapshots change so incremental rebuilds
+    // definitely refresh the embedded expected schema.
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let ast = FusedRustParser.parse(&src).expect("parse");
     let idx = build_define_index(&FusedRustParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::to_value(&ir).expect("ir json"))
+                .expect("pretty ir")
+        );
+    }
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
@@ -1812,17 +1821,62 @@ fn schema_fused_rust() {
               "x-kubernetes-list-type": "atomic"
             },
             "annotations": {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
               "type": "object"
             },
             "dataLogDir": {
               "additionalProperties": false,
               "properties": {
                 "existingClaim": {
+                  "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
                   "type": "string"
                 },
                 "selector": {
-                  "additionalProperties": {},
+                  "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+                  "properties": {
+                    "matchExpressions": {
+                      "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                      "items": {
+                        "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                        "properties": {
+                          "key": {
+                            "description": "key is the label key that the selector applies to.",
+                            "type": "string"
+                          },
+                          "operator": {
+                            "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                            "type": "string"
+                          },
+                          "values": {
+                            "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "operator"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "matchLabels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                      "type": "object"
+                    }
+                  },
+                  "x-kubernetes-map-type": "atomic",
                   "type": "object"
                 },
                 "size": {
@@ -1835,14 +1889,59 @@ fn schema_fused_rust() {
               "type": "boolean"
             },
             "existingClaim": {
+              "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
               "type": "string"
             },
             "labels": {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
               "type": "object"
             },
             "selector": {
-              "additionalProperties": {},
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": "object"
+                }
+              },
+              "x-kubernetes-map-type": "atomic",
               "type": "object"
             },
             "size": {
@@ -2632,11 +2731,31 @@ fn schema_fused_rust() {
           "additionalProperties": false,
           "properties": {
             "limits": {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": "object"
             },
             "requests": {
-              "additionalProperties": false,
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "properties": {
                 "cpu": {
                   "type": "string"
@@ -2783,11 +2902,31 @@ fn schema_fused_rust() {
               "additionalProperties": false,
               "properties": {
                 "limits": {
-                  "additionalProperties": {},
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "type": "object"
                 },
                 "requests": {
-                  "additionalProperties": {},
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "type": "object"
                 }
               },
@@ -2930,9 +3069,11 @@ fn schema_fused_rust() {
           "x-kubernetes-patch-strategy": "merge"
         },
         "updateStrategy": {
+          "additionalProperties": false,
           "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.",
           "properties": {
             "rollingUpdate": {
+              "additionalProperties": false,
               "description": "RollingUpdateStatefulSetStrategy is used to communicate parameter for RollingUpdateStatefulSetStrategyType.",
               "properties": {
                 "maxUnavailable": {
