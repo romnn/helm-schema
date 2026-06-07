@@ -1,0 +1,367 @@
+[
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "creator"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.commonLabels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "selector",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "namespace",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "namespace"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "namespace"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "prometheus.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "prometheus.podmonitor.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "ports[*]",
+      "targetPort"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "prometheus.servicemonitor.targetPort"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceAnnotations",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceAnnotations"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceAnnotations",
+        "type": "with"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "annotations"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceAnnotations"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceIPFamilies"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceIPFamilies",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "ipFamilies"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceIPFamilies"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceIPFamilyPolicy"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceIPFamilyPolicy",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "ipFamilyPolicy"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceIPFamilyPolicy"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceLabels",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceLabels",
+        "type": "with"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "serviceLabels"
+  }
+]

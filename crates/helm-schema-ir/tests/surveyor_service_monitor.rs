@@ -50,132 +50,14 @@ fn symbolic_ir_full() {
         );
     }
 
-    let sm =
+    let _sm =
         serde_json::json!({"api_version": "monitoring.coreos.com/v1", "kind": "ServiceMonitor"});
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global.labels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceMonitor.annotations",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.annotations")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.annotations",
-            "path": ["metadata", "annotations"],
-            "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.annotations")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceMonitor.interval",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.interval",
-            "path": ["spec", "endpoints[*]", "interval"],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled"), t("serviceMonitor.interval")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.labels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.labels")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.labels",
-            "path": ["metadata", "labels"],
-            "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.labels")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.metricRelabelings",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.metricRelabelings")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.metricRelabelings",
-            "path": ["spec", "endpoints"],
-            "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.metricRelabelings")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.relabelings",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.relabelings")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.relabelings",
-            "path": ["spec", "endpoints"],
-            "kind": "Fragment",
-            "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.relabelings")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.scrapeTimeout",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled")],
-            "resource": sm
-        },
-        {
-            "source_expr": "serviceMonitor.scrapeTimeout",
-            "path": ["spec", "endpoints[*]", "scrapeTimeout"],
-            "kind": "Scalar",
-            "guards": [t("serviceMonitor.enabled"), t("serviceMonitor.scrapeTimeout")],
-            "resource": sm
-        }
-    ]);
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/surveyor_service_monitor.ir.json"))
+            .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

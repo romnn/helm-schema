@@ -24,6 +24,7 @@ pub mod inference;
 pub mod kubernetes_openapi;
 pub mod local_override;
 pub mod lookup;
+mod metadata_enrichment;
 
 pub use builtin_groups::is_k8s_builtin_group;
 pub use cache::{

@@ -940,7 +940,17 @@
       "x-kubernetes-patch-merge-key": "name",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "fullnameOverride": {},
+    "fullnameOverride": {
+      "anyOf": [
+        {
+          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "image": {
       "additionalProperties": false,
       "properties": {
@@ -984,7 +994,10 @@
       "x-kubernetes-patch-merge-key": "name",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "nameOverride": {},
+    "nameOverride": {
+      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+      "type": "string"
+    },
     "nodeSelector": {
       "additionalProperties": {
         "type": "string"
@@ -1008,8 +1021,15 @@
       "type": "object"
     },
     "priorityClassName": {
-      "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "readinessProbe": {
       "additionalProperties": false,
@@ -1259,7 +1279,17 @@
     "serviceAccount": {
       "additionalProperties": false,
       "properties": {
-        "name": {}
+        "name": {
+          "anyOf": [
+            {
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       },
       "type": "object"
     },

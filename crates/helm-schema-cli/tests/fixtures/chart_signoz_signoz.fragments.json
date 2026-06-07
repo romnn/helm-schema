@@ -1,24 +1,74 @@
 {
   "$comment": "Manual fixture for representative deep fragments of the generated signoz-signoz chart schema. Keep this curated; do not add any snapshot refresh workflow.",
-  "top_level_keys": [
-    "alertmanager",
-    "clickhouse",
-    "clusterName",
-    "externalClickhouse",
-    "fullnameOverride",
-    "global",
-    "imagePullSecrets",
-    "nameOverride",
-    "otelCollector",
-    "schemaMigrator",
-    "signoz",
-    "signoz-otel-gateway"
-  ],
   "pointers": {
-    "/properties/clusterName": {
-      "type": "string"
+    "/properties/alertmanager/properties/ingress": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "className": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "hosts": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "paths": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "pathType": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "tls": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "hosts": {
+                "items": {},
+                "type": "array"
+              },
+              "secretName": {}
+            },
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     },
-    "/properties/signoz/properties/serviceAccount": {
+    "/properties/alertmanager/properties/serviceAccount": {
       "additionalProperties": false,
       "properties": {
         "annotations": {
@@ -41,59 +91,6 @@
       },
       "type": "object"
     },
-    "/properties/signoz/properties/smtpVars/properties/existingSecret": {
-      "additionalProperties": false,
-      "properties": {
-        "fromKey": {
-          "type": "string"
-        },
-        "hostKey": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "passwordKey": {
-          "type": "string"
-        },
-        "portKey": {
-          "type": "string"
-        },
-        "usernameKey": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "/properties/signoz/properties/service": {
-      "additionalProperties": false,
-      "properties": {
-        "annotations": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "internalNodePort": {},
-        "internalPort": {
-          "type": "integer"
-        },
-        "labels": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "nodePort": {},
-        "opampInternalNodePort": {},
-        "opampPort": {
-          "type": "integer"
-        },
-        "port": {
-          "type": "integer"
-        },
-        "type": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "/properties/clickhouse/properties/clickhouseOperator/properties/image": {
       "additionalProperties": false,
       "properties": {
@@ -112,72 +109,8 @@
       },
       "type": "object"
     },
-    "/properties/signoz-otel-gateway/properties/postgresql/properties/auth": {
-      "additionalProperties": false,
-      "properties": {
-        "database": {
-          "type": "string"
-        },
-        "enablePostgresUser": {
-          "type": "boolean"
-        },
-        "existingSecret": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        },
-        "postgresPassword": {
-          "type": "string"
-        },
-        "replicationPassword": {
-          "type": "string"
-        },
-        "replicationUsername": {
-          "type": "string"
-        },
-        "secretKeys": {
-          "additionalProperties": false,
-          "properties": {
-            "adminPasswordKey": {
-              "type": "string"
-            },
-            "replicationPasswordKey": {
-              "type": "string"
-            },
-            "userPasswordKey": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "usePasswordFiles": {
-          "type": "boolean"
-        },
-        "username": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "/properties/signoz-otel-gateway/properties/serviceAccount": {
-      "additionalProperties": false,
-      "properties": {
-        "annotations": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "automount": {
-          "type": "boolean"
-        },
-        "create": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "type": "object"
+    "/properties/clusterName": {
+      "type": "string"
     },
     "/properties/otelCollector/properties/ingress": {
       "additionalProperties": false,
@@ -187,7 +120,14 @@
           "type": "object"
         },
         "className": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "enabled": {
           "type": "boolean"
@@ -283,67 +223,166 @@
       },
       "type": "object"
     },
-    "/properties/alertmanager/properties/ingress": {
+    "/properties/signoz-otel-gateway/properties/postgresql/properties/auth": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "enablePostgresUser": {
+          "type": "boolean"
+        },
+        "existingSecret": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "password": {
+          "type": "string"
+        },
+        "postgresPassword": {
+          "type": "string"
+        },
+        "replicationPassword": {
+          "type": "string"
+        },
+        "replicationUsername": {
+          "type": "string"
+        },
+        "secretKeys": {
+          "additionalProperties": false,
+          "properties": {
+            "adminPasswordKey": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "replicationPasswordKey": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "userPasswordKey": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "usePasswordFiles": {
+          "type": "boolean"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/signoz-otel-gateway/properties/serviceAccount": {
       "additionalProperties": false,
       "properties": {
         "annotations": {
           "additionalProperties": {},
           "type": "object"
         },
-        "className": {
-          "type": "string"
-        },
-        "enabled": {
+        "automount": {
           "type": "boolean"
         },
-        "hosts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "host": {
-                "type": "string"
-              },
-              "paths": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "pathType": {
-                      "type": "string"
-                    },
-                    "port": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          "type": "array"
+        "create": {
+          "type": "boolean"
         },
-        "tls": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "hosts": {
-                "items": {},
-                "type": "array"
-              },
-              "secretName": {}
+        "name": {
+          "anyOf": [
+            {
+              "type": "null"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "type": "object"
     },
-    "/properties/alertmanager/properties/serviceAccount": {
+    "/properties/signoz/properties/service": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "internalNodePort": {},
+        "internalPort": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "labels": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nodePort": {},
+        "opampInternalNodePort": {},
+        "opampPort": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "/properties/signoz/properties/serviceAccount": {
       "additionalProperties": false,
       "properties": {
         "annotations": {
@@ -365,6 +404,44 @@
         }
       },
       "type": "object"
+    },
+    "/properties/signoz/properties/smtpVars/properties/existingSecret": {
+      "additionalProperties": false,
+      "properties": {
+        "fromKey": {
+          "type": "string"
+        },
+        "hostKey": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "passwordKey": {
+          "type": "string"
+        },
+        "portKey": {
+          "type": "string"
+        },
+        "usernameKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
-  }
+  },
+  "top_level_keys": [
+    "alertmanager",
+    "clickhouse",
+    "clusterName",
+    "externalClickhouse",
+    "fullnameOverride",
+    "global",
+    "imagePullSecrets",
+    "nameOverride",
+    "otelCollector",
+    "schemaMigrator",
+    "signoz",
+    "signoz-otel-gateway"
+  ]
 }

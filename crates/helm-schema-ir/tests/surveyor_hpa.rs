@@ -50,107 +50,15 @@ fn symbolic_ir_full() {
         );
     }
 
-    let hpa = serde_json::json!({
+    let _hpa = serde_json::json!({
         "api_version": "autoscaling/v2beta1",
         "kind": "HorizontalPodAutoscaler"
     });
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "autoscaling.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "autoscaling.maxReplicas",
-            "path": ["spec", "maxReplicas"],
-            "kind": "Scalar",
-            "guards": [t("autoscaling.enabled")],
-            "resource": hpa
-        },
-        {
-            "source_expr": "autoscaling.minReplicas",
-            "path": ["spec", "minReplicas"],
-            "kind": "Scalar",
-            "guards": [t("autoscaling.enabled")],
-            "resource": hpa
-        },
-        {
-            "source_expr": "autoscaling.targetCPUUtilizationPercentage",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("autoscaling.enabled")],
-            "resource": hpa
-        },
-        {
-            "source_expr": "autoscaling.targetCPUUtilizationPercentage",
-            "path": [
-                "spec",
-                "metrics[*]",
-                "resource",
-                "targetAverageUtilization"
-            ],
-            "kind": "Scalar",
-            "guards": [
-                t("autoscaling.enabled"),
-                t("autoscaling.targetCPUUtilizationPercentage")
-            ],
-            "resource": hpa
-        },
-        {
-            "source_expr": "autoscaling.targetMemoryUtilizationPercentage",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("autoscaling.enabled")],
-            "resource": hpa
-        },
-        {
-            "source_expr": "autoscaling.targetMemoryUtilizationPercentage",
-            "path": [
-                "spec",
-                "metrics[*]",
-                "resource",
-                "targetAverageUtilization"
-            ],
-            "kind": "Scalar",
-            "guards": [
-                t("autoscaling.enabled"),
-                t("autoscaling.targetMemoryUtilizationPercentage")
-            ],
-            "resource": hpa
-        },
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global.labels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        }
-    ]);
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/surveyor_hpa.ir.json"))
+            .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

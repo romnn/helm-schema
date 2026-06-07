@@ -6,6 +6,7 @@ use serde_json::Value;
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::metadata_enrichment::enrich_root_metadata_schema;
 
 #[derive(Debug, Clone)]
 pub struct LocalSchemaProvider {
@@ -62,7 +63,9 @@ impl LocalSchemaProvider {
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
         let root = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
-        Some(expand_local_refs(&root, &root, 0, &mut stack))
+        Some(enrich_root_metadata_schema(expand_local_refs(
+            &root, &root, 0, &mut stack,
+        )))
     }
 }
 

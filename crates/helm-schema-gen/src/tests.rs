@@ -61,14 +61,34 @@ fn permits_null(schema: &Value) -> bool {
     if schema.get("type").and_then(Value::as_str) == Some("null") {
         return true;
     }
+    if schema
+        .get("type")
+        .and_then(Value::as_array)
+        .is_some_and(|types| types.iter().any(|v| v.as_str() == Some("null")))
+    {
+        return true;
+    }
     schema
         .get("anyOf")
         .and_then(Value::as_array)
-        .is_some_and(|variants| {
-            variants
-                .iter()
-                .any(|v| v.get("type").and_then(Value::as_str) == Some("null"))
-        })
+        .is_some_and(|variants| variants.iter().any(permits_null))
+}
+
+fn permits_type(schema: &Value, ty: &str) -> bool {
+    if schema.get("type").and_then(Value::as_str) == Some(ty) {
+        return true;
+    }
+    if schema
+        .get("type")
+        .and_then(Value::as_array)
+        .is_some_and(|types| types.iter().any(|value| value.as_str() == Some(ty)))
+    {
+        return true;
+    }
+    schema
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .is_some_and(|variants| variants.iter().any(|variant| permits_type(variant, ty)))
 }
 
 /// Simple template produces correct schema structure.
@@ -123,9 +143,8 @@ fn guard_values_get_boolean_type() {
     similar_asserts::assert_eq!(schema, expected);
 }
 
-/// Step 1: a path used as a YAML fragment inside `with` with a null default in
-/// values.yaml gets a nullable union (provider object | null), so the chart
-/// can ship `extraAnnotations:` (null) without lint errors.
+/// Step 1 stays focused on the nullable-scalar gap. Fragment-fed objects keep
+/// their provider object shape even when values.yaml uses a null placeholder.
 #[test]
 fn step1_with_fragment_null_default_is_nullable() {
     let src = indoc! {r"
@@ -147,19 +166,13 @@ fn step1_with_fragment_null_default_is_nullable() {
     let extra = schema
         .pointer("/properties/extraAnnotations")
         .expect("extraAnnotations present");
-    let variants = extra
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .expect("expected anyOf union");
     assert!(
-        permits_null(extra),
-        "extraAnnotations should permit null, got {extra}"
+        permits_type(extra, "object"),
+        "extraAnnotations should keep the K8s annotations object shape, got {extra}"
     );
     assert!(
-        variants
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("object")),
-        "extraAnnotations should also accept the K8s annotations object, got {extra}"
+        !permits_null(extra),
+        "fragment-fed object placeholders should not widen to nullable unions, got {extra}"
     );
 }
 
@@ -417,6 +430,83 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
             .iter()
             .any(|v| v.get("type").and_then(Value::as_str) == Some("integer")),
         "nodePort should also accept the provider integer type, got {node_port}"
+    );
+}
+
+/// Truthy-guarded optional scalars should accept null even when values.yaml
+/// chooses an empty-string default instead of an explicit YAML null.
+#[test]
+fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          {{- if .Values.fullnameOverride }}
+          name: {{ .Values.fullnameOverride }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        fullnameOverride: \"\"
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let fullname = schema
+        .pointer("/properties/fullnameOverride")
+        .expect("fullnameOverride present");
+    assert!(
+        permits_null(fullname),
+        "truthy-guarded fullnameOverride should allow null, got {fullname}"
+    );
+}
+
+#[test]
+fn common_fullname_helper_keeps_fullname_override_nullable() {
+    let helpers = indoc! {r#"
+        {{- define "common.name" -}}
+        {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+        {{- end }}
+
+        {{- define "common.fullname" -}}
+        {{- if .Values.fullnameOverride }}
+        {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+        {{- else }}
+        {{- $name := default .Chart.Name .Values.nameOverride }}
+        {{- if contains $name .Release.Name }}
+        {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+        {{- else }}
+        {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: {{ include "common.fullname" . }}
+    "#};
+    let values_yaml = indoc! {"
+        nameOverride:
+        fullnameOverride:
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let fullname = schema
+        .pointer("/properties/fullnameOverride")
+        .expect("fullnameOverride present");
+    assert!(
+        permits_null(fullname),
+        "common.fullname should keep fullnameOverride nullable, got {fullname}"
+    );
+    assert!(
+        permits_type(fullname, "string"),
+        "common.fullname should keep fullnameOverride string-like, got {fullname}"
     );
 }
 
@@ -728,6 +818,232 @@ fn dict_bound_helper_object_input_stays_object() {
     );
 }
 
+#[test]
+fn helper_defaulted_bound_name_allows_null() {
+    let helpers = indoc! {r#"
+        {{- define "common.serviceAccountName" -}}
+        {{- if .config.create -}}
+        {{- .config.name | default (include "common.fullname" .ctx) -}}
+        {{- else -}}
+        {{- .config.name | default "default" -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          serviceAccountName: {{ include "common.serviceAccountName" (dict "ctx" $ "config" .Values.serviceAccount) }}
+    "#};
+    let values_yaml = indoc! {r#"
+        serviceAccount:
+          create: true
+          name: ""
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let name = schema
+        .pointer("/properties/serviceAccount/properties/name")
+        .expect("serviceAccount.name present");
+    assert!(
+        permits_null(name),
+        "defaulted helper-bound serviceAccount.name should allow null, got {name}"
+    );
+}
+
+#[test]
+fn helper_direct_boolean_render_keeps_provider_shape() {
+    let helpers = indoc! {r#"
+        {{- define "common.service-account" -}}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: {{ .config.name | default "generated" }}
+        automountServiceAccountToken: {{ .config.automount }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{ include "common.service-account" (dict "ctx" $ "config" .Values.serviceAccount) }}
+    "#};
+    let values_yaml = indoc! {"
+        serviceAccount:
+          automount: true
+          name: workload
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let automount = schema
+        .pointer("/properties/serviceAccount/properties/automount")
+        .expect("serviceAccount.automount present");
+    assert!(
+        permits_null(automount),
+        "serviceAccount.automount should keep the provider's nullable boolean shape, got {automount}"
+    );
+    assert!(
+        automount
+            .get("anyOf")
+            .and_then(Value::as_array)
+            .is_some_and(|variants| !variants.is_empty()),
+        "serviceAccount.automount should remain a union shaped by the provider, got {automount}"
+    );
+}
+
+#[test]
+fn nested_bound_helper_keeps_structured_parent_object() {
+    let helpers = indoc! {r#"
+        {{- define "common.images.image" -}}
+        {{- printf "%s/%s:%s" .imageRoot.registry .imageRoot.repository .imageRoot.tag -}}
+        {{- end -}}
+        {{- define "workload.image" -}}
+        {{ include "common.images.image" (dict "imageRoot" .Values.image) }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: {{ include "workload.image" . }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          registry: docker.io
+          repository: example/app
+          tag: stable
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let image = schema.pointer("/properties/image").expect("image present");
+    assert_eq!(
+        image.get("type").and_then(Value::as_str),
+        Some("object"),
+        "image should stay object-valued, got {image}"
+    );
+    assert!(
+        image.get("anyOf").is_none(),
+        "image should not widen to object-or-string, got {image}"
+    );
+    assert_eq!(
+        image
+            .pointer("/properties/registry/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "image.registry should stay string-typed, got {image}"
+    );
+}
+
+#[test]
+fn helper_string_output_conflicts_collapse_to_plain_string() {
+    let helpers = indoc! {r#"
+        {{- define "common.fullname" -}}
+        {{- if .Values.fullnameOverride -}}
+        {{- .Values.fullnameOverride -}}
+        {{- else -}}
+        generated
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: {{ include "common.fullname" . }}
+        spec:
+          template:
+            spec:
+              serviceAccountName: {{ include "common.fullname" . }}
+              containers:
+                - name: app
+                  image: nginx
+                  env:
+                    - name: TOKEN_SECRET
+                      valueFrom:
+                        secretKeyRef:
+                          name: {{ include "common.fullname" . }}
+                          key: token
+    "#};
+    let values_yaml = indoc! {"
+        fullnameOverride: custom
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let fullname = schema
+        .pointer("/properties/fullnameOverride")
+        .expect("fullnameOverride present");
+    assert!(
+        permits_null(fullname),
+        "truthy-gated helper output should still accept null, got {fullname}"
+    );
+    let variants = fullname
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .expect("expected nullable string union");
+    assert!(
+        variants
+            .iter()
+            .any(|variant| variant.get("type").and_then(Value::as_str) == Some("string")),
+        "helper-derived scalar outputs should still include a string branch, got {fullname}"
+    );
+}
+
+#[test]
+fn template_call_in_scalar_slot_propagates_helper_value_types() {
+    let helpers = indoc! {r#"
+        {{- define "common.fullname" -}}
+        {{- if .Values.fullnameOverride -}}
+        {{- .Values.fullnameOverride -}}
+        {{- else -}}
+        generated
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ template "common.fullname" . }}
+    "#};
+    let values_yaml = indoc! {"
+        fullnameOverride: custom
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let fullname = schema
+        .pointer("/properties/fullnameOverride")
+        .expect("fullnameOverride present");
+    assert_eq!(
+        fullname,
+        &serde_json::json!({ "type": "string" }),
+        "template calls in scalar slots should propagate helper value types, got {fullname}"
+    );
+}
+
 /// A destructured `range $k, $v := .` inside an outer `with .Values.X` should
 /// still attribute the rendered map field back to `X`, so provider schemas can
 /// type it as an open string map.
@@ -909,10 +1225,19 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
 
     assert_eq!(
         schema
-            .pointer("/properties/ingress/properties/className/type")
-            .and_then(Value::as_str),
-        Some("string"),
+            .pointer("/properties/ingress/properties/className")
+            .is_some(),
+        true,
         "helper body should propagate ingress.className, got {schema}"
+    );
+    assert!(
+        permits_type(
+            schema
+                .pointer("/properties/ingress/properties/className")
+                .expect("className present"),
+            "string"
+        ),
+        "helper body should infer ingress.className as string-like, got {schema}"
     );
     assert_eq!(
         schema
@@ -994,10 +1319,19 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
 
     assert_eq!(
         schema
-            .pointer("/properties/ingress/properties/className/type")
-            .and_then(Value::as_str),
-        Some("string"),
+            .pointer("/properties/ingress/properties/className")
+            .is_some(),
+        true,
         "with-bound dot helper call should propagate ingress.className, got {schema}"
+    );
+    assert!(
+        permits_type(
+            schema
+                .pointer("/properties/ingress/properties/className")
+                .expect("className present"),
+            "string"
+        ),
+        "with-bound dot helper call should propagate ingress.className as string-like, got {schema}"
     );
     assert_eq!(
         schema
@@ -1057,11 +1391,11 @@ fn exact_bound_helper_with_bound_dot_arg_infers_classname_without_values_default
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/className/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    let class_name = schema
+        .pointer("/properties/ingress/properties/className")
+        .expect("className present");
+    assert!(
+        permits_type(class_name, "string"),
         "helper body should infer ingress.className from the output path even without a values.yaml example, got {schema}"
     );
 }
@@ -1089,12 +1423,14 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
     let schema =
         generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
 
-    assert_eq!(
-        schema
-            .pointer("/properties/leaderElection/properties/leaseDuration/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "inline sequence scalar interpolation should infer leaderElection.leaseDuration as string, got {schema}"
+    assert!(
+        permits_type(
+            schema
+                .pointer("/properties/leaderElection/properties/leaseDuration")
+                .expect("leaseDuration present"),
+            "string"
+        ),
+        "inline sequence scalar interpolation should infer leaderElection.leaseDuration as string-like, got {schema}"
     );
 }
 
@@ -1119,14 +1455,13 @@ fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
         generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
 
     for pointer in [
-        "/properties/image/properties/registry/type",
-        "/properties/image/properties/repository/type",
-        "/properties/image/properties/digest/type",
+        "/properties/image/properties/registry",
+        "/properties/image/properties/repository",
+        "/properties/image/properties/digest",
     ] {
-        assert_eq!(
-            schema.pointer(pointer).and_then(Value::as_str),
-            Some("string"),
-            "mixed inline template gaps should keep {pointer} string-valued, got {schema}"
+        assert!(
+            permits_type(schema.pointer(pointer).expect("pointer present"), "string"),
+            "mixed inline template gaps should keep {pointer} string-like, got {schema}"
         );
     }
 }
@@ -1154,14 +1489,13 @@ fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_pat
         generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
 
     for pointer in [
-        "/properties/image/properties/registry/type",
-        "/properties/image/properties/repository/type",
-        "/properties/image/properties/digest/type",
+        "/properties/image/properties/registry",
+        "/properties/image/properties/repository",
+        "/properties/image/properties/digest",
     ] {
-        assert_eq!(
-            schema.pointer(pointer).and_then(Value::as_str),
-            Some("string"),
-            "with-bound mixed inline template gaps should keep {pointer} string-valued, got {schema}"
+        assert!(
+            permits_type(schema.pointer(pointer).expect("pointer present"), "string"),
+            "with-bound mixed inline template gaps should keep {pointer} string-like, got {schema}"
         );
     }
 }
@@ -1259,25 +1593,31 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
         Some("string"),
         "realistic common.ingress helper should keep ingress.annotations open, got {schema}"
     );
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/className/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        permits_type(
+            schema
+                .pointer("/properties/ingress/properties/className")
+                .expect("className present"),
+            "string"
+        ),
         "realistic common.ingress helper should propagate ingress.className, got {schema}"
     );
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/tls/items/properties/secretName/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        permits_type(
+            schema
+                .pointer("/properties/ingress/properties/tls/items/properties/secretName")
+                .expect("secretName present"),
+            "string"
+        ),
         "realistic common.ingress helper should propagate ingress.tls[*].secretName, got {schema}"
     );
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/hosts/items/properties/host/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        permits_type(
+            schema
+                .pointer("/properties/ingress/properties/hosts/items/properties/host")
+                .expect("host present"),
+            "string"
+        ),
         "realistic common.ingress helper should propagate ingress.hosts[*].host, got {schema}"
     );
     assert!(

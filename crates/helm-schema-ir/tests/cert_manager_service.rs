@@ -48,124 +48,13 @@ fn symbolic_ir_full() {
         );
     }
 
-    let svc = serde_json::json!({"api_version": "v1", "kind": "Service"});
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
+    let _svc = serde_json::json!({"api_version": "v1", "kind": "Service"});
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "creator",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global.commonLabels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "namespace",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "prometheus.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "prometheus.podmonitor.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "prometheus.servicemonitor.targetPort",
-            "path": ["spec", "ports[*]", "targetPort"],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceAnnotations",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceAnnotations")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceAnnotations",
-            "path": ["metadata", "annotations"],
-            "kind": "Fragment",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceAnnotations")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceIPFamilies",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceIPFamilies",
-            "path": ["spec", "ipFamilies"],
-            "kind": "Fragment",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), t("serviceIPFamilies")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceIPFamilyPolicy",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceIPFamilyPolicy",
-            "path": ["spec", "ipFamilyPolicy"],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), t("serviceIPFamilyPolicy")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceLabels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceLabels")],
-            "resource": svc
-        },
-        {
-            "source_expr": "serviceLabels",
-            "path": ["metadata", "labels"],
-            "kind": "Fragment",
-            "guards": [t("prometheus.enabled"), t("prometheus.podmonitor.enabled"), w("serviceLabels")],
-            "resource": svc
-        }
-    ]);
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/cert_manager_service.ir.json"))
+            .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

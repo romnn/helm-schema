@@ -50,77 +50,16 @@ fn symbolic_ir_full() {
         );
     }
 
-    let cluster_role = serde_json::json!({
+    let _cluster_role = serde_json::json!({
         "api_version": "rbac.authorization.k8s.io/v1",
         "kind": "ClusterRole"
     });
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
 
-    let expected = serde_json::json!([
-        {
-            "guards": [t("rbac.create")],
-            "kind": "Scalar",
-            "path": [],
-            "resource": cluster_role,
-            "source_expr": "configGeneral.enable_crd_registration"
-        },
-        {
-            "guards": [t("rbac.create")],
-            "kind": "Scalar",
-            "path": [],
-            "resource": cluster_role,
-            "source_expr": "configGeneral.kubernetes_use_configmaps"
-        },
-        {
-            "guards": [t("rbac.create")],
-            "kind": "Scalar",
-            "path": [],
-            "resource": cluster_role,
-            "source_expr": "configKubernetes.spilo_privileged"
-        },
-        {
-            "guards": [t("rbac.create")],
-            "kind": "Scalar",
-            "path": [],
-            "resource": cluster_role,
-            "source_expr": "configKubernetes.storage_resize_mode"
-        },
-        {
-            "guards": [t("rbac.create")],
-            "kind": "Scalar",
-            "path": [],
-            "resource": cluster_role,
-            "source_expr": "enableStreams"
-        },
-        {
-            "guards": [],
-            "kind": "Scalar",
-            "path": [],
-            "resource": null,
-            "source_expr": "fullnameOverride"
-        },
-        {
-            "guards": [],
-            "kind": "Scalar",
-            "path": [],
-            "resource": null,
-            "source_expr": "nameOverride"
-        },
-        {
-            "guards": [],
-            "kind": "Scalar",
-            "path": [],
-            "resource": null,
-            "source_expr": "rbac.create"
-        },
-        {
-            "guards": [],
-            "kind": "Scalar",
-            "path": [],
-            "resource": null,
-            "source_expr": "serviceAccount.name"
-        }
-    ]);
+    let expected: serde_json::Value = serde_json::from_str(include_str!(
+        "fixtures/zalando_postgres_operator_clusterrole.ir.json"
+    ))
+    .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

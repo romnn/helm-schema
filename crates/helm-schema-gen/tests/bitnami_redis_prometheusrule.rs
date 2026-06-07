@@ -34,89 +34,123 @@ fn schema_fused_rust() {
         );
     }
 
-    let expected = serde_json::json!({
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-            "commonAnnotations": {
-                "type": "object",
-                "additionalProperties": {}
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "commonAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "commonLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "metrics": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "prometheusRule": {
+          "additionalProperties": false,
+          "properties": {
+            "additionalLabels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
-            "commonLabels": {
-                "type": "object",
-                "additionalProperties": {}
+            "enabled": {
+              "type": "boolean"
             },
-            "metrics": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                    "enabled": {"type": "boolean"},
-                    "prometheusRule": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                            "additionalLabels": {
-                                "type": "object",
-                                "additionalProperties": {}
-                            },
-                            "enabled": {"type": "boolean"},
-                            "namespace": {"type": "string"},
-                            "rules": {
-                                "description": "List of alerting and recording rules.",
-                                "type": "array",
-                                "items": {
-                                    "additionalProperties": false,
-                                    "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                                    "properties": {
-                                        "alert": {
-                                            "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                                            "type": "string"
-                                        },
-                                        "annotations": {
-                                            "additionalProperties": {"type": "string"},
-                                            "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                                            "type": "object"
-                                        },
-                                        "expr": {
-                                            "anyOf": [
-                                                {"type": "integer"},
-                                                {"type": "string"}
-                                            ],
-                                            "description": "PromQL expression to evaluate.",
-                                            "x-kubernetes-int-or-string": true
-                                        },
-                                        "for": {
-                                            "description": "Alerts are considered firing once they have been returned for this long.",
-                                            "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                                            "type": "string"
-                                        },
-                                        "keep_firing_for": {
-                                            "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                                            "minLength": 1,
-                                            "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                                            "type": "string"
-                                        },
-                                        "labels": {
-                                            "additionalProperties": {"type": "string"},
-                                            "description": "Labels to add or overwrite.",
-                                            "type": "object"
-                                        },
-                                        "record": {
-                                            "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": ["expr"],
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
+            "namespace": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
                 }
+              ]
+            },
+            "rules": {
+              "description": "List of alerting and recording rules.",
+              "items": {
+                "additionalProperties": false,
+                "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
+                "properties": {
+                  "alert": {
+                    "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
+                    "type": "string"
+                  },
+                  "annotations": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
+                    "type": "object"
+                  },
+                  "expr": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "PromQL expression to evaluate.",
+                    "x-kubernetes-int-or-string": true
+                  },
+                  "for": {
+                    "description": "Alerts are considered firing once they have been returned for this long.",
+                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                    "type": "string"
+                  },
+                  "keep_firing_for": {
+                    "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
+                    "minLength": 1,
+                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                    "type": "string"
+                  },
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Labels to add or overwrite.",
+                    "type": "object"
+                  },
+                  "record": {
+                    "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "expr"
+                ],
+                "type": "object"
+              },
+              "type": "array"
             }
+          },
+          "type": "object"
         }
-    });
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}
+"#,
+    )
+    .expect("parse expected");
 
     similar_asserts::assert_eq!(actual, expected);
 }

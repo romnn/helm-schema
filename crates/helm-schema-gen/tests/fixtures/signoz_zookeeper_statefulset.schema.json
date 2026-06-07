@@ -779,7 +779,15 @@
               ]
             },
             "existingSecret": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "serverUsers": {
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -803,7 +811,15 @@
               ]
             },
             "existingSecret": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "learnerUser": {
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -1501,19 +1517,7 @@
       "type": "object"
     },
     "dataLogDir": {
-      "anyOf": [
-        {
-          "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-          "type": "string"
-        },
-        {
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "string"
-        },
-        {
-          "type": "string"
-        }
-      ]
+      "type": "string"
     },
     "diagnosticMode": {
       "additionalProperties": false,
@@ -1549,7 +1553,15 @@
       "type": "object"
     },
     "existingConfigmap": {
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "extraEnvVars": {
       "anyOf": [
@@ -1578,12 +1590,26 @@
       ]
     },
     "extraEnvVarsCM": {
-      "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "extraEnvVarsSecret": {
-      "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "extraVolumeMounts": {
       "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
@@ -3235,7 +3261,14 @@
       "type": "string"
     },
     "fullnameOverride": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "global": {
       "additionalProperties": false,
@@ -3314,7 +3347,6 @@
           "type": "string"
         },
         "pullPolicy": {
-          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
           "type": "string"
         },
         "pullSecrets": {
@@ -3322,12 +3354,15 @@
           "type": "array"
         },
         "registry": {
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
           "type": "string"
         },
         "repository": {
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
           "type": "string"
         },
         "tag": {
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
           "type": "string"
         }
       },
@@ -3393,8 +3428,15 @@
       ]
     },
     "jvmFlags": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "kubeVersion": {
       "type": "string"
@@ -3694,7 +3736,14 @@
       "type": "integer"
     },
     "nameOverride": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "namespaceOverride": {
       "type": "string"
@@ -3928,8 +3977,15 @@
           "additionalProperties": false,
           "properties": {
             "existingClaim": {
-              "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "selector": {
               "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
@@ -4000,8 +4056,15 @@
           "type": "boolean"
         },
         "existingClaim": {
-          "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "labels": {
           "additionalProperties": {
@@ -4139,9 +4202,6 @@
             {
               "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
               "format": "int64",
-              "type": "integer"
-            },
-            {
               "type": "integer"
             },
             {
@@ -4291,8 +4351,15 @@
       ]
     },
     "priorityClassName": {
-      "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "replicaCount": {
       "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
@@ -4368,8 +4435,15 @@
       "type": "object"
     },
     "schedulerName": {
-      "description": "If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "service": {
       "additionalProperties": false,
@@ -4381,8 +4455,15 @@
           "additionalProperties": false,
           "properties": {
             "servicenameOverride": {
-              "description": "serviceName is the name of the service that governs this StatefulSet. This service must exist before the StatefulSet, and is responsible for the network identity of the set. Pods get DNS/hostnames that follow the pattern: pod-specific-string.serviceName.default.svc.cluster.local where \"pod-specific-string\" is managed by the StatefulSet controller.",
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "serviceName is the name of the service that governs this StatefulSet. This service must exist before the StatefulSet, and is responsible for the network identity of the set. Pods get DNS/hostnames that follow the pattern: pod-specific-string.serviceName.default.svc.cluster.local where \"pod-specific-string\" is managed by the StatefulSet controller.",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "type": "object"
@@ -4504,10 +4585,14 @@
                 },
                 {
                   "type": "boolean"
+                },
+                {
+                  "type": "null"
                 }
               ]
             },
             "existingSecret": {
+              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
               "type": "string"
             },
             "keystorePassword": {
@@ -4518,13 +4603,27 @@
               "type": "string"
             },
             "passwordsSecretKeystoreKey": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "passwordsSecretName": {
               "type": "string"
             },
             "passwordsSecretTruststoreKey": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "truststorePassword": {
               "type": "string"
@@ -4554,10 +4653,14 @@
                 },
                 {
                   "type": "boolean"
+                },
+                {
+                  "type": "null"
                 }
               ]
             },
             "existingSecret": {
+              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
               "type": "string"
             },
             "keystorePassword": {
@@ -4568,13 +4671,27 @@
               "type": "string"
             },
             "passwordsSecretKeystoreKey": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "passwordsSecretName": {
               "type": "string"
             },
             "passwordsSecretTruststoreKey": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "truststorePassword": {
               "type": "string"
@@ -4983,8 +5100,15 @@
               "type": "string"
             },
             "pullPolicy": {
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "pullSecrets": {
               "items": {},

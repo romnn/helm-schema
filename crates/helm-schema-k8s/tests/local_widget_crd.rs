@@ -75,6 +75,21 @@ fn materialize_expands_refs() {
         "properties": {
             "apiVersion": {"type": ["string", "null"], "enum": [api_version]},
             "kind": {"type": ["string", "null"], "enum": [kind]},
+            "metadata": {
+                "type": "object",
+                "properties": {
+                    "annotations": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"}
+                    },
+                    "labels": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"}
+                    },
+                    "name": {"type": "string"},
+                    "namespace": {"type": "string"}
+                }
+            },
             "spec": {
                 "type": "object",
                 "properties": {

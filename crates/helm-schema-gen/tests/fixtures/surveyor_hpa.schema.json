@@ -19,20 +19,41 @@
           "type": "integer"
         },
         "targetCPUUtilizationPercentage": {
-          "description": "targetAverageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.",
-          "format": "int32",
-          "type": "integer"
+          "anyOf": [
+            {
+              "description": "targetAverageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "targetMemoryUtilizationPercentage": {
-          "description": "targetAverageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.",
-          "format": "int32",
-          "type": "integer"
+          "anyOf": [
+            {
+              "description": "targetAverageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
     },
     "fullnameOverride": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "global": {
       "additionalProperties": false,
@@ -45,7 +66,14 @@
       "type": "object"
     },
     "nameOverride": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
     }
   },
   "type": "object"

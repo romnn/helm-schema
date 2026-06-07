@@ -434,6 +434,9 @@ fn scope_guard(g: Guard, prefix: &[String]) -> Guard {
         Guard::With { path } => Guard::With {
             path: scope_values_path(&path, prefix),
         },
+        Guard::Default { path } => Guard::Default {
+            path: scope_values_path(&path, prefix),
+        },
     }
 }
 

@@ -15,6 +15,7 @@ use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_override::{descend_schema_path, expand_local_refs};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::metadata_enrichment::enrich_root_metadata_schema;
 
 use super::cross_scan::collect_other_versions;
 use super::mirror_chain::{CrdMirrorChain, CrdSource};
@@ -251,7 +252,9 @@ impl CrdsCatalogSchemaProvider {
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
         let (_source_id, root) = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
-        Some(expand_local_refs(&root, &root, 0, &mut stack))
+        Some(enrich_root_metadata_schema(expand_local_refs(
+            &root, &root, 0, &mut stack,
+        )))
     }
 }
 

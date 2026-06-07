@@ -52,49 +52,16 @@ fn symbolic_ir_full() {
         );
     }
 
-    let pc = serde_json::json!({
+    let _pc = serde_json::json!({
         "api_version": "scheduling.k8s.io/v1",
         "kind": "PriorityClass"
     });
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "podPriorityClassName.create",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "podPriorityClassName.name",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "podPriorityClassName.priority",
-            "path": ["value"],
-            "kind": "Scalar",
-            "guards": [t("podPriorityClassName.create")],
-            "resource": pc
-        }
-    ]);
+    let expected: serde_json::Value = serde_json::from_str(include_str!(
+        "fixtures/zalando_postgres_operator_postgres_pod_priority_class.ir.json"
+    ))
+    .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

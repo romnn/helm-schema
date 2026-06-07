@@ -154,6 +154,8 @@ pub fn generate_values_schema_full(
     }
 
     let nullable_paths = collect_nullable_value_paths(uses);
+    let default_fallback_paths = collect_default_fallback_value_paths(uses);
+    let paths_with_descendants = collect_paths_with_descendants(&referenced_value_paths);
 
     let values_yaml_doc = values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
@@ -162,16 +164,24 @@ pub fn generate_values_schema_full(
     let mut root_schema = object_schema(Map::new());
     for vp in referenced_value_paths {
         let used_as_fragment = value_paths_used_as_fragment.contains(&vp);
-        let provider_schema = provider_schemas_by_value_path
+        let provider_schemas = provider_schemas_by_value_path
             .remove(&vp)
-            .map_or_else(empty_schema, merge_schema_list);
+            .unwrap_or_default();
+        let provider_schema =
+            if provider_schemas.len() > 1 && provider_schemas.iter().all(is_string_like_schema) {
+                type_schema("string")
+            } else {
+                merge_schema_list(provider_schemas)
+            };
 
         // Preserve an explicit `null` default when the template proves the
         // path is optional and type hints or provider evidence can still
         // describe the non-null branch. This keeps `null` as an accepted input
         // value without letting a null placeholder erase the richer schema we
         // inferred from rendered usage.
-        let path_is_nullable = nullable_paths.contains(&vp) || type_hints.contains_key(&vp);
+        let path_is_nullable = nullable_paths.contains(&vp)
+            || default_fallback_paths.contains(&vp)
+            || type_hints.contains_key(&vp);
         let preserve_explicit_null_default =
             path_is_nullable && is_null_at_value_path(&values_yaml_doc, &vp);
         let values_yaml_schema = if used_as_fragment
@@ -209,6 +219,7 @@ pub fn generate_values_schema_full(
             .map_or_else(empty_schema, merge_schema_list);
 
         let merged = resolve_schema_for_value_path(
+            paths_with_descendants.contains(&vp),
             used_as_fragment,
             provider_schema,
             values_yaml_schema,
@@ -216,7 +227,12 @@ pub fn generate_values_schema_full(
             guard_constraint_schema,
             type_hint_schema,
         );
-        let merged = if preserve_explicit_null_default && !is_empty_schema(&merged) {
+        let merged = if is_scalar_like_schema(&merged)
+            && (preserve_explicit_null_default
+                || default_fallback_paths.contains(&vp)
+                || nullable_paths.contains(&vp))
+            && !is_empty_schema(&merged)
+        {
             merge_two_schemas(merged, type_schema("null"))
         } else {
             merged
@@ -256,6 +272,57 @@ fn is_scalar_schema(v: &Value) -> bool {
         schema_type(v),
         Some("string" | "integer" | "number" | "boolean")
     )
+}
+
+fn is_string_like_schema(v: &Value) -> bool {
+    if schema_type(v) == Some("string") {
+        return true;
+    }
+
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+
+    if let Some(Value::Array(types)) = obj.get("type") {
+        return types
+            .iter()
+            .all(|value| matches!(value.as_str(), Some("string" | "null")));
+    }
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(Value::Array(variants)) = obj.get(key) {
+            return !variants.is_empty() && variants.iter().all(is_string_like_schema);
+        }
+    }
+
+    false
+}
+
+fn is_scalar_like_schema(v: &Value) -> bool {
+    if is_scalar_schema(v) {
+        return true;
+    }
+
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+
+    if let Some(Value::Array(types)) = obj.get("type") {
+        return types.iter().all(|value| {
+            matches!(
+                value.as_str(),
+                Some("string" | "number" | "integer" | "boolean" | "null")
+            )
+        });
+    }
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(Value::Array(variants)) = obj.get(key) {
+            return !variants.is_empty() && variants.iter().all(is_scalar_like_schema);
+        }
+    }
+
+    false
 }
 
 fn is_object_or_array_schema(v: &Value) -> bool {
@@ -312,6 +379,7 @@ fn schema_allows_scalar_type(schema: &Value, scalar_ty: &str) -> bool {
 }
 
 fn resolve_schema_for_value_path(
+    has_referenced_descendants: bool,
     used_as_fragment: bool,
     provider_schema: Value,
     values_yaml_schema: Value,
@@ -327,7 +395,12 @@ fn resolve_schema_for_value_path(
             // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
             // In these cases the *input* type in values.yaml is the scalar, not the output
             // object type, so prefer the values.yaml scalar schema.
-            if used_as_fragment
+            if has_referenced_descendants
+                && is_fixed_object_schema(&values_yaml_schema)
+                && is_scalar_schema(&provider_schema)
+            {
+                values_yaml_schema
+            } else if used_as_fragment
                 && is_fixed_object_schema(&values_yaml_schema)
                 && is_open_string_map_schema(&provider_schema)
             {
@@ -392,8 +465,9 @@ fn infer_guard_boolish_schema(guard: &Guard) -> Option<Value> {
         // `with .Values.X` accepts any non-empty value (string, list, map,
         // number, bool, …), not just booleans, so it must not contribute a
         // boolean type hint. `eq` constrains the value but the constraint is
-        // emitted separately by `infer_guard_constraint_schema`.
-        Guard::Eq { .. } | Guard::Range { .. } | Guard::With { .. } => None,
+        // emitted separately by `infer_guard_constraint_schema`. `default`
+        // guards express fallback/nullability, not booleans.
+        Guard::Eq { .. } | Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => None,
         _ => Some(type_schema("boolean")),
     }
 }
@@ -477,6 +551,21 @@ fn is_mapping_at_value_path(doc: &YamlValue, vp: &str) -> bool {
             .all(|value| matches!(value, YamlValue::Mapping(_)))
 }
 
+fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for path in paths {
+        let mut segments: Vec<&str> = path
+            .split('.')
+            .filter(|segment| !segment.is_empty())
+            .collect();
+        while segments.len() > 1 {
+            segments.pop();
+            out.insert(segments.join("."));
+        }
+    }
+    out
+}
+
 fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
     if !is_fixed_object_schema(&schema) {
         return schema;
@@ -555,7 +644,8 @@ fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
             Guard::Truthy { path }
             | Guard::Eq { path, .. }
             | Guard::Range { path }
-            | Guard::With { path } => path == &use_.source_expr,
+            | Guard::With { path }
+            | Guard::Default { path } => path == &use_.source_expr,
             Guard::Not { .. } | Guard::Or { .. } => false,
         })
     }
@@ -575,6 +665,18 @@ fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
         .into_iter()
         .filter_map(|(path, info)| {
             (info.has_render_use && info.all_uses_nullable).then(|| path.to_string())
+        })
+        .collect()
+}
+
+fn collect_default_fallback_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
+    uses.iter()
+        .filter(|use_| !use_.path.0.is_empty())
+        .filter_map(|use_| {
+            use_.guards
+                .iter()
+                .any(|guard| matches!(guard, Guard::Default { path } if path == &use_.source_expr))
+                .then(|| use_.source_expr.clone())
         })
         .collect()
 }

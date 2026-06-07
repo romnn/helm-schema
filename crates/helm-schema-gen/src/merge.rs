@@ -1,5 +1,12 @@
 use serde_json::{Map, Value};
 
+fn is_annotation_keyword(key: &str) -> bool {
+    matches!(
+        key,
+        "description" | "title" | "default" | "examples" | "deprecated" | "readOnly" | "writeOnly"
+    )
+}
+
 pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
     schemas.sort_by_key(canonical_json_string);
     schemas.dedup();
@@ -27,8 +34,9 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     }
 
     let mut out: Vec<Value> = Vec::new();
-    out.extend(flatten_anyof(a));
-    out.extend(flatten_anyof(b));
+    out.extend(flatten_union_variants(a));
+    out.extend(flatten_union_variants(b));
+    out = collapse_compatible_variants(out);
     out.sort_by_key(canonical_json_string);
     out.dedup();
     if out.len() == 1 {
@@ -42,13 +50,48 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     }
 }
 
-fn flatten_anyof(v: Value) -> Vec<Value> {
+fn flatten_union_variants(v: Value) -> Vec<Value> {
     if let Value::Object(obj) = &v
         && let Some(arr) = obj.get("anyOf").and_then(|x| x.as_array())
     {
         return arr.clone();
     }
+    if let Value::Object(mut obj) = v.clone()
+        && let Some(Value::Array(types)) = obj.remove("type")
+    {
+        let mut variants = Vec::new();
+        for ty in types {
+            let Some(ty) = ty.as_str() else {
+                continue;
+            };
+            let mut variant = obj.clone();
+            if ty == "null" {
+                variant.retain(|key, _| key == "type");
+            }
+            variant.insert("type".to_string(), Value::String(ty.to_string()));
+            variants.push(Value::Object(variant));
+        }
+        if !variants.is_empty() {
+            return variants;
+        }
+    }
     vec![v]
+}
+
+fn collapse_compatible_variants(mut variants: Vec<Value>) -> Vec<Value> {
+    variants.sort_by_key(canonical_json_string);
+
+    let mut out: Vec<Value> = Vec::new();
+    'variants: for variant in variants {
+        for existing in &mut out {
+            if let Some(merged) = try_merge_compatible(existing, &variant) {
+                *existing = merged;
+                continue 'variants;
+            }
+        }
+        out.push(variant);
+    }
+    out
 }
 
 fn canonical_json_string(v: &Value) -> String {
@@ -142,6 +185,7 @@ fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {
 fn merge_scalar_like_schemas(a: &Value, b: &Value) -> Option<Value> {
     let mut out = a.as_object()?.clone();
     let bobj = b.as_object()?;
+    let is_string_type = out.get("type").and_then(Value::as_str) == Some("string");
 
     match (
         out.get("enum").and_then(|v| v.as_array()).cloned(),
@@ -171,6 +215,12 @@ fn merge_scalar_like_schemas(a: &Value, b: &Value) -> Option<Value> {
                 out.insert(k.clone(), bv.clone());
             }
             Some(av) if av == bv => {}
+            Some(_) if is_string_type => {
+                out.remove(k);
+            }
+            Some(_) if is_annotation_keyword(k) => {
+                out.remove(k);
+            }
             _ => {
                 return None;
             }
@@ -418,6 +468,45 @@ mod tests {
                 .pointer("/properties/requests/properties/cpu/type")
                 .and_then(|value| value.as_str()),
             Some("string"),
+        );
+    }
+
+    #[test]
+    fn merge_scalar_schemas_drops_conflicting_annotations() {
+        let metadata_name = json!({
+            "type": "string",
+            "description": "Name must be unique within a namespace."
+        });
+        let service_account_name = json!({
+            "type": "string",
+            "description": "ServiceAccountName is the name of the ServiceAccount to use."
+        });
+
+        let merged = merge_two_schemas(metadata_name, service_account_name);
+
+        assert_eq!(merged, json!({ "type": "string" }));
+    }
+
+    #[test]
+    fn merge_string_schemas_drops_conflicting_validation_keywords() {
+        let service_name = json!({
+            "type": "string",
+            "minLength": 1
+        });
+        let plain_string = json!({
+            "type": "string"
+        });
+
+        let merged = merge_two_schemas(service_name, plain_string);
+        assert_eq!(merged, json!({ "type": "string", "minLength": 1 }));
+
+        let merged_nullable = merge_two_schemas(
+            json!({ "type": "string", "format": "byte" }),
+            json!({ "type": "string", "minLength": 1 }),
+        );
+        assert_eq!(
+            merged_nullable,
+            json!({ "type": "string", "format": "byte", "minLength": 1 })
         );
     }
 }

@@ -42,75 +42,204 @@ fn symbolic_ir_full() {
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");
 
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let pr =
+    if std::env::var("SYMBOLIC_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&actual).expect("pretty json")
+        );
+    }
+
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _pr =
         serde_json::json!({"api_version": "monitoring.coreos.com/v1", "kind": "PrometheusRule"});
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "commonAnnotations",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled")],
-            "resource": pr
-        },
-        {
-            "source_expr": "commonAnnotations",
-            "path": ["metadata", "annotations"],
-            "kind": "Fragment",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled"), t("commonAnnotations")],
-            "resource": pr
-        },
-        {
-            "source_expr": "commonLabels",
-            "path": ["metadata", "labels"],
-            "kind": "Fragment",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled")],
-            "resource": pr
-        },
-        {
-            "source_expr": "metrics.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "metrics.prometheusRule.additionalLabels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled")],
-            "resource": pr
-        },
-        {
-            "source_expr": "metrics.prometheusRule.additionalLabels",
-            "path": ["metadata", "labels"],
-            "kind": "Fragment",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled"), t("metrics.prometheusRule.additionalLabels")],
-            "resource": pr
-        },
-        {
-            "source_expr": "metrics.prometheusRule.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("metrics.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "metrics.prometheusRule.namespace",
-            "path": ["metadata", "namespace"],
-            "kind": "Scalar",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled")],
-            "resource": pr
-        },
-        {
-            "source_expr": "metrics.prometheusRule.rules",
-            "path": ["spec", "groups[*]", "rules"],
-            "kind": "Fragment",
-            "guards": [t("metrics.enabled"), t("metrics.prometheusRule.enabled")],
-            "resource": pr
-        }
-    ]);
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+[
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "commonAnnotations"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "commonAnnotations",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "annotations"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "commonAnnotations"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "commonLabels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "metrics.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "metrics.prometheusRule.additionalLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.additionalLabels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "metrics.prometheusRule.additionalLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "metrics.prometheusRule.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.namespace",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "namespace"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "metrics.prometheusRule.namespace"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "groups[*]",
+      "rules"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "metrics.prometheusRule.rules"
+  }
+]
+"#,
+    )
+    .expect("parse expected");
 
     similar_asserts::assert_eq!(actual, expected);
 }

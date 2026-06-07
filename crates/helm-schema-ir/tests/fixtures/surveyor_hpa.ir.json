@@ -1,0 +1,249 @@
+[
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "autoscaling.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "maxReplicas"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "autoscaling.maxReplicas"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "minReplicas"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "autoscaling.minReplicas"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "autoscaling.targetCPUUtilizationPercentage"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "autoscaling.targetCPUUtilizationPercentage",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "metrics[*]",
+      "resource",
+      "targetAverageUtilization"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "autoscaling.targetCPUUtilizationPercentage"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "autoscaling.targetMemoryUtilizationPercentage",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "metrics[*]",
+      "resource",
+      "targetAverageUtilization"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "name"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "scaleTargetRef",
+      "name"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "name"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "scaleTargetRef",
+      "name"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "nameOverride"
+  }
+]

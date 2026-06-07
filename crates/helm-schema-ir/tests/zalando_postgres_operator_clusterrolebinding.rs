@@ -52,36 +52,10 @@ fn symbolic_ir_full() {
         );
     }
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "rbac.create",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceAccount.name",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        }
-    ]);
+    let expected: serde_json::Value = serde_json::from_str(include_str!(
+        "fixtures/zalando_postgres_operator_clusterrolebinding.ir.json"
+    ))
+    .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

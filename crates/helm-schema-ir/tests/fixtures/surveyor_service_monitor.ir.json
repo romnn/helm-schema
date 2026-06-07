@@ -1,0 +1,277 @@
+[
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.annotations",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.annotations"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.annotations",
+        "type": "with"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "annotations"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.annotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceMonitor.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.interval"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.interval",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "endpoints[*]",
+      "interval"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.interval"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.labels",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.labels",
+        "type": "with"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.metricRelabelings",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.metricRelabelings"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.metricRelabelings",
+        "type": "with"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "endpoints"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.metricRelabelings"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.relabelings",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.relabelings"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.relabelings",
+        "type": "with"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "endpoints"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.relabelings"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.scrapeTimeout"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.scrapeTimeout",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "endpoints[*]",
+      "scrapeTimeout"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "serviceMonitor.scrapeTimeout"
+  }
+]

@@ -73,6 +73,7 @@ enum HelperBinding {
 #[derive(Default)]
 struct BoundHelperAnalysis {
     output: BTreeSet<String>,
+    defaulted: BTreeSet<String>,
     guards: BTreeSet<String>,
     suppress_roots: BTreeSet<String>,
 }
@@ -80,6 +81,7 @@ struct BoundHelperAnalysis {
 impl BoundHelperAnalysis {
     fn extend(&mut self, other: Self) {
         self.output.extend(other.output);
+        self.defaulted.extend(other.defaulted);
         self.guards.extend(other.guards);
         self.suppress_roots.extend(other.suppress_roots);
     }
@@ -845,9 +847,16 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelmAst::HelmExpr { text } => {
+                let bound = Self::analyze_bound_helper_calls_with_bindings(
+                    text, None, None, defines, visited,
+                );
                 for v in extract_values_paths(text) {
-                    output.insert(v);
+                    if !bound.suppress_roots.contains(&v) {
+                        output.insert(v);
+                    }
                 }
+                output.extend(bound.output);
+                guards.extend(bound.guards);
                 for name in Self::literal_template_calls(text) {
                     if !visited.insert(name.clone()) {
                         continue;
@@ -1340,6 +1349,30 @@ impl<'a> SymbolicWalker<'a> {
         paths.into_iter().collect()
     }
 
+    fn resolve_expr_to_values_path_in_context(
+        expr: &TemplateExpr,
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+    ) -> Option<String> {
+        if let Some(path) = values_path_from_expr(expr) {
+            return Some(path);
+        }
+
+        match Self::binding_from_expr(expr, bindings, current_dot) {
+            Some(HelperBinding::ValuesPath(path)) => Some(path),
+            _ => None,
+        }
+    }
+
+    fn resolved_default_fallback_paths_in_context(&self, text: &str) -> BTreeSet<String> {
+        let current_dot = self.current_dot_binding();
+        Self::resolved_default_fallback_paths_for_text(
+            text,
+            Some(&self.root_bindings),
+            current_dot.as_ref(),
+        )
+    }
+
     fn condition_guards_in_context(&self, text: &str) -> Vec<Guard> {
         let cond_guards = parse_condition(text);
         if !cond_guards.is_empty() {
@@ -1458,10 +1491,12 @@ impl<'a> SymbolicWalker<'a> {
         let helper_inlined = self.inline_exact_helper_call(text);
 
         let values = self.resolved_values_paths_in_context(text);
+        let default_fallback_values = self.resolved_default_fallback_paths_in_context(text);
 
         let bound_values = self.extract_bound_values(text);
 
         let mut helper_output_values: Vec<String> = Vec::new();
+        let mut helper_defaulted_values: Vec<String> = Vec::new();
         let mut helper_guard_values: Vec<String> = Vec::new();
         let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
         if !helper_inlined {
@@ -1475,10 +1510,13 @@ impl<'a> SymbolicWalker<'a> {
             }
             let bound = self.analyze_bound_helper_calls(text);
             helper_output_values.extend(bound.output);
+            helper_defaulted_values.extend(bound.defaulted);
             helper_guard_values.extend(bound.guards);
             suppress_direct_values.extend(bound.suppress_roots);
             helper_output_values.sort();
             helper_output_values.dedup();
+            helper_defaulted_values.sort();
+            helper_defaulted_values.dedup();
             helper_guard_values.sort();
             helper_guard_values.dedup();
         }
@@ -1549,15 +1587,44 @@ impl<'a> SymbolicWalker<'a> {
             } else {
                 path.clone()
             };
-            self.emit_use(v, emit_path, kind);
+            let default_guard = Guard::Default { path: v.clone() };
+            if default_fallback_values.contains(&v) {
+                self.emit_use_with_extra_guards(
+                    v,
+                    emit_path,
+                    kind,
+                    std::slice::from_ref(&default_guard),
+                );
+            } else {
+                self.emit_use(v, emit_path, kind);
+            }
         }
 
         for v in bound_values {
             self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
         }
 
+        let helper_call_caller_path = !helper_inlined
+            && kind == ValueKind::Scalar
+            && !in_mapping_key
+            && !path.0.is_empty()
+            && !helper_output_values.is_empty()
+            && self.output_node_is_entire_scalar_value(node);
+
         for v in helper_output_values {
-            self.emit_helper_use(v);
+            if helper_call_caller_path {
+                let mut extra_guards: Vec<Guard> = helper_guard_values
+                    .iter()
+                    .cloned()
+                    .map(|path| Guard::Truthy { path })
+                    .collect();
+                if helper_defaulted_values.binary_search(&v).is_ok() {
+                    extra_guards.push(Guard::Default { path: v.clone() });
+                }
+                self.emit_use_with_extra_guards(v, path.clone(), kind, &extra_guards);
+            } else {
+                self.emit_helper_use(v);
+            }
         }
 
         for v in helper_guard_values {
@@ -1582,6 +1649,56 @@ impl<'a> SymbolicWalker<'a> {
         // to key construction (for example `{{ .name }}.json: ...`), not to the
         // parent value slot.
         rel_start < colon_offset && rel_end <= colon_offset
+    }
+
+    fn output_node_is_entire_scalar_value(&self, node: tree_sitter::Node<'_>) -> bool {
+        fn normalize_value_text(value_text: &str) -> &str {
+            let trimmed = value_text.trim();
+            let unquoted = if trimmed.len() >= 2
+                && ((trimmed.starts_with('"') && trimmed.ends_with('"'))
+                    || (trimmed.starts_with('\'') && trimmed.ends_with('\'')))
+            {
+                &trimmed[1..trimmed.len() - 1]
+            } else {
+                trimmed
+            };
+
+            let Some(rest) = unquoted.strip_prefix("{{") else {
+                return unquoted.trim();
+            };
+            let rest = rest.strip_prefix('-').unwrap_or(rest);
+            let Some(rest) = rest.strip_suffix("}}") else {
+                return unquoted.trim();
+            };
+            let rest = rest.strip_suffix('-').unwrap_or(rest);
+            rest.trim()
+        }
+
+        let start = node.start_byte();
+        let end = node.end_byte();
+        let line_start = self.source[..start].rfind('\n').map_or(0, |idx| idx + 1);
+        let line_end = self.source[end..]
+            .find('\n')
+            .map_or(self.source.len(), |idx| end + idx);
+        let line = &self.source[line_start..line_end];
+        let rel_start = start - line_start;
+        let rel_end = end - line_start;
+        let node_text = &line[rel_start..rel_end];
+
+        if let Some(colon_offset) = first_mapping_colon_offset(line) {
+            if rel_start <= colon_offset {
+                return false;
+            }
+            let value_text = line[colon_offset + 1..].trim();
+            return normalize_value_text(value_text) == node_text.trim();
+        }
+
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix('-') {
+            return normalize_value_text(rest.trim_start()) == node_text.trim();
+        }
+
+        false
     }
 
     fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
@@ -1794,30 +1911,19 @@ impl<'a> SymbolicWalker<'a> {
         analysis
     }
 
-    fn collect_bound_paths_from_text(
+    fn direct_bound_paths_from_text(
         text: &str,
         bindings: &HashMap<String, HelperBinding>,
-        defines: &DefineIndex,
-        seen: &mut HashSet<String>,
-        into: &mut BTreeSet<String>,
-    ) {
+    ) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
         for expr in Self::parse_expr_text(text) {
             expr.walk(|node| {
                 if let Some(path) = Self::resolve_bound_path_expr(node, bindings) {
-                    into.insert(path);
+                    out.insert(path);
                 }
             });
         }
-
-        let nested = Self::analyze_bound_helper_calls_with_bindings(
-            text,
-            Some(bindings),
-            None,
-            defines,
-            seen,
-        );
-        into.extend(nested.output);
-        into.extend(nested.guards);
+        out
     }
 
     fn collect_bound_helper_values_from_ast(
@@ -1848,26 +1954,39 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelmAst::HelmExpr { text } => {
-                Self::collect_bound_paths_from_text(
+                analysis
+                    .output
+                    .extend(Self::direct_bound_paths_from_text(text, bindings));
+                let nested = Self::analyze_bound_helper_calls_with_bindings(
                     text,
-                    bindings,
+                    Some(bindings),
+                    None,
                     defines,
                     seen,
-                    &mut analysis.output,
                 );
+                analysis.output.extend(nested.output);
+                analysis.guards.extend(nested.guards);
+                let fallback_paths =
+                    Self::resolved_default_fallback_paths_for_text(text, Some(bindings), None);
+                analysis.defaulted.extend(fallback_paths);
             }
             HelmAst::If {
                 cond,
                 then_branch,
                 else_branch,
             } => {
-                Self::collect_bound_paths_from_text(
+                analysis
+                    .guards
+                    .extend(Self::direct_bound_paths_from_text(cond, bindings));
+                let nested = Self::analyze_bound_helper_calls_with_bindings(
                     cond,
-                    bindings,
+                    Some(bindings),
+                    None,
                     defines,
                     seen,
-                    &mut analysis.guards,
                 );
+                analysis.guards.extend(nested.output);
+                analysis.guards.extend(nested.guards);
                 for item in then_branch {
                     Self::collect_bound_helper_values_from_ast(
                         item, bindings, defines, seen, analysis,
@@ -1889,13 +2008,18 @@ impl<'a> SymbolicWalker<'a> {
                 body,
                 else_branch,
             } => {
-                Self::collect_bound_paths_from_text(
+                analysis
+                    .guards
+                    .extend(Self::direct_bound_paths_from_text(header, bindings));
+                let nested = Self::analyze_bound_helper_calls_with_bindings(
                     header,
-                    bindings,
+                    Some(bindings),
+                    None,
                     defines,
                     seen,
-                    &mut analysis.guards,
                 );
+                analysis.guards.extend(nested.output);
+                analysis.guards.extend(nested.guards);
                 for item in body {
                     Self::collect_bound_helper_values_from_ast(
                         item, bindings, defines, seen, analysis,
@@ -1909,6 +2033,50 @@ impl<'a> SymbolicWalker<'a> {
             }
             HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
         }
+    }
+
+    fn resolved_default_fallback_paths_for_text(
+        text: &str,
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+    ) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| match node {
+                TemplateExpr::Call { function, args }
+                    if function == "default" && args.len() == 2 =>
+                {
+                    if let Some(path) = Self::resolve_expr_to_values_path_in_context(
+                        &args[1],
+                        bindings,
+                        current_dot,
+                    ) {
+                        out.insert(path);
+                    }
+                }
+                TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
+                    for window in stages.windows(2) {
+                        let TemplateExpr::Call { function, .. } = &window[1] else {
+                            continue;
+                        };
+                        if function != "default" {
+                            continue;
+                        }
+                        if let Some(path) = Self::resolve_expr_to_values_path_in_context(
+                            &window[0],
+                            bindings,
+                            current_dot,
+                        ) {
+                            out.insert(path);
+                        }
+                    }
+                }
+                _ => {}
+            });
+        }
+
+        out
     }
 
     fn collect_if_with_guards(&mut self, cond_text: &str) {
@@ -1961,6 +2129,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
                 Guard::Range { .. } => vec![g],
                 Guard::With { .. } => vec![g],
+                Guard::Default { .. } => vec![g],
             })
             .collect();
 

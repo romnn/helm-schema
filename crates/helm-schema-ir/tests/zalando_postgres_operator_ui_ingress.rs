@@ -55,7 +55,7 @@ fn symbolic_ir_full() {
     // → legacy extensions fallback). The detector preserves that
     // order verbatim instead of imposing a generic stability rank
     // (round-5 Finding 2 fix).
-    let ingress = serde_json::json!({
+    let _ingress = serde_json::json!({
         "api_version": "networking.k8s.io/v1",
         "kind": "Ingress",
         "api_version_candidates": [
@@ -63,110 +63,14 @@ fn symbolic_ir_full() {
             "extensions/v1beta1"
         ]
     });
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let r = |p: &str| serde_json::json!({"type": "range", "path": p});
-    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
+    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
+    let _r = |p: &str| serde_json::json!({"type": "range", "path": p});
+    let _w = |p: &str| serde_json::json!({"type": "with", "path": p});
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "ingress.annotations",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), w("ingress.annotations")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.annotations",
-            "path": ["metadata", "annotations"],
-            "kind": "Fragment",
-            "guards": [t("ingress.enabled"), w("ingress.annotations")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "ingress.hosts.*.host",
-            "path": ["spec", "rules[*]", "host"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), r("ingress.hosts")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.hosts.*.paths.*",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), r("ingress.hosts"), r("ingress.hosts.*.paths")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.ingressClassName",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.ingressClassName",
-            "path": ["spec", "ingressClassName"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.ingressClassName")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.tls",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.tls.*.hosts",
-            "path": ["spec", "tls[*]", "hosts"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls"), r("ingress.tls.*.hosts")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.tls.*.hosts.*",
-            "path": ["spec", "tls[*]", "hosts[*]"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls"), r("ingress.tls.*.hosts")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "ingress.tls.*.secretName",
-            "path": ["spec", "tls[*]", "secretName"],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled"), t("ingress.tls"), r("ingress.tls")],
-            "resource": ingress
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "service.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("ingress.enabled")],
-            "resource": null
-        }
-    ]);
+    let expected: serde_json::Value = serde_json::from_str(include_str!(
+        "fixtures/zalando_postgres_operator_ui_ingress.ir.json"
+    ))
+    .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

@@ -27,8 +27,21 @@
     "enableStreams": {
       "type": "boolean"
     },
-    "fullnameOverride": {},
-    "nameOverride": {},
+    "fullnameOverride": {
+      "anyOf": [
+        {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nameOverride": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
+    },
     "rbac": {
       "additionalProperties": false,
       "properties": {
@@ -41,7 +54,17 @@
     "serviceAccount": {
       "additionalProperties": false,
       "properties": {
-        "name": {}
+        "name": {
+          "anyOf": [
+            {
+              "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       },
       "type": "object"
     }

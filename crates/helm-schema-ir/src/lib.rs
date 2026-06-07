@@ -93,6 +93,14 @@ pub enum Guard {
     /// `if`-style truthy checks. The bound path is null-tolerant by
     /// construction (`with nil` skips the body).
     With { path: String },
+    /// Rendered via a `default ... <path>` fallback, either in prefix form
+    /// (`default "x" .Values.X`) or pipeline form (`.Values.X | default "x"`).
+    ///
+    /// This is stronger than a plain truthy guard: the template explicitly
+    /// substitutes a fallback when the path is empty/nil, so `null` is an
+    /// accepted chart input for that render site even when `values.yaml` ships
+    /// a non-null default.
+    Default { path: String },
 }
 
 impl Guard {
@@ -104,7 +112,8 @@ impl Guard {
             | Guard::Not { path }
             | Guard::Eq { path, .. }
             | Guard::Range { path }
-            | Guard::With { path } => {
+            | Guard::With { path }
+            | Guard::Default { path } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
