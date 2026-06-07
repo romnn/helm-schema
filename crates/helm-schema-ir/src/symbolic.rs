@@ -1124,44 +1124,56 @@ impl<'a> SymbolicWalker<'a> {
         (indent, col)
     }
 
-    fn sync_action_for_node(&mut self, node: tree_sitter::Node<'_>) {
-        fn parse_indent_width(text: &str) -> Option<usize> {
-            for kw in ["nindent", "indent"] {
-                let Some(idx) = text.rfind(kw) else {
-                    continue;
-                };
-                let after = &text[idx + kw.len()..];
-                let after = after.trim_start();
-                let digits: String = after.chars().take_while(char::is_ascii_digit).collect();
-                if digits.is_empty() {
-                    continue;
-                }
-                if let Ok(n) = digits.parse::<usize>() {
-                    return Some(n);
-                }
+    fn starts_template_action_line(&self, byte_pos: usize) -> bool {
+        let bytes = self.source.as_bytes();
+        let mut line_start = byte_pos.min(bytes.len());
+        while line_start > 0 {
+            if bytes[line_start - 1] == b'\n' {
+                break;
             }
-            None
+            line_start -= 1;
         }
 
+        let prefix = &self.source[line_start..byte_pos.min(self.source.len())];
+        let trimmed = prefix.trim_start();
+        trimmed.starts_with("{{")
+    }
+
+    fn fragment_indent_width(text: &str) -> Option<usize> {
+        fn call_indent_width(expr: &TemplateExpr) -> Option<usize> {
+            match expr {
+                TemplateExpr::Call { function, args }
+                    if matches!(function.as_str(), "indent" | "nindent") =>
+                {
+                    match args.first() {
+                        Some(TemplateExpr::Literal(Literal::Int(n))) => usize::try_from(*n).ok(),
+                        Some(TemplateExpr::Parenthesized(inner)) => call_indent_width(inner),
+                        _ => None,
+                    }
+                }
+                TemplateExpr::Parenthesized(inner) => call_indent_width(inner),
+                TemplateExpr::Pipeline(stages) => stages.iter().rev().find_map(call_indent_width),
+                _ => None,
+            }
+        }
+
+        Self::parse_expr_text(text)
+            .iter()
+            .rev()
+            .find_map(call_indent_width)
+    }
+
+    fn sync_action_for_node(&mut self, node: tree_sitter::Node<'_>) {
         if matches!(node.kind(), "text" | "yaml_no_injection_text") {
             return;
         }
 
-        // Only sync placement for nodes that correspond to template actions or whole pipelines.
-        // Syncing on every leaf (e.g. inside selector chains) can shift the shape incorrectly
-        // and cause spurious path emissions.
-        // Sync *only* on template-level action nodes.
-        // Syncing on inner expression nodes (e.g. `selector_expression`) can set
-        // `clear_pending_on_newline_at_indent` at the wrong indent and clear parent keys.
-        if !matches!(
-            node.kind(),
-            "if_action"
-                | "with_action"
-                | "range_action"
-                | "template_action"
-                | "define_action"
-                | "block_action"
-        ) {
+        // Only sync placement for emitted template-output nodes. Control-action
+        // lines (`if` / `with` / `range` / `define` / `block`) do not
+        // contribute YAML structure themselves, so letting their physical
+        // indentation mutate the shape stack can incorrectly pop surrounding
+        // mapping context before the controlled body is walked.
+        if node.kind() != "template_action" {
             return;
         }
 
@@ -1189,7 +1201,7 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
 
-        let (indent, col) = self.line_indent_and_col(pos);
+        let (physical_indent, physical_col) = self.line_indent_and_col(pos);
 
         // Only clear a pending mapping key at end-of-line when this looks like an inline scalar
         // value (e.g. `name: {{ ... }}`), not when the template action expands to a YAML fragment
@@ -1206,15 +1218,15 @@ impl<'a> SymbolicWalker<'a> {
 
         let (indent, col) = if node.kind() == "template_action" && !allow_clear_pending {
             if let Ok(text) = node.utf8_text(self.source.as_bytes())
-                && let Some(virtual_indent) = parse_indent_width(text)
-                && virtual_indent > indent
+                && let Some(virtual_indent) = Self::fragment_indent_width(text)
+                && virtual_indent > physical_indent
             {
                 (virtual_indent, virtual_indent)
             } else {
-                (indent, col)
+                (physical_indent, physical_col)
             }
         } else {
-            (indent, col)
+            (physical_indent, physical_col)
         };
 
         self.shape
@@ -1452,10 +1464,7 @@ impl<'a> SymbolicWalker<'a> {
         let mut helper_output_values: Vec<String> = Vec::new();
         let mut helper_guard_values: Vec<String> = Vec::new();
         let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
-        if !helper_inlined
-            && (kind == ValueKind::Scalar
-                || (self.inline_helpers_in_fragments && kind == ValueKind::Fragment))
-        {
+        if !helper_inlined {
             for name in Self::literal_template_calls(text) {
                 if name.ends_with(".defaultValues") {
                     continue;
@@ -1488,6 +1497,32 @@ impl<'a> SymbolicWalker<'a> {
         } else {
             self.shape.current_path()
         };
+        if kind == ValueKind::Fragment
+            && let Ok(node_text) = node.utf8_text(self.source.as_bytes())
+        {
+            let (physical_indent, _physical_col) = self.line_indent_and_col(node.start_byte());
+            if self.starts_template_action_line(node.start_byte()) {
+                let mut logical_indent = physical_indent;
+                if let Some(virtual_indent) = Self::fragment_indent_width(node_text) {
+                    logical_indent = virtual_indent;
+                }
+
+                let trailing_pending_segments = self
+                    .shape
+                    .stack
+                    .iter()
+                    .rev()
+                    .take_while(|(indent, kind, pending)| {
+                        *indent >= logical_indent
+                            && *kind == Container::Mapping
+                            && pending.is_some()
+                    })
+                    .count();
+                for _ in 0..trailing_pending_segments {
+                    path.0.pop();
+                }
+            }
+        }
         if kind == ValueKind::Fragment {
             if let Some(last) = path.0.last_mut()
                 && let Some(stripped) = last.strip_suffix("[*]")
@@ -1573,10 +1608,8 @@ impl<'a> SymbolicWalker<'a> {
             TemplateExpr::Parenthesized(inner) => Self::resolve_bound_path_expr(inner, bindings),
             TemplateExpr::Field(path) => Self::resolve_bound_segments(path, bindings),
             TemplateExpr::Selector { operand, path } => {
-                if let TemplateExpr::Variable(var) = operand.as_ref()
-                    && let Some(binding) = bindings.get(var)
-                {
-                    return Self::apply_binding(binding, path);
+                if let Some(binding) = Self::binding_from_expr(operand, Some(bindings), None) {
+                    return Self::apply_binding(&binding, path);
                 }
                 None
             }

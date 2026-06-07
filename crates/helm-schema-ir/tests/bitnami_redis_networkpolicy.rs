@@ -167,7 +167,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.extraEgress",
-            "path": ["spec", "egress"],
+            "path": ["spec", "egress[*]", "to"],
             "kind": "Fragment",
             "guards": [t("networkPolicy.enabled"), t("networkPolicy.extraEgress")],
             "resource": np
@@ -181,7 +181,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "networkPolicy.extraIngress",
-            "path": ["spec", "ingress"],
+            "path": ["spec", "ingress[*]", "from"],
             "kind": "Fragment",
             "guards": [t("networkPolicy.enabled"), t("networkPolicy.extraIngress")],
             "resource": np

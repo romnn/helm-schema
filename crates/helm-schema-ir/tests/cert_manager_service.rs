@@ -54,7 +54,21 @@ fn symbolic_ir_full() {
 
     let expected = serde_json::json!([
         {
+            "source_expr": "creator",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "fullnameOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "global.commonLabels",
             "path": [],
             "kind": "Scalar",
             "guards": [],

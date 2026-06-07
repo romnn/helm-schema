@@ -3,6 +3,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "affinity"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -285,6 +292,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "commonAnnotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -316,6 +330,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "commonAnnotations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "commonLabels"
   },
   {
     "guards": [],
@@ -680,6 +701,13 @@
     "source_expr": "containerSecurityContext.runAsUser"
   },
   {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "customLivenessProbe"
+  },
+  {
     "guards": [
       {
         "path": "diagnosticMode.enabled",
@@ -728,6 +756,13 @@
     "source_expr": "customLivenessProbe"
   },
   {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "customReadinessProbe"
+  },
+  {
     "guards": [
       {
         "path": "diagnosticMode.enabled",
@@ -774,6 +809,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "customReadinessProbe"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "customStartupProbe"
   },
   {
     "guards": [
@@ -1029,6 +1071,13 @@
     "source_expr": "dataLogDir"
   },
   {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "diagnosticMode.args"
+  },
+  {
     "guards": [
       {
         "path": "diagnosticMode.enabled",
@@ -1052,6 +1101,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "diagnosticMode.args"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "diagnosticMode.command"
   },
   {
     "guards": [
@@ -1138,6 +1194,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "extraEnvVars"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -1161,7 +1224,9 @@
       "template",
       "spec",
       "containers[*]",
-      "env"
+      "env[*]",
+      "valueFrom",
+      "fieldRef"
     ],
     "resource": {
       "api_version": "",
@@ -1172,6 +1237,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "extraEnvVars"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "extraEnvVarsCM"
   },
   {
     "guards": [],
@@ -1247,6 +1319,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "extraEnvVarsSecret"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -1317,6 +1396,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "extraVolumeMounts"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -1351,6 +1437,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "extraVolumeMounts"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "extraVolumes"
   },
   {
     "guards": [],
@@ -1444,15 +1537,8 @@
         "type": "truthy"
       }
     ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "volumeClaimTemplates[*]",
-      "spec",
-      "resources",
-      "requests",
-      "storage"
-    ],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -1482,15 +1568,8 @@
         "type": "not"
       }
     ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "volumeClaimTemplates[*]",
-      "spec",
-      "resources",
-      "requests",
-      "storage"
-    ],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -1506,6 +1585,13 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "global.imagePullSecrets"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
     "source_expr": "global.imageRegistry"
   },
   {
@@ -1514,6 +1600,13 @@
     "path": [],
     "resource": null,
     "source_expr": "global.kubeVersion"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.storageClass"
   },
   {
     "guards": [],
@@ -1535,6 +1628,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "heapSize"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "hostAliases"
   },
   {
     "guards": [],
@@ -1682,6 +1782,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "initContainers"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -1704,7 +1811,8 @@
       "spec",
       "template",
       "spec",
-      "initContainers"
+      "initContainers[*]",
+      "volumeMounts"
     ],
     "resource": {
       "api_version": "",
@@ -1783,6 +1891,13 @@
     "path": [],
     "resource": null,
     "source_expr": "kubeVersion"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "lifecycleHooks"
   },
   {
     "guards": [],
@@ -2003,6 +2118,13 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nodeAffinityPreset.key"
+  },
+  {
+    "guards": [],
     "kind": "Fragment",
     "path": [
       "spec",
@@ -2020,6 +2142,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "nodeAffinityPreset.key"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nodeAffinityPreset.type"
   },
   {
     "guards": [],
@@ -2043,6 +2172,13 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nodeAffinityPreset.values"
+  },
+  {
+    "guards": [],
     "kind": "Fragment",
     "path": [
       "spec",
@@ -2060,6 +2196,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "nodeAffinityPreset.values"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nodeSelector"
   },
   {
     "guards": [],
@@ -2118,15 +2261,8 @@
         "type": "truthy"
       }
     ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "volumeClaimTemplates[*]",
-      "spec",
-      "resources",
-      "requests",
-      "storage"
-    ],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -2156,15 +2292,8 @@
         "type": "not"
       }
     ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "volumeClaimTemplates[*]",
-      "spec",
-      "resources",
-      "requests",
-      "storage"
-    ],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -2334,6 +2463,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "persistence.accessModes.*"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.annotations"
   },
   {
     "guards": [
@@ -2551,6 +2687,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "persistence.dataLogDir.existingClaim"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.dataLogDir.selector"
   },
   {
     "guards": [
@@ -2794,6 +2937,13 @@
     "source_expr": "persistence.existingClaim"
   },
   {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.labels"
+  },
+  {
     "guards": [
       {
         "path": "persistence.dataLogDir.existingClaim",
@@ -2934,6 +3084,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "persistence.labels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.selector"
   },
   {
     "guards": [
@@ -3046,6 +3203,20 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.storageClass"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podAffinityPreset"
+  },
+  {
+    "guards": [],
     "kind": "Fragment",
     "path": [
       "spec",
@@ -3063,6 +3234,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "podAffinityPreset"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podAnnotations"
   },
   {
     "guards": [],
@@ -3104,6 +3282,13 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podAntiAffinityPreset"
+  },
+  {
+    "guards": [],
     "kind": "Fragment",
     "path": [
       "spec",
@@ -3121,6 +3306,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "podAntiAffinityPreset"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podLabels"
   },
   {
     "guards": [],
@@ -3493,6 +3685,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "sidecars"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -3515,7 +3714,8 @@
       "spec",
       "template",
       "spec",
-      "containers"
+      "containers[*]",
+      "volumeMounts"
     ],
     "resource": {
       "api_version": "",
@@ -4180,6 +4380,13 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "tolerations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -4213,6 +4420,13 @@
       "kind": "StatefulSet"
     },
     "source_expr": "tolerations"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "topologySpreadConstraints"
   },
   {
     "guards": [],
@@ -4484,4 +4698,3 @@
     "source_expr": "volumePermissions.resources"
   }
 ]
-

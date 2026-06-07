@@ -203,6 +203,20 @@ fn symbolic_ir_full() {
             "resource": null
         },
         {
+            "source_expr": "global",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "global.labels",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "nameOverride",
             "path": [],
             "kind": "Scalar",

@@ -38,7 +38,20 @@ fn schema_fused_rust() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
+            "creator": {
+                "type": "string"
+            },
             "fullnameOverride": {},
+            "global": {
+                "additionalProperties": false,
+                "properties": {
+                    "commonLabels": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "nameOverride": {},
             "namespace": {
                 "type": "string"

@@ -114,7 +114,7 @@ fn symbolic_ir_full() {
         {
             "guards": [t("extraEnvs")],
             "kind": "Fragment",
-            "path": ["spec", "template", "spec", "containers"],
+            "path": ["spec", "template", "spec", "containers[*]", "env"],
             "resource": deploy,
             "source_expr": "extraEnvs"
         },
@@ -197,7 +197,7 @@ fn symbolic_ir_full() {
         {
             "guards": [t("podAnnotations")],
             "kind": "Fragment",
-            "path": ["spec", "template", "metadata"],
+            "path": ["spec", "template", "metadata", "annotations"],
             "resource": deploy,
             "source_expr": "podAnnotations"
         },

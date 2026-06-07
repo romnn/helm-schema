@@ -64,6 +64,20 @@ fn symbolic_ir_full() {
             "resource": null
         },
         {
+            "source_expr": "global",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "global.labels",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "nameOverride",
             "path": [],
             "kind": "Scalar",
@@ -128,7 +142,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "serviceMonitor.metricRelabelings",
-            "path": ["spec", "endpoints[*]", "metricRelabelings"],
+            "path": ["spec", "endpoints"],
             "kind": "Fragment",
             "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.metricRelabelings")],
             "resource": sm
@@ -142,7 +156,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "serviceMonitor.relabelings",
-            "path": ["spec", "endpoints[*]", "relabelings"],
+            "path": ["spec", "endpoints"],
             "kind": "Fragment",
             "guards": [t("serviceMonitor.enabled"), w("serviceMonitor.relabelings")],
             "resource": sm

@@ -66,6 +66,13 @@ fn symbolic_ir_full() {
             "path": [],
             "kind": "Scalar",
             "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "commonAnnotations",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
             "resource": svc
         },
         {
@@ -81,6 +88,13 @@ fn symbolic_ir_full() {
             "kind": "Fragment",
             "guards": [o("commonAnnotations", "service.annotations"), t("commonAnnotations")],
             "resource": svc
+        },
+        {
+            "source_expr": "commonLabels",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "commonLabels",
@@ -112,6 +126,13 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "namespaceOverride",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "service.annotations",
             "path": [],
             "kind": "Scalar",
             "guards": [],
@@ -165,6 +186,13 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [t("service.type")],
             "resource": svc
+        },
+        {
+            "source_expr": "service.extraPorts",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "service.extraPorts",
@@ -281,6 +309,13 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [t("service.sessionAffinity")],
             "resource": svc
+        },
+        {
+            "source_expr": "service.sessionAffinityConfig",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "service.sessionAffinityConfig",

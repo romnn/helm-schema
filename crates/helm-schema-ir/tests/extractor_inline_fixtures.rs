@@ -513,6 +513,51 @@ fn exact_helper_dict_dot_arg_uses_current_with_binding() {
 }
 
 #[test]
+fn conditional_annotations_fragment_stays_under_annotations_path() {
+    let template = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          selector:
+            matchLabels:
+              app: demo
+          template:
+            metadata:
+              annotations:
+                checksum/secret: {{ "abc" | quote }}
+            {{- if .Values.podAnnotations }}
+        {{ toYaml .Values.podAnnotations | indent 8 }}
+            {{- end }}
+            spec:
+              containers:
+                - name: demo
+                  image: nginx
+    "#};
+
+    let ir = generate(template, "");
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!("{ir:#?}");
+    }
+
+    let pod_annotations: Vec<&ValueUse> = ir
+        .iter()
+        .filter(|use_| use_.source_expr == "podAnnotations")
+        .collect();
+    assert!(
+        pod_annotations.iter().any(|use_| {
+            use_.path.0
+                == [
+                    "spec".to_string(),
+                    "template".to_string(),
+                    "metadata".to_string(),
+                    "annotations".to_string(),
+                ]
+        }),
+        "podAnnotations should stay attached to metadata.annotations, got {pod_annotations:#?}",
+    );
+}
+
+#[test]
 fn with_rewritten_selector_chain_does_not_emit_parent_suffix_path() {
     let template = indoc! {r#"
         apiVersion: v1

@@ -135,6 +135,13 @@ fn symbolic_ir_full() {
             "path": [],
             "kind": "Scalar",
             "guards": [],
+            "resource": null
+        },
+        {
+            "source_expr": "commonAnnotations",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
             "resource": secret
         },
         {
@@ -157,6 +164,13 @@ fn symbolic_ir_full() {
             "kind": "Fragment",
             "guards": [t("serviceBindings.enabled"), t("commonAnnotations")],
             "resource": secret
+        },
+        {
+            "source_expr": "commonLabels",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "commonLabels",

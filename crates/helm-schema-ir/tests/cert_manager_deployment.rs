@@ -175,6 +175,13 @@ fn symbolic_ir_full() {
             "resource": dep
         },
         {
+            "source_expr": "creator",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
+        },
+        {
             "source_expr": "deploymentAnnotations",
             "path": [],
             "kind": "Scalar",
@@ -253,7 +260,7 @@ fn symbolic_ir_full() {
         },
         {
             "source_expr": "extraEnv",
-            "path": ["spec", "template", "spec", "containers[*]", "env"],
+            "path": ["spec", "template", "spec", "containers[*]", "env[*]", "valueFrom", "fieldRef"],
             "kind": "Fragment",
             "guards": [w("extraEnv")],
             "resource": dep
@@ -285,6 +292,13 @@ fn symbolic_ir_full() {
             "kind": "Scalar",
             "guards": [],
             "resource": dep
+        },
+        {
+            "source_expr": "global.commonLabels",
+            "path": [],
+            "kind": "Scalar",
+            "guards": [],
+            "resource": null
         },
         {
             "source_expr": "global.hostUsers",
