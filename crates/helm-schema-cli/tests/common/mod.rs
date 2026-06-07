@@ -87,6 +87,7 @@ pub fn generate_chart_schema(chart: &str) -> std::result::Result<Value, Report> 
         .wrap_err("generate schema")
 }
 
+#[allow(dead_code)]
 pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<(), Report> {
     let chart_dir = chart_dir(chart);
     let schema = generate_chart_schema(chart)?;
@@ -95,8 +96,21 @@ pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<()
     let values_json: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;
     let values_json = drop_nulls(&values_json);
 
-    let errors = validate_json_against_schema(&values_json, &schema);
-    similar_asserts::assert_eq!(errors, Vec::<String>::new());
+    assert_values_json_validates(&values_json, &schema);
 
     Ok(())
+}
+
+#[allow(dead_code)]
+pub fn values_yaml_as_json(chart: &str) -> std::result::Result<Value, Report> {
+    let chart_dir = chart_dir(chart);
+    let values_yaml = read_values_yaml(&chart_dir).wrap_err("read values.yaml")?;
+    let values_json: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;
+    Ok(drop_nulls(&values_json))
+}
+
+#[allow(dead_code)]
+pub fn assert_values_json_validates(values_json: &Value, schema: &Value) {
+    let errors = validate_json_against_schema(&values_json, &schema);
+    similar_asserts::assert_eq!(errors, Vec::<String>::new());
 }

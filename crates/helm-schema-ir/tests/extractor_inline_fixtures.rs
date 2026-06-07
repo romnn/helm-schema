@@ -513,6 +513,112 @@ fn exact_helper_dict_dot_arg_uses_current_with_binding() {
 }
 
 #[test]
+fn list_bound_helper_fragment_keeps_metadata_map_paths() {
+    let helpers = indoc! {r#"
+        {{- define "temporal.resourceAnnotations" -}}
+        {{- $global := index . 0 -}}
+        {{- $scope := index . 1 -}}
+        {{- $resourceType := index . 2 -}}
+        {{- $component := "server" -}}
+        {{- if (or (eq $scope "admintools") (eq $scope "web")) -}}
+        {{- $component = $scope -}}
+        {{- end -}}
+        {{- with $resourceType -}}
+        {{- $resourceTypeKey := printf "%sAnnotations" . -}}
+        {{- $componentAnnotations := (index $global.Values $component $resourceTypeKey) -}}
+        {{- $scopeAnnotations := dict -}}
+        {{- if hasKey (index $global.Values $component) $scope -}}
+        {{- $scopeAnnotations = (index $global.Values $component $scope $resourceTypeKey) -}}
+        {{- end -}}
+        {{- $resourceAnnotations := merge $scopeAnnotations $componentAnnotations -}}
+        {{- range $annotation_name, $annotation_value := $resourceAnnotations }}
+        {{ $annotation_name }}: {{ $annotation_value | quote }}
+        {{- end -}}
+        {{- end -}}
+        {{- range $annotation_name, $annotation_value := $global.Values.additionalAnnotations }}
+        {{ $annotation_name }}: {{ $annotation_value | quote }}
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "temporal.resourceLabels" -}}
+        {{- $global := index . 0 -}}
+        {{- $scope := index . 1 -}}
+        {{- $resourceType := index . 2 -}}
+        {{- $component := "server" -}}
+        {{- if (or (eq $scope "admintools") (eq $scope "web")) -}}
+        {{- $component = $scope -}}
+        {{- end -}}
+        {{- with $resourceType -}}
+        {{- $resourceTypeKey := printf "%sLabels" . -}}
+        {{- $componentLabels := (index $global.Values $component $resourceTypeKey) -}}
+        {{- $scopeLabels := dict -}}
+        {{- if hasKey (index $global.Values $component) $scope -}}
+        {{- $scopeLabels = (index $global.Values $component $scope $resourceTypeKey) -}}
+        {{- end -}}
+        {{- $resourceLabels := merge $scopeLabels $componentLabels -}}
+        {{- range $label_name, $label_value := $resourceLabels }}
+        {{ $label_name }}: {{ $label_value | quote }}
+        {{- end -}}
+        {{- end -}}
+        {{- range $label_name, $label_value := $global.Values.additionalLabels }}
+        {{ $label_name }}: {{ $label_value | quote }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+          annotations:
+            {{- include "temporal.resourceAnnotations" (list $ "admintools" "pod") | nindent 4 }}
+          labels:
+            {{- include "temporal.resourceLabels" (list $ "admintools" "pod") | nindent 4 }}
+    "#};
+
+    let ir = generate(template, helpers);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!("{ir:#?}");
+    }
+
+    let annotations_path = ["metadata".to_string(), "annotations".to_string()];
+    assert!(
+        ir.iter().any(|use_| {
+            use_.source_expr == "admintools.podAnnotations"
+                && use_.path.0 == annotations_path
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+        }),
+        "expected admintools.podAnnotations to stay attached to metadata.annotations: {ir:#?}",
+    );
+    assert!(
+        ir.iter().any(|use_| {
+            use_.source_expr == "additionalAnnotations"
+                && use_.path.0 == annotations_path
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+        }),
+        "expected additionalAnnotations to stay attached to metadata.annotations: {ir:#?}",
+    );
+
+    let labels_path = ["metadata".to_string(), "labels".to_string()];
+    assert!(
+        ir.iter().any(|use_| {
+            use_.source_expr == "admintools.podLabels"
+                && use_.path.0 == labels_path
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+        }),
+        "expected admintools.podLabels to stay attached to metadata.labels: {ir:#?}",
+    );
+    assert!(
+        ir.iter().any(|use_| {
+            use_.source_expr == "additionalLabels"
+                && use_.path.0 == labels_path
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+        }),
+        "expected additionalLabels to stay attached to metadata.labels: {ir:#?}",
+    );
+}
+
+#[test]
 fn conditional_annotations_fragment_stays_under_annotations_path() {
     let template = indoc! {r#"
         apiVersion: apps/v1

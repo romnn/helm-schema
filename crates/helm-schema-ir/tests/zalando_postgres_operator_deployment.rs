@@ -50,7 +50,6 @@ fn symbolic_ir_full() {
         );
     }
 
-    let deploy = serde_json::json!({"api_version": "apps/v1", "kind": "Deployment"});
     let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
 
     let expected: serde_json::Value = serde_json::from_str(include_str!(

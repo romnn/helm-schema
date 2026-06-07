@@ -87,6 +87,7 @@ pub fn generate_values_schema_full(
     let mut ranged_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let mut metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_boolish_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     // When a value is rendered inside the body guarded by its own truthiness,
@@ -151,6 +152,13 @@ pub fn generate_values_schema_full(
                 .or_default()
                 .push(schema);
         }
+
+        if let Some(schema) = infer_metadata_path_schema(&u.path.0) {
+            metadata_schemas_by_value_path
+                .entry(u.source_expr.clone())
+                .or_default()
+                .push(schema);
+        }
     }
 
     let nullable_paths = collect_nullable_value_paths(uses);
@@ -173,6 +181,10 @@ pub fn generate_values_schema_full(
             } else {
                 merge_schema_list(provider_schemas)
             };
+        let metadata_schema = metadata_schemas_by_value_path
+            .remove(&vp)
+            .map_or_else(empty_schema, merge_schema_list);
+        let provider_schema = merge_schema_list(vec![provider_schema, metadata_schema]);
 
         // Preserve an explicit `null` default when the template proves the
         // path is optional and type hints or provider evidence can still
@@ -296,6 +308,27 @@ fn is_string_like_schema(v: &Value) -> bool {
     }
 
     false
+}
+
+fn infer_metadata_path_schema(path: &[String]) -> Option<Value> {
+    let last = path.last()?.as_str();
+    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
+    if prev != "metadata" {
+        return None;
+    }
+
+    match last {
+        "labels" | "annotations" => Some(string_map_schema()),
+        "name" | "namespace" => Some(type_schema("string")),
+        _ => None,
+    }
+}
+
+fn string_map_schema() -> Value {
+    let mut schema = Map::new();
+    schema.insert("type".to_string(), Value::String("object".to_string()));
+    schema.insert("additionalProperties".to_string(), type_schema("string"));
+    Value::Object(schema)
 }
 
 fn is_scalar_like_schema(v: &Value) -> bool {

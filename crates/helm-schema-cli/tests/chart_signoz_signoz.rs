@@ -1,16 +1,12 @@
 mod common;
 
-use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
+use color_eyre::eyre::{OptionExt as _, WrapErr as _};
 
 #[test]
-fn signoz_signoz_values_yaml_validates() -> color_eyre::eyre::Result<()> {
-    common::assert_chart_values_yaml_validates("signoz-signoz")?;
-    Ok(())
-}
-
-#[test]
-fn signoz_signoz_schema_fragments_match_fixture() -> eyre::Result<()> {
+fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<()> {
     let schema = common::generate_chart_schema("signoz-signoz")?;
+    let values_json = common::values_yaml_as_json("signoz-signoz")?;
+    common::assert_values_json_validates(&values_json, &schema);
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))
             .wrap_err("parse signoz fixture")?;

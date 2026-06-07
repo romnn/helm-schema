@@ -55,6 +55,60 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
     hints
 }
 
+fn bitnami_tplvalues_helpers() -> &'static str {
+    indoc! {r#"
+        {{- define "common.tplvalues.render" -}}
+        {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+        {{- if contains "{{" (toJson .value) }}
+          {{- if .scope }}
+              {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+          {{- else }}
+            {{- tpl $value .context }}
+          {{- end }}
+        {{- else }}
+            {{- $value }}
+        {{- end }}
+        {{- end -}}
+
+        {{- define "common.tplvalues.merge" -}}
+        {{- $dst := dict -}}
+        {{- range .values -}}
+        {{- $dst = include "common.tplvalues.render" (dict "value" . "context" $.context "scope" $.scope) | fromYaml | merge $dst -}}
+        {{- end -}}
+        {{ $dst | toYaml }}
+        {{- end -}}
+    "#}
+}
+
+fn bitnami_labels_helpers() -> String {
+    format!(
+        "{}\n{}",
+        bitnami_tplvalues_helpers(),
+        indoc! {r#"
+            {{- define "common.names.name" -}}minio{{- end -}}
+            {{- define "common.names.chart" -}}minio{{- end -}}
+
+            {{- define "common.labels.standard" -}}
+            {{- if and (hasKey . "customLabels") (hasKey . "context") -}}
+            {{- $default := dict "app.kubernetes.io/name" (include "common.names.name" .context) "helm.sh/chart" (include "common.names.chart" .context) "app.kubernetes.io/instance" .context.Release.Name "app.kubernetes.io/managed-by" .context.Release.Service -}}
+            {{- with .context.Chart.AppVersion -}}
+            {{- $_ := set $default "app.kubernetes.io/version" . -}}
+            {{- end -}}
+            {{ template "common.tplvalues.merge" (dict "values" (list .customLabels $default) "context" .context) }}
+            {{- else -}}
+            app.kubernetes.io/name: {{ include "common.names.name" . }}
+            helm.sh/chart: {{ include "common.names.chart" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+            app.kubernetes.io/managed-by: {{ .Release.Service }}
+            {{- with .Chart.AppVersion }}
+            app.kubernetes.io/version: {{ . | quote }}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
+        "#}
+    )
+}
+
 /// True if the schema permits a `null` value — either directly via
 /// `{"type": "null"}` or as one branch of an `anyOf` union.
 fn permits_null(schema: &Value) -> bool {
@@ -1397,6 +1451,380 @@ fn exact_bound_helper_with_bound_dot_arg_infers_classname_without_values_default
     assert!(
         permits_type(class_name, "string"),
         "helper body should infer ingress.className from the output path even without a values.yaml example, got {schema}"
+    );
+}
+
+#[test]
+fn helper_list_bound_metadata_maps_stay_open_string_maps() {
+    let helpers = indoc! {r#"
+        {{- define "temporal.resourceAnnotations" -}}
+        {{- $global := index . 0 -}}
+        {{- $scope := index . 1 -}}
+        {{- $resourceType := index . 2 -}}
+        {{- $component := "server" -}}
+        {{- if (or (eq $scope "admintools") (eq $scope "web")) -}}
+        {{- $component = $scope -}}
+        {{- end -}}
+        {{- with $resourceType -}}
+        {{- $resourceTypeKey := printf "%sAnnotations" . -}}
+        {{- $componentAnnotations := (index $global.Values $component $resourceTypeKey) -}}
+        {{- $scopeAnnotations := dict -}}
+        {{- if hasKey (index $global.Values $component) $scope -}}
+        {{- $scopeAnnotations = (index $global.Values $component $scope $resourceTypeKey) -}}
+        {{- end -}}
+        {{- $resourceAnnotations := merge $scopeAnnotations $componentAnnotations -}}
+        {{- range $annotation_name, $annotation_value := $resourceAnnotations }}
+        {{ $annotation_name }}: {{ $annotation_value | quote }}
+        {{- end -}}
+        {{- end -}}
+        {{- range $annotation_name, $annotation_value := $global.Values.additionalAnnotations }}
+        {{ $annotation_name }}: {{ $annotation_value | quote }}
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "temporal.resourceLabels" -}}
+        {{- $global := index . 0 -}}
+        {{- $scope := index . 1 -}}
+        {{- $resourceType := index . 2 -}}
+        {{- $component := "server" -}}
+        {{- if (or (eq $scope "admintools") (eq $scope "web")) -}}
+        {{- $component = $scope -}}
+        {{- end -}}
+        {{- with $resourceType -}}
+        {{- $resourceTypeKey := printf "%sLabels" . -}}
+        {{- $componentLabels := (index $global.Values $component $resourceTypeKey) -}}
+        {{- $scopeLabels := dict -}}
+        {{- if hasKey (index $global.Values $component) $scope -}}
+        {{- $scopeLabels = (index $global.Values $component $scope $resourceTypeKey) -}}
+        {{- end -}}
+        {{- $resourceLabels := merge $scopeLabels $componentLabels -}}
+        {{- range $label_name, $label_value := $resourceLabels }}
+        {{ $label_name }}: {{ $label_value | quote }}
+        {{- end -}}
+        {{- end -}}
+        {{- range $label_name, $label_value := $global.Values.additionalLabels }}
+        {{ $label_name }}: {{ $label_value | quote }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+          annotations:
+            {{- include "temporal.resourceAnnotations" (list $ "admintools" "pod") | nindent 4 }}
+          labels:
+            {{- include "temporal.resourceLabels" (list $ "admintools" "pod") | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        admintools:
+          podAnnotations:
+            team: platform
+          podLabels:
+            app: temporal
+        additionalAnnotations:
+          owner: infra
+        additionalLabels:
+          cluster: prod
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let pod_annotations = schema
+        .pointer("/properties/admintools/properties/podAnnotations")
+        .expect("admintools.podAnnotations present");
+    assert_eq!(
+        pod_annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "admintools.podAnnotations should stay an open string map, got {pod_annotations}"
+    );
+
+    let pod_labels = schema
+        .pointer("/properties/admintools/properties/podLabels")
+        .expect("admintools.podLabels present");
+    assert_eq!(
+        pod_labels
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "admintools.podLabels should stay an open string map, got {pod_labels}"
+    );
+
+    let additional_annotations = schema
+        .pointer("/properties/additionalAnnotations")
+        .expect("additionalAnnotations present");
+    assert_eq!(
+        additional_annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "additionalAnnotations should stay an open string map, got {additional_annotations}"
+    );
+
+    let additional_labels = schema
+        .pointer("/properties/additionalLabels")
+        .expect("additionalLabels present");
+    assert_eq!(
+        additional_labels
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "additionalLabels should stay an open string map, got {additional_labels}"
+    );
+}
+
+#[test]
+fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call() {
+    let helpers = bitnami_labels_helpers();
+    let src = indoc! {r#"
+        {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.podLabels .Values.commonLabels) "context" .) }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          labels: {{- include "common.labels.standard" (dict "customLabels" $podLabels "context" .) | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        commonLabels:
+          team: platform
+        podLabels:
+          app: minio
+          extra: enabled
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, &helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let pod_labels = schema
+        .pointer("/properties/podLabels")
+        .expect("podLabels present");
+    assert_eq!(
+        pod_labels
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "podLabels should stay an open string map when reused through a local fragment variable, got {pod_labels}"
+    );
+}
+
+#[test]
+fn assigned_annotations_fragment_variable_keeps_open_string_map() {
+    let helpers = bitnami_tplvalues_helpers();
+    let src = indoc! {r#"
+        {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.serviceAccount.annotations .Values.commonAnnotations) "context" .) }}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: test
+          annotations: {{- include "common.tplvalues.render" (dict "value" $annotations "context" .) | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        commonAnnotations:
+          owner: infra
+        serviceAccount:
+          annotations:
+            team: platform
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let annotations = schema
+        .pointer("/properties/serviceAccount/properties/annotations")
+        .expect("serviceAccount.annotations present");
+    assert_eq!(
+        annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "serviceAccount.annotations should stay an open string map when reused through a local fragment variable, got {annotations}"
+    );
+}
+
+#[test]
+fn direct_rendered_annotations_helper_keeps_open_string_map() {
+    let helpers = bitnami_tplvalues_helpers();
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          selector:
+            matchLabels:
+              app: demo
+          template:
+            metadata:
+              {{- if .Values.podAnnotations }}
+              annotations: {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" .) | nindent 8 }}
+              {{- end }}
+            spec:
+              containers:
+                - name: demo
+                  image: nginx
+    "#};
+    let values_yaml = indoc! {r#"
+        podAnnotations:
+          owner: infra
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let pod_annotations = schema
+        .pointer("/properties/podAnnotations")
+        .expect("podAnnotations present");
+    assert_eq!(
+        pod_annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "podAnnotations should stay an open string map through common.tplvalues.render, got {pod_annotations}"
+    );
+}
+
+#[test]
+fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map() {
+    let helpers = bitnami_tplvalues_helpers();
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          selector:
+            matchLabels:
+              app: demo
+          template:
+            metadata:
+              annotations:
+                checksum/config: abc
+                {{- if .Values.podAnnotations }}
+                {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" .) | nindent 8 }}
+                {{- end }}
+            spec:
+              containers:
+                - name: demo
+                  image: nginx
+    "#};
+    let values_yaml = indoc! {r#"
+        podAnnotations: {}
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let pod_annotations = schema
+        .pointer("/properties/podAnnotations")
+        .expect("podAnnotations present");
+    assert_eq!(
+        pod_annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "empty-map podAnnotations should still keep the provider string-map shape through helper render, got {pod_annotations}"
+    );
+}
+
+#[test]
+fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
+    let helpers = bitnami_labels_helpers();
+    let src = indoc! {r#"
+        {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.podLabels .Values.commonLabels) "context" .) }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          labels: {{- include "common.labels.standard" (dict "customLabels" $podLabels "context" .) | nindent 4 }}
+            app.kubernetes.io/component: minio
+    "#};
+    let values_yaml = indoc! {r#"
+        commonLabels: {}
+        podLabels: {}
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, &helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let pod_labels = schema
+        .pointer("/properties/podLabels")
+        .expect("podLabels present");
+    assert_eq!(
+        pod_labels
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "empty-map podLabels should still keep the provider string-map shape through the assigned fragment helper path, got {pod_labels}"
+    );
+}
+
+#[test]
+fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
+    let helpers = bitnami_labels_helpers();
+    let src = indoc! {r#"
+        apiVersion: {{ ternary "apps/v1" "apps/v1" (eq .Values.mode "distributed") }}
+        kind: {{ ternary "StatefulSet" "Deployment" (eq .Values.mode "distributed") }}
+        {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.podLabels .Values.commonLabels) "context" . ) }}
+        metadata:
+          name: test
+        spec:
+          template:
+            metadata:
+              labels: {{- include "common.labels.standard" (dict "customLabels" $podLabels "context" .) | nindent 8 }}
+              {{- if .Values.podAnnotations }}
+              annotations: {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" .) | nindent 8 }}
+              {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        mode: standalone
+        commonLabels: {}
+        podLabels:
+          app: minio
+        podAnnotations: {}
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, &helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let pod_labels = schema
+        .pointer("/properties/podLabels")
+        .expect("podLabels present");
+    assert_eq!(
+        pod_labels
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "metadata.labels should keep podLabels as an open string map even when workload kind is unresolved, got {pod_labels}"
+    );
+
+    let pod_annotations = schema
+        .pointer("/properties/podAnnotations")
+        .expect("podAnnotations present");
+    assert_eq!(
+        pod_annotations
+            .pointer("/additionalProperties/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "metadata.annotations should keep podAnnotations as an open string map even when workload kind is unresolved, got {pod_annotations}"
     );
 }
 
