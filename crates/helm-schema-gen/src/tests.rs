@@ -339,6 +339,87 @@ fn step1_with_fragment_non_null_default_not_widened() {
     );
 }
 
+/// Explicit `null` defaults stay valid when a scalar is rendered only from a
+/// `with` body that skips on nil. This is the common `priorityClassName`
+/// pattern across many charts.
+#[test]
+fn nullable_scalar_preserved_for_with_guarded_render_use() {
+    let src = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              {{- with .Values.priorityClassName }}
+              priorityClassName: {{ . }}
+              {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        priorityClassName:
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let priority = schema
+        .pointer("/properties/priorityClassName")
+        .expect("priorityClassName present");
+    let variants = priority
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .expect("expected nullable priorityClassName union");
+    assert!(permits_null(priority));
+    assert!(
+        variants
+            .iter()
+            .any(|v| v.get("type").and_then(Value::as_str) == Some("string")),
+        "priorityClassName should also accept the provider string type, got {priority}"
+    );
+}
+
+/// Explicit `null` defaults also stay valid when a scalar is rendered only
+/// from a truthy self-guard inside a larger condition, such as optional
+/// Service nodePorts gated by `not (empty ...)`.
+#[test]
+fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        spec:
+          type: {{ .Values.service.type }}
+          ports:
+            {{- with .Values.service }}
+            - port: 25
+              {{- if (and (eq .type "NodePort") (not (empty .ports.smtp.nodePort))) }}
+              nodePort: {{ .ports.smtp.nodePort }}
+              {{- end }}
+            {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        service:
+          type: ClusterIP
+          ports:
+            smtp:
+              nodePort:
+    "};
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let node_port = schema
+        .pointer("/properties/service/properties/ports/properties/smtp/properties/nodePort")
+        .expect("service.ports.smtp.nodePort present");
+    let variants = node_port
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .expect("expected nullable nodePort union");
+    assert!(permits_null(node_port));
+    assert!(
+        variants
+            .iter()
+            .any(|v| v.get("type").and_then(Value::as_str) == Some("integer")),
+        "nodePort should also accept the provider integer type, got {node_port}"
+    );
+}
+
 /// Fragment inputs that flow into K8s label/annotation maps should keep the
 /// provider's open string-map shape instead of being closed to whatever keys
 /// `values.yaml` happened to default.

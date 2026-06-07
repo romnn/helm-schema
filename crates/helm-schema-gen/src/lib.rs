@@ -153,7 +153,7 @@ pub fn generate_values_schema_full(
         }
     }
 
-    let nullable_with_fragment_paths = collect_nullable_with_fragment_paths(uses);
+    let nullable_paths = collect_nullable_value_paths(uses);
 
     let values_yaml_doc = values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
@@ -166,17 +166,15 @@ pub fn generate_values_schema_full(
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
 
-        // Preserve a null values.yaml default when the template signals that
-        // null is contractually valid: either a `with`-fragment splat
-        // (`with .Values.X` body uses `toYaml .`) or a `default <literal>
-        // .Values.X` pattern. Otherwise the null is dropped and the path is
-        // typed solely by the literal/provider signal.
-        let path_is_nullable =
-            nullable_with_fragment_paths.contains(&vp) || type_hints.contains_key(&vp);
-        let values_yaml_schema = if path_is_nullable && is_null_at_value_path(&values_yaml_doc, &vp)
-        {
-            type_schema("null")
-        } else if used_as_fragment
+        // Preserve an explicit `null` default when the template proves the
+        // path is optional and type hints or provider evidence can still
+        // describe the non-null branch. This keeps `null` as an accepted input
+        // value without letting a null placeholder erase the richer schema we
+        // inferred from rendered usage.
+        let path_is_nullable = nullable_paths.contains(&vp) || type_hints.contains_key(&vp);
+        let preserve_explicit_null_default =
+            path_is_nullable && is_null_at_value_path(&values_yaml_doc, &vp);
+        let values_yaml_schema = if used_as_fragment
             && schema_type(&provider_schema) == Some("object")
             && is_empty_map_at_value_path(&values_yaml_doc, &vp)
         {
@@ -218,6 +216,11 @@ pub fn generate_values_schema_full(
             guard_constraint_schema,
             type_hint_schema,
         );
+        let merged = if preserve_explicit_null_default && !is_empty_schema(&merged) {
+            merge_two_schemas(merged, type_schema("null"))
+        } else {
+            merged
+        };
 
         insert_schema_at_value_path(&mut root_schema, &vp, merged);
     }
@@ -347,10 +350,16 @@ fn resolve_schema_for_value_path(
         values_yaml_schema
     } else if used_as_fragment {
         unknown_object_schema()
-    } else if !is_empty_schema(&guard_boolish_schema) {
-        guard_boolish_schema
     } else {
         empty_schema()
+    };
+
+    let base = if is_empty_schema(&guard_boolish_schema) {
+        base
+    } else if is_empty_schema(&base) {
+        guard_boolish_schema
+    } else {
+        base
     };
 
     let base = if is_empty_schema(&type_hint_schema) {
@@ -500,43 +509,72 @@ fn is_null_at_parts(doc: &YamlValue, parts: &[&str]) -> bool {
     }
 }
 
-/// Identify paths that are used as YAML fragments inside `with` blocks and
-/// whose only scalar uses are with-header bindings. For these paths, a `null`
-/// values.yaml default is contractually valid (`with nil` skips the body) and
-/// must survive into the generated schema.
-fn collect_nullable_with_fragment_paths(uses: &[ValueUse]) -> BTreeSet<String> {
-    #[derive(Default)]
+/// Identify value paths for which an explicit `null` default in values.yaml is
+/// contractually valid according to the template control flow.
+///
+/// A path qualifies when every observed use is null-tolerant and at least one
+/// rendered use provides non-null type evidence:
+///
+/// - header-only guard/binding uses (`if` / `with` / `range` conditions) are
+///   always null-tolerant because Helm evaluates them against `nil` without
+///   crashing;
+/// - rendered uses must sit under a self-guard that only renders the body when
+///   the same value path is non-empty (`if .Values.X`, `with .Values.X`,
+///   `range .Values.X`, `if eq .Values.X "literal"`, and similar composed
+///   conditions that retain the per-path guard).
+///
+/// We intentionally do not widen pure control-flow paths on the strength of
+/// guard heuristics alone. Without a rendered use, a truthy/or/not condition
+/// still does not tell us whether the underlying values type is boolean,
+/// string, list, or object.
+///
+/// This keeps generated schemas aligned with the chart's actual acceptance
+/// surface: if the template explicitly treats a value as optional and
+/// values.yaml ships `null`, the schema should preserve that `null`.
+fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
     struct PathInfo {
-        has_fragment: bool,
-        has_with_header_scalar: bool,
-        has_non_header_scalar: bool,
+        has_render_use: bool,
+        all_uses_nullable: bool,
     }
+
+    impl Default for PathInfo {
+        fn default() -> Self {
+            Self {
+                has_render_use: false,
+                all_uses_nullable: true,
+            }
+        }
+    }
+
+    fn use_is_null_tolerant(use_: &ValueUse) -> bool {
+        if use_.path.0.is_empty() {
+            return true;
+        }
+
+        use_.guards.iter().any(|guard| match guard {
+            Guard::Truthy { path }
+            | Guard::Eq { path, .. }
+            | Guard::Range { path }
+            | Guard::With { path } => path == &use_.source_expr,
+            Guard::Not { .. } | Guard::Or { .. } => false,
+        })
+    }
+
     let mut by_path: BTreeMap<&str, PathInfo> = BTreeMap::new();
     for u in uses {
         if u.source_expr.trim().is_empty() {
             continue;
         }
         let info = by_path.entry(u.source_expr.as_str()).or_default();
-        match u.kind {
-            ValueKind::Fragment => info.has_fragment = true,
-            ValueKind::Scalar => {
-                let is_with_header = u.path.0.is_empty()
-                    && u.guards
-                        .iter()
-                        .any(|g| matches!(g, Guard::With { path } if path == &u.source_expr));
-                if is_with_header {
-                    info.has_with_header_scalar = true;
-                } else {
-                    info.has_non_header_scalar = true;
-                }
-            }
+        if !u.path.0.is_empty() {
+            info.has_render_use = true;
         }
+        info.all_uses_nullable &= use_is_null_tolerant(u);
     }
     by_path
         .into_iter()
         .filter_map(|(path, info)| {
-            (info.has_fragment && info.has_with_header_scalar && !info.has_non_header_scalar)
-                .then(|| path.to_string())
+            (info.has_render_use && info.all_uses_nullable).then(|| path.to_string())
         })
         .collect()
 }
