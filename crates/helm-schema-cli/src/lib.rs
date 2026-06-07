@@ -8,7 +8,7 @@ mod required_inference;
 pub mod schema_override;
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::Read;
+use std::io::{BufWriter, Read, Write};
 use std::path::Path;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
@@ -93,12 +93,6 @@ pub fn run(cli: Cli) -> CliResult<()> {
         )?;
     }
 
-    let json = if cli.output.compact {
-        serde_json::to_vec(&schema)?
-    } else {
-        serde_json::to_vec_pretty(&schema)?
-    };
-
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
 
     if let Some(path) = cli.output.output {
@@ -108,14 +102,28 @@ pub fn run(cli: Cli) -> CliResult<()> {
                 source: e,
             })?;
         }
-        std::fs::write(&path, json).map_err(|e| CliError::WriteOutput {
+        let file = std::fs::File::create(&path).map_err(|err| CliError::WriteOutput {
             path: path.clone(),
-            source: e,
+            source: err,
+        })?;
+        let mut out = BufWriter::new(file);
+        if cli.output.compact {
+            serde_json::to_writer(&mut out, &schema)?;
+        } else {
+            serde_json::to_writer_pretty(&mut out, &schema)?;
+        }
+        out.write_all(b"\n").map_err(|err| CliError::WriteOutput {
+            path: path.clone(),
+            source: err,
         })?;
     } else {
-        use std::io::Write;
-        let mut out = std::io::stdout().lock();
-        out.write_all(&json)?;
+        let stdout = std::io::stdout();
+        let mut out = BufWriter::new(stdout.lock());
+        if cli.output.compact {
+            serde_json::to_writer(&mut out, &schema)?;
+        } else {
+            serde_json::to_writer_pretty(&mut out, &schema)?;
+        }
         out.write_all(b"\n")?;
     }
 

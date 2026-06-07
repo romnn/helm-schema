@@ -8,8 +8,7 @@ fn is_annotation_keyword(key: &str) -> bool {
 }
 
 pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
-    schemas.sort_by_key(canonical_json_string);
-    schemas.dedup();
+    schemas = dedup_schemas(schemas);
     let mut it = schemas.into_iter();
     let Some(first) = it.next() else {
         return Value::Object(Map::new());
@@ -37,8 +36,8 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     out.extend(flatten_union_variants(a));
     out.extend(flatten_union_variants(b));
     out = collapse_compatible_variants(out);
+    out = dedup_schemas(out);
     out.sort_by_key(canonical_json_string);
-    out.dedup();
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
     } else {
@@ -78,9 +77,7 @@ fn flatten_union_variants(v: Value) -> Vec<Value> {
     vec![v]
 }
 
-fn collapse_compatible_variants(mut variants: Vec<Value>) -> Vec<Value> {
-    variants.sort_by_key(canonical_json_string);
-
+fn collapse_compatible_variants(variants: Vec<Value>) -> Vec<Value> {
     let mut out: Vec<Value> = Vec::new();
     'variants: for variant in variants {
         for existing in &mut out {
@@ -90,6 +87,17 @@ fn collapse_compatible_variants(mut variants: Vec<Value>) -> Vec<Value> {
             }
         }
         out.push(variant);
+    }
+    out
+}
+
+fn dedup_schemas(schemas: Vec<Value>) -> Vec<Value> {
+    let mut out = Vec::new();
+    for schema in schemas {
+        if out.iter().any(|existing| existing == &schema) {
+            continue;
+        }
+        out.push(schema);
     }
     out
 }
@@ -105,14 +113,14 @@ fn canonicalize_json_value(v: &Value) -> Value {
             let mut keys: Vec<&String> = o.keys().collect();
             keys.sort();
             let mut out = Map::new();
-            for k in keys {
-                if let Some(v) = o.get(k) {
-                    out.insert(k.clone(), canonicalize_json_value(v));
+            for key in keys {
+                if let Some(value) = o.get(key) {
+                    out.insert(key.clone(), canonicalize_json_value(value));
                 }
             }
             Value::Object(out)
         }
-        Value::Array(a) => Value::Array(a.iter().map(canonicalize_json_value).collect()),
+        Value::Array(values) => Value::Array(values.iter().map(canonicalize_json_value).collect()),
         _ => v.clone(),
     }
 }

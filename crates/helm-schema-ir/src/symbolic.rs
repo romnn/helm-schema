@@ -1,4 +1,5 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::cell::RefCell;
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
@@ -30,6 +31,9 @@ impl IrGenerator for SymbolicIrGenerator {
 struct SymbolicWalker<'a> {
     source: &'a str,
     defines: &'a DefineIndex,
+    define_body_sources: HashMap<String, String>,
+    define_tree_cache: RefCell<HashMap<String, tree_sitter::Tree>>,
+    fragment_helper_body_cache: RefCell<BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>>,
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
     seed_guards: Vec<Guard>,
@@ -71,16 +75,23 @@ enum HelperBinding {
     RootContext,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum FragmentBinding {
     ValuesPath(String),
     ValuesRoot,
     RootContext,
-    Dict(HashMap<String, FragmentBinding>),
+    Dict(BTreeMap<String, FragmentBinding>),
     List(Vec<FragmentBinding>),
     StringSet(BTreeSet<String>),
     PathSet(BTreeSet<String>),
-    Choice(Vec<FragmentBinding>),
+    Choice(BTreeSet<FragmentBinding>),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct FragmentHelperBodyCacheKey {
+    name: String,
+    helper_dot: Option<FragmentBinding>,
+    locals: BTreeMap<String, FragmentBinding>,
 }
 
 #[derive(Default)]
@@ -561,6 +572,9 @@ impl<'a> SymbolicWalker<'a> {
         Self {
             source,
             defines,
+            define_body_sources: Self::collect_define_body_sources(defines),
+            define_tree_cache: RefCell::new(HashMap::new()),
+            fragment_helper_body_cache: RefCell::new(BTreeMap::new()),
             uses: Vec::new(),
             guards: Vec::new(),
             seed_guards: Vec::new(),
@@ -614,6 +628,33 @@ impl<'a> SymbolicWalker<'a> {
             return None;
         }
         parser.parse(src, None)
+    }
+
+    fn define_body_tree_from_cache(
+        name: &str,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+    ) -> Option<tree_sitter::Tree> {
+        if let Some(tree) = define_tree_cache.borrow().get(name) {
+            return Some(tree.clone());
+        }
+
+        let src = define_sources.get(name)?;
+        let tree = Self::parse_go_template(src)?;
+        define_tree_cache
+            .borrow_mut()
+            .insert(name.to_string(), tree.clone());
+        Some(tree)
+    }
+
+    fn collect_define_body_sources(defines: &DefineIndex) -> HashMap<String, String> {
+        let mut out = HashMap::new();
+        for (_path, src) in defines.file_sources() {
+            for block in crate::extract_define_blocks(src) {
+                out.insert(block.name, block.body);
+            }
+        }
+        out
     }
 
     fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
@@ -842,6 +883,11 @@ impl<'a> SymbolicWalker<'a> {
     fn collect_values_from_ast(
         node: &HelmAst,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         visited: &mut HashSet<String>,
         output: &mut BTreeSet<String>,
         guards: &mut BTreeSet<String>,
@@ -853,18 +899,52 @@ impl<'a> SymbolicWalker<'a> {
             | HelmAst::Define { body: items, .. }
             | HelmAst::Block { body: items, .. } => {
                 for it in items {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                    Self::collect_values_from_ast(
+                        it,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        visited,
+                        output,
+                        guards,
+                    );
                 }
             }
             HelmAst::Pair { key, value } => {
-                Self::collect_values_from_ast(key, defines, visited, output, guards);
+                Self::collect_values_from_ast(
+                    key,
+                    defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
+                    visited,
+                    output,
+                    guards,
+                );
                 if let Some(v) = value {
-                    Self::collect_values_from_ast(v, defines, visited, output, guards);
+                    Self::collect_values_from_ast(
+                        v,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        visited,
+                        output,
+                        guards,
+                    );
                 }
             }
             HelmAst::HelmExpr { text } => {
                 let bound = Self::analyze_bound_helper_calls_with_bindings(
-                    text, None, None, defines, visited,
+                    text,
+                    None,
+                    None,
+                    defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
+                    visited,
                 );
                 for v in extract_values_paths(text) {
                     if !bound.suppress_roots.contains(&v) {
@@ -879,7 +959,16 @@ impl<'a> SymbolicWalker<'a> {
                     }
                     if let Some(body) = defines.get(&name) {
                         for it in body {
-                            Self::collect_values_from_ast(it, defines, visited, output, guards);
+                            Self::collect_values_from_ast(
+                                it,
+                                defines,
+                                define_sources,
+                                define_tree_cache,
+                                fragment_helper_body_cache,
+                                visited,
+                                output,
+                                guards,
+                            );
                         }
                     }
                 }
@@ -893,10 +982,28 @@ impl<'a> SymbolicWalker<'a> {
                     guards.insert(v);
                 }
                 for it in then_branch {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                    Self::collect_values_from_ast(
+                        it,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        visited,
+                        output,
+                        guards,
+                    );
                 }
                 for it in else_branch {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                    Self::collect_values_from_ast(
+                        it,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        visited,
+                        output,
+                        guards,
+                    );
                 }
             }
             HelmAst::Range {
@@ -913,10 +1020,28 @@ impl<'a> SymbolicWalker<'a> {
                     guards.insert(v);
                 }
                 for it in body {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                    Self::collect_values_from_ast(
+                        it,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        visited,
+                        output,
+                        guards,
+                    );
                 }
                 for it in else_branch {
-                    Self::collect_values_from_ast(it, defines, visited, output, guards);
+                    Self::collect_values_from_ast(
+                        it,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        visited,
+                        output,
+                        guards,
+                    );
                 }
             }
             HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
@@ -937,6 +1062,9 @@ impl<'a> SymbolicWalker<'a> {
                 Self::collect_values_from_ast(
                     it,
                     self.defines,
+                    &self.define_body_sources,
+                    &self.define_tree_cache,
+                    &self.fragment_helper_body_cache,
                     &mut visited,
                     &mut output,
                     &mut guards,
@@ -1424,19 +1552,8 @@ impl<'a> SymbolicWalker<'a> {
         self.single_resolved_values_path(text)
     }
 
-    fn define_body_source_from_index(defines: &DefineIndex, name: &str) -> Option<String> {
-        for (_path, src) in defines.file_sources() {
-            for block in crate::extract_define_blocks(src) {
-                if block.name == name {
-                    return Some(block.body);
-                }
-            }
-        }
-        None
-    }
-
-    fn define_body_source(&self, name: &str) -> Option<String> {
-        Self::define_body_source_from_index(self.defines, name)
+    fn define_body_source(&self, name: &str) -> Option<&str> {
+        self.define_body_sources.get(name).map(String::as_str)
     }
 
     fn define_body_resource(&self, name: &str) -> Option<ResourceRef> {
@@ -1473,7 +1590,11 @@ impl<'a> SymbolicWalker<'a> {
         if self.inline_stack.iter().any(|entry| entry == &token) {
             return false;
         }
-        let Some(tree) = Self::parse_go_template(&src) else {
+        let Some(tree) = Self::define_body_tree_from_cache(
+            name,
+            &self.define_body_sources,
+            &self.define_tree_cache,
+        ) else {
             return false;
         };
 
@@ -1485,7 +1606,7 @@ impl<'a> SymbolicWalker<'a> {
         );
         let mut stack = self.inline_stack.clone();
         stack.push(token);
-        let mut nested = SymbolicWalker::new(src.as_str(), self.defines)
+        let mut nested = SymbolicWalker::new(src, self.defines)
             .with_initial_guards(self.guards.clone())
             .with_inline_stack(stack)
             .with_inline_helpers_in_fragments(true)
@@ -1871,11 +1992,13 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn fragment_choice(bindings: Vec<FragmentBinding>) -> Option<FragmentBinding> {
-        let mut flat = Vec::new();
+        let mut flat = BTreeSet::new();
         for binding in bindings {
             match binding {
                 FragmentBinding::Choice(inner) => flat.extend(inner),
-                other => flat.push(other),
+                other => {
+                    flat.insert(other);
+                }
             }
         }
         match flat.len() {
@@ -2017,7 +2140,7 @@ impl<'a> SymbolicWalker<'a> {
                 Some(FragmentBinding::List(items))
             }
             TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = HashMap::new();
+                let mut map = BTreeMap::new();
                 let mut index = 0usize;
                 while index + 1 < args.len() {
                     let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
@@ -2046,6 +2169,11 @@ impl<'a> SymbolicWalker<'a> {
         locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
         if let Some(path) = values_path_from_expr(expr) {
@@ -2056,9 +2184,16 @@ impl<'a> SymbolicWalker<'a> {
             TemplateExpr::Literal(Literal::String(value)) => Some(FragmentBinding::StringSet(
                 [value.clone()].into_iter().collect(),
             )),
-            TemplateExpr::Parenthesized(inner) => {
-                Self::fragment_binding_from_expr(inner, locals, current_dot, defines, seen)
-            }
+            TemplateExpr::Parenthesized(inner) => Self::fragment_binding_from_expr(
+                inner,
+                locals,
+                current_dot,
+                defines,
+                define_sources,
+                define_tree_cache,
+                fragment_helper_body_cache,
+                seen,
+            ),
             TemplateExpr::Field(path)
                 if path.first().is_some_and(|segment| segment == "Values") =>
             {
@@ -2074,8 +2209,16 @@ impl<'a> SymbolicWalker<'a> {
             TemplateExpr::Variable(var) if var.is_empty() => Some(FragmentBinding::RootContext),
             TemplateExpr::Variable(var) => locals.get(var).cloned(),
             TemplateExpr::Selector { operand, path } => {
-                let binding =
-                    Self::fragment_binding_from_expr(operand, locals, current_dot, defines, seen)?;
+                let binding = Self::fragment_binding_from_expr(
+                    operand,
+                    locals,
+                    current_dot,
+                    defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
+                    seen,
+                )?;
                 Self::fragment_apply_binding(&binding, path)
             }
             TemplateExpr::Call { function, args } if function == "list" => {
@@ -2086,13 +2229,16 @@ impl<'a> SymbolicWalker<'a> {
                         locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                     )?);
                 }
                 Some(FragmentBinding::List(items))
             }
             TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = HashMap::new();
+                let mut map = BTreeMap::new();
                 let mut index = 0usize;
                 while index + 1 < args.len() {
                     let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
@@ -2104,6 +2250,9 @@ impl<'a> SymbolicWalker<'a> {
                         locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                     ) {
                         map.insert(key.clone(), binding);
@@ -2117,9 +2266,16 @@ impl<'a> SymbolicWalker<'a> {
             {
                 let mut paths = BTreeSet::new();
                 for arg in args {
-                    let Some(binding) =
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, defines, seen)
-                    else {
+                    let Some(binding) = Self::fragment_binding_from_expr(
+                        arg,
+                        locals,
+                        current_dot,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                    ) else {
                         continue;
                     };
                     paths.extend(Self::fragment_paths(&binding));
@@ -2137,6 +2293,9 @@ impl<'a> SymbolicWalker<'a> {
                         locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                     )?);
                     if strings.is_empty() {
@@ -2158,6 +2317,9 @@ impl<'a> SymbolicWalker<'a> {
                     locals,
                     current_dot,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 )?;
                 match base {
@@ -2173,6 +2335,9 @@ impl<'a> SymbolicWalker<'a> {
                                         locals,
                                         current_dot,
                                         defines,
+                                        define_sources,
+                                        define_tree_cache,
+                                        fragment_helper_body_cache,
                                         seen,
                                     )?);
                                 strings.iter().next()?.parse::<usize>().ok()?
@@ -2188,6 +2353,9 @@ impl<'a> SymbolicWalker<'a> {
                                 locals,
                                 current_dot,
                                 defines,
+                                define_sources,
+                                define_tree_cache,
+                                fragment_helper_body_cache,
                                 seen,
                             );
                             let strings = Self::fragment_strings(&arg_binding?);
@@ -2228,6 +2396,9 @@ impl<'a> SymbolicWalker<'a> {
                     locals,
                     current_dot,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 );
                 if outputs.is_empty() {
@@ -2237,14 +2408,30 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             TemplateExpr::Call { function, args } if function == "tpl" => {
-                Self::fragment_binding_from_expr(args.first()?, locals, current_dot, defines, seen)
+                Self::fragment_binding_from_expr(
+                    args.first()?,
+                    locals,
+                    current_dot,
+                    defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
+                    seen,
+                )
             }
             TemplateExpr::Call { function, args } if function == "ternary" => {
                 let mut choices = Vec::new();
                 for arg in args {
-                    if let Some(binding) =
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, defines, seen)
-                    {
+                    if let Some(binding) = Self::fragment_binding_from_expr(
+                        arg,
+                        locals,
+                        current_dot,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                    ) {
                         choices.push(binding);
                     }
                 }
@@ -2256,6 +2443,9 @@ impl<'a> SymbolicWalker<'a> {
                     locals,
                     current_dot,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 );
                 for stage in &stages[1..] {
@@ -2276,6 +2466,9 @@ impl<'a> SymbolicWalker<'a> {
                                     locals,
                                     current_dot,
                                     defines,
+                                    define_sources,
+                                    define_tree_cache,
+                                    fragment_helper_body_cache,
                                     seen,
                                 ) {
                                     paths.extend(Self::fragment_paths(&binding));
@@ -2294,6 +2487,9 @@ impl<'a> SymbolicWalker<'a> {
                                     locals,
                                     current_dot,
                                     defines,
+                                    define_sources,
+                                    define_tree_cache,
+                                    fragment_helper_body_cache,
                                     seen,
                                 )
                             })
@@ -2309,6 +2505,9 @@ impl<'a> SymbolicWalker<'a> {
                                     locals,
                                     current_dot,
                                     defines,
+                                    define_sources,
+                                    define_tree_cache,
+                                    fragment_helper_body_cache,
                                     seen,
                                 ) {
                                     choices.push(binding);
@@ -2357,10 +2556,24 @@ impl<'a> SymbolicWalker<'a> {
         outer_locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
     ) -> BTreeSet<String> {
         let helper_dot = arg.and_then(|expr| {
-            Self::fragment_binding_from_expr(expr, outer_locals, current_dot, defines, seen)
+            Self::fragment_binding_from_expr(
+                expr,
+                outer_locals,
+                current_dot,
+                defines,
+                define_sources,
+                define_tree_cache,
+                fragment_helper_body_cache,
+                seen,
+            )
         });
         let mut helper_locals = HashMap::new();
         if let Some(FragmentBinding::Dict(map)) = &helper_dot {
@@ -2368,7 +2581,16 @@ impl<'a> SymbolicWalker<'a> {
                 helper_locals.insert(key.clone(), value.clone());
             }
         }
-        Self::analyze_bound_fragment_helper_body(name, helper_dot, helper_locals, defines, seen)
+        Self::analyze_bound_fragment_helper_body(
+            name,
+            helper_dot,
+            helper_locals,
+            defines,
+            define_sources,
+            define_tree_cache,
+            fragment_helper_body_cache,
+            seen,
+        )
     }
 
     fn analyze_bound_fragment_helper_body(
@@ -2376,6 +2598,11 @@ impl<'a> SymbolicWalker<'a> {
         helper_dot: Option<FragmentBinding>,
         mut locals: HashMap<String, FragmentBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        _fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
     ) -> BTreeSet<String> {
         let token = format!("fragment:{name}");
@@ -2383,15 +2610,19 @@ impl<'a> SymbolicWalker<'a> {
             return BTreeSet::new();
         }
         let mut outputs = BTreeSet::new();
-        if let Some(src) = Self::define_body_source_from_index(defines, name)
-            && let Some(tree) = Self::parse_go_template(&src)
+        if let Some(src) = define_sources.get(name)
+            && let Some(tree) =
+                Self::define_body_tree_from_cache(name, define_sources, define_tree_cache)
         {
             Self::collect_bound_fragment_outputs_from_tree(
                 tree.root_node(),
-                &src,
+                src,
                 &mut locals,
                 helper_dot.as_ref(),
                 defines,
+                define_sources,
+                define_tree_cache,
+                _fragment_helper_body_cache,
                 seen,
                 &mut outputs,
             );
@@ -2445,13 +2676,25 @@ impl<'a> SymbolicWalker<'a> {
         locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
         let mut bindings = Vec::new();
         for expr in Self::parse_expr_text(text) {
-            if let Some(binding) =
-                Self::fragment_binding_from_expr(&expr, locals, current_dot, defines, seen)
-            {
+            if let Some(binding) = Self::fragment_binding_from_expr(
+                &expr,
+                locals,
+                current_dot,
+                defines,
+                define_sources,
+                define_tree_cache,
+                fragment_helper_body_cache,
+                seen,
+            ) {
                 bindings.push(binding);
             }
         }
@@ -2464,6 +2707,11 @@ impl<'a> SymbolicWalker<'a> {
         locals: &mut HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
         outputs: &mut BTreeSet<String>,
     ) {
@@ -2476,6 +2724,9 @@ impl<'a> SymbolicWalker<'a> {
                             locals,
                             current_dot,
                             defines,
+                            define_sources,
+                            define_tree_cache,
+                            fragment_helper_body_cache,
                             seen,
                         );
                         if let Some(binding) = binding {
@@ -2493,8 +2744,16 @@ impl<'a> SymbolicWalker<'a> {
             | "function_call"
             | "method_call" => {
                 if let Ok(text) = node.utf8_text(source.as_bytes())
-                    && let Some(binding) =
-                        Self::fragment_binding_from_text(text, locals, current_dot, defines, seen)
+                    && let Some(binding) = Self::fragment_binding_from_text(
+                        text,
+                        locals,
+                        current_dot,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                    )
                 {
                     outputs.extend(Self::fragment_paths(&binding));
                 }
@@ -2508,6 +2767,9 @@ impl<'a> SymbolicWalker<'a> {
                         &mut then_locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                         outputs,
                     );
@@ -2521,6 +2783,9 @@ impl<'a> SymbolicWalker<'a> {
                         &mut else_locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                         outputs,
                     );
@@ -2533,7 +2798,16 @@ impl<'a> SymbolicWalker<'a> {
                     .child_by_field_name("condition")
                     .and_then(|condition| condition.utf8_text(source.as_bytes()).ok())
                     .and_then(|text| {
-                        Self::fragment_binding_from_text(text, locals, current_dot, defines, seen)
+                        Self::fragment_binding_from_text(
+                            text,
+                            locals,
+                            current_dot,
+                            defines,
+                            define_sources,
+                            define_tree_cache,
+                            fragment_helper_body_cache,
+                            seen,
+                        )
                     });
 
                 let mut body_locals = locals.clone();
@@ -2544,6 +2818,9 @@ impl<'a> SymbolicWalker<'a> {
                         &mut body_locals,
                         binding.as_ref(),
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                         outputs,
                     );
@@ -2557,6 +2834,9 @@ impl<'a> SymbolicWalker<'a> {
                         &mut else_locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                         outputs,
                     );
@@ -2570,7 +2850,16 @@ impl<'a> SymbolicWalker<'a> {
                 };
                 let header = Self::range_header_text_from_source(node, source);
                 let binding = header.as_deref().and_then(|text| {
-                    Self::fragment_binding_from_text(text, locals, current_dot, defines, seen)
+                    Self::fragment_binding_from_text(
+                        text,
+                        locals,
+                        current_dot,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                    )
                 });
                 if has_variable_definition
                     && !Self::range_body_emits_sequence_item_from_source(node, source)
@@ -2592,6 +2881,9 @@ impl<'a> SymbolicWalker<'a> {
                         &mut body_locals,
                         body_dot.as_ref(),
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                         outputs,
                     );
@@ -2607,6 +2899,9 @@ impl<'a> SymbolicWalker<'a> {
                         locals,
                         current_dot,
                         defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
                         seen,
                         outputs,
                     );
@@ -2623,6 +2918,9 @@ impl<'a> SymbolicWalker<'a> {
             None,
             current_dot.as_ref(),
             self.defines,
+            &self.define_body_sources,
+            &self.define_tree_cache,
+            &self.fragment_helper_body_cache,
             &mut seen,
         )
     }
@@ -2671,6 +2969,9 @@ impl<'a> SymbolicWalker<'a> {
                     helper_dot,
                     helper_locals,
                     self.defines,
+                    &self.define_body_sources,
+                    &self.define_tree_cache,
+                    &self.fragment_helper_body_cache,
                     &mut seen,
                 );
                 outputs.extend(nested);
@@ -2684,6 +2985,11 @@ impl<'a> SymbolicWalker<'a> {
         bindings: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
     ) -> BoundHelperAnalysis {
         let mut analysis = BoundHelperAnalysis::default();
@@ -2704,6 +3010,9 @@ impl<'a> SymbolicWalker<'a> {
                     bindings,
                     current_dot,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 );
                 analysis.extend(nested);
@@ -2718,6 +3027,11 @@ impl<'a> SymbolicWalker<'a> {
         outer_bindings: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
     ) -> BoundHelperAnalysis {
         if !seen.insert(name.to_string()) {
@@ -2732,6 +3046,9 @@ impl<'a> SymbolicWalker<'a> {
                     node,
                     &bindings,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                     &mut analysis,
                 );
@@ -2752,15 +3069,19 @@ impl<'a> SymbolicWalker<'a> {
                 fragment_locals.insert(key.clone(), value.clone());
             }
         }
-        if let Some(src) = Self::define_body_source_from_index(defines, name)
-            && let Some(tree) = Self::parse_go_template(&src)
+        if let Some(src) = define_sources.get(name)
+            && let Some(tree) =
+                Self::define_body_tree_from_cache(name, define_sources, define_tree_cache)
         {
             Self::collect_bound_fragment_outputs_from_tree(
                 tree.root_node(),
-                &src,
+                src,
                 &mut fragment_locals,
                 helper_dot.as_ref(),
                 defines,
+                define_sources,
+                define_tree_cache,
+                fragment_helper_body_cache,
                 seen,
                 &mut analysis.fragment_output,
             );
@@ -2804,6 +3125,11 @@ impl<'a> SymbolicWalker<'a> {
         node: &HelmAst,
         bindings: &HashMap<String, HelperBinding>,
         defines: &DefineIndex,
+        define_sources: &HashMap<String, String>,
+        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
+        fragment_helper_body_cache: &RefCell<
+            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
+        >,
         seen: &mut HashSet<String>,
         analysis: &mut BoundHelperAnalysis,
     ) {
@@ -2815,15 +3141,38 @@ impl<'a> SymbolicWalker<'a> {
             | HelmAst::Block { body: items, .. } => {
                 for item in items {
                     Self::collect_bound_helper_values_from_ast(
-                        item, bindings, defines, seen, analysis,
+                        item,
+                        bindings,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                        analysis,
                     );
                 }
             }
             HelmAst::Pair { key, value } => {
-                Self::collect_bound_helper_values_from_ast(key, bindings, defines, seen, analysis);
+                Self::collect_bound_helper_values_from_ast(
+                    key,
+                    bindings,
+                    defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
+                    seen,
+                    analysis,
+                );
                 if let Some(value) = value {
                     Self::collect_bound_helper_values_from_ast(
-                        value, bindings, defines, seen, analysis,
+                        value,
+                        bindings,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                        analysis,
                     );
                 }
             }
@@ -2836,6 +3185,9 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     None,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 );
                 analysis.output.extend(nested.output);
@@ -2857,18 +3209,35 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     None,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 );
                 analysis.guards.extend(nested.output);
                 analysis.guards.extend(nested.guards);
                 for item in then_branch {
                     Self::collect_bound_helper_values_from_ast(
-                        item, bindings, defines, seen, analysis,
+                        item,
+                        bindings,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                        analysis,
                     );
                 }
                 for item in else_branch {
                     Self::collect_bound_helper_values_from_ast(
-                        item, bindings, defines, seen, analysis,
+                        item,
+                        bindings,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                        analysis,
                     );
                 }
             }
@@ -2890,18 +3259,35 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     None,
                     defines,
+                    define_sources,
+                    define_tree_cache,
+                    fragment_helper_body_cache,
                     seen,
                 );
                 analysis.guards.extend(nested.output);
                 analysis.guards.extend(nested.guards);
                 for item in body {
                     Self::collect_bound_helper_values_from_ast(
-                        item, bindings, defines, seen, analysis,
+                        item,
+                        bindings,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                        analysis,
                     );
                 }
                 for item in else_branch {
                     Self::collect_bound_helper_values_from_ast(
-                        item, bindings, defines, seen, analysis,
+                        item,
+                        bindings,
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        seen,
+                        analysis,
                     );
                 }
             }
@@ -3204,6 +3590,9 @@ impl<'a> SymbolicWalker<'a> {
                     &locals,
                     current_dot.as_ref(),
                     self.defines,
+                    &self.define_body_sources,
+                    &self.define_tree_cache,
+                    &self.fragment_helper_body_cache,
                     &mut seen,
                 ) {
                     self.template_bindings.insert(var, binding);
@@ -3906,6 +4295,35 @@ impl ResourceDetector {
             self.buf.drain(..=nl);
             Self::process_line(self, helpers, &line);
         }
+    }
+}
+
+#[cfg(test)]
+mod fragment_binding_unit_tests {
+    use super::{FragmentBinding, SymbolicWalker};
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn fragment_choice_deduplicates_identical_bindings() {
+        let binding = FragmentBinding::Dict(BTreeMap::from([(
+            "ctx".to_string(),
+            FragmentBinding::ValuesPath("serviceAccount".to_string()),
+        )]));
+
+        let choice = SymbolicWalker::fragment_choice(vec![
+            binding.clone(),
+            binding.clone(),
+            FragmentBinding::Choice([binding.clone()].into_iter().collect()),
+        ]);
+
+        assert_eq!(choice, Some(binding));
+    }
+
+    #[test]
+    fn fragment_union_of_identical_bindings_stays_scalar() {
+        let binding = FragmentBinding::ValuesPath("fullnameOverride".to_string());
+        let merged = SymbolicWalker::fragment_union(Some(binding.clone()), Some(binding.clone()));
+        assert_eq!(merged, Some(binding));
     }
 }
 
