@@ -28,6 +28,7 @@ use std::path::Path;
 
 use jsonschema::{Retrieve, Uri};
 use serde_json::Value;
+use tracing::instrument;
 
 use crate::error::CliResult;
 
@@ -54,6 +55,7 @@ pub struct FlattenOptions {
 /// (file not found, JSON parse error, cycle the underlying resolver
 /// can't break, network ref under `--offline`, …). The underlying error
 /// is wrapped with enough detail for an operator to find the bad ref.
+#[instrument(skip_all)]
 pub fn flatten_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) -> CliResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
     let retriever = FsHttpRetrieve::new(options.allow_net);
@@ -70,6 +72,7 @@ pub fn flatten_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) ->
 /// # Errors
 ///
 /// Returns [`CliError::Referencing`] on any ref-resolution failure.
+#[instrument(skip_all)]
 pub fn flatten_with_retriever(
     schema: Value,
     base_uri: &str,

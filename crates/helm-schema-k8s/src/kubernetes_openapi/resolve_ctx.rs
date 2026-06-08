@@ -4,8 +4,6 @@ use std::path::PathBuf;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::YamlPath;
-
 /// `$ref` resolution context. Holds previously-loaded documents and a
 /// stack of (filename, json-pointer) pairs to break cycles.
 ///
@@ -71,86 +69,6 @@ impl<F: FnMut(&str) -> Option<PathBuf>> ResolveCtx<F> {
             doc.pointer(ptr).cloned().map(|v| (filename, v))
         }
     }
-}
-
-fn resolve_refs<F: FnMut(&str) -> Option<PathBuf>>(
-    ctx: &mut ResolveCtx<F>,
-    current_filename: &str,
-    schema: &Value,
-) -> Option<(String, Value)> {
-    if let Some(r) = schema.get("$ref").and_then(|v| v.as_str()) {
-        return ctx.resolve_ref(current_filename, r);
-    }
-    Some((current_filename.to_string(), schema.clone()))
-}
-
-pub fn schema_at_ypath<F: FnMut(&str) -> Option<PathBuf>>(
-    ctx: &mut ResolveCtx<F>,
-    root_filename: &str,
-    path: &YamlPath,
-) -> Option<(String, Value)> {
-    let mut cur = ctx.doc(root_filename)?.clone();
-    let mut cur_filename = root_filename.to_string();
-    for seg in &path.0 {
-        let (nf, ns) = descend_one(ctx, &cur_filename, &cur, seg)?;
-        cur_filename = nf;
-        cur = ns;
-    }
-    Some((cur_filename, cur))
-}
-
-fn descend_one<F: FnMut(&str) -> Option<PathBuf>>(
-    ctx: &mut ResolveCtx<F>,
-    current_filename: &str,
-    schema: &Value,
-    seg: &str,
-) -> Option<(String, Value)> {
-    let (schema_filename, schema) = resolve_refs(ctx, current_filename, schema)?;
-
-    for keyword in &["allOf", "anyOf", "oneOf"] {
-        if let Some(arr) = schema.get(*keyword).and_then(|v| v.as_array()) {
-            for s in arr {
-                if let Some(v) = descend_one(ctx, &schema_filename, s, seg) {
-                    return Some(v);
-                }
-            }
-        }
-    }
-
-    let (key, is_array_item) = if let Some(k) = seg.strip_suffix("[*]") {
-        (k, true)
-    } else {
-        (seg, false)
-    };
-
-    let mut next = schema
-        .get("properties")
-        .and_then(|p| p.as_object())
-        .and_then(|p| p.get(key))
-        .cloned()
-        .or_else(|| {
-            schema.get("additionalProperties").and_then(|ap| {
-                if ap.is_boolean() {
-                    None
-                } else {
-                    Some(ap.clone())
-                }
-            })
-        })?;
-
-    if is_array_item {
-        let (nf, ns) = resolve_refs(ctx, &schema_filename, &next)?;
-        next = ns;
-        let doc_key = nf;
-        next = next.get("items").cloned().or_else(|| {
-            next.get("prefixItems")
-                .and_then(|v| v.as_array())
-                .and_then(|a| a.first())
-                .cloned()
-        })?;
-        return Some((doc_key, next));
-    }
-    Some((schema_filename, next))
 }
 
 fn strip_ref(schema: &Value) -> Value {

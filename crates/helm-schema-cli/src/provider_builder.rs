@@ -5,6 +5,7 @@ use helm_schema_k8s::{
     Chain, CrdsCatalogSchemaProvider, DiagnosticSink, K8sSchemaProvider, K8sVersionChain,
     KubernetesJsonSchemaProvider, LayoutChecker, LocalSchemaProvider, NegativeCache,
 };
+use tracing::instrument;
 
 /// Options consumed by `build_provider`. Comes from the CLI surface or
 /// from library callers.
@@ -38,6 +39,7 @@ pub struct ProviderOptions {
     pub api_version_guess: bool,
 }
 
+#[instrument(skip_all)]
 pub fn build_provider(opts: &ProviderOptions, diagnostic_sink: Option<&DiagnosticSink>) -> Chain {
     let mut providers: Vec<Box<dyn K8sSchemaProvider>> = Vec::new();
     let negative_cache = Arc::new(NegativeCache::new());

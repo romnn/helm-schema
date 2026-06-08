@@ -4,6 +4,7 @@ mod diag_args;
 mod inference_args;
 mod k8s_args;
 mod output_args;
+mod perf_args;
 
 use std::path::PathBuf;
 
@@ -15,6 +16,7 @@ pub use diag_args::{DiagArgs, DiagFormat};
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::OutputArgs;
+pub use perf_args::PerfArgs;
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -42,6 +44,9 @@ pub struct Cli {
 
     #[command(flatten)]
     pub chart: ChartArgs,
+
+    #[command(flatten)]
+    pub perf: PerfArgs,
 
     #[arg(long)]
     pub override_schema: Option<PathBuf>,

@@ -10,9 +10,10 @@ pub mod schema_override;
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{BufWriter, Read, Write};
 use std::path::Path;
+use std::time::{Duration, Instant};
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_full;
+use helm_schema_gen::{GenerationProfile, generate_values_schema_full_profiled};
 use helm_schema_ir::{
     Guard, IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints,
     extract_define_blocks, extract_helper_calls,
@@ -20,6 +21,8 @@ use helm_schema_ir::{
 use helm_schema_k8s::DiagnosticSink;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
+use tracing_subscriber::Layer as _;
+use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
 
 use crate::error::CliResult;
@@ -37,6 +40,173 @@ pub struct GenerateOptions {
     pub provider: ProviderOptions,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum ProfilePhase {
+    ChartDiscovery,
+    DefineIndex,
+    ValuesYamlCompose,
+    IrCollection,
+    ProviderBuild,
+    SchemaGeneration,
+    RequiredInference,
+    OverrideMerge,
+    FlattenRefs,
+    OutputWrite,
+}
+
+impl ProfilePhase {
+    fn label(self) -> &'static str {
+        match self {
+            Self::ChartDiscovery => "chart_discovery",
+            Self::DefineIndex => "define_index",
+            Self::ValuesYamlCompose => "values_yaml_compose",
+            Self::IrCollection => "ir_collection",
+            Self::ProviderBuild => "provider_build",
+            Self::SchemaGeneration => "schema_generation",
+            Self::RequiredInference => "required_inference",
+            Self::OverrideMerge => "override_merge",
+            Self::FlattenRefs => "flatten_refs",
+            Self::OutputWrite => "output_write",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct GenerationStats {
+    charts_total: usize,
+    charts_non_library: usize,
+    value_uses: usize,
+    type_hint_paths: usize,
+    output_bytes: usize,
+    generator_profile: Option<GenerationProfile>,
+}
+
+#[derive(Debug, Clone)]
+struct GeneratedSchema {
+    schema: Value,
+    stats: GenerationStats,
+}
+
+#[derive(Debug, Clone)]
+struct ProfileEntry {
+    phase: ProfilePhase,
+    duration: Duration,
+}
+
+#[derive(Debug)]
+struct PhaseProfiler {
+    enabled: bool,
+    total_start: Instant,
+    entries: Vec<ProfileEntry>,
+}
+
+impl PhaseProfiler {
+    fn new(enabled: bool) -> Self {
+        Self {
+            enabled,
+            total_start: Instant::now(),
+            entries: Vec::new(),
+        }
+    }
+
+    fn measure<T>(&mut self, phase: ProfilePhase, work: impl FnOnce() -> T) -> T {
+        let start = Instant::now();
+        let result = {
+            let span = tracing::info_span!("helm_schema_phase", phase = phase.label());
+            let _entered = span.enter();
+            work()
+        };
+        if self.enabled {
+            self.entries.push(ProfileEntry {
+                phase,
+                duration: start.elapsed(),
+            });
+        }
+        result
+    }
+
+    fn emit(&self, stats: &GenerationStats) {
+        if !self.enabled {
+            return;
+        }
+
+        let total = self.total_start.elapsed();
+        let stderr = std::io::stderr();
+        let mut out = stderr.lock();
+
+        let _ = writeln!(out, "perf:");
+        for entry in &self.entries {
+            let _ = writeln!(
+                out,
+                "  {:<20} {:>10.3} ms",
+                entry.phase.label(),
+                entry.duration.as_secs_f64() * 1000.0
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  {:<20} {:>10.3} ms",
+            "total",
+            total.as_secs_f64() * 1000.0
+        );
+        let _ = writeln!(out, "  charts_total: {}", stats.charts_total);
+        let _ = writeln!(out, "  charts_non_library: {}", stats.charts_non_library);
+        let _ = writeln!(out, "  value_uses: {}", stats.value_uses);
+        let _ = writeln!(out, "  type_hint_paths: {}", stats.type_hint_paths);
+        let _ = writeln!(out, "  output_bytes: {}", stats.output_bytes);
+        if let Some(generator_profile) = &stats.generator_profile {
+            let _ = writeln!(
+                out,
+                "  {:<20} {:>10.3} ms",
+                "gen.collect_use_signals",
+                generator_profile.collect_use_signals.as_secs_f64() * 1000.0
+            );
+            let _ = writeln!(
+                out,
+                "  {:<20} {:>10.3} ms",
+                "gen.collect_path_metadata",
+                generator_profile.collect_path_metadata.as_secs_f64() * 1000.0
+            );
+            let _ = writeln!(
+                out,
+                "  {:<20} {:>10.3} ms",
+                "gen.build_root_schema",
+                generator_profile.build_root_schema.as_secs_f64() * 1000.0
+            );
+        }
+    }
+}
+
+struct CountingWrite<W> {
+    inner: W,
+    bytes_written: usize,
+}
+
+impl<W> CountingWrite<W> {
+    fn new(inner: W) -> Self {
+        Self {
+            inner,
+            bytes_written: 0,
+        }
+    }
+
+    fn bytes_written(&self) -> usize {
+        self.bytes_written
+    }
+}
+
+impl<W: Write> Write for CountingWrite<W> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let written = self.inner.write(buf)?;
+        self.bytes_written += written;
+        Ok(written)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.flush()
+    }
+}
+
 /// Run the CLI.
 ///
 /// # Errors
@@ -44,6 +214,41 @@ pub struct GenerateOptions {
 /// Returns an error if chart discovery fails, a template/values file cannot be
 /// read/parsed, the schema cannot be generated, or output cannot be written.
 pub fn run(cli: Cli) -> CliResult<()> {
+    let trace_output = cli.perf.trace_output.clone();
+    if let Some(trace_output) = trace_output {
+        if let Some(parent) = trace_output.parent() {
+            std::fs::create_dir_all(parent).map_err(|err| CliError::CreateOutputDir {
+                path: parent.to_path_buf(),
+                source: err,
+            })?;
+        }
+        let trace_file =
+            std::fs::File::create(&trace_output).map_err(|err| CliError::WriteOutput {
+                path: trace_output.clone(),
+                source: err,
+            })?;
+        let perfetto_layer =
+            tracing_perfetto::PerfettoLayer::new(std::sync::Mutex::new(trace_file))
+                .with_debug_annotations(true)
+                .with_filter(tracing_subscriber::filter::filter_fn(|metadata| {
+                    metadata.target().starts_with("helm_schema")
+                }));
+        let subscriber = tracing_subscriber::registry().with(perfetto_layer);
+        let dispatch = tracing::Dispatch::new(subscriber);
+        return tracing::dispatcher::with_default(&dispatch, || run_inner(cli));
+    }
+
+    run_inner(cli)
+}
+
+fn run_inner(cli: Cli) -> CliResult<()> {
+    let run_span = tracing::info_span!(
+        "helm_schema_run",
+        chart_dir = %cli.chart_dir.display()
+    );
+    let _entered = run_span.enter();
+
+    let mut profiler = PhaseProfiler::new(cli.perf.profile_phases);
     cli.crd.validate().map_err(CliError::CliValidation)?;
     let fallback_window = cli
         .k8s
@@ -77,20 +282,31 @@ pub fn run(cli: Cli) -> CliResult<()> {
     };
 
     let diagnostics = DiagnosticSink::new();
-    let mut schema = generate_values_schema_for_chart_with_diagnostics(&opts, Some(&diagnostics))?;
+    let GeneratedSchema {
+        mut schema,
+        mut stats,
+    } = generate_values_schema_for_chart_with_diagnostics_profiled(
+        &opts,
+        Some(&diagnostics),
+        &mut profiler,
+    )?;
 
     if let Some(path) = cli.override_schema {
         let override_schema = load_json_file(&path)?;
-        schema = schema_override::apply_schema_override(schema, override_schema);
+        schema = profiler.measure(ProfilePhase::OverrideMerge, || {
+            schema_override::apply_schema_override(schema, override_schema)
+        });
     }
 
     if !cli.output.keep_refs {
         let allow_net = !cli.k8s.offline;
-        schema = flatten::flatten_refs(
-            schema,
-            &cli.chart_dir,
-            &flatten::FlattenOptions { allow_net },
-        )?;
+        schema = profiler.measure(ProfilePhase::FlattenRefs, || {
+            flatten::flatten_refs(
+                schema,
+                &cli.chart_dir,
+                &flatten::FlattenOptions { allow_net },
+            )
+        })?;
     }
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
@@ -102,31 +318,45 @@ pub fn run(cli: Cli) -> CliResult<()> {
                 source: e,
             })?;
         }
-        let file = std::fs::File::create(&path).map_err(|err| CliError::WriteOutput {
-            path: path.clone(),
-            source: err,
-        })?;
-        let mut out = BufWriter::new(file);
-        if cli.output.compact {
-            serde_json::to_writer(&mut out, &schema)?;
-        } else {
-            serde_json::to_writer_pretty(&mut out, &schema)?;
-        }
-        out.write_all(b"\n").map_err(|err| CliError::WriteOutput {
-            path: path.clone(),
-            source: err,
-        })?;
+        stats.output_bytes =
+            profiler.measure(ProfilePhase::OutputWrite, || -> CliResult<usize> {
+                let file = std::fs::File::create(&path).map_err(|err| CliError::WriteOutput {
+                    path: path.clone(),
+                    source: err,
+                })?;
+                let mut out = CountingWrite::new(BufWriter::new(file));
+                if cli.output.compact {
+                    serde_json::to_writer(&mut out, &schema)?;
+                } else {
+                    serde_json::to_writer_pretty(&mut out, &schema)?;
+                }
+                out.write_all(b"\n").map_err(|err| CliError::WriteOutput {
+                    path: path.clone(),
+                    source: err,
+                })?;
+                out.flush().map_err(|err| CliError::WriteOutput {
+                    path: path.clone(),
+                    source: err,
+                })?;
+                Ok(out.bytes_written())
+            })?;
     } else {
-        let stdout = std::io::stdout();
-        let mut out = BufWriter::new(stdout.lock());
-        if cli.output.compact {
-            serde_json::to_writer(&mut out, &schema)?;
-        } else {
-            serde_json::to_writer_pretty(&mut out, &schema)?;
-        }
-        out.write_all(b"\n")?;
+        stats.output_bytes =
+            profiler.measure(ProfilePhase::OutputWrite, || -> CliResult<usize> {
+                let stdout = std::io::stdout();
+                let mut out = CountingWrite::new(BufWriter::new(stdout.lock()));
+                if cli.output.compact {
+                    serde_json::to_writer(&mut out, &schema)?;
+                } else {
+                    serde_json::to_writer_pretty(&mut out, &schema)?;
+                }
+                out.write_all(b"\n")?;
+                out.flush()?;
+                Ok(out.bytes_written())
+            })?;
     }
 
+    profiler.emit(&stats);
     Ok(())
 }
 
@@ -150,36 +380,75 @@ pub fn generate_values_schema_for_chart_with_diagnostics(
     opts: &GenerateOptions,
     diagnostic_sink: Option<&DiagnosticSink>,
 ) -> CliResult<Value> {
-    let discovery = chart::discover_chart_contexts(&opts.chart_dir)?;
+    let mut profiler = PhaseProfiler::new(false);
+    let generated = generate_values_schema_for_chart_with_diagnostics_profiled(
+        opts,
+        diagnostic_sink,
+        &mut profiler,
+    )?;
+    Ok(generated.schema)
+}
+
+#[tracing::instrument(skip_all)]
+fn generate_values_schema_for_chart_with_diagnostics_profiled(
+    opts: &GenerateOptions,
+    diagnostic_sink: Option<&DiagnosticSink>,
+    profiler: &mut PhaseProfiler,
+) -> CliResult<GeneratedSchema> {
+    let discovery = profiler.measure(ProfilePhase::ChartDiscovery, || {
+        chart::discover_chart_contexts(&opts.chart_dir)
+    })?;
     let charts = &discovery.charts;
 
-    let defines = chart::build_define_index(charts, opts.include_tests)?;
+    let defines = profiler.measure(ProfilePhase::DefineIndex, || {
+        chart::build_define_index(charts, opts.include_tests)
+    })?;
 
-    let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
+    let values_yaml = profiler.measure(ProfilePhase::ValuesYamlCompose, || {
+        chart::build_composed_values_yaml(charts, opts.include_subchart_values)
+    })?;
 
     let ChartIrCollection {
         mut uses,
         type_hints,
         call_graph,
-    } = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
+    } = profiler.measure(ProfilePhase::IrCollection, || {
+        collect_ir_for_charts(charts, &defines, opts.include_tests)
+    })?;
     seed_top_level_values_yaml_keys(&mut uses, values_yaml.as_deref());
 
-    let provider = provider_builder::build_provider(&opts.provider, diagnostic_sink);
+    let provider = profiler.measure(ProfilePhase::ProviderBuild, || {
+        provider_builder::build_provider(&opts.provider, diagnostic_sink)
+    });
 
-    let mut schema =
-        generate_values_schema_full(&uses, &provider, values_yaml.as_deref(), &type_hints);
+    let generated_schema = profiler.measure(ProfilePhase::SchemaGeneration, || {
+        generate_values_schema_full_profiled(&uses, &provider, values_yaml.as_deref(), &type_hints)
+    });
+    let mut schema = generated_schema.schema;
 
     if opts.infer_required {
-        required_inference::apply(
-            &mut schema,
-            &uses,
-            values_yaml.as_deref(),
-            charts,
-            &call_graph,
-        );
+        profiler.measure(ProfilePhase::RequiredInference, || {
+            required_inference::apply(
+                &mut schema,
+                &uses,
+                values_yaml.as_deref(),
+                charts,
+                &call_graph,
+            );
+        });
     }
 
-    Ok(schema)
+    Ok(GeneratedSchema {
+        schema,
+        stats: GenerationStats {
+            charts_total: charts.len(),
+            charts_non_library: charts.iter().filter(|chart| !chart.is_library).count(),
+            value_uses: uses.len(),
+            type_hint_paths: type_hints.len(),
+            output_bytes: 0,
+            generator_profile: Some(generated_schema.profile),
+        },
+    })
 }
 
 /// IR + auxiliary signals collected from a chart's templates.
@@ -254,6 +523,7 @@ impl HelperCallGraph {
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn build_helper_call_graph(
     charts: &[chart::ChartContext],
     include_tests: bool,
@@ -348,6 +618,7 @@ fn reachable_helpers(graph: &HelperCallGraph, seeds: &BTreeSet<String>) -> BTree
     visited
 }
 
+#[tracing::instrument(skip_all)]
 fn collect_ir_for_charts(
     charts: &[chart::ChartContext],
     defines: &DefineIndex,

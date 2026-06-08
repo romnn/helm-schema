@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 use serde_json::Value;
@@ -8,10 +9,11 @@ use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LocalSchemaProvider {
     root_dir: PathBuf,
     allow_api_version_guess: bool,
+    materialized: Mutex<std::collections::HashMap<ResourceRef, Arc<Value>>>,
 }
 
 impl LocalSchemaProvider {
@@ -20,6 +22,7 @@ impl LocalSchemaProvider {
         Self {
             root_dir: root_dir.into(),
             allow_api_version_guess: false,
+            materialized: Mutex::new(std::collections::HashMap::new()),
         }
     }
 
@@ -61,17 +64,32 @@ impl LocalSchemaProvider {
 
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
+        let materialized = self.materialized_schema_root(resource)?;
+        Some((*materialized).clone())
+    }
+
+    fn materialized_schema_root(&self, resource: &ResourceRef) -> Option<Arc<Value>> {
+        if let Ok(guard) = self.materialized.lock()
+            && let Some(root) = guard.get(resource)
+        {
+            return Some(Arc::clone(root));
+        }
+
         let root = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
-        Some(enrich_root_metadata_schema(expand_local_refs(
+        let materialized = Arc::new(enrich_root_metadata_schema(expand_local_refs(
             &root, &root, 0, &mut stack,
-        )))
+        )));
+        if let Ok(mut guard) = self.materialized.lock() {
+            guard.insert(resource.clone(), Arc::clone(&materialized));
+        }
+        Some(materialized)
     }
 }
 
 impl K8sSchemaProvider for LocalSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        let root = self.materialize_schema_for_resource(resource)?;
+        let root = self.materialized_schema_root(resource)?;
         descend_schema_path(&root, &path.0)
     }
 
@@ -80,6 +98,16 @@ impl K8sSchemaProvider for LocalSchemaProvider {
     }
 
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
+        if let Some(root) = self.materialized_schema_root(resource) {
+            return match descend_schema_path(&root, &path.0) {
+                Some(schema) => ProviderLookupResult::Found {
+                    schema,
+                    resolved_k8s_version: None,
+                },
+                None => ProviderLookupResult::PathUnresolved,
+            };
+        }
+
         let Some(file) = self.override_file_for(resource) else {
             return ProviderLookupResult::NotOwned;
         };
@@ -90,10 +118,14 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         let source_path = file.display().to_string();
         match std::fs::read(&file) {
             Ok(bytes) => match serde_json::from_slice::<Value>(&bytes) {
-                Ok(root) => {
-                    let mut stack = std::collections::HashSet::new();
-                    let expanded = expand_local_refs(&root, &root, 0, &mut stack);
-                    match descend_schema_path(&expanded, &path.0) {
+                Ok(_) => {
+                    let Some(root) = self.materialized_schema_root(resource) else {
+                        return ProviderLookupResult::ResourceDocMissing {
+                            io_error: "failed to materialize local override schema".to_string(),
+                            source_path,
+                        };
+                    };
+                    match descend_schema_path(&root, &path.0) {
                         Some(schema) => ProviderLookupResult::Found {
                             schema,
                             resolved_k8s_version: None,
@@ -132,14 +164,14 @@ impl K8sSchemaProvider for LocalSchemaProvider {
 }
 
 pub fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
-    let mut current = schema.clone();
+    let mut current = schema;
     for seg in path {
-        current = descend_one(&current, seg)?;
+        current = descend_one(current, seg)?;
     }
-    Some(current)
+    Some(current.clone())
 }
 
-fn descend_one(schema: &Value, seg: &str) -> Option<Value> {
+fn descend_one<'a>(schema: &'a Value, seg: &str) -> Option<&'a Value> {
     for keyword in ["allOf", "anyOf", "oneOf"] {
         if let Some(arr) = schema.get(keyword).and_then(|v| v.as_array()) {
             for branch in arr {
@@ -160,23 +192,17 @@ fn descend_one(schema: &Value, seg: &str) -> Option<Value> {
         .get("properties")
         .and_then(|p| p.as_object())
         .and_then(|p| p.get(key))
-        .cloned()
         .or_else(|| {
-            schema.get("additionalProperties").and_then(|ap| {
-                if ap.is_boolean() {
-                    None
-                } else {
-                    Some(ap.clone())
-                }
-            })
+            schema
+                .get("additionalProperties")
+                .and_then(|ap| if ap.is_boolean() { None } else { Some(ap) })
         })?;
 
     if is_array_item {
-        next = next.get("items").cloned().or_else(|| {
+        next = next.get("items").or_else(|| {
             next.get("prefixItems")
                 .and_then(|v| v.as_array())
                 .and_then(|a| a.first())
-                .cloned()
         })?;
     }
 

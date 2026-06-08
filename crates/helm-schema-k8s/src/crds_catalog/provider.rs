@@ -39,6 +39,7 @@ pub struct CrdsCatalogSchemaProvider {
     diagnostic_sink: Option<DiagnosticSink>,
 
     mem: Mutex<HashMap<MemKey, Value>>,
+    materialized: Mutex<HashMap<ResourceRef, Arc<Value>>>,
 }
 
 impl CrdsCatalogSchemaProvider {
@@ -58,6 +59,7 @@ impl CrdsCatalogSchemaProvider {
             layout_checker: Arc::new(LayoutChecker::new()),
             diagnostic_sink: None,
             mem: Mutex::new(HashMap::new()),
+            materialized: Mutex::new(HashMap::new()),
         }
     }
 
@@ -250,11 +252,26 @@ impl CrdsCatalogSchemaProvider {
 
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
+        let materialized = self.materialized_schema_root(resource)?;
+        Some((*materialized).clone())
+    }
+
+    fn materialized_schema_root(&self, resource: &ResourceRef) -> Option<Arc<Value>> {
+        if let Ok(guard) = self.materialized.lock()
+            && let Some(root) = guard.get(resource)
+        {
+            return Some(Arc::clone(root));
+        }
+
         let (_source_id, root) = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
-        Some(enrich_root_metadata_schema(expand_local_refs(
+        let materialized = Arc::new(enrich_root_metadata_schema(expand_local_refs(
             &root, &root, 0, &mut stack,
-        )))
+        )));
+        if let Ok(mut guard) = self.materialized.lock() {
+            guard.insert(resource.clone(), Arc::clone(&materialized));
+        }
+        Some(materialized)
     }
 }
 
@@ -269,7 +286,7 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
-        let root = self.materialize_schema_for_resource(resource)?;
+        let root = self.materialized_schema_root(resource)?;
         descend_schema_path(&root, &path.0)
     }
 
@@ -281,30 +298,10 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return ProviderLookupResult::NotOwned;
         }
-        if !self.has_resource(resource) {
-            if self.allow_download {
-                let Some(relative_path) = relative_path_for_resource(resource) else {
-                    return ProviderLookupResult::NotOwned;
-                };
-                let mut downloaded_any = false;
-                for source in &self.mirrors.sources {
-                    if self.try_load_from_source(source, &relative_path).is_some() {
-                        downloaded_any = true;
-                        break;
-                    }
-                }
-                if !downloaded_any {
-                    // Miss-side diagnostic emission moved to the chain
-                    // layer (Finding 4 — silent candidate probing). The
-                    // chain calls `missing_schema_provider_diagnostics`
-                    // only after exhausting all candidates.
-                    return ProviderLookupResult::NotOwned;
-                }
-            } else {
-                return ProviderLookupResult::NotOwned;
-            }
-        }
-        match self.schema_for_resource_path(resource, path) {
+        let Some(root) = self.materialized_schema_root(resource) else {
+            return ProviderLookupResult::NotOwned;
+        };
+        match descend_schema_path(&root, &path.0) {
             Some(schema) => ProviderLookupResult::Found {
                 schema,
                 resolved_k8s_version: None,

@@ -121,6 +121,60 @@ tasks:
     cmds:
       - cargo nextest run --workspace --all-targets {{.CLI_ARGS}}
 
+  bench:chart:
+    desc: "benchmark release helm-schema on one chart with phase timings"
+    vars:
+      HELM_SCHEMA_BIN: "{{.ROOT_DIR}}/target/release/helm-schema"
+      CHART: '{{.CHART | default "./testdata/charts/cert-manager"}}'
+      OUTPUT: '{{.OUTPUT | default "/tmp/helm-schema-bench.schema.json"}}'
+    cmds:
+      - cargo build -p helm-schema-cli --release
+      - >-
+        /usr/bin/time -v
+        {{.HELM_SCHEMA_BIN}}
+        {{.CHART}}
+        --compact
+        --profile-phases
+        --output {{.OUTPUT}}
+        {{.CLI_ARGS}}
+
+  trace:chart:
+    desc: "run release helm-schema on one chart and write a perfetto trace"
+    vars:
+      HELM_SCHEMA_BIN: "{{.ROOT_DIR}}/target/release/helm-schema"
+      CHART: '{{.CHART | default "./testdata/charts/cert-manager"}}'
+      OUTPUT: '{{.OUTPUT | default "/tmp/helm-schema-trace.schema.json"}}'
+      TRACE: '{{.TRACE | default "/tmp/helm-schema-trace.pftrace"}}'
+    cmds:
+      - cargo build -p helm-schema-cli --release
+      - >-
+        /usr/bin/time -v
+        {{.HELM_SCHEMA_BIN}}
+        {{.CHART}}
+        --compact
+        --profile-phases
+        --trace-output {{.TRACE}}
+        --output {{.OUTPUT}}
+        {{.CLI_ARGS}}
+
+  bench:representative:
+    desc: "benchmark representative charts, including luup3 temporal"
+    vars:
+      LUUP3_DIR: '{{.LUUP3_DIR | default "/home/roman/dev/branches/luup3"}}'
+    cmds:
+      - >-
+        task bench:chart --
+        CHART=./testdata/charts/cert-manager
+        OUTPUT=/tmp/helm-schema-bench-cert-manager.json
+      - >-
+        task bench:chart --
+        CHART={{.LUUP3_DIR}}/deployment/charts/inbucket
+        OUTPUT=/tmp/helm-schema-bench-inbucket.json
+      - >-
+        task bench:chart --
+        CHART={{.LUUP3_DIR}}/deployment/charts/temporal
+        OUTPUT=/tmp/helm-schema-bench-temporal.json
+
   test:fc:
     desc: "test cargo workspace for all combinations of features"
     cmds:

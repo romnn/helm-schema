@@ -8,6 +8,17 @@ fn is_annotation_keyword(key: &str) -> bool {
 }
 
 pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
+    match schemas.len() {
+        0 => return Value::Object(Map::new()),
+        1 => return schemas.pop().unwrap_or_else(|| Value::Object(Map::new())),
+        2 => {
+            let right = schemas.pop().unwrap_or_else(|| Value::Object(Map::new()));
+            let left = schemas.pop().unwrap_or_else(|| Value::Object(Map::new()));
+            return merge_two_schemas(left, right);
+        }
+        _ => {}
+    }
+
     schemas = dedup_schemas(schemas);
     let mut it = schemas.into_iter();
     let Some(first) = it.next() else {
@@ -78,6 +89,10 @@ fn flatten_union_variants(v: Value) -> Vec<Value> {
 }
 
 fn collapse_compatible_variants(variants: Vec<Value>) -> Vec<Value> {
+    if variants.len() < 2 {
+        return variants;
+    }
+
     let mut out: Vec<Value> = Vec::new();
     'variants: for variant in variants {
         for existing in &mut out {
@@ -92,6 +107,10 @@ fn collapse_compatible_variants(variants: Vec<Value>) -> Vec<Value> {
 }
 
 fn dedup_schemas(schemas: Vec<Value>) -> Vec<Value> {
+    if schemas.len() < 2 {
+        return schemas;
+    }
+
     let mut out = Vec::new();
     for schema in schemas {
         if out.iter().any(|existing| existing == &schema) {

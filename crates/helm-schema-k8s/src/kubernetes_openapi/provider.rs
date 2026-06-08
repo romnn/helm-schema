@@ -19,11 +19,17 @@ use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
-use super::resolve_ctx::{ResolveCtx, expand_schema_node, schema_at_ypath};
+use super::resolve_ctx::{ResolveCtx, expand_schema_node};
 use super::version_chain::K8sVersionChain;
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
 type MemKey = (String, String, String);
+
+#[derive(Debug, Clone)]
+struct MaterializedResourceDoc {
+    resolved_k8s_version: String,
+    root: Arc<Value>,
+}
 
 /// Composer of fetch + cache + lookup primitives for upstream K8s
 /// OpenAPI schemas. Carries a [`K8sVersionChain`] (Feature B) and a
@@ -45,6 +51,7 @@ pub struct KubernetesJsonSchemaProvider {
     diagnostic_sink: Option<DiagnosticSink>,
 
     mem: Mutex<HashMap<MemKey, Value>>,
+    materialized: Mutex<HashMap<ResourceRef, MaterializedResourceDoc>>,
 }
 
 /// Tri-state outcome for the capability-oracle probe path. See
@@ -82,6 +89,7 @@ impl KubernetesJsonSchemaProvider {
             layout_checker: Arc::new(LayoutChecker::new()),
             diagnostic_sink: None,
             mem: Mutex::new(HashMap::new()),
+            materialized: Mutex::new(HashMap::new()),
         }
     }
 
@@ -293,12 +301,33 @@ impl KubernetesJsonSchemaProvider {
     /// Materialise the entire schema for a resource (used by tests).
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
+        let materialized = self.materialized_schema_for_resource(resource)?;
+        Some((*materialized.root).clone())
+    }
+
+    fn materialized_schema_for_resource(
+        &self,
+        resource: &ResourceRef,
+    ) -> Option<MaterializedResourceDoc> {
+        if let Ok(guard) = self.materialized.lock()
+            && let Some(doc) = guard.get(resource)
+        {
+            return Some(doc.clone());
+        }
+
         let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
-        let loader = self.loader_for_source(source_id, version);
+        let loader = self.loader_for_source(source_id, version.clone());
         let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
         let root_doc = ctx.doc(&filename)?.clone();
         let (_, expanded) = expand_schema_node(&mut ctx, &filename, &root_doc, 0);
-        Some(expanded)
+        let materialized = MaterializedResourceDoc {
+            resolved_k8s_version: version,
+            root: Arc::new(expanded),
+        };
+        if let Ok(mut guard) = self.materialized.lock() {
+            guard.insert(resource.clone(), materialized.clone());
+        }
+        Some(materialized)
     }
 
     /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`
@@ -533,13 +562,8 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
-        let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
-        let loader = self.loader_for_source(source_id, version);
-        let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
-
-        let (leaf_filename, leaf) = schema_at_ypath(&mut ctx, &filename, path)?;
-        let (_, expanded) = expand_schema_node(&mut ctx, &leaf_filename, &leaf, 0);
-        Some(expanded)
+        let materialized = self.materialized_schema_for_resource(resource)?;
+        crate::local_override::descend_schema_path(&materialized.root, &path.0)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -550,47 +574,21 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return ProviderLookupResult::NotOwned;
         }
-        if !self.has_resource(resource) {
-            // Try a download to seed local cache & ownership at the
-            // schema_for_resource_path layer — if it succeeds we
-            // upgrade to Found below.
-            if self.allow_download {
-                let mut found_any = false;
-                let candidates = candidate_filenames_for_resource(resource);
-                for version in self.versions.ordered() {
-                    for filename in &candidates {
-                        for source in &self.mirrors.sources {
-                            if self
-                                .try_load_from_source(source, &version, filename)
-                                .is_some()
-                            {
-                                found_any = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if !found_any {
-                    return ProviderLookupResult::NotOwned;
-                }
-            } else {
-                return ProviderLookupResult::NotOwned;
-            }
-        }
-        let Some((_, version, _, _)) = self.load_resource_doc(resource) else {
-            return ProviderLookupResult::ResourceDocMissing {
-                io_error: "resource doc disappeared after has_resource".to_string(),
-                source_path: String::new(),
-            };
+        let Some(materialized) = self.materialized_schema_for_resource(resource) else {
+            return ProviderLookupResult::NotOwned;
         };
-        let primary = self.versions.primary().unwrap_or(&version).to_string();
-        match self.schema_for_resource_path(resource, path) {
+        let primary = self
+            .versions
+            .primary()
+            .unwrap_or(&materialized.resolved_k8s_version)
+            .to_string();
+        match crate::local_override::descend_schema_path(&materialized.root, &path.0) {
             Some(schema) => ProviderLookupResult::Found {
                 schema,
-                resolved_k8s_version: if primary == version {
+                resolved_k8s_version: if primary == materialized.resolved_k8s_version {
                     None
                 } else {
-                    Some(version)
+                    Some(materialized.resolved_k8s_version)
                 },
             },
             None => ProviderLookupResult::PathUnresolved,

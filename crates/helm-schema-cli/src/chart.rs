@@ -6,6 +6,7 @@ use flate2::read::GzDecoder;
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use serde::Deserialize;
 use serde_yaml::Value as YamlValue;
+use tracing::instrument;
 use vfs::VfsPath;
 
 use crate::error::{CliError, CliResult};
@@ -68,6 +69,7 @@ struct ChartDependency {
     alias: Option<String>,
 }
 
+#[instrument(skip_all)]
 pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<ChartDiscovery> {
     let mut out = Vec::new();
     discover_chart_contexts_inner(root_chart_dir, &[], &mut out)?;
@@ -258,6 +260,7 @@ fn read_chart_yaml(chart_dir: &VfsPath) -> CliResult<ChartYaml> {
     Ok(doc)
 }
 
+#[instrument(skip_all)]
 pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliResult<DefineIndex> {
     let mut idx = DefineIndex::new();
 
@@ -332,6 +335,7 @@ fn list_files_recursive(dir: &VfsPath, out: &mut Vec<VfsPath>) -> CliResult<()> 
     Ok(())
 }
 
+#[instrument(skip_all)]
 pub fn list_manifest_templates(
     chart_dir: &VfsPath,
     include_tests: bool,
@@ -360,6 +364,7 @@ pub fn list_manifest_templates(
     Ok(out)
 }
 
+#[instrument(skip_all)]
 pub fn build_composed_values_yaml(
     charts: &[ChartContext],
     include_subchart_values: bool,
@@ -408,6 +413,7 @@ pub fn build_composed_values_yaml(
     }
 }
 
+#[instrument(skip_all)]
 pub fn list_template_sources_for_define_index(
     chart_dir: &VfsPath,
     include_tests: bool,

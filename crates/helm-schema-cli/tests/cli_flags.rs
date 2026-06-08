@@ -19,6 +19,21 @@ fn cli_diag_format_text_is_default() {
 }
 
 #[test]
+fn cli_perf_flags_parse() {
+    let cli = parse(&[
+        "--profile-phases",
+        "--trace-output",
+        "/tmp/helm-schema.trace",
+    ])
+    .expect("parse");
+    assert!(cli.perf.profile_phases);
+    assert_eq!(
+        cli.perf.trace_output.as_deref(),
+        Some(std::path::Path::new("/tmp/helm-schema.trace"))
+    );
+}
+
+#[test]
 fn cli_repeated_k8s_version_preserves_order() {
     let cli = parse(&["--k8s-version", "v1.24.0", "--k8s-version", "v1.35.0"]).expect("parse");
     assert_eq!(
