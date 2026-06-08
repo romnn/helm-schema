@@ -4,12 +4,13 @@ use indoc::indoc;
 use serde_json::Value;
 
 use crate::{
-    DefaultValuesSchemaGenerator, ValuesSchemaGenerator, generate_values_schema_full,
-    generate_values_schema_with_values_yaml,
+    DefaultValuesSchemaGenerator, ValuesSchemaGenerator, collect_nullable_value_paths,
+    generate_values_schema_full, generate_values_schema_with_values_yaml,
 };
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    IrGenerator, ResourceRef, SymbolicIrGenerator, ValueUse, YamlPath, extract_default_type_hints,
+    Guard, IrGenerator, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse, YamlPath,
+    extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
@@ -2337,6 +2338,47 @@ fn step2_default_in_string_literal_no_hint() {
 }
 
 /// Step 2 real-world pattern: the `default <literal> .Values.X` site lives
+/// Strict per-use rule for `collect_nullable_value_paths`: a path is
+/// only null-tolerant when *every* render use carries a null-tolerating
+/// guard. Two uses of the same source expression — one with
+/// `Guard::Default { path }` matching, one with no guards — must not
+/// widen the path. Renders that hit the bare site would crash on null,
+/// so the schema must reject null too.
+///
+/// This locks in the design line called out in review: do not widen a
+/// path on the strength of "any single use has a Default guard." Only
+/// the structural set-mutation pattern in a helper (see
+/// `SymbolicWalker::set_default_chart_paths_for_text`) propagates the
+/// guard to every read that runs after the mutation; under the strict
+/// per-use rule, that path correctly widens. Mixed-guards paths stay
+/// strict.
+#[test]
+fn collect_nullable_value_paths_requires_all_render_uses_to_be_null_tolerant() {
+    let path = YamlPath(vec!["data".into(), "value".into()]);
+    let guarded = ValueUse {
+        source_expr: "image.tag".into(),
+        path: path.clone(),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Default {
+            path: "image.tag".into(),
+        }],
+        resource: None,
+    };
+    let bare = ValueUse {
+        source_expr: "image.tag".into(),
+        path,
+        kind: ValueKind::Scalar,
+        guards: vec![],
+        resource: None,
+    };
+
+    let null_paths = collect_nullable_value_paths(&[guarded, bare]);
+    assert!(
+        null_paths.is_empty(),
+        "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",
+    );
+}
+
 /// in a helper template (`_helpers.tpl`), not in a manifest body. The
 /// temporal chart's `temporal.serviceAccountName` is the canonical case.
 /// The CLI must scan helper sources too, not just manifest templates.

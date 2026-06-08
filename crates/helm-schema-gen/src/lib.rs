@@ -25,7 +25,6 @@ struct UseSignals {
 
 struct PathMetadata {
     nullable_paths: BTreeSet<String>,
-    default_fallback_paths: BTreeSet<String>,
     paths_with_descendants: BTreeSet<String>,
 }
 
@@ -311,7 +310,6 @@ fn collect_path_metadata(
 ) -> PathMetadata {
     PathMetadata {
         nullable_paths: collect_nullable_value_paths(uses),
-        default_fallback_paths: collect_default_fallback_value_paths(uses),
         paths_with_descendants: collect_paths_with_descendants(referenced_value_paths),
     }
 }
@@ -357,9 +355,8 @@ fn build_root_schema(
             .map_or_else(empty_schema, merge_schema_list);
         let provider_schema = merge_schema_list(vec![provider_schema, metadata_schema]);
 
-        let path_is_nullable = path_metadata.nullable_paths.contains(&vp)
-            || path_metadata.default_fallback_paths.contains(&vp)
-            || type_hints.contains_key(&vp);
+        let path_is_nullable =
+            path_metadata.nullable_paths.contains(&vp) || type_hints.contains_key(&vp);
         let preserve_explicit_null_default = path_is_nullable
             && values_yaml_info.is_some_and(|path_info| path_info.is_explicit_null);
         let values_yaml_schema = if used_as_fragment
@@ -405,9 +402,7 @@ fn build_root_schema(
             type_hint_schema,
         );
         let merged = if is_scalar_like_schema(&merged)
-            && (preserve_explicit_null_default
-                || path_metadata.default_fallback_paths.contains(&vp)
-                || path_metadata.nullable_paths.contains(&vp))
+            && (preserve_explicit_null_default || path_metadata.nullable_paths.contains(&vp))
             && !is_empty_schema(&merged)
         {
             merge_two_schemas(merged, type_schema("null"))
@@ -787,6 +782,15 @@ fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
 ///   `range .Values.X`, `if eq .Values.X "literal"`, and similar composed
 ///   conditions that retain the per-path guard).
 ///
+/// Chart-level mutations on the values dict (e.g. nats's `defaultValues`
+/// helper, which does `set X "K" (X.K | default V)` on Values-rooted paths)
+/// are handled at the IR layer: see
+/// `SymbolicWalker::set_default_chart_paths_for_text`. Those mutations
+/// attach a `Guard::Default` to every read of the mutated path within
+/// templates that include the helper, so reads in the YAML body are
+/// guarded uniformly — the per-use rule below then widens the path
+/// without any special case here.
+///
 /// We intentionally do not widen pure control-flow paths on the strength of
 /// guard heuristics alone. Without a rendered use, a truthy/or/not condition
 /// still does not tell us whether the underlying values type is boolean,
@@ -840,18 +844,6 @@ fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
         .into_iter()
         .filter_map(|(path, info)| {
             (info.has_render_use && info.all_uses_nullable).then(|| path.to_string())
-        })
-        .collect()
-}
-
-fn collect_default_fallback_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
-    uses.iter()
-        .filter(|use_| !use_.path.0.is_empty())
-        .filter_map(|use_| {
-            use_.guards
-                .iter()
-                .any(|guard| matches!(guard, Guard::Default { path } if path == &use_.source_expr))
-                .then(|| use_.source_expr.clone())
         })
         .collect()
 }

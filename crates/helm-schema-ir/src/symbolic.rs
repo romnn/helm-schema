@@ -45,8 +45,6 @@ struct SymbolicWalker<'a> {
     text_span_idx: usize,
     text_pos: usize,
 
-    define_value_cache: HashMap<String, DefineValues>,
-
     inline_stack: Vec<String>,
 
     range_domains: HashMap<String, Vec<String>>,
@@ -55,6 +53,28 @@ struct SymbolicWalker<'a> {
 
     inline_helpers_in_fragments: bool,
     root_bindings: HashMap<String, HelperBinding>,
+
+    /// Paths the chart has structurally declared as null-tolerant via a
+    /// `set OPERAND "KEY" (OPERAND.KEY | default V)` mutation inside a
+    /// helper. Populated as the walker traverses templates that include
+    /// such helpers; consumed by `emit_use_with_extra_guards` to attach
+    /// `Guard::Default { path }` to any subsequent ValueUse whose
+    /// `source_expr` matches.
+    ///
+    /// This models Helm's render-time semantics: a `set` action in a
+    /// chart helper run before downstream reads (typical pattern: a
+    /// `<chart>.defaultValues` helper `include`d at the top of every
+    /// consumer template) means the merged values dict has the default
+    /// applied before any read. Reads of that path therefore tolerate a
+    /// null from values.yaml — `helm-lint --strict` sees the post-`set`
+    /// value, not the raw user input.
+    ///
+    /// Walker scope is per-template, so a path is only widened in
+    /// templates that actually traverse through an include of the
+    /// defaulting helper. Templates that read `.Values.X` without
+    /// running the helper produce ungrouped uses that the nullability
+    /// pass treats as null-intolerant, which is the conservative read.
+    chart_value_defaults: BTreeSet<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -64,9 +84,9 @@ struct GetBinding {
 }
 
 #[derive(Clone, Debug, Default)]
-struct DefineValues {
-    output: Vec<String>,
-    guards: Vec<String>,
+struct HelperOutputMeta {
+    guards: BTreeSet<String>,
+    defaulted: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -96,20 +116,37 @@ struct FragmentHelperBodyCacheKey {
 
 #[derive(Default)]
 struct BoundHelperAnalysis {
-    output: BTreeSet<String>,
+    output: BTreeMap<String, HelperOutputMeta>,
     fragment_output: BTreeSet<String>,
-    defaulted: BTreeSet<String>,
-    guards: BTreeSet<String>,
+    guard_paths: BTreeSet<String>,
     suppress_roots: BTreeSet<String>,
+    /// Values-rooted paths that the helper body has structurally declared
+    /// as null-tolerant via a `set OPERAND "KEY" (OPERAND.KEY | default V)`
+    /// mutation. Distinct from `defaulted` (which fires on every
+    /// `(X | default V)` expression, including condition fallbacks):
+    /// only the explicit set-mutation pattern counts here, because that
+    /// is the chart writer asserting "this path gets defaulted before
+    /// any other read." See [`SymbolicWalker::set_default_chart_paths_for_text`].
+    chart_defaults: BTreeSet<String>,
 }
 
 impl BoundHelperAnalysis {
     fn extend(&mut self, other: Self) {
-        self.output.extend(other.output);
+        for (path, meta) in other.output {
+            let entry = self.output.entry(path).or_default();
+            entry.guards.extend(meta.guards);
+            entry.defaulted |= meta.defaulted;
+        }
         self.fragment_output.extend(other.fragment_output);
-        self.defaulted.extend(other.defaulted);
-        self.guards.extend(other.guards);
+        self.guard_paths.extend(other.guard_paths);
         self.suppress_roots.extend(other.suppress_roots);
+        self.chart_defaults.extend(other.chart_defaults);
+    }
+
+    fn add_output(&mut self, path: String, guards: &BTreeSet<String>, defaulted: bool) {
+        let entry = self.output.entry(path).or_default();
+        entry.guards.extend(guards.iter().cloned());
+        entry.defaulted |= defaulted;
     }
 }
 
@@ -586,8 +623,6 @@ impl<'a> SymbolicWalker<'a> {
             text_span_idx: 0,
             text_pos: 0,
 
-            define_value_cache: HashMap::new(),
-
             inline_stack: Vec::new(),
 
             range_domains: HashMap::new(),
@@ -596,6 +631,8 @@ impl<'a> SymbolicWalker<'a> {
 
             inline_helpers_in_fragments: false,
             root_bindings: HashMap::new(),
+
+            chart_value_defaults: BTreeSet::new(),
         }
     }
 
@@ -617,6 +654,17 @@ impl<'a> SymbolicWalker<'a> {
 
     fn with_helper_bindings(mut self, bindings: HashMap<String, HelperBinding>) -> Self {
         self.root_bindings = bindings;
+        self
+    }
+
+    /// Seed this walker's chart-level defaults from a parent walker so a
+    /// nested walk (e.g. `loadMergePatch` inlining a `files/<x>.yaml`
+    /// fragment) inherits the same render-time mutation context. The
+    /// parent's `include "X.defaultValues" .` already ran above the
+    /// nested fragment in source order, so the fragment's reads see the
+    /// same defaulted state.
+    fn with_chart_value_defaults(mut self, defaults: BTreeSet<String>) -> Self {
+        self.chart_value_defaults = defaults;
         self
     }
 
@@ -844,240 +892,11 @@ impl<'a> SymbolicWalker<'a> {
         let mut nested = SymbolicWalker::new(src, self.defines)
             .with_initial_guards(self.guards.clone())
             .with_inline_stack(stack)
-            .with_inline_helpers_in_fragments(true);
+            .with_inline_helpers_in_fragments(true)
+            .with_chart_value_defaults(self.chart_value_defaults.clone());
 
         let uses = nested.run(&tree);
         self.uses.extend(uses);
-    }
-
-    fn literal_template_calls(text: &str) -> Vec<String> {
-        let mut out = Vec::new();
-        let toks: Vec<&str> = text.split_whitespace().collect();
-        for i in 0..toks.len().saturating_sub(1) {
-            let head = toks[i];
-            if head != "include" && head != "template" {
-                continue;
-            }
-            let arg = toks[i + 1];
-            if !arg.starts_with('"') {
-                continue;
-            }
-            let end = arg.rfind('"');
-            if end.is_none() || end == Some(0) {
-                continue;
-            }
-            let end = end.unwrap();
-            if end <= 1 {
-                continue;
-            }
-            let name = &arg[1..end];
-            if !name.is_empty() {
-                out.push(name.to_string());
-            }
-        }
-        out.sort();
-        out.dedup();
-        out
-    }
-
-    fn collect_values_from_ast(
-        node: &HelmAst,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
-        visited: &mut HashSet<String>,
-        output: &mut BTreeSet<String>,
-        guards: &mut BTreeSet<String>,
-    ) {
-        match node {
-            HelmAst::Document { items }
-            | HelmAst::Mapping { items }
-            | HelmAst::Sequence { items }
-            | HelmAst::Define { body: items, .. }
-            | HelmAst::Block { body: items, .. } => {
-                for it in items {
-                    Self::collect_values_from_ast(
-                        it,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        visited,
-                        output,
-                        guards,
-                    );
-                }
-            }
-            HelmAst::Pair { key, value } => {
-                Self::collect_values_from_ast(
-                    key,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    visited,
-                    output,
-                    guards,
-                );
-                if let Some(v) = value {
-                    Self::collect_values_from_ast(
-                        v,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        visited,
-                        output,
-                        guards,
-                    );
-                }
-            }
-            HelmAst::HelmExpr { text } => {
-                let bound = Self::analyze_bound_helper_calls_with_bindings(
-                    text,
-                    None,
-                    None,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    visited,
-                );
-                for v in extract_values_paths(text) {
-                    if !bound.suppress_roots.contains(&v) {
-                        output.insert(v);
-                    }
-                }
-                output.extend(bound.output);
-                guards.extend(bound.guards);
-                for name in Self::literal_template_calls(text) {
-                    if !visited.insert(name.clone()) {
-                        continue;
-                    }
-                    if let Some(body) = defines.get(&name) {
-                        for it in body {
-                            Self::collect_values_from_ast(
-                                it,
-                                defines,
-                                define_sources,
-                                define_tree_cache,
-                                fragment_helper_body_cache,
-                                visited,
-                                output,
-                                guards,
-                            );
-                        }
-                    }
-                }
-            }
-            HelmAst::If {
-                cond,
-                then_branch,
-                else_branch,
-            } => {
-                for v in extract_values_paths(cond) {
-                    guards.insert(v);
-                }
-                for it in then_branch {
-                    Self::collect_values_from_ast(
-                        it,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        visited,
-                        output,
-                        guards,
-                    );
-                }
-                for it in else_branch {
-                    Self::collect_values_from_ast(
-                        it,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        visited,
-                        output,
-                        guards,
-                    );
-                }
-            }
-            HelmAst::Range {
-                header,
-                body,
-                else_branch,
-            }
-            | HelmAst::With {
-                header,
-                body,
-                else_branch,
-            } => {
-                for v in extract_values_paths(header) {
-                    guards.insert(v);
-                }
-                for it in body {
-                    Self::collect_values_from_ast(
-                        it,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        visited,
-                        output,
-                        guards,
-                    );
-                }
-                for it in else_branch {
-                    Self::collect_values_from_ast(
-                        it,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        visited,
-                        output,
-                        guards,
-                    );
-                }
-            }
-            HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
-        }
-    }
-
-    fn values_from_define(&mut self, name: &str) -> DefineValues {
-        if let Some(v) = self.define_value_cache.get(name).cloned() {
-            return v;
-        }
-
-        let mut output = BTreeSet::<String>::new();
-        let mut guards = BTreeSet::<String>::new();
-        let mut visited = HashSet::<String>::new();
-        visited.insert(name.to_string());
-        if let Some(body) = self.defines.get(name) {
-            for it in body {
-                Self::collect_values_from_ast(
-                    it,
-                    self.defines,
-                    &self.define_body_sources,
-                    &self.define_tree_cache,
-                    &self.fragment_helper_body_cache,
-                    &mut visited,
-                    &mut output,
-                    &mut guards,
-                );
-            }
-        }
-
-        let v = DefineValues {
-            output: output.into_iter().collect(),
-            guards: guards.into_iter().collect(),
-        };
-        self.define_value_cache.insert(name.to_string(), v.clone());
-        v
     }
 
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
@@ -1093,6 +912,27 @@ impl<'a> SymbolicWalker<'a> {
         });
         self.uses.dedup();
         std::mem::take(&mut self.uses)
+    }
+
+    fn literal_template_calls(text: &str) -> Vec<String> {
+        let mut out = Vec::new();
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| {
+                let TemplateExpr::Call { function, args } = node else {
+                    return;
+                };
+                if !matches!(function.as_str(), "include" | "template") {
+                    return;
+                }
+                let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
+                    return;
+                };
+                out.push(name.clone());
+            });
+        }
+        out.sort();
+        out.dedup();
+        out
     }
 
     fn reset_text_spans(&mut self, tree: &tree_sitter::Tree) {
@@ -1397,18 +1237,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn emit_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
-        let path = if self.no_output_depth > 0 {
-            YamlPath(Vec::new())
-        } else {
-            path
-        };
-        self.uses.push(ValueUse {
-            source_expr,
-            path,
-            kind,
-            guards: self.guards.clone(),
-            resource: self.resource_detector.current(),
-        });
+        self.emit_use_with_extra_guards(source_expr, path, kind, &[]);
     }
 
     fn emit_use_with_extra_guards(
@@ -1428,6 +1257,23 @@ impl<'a> SymbolicWalker<'a> {
         for guard in extra_guards {
             if !guards.contains(guard) {
                 guards.push(guard.clone());
+            }
+        }
+        // If a helper already invoked above this walk in source order
+        // structurally set a default for this exact path (the chart
+        // writer's `set OPERAND "K" (OPERAND.K | default V)` mutation —
+        // see `set_default_chart_paths_for_text`), surface that as a
+        // `Guard::Default` so the nullability pass sees the same null
+        // tolerance Helm's render-time `set` produces. The chart-default
+        // applies only to reads with a non-empty `path` (i.e. ones
+        // contributing to a rendered field): without a render use the
+        // guard would be meaningless.
+        if !path.0.is_empty() && self.chart_value_defaults.contains(&source_expr) {
+            let default_guard = Guard::Default {
+                path: source_expr.clone(),
+            };
+            if !guards.contains(&default_guard) {
+                guards.push(default_guard);
             }
         }
 
@@ -1610,7 +1456,8 @@ impl<'a> SymbolicWalker<'a> {
             .with_initial_guards(self.guards.clone())
             .with_inline_stack(stack)
             .with_inline_helpers_in_fragments(true)
-            .with_helper_bindings(bindings);
+            .with_helper_bindings(bindings)
+            .with_chart_value_defaults(self.chart_value_defaults.clone());
         let uses = nested.run(&tree);
         self.uses.extend(uses);
         true
@@ -1636,20 +1483,11 @@ impl<'a> SymbolicWalker<'a> {
 
         let bound_values = self.extract_bound_values(text);
 
-        let mut helper_output_values: Vec<String> = Vec::new();
+        let mut helper_output_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         let mut helper_fragment_output_values: Vec<String> = Vec::new();
-        let mut helper_defaulted_values: Vec<String> = Vec::new();
-        let mut helper_guard_values: Vec<String> = Vec::new();
+        let mut helper_guard_values: BTreeSet<String> = BTreeSet::new();
         let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
         if !helper_inlined {
-            for name in Self::literal_template_calls(text) {
-                if name.ends_with(".defaultValues") {
-                    continue;
-                }
-                let v = self.values_from_define(&name);
-                helper_output_values.extend(v.output);
-                helper_guard_values.extend(v.guards);
-            }
             let bound = self.analyze_bound_helper_calls(text);
             helper_output_values.extend(bound.output);
             if kind == ValueKind::Fragment {
@@ -1657,17 +1495,17 @@ impl<'a> SymbolicWalker<'a> {
                 helper_fragment_output_values
                     .extend(self.analyze_bound_fragment_helper_calls_in_context(text));
             }
-            helper_defaulted_values.extend(bound.defaulted);
-            helper_guard_values.extend(bound.guards);
+            helper_guard_values.extend(bound.guard_paths);
             suppress_direct_values.extend(bound.suppress_roots);
-            helper_output_values.sort();
-            helper_output_values.dedup();
+            // Stash chart-level `set X "K" (X.K | default V)` mutations
+            // discovered in any helper called from this text. Subsequent
+            // `emit_use` calls in this walker (same template scope) will
+            // attach `Guard::Default { path }` for matching reads,
+            // modeling that the helper's `set` has already run by the
+            // time those reads are evaluated.
+            self.chart_value_defaults.extend(bound.chart_defaults);
             helper_fragment_output_values.sort();
             helper_fragment_output_values.dedup();
-            helper_defaulted_values.sort();
-            helper_defaulted_values.dedup();
-            helper_guard_values.sort();
-            helper_guard_values.dedup();
         }
 
         if values.is_empty()
@@ -1766,19 +1604,20 @@ impl<'a> SymbolicWalker<'a> {
             && !helper_fragment_output_values.is_empty()
             && kind == ValueKind::Fragment;
 
-        for v in helper_output_values {
+        for (v, meta) in &helper_output_values {
             if helper_call_caller_scalar_path {
-                let mut extra_guards: Vec<Guard> = helper_guard_values
+                let mut extra_guards: Vec<Guard> = meta
+                    .guards
                     .iter()
                     .cloned()
                     .map(|path| Guard::Truthy { path })
                     .collect();
-                if helper_defaulted_values.binary_search(&v).is_ok() {
+                if meta.defaulted {
                     extra_guards.push(Guard::Default { path: v.clone() });
                 }
-                self.emit_use_with_extra_guards(v, path.clone(), kind, &extra_guards);
+                self.emit_use_with_extra_guards(v.clone(), path.clone(), kind, &extra_guards);
             } else {
-                self.emit_helper_use(v);
+                self.emit_helper_use(v.clone());
             }
         }
 
@@ -1942,6 +1781,36 @@ impl<'a> SymbolicWalker<'a> {
                 current_dot.cloned().or(Some(HelperBinding::RootContext))
             }
             TemplateExpr::Variable(var) if var.is_empty() => Some(HelperBinding::RootContext),
+            TemplateExpr::Field(path) => {
+                // Helper bindings take priority: a `Field` whose head
+                // names a helper-bound key resolves through that
+                // binding (e.g. a `dict "ctx" .Values.cfg` helper call
+                // binds `ctx`, so the callee's `.ctx.X` becomes
+                // `cfg.X`).
+                if let Some(bound) =
+                    outer.and_then(|bindings| Self::resolve_bound_path_expr(expr, bindings))
+                {
+                    return Some(HelperBinding::ValuesPath(bound));
+                }
+                // Otherwise re-root through the current dot: `with
+                // .Values…` (or `range .Values…`) shifted `.` to a
+                // Values prefix, so an unprefixed Field inside the
+                // body refers to `<prefix>.<path>`. Concretely, this
+                // is the nats `{{ with .Values }}{{ .X.Y | default …
+                // }}{{ end }}` pattern — without it the
+                // default-fallback pass loses the nullability signal
+                // for every name field set this way.
+                if let Some(HelperBinding::ValuesPath(prefix)) = current_dot {
+                    let joined = path.join(".");
+                    let full = if prefix.is_empty() {
+                        joined
+                    } else {
+                        format!("{prefix}.{joined}")
+                    };
+                    return Some(HelperBinding::ValuesPath(full));
+                }
+                None
+            }
             _ => outer
                 .and_then(|bindings| Self::resolve_bound_path_expr(expr, bindings))
                 .map(HelperBinding::ValuesPath),
@@ -3039,12 +2908,24 @@ impl<'a> SymbolicWalker<'a> {
         }
 
         let bindings = Self::bindings_for_helper_arg(arg, outer_bindings, current_dot);
+        // Inside the helper body, `.` is what the caller passed as the
+        // helper argument. `binding_from_expr` against the outer
+        // `current_dot` resolves that for us (and falls back to
+        // `RootContext` when the caller passes the bare `.` from a
+        // template-root context). `None` is acceptable when the
+        // caller's dot can't be statically pinned.
+        let helper_body_dot = arg
+            .and_then(|expr| Self::binding_from_expr(expr, outer_bindings, current_dot))
+            .or_else(|| current_dot.cloned());
         let mut analysis = BoundHelperAnalysis::default();
         if let Some(body) = defines.get(name) {
+            let active_output_guards = BTreeSet::new();
             for node in body {
                 Self::collect_bound_helper_values_from_ast(
                     node,
                     &bindings,
+                    helper_body_dot.as_ref(),
+                    &active_output_guards,
                     defines,
                     define_sources,
                     define_tree_cache,
@@ -3094,8 +2975,8 @@ impl<'a> SymbolicWalker<'a> {
             let prefix = format!("{root}.");
             if analysis
                 .output
-                .iter()
-                .chain(analysis.guards.iter())
+                .keys()
+                .chain(analysis.guard_paths.iter())
                 .any(|path| path.starts_with(&prefix))
             {
                 analysis.suppress_roots.insert(root.clone());
@@ -3121,9 +3002,30 @@ impl<'a> SymbolicWalker<'a> {
         out
     }
 
+    /// Walk a helper's AST node collecting bound helper values.
+    ///
+    /// `current_dot` tracks the value the current `.` resolves to as
+    /// the walk descends into `with`/`range` blocks. Without it, a
+    /// helper body like
+    ///
+    /// ```text
+    /// {{- define "X.defaults" }}
+    ///   {{- with .Values }}
+    ///     {{- $_ := set .a "name" (.a.name | default "fallback") }}
+    ///   {{- end }}
+    /// {{- end }}
+    /// ```
+    ///
+    /// would not register `a.name` as a chart-declared default — the
+    /// default-fallback detector inside the inner `set` action only
+    /// sees `.a.name` (no `.Values` prefix), so it can't resolve to a
+    /// values path. Threading the with-shifted dot lets the detector
+    /// re-root `.a.name` against `.Values` and record the default.
     fn collect_bound_helper_values_from_ast(
         node: &HelmAst,
         bindings: &HashMap<String, HelperBinding>,
+        current_dot: Option<&HelperBinding>,
+        active_output_guards: &BTreeSet<String>,
         defines: &DefineIndex,
         define_sources: &HashMap<String, String>,
         define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
@@ -3143,6 +3045,8 @@ impl<'a> SymbolicWalker<'a> {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
+                        current_dot,
+                        active_output_guards,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3156,6 +3060,8 @@ impl<'a> SymbolicWalker<'a> {
                 Self::collect_bound_helper_values_from_ast(
                     key,
                     bindings,
+                    current_dot,
+                    active_output_guards,
                     defines,
                     define_sources,
                     define_tree_cache,
@@ -3167,6 +3073,8 @@ impl<'a> SymbolicWalker<'a> {
                     Self::collect_bound_helper_values_from_ast(
                         value,
                         bindings,
+                        current_dot,
+                        active_output_guards,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3177,49 +3085,67 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelmAst::HelmExpr { text } => {
-                analysis
-                    .output
-                    .extend(Self::direct_bound_paths_from_text(text, bindings));
+                let direct_outputs = Self::direct_bound_paths_from_text(text, bindings);
+                let fallback_paths = Self::resolved_default_fallback_paths_for_text(
+                    text,
+                    Some(bindings),
+                    current_dot,
+                );
+                for output in direct_outputs {
+                    analysis.add_output(
+                        output.clone(),
+                        active_output_guards,
+                        fallback_paths.contains(&output),
+                    );
+                }
                 let nested = Self::analyze_bound_helper_calls_with_bindings(
                     text,
                     Some(bindings),
-                    None,
+                    current_dot,
                     defines,
                     define_sources,
                     define_tree_cache,
                     fragment_helper_body_cache,
                     seen,
                 );
-                analysis.output.extend(nested.output);
-                analysis.guards.extend(nested.guards);
-                let fallback_paths =
-                    Self::resolved_default_fallback_paths_for_text(text, Some(bindings), None);
-                analysis.defaulted.extend(fallback_paths);
+                let mut nested = nested;
+                for meta in nested.output.values_mut() {
+                    meta.guards.extend(active_output_guards.iter().cloned());
+                }
+                analysis.extend(nested);
+                let set_default_paths =
+                    Self::set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+                analysis.chart_defaults.extend(set_default_paths);
             }
             HelmAst::If {
                 cond,
                 then_branch,
                 else_branch,
             } => {
-                analysis
-                    .guards
-                    .extend(Self::direct_bound_paths_from_text(cond, bindings));
+                let mut branch_guard_paths = Self::direct_bound_paths_from_text(cond, bindings);
                 let nested = Self::analyze_bound_helper_calls_with_bindings(
                     cond,
                     Some(bindings),
-                    None,
+                    current_dot,
                     defines,
                     define_sources,
                     define_tree_cache,
                     fragment_helper_body_cache,
                     seen,
                 );
-                analysis.guards.extend(nested.output);
-                analysis.guards.extend(nested.guards);
+                branch_guard_paths.extend(nested.output.keys().cloned());
+                branch_guard_paths.extend(nested.guard_paths.iter().cloned());
+                analysis
+                    .guard_paths
+                    .extend(branch_guard_paths.iter().cloned());
+                let mut then_output_guards = active_output_guards.clone();
+                then_output_guards.extend(branch_guard_paths);
                 for item in then_branch {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
+                        current_dot,
+                        &then_output_guards,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3232,6 +3158,8 @@ impl<'a> SymbolicWalker<'a> {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
+                        current_dot,
+                        active_output_guards,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3251,25 +3179,46 @@ impl<'a> SymbolicWalker<'a> {
                 body,
                 else_branch,
             } => {
-                analysis
-                    .guards
-                    .extend(Self::direct_bound_paths_from_text(header, bindings));
+                let is_with = matches!(node, HelmAst::With { .. });
+                let mut branch_guard_paths = Self::direct_bound_paths_from_text(header, bindings);
                 let nested = Self::analyze_bound_helper_calls_with_bindings(
                     header,
                     Some(bindings),
-                    None,
+                    current_dot,
                     defines,
                     define_sources,
                     define_tree_cache,
                     fragment_helper_body_cache,
                     seen,
                 );
-                analysis.guards.extend(nested.output);
-                analysis.guards.extend(nested.guards);
+                branch_guard_paths.extend(nested.output.keys().cloned());
+                branch_guard_paths.extend(nested.guard_paths.iter().cloned());
+                analysis
+                    .guard_paths
+                    .extend(branch_guard_paths.iter().cloned());
+
+                // Inside a `with` body the dot re-roots to the value of
+                // the with-header. Compute that statically from the
+                // parsed header so the body's default-fallback detector
+                // sees `.X.Y` as `<resolved-path>.X.Y`. `range` body
+                // dot is the per-iteration item (per-element type, not
+                // a values path) — leave it as-is to avoid the
+                // detector thinking each item access is a separate
+                // values path.
+                let body_dot = if is_with {
+                    Self::computed_with_body_dot(header, bindings, current_dot)
+                        .or_else(|| current_dot.cloned())
+                } else {
+                    current_dot.cloned()
+                };
+                let mut body_output_guards = active_output_guards.clone();
+                body_output_guards.extend(branch_guard_paths);
                 for item in body {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
+                        body_dot.as_ref(),
+                        &body_output_guards,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3279,9 +3228,13 @@ impl<'a> SymbolicWalker<'a> {
                     );
                 }
                 for item in else_branch {
+                    // `with ... else ...` else-branch executes with the
+                    // outer `.`, not the with-shifted one.
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
+                        current_dot,
+                        active_output_guards,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3295,6 +3248,38 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
+    /// Resolve a `with` header's value to the binding callers should
+    /// use as `current_dot` while walking the body. Returns `None` when
+    /// the header can't be statically pinned to a single Values-rooted
+    /// path (e.g. `with $variable`, `with .Chart.Name`, multi-expression
+    /// headers): the body's dot is then unknown and the caller should
+    /// leave `current_dot` untouched rather than guess.
+    fn computed_with_body_dot(
+        header: &str,
+        bindings: &HashMap<String, HelperBinding>,
+        current_dot: Option<&HelperBinding>,
+    ) -> Option<HelperBinding> {
+        let exprs = Self::parse_expr_text(header);
+        let [expr] = exprs.as_slice() else {
+            return None;
+        };
+        // Bare `.Values` — `single_resolved_values_path` returns None
+        // for this because the strict path extractor requires at least
+        // one segment after `Values`. Treat it as a Values-root binding
+        // so the body's `.X` resolves to `.Values.X`.
+        if matches!(expr, TemplateExpr::Field(path) if matches!(path.as_slice(), [head] if head == "Values"))
+            || matches!(
+                expr,
+                TemplateExpr::Selector { operand, path }
+                    if matches!(operand.as_ref(), TemplateExpr::Variable(v) if v.is_empty())
+                        && matches!(path.as_slice(), [head] if head == "Values"),
+            )
+        {
+            return Some(HelperBinding::ValuesPath(String::new()));
+        }
+        Self::binding_from_expr(expr, Some(bindings), current_dot)
+    }
+
     fn resolved_default_fallback_paths_for_text(
         text: &str,
         bindings: Option<&HashMap<String, HelperBinding>>,
@@ -3303,39 +3288,125 @@ impl<'a> SymbolicWalker<'a> {
         let mut out = BTreeSet::new();
 
         for expr in Self::parse_expr_text(text) {
-            expr.walk(|node| match node {
-                TemplateExpr::Call { function, args }
-                    if function == "default" && args.len() == 2 =>
+            out.extend(Self::resolved_default_fallback_paths_for_expr(
+                &expr,
+                bindings,
+                current_dot,
+            ));
+        }
+
+        out
+    }
+
+    fn resolved_default_fallback_paths_for_expr(
+        expr: &TemplateExpr,
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+    ) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        expr.walk(|node| match node {
+            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
+                if let Some(path) =
+                    Self::resolve_expr_to_values_path_in_context(&args[1], bindings, current_dot)
                 {
+                    out.insert(path);
+                }
+            }
+            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
+                for window in stages.windows(2) {
+                    let TemplateExpr::Call { function, .. } = &window[1] else {
+                        continue;
+                    };
+                    if function != "default" {
+                        continue;
+                    }
                     if let Some(path) = Self::resolve_expr_to_values_path_in_context(
-                        &args[1],
+                        &window[0],
                         bindings,
                         current_dot,
                     ) {
                         out.insert(path);
                     }
                 }
-                TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
-                    for window in stages.windows(2) {
-                        let TemplateExpr::Call { function, .. } = &window[1] else {
-                            continue;
-                        };
-                        if function != "default" {
-                            continue;
-                        }
-                        if let Some(path) = Self::resolve_expr_to_values_path_in_context(
-                            &window[0],
-                            bindings,
-                            current_dot,
-                        ) {
-                            out.insert(path);
-                        }
-                    }
-                }
-                _ => {}
-            });
+            }
+            _ => {}
+        });
+        out
+    }
+
+    /// Extract Values-rooted paths that this helper-body text declares
+    /// as chart-level defaults via the canonical pattern
+    ///
+    /// ```text
+    /// {{- $_ := set OPERAND "KEY" (OPERAND.KEY | default V) }}
+    /// ```
+    ///
+    /// This is the chart writer asserting "this path is defaulted before
+    /// any subsequent read." Matched here (and *only* here, not by the
+    /// broader `resolved_default_fallback_paths_for_text` which fires
+    /// on every `| default` regardless of context — including condition
+    /// fallbacks like `if X | default false` that do not mutate values).
+    ///
+    /// Requirements for a match:
+    ///   - The action is a `set` call with exactly three arguments.
+    ///   - The first argument resolves to a Values-rooted path through
+    ///     the active bindings and `current_dot` (so `with .Values` shifts
+    ///     correctly).
+    ///   - The second argument is a string literal — the dict key being
+    ///     defaulted.
+    ///   - The third argument's expression tree contains a `default` call
+    ///     anywhere within it. The chart writer's `| default V` (or
+    ///     `default V .` form) is what signals the path is optional; a
+    ///     bare `set X "K" V` without a default falls outside this rule
+    ///     because it unconditionally overwrites and tells us nothing
+    ///     about the values.yaml schema's null-tolerance.
+    ///
+    /// The emitted path is `<resolved-operand>.<key>` (or just `<key>`
+    /// when the operand resolves to the Values root, i.e. inside a bare
+    /// `with .Values` block).
+    fn set_default_chart_paths_for_text(
+        text: &str,
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+    ) -> BTreeSet<String> {
+        fn literal_string(expr: &TemplateExpr) -> Option<&str> {
+            match expr {
+                TemplateExpr::Literal(Literal::String(s) | Literal::RawString(s)) => Some(s),
+                TemplateExpr::Parenthesized(inner) => literal_string(inner),
+                _ => None,
+            }
         }
 
+        let mut out = BTreeSet::new();
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| {
+                let TemplateExpr::Call { function, args } = node else {
+                    return;
+                };
+                if function != "set" || args.len() != 3 {
+                    return;
+                }
+                let Some(operand_path) =
+                    Self::resolve_expr_to_values_path_in_context(&args[0], bindings, current_dot)
+                else {
+                    return;
+                };
+                let Some(key) = literal_string(&args[1]) else {
+                    return;
+                };
+                let target_path = if operand_path.is_empty() {
+                    key.to_string()
+                } else {
+                    format!("{operand_path}.{key}")
+                };
+                let defaulted_paths =
+                    Self::resolved_default_fallback_paths_for_expr(&args[2], bindings, current_dot);
+                if !defaulted_paths.contains(&target_path) {
+                    return;
+                }
+                out.insert(target_path);
+            });
+        }
         out
     }
 
@@ -3417,6 +3488,31 @@ impl<'a> SymbolicWalker<'a> {
     fn push_with_dot_binding(&mut self, header_text: &str) {
         if let Some(path) = self.single_resolved_values_path(header_text) {
             self.dot_stack.push(Some(path));
+            return;
+        }
+        // Bare `.Values` (and the `$.Values` re-rooted form) shift the
+        // dot to the Values root. `single_resolved_values_path` returns
+        // `None` for those because `values_path_from_expr*` only emit a
+        // path when at least one segment follows `Values` (an empty
+        // tail joins to `""`, which the strict variant interprets as
+        // "no Values reference"). Detect the bare form structurally
+        // via the parsed expression and push `Some("")` so downstream
+        // dot-rewriting and `binding_from_expr` know the body sits
+        // under the Values root — without this, a `with .Values`
+        // block's `default`-fallback signals never reach the
+        // nullability pass.
+        let exprs = Self::parse_expr_text(header_text);
+        let is_values_root = matches!(
+            exprs.as_slice(),
+            [TemplateExpr::Field(path)] if matches!(path.as_slice(), [head] if head == "Values"),
+        ) || matches!(
+            exprs.as_slice(),
+            [TemplateExpr::Selector { operand, path }]
+                if matches!(operand.as_ref(), TemplateExpr::Variable(v) if v.is_empty())
+                    && matches!(path.as_slice(), [head] if head == "Values"),
+        );
+        if is_values_root {
+            self.dot_stack.push(Some(String::new()));
         } else {
             self.dot_stack.push(None);
         }

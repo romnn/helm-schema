@@ -61,7 +61,10 @@ fn schema_fused_rust() {
                                 "type": "string"
                             },
                             "tag": {
-                                "type": "string"
+                                "anyOf": [
+                                    { "type": "null" },
+                                    { "type": "string" }
+                                ]
                             }
                         },
                         "type": "object"

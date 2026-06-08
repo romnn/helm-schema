@@ -55,6 +55,7 @@ fn symbolic_ir_full() {
     let sa = serde_json::json!({"api_version": "v1", "kind": "ServiceAccount"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
     let w = |p: &str| serde_json::json!({"type": "with", "path": p});
+    let d = |p: &str| serde_json::json!({"type": "default", "path": p});
 
     let expected = serde_json::json!([
         {
@@ -131,7 +132,11 @@ fn symbolic_ir_full() {
             "source_expr": "serviceAccount.name",
             "path": ["metadata", "name"],
             "kind": "Scalar",
-            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
+            "guards": [
+                w("serviceAccount"),
+                t("serviceAccount.enabled"),
+                d("serviceAccount.name"),
+            ],
             "resource": sa
         },
         {

@@ -55,6 +55,7 @@ fn symbolic_ir_full() {
     let svc = serde_json::json!({"api_version": "v1", "kind": "Service"});
     let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
     let w = |p: &str| serde_json::json!({"type": "with", "path": p});
+    let d = |p: &str| serde_json::json!({"type": "default", "path": p});
 
     // Note: `nats.defaultValues` is intentionally ignored for IR purposes; it's a side-effect helper.
     let expected = serde_json::json!([
@@ -300,7 +301,7 @@ fn symbolic_ir_full() {
             "source_expr": "service.name",
             "path": ["metadata", "name"],
             "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
+            "guards": [w("service"), t("service.enabled"), d("service.name")],
             "resource": svc
         },
         {

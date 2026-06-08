@@ -1253,7 +1253,14 @@ fn schema_fused_rust() {
           "type": "integer"
         },
         "nameOverride": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "namespaceOverride": {
           "type": "string"

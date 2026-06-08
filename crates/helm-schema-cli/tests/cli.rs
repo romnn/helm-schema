@@ -61,7 +61,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -208,8 +208,8 @@ spec:
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
-            disable_k8s_schemas: false,
+            allow_net: false,
+            disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
         },
@@ -649,5 +649,283 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
         "image.tag should be inferred as nullable when guarded by `| default` even through the parens-form prefix; got {tag}",
     );
 
+    Ok(())
+}
+
+/// Mirrors the nats `defaultValues` shape end-to-end: a `_helpers.tpl`
+/// defines a helper that, when included, sets a default on a values
+/// path via the `with .Values` + `set X "K" (X.K | default V)` pattern;
+/// the consumer template `include`s that helper at top-of-file before
+/// reading the path. The values.yaml ships the path as `null`.
+///
+/// Asserts the *whole* generated schema, not a single subschema —
+/// nullability needs to land on the right field without leaking to
+/// neighbours. The schema must widen `serviceAccount.name` to
+/// `string | null` because the helper's `set ... | default` mutation
+/// runs before any read, while every other path on `serviceAccount`
+/// stays narrowly typed.
+#[test]
+fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: synth-nats\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            serviceAccount:
+              name:
+              labels: {}
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc! {r#"
+            {{- define "synth.fullname" -}}
+            {{- .Release.Name | default "synth" -}}
+            {{- end }}
+
+            {{- define "synth.defaultValues" }}
+            {{- $name := include "synth.fullname" . }}
+            {{- with .Values }}
+            {{- $_ := set .serviceAccount "name" (.serviceAccount.name | default $name) }}
+            {{- end }}
+            {{- end }}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/sa.yaml")?,
+        indoc! {r#"
+            {{- include "synth.defaultValues" . }}
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: {{ .Values.serviceAccount.name | quote }}
+              labels:
+                {{- toYaml .Values.serviceAccount.labels | nindent 4 }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+            "serviceAccount": {
+                "additionalProperties": false,
+                "properties": {
+                    "labels": {
+                        "additionalProperties": { "type": "string" },
+                        "type": "object"
+                    },
+                    "name": {
+                        "anyOf": [
+                            { "type": "null" },
+                            { "type": "string" }
+                        ]
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "type": "object"
+    });
+
+    similar_asserts::assert_eq!(actual, expected);
+    Ok(())
+}
+
+/// Negative guard for the structural `set ... (X.K | default V)` matcher:
+/// a helper that mutates `serviceAccount.name` but only defaults some
+/// *other* path inside the RHS must not make `serviceAccount.name`
+/// nullable. The target path is nullable only when the static analysis
+/// can prove the `default` is applied to that exact target field.
+#[test]
+fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: synth-negative\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            serviceAccount:
+              name:
+            other:
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc! {r#"
+            {{- define "synth.defaultValues" }}
+            {{- with .Values }}
+            {{- $_ := set .serviceAccount "name" (printf "%s" (.other | default "fallback")) }}
+            {{- end }}
+            {{- end }}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/sa.yaml")?,
+        indoc! {r#"
+            {{- include "synth.defaultValues" . }}
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: {{ .Values.serviceAccount.name | quote }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: false,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+            "other": {},
+            "serviceAccount": {
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "type": "object"
+    });
+
+    similar_asserts::assert_eq!(actual, expected);
+    Ok(())
+}
+
+/// Focused guardrail for a nested helper consumption shape that shows up in
+/// real charts: `common.names.fullname` is not rendered directly, but wrapped
+/// in a larger scalar expression (`printf "%s-sfx" (...)`). The helper itself
+/// carries the default-driven nullability for both `fullnameOverride` and
+/// `nameOverride`; the surrounding `printf` must not erase that signal.
+#[test]
+fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: hs-nested\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            nameOverride:
+            fullnameOverride:
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc! {r#"
+            {{- define "common.names.fullname" -}}
+            {{- if .Values.fullnameOverride -}}
+            {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- else -}}
+            {{- $name := default .Chart.Name .Values.nameOverride -}}
+            {{- if contains $name .Release.Name -}}
+            {{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+            {{- else -}}
+            {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/cm.yaml")?,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {{ printf "%s-sfx" (include "common.names.fullname" .) }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: false,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+            "fullnameOverride": {
+                "anyOf": [
+                    { "type": "null" },
+                    { "type": "string" }
+                ]
+            },
+            "nameOverride": {
+                "anyOf": [
+                    { "type": "null" },
+                    { "type": "string" }
+                ]
+            }
+        },
+        "type": "object"
+    });
+
+    similar_asserts::assert_eq!(actual, expected);
     Ok(())
 }

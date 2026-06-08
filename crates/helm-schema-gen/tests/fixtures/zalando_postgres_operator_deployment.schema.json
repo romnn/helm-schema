@@ -995,8 +995,15 @@
       "x-kubernetes-patch-strategy": "merge"
     },
     "nameOverride": {
-      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "nodeSelector": {
       "additionalProperties": {
