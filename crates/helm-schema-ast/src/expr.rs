@@ -89,6 +89,39 @@ impl TemplateExpr {
         self.walk_inner(&mut visit);
     }
 
+    /// Strip every surrounding `Parenthesized` wrapper and return the
+    /// inner-most non-parens node. Parens are syntactic grouping in Go
+    /// templates — same rule as arithmetic: depth and ordering don't
+    /// change *what* the expression is, only its associativity. Use
+    /// this helper at the top of any pattern-match that wants to treat
+    /// `(.X)`, `((.X))`, `((((.X))))` as identical to `.X`. Convert-site
+    /// path collapsing (`convert_selector`) handles the `(prefix).suffix`
+    /// case structurally; this helper covers standalone uses.
+    ///
+    /// **When NOT to use:** inside a [`Self::walk`] visitor. `walk`
+    /// already recurses through `Parenthesized`, so the visitor sees
+    /// the inner node on its own. Adding `deparen()` to the visitor's
+    /// match would fire the same pattern twice — once at the parens
+    /// parent (deparened down to the inner), once at the inner itself.
+    /// `walk` callbacks should match on `expr` directly; only use
+    /// `deparen()` on argument slots / pipeline stages that the walk
+    /// doesn't independently traverse.
+    ///
+    /// **Semantic caveat:** at runtime, `.A.B.C` errors out when an
+    /// intermediate is nil, but `(.A).B.C` (or `(.A.B).C`) returns nil
+    /// instead — the parens are a Helm idiom for nil-tolerant access.
+    /// `deparen` only resolves the *structural* parens; nullability
+    /// inference is the caller's concern (see
+    /// `crate::required_inference` for the default-fallback pass).
+    #[must_use]
+    pub fn deparen(&self) -> &TemplateExpr {
+        let mut current = self;
+        while let TemplateExpr::Parenthesized(inner) = current {
+            current = inner;
+        }
+        current
+    }
+
     fn walk_inner<F: FnMut(&TemplateExpr)>(&self, visit: &mut F) {
         visit(self);
         match self {
@@ -312,14 +345,23 @@ fn convert_pipeline(node: Node<'_>, src: &str) -> TemplateExpr {
 }
 
 /// Convert the `operand.field` chain rooted at a `selector_expression`.
-/// Collapses adjacent selectors into a single `Field` or `Selector`
-/// with a long path, so `.Values.foo.bar` becomes
-/// `Field(["Values","foo","bar"])` rather than three nested nodes.
+///
+/// Two collapses live here, both grounded in the same observation that
+/// parens are syntactic grouping (depth and ordering don't change the
+/// value, only the parse tree):
+///
+/// - **Adjacent selectors merge.** `.Values.foo.bar` becomes
+///   `Field(["Values","foo","bar"])` instead of three nested nodes.
+/// - **Path-prefix parens disappear.** `(.Values.image).tag`,
+///   `((.Values.image)).tag`, `(.Values).image.tag` all become
+///   `Field(["Values","image","tag"])` — see [`unwrap_path_parens`]
+///   for why the parens are safe to drop here.
 fn convert_selector(node: Node<'_>, src: &str) -> TemplateExpr {
     let suffix = field_text(node, "field", src).to_string();
     let operand = node
         .child_by_field_name("operand")
-        .map(|n| convert_pipeline(n, src));
+        .map(|n| convert_pipeline(n, src))
+        .map(unwrap_path_parens);
     match operand {
         Some(TemplateExpr::Field(mut path)) => {
             path.push(suffix);
@@ -341,6 +383,40 @@ fn convert_selector(node: Node<'_>, src: &str) -> TemplateExpr {
         },
         None => TemplateExpr::Unknown(node_text(node, src).to_string()),
     }
+}
+
+/// Strip every surrounding `Parenthesized` wrapper when (and only when)
+/// the inner-most non-parens node is a pure path expression — `Field`
+/// or `Selector`. Go template charts commonly write
+/// `(.Values.image).tag` so a `nil` value of `.Values.image` returns
+/// `nil` from the `.tag` access instead of erroring the whole action;
+/// the parens are a runtime guard, not a new sub-expression, and the
+/// path the chart names is the same `.Values.image.tag`. Without this
+/// collapse the IR sees
+/// `Selector { operand: Parenthesized(Field([...])), path: [...] }`
+/// and never recognises the chain as a `.Values.image.tag` reference,
+/// dropping the `.tag` field from the inferred schema.
+///
+/// Parenthesised non-path expressions (`(.X | upper).tag`,
+/// `(include "f" .).tag`, …) are returned unchanged: collapsing those
+/// would silently rewrite the operand to look like a path, which is
+/// misleading and wrong. The check uses [`TemplateExpr::deparen`] to
+/// peek through every layer first, so a path buried under any number
+/// of parens (`(((.X.Y)))`, `(((.X)).Y)`) still collapses cleanly while
+/// a non-path payload (`((.X | upper))`, `(((include …)))`) keeps every
+/// original wrapper.
+fn unwrap_path_parens(expr: TemplateExpr) -> TemplateExpr {
+    if !matches!(
+        expr.deparen(),
+        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+    ) {
+        return expr;
+    }
+    let mut current = expr;
+    while let TemplateExpr::Parenthesized(inner) = current {
+        current = *inner;
+    }
+    current
 }
 
 /// Convert the `value` field of a `variable_definition` / `assignment`
@@ -701,9 +777,156 @@ mod tests {
     }
 
     #[test]
+    fn parens_around_field_prefix_collapse_into_path() {
+        // `(.Values.image).tag` — Helm charts use this form so a `nil`
+        // value of `.Values.image` doesn't blow up the surrounding
+        // expression (the parens defer `.tag` access until the outer
+        // pipeline runs). Semantically identical to `.Values.image.tag`
+        // and should produce the same Field path so downstream IR sees
+        // the full `.Values.image.tag` reference instead of just
+        // `.Values.image`.
+        let exprs = parse_action_expressions(r#"{{ (.Values.image).tag }}"#);
+        assert_eq!(
+            first(&exprs),
+            &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        );
+    }
+
+    #[test]
+    fn nested_parens_around_field_prefix_collapse_into_path() {
+        // `((.Values.image)).tag` — double parens, still a pure path
+        // prefix, still must collapse into a single Field.
+        let exprs = parse_action_expressions(r#"{{ ((.Values.image)).tag }}"#);
+        assert_eq!(
+            first(&exprs),
+            &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        );
+    }
+
+    #[test]
+    fn arbitrary_depth_parens_around_field_collapse_into_path() {
+        // `(((.Values.image))).tag` — three nested parens. Parens are
+        // syntactic grouping; depth doesn't change semantics. Same
+        // outcome as the un-parenthesised form.
+        let exprs = parse_action_expressions(r#"{{ (((.Values.image))).tag }}"#);
+        assert_eq!(
+            first(&exprs),
+            &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        );
+    }
+
+    #[test]
+    fn parens_around_partial_path_chain_collapses_at_each_layer() {
+        // `(.Values).image.tag` — outer parens wrap just `.Values`, then
+        // `.image.tag` is appended. Also `.Values.(image).tag` isn't a
+        // legal grammar form so we focus on the prefix case here.
+        let exprs = parse_action_expressions(r#"{{ (.Values).image.tag }}"#);
+        assert_eq!(
+            first(&exprs),
+            &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        );
+    }
+
+    #[test]
+    fn parens_around_pipeline_do_not_collapse_into_field() {
+        // `(.Values.image | upper).tag` — the parens wrap a Pipeline,
+        // not a pure path. Don't pretend the result is a Values path;
+        // leave the Pipeline wrapped so downstream code sees that the
+        // tag access is on the upper-cased operand, not on the raw
+        // `.Values.image.tag`.
+        let exprs = parse_action_expressions(r#"{{ (.Values.image | upper).tag }}"#);
+        match first(&exprs) {
+            TemplateExpr::Selector { operand, path } => {
+                assert_eq!(path, &vec!["tag".to_string()]);
+                assert!(
+                    matches!(
+                        operand.as_ref(),
+                        TemplateExpr::Parenthesized(inner)
+                            if matches!(inner.as_ref(), TemplateExpr::Pipeline(_))
+                    ),
+                    "expected Selector operand to be Parenthesized(Pipeline), got {operand:?}",
+                );
+            }
+            other => panic!("expected Selector, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn bare_dot_parses_as_empty_field_path() {
         let exprs = parse_action_expressions(r#"{{ . }}"#);
         assert_eq!(exprs, vec![TemplateExpr::Field(Vec::new())]);
+    }
+
+    #[test]
+    fn deparen_strips_arbitrary_nesting_for_path_and_non_path_alike() {
+        // Standalone form: `deparen` always returns the inner-most
+        // non-parens node, regardless of what it is. Path or pipeline,
+        // depth and ordering of the parens don't change the answer.
+        let cases = [
+            (r#"{{ .X.Y }}"#, "Field"),
+            (r#"{{ (.X.Y) }}"#, "Field"),
+            (r#"{{ ((.X.Y)) }}"#, "Field"),
+            (r#"{{ (((.X.Y))) }}"#, "Field"),
+            (r#"{{ ((((.X.Y)))) }}"#, "Field"),
+        ];
+        for (src, expected_kind) in cases {
+            let exprs = parse_action_expressions(src);
+            let kind = match first(&exprs).deparen() {
+                TemplateExpr::Field(_) => "Field",
+                TemplateExpr::Selector { .. } => "Selector",
+                TemplateExpr::Pipeline(_) => "Pipeline",
+                TemplateExpr::Call { .. } => "Call",
+                other => panic!("unexpected node for `{src}`: {other:?}"),
+            };
+            assert_eq!(kind, expected_kind, "deparen result mismatch for {src}");
+            // And the path is the same `["X","Y"]` everywhere.
+            let TemplateExpr::Field(path) = first(&exprs).deparen() else {
+                panic!("expected Field after deparen for {src}");
+            };
+            assert_eq!(path, &vec!["X".to_string(), "Y".to_string()]);
+        }
+    }
+
+    #[test]
+    fn walk_already_recurses_through_parens_so_visitor_must_not_deparen() {
+        // Visitor-level invariant guarded by this test:
+        // `TemplateExpr::walk` calls the visitor on the
+        // `Parenthesized` *and* on its inner node — visiting the
+        // wrapper is a no-op for any extractor that matches on a
+        // specific shape (Literal / Call / Pipeline), so the inner is
+        // reached without callers having to `deparen`. Conversely, if
+        // a visitor *did* deparen, nested forms like
+        // `default 5 (default "x" .Values.X)` would emit the inner
+        // hint twice (once when visiting the Parenthesized — deparened
+        // back to the Call — and once when visiting the same Call
+        // directly).
+        let exprs = parse_action_expressions(r#"{{ default 5 (default "x" .Values.X) }}"#);
+        let mut paren_visits = 0;
+        let mut inner_call_visits = 0;
+        for top in &exprs {
+            top.walk(|node| match node {
+                TemplateExpr::Parenthesized(_) => paren_visits += 1,
+                TemplateExpr::Call { function, args }
+                    if function == "default" && args.len() == 2 =>
+                {
+                    if matches!(
+                        args.first(),
+                        Some(TemplateExpr::Literal(Literal::String(_)))
+                    ) {
+                        inner_call_visits += 1;
+                    }
+                }
+                _ => {}
+            });
+        }
+        assert_eq!(
+            paren_visits, 1,
+            "walk should visit the Parenthesized node exactly once",
+        );
+        assert_eq!(
+            inner_call_visits, 1,
+            "walk should visit the inner `default \"x\" .Values.X` Call exactly once",
+        );
     }
 
     #[test]

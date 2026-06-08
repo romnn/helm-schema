@@ -62,10 +62,22 @@ pub fn extract_default_type_hints(text: &str) -> Vec<(String, Value)> {
     let cleaned = strip_yaml_comment_lines(text);
     let mut out: Vec<(String, Value)> = Vec::new();
     for top in parse_action_expressions(&cleaned) {
+        // `walk` already recurses through `Parenthesized`, so the
+        // visitor's `expr` here is never the parens wrapper — by the
+        // time control reaches a match arm, the wrapping parens have
+        // been peeled by the walk itself. Don't `deparen` again: the
+        // walk would emit the same wrapped subtree twice (once at the
+        // Parenthesized parent, once at the inner), duplicating hints
+        // for nested forms like `default 5 (default "x" .Values.X)`.
+        // Arg-level `deparen` IS safe (those values aren't visited
+        // independently for `default`-match purposes — they ride along
+        // with the matched Call).
         top.walk(|expr| match expr {
-            // Prefix form: `default LIT .Values.X`.
+            // Prefix form: `default LIT .Values.X`. Parens around the
+            // literal (`default (LIT) (.Values.X)`) are syntactic
+            // grouping; peel them before classifying.
             TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                let TemplateExpr::Literal(lit) = &args[0] else {
+                let TemplateExpr::Literal(lit) = args[0].deparen() else {
                     return;
                 };
                 let Some(ty) = classify_literal_type(lit) else {
@@ -76,19 +88,22 @@ pub fn extract_default_type_hints(text: &str) -> Vec<(String, Value)> {
                 };
                 out.push((path, ty.schema()));
             }
-            // Pipeline form: `.Values.X | default LIT`.
+            // Pipeline form: `.Values.X | default LIT`. Stages may have
+            // been written in parens (`(.Values.X) | (default LIT)`) —
+            // parens are syntactic grouping, so `deparen` peels them
+            // before the path / call patterns fire.
             TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
                 for window in stages.windows(2) {
                     let Some(path) = values_path_from_expr(&window[0]) else {
                         continue;
                     };
-                    let TemplateExpr::Call { function, args } = &window[1] else {
+                    let TemplateExpr::Call { function, args } = window[1].deparen() else {
                         continue;
                     };
                     if function != "default" || args.len() != 1 {
                         continue;
                     }
-                    let TemplateExpr::Literal(lit) = &args[0] else {
+                    let TemplateExpr::Literal(lit) = args[0].deparen() else {
                         continue;
                     };
                     let Some(ty) = classify_literal_type(lit) else {
@@ -137,6 +152,7 @@ pub(crate) fn strip_yaml_comment_lines(src: &str) -> String {
 /// `crate::required_inference::extract_default_fallback_paths`.
 pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
     use helm_schema_ast::TemplateExpr as E;
+    let expr = expr.deparen();
     let segments: &[String] = match expr {
         E::Field(path) => path,
         E::Selector { operand, path } => {
@@ -302,6 +318,7 @@ fn restore_segments(segments: &mut [String]) {
 /// segment immediately after `Values` be a real identifier.
 fn values_path_from_expr_loose(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
     use helm_schema_ast::TemplateExpr as E;
+    let expr = expr.deparen();
     let segments: &[String] = match expr {
         E::Field(path) | E::Selector { path, .. } => path,
         _ => return None,

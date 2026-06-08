@@ -1,6 +1,7 @@
 use clap::Parser;
 use color_eyre::eyre::{WrapErr, eyre};
 use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use indoc::indoc;
 use vfs::VfsPath;
 
 fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
@@ -477,6 +478,175 @@ spec:
     assert!(
         global.pointer("/properties/name").is_none(),
         "global should not inherit local-object-reference fields, got {global}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn parens_around_values_prefix_propagate_full_path_into_schema() -> color_eyre::eyre::Result<()> {
+    // Regression: charts use `(.Values.image).tag` so a nil
+    // `.Values.image` returns nil instead of erroring on the `.tag`
+    // access (Helm idiom, see chart_template_guide). Pre-fix, the IR
+    // saw the parens-wrapped prefix as opaque and never recognised
+    // `.tag` as a Values path — `image.tag` was missing from the
+    // generated schema, which caused luup3's `helm lint --strict` to
+    // reject every chart whose values.yaml ships `image.tag`.
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        "image:\n  repository: example/app\n  tag: latest\n",
+    )?;
+    // Two parens forms: the common Helm idiom plus a double-paren
+    // variant. Both should produce identical Field paths.
+    test_util::write(
+        &chart_dir.join("templates/deployment.yaml")?,
+        indoc! {r#"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: test
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: app
+                      image: "{{ .Values.image.repository }}:{{ (.Values.image).tag }}"
+                      env:
+                        - name: VARIANT
+                          value: {{ ((.Values.image)).tag | quote }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let image = actual
+        .pointer("/properties/image")
+        .ok_or_else(|| eyre!("missing image schema"))?;
+    assert!(
+        image.pointer("/properties/tag").is_some(),
+        "image.tag should be inferred even when the template uses `(.Values.image).tag` parens form; got {image}",
+    );
+    assert!(
+        image.pointer("/properties/repository").is_some(),
+        "image.repository should still be inferred alongside the parens-form access; got {image}",
+    );
+
+    Ok(())
+}
+
+#[test]
+fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
+-> color_eyre::eyre::Result<()> {
+    // Charts pair the parens idiom with `| default` so a nil
+    // `.Values.image.tag` falls back to `$appVersion`. The default
+    // pattern is what makes the inner path nullable in the schema —
+    // confirm that adding the parens to the *prefix* doesn't get in
+    // the way of `collect_nullable_value_paths` finding the inner
+    // `image.tag` path through the Default guard.
+    //
+    // Pre-fix the bug was structural: the IR didn't see
+    // `image.tag` as a Values path at all, so there was nothing for
+    // the nullability pass to mark. With the parens-collapse fix the
+    // path is visible, and the Default guard (also pointed at
+    // `image.tag`) should now flow through cleanly.
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    // values.yaml ships `tag` as an empty string so helm-schema has a
+    // type signal to anchor the schema. With `tag: null` instead, the
+    // YAML null gives no type information and the schema falls back to
+    // `{}` (allow-anything), which is functionally null-tolerant but
+    // not what most charts want to express.
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        "image:\n  repository: example/app\n  tag: \"\"\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/deployment.yaml")?,
+        indoc! {r#"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: test
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: app
+                      image: "{{ .Values.image.repository }}:{{ (.Values.image).tag | default .Chart.AppVersion }}"
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let tag = actual
+        .pointer("/properties/image/properties/tag")
+        .ok_or_else(|| eyre!("image.tag missing from generated schema: {actual}"))?;
+
+    // `image.tag` should accept null because (a) the values.yaml ships
+    // it as null and (b) the template guards it with `| default`. The
+    // exact shape can be `{type: ["null","string"]}` or
+    // `{anyOf: [{type:"null"}, {type:"string"}]}` depending on
+    // upstream-K8s merging; both encode "null is allowed".
+    let accepts_null = match tag.get("type") {
+        Some(serde_json::Value::Array(types)) => types.iter().any(|t| t == "null"),
+        Some(serde_json::Value::String(t)) => t == "null",
+        _ => false,
+    } || tag
+        .get("anyOf")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|variants| {
+            variants
+                .iter()
+                .any(|v| matches!(v.get("type"), Some(serde_json::Value::String(t)) if t == "null"))
+        });
+
+    assert!(
+        accepts_null,
+        "image.tag should be inferred as nullable when guarded by `| default` even through the parens-form prefix; got {tag}",
     );
 
     Ok(())

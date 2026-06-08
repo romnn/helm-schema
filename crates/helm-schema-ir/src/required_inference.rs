@@ -38,6 +38,11 @@ pub fn extract_default_fallback_paths(text: &str) -> Vec<String> {
     let cleaned = strip_yaml_comment_lines(text);
     let mut out: Vec<String> = Vec::new();
     for top in parse_action_expressions(&cleaned) {
+        // `walk` recurses through `Parenthesized` for us, so the
+        // visitor's `expr` is never the parens wrapper at match time —
+        // adding `deparen` here would double-count nested forms like
+        // `default 5 (default "x" .Values.X)`. Arg-level `deparen` IS
+        // safe (the args don't visit independently for this pattern).
         top.walk(|expr| match expr {
             // Prefix form: `default <any-expr> .Values.X`. The first
             // arg can be anything (literal, identifier, parenthesised
@@ -53,12 +58,14 @@ pub fn extract_default_fallback_paths(text: &str) -> Vec<String> {
             // Pipeline form: `.Values.X | default <any>`. The presence
             // of `default` after the pipe is the signal — its argument
             // (if any) is irrelevant for the "has fallback" classification.
+            // Parens around the consumer call (`.Values.X | (default …)`)
+            // are syntactic grouping; peel them on the consumer slot only.
             TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
                 for window in stages.windows(2) {
                     let Some(path) = values_path_from_expr(&window[0]) else {
                         continue;
                     };
-                    let TemplateExpr::Call { function, .. } = &window[1] else {
+                    let TemplateExpr::Call { function, .. } = window[1].deparen() else {
                         continue;
                     };
                     if function == "default" {

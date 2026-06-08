@@ -716,7 +716,11 @@ fn extract_expr_outputs(
     let exprs = parse_action_expressions(&wrapped);
     let mut out: Vec<String> = Vec::new();
     for expr in &exprs {
-        match expr {
+        // `apiVersion: ("v1")` and `apiVersion: (printf "%s/%s" "apps" "v1")`
+        // — parens around the whole emitted expression are syntactic
+        // grouping, not a new sub-expression. Skip them so the literal /
+        // call patterns below fire on the actual payload.
+        match expr.deparen() {
             TemplateExpr::Literal(lit) => {
                 if let Some(s) = lit.as_string() {
                     out.push(s.to_string());
