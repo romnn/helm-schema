@@ -313,15 +313,18 @@ carry signals from the deepest helper back to the app.
 
 ### Applying a schema override
 
-You can post-process the generated schema with an override schema:
+You can post-process the generated schema with one or more override schemas:
 
 ```bash
 helm-schema ./path/to/chart \
+  --override-schema ../schemas/injected-keys.override.json \
   --override-schema ./schema-override.json \
   --output values.schema.json
 ```
 
-Overrides are applied as a recursive merge (with special handling to union `required` lists), which is useful for tightening types and filling inference gaps.
+`--override-schema` is repeatable. Files are applied in the order given, each merged on top of the previous result. The intended split is a shared cross-chart override (e.g. top-level keys an outer pipeline injects at render time and helm-schema can't see in `values.yaml`) followed by a chart-specific override.
+
+Overrides are applied as a recursive merge (with special handling to union `required` lists), which is useful for tightening types and filling inference gaps. One exception: an override subtree that contains `$ref` replaces the corresponding base subtree entirely rather than merging — JSON Schema draft-07 ignores siblings of `$ref`, and merging would otherwise leave inferred constraints from the base alongside the refed schema's constraints, producing shapes no input can satisfy.
 
 ## How it works (high level)
 

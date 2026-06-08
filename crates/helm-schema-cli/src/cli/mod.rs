@@ -48,6 +48,10 @@ pub struct Cli {
     #[command(flatten)]
     pub perf: PerfArgs,
 
+    /// Schema files to merge on top of the inferred output, applied in
+    /// the order given. Repeatable: pass multiple `--override-schema`
+    /// flags to layer (e.g. a shared cross-chart top-level schema
+    /// followed by a chart-specific override).
     #[arg(long)]
-    pub override_schema: Option<PathBuf>,
+    pub override_schema: Vec<PathBuf>,
 }

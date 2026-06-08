@@ -291,8 +291,47 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         &mut profiler,
     )?;
 
-    if let Some(path) = cli.override_schema {
-        let override_schema = load_json_file(&path)?;
+    for path in cli.override_schema {
+        let mut override_schema = load_json_file(&path)?;
+
+        // Tag every subtree that carries `$ref` with an internal
+        // "replace on merge" marker. The marker rides through the
+        // pre-flatten dereference pass below and tells
+        // `apply_schema_override` to swap the resolved content into the
+        // base instead of deep-merging it with whatever helm-schema's
+        // inference produced for the same path. Without this, an
+        // inferred `cloud: {type: [boolean, string]}` would end up
+        // alongside the override's resolved `enum: [null, "azure",
+        // "minikube"]`, leaving the schema impossible to satisfy.
+        schema_override::mark_refs_for_replacement(&mut override_schema);
+
+        // Resolve `$ref`s in the override against the override file's
+        // own directory, not the chart directory. This lets a shared
+        // override (e.g. `deployment/charts/schemas/foo.override.json`
+        // pulled in across many charts) carry refs to its siblings
+        // (`./bar.json`) and have them resolve to the same physical
+        // file regardless of where the chart being generated lives.
+        // Without this, every override would have to use a chart-dir-
+        // relative path that only works at one tree depth.
+        //
+        // `--keep-refs` opts out of the final flatten pass over the
+        // merged schema (so chart-inference refs remain literal). We
+        // honour the same flag here for symmetry — without it, an
+        // override that wants to ship literal `$ref` strings can't.
+        let override_schema = if cli.output.keep_refs {
+            override_schema
+        } else {
+            let override_base = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+            let allow_net = !cli.k8s.offline;
+            profiler.measure(ProfilePhase::OverrideMerge, || {
+                flatten::flatten_refs(
+                    override_schema,
+                    override_base,
+                    &flatten::FlattenOptions { allow_net },
+                )
+            })?
+        };
+
         schema = profiler.measure(ProfilePhase::OverrideMerge, || {
             schema_override::apply_schema_override(schema, override_schema)
         });

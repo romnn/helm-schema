@@ -18,8 +18,30 @@ fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     assert!(!cli.k8s.no_k8s_schemas);
     assert!(!cli.chart.exclude_tests);
     assert!(!cli.chart.no_subchart_values);
-    assert!(cli.override_schema.is_none());
+    assert!(cli.override_schema.is_empty());
     assert!(!cli.output.compact);
+
+    Ok(())
+}
+
+#[test]
+fn override_schema_flag_is_repeatable() -> color_eyre::eyre::Result<()> {
+    let cli = Cli::try_parse_from([
+        "helm-schema",
+        "/tmp/chart",
+        "--override-schema",
+        "/tmp/shared.json",
+        "--override-schema",
+        "/tmp/per-chart.json",
+    ])
+    .map_err(|e| eyre!(e.to_string()))?;
+
+    let paths: Vec<_> = cli
+        .override_schema
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    assert_eq!(paths, vec!["/tmp/shared.json", "/tmp/per-chart.json"]);
 
     Ok(())
 }
