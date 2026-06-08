@@ -381,6 +381,15 @@ pub fn build_composed_values_yaml(
     };
 
     if include_subchart_values {
+        // Two passes so every subchart's slot ends up with the FULL union of
+        // globals (its own + every sibling's + the root chart's), not just
+        // whatever had been hoisted by the time we got around to writing
+        // that subchart's slot.
+        //
+        // Pass 1: hoist `global` from each subchart's values.yaml into
+        // the root doc's `.global`. Subchart-local sub_docs are kept
+        // aside until we know the full root-global picture.
+        let mut sub_docs: Vec<(&ChartContext, YamlValue)> = Vec::new();
         for c in charts {
             if c.values_prefix.is_empty() {
                 continue;
@@ -401,6 +410,35 @@ pub fn build_composed_values_yaml(
                 merge_global_values(&mut doc, global_doc);
             }
 
+            sub_docs.push((c, sub_doc));
+        }
+
+        // Pass 2: at Helm render time the root's effective `global` is
+        // mirrored back into every subchart's `.Values` (so
+        // `.Values.global.X` resolves identically in every chart in
+        // the tree, and so `helm.sh/helm/v4 chartutil.MergeValues`
+        // unconditionally writes `global: {}` into every subchart
+        // even when no chart in the tree declares its own `global`).
+        // Mirror it into each subchart's slot in the composed values
+        // doc so the inferred schema also lets `<subchart>.global`
+        // carry the same shape — without this,
+        // `additionalProperties: false` on the inferred subchart node
+        // rejects `<subchart>.global` and `helm lint --strict` fails
+        // against the otherwise-correct merged values.
+        let empty_global = YamlValue::Mapping(serde_yaml::Mapping::default());
+        let root_global = doc
+            .as_mapping()
+            .and_then(|m| m.get(YamlValue::String("global".to_string())))
+            .cloned()
+            .unwrap_or(empty_global);
+
+        for (c, mut sub_doc) in sub_docs {
+            if !matches!(sub_doc, YamlValue::Mapping(_)) {
+                sub_doc = YamlValue::Mapping(serde_yaml::Mapping::default());
+            }
+            if let YamlValue::Mapping(m) = &mut sub_doc {
+                m.insert(YamlValue::String("global".to_string()), root_global.clone());
+            }
             merge_values_at_prefix(&mut doc, &c.values_prefix, sub_doc);
         }
     }

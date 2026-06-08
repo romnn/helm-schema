@@ -122,25 +122,31 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
+    // The subchart's slot mirrors `global` because at Helm render time
+    // the root's effective `global` is propagated into every subchart's
+    // `.Values`. Same shape on both sides of the tree.
+    let global_schema = serde_json::json!({
+      "additionalProperties": false,
+      "properties": {
+        "bar": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    });
+
     let expected = serde_json::json!({
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
-        "global": {
-          "additionalProperties": false,
-          "properties": {
-            "bar": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
+        "global": global_schema,
         "kid": {
           "additionalProperties": false,
           "properties": {
             "foo": {
               "type": "integer"
-            }
+            },
+            "global": global_schema,
           },
           "type": "object"
         }

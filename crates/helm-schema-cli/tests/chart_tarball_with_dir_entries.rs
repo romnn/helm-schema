@@ -159,6 +159,12 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
+    // `global: {}` is mirrored into every subchart slot to match
+    // Helm's chartutil.MergeValues, which writes `global: {}` into
+    // each subchart at render time even when no chart in the tree
+    // declares its own `global`. Without the mirror, `helm lint
+    // --strict` rejects the merged values against an otherwise-correct
+    // inferred schema.
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
@@ -166,7 +172,8 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
             "subchart": {
                 "additionalProperties": false,
                 "properties": {
-                    "enabled": { "type": "boolean" }
+                    "enabled": { "type": "boolean" },
+                    "global": { "additionalProperties": {}, "type": "object" }
                 },
                 "type": "object"
             }
