@@ -15,18 +15,19 @@ This plan covers the next high-level work after the recent correctness push.
 - The Temporal runaway bug is fixed in the sense that generation now finishes
   reliably instead of exhausting swap and RAM.
 - Temporal is still far too slow in release mode for its size and usage target.
+- Opt-in JSON Schema minimization exists as a Helm-independent output transform
+  that deduplicates repeated schema-position subtrees into root-level `$defs`.
 
 That means the highest-value work is no longer "basic correctness for one more
 chart". The bottleneck has moved.
 
 ## Recommended order
 
-1. **Performance work for Temporal-class charts**
-2. **Add independent JSON Schema output minimization**
-3. **Unify the dual resource detector**
-4. **Implement `kind: List` items[*] structural descent**
-5. **Targeted architecture cleanup in the hot IR / generator path**
-6. **Broader refactor / abstraction work only after the above is stable**
+1. **Continue performance work for Temporal-class charts**
+2. **Unify the dual resource detector**
+3. **Implement `kind: List` items[*] structural descent**
+4. **Targeted architecture cleanup in the hot IR / generator path**
+5. **Broader refactor / abstraction work only after the above is stable**
 
 ## Why this order
 
@@ -45,21 +46,19 @@ slow enough to distort local iteration and CI ergonomics. We already know:
 So the next work should be a focused performance pass, not a broad correctness
 hunt.
 
-### 2. JSON Schema minimization second
+### 2. JSON Schema minimization is complete
 
-The luup3 cutover is complete, so the next output-size feature should be a
+The luup3 cutover is complete, so the output-size feature is implemented as a
 general JSON Schema transform rather than another chart-specific migration
 step.
 
 This should stay independent from Helm template inference:
 
-- first check whether a battle-tested dependency already solves this correctly
-- if no suitable dependency exists, add a small helm-agnostic crate in this
-  workspace rather than hiding the logic inside `helm-schema-cli`
+- the minimizer lives in a small helm-agnostic workspace crate
 - input is an arbitrary JSON Schema document
-- output preserves semantics while replacing repeated subtrees with `$defs`
-  and `$ref`
-- the CLI exposes it as an opt-in flag such as `--minimize`
+- output preserves semantics while replacing repeated schema-position subtrees
+  with `$defs` and `$ref`
+- the CLI exposes it as opt-in `--minimize`
 - description stripping remains a simpler orthogonal output transform
 
 ### 3. Detector unification before more deep feature work
@@ -132,6 +131,11 @@ We need a stable way to answer:
 
 This is the enabling work for getting Temporal closer to sub-second output.
 
+Now that Perfetto tracing is available, it should become the source of truth for
+runtime analysis. The old hand-maintained `ProfilePhase` / `--profile-phases`
+path should be removed after the current minimization work lands, with any
+still-useful spans represented by `tracing::instrument` annotations instead.
+
 ### B. Output deduplication / structural sharing
 
 The Temporal schema size strongly suggests repeated large subtrees are being
@@ -187,26 +191,21 @@ of the review bar for the next performance iteration.
 5. Repeat until the chart is substantially closer to acceptable local
    iteration time.
 
-### Priority 2 — JSON Schema minimization
+### Completed — JSON Schema minimization
 
-1. Check whether an existing Rust crate can safely minimize JSON Schema by
-   introducing `$defs` / `$ref` for repeated subtrees. Prefer a proven
-   dependency if it is correct, maintained, deterministic, and draft-aware.
-2. If no suitable dependency exists, add a self-contained helm-agnostic
-   workspace crate that:
-   - accepts `serde_json::Value`
-   - hashes canonical schema subtrees deterministically
-   - extracts repeated, worthwhile subtrees into `$defs`
-   - rewrites later occurrences to `$ref`
-   - never changes validation semantics
-3. Keep the crate free of Helm concepts: no chart paths, no K8s providers, no
-   template inference, no luup3-specific policy.
-4. Add a CLI flag such as `--minimize` that runs this transform after override
-   merging and before final writing.
-5. Measure compact output size for large charts, especially Temporal and
-   Signoz, with and without minimization.
+The minimizer is implemented as a self-contained crate that:
 
-### Priority 3 — Detector unification
+- accepts `serde_json::Value`
+- canonicalizes schema subtrees deterministically
+- extracts repeated, worthwhile schema-position subtrees into `$defs`
+- rewrites occurrences to `$ref`
+- stays free of Helm concepts, K8s providers, template inference, and
+  luup3-specific policy
+
+The CLI exposes this as `--minimize`, after override merging and reference
+flattening and before final writing.
+
+### Priority 2 — Detector unification
 
 Follow `./unify-resource-detector.md`.
 
@@ -216,7 +215,7 @@ Success criteria:
 - IR tests and production CLI share the same identity logic
 - dead line-oriented detector code removed
 
-### Priority 4 — List-envelope descent
+### Priority 3 — List-envelope descent
 
 Follow `./list-envelope-items-descent.md`.
 
@@ -226,9 +225,9 @@ Success criteria:
 - inner resources resolve against their actual apiVersion/kind
 - existing suppression logic in the chain is deleted
 
-### Priority 5 — Focused architecture cleanup
+### Priority 4 — Focused architecture cleanup
 
-After priorities 1-4:
+After priorities 1-3:
 
 1. Split oversized files only where there is a stable ownership boundary.
 2. Remove dead helper-analysis scaffolding that did not survive the performance

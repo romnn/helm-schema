@@ -19,6 +19,7 @@ use helm_schema_ir::{
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
+use json_schema_minify::{MinimizeOptions, minimize_schema};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 use tracing_subscriber::Layer as _;
@@ -51,6 +52,7 @@ enum ProfilePhase {
     RequiredInference,
     OverrideMerge,
     FlattenRefs,
+    MinimizeSchema,
     OutputWrite,
 }
 
@@ -66,6 +68,7 @@ impl ProfilePhase {
             Self::RequiredInference => "required_inference",
             Self::OverrideMerge => "override_merge",
             Self::FlattenRefs => "flatten_refs",
+            Self::MinimizeSchema => "minimize_schema",
             Self::OutputWrite => "output_write",
         }
     }
@@ -233,6 +236,7 @@ pub fn run(cli: Cli) -> CliResult<()> {
                 .with_debug_annotations(true)
                 .with_filter(tracing_subscriber::filter::filter_fn(|metadata| {
                     metadata.target().starts_with("helm_schema")
+                        || metadata.target().starts_with("json_schema_minify")
                 }));
         let subscriber = tracing_subscriber::registry().with(perfetto_layer);
         let dispatch = tracing::Dispatch::new(subscriber);
@@ -350,6 +354,12 @@ fn run_inner(cli: Cli) -> CliResult<()> {
                 &flatten::FlattenOptions { allow_net },
             )
         })?;
+    }
+
+    if cli.output.minimize {
+        schema = profiler.measure(ProfilePhase::MinimizeSchema, || {
+            minimize_schema(schema, &MinimizeOptions::default()).schema
+        });
     }
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);

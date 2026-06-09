@@ -34,6 +34,12 @@ fn cli_perf_flags_parse() {
 }
 
 #[test]
+fn cli_output_minimize_flag_parses() {
+    let cli = parse(&["--minimize"]).expect("parse");
+    assert!(cli.output.minimize);
+}
+
+#[test]
 fn cli_repeated_k8s_version_preserves_order() {
     let cli = parse(&["--k8s-version", "v1.24.0", "--k8s-version", "v1.35.0"]).expect("parse");
     assert_eq!(

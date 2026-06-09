@@ -7,6 +7,7 @@ pub struct OutputArgs {
     #[arg(short, long)]
     pub output: Option<PathBuf>,
 
+    /// Write compact JSON output instead of the default pretty JSON.
     #[arg(long)]
     pub compact: bool,
 
@@ -16,4 +17,11 @@ pub struct OutputArgs {
     /// `$ref`), recursively, with cycle detection.
     #[arg(long)]
     pub keep_refs: bool,
+
+    /// Deduplicate repeated schema subtrees into root-level `$defs`.
+    ///
+    /// This is an output-only transform over the final JSON Schema. It does not
+    /// participate in Helm template inference.
+    #[arg(long)]
+    pub minimize: bool,
 }
