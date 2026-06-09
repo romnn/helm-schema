@@ -23,7 +23,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ir::{Guard, ValueKind, ValueUse};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally and
@@ -165,7 +165,6 @@ fn add_to_required_list(node: &mut Value, key: &str) {
     }
     arr.sort_by(|a, b| a.as_str().unwrap_or("").cmp(b.as_str().unwrap_or("")));
     arr.dedup();
-    let _: &Map<String, Value> = obj; // keep ‘unused’ lint happy if Map gets refactored
 }
 
 #[cfg(test)]

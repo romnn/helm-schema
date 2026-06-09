@@ -25,17 +25,6 @@ fn generate(template: &str) -> Vec<ValueUse> {
     SymbolicIrGenerator.generate(template, &ast, &idx)
 }
 
-#[allow(dead_code)]
-fn generate_with_helpers(template: &str, helpers: &str) -> Vec<ValueUse> {
-    let mut idx = DefineIndex::new();
-    if !helpers.is_empty() {
-        idx.add_source(&TreeSitterParser, helpers)
-            .expect("helpers parse");
-    }
-    let ast = TreeSitterParser.parse(template).expect("template parse");
-    SymbolicIrGenerator.generate(template, &ast, &idx)
-}
-
 fn resource_of(use_: &ValueUse) -> (String, String) {
     let r = use_
         .resource

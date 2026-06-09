@@ -36,7 +36,6 @@ impl FakeProvider {
 
     /// Configure an explicit `Capabilities.APIVersions.Has(api)`
     /// answer. Without one, this provider abstains (returns `None`).
-    #[allow(dead_code)]
     fn with_capability(mut self, api: &str, has: bool) -> Self {
         self.capability_answers.insert(api.to_string(), has);
         self

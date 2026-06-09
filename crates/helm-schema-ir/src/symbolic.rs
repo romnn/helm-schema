@@ -6840,7 +6840,7 @@ impl<'a> SymbolicWalker<'a> {
         analysis
     }
 
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[cfg(test)]
     fn analyze_bound_helper_call(
         name: &str,
         arg: Option<&TemplateExpr>,
@@ -7025,7 +7025,7 @@ impl<'a> SymbolicWalker<'a> {
         analysis
     }
 
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[cfg(test)]
     fn direct_bound_paths_from_text(
         text: &str,
         bindings: &HashMap<String, HelperBinding>,

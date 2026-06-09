@@ -192,7 +192,7 @@ pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Opt
 /// after `Values` must be a real identifier, matching the old regex's
 /// `[\w]+(?:\.(?:[\w]+|\*))*` shape.
 #[must_use]
-#[cfg_attr(not(test), allow(dead_code))]
+#[cfg(test)]
 pub fn extract_values_paths(text: &str) -> Vec<String> {
     let mut paths: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     for top in parse_bare_expression_text(text) {
@@ -304,10 +304,10 @@ fn restore_segments(segments: &mut [String]) {
     }
 }
 
-/// "Loose" path extractor for [`extract_values_paths`] and
-/// [`parse_condition`]: locates `Values` *anywhere* in a selector
-/// chain (`.context.Values.X` → `"X"`), matching the old regex which
-/// matched any `.Values.X` substring in the input text. Unlike
+/// "Loose" path extractor for [`parse_condition`] and related tests:
+/// locates `Values` *anywhere* in a selector chain
+/// (`.context.Values.X` → `"X"`), matching the old regex which matched
+/// any `.Values.X` substring in the input text. Unlike
 /// [`values_path_from_expr`] (used by literal-default extractors,
 /// which require the chain to be rooted at `.Values`), this accepts
 /// embedded chains commonly produced by chart helpers — e.g.

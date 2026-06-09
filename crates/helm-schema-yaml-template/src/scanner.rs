@@ -310,11 +310,6 @@ impl<T: Iterator<Item = char>> Scanner<T> {
     fn ch_is(&self, c: char) -> bool {
         self.buffer[0] == c
     }
-    #[allow(dead_code)]
-    #[inline]
-    fn eof(&self) -> bool {
-        self.ch_is('\0')
-    }
     #[inline]
     pub fn stream_started(&self) -> bool {
         self.stream_start_produced
