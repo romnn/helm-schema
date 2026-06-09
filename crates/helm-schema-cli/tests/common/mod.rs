@@ -70,14 +70,11 @@ pub fn generate_chart_schema(chart: &str) -> std::result::Result<Value, Report> 
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(
-                test_util::workspace_root()
-                    .join("deprecated/crates/helm-schema-mapper/testdata/kubernetes-json-schema"),
+                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
             disable_k8s_schemas: false,
-            crd_override_dir: Some(
-                test_util::workspace_root().join("target/helm-schema-test-crds-catalog-cache"),
-            ),
+            crd_override_dir: Some(test_util::workspace_root().join(".cache/crds-catalog-cache")),
             ..Default::default()
         },
     };

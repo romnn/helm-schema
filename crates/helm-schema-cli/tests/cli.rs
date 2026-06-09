@@ -61,8 +61,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(
-                test_util::workspace_root()
-                    .join("deprecated/crates/helm-schema-mapper/testdata/kubernetes-json-schema"),
+                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
             disable_k8s_schemas: false,
@@ -223,8 +222,7 @@ spec:
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(
-                test_util::workspace_root()
-                    .join("deprecated/crates/helm-schema-mapper/testdata/kubernetes-json-schema"),
+                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
             disable_k8s_schemas: false,
