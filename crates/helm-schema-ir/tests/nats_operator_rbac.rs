@@ -13,7 +13,7 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 }
 
 #[test]
-fn symbolic_ir_full() {
+fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata("charts/nats-operator/templates/rbac.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
@@ -39,7 +39,7 @@ fn symbolic_ir_full() {
             "source_expr": "clusterScoped",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("rbacEnabled")],
+            "guards": [t("rbacEnabled"), t("clusterScoped")],
             "resource": serde_json::json!({
                 "api_version": "rbac.authorization.k8s.io/v1",
                 "kind": "ClusterRole"
@@ -49,14 +49,14 @@ fn symbolic_ir_full() {
             "source_expr": "clusterScoped",
             "path": [],
             "kind": "Scalar",
-            "guards": [t("rbacEnabled")],
+            "guards": [t("rbacEnabled"), t("clusterScoped")],
             "resource": crb
         },
         {
             "source_expr": "rbacEnabled",
             "path": [],
             "kind": "Scalar",
-            "guards": [],
+            "guards": [t("rbacEnabled")],
             "resource": null
         }
     ]);

@@ -1,4 +1,4 @@
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (If ".Values.rbac.create"
@@ -426,19 +426,6 @@ const EXPECTED_SEXPR: &str = r#"(Document
                 (Sequence
                   (Scalar "use"))))))))))
 "#;
-
-#[test]
-fn fused_rust_ast() {
-    let src =
-        test_util::read_testdata("charts/zalando-postgres-operator/templates/clusterrole.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-
-    if std::env::var("AST_DUMP").is_ok() {
-        eprintln!("{}", ast.to_sexpr());
-    }
-
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
-}
 
 #[test]
 fn tree_sitter_ast() {

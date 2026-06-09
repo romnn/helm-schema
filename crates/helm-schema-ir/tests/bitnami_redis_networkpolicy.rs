@@ -16,7 +16,7 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 
 #[test]
 #[allow(clippy::too_many_lines)]
-fn symbolic_ir_full() {
+fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
@@ -34,21 +34,6 @@ fn symbolic_ir_full() {
     let expected: serde_json::Value = serde_json::from_str(
         r#"
 [
-  {
-    "guards": [
-      {
-        "path": "networkPolicy.enabled",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "networking.k8s.io/v1",
-      "kind": "NetworkPolicy"
-    },
-    "source_expr": "architecture"
-  },
   {
     "guards": [
       {
@@ -77,18 +62,6 @@ fn symbolic_ir_full() {
       },
       {
         "path": "commonAnnotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "commonAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "path": "networkPolicy.enabled",
         "type": "truthy"
       }
     ],
@@ -172,6 +145,26 @@ fn symbolic_ir_full() {
     "guards": [
       {
         "path": "networkPolicy.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "commonLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
         "type": "truthy"
       }
     ],
@@ -539,6 +532,50 @@ fn symbolic_ir_full() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternal",
+        "type": "not"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -606,6 +643,10 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -621,6 +662,18 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -637,11 +690,80 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.allowExternal",
         "type": "not"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternal",
+        "type": "not"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "architecture",
+        "type": "eq",
+        "value": "replication"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -713,6 +835,40 @@ fn symbolic_ir_full() {
       "egress[*]",
       "to[*]",
       "podSelector",
+      "matchLabels"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "architecture",
+        "type": "eq",
+        "value": "replication"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "egress[*]",
+      "to[*]",
+      "podSelector",
       "matchLabels",
       "app.kubernetes.io/name"
     ],
@@ -778,6 +934,39 @@ fn symbolic_ir_full() {
       "ingress[*]",
       "from[*]",
       "podSelector",
+      "matchLabels"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternal",
+        "type": "not"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "ingress[*]",
+      "from[*]",
+      "podSelector",
       "matchLabels",
       "app.kubernetes.io/name"
     ],
@@ -810,6 +999,33 @@ fn symbolic_ir_full() {
       "podSelector",
       "matchLabels",
       "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "podSelector",
+      "matchLabels"
     ],
     "resource": {
       "api_version": "networking.k8s.io/v1",
@@ -877,6 +1093,26 @@ fn symbolic_ir_full() {
       },
       {
         "path": "namespaceOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "namespaceOverride",
         "type": "default"
       }
     ],
@@ -896,6 +1132,10 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternal",
+        "type": "not"
       }
     ],
     "kind": "Scalar",
@@ -911,6 +1151,10 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -922,7 +1166,12 @@ fn symbolic_ir_full() {
     "source_expr": "networkPolicy.allowExternalEgress"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -939,18 +1188,6 @@ fn symbolic_ir_full() {
       },
       {
         "path": "networkPolicy.extraEgress",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "networkPolicy.extraEgress"
-  },
-  {
-    "guards": [
-      {
-        "path": "networkPolicy.enabled",
         "type": "truthy"
       }
     ],
@@ -1040,18 +1277,6 @@ fn symbolic_ir_full() {
       },
       {
         "path": "networkPolicy.extraIngress",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "networkPolicy.extraIngress"
-  },
-  {
-    "guards": [
-      {
-        "path": "networkPolicy.enabled",
         "type": "truthy"
       }
     ],
@@ -1142,6 +1367,13 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.allowExternal",
         "type": "not"
+      },
+      {
+        "paths": [
+          "networkPolicy.ingressNSMatchLabels",
+          "networkPolicy.ingressNSPodMatchLabels"
+        ],
+        "type": "or"
       }
     ],
     "kind": "Scalar",
@@ -1168,6 +1400,10 @@ fn symbolic_ir_full() {
           "networkPolicy.ingressNSPodMatchLabels"
         ],
         "type": "or"
+      },
+      {
+        "path": "networkPolicy.ingressNSMatchLabels",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1261,6 +1497,13 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.allowExternal",
         "type": "not"
+      },
+      {
+        "paths": [
+          "networkPolicy.ingressNSMatchLabels",
+          "networkPolicy.ingressNSPodMatchLabels"
+        ],
+        "type": "or"
       }
     ],
     "kind": "Scalar",
@@ -1287,6 +1530,10 @@ fn symbolic_ir_full() {
           "networkPolicy.ingressNSPodMatchLabels"
         ],
         "type": "or"
+      },
+      {
+        "path": "networkPolicy.ingressNSPodMatchLabels",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1380,6 +1627,10 @@ fn symbolic_ir_full() {
       {
         "path": "metrics.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.metrics.allowExternal",
+        "type": "not"
       }
     ],
     "kind": "Scalar",
@@ -1403,6 +1654,13 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.metrics.allowExternal",
         "type": "not"
+      },
+      {
+        "paths": [
+          "networkPolicy.metrics.ingressNSMatchLabels",
+          "networkPolicy.metrics.ingressNSPodMatchLabels"
+        ],
+        "type": "or"
       }
     ],
     "kind": "Scalar",
@@ -1433,6 +1691,10 @@ fn symbolic_ir_full() {
           "networkPolicy.metrics.ingressNSPodMatchLabels"
         ],
         "type": "or"
+      },
+      {
+        "path": "networkPolicy.metrics.ingressNSMatchLabels",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1538,6 +1800,13 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.metrics.allowExternal",
         "type": "not"
+      },
+      {
+        "paths": [
+          "networkPolicy.metrics.ingressNSMatchLabels",
+          "networkPolicy.metrics.ingressNSPodMatchLabels"
+        ],
+        "type": "or"
       }
     ],
     "kind": "Scalar",
@@ -1568,6 +1837,10 @@ fn symbolic_ir_full() {
           "networkPolicy.metrics.ingressNSPodMatchLabels"
         ],
         "type": "or"
+      },
+      {
+        "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1718,6 +1991,10 @@ fn symbolic_ir_full() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "sentinel.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1738,6 +2015,10 @@ fn symbolic_ir_full() {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
+      },
+      {
+        "path": "sentinel.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",

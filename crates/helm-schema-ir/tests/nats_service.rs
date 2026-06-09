@@ -37,7 +37,7 @@ fn build_nats_define_index(parser: &dyn HelmParser) -> DefineIndex {
 
 #[test]
 #[allow(clippy::too_many_lines)]
-fn symbolic_ir_full() {
+fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata("charts/nats/templates/service.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_nats_define_index(&TreeSitterParser);
@@ -267,12 +267,7 @@ fn symbolic_ir_full() {
     "source_expr": "config.leafnodes.tls.enabled"
   },
   {
-    "guards": [
-      {
-        "path": "config",
-        "type": "truthy"
-      }
-    ],
+    "guards": [],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -431,12 +426,7 @@ fn symbolic_ir_full() {
     "source_expr": "config.nats.tls.enabled"
   },
   {
-    "guards": [
-      {
-        "path": "config",
-        "type": "truthy"
-      }
-    ],
+    "guards": [],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -599,7 +589,12 @@ fn symbolic_ir_full() {
     "source_expr": "configMap.name"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -609,7 +604,8 @@ fn symbolic_ir_full() {
     "guards": [
       {
         "path": "fullnameOverride",
-        "type": "truthy"
+        "schema_type": "string",
+        "type": "type_is"
       }
     ],
     "kind": "Scalar",
@@ -674,10 +670,39 @@ fn symbolic_ir_full() {
     "source_expr": "headlessService.name"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -748,6 +773,30 @@ fn symbolic_ir_full() {
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "namespaceOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
     "source_expr": "namespaceOverride"
   },
   {
@@ -891,6 +940,10 @@ fn symbolic_ir_full() {
       {
         "path": "service",
         "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1163,7 +1216,6 @@ fn symbolic_ir_full() {
     "source_expr": "statefulSet.name"
   }
 ]
-
 "#,
     )
     .expect("parse expected");

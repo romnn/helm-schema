@@ -13,7 +13,7 @@
 //! real IR shape vendored charts produce, not just synthetic
 //! ResourceRefs in chain-only unit tests.
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
@@ -40,7 +40,7 @@ host: example.com
 
 #[test]
 fn kind_list_envelope_emits_no_missing_schema_diagnostic() {
-    let ast = FusedRustParser.parse(KIND_LIST_TEMPLATE).expect("parse");
+    let ast = TreeSitterParser.parse(KIND_LIST_TEMPLATE).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(KIND_LIST_TEMPLATE, &ast, &idx);
 

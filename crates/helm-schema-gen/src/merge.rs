@@ -153,7 +153,7 @@ fn dedup_schemas(schemas: Vec<Value>) -> Vec<Value> {
 
 fn canonical_json_string(v: &Value) -> String {
     let v = canonicalize_json_value(v);
-    serde_json::to_string(&v).unwrap_or_default()
+    serde_json::to_string(&v).expect("serialize canonical json schema value")
 }
 
 fn canonicalize_json_value(v: &Value) -> Value {
@@ -292,7 +292,46 @@ fn merge_scalar_like_schemas(a: &Value, b: &Value) -> Option<Value> {
         }
     }
 
+    if let Some(values) = out.get("enum").and_then(Value::as_array)
+        && !values
+            .iter()
+            .all(|value| enum_value_satisfies_scalar_schema(value, &out))
+    {
+        return None;
+    }
+
     Some(Value::Object(out))
+}
+
+fn enum_value_satisfies_scalar_schema(value: &Value, schema: &Map<String, Value>) -> bool {
+    match schema.get("type").and_then(Value::as_str) {
+        Some("string") => {
+            let Some(value) = value.as_str() else {
+                return false;
+            };
+            let len = value.chars().count() as u64;
+            if schema
+                .get("minLength")
+                .and_then(Value::as_u64)
+                .is_some_and(|min_length| len < min_length)
+            {
+                return false;
+            }
+            if schema
+                .get("maxLength")
+                .and_then(Value::as_u64)
+                .is_some_and(|max_length| len > max_length)
+            {
+                return false;
+            }
+            !schema.contains_key("pattern")
+        }
+        Some("integer") => value.as_i64().is_some() || value.as_u64().is_some(),
+        Some("number") => value.is_number(),
+        Some("boolean") => value.is_boolean(),
+        Some("null") => value.is_null(),
+        _ => true,
+    }
 }
 
 #[allow(
@@ -676,6 +715,73 @@ mod tests {
         assert_eq!(
             merged_nullable,
             json!({ "type": "string", "format": "byte", "minLength": 1 })
+        );
+    }
+
+    #[test]
+    fn union_keeps_empty_string_branch_separate_from_non_empty_string() {
+        let merged = super::union_schema_list(vec![
+            json!({
+                "type": "string",
+                "minLength": 1
+            }),
+            json!({
+                "type": "string",
+                "enum": [""]
+            }),
+        ]);
+
+        let variants = merged
+            .get("anyOf")
+            .and_then(Value::as_array)
+            .unwrap_or_else(|| panic!("expected non-empty/empty string union, got {merged}"));
+        assert!(
+            variants
+                .iter()
+                .any(|variant| variant.get("minLength").and_then(Value::as_u64) == Some(1)),
+            "non-empty string branch should survive, got {merged}",
+        );
+        assert!(
+            variants.iter().any(|variant| {
+                variant
+                    .get("enum")
+                    .and_then(Value::as_array)
+                    .is_some_and(|values| values.iter().any(|value| value.as_str() == Some("")))
+            }),
+            "empty string branch should survive, got {merged}",
+        );
+    }
+
+    #[test]
+    fn union_keeps_null_enum_branch_separate_from_string_branch() {
+        let merged = super::union_schema_list(vec![
+            json!({
+                "type": "string"
+            }),
+            json!({
+                "type": "string",
+                "enum": [null]
+            }),
+        ]);
+
+        let variants = merged
+            .get("anyOf")
+            .and_then(Value::as_array)
+            .unwrap_or_else(|| panic!("expected impossible-null/string union, got {merged}"));
+        assert!(
+            variants
+                .iter()
+                .any(|variant| variant == &json!({ "type": "string" })),
+            "plain string branch should survive, got {merged}",
+        );
+        assert!(
+            variants.iter().any(|variant| {
+                variant
+                    .get("enum")
+                    .and_then(Value::as_array)
+                    .is_some_and(|values| values.iter().any(Value::is_null))
+            }),
+            "null enum branch should survive separately, got {merged}",
         );
     }
 }

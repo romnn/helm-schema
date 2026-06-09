@@ -4,6 +4,10 @@
       {
         "path": "rbac.create",
         "type": "truthy"
+      },
+      {
+        "path": "configGeneral.enable_crd_registration",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -18,6 +22,10 @@
     "guards": [
       {
         "path": "rbac.create",
+        "type": "truthy"
+      },
+      {
+        "path": "configGeneral.kubernetes_use_configmaps",
         "type": "truthy"
       }
     ],
@@ -34,6 +42,10 @@
       {
         "path": "rbac.create",
         "type": "truthy"
+      },
+      {
+        "path": "configKubernetes.spilo_privileged",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -49,6 +61,10 @@
       {
         "path": "rbac.create",
         "type": "truthy"
+      },
+      {
+        "path": "configKubernetes.storage_resize_mode",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -63,6 +79,10 @@
     "guards": [
       {
         "path": "rbac.create",
+        "type": "truthy"
+      },
+      {
+        "path": "enableStreams",
         "type": "truthy"
       }
     ],
@@ -94,6 +114,26 @@
       },
       {
         "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "rbac.create",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
         "type": "truthy"
       }
     ],
@@ -113,11 +153,35 @@
       {
         "path": "rbac.create",
         "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "rbac.create",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -143,7 +207,12 @@
     "source_expr": "nameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "rbac.create",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -154,6 +223,10 @@
       {
         "path": "rbac.create",
         "type": "truthy"
+      },
+      {
+        "path": "serviceAccount.name",
+        "type": "default"
       }
     ],
     "kind": "Scalar",

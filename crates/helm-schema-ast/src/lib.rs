@@ -1,9 +1,7 @@
 pub mod expr;
-mod fused_rust;
 mod tree_sitter_parser;
 
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
-pub use fused_rust::FusedRustParser;
 pub use tree_sitter_parser::TreeSitterParser;
 
 use std::collections::HashMap;
@@ -11,17 +9,11 @@ use std::fmt::Write;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
-    #[error("fused parser error: {0}")]
-    FusedParse(#[from] helm_schema_yaml_template::fused::FusedParseError),
-
     #[error("tree-sitter parse failed")]
     TreeSitterParseFailed,
 }
 
-/// Shared AST for fused Helm+YAML templates.
-///
-/// Both the pure-Rust yaml-rust parser and the tree-sitter fused grammar
-/// produce this same representation.
+/// Shared AST for Helm+YAML templates.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HelmAst {
     Document {

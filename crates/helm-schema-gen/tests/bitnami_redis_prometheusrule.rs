@@ -1,6 +1,6 @@
 mod common;
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
@@ -16,14 +16,14 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     idx
 }
 
-/// Full schema generation for prometheusrule using fused-Rust parser.
+/// Full schema generation for prometheusrule using tree-sitter parser.
 #[test]
 #[allow(clippy::too_many_lines)]
-fn schema_fused_rust() {
+fn schema_from_tree_sitter() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let provider = common::production_crd_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
@@ -217,7 +217,6 @@ fn schema_fused_rust() {
   },
   "type": "object"
 }
-
 "#,
     )
     .expect("parse expected");
@@ -229,8 +228,8 @@ fn schema_fused_rust() {
 fn schema_validates_values_yaml() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let provider = common::production_crd_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
@@ -242,26 +241,4 @@ fn schema_validates_values_yaml() {
         errors.len(),
         errors.join("\n")
     );
-}
-
-/// Schema generation using tree-sitter parser should produce same result.
-#[test]
-fn schema_both_parsers_same() {
-    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
-    let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
-
-    let provider = common::production_crd_k8s_chain("v1.35.0");
-
-    let rust_ast = FusedRustParser.parse(&src).expect("fused rust");
-    let rust_idx = build_define_index(&FusedRustParser);
-    let rust_ir = SymbolicIrGenerator.generate(&src, &rust_ast, &rust_idx);
-    let rust_schema =
-        generate_values_schema_with_values_yaml(&rust_ir, &provider, Some(&values_yaml));
-
-    let ts_ast = TreeSitterParser.parse(&src).expect("tree-sitter");
-    let ts_idx = build_define_index(&TreeSitterParser);
-    let ts_ir = SymbolicIrGenerator.generate(&src, &ts_ast, &ts_idx);
-    let ts_schema = generate_values_schema_with_values_yaml(&ts_ir, &provider, Some(&values_yaml));
-
-    similar_asserts::assert_eq!(rust_schema, ts_schema);
 }

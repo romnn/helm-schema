@@ -32,6 +32,26 @@
       {
         "path": "serviceMonitor.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -66,11 +86,35 @@
       {
         "path": "serviceMonitor.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -162,7 +206,12 @@
     "source_expr": "serviceMonitor.annotations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -172,6 +221,10 @@
     "guards": [
       {
         "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.interval",
         "type": "truthy"
       }
     ],
@@ -333,6 +386,10 @@
     "guards": [
       {
         "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceMonitor.scrapeTimeout",
         "type": "truthy"
       }
     ],

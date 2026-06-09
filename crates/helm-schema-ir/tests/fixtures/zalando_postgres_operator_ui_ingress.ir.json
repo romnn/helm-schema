@@ -42,6 +42,30 @@
       },
       {
         "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
         "type": "truthy"
       }
     ],
@@ -187,7 +211,12 @@
     "source_expr": "ingress.annotations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -252,6 +281,10 @@
       {
         "path": "ingress.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "ingress.ingressClassName",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -296,6 +329,10 @@
     "guards": [
       {
         "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.tls",
         "type": "truthy"
       }
     ],
@@ -411,18 +448,6 @@
       "kind": "Ingress"
     },
     "source_expr": "ingress.tls.*.secretName"
-  },
-  {
-    "guards": [
-      {
-        "path": "ingress.enabled",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
   },
   {
     "guards": [

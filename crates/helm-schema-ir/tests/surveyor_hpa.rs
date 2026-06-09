@@ -17,7 +17,7 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 
 #[test]
 #[allow(clippy::too_many_lines)]
-fn symbolic_ir_full() {
+fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);

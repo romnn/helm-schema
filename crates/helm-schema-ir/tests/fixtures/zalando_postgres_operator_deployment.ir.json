@@ -38,16 +38,6 @@
     "source_expr": "configLoggingRestApi.api_port"
   },
   {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "configTarget"
-  },
-  {
     "guards": [
       {
         "path": "configTarget",
@@ -64,7 +54,12 @@
     "source_expr": "configTarget"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "controllerID.create",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -78,6 +73,10 @@
       {
         "path": "controllerID.create",
         "type": "truthy"
+      },
+      {
+        "path": "controllerID.name",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -86,7 +85,12 @@
     "source_expr": "controllerID.name"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "enableJsonLogging",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -96,7 +100,12 @@
     "source_expr": "enableJsonLogging"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "extraEnvs",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -206,6 +215,63 @@
   {
     "guards": [
       {
+        "path": "controllerID.create",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "configTarget",
+        "type": "eq",
+        "value": "ConfigMap"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
         "path": "fullnameOverride",
         "type": "truthy"
       }
@@ -288,7 +354,12 @@
     "source_expr": "image.tag"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "imagePullSecrets",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -318,17 +389,14 @@
     "source_expr": "imagePullSecrets"
   },
   {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
     "guards": [
       {
         "path": "controllerID.create",
         "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -342,11 +410,43 @@
         "path": "configTarget",
         "type": "eq",
         "value": "ConfigMap"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -385,7 +485,12 @@
     "source_expr": "nodeSelector"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "podAnnotations",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -415,7 +520,12 @@
     "source_expr": "podAnnotations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "podLabels",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -445,7 +555,12 @@
     "source_expr": "podLabels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "priorityClassName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -475,7 +590,12 @@
     "source_expr": "priorityClassName"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "readinessProbe",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -561,7 +681,12 @@
     "source_expr": "securityContext"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "serviceAccount.name",
+        "type": "default"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,

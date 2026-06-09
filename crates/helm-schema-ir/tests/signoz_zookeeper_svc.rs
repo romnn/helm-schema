@@ -1,6 +1,6 @@
 #![recursion_limit = "1024"]
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 const TEMPLATE_PATH: &str =
@@ -22,10 +22,10 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 
 #[test]
 #[allow(clippy::too_many_lines)]
-fn symbolic_ir_full() {
+fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");

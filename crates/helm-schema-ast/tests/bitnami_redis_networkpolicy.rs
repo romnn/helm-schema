@@ -1,6 +1,6 @@
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
-// Both parsers produce identical AST for the networkpolicy template.
+// Tree-sitter AST shape for the networkpolicy template.
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
@@ -227,13 +227,6 @@ const EXPECTED_SEXPR: &str = r#"(Document
       (If ".Values.networkPolicy.extraIngress"
         (then
           (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraIngress \"context\" $ ) | nindent 4"))))))"#;
-
-#[test]
-fn fused_rust_ast() {
-    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR);
-}
 
 #[test]
 fn tree_sitter_ast() {

@@ -11,6 +11,12 @@ pub struct OutputArgs {
     #[arg(long)]
     pub compact: bool,
 
+    /// Remove JSON Schema `description` annotations from the generated output.
+    ///
+    /// This is schema-aware: properties named `description` remain intact.
+    #[arg(long)]
+    pub strip_descriptions: bool,
+
     /// Leave file/URL `$ref` strings in the generated schema as-is.
     /// By default, the final output pass walks the merged schema and
     /// inlines every file `$ref` (and, unless `--offline`, every URL

@@ -1,4 +1,4 @@
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (Mapping
@@ -476,13 +476,6 @@ const EXPECTED_SEXPR: &str = r#"(Document
           (Scalar "hostAliases")
           (HelmExpr "toYaml . | nindent 8"))))))
 "#;
-
-#[test]
-fn fused_rust_ast() {
-    let src = test_util::read_testdata("charts/cert-manager/templates/deployment.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
-}
 
 #[test]
 fn tree_sitter_ast() {

@@ -15,7 +15,7 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 }
 
 #[test]
-fn symbolic_ir_full() {
+fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
@@ -54,22 +54,6 @@ fn symbolic_ir_full() {
     ],
     "kind": "Scalar",
     "path": [],
-    "resource": null,
-    "source_expr": "commonAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "path": "metrics.enabled",
-        "type": "truthy"
-      },
-      {
-        "path": "metrics.prometheusRule.enabled",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
     "resource": {
       "api_version": "monitoring.coreos.com/v1",
       "kind": "PrometheusRule"
@@ -164,6 +148,30 @@ fn symbolic_ir_full() {
       },
       {
         "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "commonLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
         "type": "truthy"
       }
     ],
@@ -256,6 +264,30 @@ fn symbolic_ir_full() {
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
     "source_expr": "fullnameOverride"
   },
   {
@@ -286,7 +318,12 @@ fn symbolic_ir_full() {
     "source_expr": "fullnameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -307,22 +344,6 @@ fn symbolic_ir_full() {
       },
       {
         "path": "metrics.prometheusRule.additionalLabels",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "metrics.prometheusRule.additionalLabels"
-  },
-  {
-    "guards": [
-      {
-        "path": "metrics.enabled",
-        "type": "truthy"
-      },
-      {
-        "path": "metrics.prometheusRule.enabled",
         "type": "truthy"
       }
     ],
@@ -418,6 +439,10 @@ fn symbolic_ir_full() {
     "guards": [
       {
         "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
         "type": "truthy"
       }
     ],
@@ -554,6 +579,38 @@ fn symbolic_ir_full() {
       {
         "path": "metrics.prometheusRule.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -651,6 +708,30 @@ fn symbolic_ir_full() {
       },
       {
         "path": "namespaceOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "metrics.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "metrics.prometheusRule.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "namespaceOverride",
         "type": "default"
       }
     ],
@@ -666,7 +747,6 @@ fn symbolic_ir_full() {
     "source_expr": "namespaceOverride"
   }
 ]
-
 "#,
     )
     .expect("parse expected");

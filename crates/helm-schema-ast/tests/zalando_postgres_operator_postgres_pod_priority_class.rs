@@ -1,4 +1,4 @@
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (If ".Values.podPriorityClassName.create"
@@ -46,20 +46,6 @@ const EXPECTED_SEXPR: &str = r#"(Document
         (Pair
           (Scalar "value")
           (HelmExpr ".Values.podPriorityClassName.priority"))))))"#;
-
-#[test]
-fn fused_rust_ast() {
-    let src = test_util::read_testdata(
-        "charts/zalando-postgres-operator/templates/postgres-pod-priority-class.yaml",
-    );
-    let ast = FusedRustParser.parse(&src).expect("parse");
-
-    if std::env::var("AST_DUMP").is_ok() {
-        eprintln!("{}", ast.to_sexpr());
-    }
-
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
-}
 
 #[test]
 fn tree_sitter_ast() {

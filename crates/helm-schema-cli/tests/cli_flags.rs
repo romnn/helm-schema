@@ -34,6 +34,12 @@ fn cli_output_minimize_flag_parses() {
 }
 
 #[test]
+fn cli_output_strip_descriptions_flag_parses() {
+    let cli = parse(&["--strip-descriptions"]).expect("parse");
+    assert!(cli.output.strip_descriptions);
+}
+
+#[test]
 fn cli_repeated_k8s_version_preserves_order() {
     let cli = parse(&["--k8s-version", "v1.24.0", "--k8s-version", "v1.35.0"]).expect("parse");
     assert_eq!(

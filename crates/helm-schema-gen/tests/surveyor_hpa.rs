@@ -2,7 +2,7 @@
 
 mod common;
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
 use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
@@ -27,8 +27,8 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
 
     let diagnostics = DiagnosticSink::new();
@@ -113,11 +113,11 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 
 #[test]
 #[allow(clippy::too_many_lines)]
-fn schema_fused_rust() {
+fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     // The Surveyor chart template hardcodes autoscaling/v2beta1, and it also uses
     // v2beta1-only metric fields like `targetAverageUtilization`.
@@ -158,10 +158,10 @@ fn helm_template_renders_successfully() {
 fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
-    // See comment in `schema_fused_rust`.
+    // See comment in `schema_from_tree_sitter`.
     let provider = common::production_k8s_chain("v1.24.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 

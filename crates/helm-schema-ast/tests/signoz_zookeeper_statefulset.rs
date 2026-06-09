@@ -1,4 +1,4 @@
-use helm_schema_ast::{FusedRustParser, HelmParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml";
@@ -23,13 +23,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
           (HelmExpr "template \"zookeeper.namespace\" ."))
         (Pair
           (Scalar "labels")
-          (Mapping
-            (Pair
-              (Scalar "app.kubernetes.io/component")
-              (Scalar "zookeeper"))
-            (Pair
-              (Scalar "role")
-              (Scalar "zookeeper")))))))
+          (HelmExpr "include \"common.labels.standard\" . | nindent 4")))))
   (If ".Values.commonLabels"
     (then
       (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonLabels \"context\" $ ) | nindent 4")))
@@ -54,10 +48,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
           (Mapping
             (Pair
               (Scalar "matchLabels")
-              (Mapping
-                (Pair
-                  (Scalar "app.kubernetes.io/component")
-                  (Scalar "zookeeper"))))))
+              (HelmExpr "include \"common.labels.matchLabels\" . | nindent 6"))))
         (Pair
           (Scalar "serviceName")
           (HelmExpr "printf \"%s-%s\" (include \"common.names.fullname\" .) (default \"headless\" .Values.service.headless.servicenameOverride) | trunc 63 | trimSuffix \"-\"")))))
@@ -100,10 +91,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
   (Mapping
     (Pair
       (Scalar "labels")
-      (Mapping
-        (Pair
-          (Scalar "app.kubernetes.io/component")
-          (Scalar "zookeeper")))))
+      (HelmExpr "include \"common.labels.standard\" . | nindent 8")))
   (If ".Values.podLabels"
     (then
       (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.podLabels \"context\" $) | nindent 8")))
@@ -200,10 +188,10 @@ const EXPECTED_SEXPR: &str = r#"(Document
             (Scalar "args")
             (Sequence
               (Scalar "-ec")
-              (Scalar "mkdir -p /bitnami/zookeeper\nchown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}} /bitnami/zookeeper\nfind /bitnami/zookeeper -mindepth 1 -maxdepth 1 -not -name \".snapshot\" -not -name \"lost+found\" | xargs -r chown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}}\n")))))
+              (Scalar "|\n      mkdir -p /bitnami/zookeeper\n      chown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}} /bitnami/zookeeper\n      find /bitnami/zookeeper -mindepth 1 -maxdepth 1 -not -name \".snapshot\" -not -name \"lost+found\" | xargs -r chown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}}")))))
       (If ".Values.dataLogDir"
         (then
-          (Scalar "mkdir -p {{.Values.dataLogDir}} chown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}} {{.Values.dataLogDir}} find {{.Values.dataLogDir}} -mindepth 1 -maxdepth 1 -not -name \".snapshot\" -not -name \"lost+found\" | xargs -r chown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}}")))
+          (Scalar "mkdir -p {{.Values.dataLogDir}}\nchown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}} {{.Values.dataLogDir}}\nfind {{.Values.dataLogDir}} -mindepth 1 -maxdepth 1 -not -name \".snapshot\" -not -name \"lost+found\" | xargs -r chown -R {{.Values.containerSecurityContext.runAsUser}}:{{.Values.podSecurityContext.fsGroup}}")))
       (If ".Values.volumePermissions.containerSecurityContext.enabled"
         (then
           (Mapping
@@ -576,9 +564,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
   (Mapping
     (Pair
       (Scalar "value")))
-  (Range "$i, $e := until $replicaCount"
-    (body
-      (Scalar "{{$zookeeperFullname}}-{{$e}}.{{$zookeeperHeadlessServiceName}}.{{$releaseNamespace}}.svc.{{$clusterDomain}}:{{$followerPort}}:{{$electionPort}}::{{ add $e $minServerId }}")))
+  (Range "$i, $e := until $replicaCount")
   (Sequence
     (Mapping
       (Pair
@@ -994,9 +980,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
               (Mapping
                 (Pair
                   (Scalar "livenessProbe")
-                  (Mapping
-                    (Pair
-                      (Scalar "exec")))))
+                  (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" (omit .Values.livenessProbe \"enabled\" \"probeCommandTimeout\") \"context\" $) | nindent 12")))
               (If "not .Values.service.disableBaseClientPort"
                 (then
                   (Mapping
@@ -1036,9 +1020,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
               (Mapping
                 (Pair
                   (Scalar "readinessProbe")
-                  (Mapping
-                    (Pair
-                      (Scalar "exec")))))
+                  (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" (omit .Values.readinessProbe \"enabled\" \"probeCommandTimeout\") \"context\" $) | nindent 12")))
               (If "not .Values.service.disableBaseClientPort"
                 (then
                   (Mapping
@@ -1078,9 +1060,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
               (Mapping
                 (Pair
                   (Scalar "startupProbe")
-                  (Mapping
-                    (Pair
-                      (Scalar "tcpSocket")))))
+                  (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" (omit .Values.startupProbe \"enabled\") \"context\" $) | nindent 12")))
               (If "not .Values.service.disableBaseClientPort"
                 (then
                   (Mapping
@@ -1190,7 +1170,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
                 (HelmExpr "printf \"%s-scripts\" (include \"common.names.fullname\" .)"))
               (Pair
                 (Scalar "defaultMode")
-                (Scalar "755"))))))))
+                (Scalar "0755"))))))))
   (If "or .Values.configuration .Values.existingConfigmap"
     (then
       (Sequence
@@ -1403,11 +1383,16 @@ const EXPECTED_SEXPR: &str = r#"(Document
               (Mapping
                 (Pair
                   (Scalar "selector")
-                  (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.persistence.dataLogDir.selector \"context\" $) | nindent 10"))))))))))"#;
+                  (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.persistence.dataLogDir.selector \"context\" $) | nindent 10"))))))))))
+
+"#;
 
 #[test]
-fn fused_rust_ast() {
+fn tree_sitter_ast() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    if std::env::var("AST_DUMP").is_ok() {
+        eprintln!("{}", ast.to_sexpr());
+    }
+    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
 }

@@ -10,10 +10,11 @@ This crate owns two related responsibilities:
   callers can inspect helper calls, selectors, pipelines, literals, and control
   flow structurally instead of scanning strings.
 
-Both the fused Rust parser and the tree-sitter parser produce the same AST
-shape. The AST intentionally stays close to the source template: it preserves
-Helm control-flow nodes, helper definitions, scalar YAML structure, and action
-text, while higher-level semantic interpretation lives in downstream crates.
+The tree-sitter-backed parser produces the shared AST used by the rest of the
+workspace. The AST intentionally stays close to the source template: it
+preserves Helm control-flow nodes, helper definitions, scalar YAML structure,
+and action text, while higher-level semantic interpretation lives in downstream
+crates.
 
 Keep new parsing work structural. Prefer extending `TemplateExpr` or `HelmAst`
 over adding regex or substring-based parsing in consumers.

@@ -19,21 +19,6 @@
       {
         "path": "acmesolver.image",
         "type": "with"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "acmesolver.image.digest"
-  },
-  {
-    "guards": [
-      {
-        "path": "acmesolver.image",
-        "type": "with"
       },
       {
         "path": "acmesolver.image.digest",
@@ -47,21 +32,6 @@
       "kind": "Deployment"
     },
     "source_expr": "acmesolver.image.digest"
-  },
-  {
-    "guards": [
-      {
-        "path": "acmesolver.image",
-        "type": "with"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "acmesolver.image.registry"
   },
   {
     "guards": [
@@ -173,7 +143,12 @@
     "source_expr": "automountServiceAccountToken"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "clusterResourceNamespace",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -216,6 +191,21 @@
   {
     "guards": [
       {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "config"
+  },
+  {
+    "guards": [
+      {
         "paths": [
           "config",
           "volumeMounts"
@@ -236,9 +226,53 @@
       {
         "paths": [
           "config",
+          "volumeMounts"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "config"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "config",
           "volumes"
         ],
         "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "config"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "config",
+          "volumes"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "config",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -326,7 +360,12 @@
     "source_expr": "deploymentAnnotations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "disableAutoApproval",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -372,7 +411,12 @@
     "source_expr": "dns01RecursiveNameservers"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "dns01RecursiveNameserversOnly",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -382,7 +426,12 @@
     "source_expr": "dns01RecursiveNameserversOnly"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "enableCertificateOwnerRef",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -481,7 +530,12 @@
     "source_expr": "extraEnv"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "featureGates",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -580,6 +634,49 @@
       },
       {
         "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "config",
+          "volumes"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "config",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
         "type": "truthy"
       }
     ],
@@ -599,7 +696,12 @@
     "source_expr": "fullnameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "global",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -736,6 +838,10 @@
       {
         "path": "global.leaderElection",
         "type": "with"
+      },
+      {
+        "path": "global.leaderElection.leaseDuration",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -797,6 +903,10 @@
       {
         "path": "global.leaderElection",
         "type": "with"
+      },
+      {
+        "path": "global.leaderElection.renewDeadline",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -837,6 +947,10 @@
       {
         "path": "global.leaderElection",
         "type": "with"
+      },
+      {
+        "path": "global.leaderElection.retryPeriod",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -873,7 +987,12 @@
     "source_expr": "global.leaderElection.retryPeriod"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "global.logLevel",
+        "type": "not"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -986,7 +1105,12 @@
     "source_expr": "global.priorityClassName"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "global.revisionHistoryLimit",
+        "type": "not"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -1224,6 +1348,10 @@
       {
         "path": "image",
         "type": "truthy"
+      },
+      {
+        "path": "image.tag",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -1251,6 +1379,10 @@
       {
         "path": "ingressShim",
         "type": "with"
+      },
+      {
+        "path": "ingressShim.defaultIssuerGroup",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1291,6 +1423,10 @@
       {
         "path": "ingressShim",
         "type": "with"
+      },
+      {
+        "path": "ingressShim.defaultIssuerKind",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1331,6 +1467,10 @@
       {
         "path": "ingressShim",
         "type": "with"
+      },
+      {
+        "path": "ingressShim.defaultIssuerName",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1386,6 +1526,10 @@
       {
         "path": "livenessProbe",
         "type": "with"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -1527,7 +1671,12 @@
     "source_expr": "livenessProbe.timeoutSeconds"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "maxConcurrentChallenges",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -1558,17 +1707,14 @@
     "source_expr": "maxConcurrentChallenges"
   },
   {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
     "guards": [
       {
         "path": "serviceAccount.create",
         "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -1579,20 +1725,29 @@
   {
     "guards": [
       {
-        "paths": [
-          "config",
-          "volumes"
-        ],
-        "type": "or"
-      },
-      {
-        "path": "config",
-        "type": "truthy"
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -1743,6 +1898,10 @@
       {
         "path": "prometheus.servicemonitor.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "podAnnotations",
+        "type": "not"
       }
     ],
     "kind": "Scalar",
@@ -1894,7 +2053,12 @@
     "source_expr": "podLabels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -1907,6 +2071,10 @@
     "guards": [
       {
         "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
         "type": "truthy"
       }
     ],
@@ -1926,6 +2094,10 @@
       },
       {
         "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.servicemonitor.enabled",
         "type": "truthy"
       }
     ],
@@ -2025,6 +2197,18 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount.create"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount.create",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
     "resource": {
       "api_version": "apps/v1",
       "kind": "Deployment"
@@ -2032,7 +2216,12 @@
     "source_expr": "serviceAccount.create"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "serviceAccount.name",
+        "type": "default"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2142,7 +2331,15 @@
     "source_expr": "topologySpreadConstraints"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "config",
+          "volumeMounts"
+        ],
+        "type": "or"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -2202,7 +2399,15 @@
     "source_expr": "volumeMounts"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "config",
+          "volumes"
+        ],
+        "type": "or"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {

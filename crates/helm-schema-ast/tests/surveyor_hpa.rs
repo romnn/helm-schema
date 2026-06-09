@@ -1,4 +1,4 @@
-use helm_schema_ast::{FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (If ".Values.autoscaling.enabled"
@@ -74,13 +74,6 @@ const EXPECTED_SEXPR: &str = r#"(Document
                   (Pair
                     (Scalar "targetAverageUtilization")
                     (HelmExpr ".Values.autoscaling.targetMemoryUtilizationPercentage")))))))))))"#;
-
-#[test]
-fn fused_rust_ast() {
-    let src = test_util::read_testdata("charts/surveyor/templates/hpa.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR);
-}
 
 #[test]
 fn tree_sitter_ast() {

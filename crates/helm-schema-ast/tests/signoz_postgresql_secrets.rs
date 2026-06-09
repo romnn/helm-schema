@@ -1,4 +1,4 @@
-use helm_schema_ast::{FusedRustParser, HelmParser};
+use helm_schema_ast::{HelmParser, TreeSitterParser};
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/templates/secrets.yaml";
@@ -99,7 +99,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
               (Mapping
                 (Pair
                   (Scalar "name")
-                  (Scalar "{{ include \"common.names.fullname\" . }}-svcbind-postgres"))
+                  (Scalar "{{include \"common.names.fullname\" . }}-svcbind-postgres"))
                 (Pair
                   (Scalar "namespace")
                   (HelmExpr ".Release.Namespace | quote"))
@@ -157,7 +157,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
               (Mapping
                 (Pair
                   (Scalar "name")
-                  (Scalar "{{ include \"common.names.fullname\" . }}-svcbind-custom-user"))
+                  (Scalar "{{include \"common.names.fullname\" . }}-svcbind-custom-user"))
                 (Pair
                   (Scalar "namespace")
                   (HelmExpr ".Release.Namespace | quote"))
@@ -204,11 +204,16 @@ const EXPECTED_SEXPR: &str = r#"(Document
           (Mapping
             (Pair
               (Scalar "uri")
-              (HelmExpr "printf \"postgresql://%s:%s@%s:%s/%s\" $customUser $password $host $port $database | b64enc | quote"))))))))"#;
+              (HelmExpr "printf \"postgresql://%s:%s@%s:%s/%s\" $customUser $password $host $port $database | b64enc | quote"))))))))
+
+"#;
 
 #[test]
-fn fused_rust_ast() {
+fn tree_sitter_ast() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    if std::env::var("AST_DUMP").is_ok() {
+        eprintln!("{}", ast.to_sexpr());
+    }
+    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
 }

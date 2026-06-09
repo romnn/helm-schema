@@ -60,6 +60,30 @@
       {
         "path": "prometheus.podmonitor.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -102,11 +126,39 @@
       {
         "path": "prometheus.podmonitor.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
       }
     ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -217,7 +269,12 @@
     "source_expr": "namespace"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": {
@@ -230,6 +287,10 @@
     "guards": [
       {
         "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
         "type": "truthy"
       }
     ],
@@ -322,6 +383,10 @@
       {
         "path": "prometheus.podmonitor.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "serviceIPFamilies",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -366,6 +431,10 @@
       },
       {
         "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceIPFamilyPolicy",
         "type": "truthy"
       }
     ],

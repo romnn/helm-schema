@@ -2,7 +2,7 @@
 
 mod common;
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
@@ -25,13 +25,13 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 
 #[test]
 #[allow(clippy::too_many_lines)]
-fn schema_fused_rust() {
+fn schema_from_tree_sitter() {
     // Keep this body touched when fixture snapshots change so incremental rebuilds
     // definitely refresh the embedded expected schema.
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     if std::env::var("IR_DUMP").is_ok() {
         eprintln!(
@@ -75,8 +75,8 @@ fn helm_template_renders_successfully() {
 fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let idx = build_define_index(&FusedRustParser);
+    let ast = TreeSitterParser.parse(&src).expect("parse");
+    let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));

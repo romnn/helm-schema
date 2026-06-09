@@ -8,7 +8,7 @@ use crate::{
     generate_values_schema_full, generate_values_schema_full_with_facts,
     generate_values_schema_with_values_yaml,
 };
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
     ChartFacts, Guard, IrGenerator, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
     YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
@@ -38,12 +38,6 @@ fn parse_ir_and_chart_facts(src: &str) -> (Vec<ValueUse>, ChartFacts) {
     let uses = SymbolicIrGenerator.generate(src, &ast, &idx);
     let facts = derive_chart_facts_from_ast(&ast);
     (uses, facts)
-}
-
-fn parse_ir_fused(src: &str) -> Vec<ValueUse> {
-    let ast = FusedRustParser.parse(src).expect("parse");
-    let idx = DefineIndex::new();
-    SymbolicIrGenerator.generate(src, &ast, &idx)
 }
 
 fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
@@ -261,7 +255,7 @@ fn simple_template_schema() {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-            "enabled": {"type": "boolean"},
+            "enabled": {},
             "name": {},
             "replicas": {}
         }
@@ -286,7 +280,6 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         values_yaml_schema,
         serde_json::json!({}),
         serde_json::json!({}),
-        serde_json::json!({}),
         true,
     );
     let schema = crate::add_null_schema(schema);
@@ -308,9 +301,9 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
     );
 }
 
-/// Guard-like values (*.enabled) get boolean type.
+/// A truthy guard is a control-flow fact, not a type assertion.
 #[test]
-fn guard_values_get_boolean_type() {
+fn guard_only_values_without_type_evidence_stay_unconstrained() {
     let src = indoc! {r"
         {{- if .Values.feature.enabled }}
         key: {{ .Values.feature.name }}
@@ -327,7 +320,7 @@ fn guard_values_get_boolean_type() {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                    "enabled": {"type": "boolean"},
+                    "enabled": {},
                     "name": {}
                 }
             }
@@ -721,10 +714,10 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         fullnameOverride:
     "};
 
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
-        .add_source(&FusedRustParser, helpers)
+        .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
@@ -872,10 +865,10 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
           imageRegistry:
     "};
 
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
-        .add_source(&FusedRustParser, helpers)
+        .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
@@ -935,10 +928,10 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
         global: {}
     "};
 
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
-        .add_source(&FusedRustParser, helpers)
+        .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
@@ -1537,10 +1530,10 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         fullnameOverride: \"\"
     "};
 
-    let ast = FusedRustParser.parse(src).expect("parse");
+    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
-        .add_source(&FusedRustParser, helpers)
+        .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
@@ -1823,6 +1816,86 @@ fn assigned_nested_printf_helper_call_preserves_helper_output_guards() {
 }
 
 #[test]
+fn assigned_capability_helper_dependency_does_not_inherit_api_version_schema() {
+    let helpers = indoc! {r#"
+        {{- define "common.capabilities.kubeVersion" -}}
+        {{- default (default .Capabilities.KubeVersion.Version .Values.kubeVersion) ((.Values.global).kubeVersion) -}}
+        {{- end -}}
+
+        {{- define "common.capabilities.hpa.apiVersion" -}}
+        {{- $kubeVersion := include "common.capabilities.kubeVersion" .context -}}
+        {{- print "autoscaling/v2" -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: {{ include "common.capabilities.hpa.apiVersion" (dict "context" .) }}
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: console
+        spec:
+          scaleTargetRef:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: console
+          minReplicas: 1
+          maxReplicas: 2
+    "#};
+    let values_yaml = indoc! {r#"
+        kubeVersion: ""
+    "#};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let kube_version = schema
+        .pointer("/properties/kubeVersion")
+        .expect("kubeVersion present");
+
+    assert!(
+        schema_contains_type(kube_version, "string"),
+        "kubeVersion should stay a chart input string, got {kube_version}; ir={ir:?}"
+    );
+    assert!(
+        !kube_version
+            .get("enum")
+            .and_then(Value::as_array)
+            .is_some_and(|values| values.iter().any(|value| value == "autoscaling/v2")),
+        "kubeVersion must not inherit the rendered HPA apiVersion enum, got {kube_version}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: example
+        {{- if .Values.existingSecret }}
+        stringData:
+          password: ignored
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        existingSecret: \"\"
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let existing_secret = schema
+        .pointer("/properties/existingSecret")
+        .expect("existingSecret present");
+
+    assert!(
+        !permits_null(existing_secret),
+        "plain guard-only scalar values should not be widened without a null-tolerant render use, got {existing_secret}"
+    );
+    assert!(
+        schema_contains_type(existing_secret, "string"),
+        "values.yaml string evidence should still be preserved, got {existing_secret}"
+    );
+}
+
+#[test]
 fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
     let helpers = indoc! {r#"
         {{- define "collector.config" -}}
@@ -1871,10 +1944,20 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
                         "additionalProperties": false,
                         "properties": {
                             "allocatableTypesToReport": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
+                                "anyOf": [
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "type": "string"
+                                    }
+                                ]
                             },
                             "collectionInterval": {
                                 "type": "string"
@@ -1964,30 +2047,13 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
                         "additionalProperties": false,
                         "properties": {
                             "allocatableTypesToReport": {
-                                "anyOf": [
-                                    {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "type": "string"
-                                    }
-                                ]
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
                             },
                             "collectionInterval": {
-                                "anyOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "type": "string"
-                                    }
-                                ]
+                                "type": "string"
                             },
                             "enabled": {
                                 "type": "boolean"
@@ -3105,6 +3171,92 @@ fn helper_built_matchlabels_keeps_name_override_scalar() {
 }
 
 #[test]
+fn bitnami_standard_labels_merge_keeps_name_override_scalar() {
+    let helpers = format!(
+        "{}\n{}",
+        bitnami_tplvalues_helpers(),
+        indoc! {r#"
+            {{- define "common.names.name" -}}
+            {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+
+            {{- define "common.names.chart" -}}postgresql{{- end -}}
+
+            {{- define "common.labels.standard" -}}
+            {{- if and (hasKey . "customLabels") (hasKey . "context") -}}
+            {{- $default := dict "app.kubernetes.io/name" (include "common.names.name" .context) "helm.sh/chart" (include "common.names.chart" .context) "app.kubernetes.io/instance" .context.Release.Name "app.kubernetes.io/managed-by" .context.Release.Service -}}
+            {{ template "common.tplvalues.merge" (dict "values" (list .customLabels $default) "context" .context) }}
+            {{- else -}}
+            app.kubernetes.io/name: {{ include "common.names.name" . }}
+            {{- end -}}
+            {{- end -}}
+        "#}
+    );
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" .) | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        commonLabels: {}
+        nameOverride: ""
+    "#};
+
+    let ir = parse_ir_with_helpers(src, &helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let name_override = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+
+    assert!(
+        permits_empty_string(name_override),
+        "defaulted nameOverride should allow the shipped empty string, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        permits_type(name_override, "string"),
+        "nameOverride should stay string-valued, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        !permits_type(name_override, "object"),
+        "standard label merge must not project its labels map onto nameOverride, got {name_override}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn scalar_slot_rendered_array_keeps_provider_item_schema() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        spec:
+          {{- if .Values.service.loadBalancerSourceRanges }}
+          loadBalancerSourceRanges: {{ .Values.service.loadBalancerSourceRanges }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        service:
+          loadBalancerSourceRanges: []
+    "#};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let source_ranges = schema
+        .pointer("/properties/service/properties/loadBalancerSourceRanges")
+        .expect("service.loadBalancerSourceRanges present");
+
+    assert_eq!(
+        source_ranges.get("type").and_then(Value::as_str),
+        Some("array"),
+        "loadBalancerSourceRanges should remain array-valued, got {source_ranges}"
+    );
+    assert_eq!(
+        source_ranges.pointer("/items/type").and_then(Value::as_str),
+        Some("string"),
+        "loadBalancerSourceRanges items should keep the Kubernetes string schema, got {source_ranges}"
+    );
+}
+
+#[test]
 fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
     let helpers = bitnami_labels_helpers();
     let src = indoc! {r#"
@@ -3436,102 +3588,6 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
             .and_then(Value::as_array)
             .is_some(),
         "resources.limits should stay an open quantity map, got {limits}"
-    );
-}
-
-#[test]
-fn direct_fragment_resource_requirements_keep_open_requests_and_limits_on_chain() {
-    let src = indoc! {r#"
-        apiVersion: v1
-        kind: Pod
-        spec:
-          containers:
-            - name: app
-              image: busybox
-              resources:
-        {{ toYaml .Values.resources | indent 16 }}
-    "#};
-    let values_yaml = indoc! {"
-        resources:
-          limits:
-            cpu: 500m
-            memory: 500Mi
-          requests:
-            cpu: 100m
-            memory: 250Mi
-    "};
-
-    let provider = production_chain_provider();
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider, Some(values_yaml));
-
-    let requests = schema
-        .pointer("/properties/resources/properties/requests")
-        .expect("resources.requests present");
-    assert!(
-        requests
-            .pointer("/additionalProperties/oneOf")
-            .and_then(Value::as_array)
-            .is_some(),
-        "resources.requests should stay an open quantity map on the chain path, got {requests}"
-    );
-    let limits = schema
-        .pointer("/properties/resources/properties/limits")
-        .expect("resources.limits present");
-    assert!(
-        limits
-            .pointer("/additionalProperties/oneOf")
-            .and_then(Value::as_array)
-            .is_some(),
-        "resources.limits should stay an open quantity map on the chain path, got {limits}"
-    );
-}
-
-#[test]
-fn direct_fragment_resource_requirements_keep_open_requests_and_limits_on_chain_fused() {
-    let src = indoc! {r#"
-        apiVersion: v1
-        kind: Pod
-        spec:
-          containers:
-            - name: app
-              image: busybox
-              resources:
-        {{ toYaml .Values.resources | indent 16 }}
-    "#};
-    let values_yaml = indoc! {"
-        resources:
-          limits:
-            cpu: 500m
-            memory: 500Mi
-          requests:
-            cpu: 100m
-            memory: 250Mi
-    "};
-
-    let provider = production_chain_provider();
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir_fused(src), &provider, Some(values_yaml));
-
-    let requests = schema
-        .pointer("/properties/resources/properties/requests")
-        .expect("resources.requests present");
-    assert!(
-        requests
-            .pointer("/additionalProperties/oneOf")
-            .and_then(Value::as_array)
-            .is_some(),
-        "resources.requests should stay an open quantity map on the fused parser path, got {requests}"
-    );
-    let limits = schema
-        .pointer("/properties/resources/properties/limits")
-        .expect("resources.limits present");
-    assert!(
-        limits
-            .pointer("/additionalProperties/oneOf")
-            .and_then(Value::as_array)
-            .is_some(),
-        "resources.limits should stay an open quantity map on the fused parser path, got {limits}"
     );
 }
 

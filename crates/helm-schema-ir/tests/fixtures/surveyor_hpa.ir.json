@@ -1,6 +1,11 @@
 [
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -47,6 +52,10 @@
       {
         "path": "autoscaling.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "autoscaling.targetCPUUtilizationPercentage",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -85,6 +94,10 @@
     "guards": [
       {
         "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "autoscaling.targetMemoryUtilizationPercentage",
         "type": "truthy"
       }
     ],
@@ -130,6 +143,26 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
     "source_expr": "fullnameOverride"
   },
   {
@@ -221,6 +254,26 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "schema_type": "string",
+        "type": "type_is"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
     "source_expr": "nameOverride"
   },
   {

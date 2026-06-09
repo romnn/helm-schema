@@ -76,6 +76,20 @@ fn collect_required_paths(
     default_fallback_paths: &BTreeSet<String>,
     synthetic_value_paths: &BTreeSet<String>,
 ) -> BTreeSet<String> {
+    fn is_positive_header_use(use_: &ValueUse) -> bool {
+        use_.guards.is_empty()
+            || use_.guards.iter().all(|guard| match guard {
+                Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
+                    path == &use_.source_expr
+                }
+                Guard::Not { .. }
+                | Guard::Or { .. }
+                | Guard::Range { .. }
+                | Guard::With { .. }
+                | Guard::Default { .. } => false,
+            })
+    }
+
     let mut conditionally_excluded: BTreeSet<&str> = BTreeSet::new();
     for u in uses {
         for g in &u.guards {
@@ -97,7 +111,7 @@ fn collect_required_paths(
     for u in uses {
         if u.kind != ValueKind::Scalar
             || !u.path.0.is_empty()
-            || !u.guards.is_empty()
+            || !is_positive_header_use(u)
             || u.source_expr.trim().is_empty()
         {
             continue;
