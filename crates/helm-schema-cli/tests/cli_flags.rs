@@ -20,13 +20,7 @@ fn cli_diag_format_text_is_default() {
 
 #[test]
 fn cli_perf_flags_parse() {
-    let cli = parse(&[
-        "--profile-phases",
-        "--trace-output",
-        "/tmp/helm-schema.trace",
-    ])
-    .expect("parse");
-    assert!(cli.perf.profile_phases);
+    let cli = parse(&["--trace-output", "/tmp/helm-schema.trace"]).expect("parse");
     assert_eq!(
         cli.perf.trace_output.as_deref(),
         Some(std::path::Path::new("/tmp/helm-schema.trace"))

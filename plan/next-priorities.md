@@ -131,10 +131,10 @@ We need a stable way to answer:
 
 This is the enabling work for getting Temporal closer to sub-second output.
 
-Now that Perfetto tracing is available, it should become the source of truth for
-runtime analysis. The old hand-maintained `ProfilePhase` / `--profile-phases`
-path should be removed after the current minimization work lands, with any
-still-useful spans represented by `tracing::instrument` annotations instead.
+Perfetto tracing is now the source of truth for runtime analysis. The old
+hand-maintained `ProfilePhase` / `--profile-phases` path has been removed, with
+the useful phase boundaries represented by `tracing::instrument` annotations
+instead.
 
 ### B. Output deduplication / structural sharing
 

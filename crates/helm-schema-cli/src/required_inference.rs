@@ -22,6 +22,7 @@ use helm_schema_ir::ValueUse;
 use helm_schema_ir::required_inference::extract_default_fallback_paths;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
+use tracing::instrument;
 
 use crate::HelperCallGraph;
 use crate::chart::ChartContext;
@@ -34,6 +35,7 @@ use crate::scope_values_path;
 /// values.yaml (used to re-derive top-level seeded keys — those must
 /// not be marked required). `charts` and `call_graph` come from the
 /// IR collection too and drive per-prefix fallback-path scoping.
+#[instrument(skip_all)]
 pub(crate) fn apply(
     schema: &mut Value,
     uses: &[ValueUse],

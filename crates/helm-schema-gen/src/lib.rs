@@ -3,7 +3,6 @@ pub mod required_inference;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
 
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
@@ -45,19 +44,6 @@ struct ValuePathCaches {
 struct ProviderSchemaLookupKey {
     resource: helm_schema_ir::ResourceRef,
     path: helm_schema_ir::YamlPath,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct GenerationProfile {
-    pub collect_use_signals: Duration,
-    pub collect_path_metadata: Duration,
-    pub build_root_schema: Duration,
-}
-
-#[derive(Debug, Clone)]
-pub struct GeneratedValuesSchema {
-    pub schema: Value,
-    pub profile: GenerationProfile,
 }
 
 // ---------------------------------------------------------------------------
@@ -145,41 +131,6 @@ pub fn generate_values_schema_full_with_facts(
     type_hints: &BTreeMap<String, Vec<Value>>,
     chart_facts: &ChartFacts,
 ) -> Value {
-    generate_values_schema_full_profiled_with_facts(
-        uses,
-        provider,
-        values_yaml,
-        type_hints,
-        chart_facts,
-    )
-    .schema
-}
-
-#[tracing::instrument(skip_all)]
-pub fn generate_values_schema_full_profiled(
-    uses: &[ValueUse],
-    provider: &dyn K8sSchemaProvider,
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-) -> GeneratedValuesSchema {
-    let chart_facts = ChartFacts::default();
-    generate_values_schema_full_profiled_with_facts(
-        uses,
-        provider,
-        values_yaml,
-        type_hints,
-        &chart_facts,
-    )
-}
-
-#[tracing::instrument(skip_all)]
-pub fn generate_values_schema_full_profiled_with_facts(
-    uses: &[ValueUse],
-    provider: &dyn K8sSchemaProvider,
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-    chart_facts: &ChartFacts,
-) -> GeneratedValuesSchema {
     // When a value is rendered inside the body guarded by its own truthiness,
     // that body use is stronger evidence than the guard itself. The guard only
     // says "non-empty", while the body proves the value participates in a
@@ -187,12 +138,8 @@ pub fn generate_values_schema_full_profiled_with_facts(
     // control flow alone.
     let scalar_paths_with_self_truthy_output_use =
         collect_scalar_paths_with_self_truthy_output_use(uses);
-    let collect_use_signals_start = Instant::now();
     let signals = collect_use_signals(uses, provider, &scalar_paths_with_self_truthy_output_use);
-    let collect_use_signals_elapsed = collect_use_signals_start.elapsed();
-    let collect_path_metadata_start = Instant::now();
     let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
-    let collect_path_metadata_elapsed = collect_path_metadata_start.elapsed();
     let mut merged_chart_facts = derive_chart_facts(uses);
     merge_chart_facts(&mut merged_chart_facts, chart_facts);
 
@@ -200,7 +147,6 @@ pub fn generate_values_schema_full_profiled_with_facts(
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
         .unwrap_or(YamlValue::Null);
 
-    let build_root_schema_start = Instant::now();
     let root_schema = build_root_schema(
         signals,
         &path_metadata,
@@ -208,7 +154,6 @@ pub fn generate_values_schema_full_profiled_with_facts(
         type_hints,
         &merged_chart_facts,
     );
-    let build_root_schema_elapsed = build_root_schema_start.elapsed();
 
     let mut out = Map::new();
     out.insert(
@@ -225,14 +170,7 @@ pub fn generate_values_schema_full_profiled_with_facts(
         out.insert("properties".to_string(), Value::Object(Map::new()));
         out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
-    GeneratedValuesSchema {
-        schema: Value::Object(out),
-        profile: GenerationProfile {
-            collect_use_signals: collect_use_signals_elapsed,
-            collect_path_metadata: collect_path_metadata_elapsed,
-            build_root_schema: build_root_schema_elapsed,
-        },
-    }
+    Value::Object(out)
 }
 
 #[tracing::instrument(skip_all)]
