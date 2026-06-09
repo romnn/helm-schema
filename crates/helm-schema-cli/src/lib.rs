@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::{GenerationProfile, generate_values_schema_full_profiled_with_facts};
 use helm_schema_ir::{
-    ChartFacts, Guard, IrGenerator, SymbolicIrGenerator, ValueUse, derive_chart_facts_from_ast,
+    ChartFacts, Guard, SymbolicIrContext, ValueUse, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
@@ -264,6 +264,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         k8s_version_fallback_window: fallback_window,
         k8s_schema_mirrors: cli.k8s.k8s_schema_mirror.clone(),
         k8s_schema_cache_dir: cli.k8s.k8s_schema_cache_dir.clone(),
+        no_cache: cli.k8s.no_cache,
         allow_net: !cli.k8s.offline,
         disable_k8s_schemas: cli.k8s.no_k8s_schemas,
         crd_lookup_loose: matches!(cli.crd.lookup_mode(), cli::CrdVersionLookup::Loose),
@@ -725,25 +726,20 @@ fn collect_ir_for_charts(
     let mut uses: Vec<ValueUse> = Vec::new();
     let mut chart_facts = ChartFacts::default();
     let mut type_hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let symbolic_context = SymbolicIrContext::new(defines);
 
     for c in charts {
         if c.is_library {
             continue;
         }
-        let manifests = chart::list_manifest_templates(&c.chart_dir, include_tests)?;
-        for path in manifests {
-            let mut src = String::new();
-            path.open_file()?.read_to_string(&mut src)?;
-            let ast = TreeSitterParser.parse(&src)?;
-            merge_chart_facts(
-                &mut chart_facts,
-                scope_chart_facts(derive_chart_facts_from_ast(&ast), &c.values_prefix),
-            );
-            let manifest_uses = SymbolicIrGenerator.generate(&src, &ast, defines);
-            for u in manifest_uses {
-                uses.push(scope_value_use(u, &c.values_prefix));
-            }
-        }
+        collect_manifest_ir_for_chart(
+            c,
+            defines,
+            &symbolic_context,
+            include_tests,
+            &mut uses,
+            &mut chart_facts,
+        )?;
     }
 
     let call_graph = build_helper_call_graph(charts, include_tests)?;
@@ -765,6 +761,51 @@ fn collect_ir_for_charts(
         type_hints,
         call_graph,
     })
+}
+
+#[tracing::instrument(skip_all, fields(prefix_len = chart.values_prefix.len()))]
+fn collect_manifest_ir_for_chart(
+    chart: &chart::ChartContext,
+    defines: &DefineIndex,
+    symbolic_context: &SymbolicIrContext,
+    include_tests: bool,
+    uses: &mut Vec<ValueUse>,
+    chart_facts: &mut ChartFacts,
+) -> CliResult<()> {
+    let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
+    for path in manifests {
+        let ManifestIr {
+            chart_facts: manifest_facts,
+            uses: manifest_uses,
+        } = collect_manifest_ir_for_template(&path, defines, symbolic_context)?;
+        merge_chart_facts(
+            chart_facts,
+            scope_chart_facts(manifest_facts, &chart.values_prefix),
+        );
+        for use_ in manifest_uses {
+            uses.push(scope_value_use(use_, &chart.values_prefix));
+        }
+    }
+    Ok(())
+}
+
+struct ManifestIr {
+    chart_facts: ChartFacts,
+    uses: Vec<ValueUse>,
+}
+
+#[tracing::instrument(skip_all)]
+fn collect_manifest_ir_for_template(
+    path: &VfsPath,
+    defines: &DefineIndex,
+    symbolic_context: &SymbolicIrContext,
+) -> CliResult<ManifestIr> {
+    let mut src = String::new();
+    path.open_file()?.read_to_string(&mut src)?;
+    let ast = TreeSitterParser.parse(&src)?;
+    let chart_facts = derive_chart_facts_from_ast(&ast);
+    let uses = symbolic_context.generate(&src, &ast, defines);
+    Ok(ManifestIr { chart_facts, uses })
 }
 
 fn scope_chart_facts(chart_facts: ChartFacts, prefix: &[String]) -> ChartFacts {

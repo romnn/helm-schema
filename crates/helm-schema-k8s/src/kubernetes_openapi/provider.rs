@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, default_source_id, k8s_cache_path,
-    write_meta_sidecar,
+    not_found_marker_exists, not_found_marker_path, write_meta_sidecar, write_not_found_marker,
 };
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
@@ -24,6 +24,21 @@ use super::version_chain::K8sVersionChain;
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
 type MemKey = (String, String, String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ResourceDocKey {
+    api_version: String,
+    kind: String,
+}
+
+impl ResourceDocKey {
+    fn from_resource(resource: &ResourceRef) -> Self {
+        Self {
+            api_version: resource.api_version.clone(),
+            kind: resource.kind.clone(),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 struct MaterializedResourceDoc {
@@ -42,6 +57,7 @@ pub struct KubernetesJsonSchemaProvider {
     pub mirrors: K8sMirrorChain,
     pub cache_dir: PathBuf,
     pub allow_download: bool,
+    pub use_cache: bool,
     pub allow_api_version_guess: bool,
     pub record_source: bool,
 
@@ -51,7 +67,7 @@ pub struct KubernetesJsonSchemaProvider {
     diagnostic_sink: Option<DiagnosticSink>,
 
     mem: Mutex<HashMap<MemKey, Value>>,
-    materialized: Mutex<HashMap<ResourceRef, MaterializedResourceDoc>>,
+    materialized: Mutex<HashMap<ResourceDocKey, MaterializedResourceDoc>>,
 }
 
 /// Tri-state outcome for the capability-oracle probe path. See
@@ -64,6 +80,28 @@ enum ProbeOutcome {
     Found,
     AuthoritativelyAbsent,
     Uncertain,
+}
+
+fn remove_cache_file_if_present(path: &Path, message: &'static str) {
+    if let Err(err) = fs::remove_file(path)
+        && err.kind() != std::io::ErrorKind::NotFound
+    {
+        tracing::debug!(?err, message);
+    }
+}
+
+fn clear_not_found_marker(schema_path: &Path) {
+    remove_cache_file_if_present(
+        &not_found_marker_path(schema_path),
+        "failed to remove stale k8s schema not-found marker",
+    );
+}
+
+fn record_authoritative_not_found(schema_path: &Path) {
+    remove_cache_file_if_present(schema_path, "failed to remove stale k8s schema cache file");
+    if let Err(err) = write_not_found_marker(schema_path) {
+        tracing::debug!(?err, "failed to write k8s schema not-found marker");
+    }
 }
 
 impl KubernetesJsonSchemaProvider {
@@ -82,6 +120,7 @@ impl KubernetesJsonSchemaProvider {
             allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
                 .ok()
                 .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true")),
+            use_cache: true,
             allow_api_version_guess: false,
             record_source: false,
             fetcher: Arc::new(UreqFetcher::new()),
@@ -102,6 +141,12 @@ impl KubernetesJsonSchemaProvider {
     #[must_use]
     pub fn with_allow_download(mut self, allow: bool) -> Self {
         self.allow_download = allow;
+        self
+    }
+
+    #[must_use]
+    pub fn with_use_cache(mut self, use_cache: bool) -> Self {
+        self.use_cache = use_cache;
         self
     }
 
@@ -149,6 +194,7 @@ impl KubernetesJsonSchemaProvider {
 
     /// Provider-facing entry point: walk `(version, mirror)` and
     /// return the first source that owns the resource.
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
     fn load_resource_doc(&self, resource: &ResourceRef) -> Option<(String, String, String, Value)> {
         if resource.api_version.trim().is_empty() {
             return None;
@@ -195,26 +241,30 @@ impl KubernetesJsonSchemaProvider {
         version: &str,
         filename: &str,
     ) -> Option<Value> {
-        if let Some(v) = self.read_mem_for(&source.source_id, version, filename) {
-            return Some(v);
-        }
         let local = k8s_cache_path(&self.cache_dir, &source.source_id, version, filename);
-        if local.exists()
-            && let Ok(bytes) = fs::read(&local)
-            && let Ok(doc) = serde_json::from_slice::<Value>(&bytes)
-        {
-            self.write_mem(&source.source_id, version, filename, &doc);
-            return Some(doc);
+        if self.use_cache {
+            if let Some(v) = self.read_mem_for(&source.source_id, version, filename) {
+                return Some(v);
+            }
+            if local.exists()
+                && let Ok(bytes) = fs::read(&local)
+                && let Ok(doc) = serde_json::from_slice::<Value>(&bytes)
+            {
+                self.write_mem(&source.source_id, version, filename, &doc);
+                return Some(doc);
+            }
+            if self
+                .negative_cache
+                .contains(&source.source_id, version, filename)
+                || not_found_marker_exists(&local)
+            {
+                return None;
+            }
         }
         if !self.allow_download {
             return None;
         }
-        if self
-            .negative_cache
-            .contains(&source.source_id, version, filename)
-        {
-            return None;
-        }
+
         let url = format!(
             "{}/{version}/{filename}",
             source.base_url.trim_end_matches('/')
@@ -226,12 +276,14 @@ impl KubernetesJsonSchemaProvider {
                     write_meta_sidecar(&local, &url);
                 }
                 let doc = serde_json::from_slice::<Value>(&bytes).ok()?;
+                clear_not_found_marker(&local);
                 self.write_mem(&source.source_id, version, filename, &doc);
                 Some(doc)
             }
             Ok(None) => {
                 self.negative_cache
                     .record(&source.source_id, version, filename);
+                record_authoritative_not_found(&local);
                 None
             }
             Err(_) => None,
@@ -305,28 +357,48 @@ impl KubernetesJsonSchemaProvider {
         Some((*materialized.root).clone())
     }
 
-    fn materialized_schema_for_resource(
+    #[tracing::instrument(skip_all, fields(kind = key.kind.as_str(), api_version = key.api_version.as_str()))]
+    fn materialized_cache_get(&self, key: &ResourceDocKey) -> Option<MaterializedResourceDoc> {
+        self.materialized
+            .lock()
+            .ok()
+            .and_then(|guard| guard.get(key).cloned())
+    }
+
+    fn materialized_cache_insert(&self, key: ResourceDocKey, doc: MaterializedResourceDoc) {
+        if let Ok(mut guard) = self.materialized.lock() {
+            guard.insert(key, doc);
+        }
+    }
+
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
+    fn materialize_schema_for_resource_uncached(
         &self,
         resource: &ResourceRef,
     ) -> Option<MaterializedResourceDoc> {
-        if let Ok(guard) = self.materialized.lock()
-            && let Some(doc) = guard.get(resource)
-        {
-            return Some(doc.clone());
-        }
-
         let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
         let loader = self.loader_for_source(source_id, version.clone());
         let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
         let root_doc = ctx.doc(&filename)?.clone();
         let (_, expanded) = expand_schema_node(&mut ctx, &filename, &root_doc, 0);
-        let materialized = MaterializedResourceDoc {
+        Some(MaterializedResourceDoc {
             resolved_k8s_version: version,
             root: Arc::new(expanded),
-        };
-        if let Ok(mut guard) = self.materialized.lock() {
-            guard.insert(resource.clone(), materialized.clone());
+        })
+    }
+
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
+    fn materialized_schema_for_resource(
+        &self,
+        resource: &ResourceRef,
+    ) -> Option<MaterializedResourceDoc> {
+        let cache_key = ResourceDocKey::from_resource(resource);
+        if let Some(doc) = self.materialized_cache_get(&cache_key) {
+            return Some(doc);
         }
+
+        let materialized = self.materialize_schema_for_resource_uncached(resource)?;
+        self.materialized_cache_insert(cache_key, materialized.clone());
         Some(materialized)
     }
 
@@ -400,18 +472,22 @@ impl KubernetesJsonSchemaProvider {
     ///     no negative-cache record), or fetch failed with a network
     ///     error. The probe gives no information either way.
     fn probe_at(&self, source_id: &str, version: &str, filename: &str) -> ProbeOutcome {
-        if self.read_mem_for(source_id, version, filename).is_some() {
-            return ProbeOutcome::Found;
-        }
         let local = k8s_cache_path(&self.cache_dir, source_id, version, filename);
-        if local.exists() {
-            return ProbeOutcome::Found;
-        }
-        // Negative cache is set ONLY when the fetcher returns a clean
-        // "not found" — treat as authoritative even offline. A prior
-        // online run already proved upstream doesn't have this file.
-        if self.negative_cache.contains(source_id, version, filename) {
-            return ProbeOutcome::AuthoritativelyAbsent;
+        if self.use_cache {
+            if self.read_mem_for(source_id, version, filename).is_some() {
+                return ProbeOutcome::Found;
+            }
+            if local.exists() {
+                return ProbeOutcome::Found;
+            }
+            // Negative cache is set ONLY when the fetcher returns a clean
+            // "not found" — treat as authoritative even offline. A prior
+            // online run already proved upstream doesn't have this file.
+            if self.negative_cache.contains(source_id, version, filename)
+                || not_found_marker_exists(&local)
+            {
+                return ProbeOutcome::AuthoritativelyAbsent;
+            }
         }
         if !self.allow_download {
             // Offline + no cache + no negative-cache record: nothing
@@ -446,11 +522,13 @@ impl KubernetesJsonSchemaProvider {
                 let Ok(doc) = serde_json::from_slice::<Value>(&bytes) else {
                     return ProbeOutcome::Uncertain;
                 };
+                clear_not_found_marker(&local);
                 self.write_mem(source_id, version, filename, &doc);
                 ProbeOutcome::Found
             }
             Ok(None) => {
                 self.negative_cache.record(source_id, version, filename);
+                record_authoritative_not_found(&local);
                 ProbeOutcome::AuthoritativelyAbsent
             }
             // Network error: uncertain. Don't pollute the negative
@@ -463,6 +541,9 @@ impl KubernetesJsonSchemaProvider {
     /// has its file already cached or recorded as negative-cache; no
     /// fetches issued during ownership probe (PR 0e contract).
     fn local_owns_resource(&self, resource: &ResourceRef) -> bool {
+        if !self.use_cache {
+            return false;
+        }
         if resource.api_version.trim().is_empty() {
             return false;
         }
@@ -570,6 +651,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         ProviderOrigin::KubernetesOpenApi
     }
 
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return ProviderLookupResult::NotOwned;
@@ -767,7 +849,7 @@ fn write_atomic(local: &Path, bytes: &[u8]) -> std::io::Result<()> {
         Ok(()) => Ok(()),
         Err(err) => {
             if local.exists() {
-                let _ = fs::remove_file(&tmp);
+                remove_cache_file_if_present(&tmp, "failed to remove stale k8s schema temp file");
                 Ok(())
             } else {
                 Err(err)

@@ -54,6 +54,7 @@ fn is_standalone_span(start: usize, end: usize, src: &str) -> bool {
 }
 
 impl HelmParser for TreeSitterParser {
+    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());

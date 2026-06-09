@@ -7,6 +7,8 @@ use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, K8sVersionChain,
     KubernetesJsonSchemaProvider, MockFetcher, MockResponse,
+    cache::{k8s_cache_path, not_found_marker_exists},
+    default_source_id,
 };
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
@@ -309,5 +311,192 @@ fn negative_cache_avoids_retry() {
         mock.calls_for(url),
         1,
         "negative cache must prevent repeat fetches for the same URL"
+    );
+}
+
+#[test]
+fn persisted_not_found_marker_avoids_cross_process_retry() {
+    let cache_dir = tmp_dir("k8s-persistent-negative-cache");
+    let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
+    let first_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
+    let first_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir.clone())
+    .with_allow_download(true)
+    .with_fetcher(first_fetcher.clone());
+
+    let resource = ResourceRef {
+        api_version: "policy/v1beta1".to_string(),
+        kind: "PodDisruptionBudget".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+
+    let _ = first_provider.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    assert_eq!(
+        first_fetcher.calls_for(url),
+        1,
+        "first lookup should fetch once and persist the authoritative 404"
+    );
+
+    let second_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
+    let second_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir)
+    .with_allow_download(true)
+    .with_fetcher(second_fetcher.clone());
+
+    let _ = second_provider.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    assert_eq!(
+        second_fetcher.total_calls(),
+        0,
+        "persisted not-found marker should avoid a cross-process retry"
+    );
+}
+
+#[test]
+fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
+    let cache_dir = tmp_dir("k8s-no-cache-refreshes-negative");
+    let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
+    let stale_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
+    let stale_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir.clone())
+    .with_allow_download(true)
+    .with_fetcher(stale_fetcher.clone());
+
+    let resource = ResourceRef {
+        api_version: "policy/v1beta1".to_string(),
+        kind: "PodDisruptionBudget".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+    let schema_path = k8s_cache_path(
+        &cache_dir,
+        default_source_id(),
+        "v1.35.0",
+        "poddisruptionbudget-policy-v1beta1.json",
+    );
+
+    let _ = stale_provider.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    assert_eq!(
+        stale_fetcher.calls_for(url),
+        1,
+        "setup should persist an initial authoritative 404"
+    );
+    assert!(
+        not_found_marker_exists(&schema_path),
+        "setup should write a persistent not-found marker"
+    );
+
+    let refresh_fetcher =
+        Arc::new(MockFetcher::new().with_body(url, pdb_v1beta1_doc().into_bytes()));
+    let refresh_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir.clone())
+    .with_allow_download(true)
+    .with_use_cache(false)
+    .with_fetcher(refresh_fetcher.clone());
+
+    let refreshed = refresh_provider.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    assert!(
+        refreshed.is_some(),
+        "--no-cache should bypass the stale not-found marker"
+    );
+    assert_eq!(
+        refresh_fetcher.calls_for(url),
+        1,
+        "--no-cache should make a fresh upstream request"
+    );
+    assert!(
+        !not_found_marker_exists(&schema_path),
+        "successful refresh should remove the stale not-found marker"
+    );
+
+    let offline_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NetworkDisabled));
+    let offline_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir)
+    .with_allow_download(false)
+    .with_fetcher(offline_fetcher);
+    assert!(
+        offline_provider
+            .schema_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .is_some(),
+        "fresh positive schema should be cached for later normal runs"
+    );
+}
+
+#[test]
+fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
+    let cache_dir = tmp_dir("k8s-no-cache-clears-positive");
+    let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
+    let resource = ResourceRef {
+        api_version: "policy/v1beta1".to_string(),
+        kind: "PodDisruptionBudget".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+
+    let positive_fetcher =
+        Arc::new(MockFetcher::new().with_body(url, pdb_v1beta1_doc().into_bytes()));
+    let positive_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir.clone())
+    .with_allow_download(true)
+    .with_fetcher(positive_fetcher);
+    assert!(
+        positive_provider
+            .schema_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .is_some(),
+        "setup should write a positive cache entry"
+    );
+
+    let stale_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
+    let stale_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir.clone())
+    .with_allow_download(true)
+    .with_use_cache(false)
+    .with_fetcher(stale_fetcher.clone());
+    assert!(
+        stale_provider
+            .schema_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .is_none(),
+        "--no-cache should accept the fresh authoritative 404"
+    );
+    assert_eq!(
+        stale_fetcher.calls_for(url),
+        1,
+        "--no-cache should re-check upstream once"
+    );
+
+    let offline_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NetworkDisabled));
+    let offline_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec!["v1.35.0".to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir)
+    .with_allow_download(false)
+    .with_fetcher(offline_fetcher);
+    assert!(
+        offline_provider
+            .schema_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .is_none(),
+        "stale positive cache entry should not survive the authoritative 404"
     );
 }

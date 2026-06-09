@@ -4,8 +4,9 @@ This plan covers the next high-level work after the recent correctness push.
 
 ## Current state
 
-- All active luup3 charts now validate against the generated
-  `values.helm-schema.json` files.
+- The luup3 migration is complete: active charts use generated schemas by
+  default and the remaining override layer is limited to non-inferable
+  deployment-pipeline values.
 - The large correctness bugs we chased in chart inference are fixed:
   helper-bound objects, open string maps, nullable helper defaults, wrapper
   chart projection issues, and the `inbucket` drift class.
@@ -20,8 +21,8 @@ chart". The bottleneck has moved.
 
 ## Recommended order
 
-1. **Performance and output-size work for Temporal-class charts**
-2. **Finish the migration in luup3 and cut over to generated schemas by default**
+1. **Performance work for Temporal-class charts**
+2. **Add independent JSON Schema output minimization**
 3. **Unify the dual resource detector**
 4. **Implement `kind: List` items[*] structural descent**
 5. **Targeted architecture cleanup in the hot IR / generator path**
@@ -44,18 +45,22 @@ slow enough to distort local iteration and CI ergonomics. We already know:
 So the next work should be a focused performance pass, not a broad correctness
 hunt.
 
-### 2. Migration completion second
+### 2. JSON Schema minimization second
 
-We are now in a good position to complete the practical luup3 migration:
+The luup3 cutover is complete, so the next output-size feature should be a
+general JSON Schema transform rather than another chart-specific migration
+step.
 
-- decide which remaining schemadiff lines are real generator bugs vs
-  hand-written schema policy
-- keep only the overrides that encode non-inferable domain constraints
-- switch the repo to generated schemas by default once the remaining diffs are
-  intentionally accounted for
+This should stay independent from Helm template inference:
 
-This work is high-value because it converts the recent helm-schema improvements
-into a simpler steady state for luup3.
+- first check whether a battle-tested dependency already solves this correctly
+- if no suitable dependency exists, add a small helm-agnostic crate in this
+  workspace rather than hiding the logic inside `helm-schema-cli`
+- input is an arbitrary JSON Schema document
+- output preserves semantics while replacing repeated subtrees with `$defs`
+  and `$ref`
+- the CLI exposes it as an opt-in flag such as `--minimize`
+- description stripping remains a simpler orthogonal output transform
 
 ### 3. Detector unification before more deep feature work
 
@@ -133,24 +138,26 @@ The Temporal schema size strongly suggests repeated large subtrees are being
 cloned into the final output. We should explicitly investigate:
 
 - whether repeated Kubernetes-derived fragments can be shared structurally in
-  memory during merge/build
-- whether output should optionally preserve more `$ref`s for repeated subtrees
-  instead of eagerly inlining everything
+  memory during merge/build as a performance optimization
+- whether an independent JSON Schema minimizer can identify repeated output
+  subtrees and move them under `$defs` with `$ref` reuse
 
-This is likely the biggest remaining performance lever after the recent fixes.
+The first item belongs to the Temporal performance pass. The second item is a
+general output-size feature and should be developed independently so it can be
+used for any large generated schema.
 
-### C. Migration cutover mechanics in luup3
+### C. Completed luup3 migration contract
 
-We already have generation, diffing, and validation tasks. The remaining work
-is to define the cutover contract clearly:
+The practical cutover is complete. Keep this contract visible so future
+override additions do not become hidden generator bug workarounds:
 
 - which chart-specific overrides are justified
 - which hand-written schemas or shared schema refs can be deleted
 - how generated schemas are tracked in git
 - what CI checks become mandatory after the cutover
 
-This is separate from core helm-schema code, but it is necessary to finish the
-work.
+This is separate from core helm-schema code; it is a maintenance contract for
+future chart changes, not a blocker for the completed migration.
 
 ### D. Dead-complexity cleanup from exploratory optimization paths
 
@@ -180,15 +187,24 @@ of the review bar for the next performance iteration.
 5. Repeat until the chart is substantially closer to acceptable local
    iteration time.
 
-### Priority 2 — Migration completion in luup3
+### Priority 2 — JSON Schema minimization
 
-1. Re-run schemadiff across active charts against the latest helm-schema.
-2. Classify remaining diffs into:
-   - generator bug
-   - justified hand-written override
-   - hand-written schema is stale or less accurate
-3. Add only the justified override layer needed for cutover.
-4. Switch the repo to generated schemas by default chart by chart.
+1. Check whether an existing Rust crate can safely minimize JSON Schema by
+   introducing `$defs` / `$ref` for repeated subtrees. Prefer a proven
+   dependency if it is correct, maintained, deterministic, and draft-aware.
+2. If no suitable dependency exists, add a self-contained helm-agnostic
+   workspace crate that:
+   - accepts `serde_json::Value`
+   - hashes canonical schema subtrees deterministically
+   - extracts repeated, worthwhile subtrees into `$defs`
+   - rewrites later occurrences to `$ref`
+   - never changes validation semantics
+3. Keep the crate free of Helm concepts: no chart paths, no K8s providers, no
+   template inference, no luup3-specific policy.
+4. Add a CLI flag such as `--minimize` that runs this transform after override
+   merging and before final writing.
+5. Measure compact output size for large charts, especially Temporal and
+   Signoz, with and without minimization.
 
 ### Priority 3 — Detector unification
 

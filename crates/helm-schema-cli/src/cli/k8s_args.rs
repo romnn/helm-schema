@@ -50,6 +50,13 @@ pub struct K8sArgs {
     #[arg(long = "k8s-schema-cache-dir")]
     pub k8s_schema_cache_dir: Option<PathBuf>,
 
+    /// Bypass K8s schema cache reads and re-check upstream directly.
+    ///
+    /// Successful responses and authoritative 404s still refresh cache
+    /// state, so this can repair stale local entries.
+    #[arg(long = "no-cache")]
+    pub no_cache: bool,
+
     /// Suppress Feature B auto-fallback semantics. Conflicts only with
     /// `--k8s-version-fallback`; orthogonal to `--k8s-schema-mirror`.
     #[arg(long = "strict-k8s-version")]

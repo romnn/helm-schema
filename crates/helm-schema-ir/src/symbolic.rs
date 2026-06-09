@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
@@ -7,10 +8,56 @@ use crate::helper_eval::{CapabilityGuard, HelperBranch, HelperBranchBody, Helper
 use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 
+thread_local! {
+    static TEMPLATE_EXPR_CACHE: RefCell<HashMap<String, Vec<TemplateExpr>>> =
+        RefCell::new(HashMap::new());
+}
+
+fn clear_template_expr_cache() {
+    TEMPLATE_EXPR_CACHE.with(|cache| cache.borrow_mut().clear());
+}
+
 pub struct SymbolicIrGenerator;
 
 impl IrGenerator for SymbolicIrGenerator {
+    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse> {
+        SymbolicIrContext::new(defines).generate(src, _ast, defines)
+    }
+}
+
+/// Reusable state for generating symbolic IR across many templates that
+/// share one [`DefineIndex`].
+///
+/// The context owns exact parse/helper-analysis caches. Reusing it across
+/// templates avoids recomputing helper bodies without changing analysis
+/// semantics; a cache miss and cache hit return the same structural facts.
+#[derive(Clone)]
+pub struct SymbolicIrContext {
+    inner: Rc<SymbolicIrContextInner>,
+}
+
+struct SymbolicIrContextInner {
+    define_body_sources: HashMap<String, String>,
+    define_tree_cache: RefCell<HashMap<String, tree_sitter::Tree>>,
+    bound_helper_calls_cache: RefCell<BTreeMap<BoundHelperCallsCacheKey, BoundHelperAnalysis>>,
+}
+
+impl SymbolicIrContext {
+    #[tracing::instrument(skip_all)]
+    pub fn new(defines: &DefineIndex) -> Self {
+        clear_template_expr_cache();
+        Self {
+            inner: Rc::new(SymbolicIrContextInner {
+                define_body_sources: SymbolicWalker::collect_define_body_sources(defines),
+                define_tree_cache: RefCell::new(HashMap::new()),
+                bound_helper_calls_cache: RefCell::new(BTreeMap::new()),
+            }),
+        }
+    }
+
+    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
+    pub fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
         let mut parser = tree_sitter::Parser::new();
@@ -21,7 +68,7 @@ impl IrGenerator for SymbolicIrGenerator {
             return Vec::new();
         };
 
-        let mut w = SymbolicWalker::new(src, defines);
+        let mut w = SymbolicWalker::new_with_context(src, defines, self.clone());
         w.run(&tree)
     }
 }
@@ -29,8 +76,7 @@ impl IrGenerator for SymbolicIrGenerator {
 struct SymbolicWalker<'a> {
     source: &'a str,
     defines: &'a DefineIndex,
-    define_body_sources: HashMap<String, String>,
-    define_tree_cache: RefCell<HashMap<String, tree_sitter::Tree>>,
+    ir_context: SymbolicIrContext,
     fragment_helper_body_cache: RefCell<BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>>,
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
@@ -152,7 +198,13 @@ struct FragmentHelperBodyCacheKey {
     locals: BTreeMap<String, FragmentBinding>,
 }
 
-#[derive(Default)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct BoundHelperCallsCacheKey {
+    text: String,
+    current_dot: Option<HelperBinding>,
+}
+
+#[derive(Clone, Debug, Default)]
 struct BoundHelperAnalysis {
     output: BTreeMap<String, HelperOutputMeta>,
     fragment_output: BTreeSet<String>,
@@ -674,12 +726,20 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
+    #[cfg(test)]
     fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
+        Self::new_with_context(source, defines, SymbolicIrContext::new(defines))
+    }
+
+    fn new_with_context(
+        source: &'a str,
+        defines: &'a DefineIndex,
+        ir_context: SymbolicIrContext,
+    ) -> Self {
         Self {
             source,
             defines,
-            define_body_sources: Self::collect_define_body_sources(defines),
-            define_tree_cache: RefCell::new(HashMap::new()),
+            ir_context,
             fragment_helper_body_cache: RefCell::new(BTreeMap::new()),
             uses: Vec::new(),
             guards: Vec::new(),
@@ -745,6 +805,7 @@ impl<'a> SymbolicWalker<'a> {
         self
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn parse_go_template(src: &str) -> Option<tree_sitter::Tree> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
@@ -755,6 +816,7 @@ impl<'a> SymbolicWalker<'a> {
         parser.parse(src, None)
     }
 
+    #[tracing::instrument(skip_all)]
     fn define_body_tree_from_cache(
         name: &str,
         define_sources: &HashMap<String, String>,
@@ -772,6 +834,7 @@ impl<'a> SymbolicWalker<'a> {
         Some(tree)
     }
 
+    #[tracing::instrument(skip_all)]
     fn collect_define_body_sources(defines: &DefineIndex) -> HashMap<String, String> {
         let mut out = HashMap::new();
         for (_path, src) in defines.file_sources() {
@@ -920,8 +983,8 @@ impl<'a> SymbolicWalker<'a> {
                     &self.template_bindings,
                     current_dot.as_ref(),
                     self.defines,
-                    &self.define_body_sources,
-                    &self.define_tree_cache,
+                    &self.ir_context.inner.define_body_sources,
+                    &self.ir_context.inner.define_tree_cache,
                     &self.fragment_helper_body_cache,
                     &mut seen,
                 )
@@ -951,8 +1014,8 @@ impl<'a> SymbolicWalker<'a> {
                 &locals,
                 helper_dot,
                 self.defines,
-                &self.define_body_sources,
-                &self.define_tree_cache,
+                &self.ir_context.inner.define_body_sources,
+                &self.ir_context.inner.define_tree_cache,
                 &self.fragment_helper_body_cache,
                 &mut seen,
                 &mut requests,
@@ -1166,16 +1229,18 @@ impl<'a> SymbolicWalker<'a> {
 
         let mut stack = self.inline_stack.clone();
         stack.push(token);
-        let mut nested = SymbolicWalker::new(src, self.defines)
-            .with_initial_guards(self.guards.clone())
-            .with_initial_dot_binding(request.dot)
-            .with_inline_stack(stack)
-            .with_inline_helpers_in_fragments(true)
-            .with_chart_value_defaults(self.chart_value_defaults.clone());
+        let mut nested =
+            SymbolicWalker::new_with_context(src, self.defines, self.ir_context.clone())
+                .with_initial_guards(self.guards.clone())
+                .with_initial_dot_binding(request.dot)
+                .with_inline_stack(stack)
+                .with_inline_helpers_in_fragments(true)
+                .with_chart_value_defaults(self.chart_value_defaults.clone());
         let uses = nested.run(&tree);
         self.uses.extend(uses);
     }
 
+    #[tracing::instrument(skip_all)]
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
         self.reset_text_spans(tree);
         self.walk(tree.root_node());
@@ -1261,6 +1326,7 @@ impl<'a> SymbolicWalker<'a> {
         });
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn literal_helper_calls(text: &str) -> Vec<LiteralHelperCall> {
         let mut out = Vec::new();
         for expr in Self::parse_expr_text(text) {
@@ -1289,6 +1355,7 @@ impl<'a> SymbolicWalker<'a> {
         out
     }
 
+    #[tracing::instrument(skip_all)]
     fn reset_text_spans(&mut self, tree: &tree_sitter::Tree) {
         let mut spans = Vec::<(usize, usize)>::new();
         let mut stack = vec![tree.root_node()];
@@ -1742,13 +1809,14 @@ impl<'a> SymbolicWalker<'a> {
             &self.template_bindings,
             current_dot,
             self.defines,
-            &self.define_body_sources,
-            &self.define_tree_cache,
+            &self.ir_context.inner.define_body_sources,
+            &self.ir_context.inner.define_tree_cache,
             &self.fragment_helper_body_cache,
             &mut seen,
         )
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn resolved_values_paths_in_context(&self, text: &str) -> Vec<String> {
         let exprs = Self::parse_expr_text(text);
         let mut paths = Self::direct_values_paths_from_exprs(&exprs);
@@ -2183,6 +2251,7 @@ impl<'a> SymbolicWalker<'a> {
         })
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn resolved_values_paths_in_expr_tree_context(&self, text: &str) -> BTreeSet<String> {
         let mut locals = self.template_bindings.clone();
         for (key, value) in &self.root_bindings {
@@ -2332,7 +2401,11 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn define_body_source(&self, name: &str) -> Option<&str> {
-        self.define_body_sources.get(name).map(String::as_str)
+        self.ir_context
+            .inner
+            .define_body_sources
+            .get(name)
+            .map(String::as_str)
     }
 
     fn define_body_resource(&self, name: &str) -> Option<ResourceRef> {
@@ -2371,8 +2444,8 @@ impl<'a> SymbolicWalker<'a> {
         }
         let Some(tree) = Self::define_body_tree_from_cache(
             name,
-            &self.define_body_sources,
-            &self.define_tree_cache,
+            &self.ir_context.inner.define_body_sources,
+            &self.ir_context.inner.define_tree_cache,
         ) else {
             return false;
         };
@@ -2385,17 +2458,19 @@ impl<'a> SymbolicWalker<'a> {
         );
         let mut stack = self.inline_stack.clone();
         stack.push(token);
-        let mut nested = SymbolicWalker::new(src, self.defines)
-            .with_initial_guards(self.guards.clone())
-            .with_inline_stack(stack)
-            .with_inline_helpers_in_fragments(true)
-            .with_helper_bindings(bindings)
-            .with_chart_value_defaults(self.chart_value_defaults.clone());
+        let mut nested =
+            SymbolicWalker::new_with_context(src, self.defines, self.ir_context.clone())
+                .with_initial_guards(self.guards.clone())
+                .with_inline_stack(stack)
+                .with_inline_helpers_in_fragments(true)
+                .with_helper_bindings(bindings)
+                .with_chart_value_defaults(self.chart_value_defaults.clone());
         let uses = nested.run(&tree);
         self.uses.extend(uses);
         true
     }
 
+    #[tracing::instrument(skip_all)]
     fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
         let Ok(text) = node.utf8_text(self.source.as_bytes()) else {
             return;
@@ -2761,16 +2836,30 @@ impl<'a> SymbolicWalker<'a> {
         false
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
         let trimmed = text.trim();
         if trimmed.is_empty() {
             return Vec::new();
         }
-        if trimmed.starts_with("{{") {
-            parse_action_expressions(trimmed)
+
+        let normalized = if trimmed.starts_with("{{") {
+            trimmed.to_string()
         } else {
-            parse_action_expressions(&format!("{{{{ {trimmed} }}}}"))
+            format!("{{{{ {trimmed} }}}}")
+        };
+
+        if let Some(cached) =
+            TEMPLATE_EXPR_CACHE.with(|cache| cache.borrow().get(&normalized).cloned())
+        {
+            return cached;
         }
+
+        let parsed = parse_action_expressions(&normalized);
+        TEMPLATE_EXPR_CACHE.with(|cache| {
+            cache.borrow_mut().insert(normalized, parsed.clone());
+        });
+        parsed
     }
 
     fn resolve_bound_path_expr(
@@ -6588,21 +6677,43 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn analyze_bound_helper_calls(&self, text: &str) -> BoundHelperAnalysis {
-        let mut seen = HashSet::new();
         let current_dot = self.current_dot_binding();
-        Self::analyze_bound_helper_calls_with_bindings(
+        let key = BoundHelperCallsCacheKey {
+            text: text.to_string(),
+            current_dot: current_dot.clone(),
+        };
+        if let Some(cached) = self
+            .ir_context
+            .inner
+            .bound_helper_calls_cache
+            .borrow()
+            .get(&key)
+        {
+            return cached.clone();
+        }
+
+        let mut seen = HashSet::new();
+        let analysis = Self::analyze_bound_helper_calls_with_bindings(
             text,
             None,
             current_dot.as_ref(),
             self.defines,
-            &self.define_body_sources,
-            &self.define_tree_cache,
+            &self.ir_context.inner.define_body_sources,
+            &self.ir_context.inner.define_tree_cache,
             &self.fragment_helper_body_cache,
             &mut seen,
-        )
+        );
+        self.ir_context
+            .inner
+            .bound_helper_calls_cache
+            .borrow_mut()
+            .insert(key, analysis.clone());
+        analysis
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn analyze_bound_fragment_helper_calls_in_context(&self, text: &str) -> BTreeSet<String> {
         let mut locals = self.template_bindings.clone();
         for (key, value) in &self.root_bindings {
@@ -6647,8 +6758,8 @@ impl<'a> SymbolicWalker<'a> {
                     helper_dot,
                     helper_locals,
                     self.defines,
-                    &self.define_body_sources,
-                    &self.define_tree_cache,
+                    &self.ir_context.inner.define_body_sources,
+                    &self.ir_context.inner.define_tree_cache,
                     &self.fragment_helper_body_cache,
                     &mut seen,
                 );
@@ -6658,6 +6769,7 @@ impl<'a> SymbolicWalker<'a> {
         outputs
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn analyze_bound_helper_calls_with_bindings(
         text: &str,
         bindings: Option<&HashMap<String, HelperBinding>>,
@@ -6684,6 +6796,7 @@ impl<'a> SymbolicWalker<'a> {
         )
     }
 
+    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn analyze_bound_helper_calls_with_fragment_locals(
         text: &str,
         bindings: Option<&HashMap<String, HelperBinding>>,
@@ -6756,6 +6869,7 @@ impl<'a> SymbolicWalker<'a> {
         )
     }
 
+    #[tracing::instrument(skip_all)]
     fn analyze_bound_helper_call_with_fragment_locals(
         name: &str,
         arg: Option<&TemplateExpr>,
@@ -7009,6 +7123,7 @@ impl<'a> SymbolicWalker<'a> {
     /// sees `.a.name` (no `.Values` prefix), so it can't resolve to a
     /// values path. Threading the with-shifted dot lets the detector
     /// re-root `.a.name` against `.Values` and record the default.
+    #[tracing::instrument(skip_all)]
     fn collect_bound_helper_values_from_ast(
         node: &HelmAst,
         bindings: &HashMap<String, HelperBinding>,
@@ -7963,8 +8078,8 @@ impl<'a> SymbolicWalker<'a> {
                     &locals,
                     current_dot.as_ref(),
                     self.defines,
-                    &self.define_body_sources,
-                    &self.define_tree_cache,
+                    &self.ir_context.inner.define_body_sources,
+                    &self.ir_context.inner.define_tree_cache,
                     &self.fragment_helper_body_cache,
                     &mut seen,
                 ) {
@@ -8811,8 +8926,8 @@ mod fragment_binding_unit_tests {
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -8914,8 +9029,8 @@ spec:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9022,8 +9137,8 @@ spec:
             Some(&lookup_bindings),
             lookup_dot.as_ref(),
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut HashSet::new(),
         );
@@ -9079,8 +9194,8 @@ spec:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9162,8 +9277,8 @@ spec:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9231,8 +9346,8 @@ spec:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9307,8 +9422,8 @@ imagePullSecrets:
             Some(&HelperBinding::RootContext),
             &fragment_locals,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9354,8 +9469,8 @@ imagePullSecrets:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9417,8 +9532,8 @@ imagePullSecrets:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9455,8 +9570,8 @@ imagePullSecrets:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9546,8 +9661,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9632,8 +9747,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9697,8 +9812,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9730,8 +9845,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             &mut local_bindings,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         ));
@@ -9769,8 +9884,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             &local_bindings,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9802,8 +9917,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             &local_bindings,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9887,8 +10002,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             None,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -9958,8 +10073,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             &fragment_locals,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -10008,8 +10123,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             &fragment_locals,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );
@@ -10057,8 +10172,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
             None,
             &fragment_locals,
             &defines,
-            &walker.define_body_sources,
-            &walker.define_tree_cache,
+            &walker.ir_context.inner.define_body_sources,
+            &walker.ir_context.inner.define_tree_cache,
             &walker.fragment_helper_body_cache,
             &mut seen,
         );

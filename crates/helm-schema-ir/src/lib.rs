@@ -9,7 +9,7 @@ pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
     helper_literal_outputs,
 };
-pub use symbolic::SymbolicIrGenerator;
+pub use symbolic::{SymbolicIrContext, SymbolicIrGenerator};
 pub use walker::{
     DefineBlock, extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };

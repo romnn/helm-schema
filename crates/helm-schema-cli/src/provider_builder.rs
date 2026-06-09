@@ -19,6 +19,8 @@ pub struct ProviderOptions {
     pub k8s_schema_mirrors: Vec<String>,
     /// Managed K8s cache root.
     pub k8s_schema_cache_dir: Option<PathBuf>,
+    /// Bypass persistent K8s cache reads while refreshing cache writes.
+    pub no_cache: bool,
 
     pub allow_net: bool,
     pub disable_k8s_schemas: bool,
@@ -72,6 +74,7 @@ pub fn build_provider(opts: &ProviderOptions, diagnostic_sink: Option<&Diagnosti
             K8sVersionChain::new(opts.k8s_versions.clone(), opts.k8s_version_fallback_window);
         let mut k8s = KubernetesJsonSchemaProvider::with_versions(versions)
             .with_allow_download(opts.allow_net)
+            .with_use_cache(!opts.no_cache)
             .with_mirrors(opts.k8s_schema_mirrors.clone())
             .with_api_version_guess(opts.api_version_guess)
             .with_negative_cache(Arc::clone(&negative_cache))

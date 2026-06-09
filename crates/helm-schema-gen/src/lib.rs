@@ -248,7 +248,7 @@ fn collect_scalar_paths_with_self_truthy_output_use(uses: &[ValueUse]) -> BTreeS
         .collect()
 }
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all, fields(uses = uses.len()))]
 fn collect_use_signals(
     uses: &[ValueUse],
     provider: &dyn K8sSchemaProvider,
@@ -310,7 +310,7 @@ fn collect_use_signals(
             let schema = match provider_schema_cache.entry(lookup_key) {
                 std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
                 std::collections::hash_map::Entry::Vacant(entry) => {
-                    let schema = provider.schema_for_use(u).map(Arc::new);
+                    let schema = lookup_provider_schema(provider, u);
                     entry.insert(schema.clone());
                     schema
                 }
@@ -345,6 +345,26 @@ fn collect_use_signals(
         guard_boolish_by_value_path,
         guard_constraints_by_value_path,
     }
+}
+
+#[tracing::instrument(
+    skip_all,
+    fields(
+        resource_kind = use_
+            .resource
+            .as_ref()
+            .map(|resource| resource.kind.as_str())
+            .unwrap_or(""),
+        resource_api_version = use_
+            .resource
+            .as_ref()
+            .map(|resource| resource.api_version.as_str())
+            .unwrap_or(""),
+        path_len = use_.path.0.len(),
+    )
+)]
+fn lookup_provider_schema(provider: &dyn K8sSchemaProvider, use_: &ValueUse) -> Option<Arc<Value>> {
+    provider.schema_for_use(use_).map(Arc::new)
 }
 
 #[tracing::instrument(skip_all)]

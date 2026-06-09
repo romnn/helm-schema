@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
+
 use helm_schema_ir::{HelperBranch, ResourceRef, ValueUse, YamlPath};
 use serde_json::Value;
 
@@ -22,6 +25,16 @@ pub struct Chain {
     providers: Vec<Box<dyn K8sSchemaProvider>>,
     sink: Option<DiagnosticSink>,
     inference_enabled: bool,
+    inference_cache: Mutex<HashMap<String, ApiVersionInferenceOutcome>>,
+    provider_lookup_cache: Mutex<HashMap<ProviderLookupCacheKey, ProviderLookupResult>>,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct ProviderLookupCacheKey {
+    provider_index: usize,
+    api_version: String,
+    kind: String,
+    path: Vec<String>,
 }
 
 impl Chain {
@@ -31,6 +44,8 @@ impl Chain {
             providers,
             sink: None,
             inference_enabled: false,
+            inference_cache: Mutex::new(HashMap::new()),
+            provider_lookup_cache: Mutex::new(HashMap::new()),
         }
     }
 
@@ -51,11 +66,68 @@ impl Chain {
         &self.providers
     }
 
+    fn infer_api_version_for_kind(&self, kind: &str) -> ApiVersionInferenceOutcome {
+        if let Ok(guard) = self.inference_cache.lock()
+            && let Some(cached) = guard.get(kind)
+        {
+            return cached.clone();
+        }
+
+        let inferred = inference::infer_api_version(self.providers.as_slice(), kind);
+        if let Ok(mut guard) = self.inference_cache.lock() {
+            guard.insert(kind.to_string(), inferred.clone());
+        }
+        inferred
+    }
+
+    fn lookup_with_provider_cache(
+        &self,
+        provider_index: usize,
+        provider: &dyn K8sSchemaProvider,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> ProviderLookupResult {
+        let key = ProviderLookupCacheKey {
+            provider_index,
+            api_version: resource.api_version.clone(),
+            kind: resource.kind.clone(),
+            path: path.0.clone(),
+        };
+
+        if let Ok(guard) = self.provider_lookup_cache.lock()
+            && let Some(cached) = guard.get(&key)
+        {
+            return cached.clone();
+        }
+
+        let result = provider.lookup(resource, path);
+        if let Ok(mut guard) = self.provider_lookup_cache.lock() {
+            guard.insert(key, result.clone());
+        }
+        result
+    }
+
     /// Schema for a [`ValueUse`] — iterates the ordered api-version
     /// candidates silently and, on total exhaustion, commits ONE
     /// `MissingSchema` attributed to the user-written primary
     /// `api_version` (not to any speculative candidate). Speculative
     /// per-candidate misses never reach the sink (Finding 4).
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            kind = use_
+                .resource
+                .as_ref()
+                .map(|resource| resource.kind.as_str())
+                .unwrap_or(""),
+            api_version = use_
+                .resource
+                .as_ref()
+                .map(|resource| resource.api_version.as_str())
+                .unwrap_or(""),
+            path_len = use_.path.0.len(),
+        )
+    )]
     pub fn schema_for_use(&self, use_: &ValueUse) -> Option<Value> {
         let resource = use_.resource.as_ref()?;
 
@@ -76,7 +148,7 @@ impl Chain {
 
         if needs_inference(resource) {
             let inferred = if self.inference_enabled {
-                inference::infer_api_version(self.providers.as_slice(), &resource.kind)
+                self.infer_api_version_for_kind(&resource.kind)
             } else {
                 ApiVersionInferenceOutcome::NoMatch
             };
@@ -218,14 +290,16 @@ impl Chain {
     /// because those reflect a *resolution* that happened. Only the
     /// miss-side (MissingSchema, LocalOverrideUnreadable, provider
     /// CrdVersionNotFound) is suppressed.
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
     fn resolve_against_chain_internal(
         &self,
         resource: &ResourceRef,
         path: &YamlPath,
         commit_miss_diagnostics: bool,
     ) -> ChainLookupOutcome {
-        for provider in &self.providers {
-            match provider.lookup(resource, path) {
+        for (provider_index, provider) in self.providers.iter().enumerate() {
+            match self.lookup_with_provider_cache(provider_index, provider.as_ref(), resource, path)
+            {
                 ProviderLookupResult::Found {
                     schema,
                     resolved_k8s_version,

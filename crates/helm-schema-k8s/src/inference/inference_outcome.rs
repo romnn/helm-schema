@@ -6,7 +6,7 @@ use super::candidate::{ApiVersionCandidate, InferenceSource};
 /// (and `api_version_candidates`) were empty. Unlike resource
 /// lookup, this is an aggregate-then-decide contract: providers
 /// contribute candidates and ambiguity is meaningful here.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ApiVersionInferenceOutcome {
     Resolved {
         api_version: String,

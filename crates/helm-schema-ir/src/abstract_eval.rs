@@ -21,6 +21,7 @@ pub struct PathFact {
 }
 
 #[must_use]
+#[tracing::instrument(skip_all)]
 pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
     enum Binding {

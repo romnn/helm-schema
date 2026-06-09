@@ -9,11 +9,26 @@ use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ResourceDocKey {
+    api_version: String,
+    kind: String,
+}
+
+impl ResourceDocKey {
+    fn from_resource(resource: &ResourceRef) -> Self {
+        Self {
+            api_version: resource.api_version.clone(),
+            kind: resource.kind.clone(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct LocalSchemaProvider {
     root_dir: PathBuf,
     allow_api_version_guess: bool,
-    materialized: Mutex<std::collections::HashMap<ResourceRef, Arc<Value>>>,
+    materialized: Mutex<std::collections::HashMap<ResourceDocKey, Arc<Value>>>,
 }
 
 impl LocalSchemaProvider {
@@ -68,9 +83,11 @@ impl LocalSchemaProvider {
         Some((*materialized).clone())
     }
 
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
     fn materialized_schema_root(&self, resource: &ResourceRef) -> Option<Arc<Value>> {
+        let cache_key = ResourceDocKey::from_resource(resource);
         if let Ok(guard) = self.materialized.lock()
-            && let Some(root) = guard.get(resource)
+            && let Some(root) = guard.get(&cache_key)
         {
             return Some(Arc::clone(root));
         }
@@ -81,7 +98,7 @@ impl LocalSchemaProvider {
             &root, &root, 0, &mut stack,
         )));
         if let Ok(mut guard) = self.materialized.lock() {
-            guard.insert(resource.clone(), Arc::clone(&materialized));
+            guard.insert(cache_key, Arc::clone(&materialized));
         }
         Some(materialized)
     }
@@ -97,6 +114,7 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         ProviderOrigin::LocalOverride
     }
 
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         if let Some(root) = self.materialized_schema_root(resource) {
             return match descend_schema_path(&root, &path.0) {
@@ -163,6 +181,7 @@ impl K8sSchemaProvider for LocalSchemaProvider {
     }
 }
 
+#[tracing::instrument(skip_all, fields(path_len = path.len()))]
 pub fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
     let mut current = schema;
     for seg in path {

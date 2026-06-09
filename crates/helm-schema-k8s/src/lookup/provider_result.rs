@@ -6,7 +6,7 @@ use serde_json::Value;
 /// aggregates these into a [`crate::lookup::ChainLookupOutcome`] and
 /// is the only layer allowed to emit
 /// [`crate::diagnostic::Diagnostic::MissingSchema`].
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ProviderLookupResult {
     /// Provider owns the resource AND resolved the requested path.
     /// `resolved_k8s_version` is `Some(...)` when the K8s provider

@@ -728,6 +728,36 @@ fn api_version_guess_online_probe_kind_scoped() {
     );
 }
 
+#[test]
+fn chain_caches_api_version_inference_by_kind() {
+    let cache = tmp_dir("inf-chain-cache");
+    let service_monitor_url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1.json";
+    let mock = Arc::new(MockFetcher::new().with_body(service_monitor_url, crd_doc().into_bytes()));
+    let provider = CrdsCatalogSchemaProvider::new()
+        .with_cache_dir(cache)
+        .with_allow_download(true)
+        .with_api_version_guess(true)
+        .with_fetcher(mock.clone());
+    let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
+    let use_ = use_with_kind("ServiceMonitor");
+
+    let first = chain.schema_for_use(&use_);
+    assert!(first.is_some(), "setup must resolve ServiceMonitor");
+    let calls_after_first_lookup = mock.calls_for(service_monitor_url);
+    assert!(
+        calls_after_first_lookup > 0,
+        "setup should exercise the online CRD inference/lookup path"
+    );
+
+    let second = chain.schema_for_use(&use_);
+    assert!(second.is_some(), "second lookup must still resolve");
+    assert_eq!(
+        mock.calls_for(service_monitor_url),
+        calls_after_first_lookup,
+        "repeated uses of the same kind must reuse the chain inference cache"
+    );
+}
+
 fn crd_doc() -> String {
     r#"{"type":"object","properties":{"spec":{"type":"object"}}}"#.to_string()
 }
