@@ -1,27 +1,109 @@
 [
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "creator"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "fullnameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "global.commonLabels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.commonLabels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "global.commonLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "prometheus.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "prometheus.podmonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,

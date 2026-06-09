@@ -1,23 +1,123 @@
 [
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "fullnameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "global.labels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.labels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceMonitor.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "selector",
+      "matchLabels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor"
+    },
     "source_expr": "nameOverride"
   },
   {

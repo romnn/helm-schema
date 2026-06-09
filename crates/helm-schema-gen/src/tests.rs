@@ -5,12 +5,13 @@ use serde_json::Value;
 
 use crate::{
     DefaultValuesSchemaGenerator, ValuesSchemaGenerator, collect_nullable_value_paths,
-    generate_values_schema_full, generate_values_schema_with_values_yaml,
+    generate_values_schema_full, generate_values_schema_full_with_facts,
+    generate_values_schema_with_values_yaml,
 };
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    Guard, IrGenerator, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse, YamlPath,
-    extract_default_type_hints,
+    ChartFacts, Guard, IrGenerator, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
+    YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
@@ -29,6 +30,14 @@ fn parse_ir(src: &str) -> Vec<ValueUse> {
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     SymbolicIrGenerator.generate(src, &ast, &idx)
+}
+
+fn parse_ir_and_chart_facts(src: &str) -> (Vec<ValueUse>, ChartFacts) {
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let idx = DefineIndex::new();
+    let uses = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let facts = derive_chart_facts_from_ast(&ast);
+    (uses, facts)
 }
 
 fn parse_ir_fused(src: &str) -> Vec<ValueUse> {
@@ -54,6 +63,56 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
         hints.entry(path).or_default().push(schema);
     }
     hints
+}
+
+fn schema_contains_open_string_map(schema: &Value) -> bool {
+    if schema
+        .pointer("/additionalProperties/type")
+        .and_then(Value::as_str)
+        == Some("string")
+    {
+        return true;
+    }
+
+    ["anyOf", "oneOf"]
+        .into_iter()
+        .filter_map(|key| schema.get(key).and_then(Value::as_array))
+        .flatten()
+        .any(schema_contains_open_string_map)
+}
+
+fn schema_contains_type(schema: &Value, schema_type: &str) -> bool {
+    if schema.get("type").and_then(Value::as_str) == Some(schema_type) {
+        return true;
+    }
+    if schema
+        .get("type")
+        .and_then(Value::as_array)
+        .is_some_and(|types| {
+            types
+                .iter()
+                .any(|value| value.as_str() == Some(schema_type))
+        })
+    {
+        return true;
+    }
+
+    ["anyOf", "oneOf"]
+        .into_iter()
+        .filter_map(|key| schema.get(key).and_then(Value::as_array))
+        .flatten()
+        .any(|variant| schema_contains_type(variant, schema_type))
+}
+
+fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
+    assert!(
+        schema_contains_open_string_map(schema),
+        "{label} should include an open string-map branch, got {schema}"
+    );
+    assert!(
+        schema_contains_type(schema, "string"),
+        "{label} should include a templated string branch, got {schema}"
+    );
 }
 
 fn bitnami_tplvalues_helpers() -> &'static str {
@@ -129,6 +188,27 @@ fn permits_null(schema: &Value) -> bool {
         .is_some_and(|variants| variants.iter().any(permits_null))
 }
 
+fn any_of_variant_matching<'a, F: Fn(&'a Value) -> bool>(
+    schema: &'a Value,
+    predicate: F,
+) -> Option<&'a Value> {
+    schema
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .and_then(|variants| variants.iter().find(|variant| predicate(variant)))
+}
+
+fn object_variant_with_property<'a>(schema: &'a Value, property: &str) -> Option<&'a Value> {
+    if schema.pointer(&format!("/properties/{property}")).is_some() {
+        return Some(schema);
+    }
+    any_of_variant_matching(schema, |variant| {
+        variant
+            .pointer(&format!("/properties/{property}"))
+            .is_some()
+    })
+}
+
 fn permits_type(schema: &Value, ty: &str) -> bool {
     if schema.get("type").and_then(Value::as_str) == Some(ty) {
         return true;
@@ -144,6 +224,25 @@ fn permits_type(schema: &Value, ty: &str) -> bool {
         .get("anyOf")
         .and_then(Value::as_array)
         .is_some_and(|variants| variants.iter().any(|variant| permits_type(variant, ty)))
+}
+
+fn permits_empty_string(schema: &Value) -> bool {
+    if let Some(variants) = schema.get("anyOf").and_then(Value::as_array) {
+        return variants.iter().any(permits_empty_string);
+    }
+    if let Some(variants) = schema.get("oneOf").and_then(Value::as_array) {
+        return variants.iter().any(permits_empty_string);
+    }
+    if !permits_type(schema, "string") {
+        return false;
+    }
+    if let Some(values) = schema.get("enum").and_then(Value::as_array) {
+        return values.iter().any(|value| value.as_str() == Some(""));
+    }
+    schema
+        .get("minLength")
+        .and_then(Value::as_u64)
+        .is_none_or(|min_length| min_length == 0)
 }
 
 /// Simple template produces correct schema structure.
@@ -168,6 +267,45 @@ fn simple_template_schema() {
         }
     });
     similar_asserts::assert_eq!(schema, expected);
+}
+
+#[test]
+fn self_guarded_empty_string_preserves_empty_fallback_branch() {
+    let provider_schema = serde_json::json!({
+        "type": "string",
+        "minLength": 1
+    });
+    let values_yaml_schema = serde_json::json!({
+        "type": "string"
+    });
+
+    let schema = crate::resolve_schema_for_value_path(
+        false,
+        false,
+        provider_schema,
+        values_yaml_schema,
+        serde_json::json!({}),
+        serde_json::json!({}),
+        serde_json::json!({}),
+        true,
+    );
+    let schema = crate::add_null_schema(schema);
+
+    assert!(
+        permits_empty_string(&schema),
+        "self-guarded empty-string default should stay valid, got {schema}"
+    );
+    assert!(
+        any_of_variant_matching(&schema, |variant| {
+            variant.get("minLength").and_then(Value::as_u64) == Some(1)
+        })
+        .is_some(),
+        "non-empty rendered values should keep provider constraints, got {schema}"
+    );
+    assert!(
+        permits_null(&schema),
+        "nullable wrapping should preserve the empty-string branch, got {schema}"
+    );
 }
 
 /// Guard-like values (*.enabled) get boolean type.
@@ -198,8 +336,9 @@ fn guard_values_get_boolean_type() {
     similar_asserts::assert_eq!(schema, expected);
 }
 
-/// Step 1 stays focused on the nullable-scalar gap. Fragment-fed objects keep
-/// their provider object shape even when values.yaml uses a null placeholder.
+/// A `with`-guarded fragment accepts null for object inputs too: Helm skips
+/// the body when the guarded value is nil, so the chart input contract includes
+/// both the rendered object shape and null.
 #[test]
 fn step1_with_fragment_null_default_is_nullable() {
     let src = indoc! {r"
@@ -226,8 +365,8 @@ fn step1_with_fragment_null_default_is_nullable() {
         "extraAnnotations should keep the K8s annotations object shape, got {extra}"
     );
     assert!(
-        !permits_null(extra),
-        "fragment-fed object placeholders should not widen to nullable unions, got {extra}"
+        permits_null(extra),
+        "with-guarded fragment object should allow null, got {extra}"
     );
 }
 
@@ -376,9 +515,9 @@ fn step1_with_or_per_path_guards_enable_null_preservation() {
     );
 }
 
-/// Step 1 must NOT widen a non-null default for a with-fragment path —
-/// only null defaults qualify. Regression guard: a fixed values.yaml value
-/// should remain the source of truth.
+/// Explicit null defaults are preserved for object fragments, but a non-null
+/// object default remains the source of truth unless values.yaml says the path
+/// is nullable.
 #[test]
 fn step1_with_fragment_non_null_default_not_widened() {
     let src = indoc! {r"
@@ -469,8 +608,8 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
             smtp:
               nodePort:
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let ir = parse_ir(src);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
     let node_port = schema
         .pointer("/properties/service/properties/ports/properties/smtp/properties/nodePort")
@@ -478,7 +617,7 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
     let variants = node_port
         .get("anyOf")
         .and_then(Value::as_array)
-        .expect("expected nullable nodePort union");
+        .unwrap_or_else(|| panic!("expected nullable nodePort union, got {node_port}"));
     assert!(permits_null(node_port));
     assert!(
         variants
@@ -546,11 +685,13 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         fullnameOverride:
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let ast = FusedRustParser.parse(src).expect("parse");
+    let mut define_index = DefineIndex::new();
+    define_index
+        .add_source(&FusedRustParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -563,6 +704,216 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         permits_type(fullname, "string"),
         "common.fullname should keep fullnameOverride string-like, got {fullname}"
     );
+}
+
+#[test]
+fn nested_label_helpers_keep_common_name_override_nullable_string() {
+    let helpers = indoc! {r#"
+        {{- define "common.name" -}}
+        {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+        {{- end }}
+
+        {{- define "common.selectorLabels" -}}
+        app.kubernetes.io/name: {{ include "common.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- end }}
+
+        {{- define "common.labels" -}}
+        helm.sh/chart: test-0.1.0
+        {{ include "common.selectorLabels" . }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+          labels:
+            {{- include "common.labels" . | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {"
+        nameOverride:
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let name_override = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+    assert!(
+        permits_null(name_override),
+        "nested label helper should keep nameOverride nullable, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        permits_type(name_override, "string"),
+        "nested label helper should keep nameOverride string-like, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        !permits_type(name_override, "object"),
+        "scalar helper output should not inherit the parent labels-map object schema, got {name_override}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn assignment_inside_inline_label_helper_does_not_project_to_parent_map() {
+    let helpers = indoc! {r#"
+        {{- define "common.name" -}}
+        {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+        {{- end }}
+
+        {{- define "common.labels" -}}
+        {{- $default := dict "app.kubernetes.io/name" (include "common.name" .) -}}
+        app.kubernetes.io/name: {{ include "common.name" . }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: test
+          labels: {{- include "common.labels" . | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {"
+        nameOverride:
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let name_override = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+    assert!(
+        permits_null(name_override),
+        "assigned helper input should keep nameOverride nullable, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        permits_type(name_override, "string"),
+        "assigned helper input should keep nameOverride string-like, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        !permits_type(name_override, "object"),
+        "assignment inputs should not inherit the parent labels-map object schema, got {name_override}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn helper_local_assignments_render_through_printf_scalar_slot() {
+    let helpers = indoc! {r#"
+        {{- define "common.image" -}}
+        {{- $registryName := .imageRoot.registry -}}
+        {{- $repositoryName := .imageRoot.repository -}}
+        {{- $termination := .imageRoot.tag | toString -}}
+        {{- if .global }}
+          {{- if .global.imageRegistry }}
+            {{- $registryName = .global.imageRegistry -}}
+          {{- end -}}
+        {{- end -}}
+        {{- if $registryName }}
+          {{- printf "%s/%s:%s" $registryName $repositoryName $termination -}}
+        {{- else -}}
+          {{- printf "%s:%s" $repositoryName $termination -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              containers:
+                - name: app
+                  image: {{ include "common.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          registry: docker.io
+          repository: example/app
+          tag: latest
+        global:
+          imageRegistry:
+    "};
+
+    let ast = FusedRustParser.parse(src).expect("parse");
+    let mut define_index = DefineIndex::new();
+    define_index
+        .add_source(&FusedRustParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let image = schema.pointer("/properties/image").expect("image present");
+    for property in ["registry", "repository", "tag"] {
+        assert!(
+            object_variant_with_property(image, property).is_some(),
+            "image.{property} should be attributed through helper-local assignments, got {image}; ir={ir:?}"
+        );
+    }
+}
+
+#[test]
+fn wrapper_helper_preserves_nested_local_assignment_outputs() {
+    let helpers = indoc! {r#"
+        {{- define "common.images.image" -}}
+        {{- $registryName := .imageRoot.registry -}}
+        {{- $repositoryName := .imageRoot.repository -}}
+        {{- $separator := ":" -}}
+        {{- $termination := .imageRoot.tag | toString -}}
+        {{- if .global }}
+          {{- if .global.imageRegistry }}
+            {{- $registryName = .global.imageRegistry -}}
+          {{- end -}}
+        {{- end -}}
+        {{- if .imageRoot.digest }}
+          {{- $separator = "@" -}}
+          {{- $termination = .imageRoot.digest | toString -}}
+        {{- end -}}
+        {{- if $registryName }}
+          {{- printf "%s/%s%s%s" $registryName $repositoryName $separator $termination -}}
+        {{- else -}}
+          {{- printf "%s%s%s" $repositoryName $separator $termination -}}
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "app.image" -}}
+        {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              containers:
+                - name: app
+                  image: {{ template "app.image" . }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          registry: docker.io
+          repository: example/app
+          tag: latest
+        global: {}
+    "};
+
+    let ast = FusedRustParser.parse(src).expect("parse");
+    let mut define_index = DefineIndex::new();
+    define_index
+        .add_source(&FusedRustParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let image = schema.pointer("/properties/image").expect("image present");
+    for property in ["registry", "repository", "tag"] {
+        assert!(
+            object_variant_with_property(image, property).is_some(),
+            "wrapper helper should preserve image.{property} output, got {image}; ir={ir:?}"
+        );
+    }
 }
 
 /// Fragment inputs that flow into K8s label/annotation maps should keep the
@@ -827,6 +1178,105 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
     );
 }
 
+#[test]
+fn scalar_range_with_root_helper_stays_scalar_array() {
+    let src = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+        spec:
+          rules:
+          {{- range .Values.hosts }}
+            {{- $url := splitList "/" . }}
+            - host: {{ first $url }}
+              http:
+                paths:
+                  - path: /{{ rest $url | join "/" }}
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: {{ include "fullname" $ }}
+                        port:
+                          number: 80
+          {{- end }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "fullname" -}}
+        {{- .Chart.Name -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        hosts:
+          - /
+    "};
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let hosts = schema.pointer("/properties/hosts").expect("hosts present");
+    assert_eq!(
+        hosts.get("type").and_then(Value::as_str),
+        Some("array"),
+        "hosts should stay an array, got {hosts}"
+    );
+    assert_eq!(
+        hosts.pointer("/items/type").and_then(Value::as_str),
+        Some("string"),
+        "hosts items should stay strings, got {hosts}"
+    );
+    assert!(
+        hosts.pointer("/items/properties/Chart").is_none(),
+        "root helper fields must not be projected onto range items, got {hosts}"
+    );
+}
+
+#[test]
+fn wildcard_source_path_creates_array_without_empty_object_variant() {
+    let uses = vec![ValueUse {
+        source_expr: "image.pullSecrets.*".to_string(),
+        path: helm_schema_ir::YamlPath(vec![
+            "spec".to_string(),
+            "imagePullSecrets[*]".to_string(),
+            "name".to_string(),
+        ]),
+        kind: ValueKind::Scalar,
+        guards: Vec::new(),
+        resource: Some(ResourceRef {
+            api_version: "v1".to_string(),
+            kind: "Pod".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }),
+    }];
+    let values_yaml = indoc! {"
+        image:
+          pullSecrets: []
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(&uses, &provider(), Some(values_yaml));
+    let pull_secrets = schema
+        .pointer("/properties/image/properties/pullSecrets")
+        .expect("image.pullSecrets present");
+
+    assert_eq!(
+        pull_secrets.get("type").and_then(Value::as_str),
+        Some("array"),
+        "wildcard source path should create an array schema, got {pull_secrets}"
+    );
+    assert!(
+        pull_secrets.get("anyOf").is_none(),
+        "wildcard source path should not create an empty-object variant, got {pull_secrets}"
+    );
+    assert_eq!(
+        pull_secrets.pointer("/items/type").and_then(Value::as_str),
+        Some("string"),
+        "source item should inherit the rendered name scalar type, got {pull_secrets}"
+    );
+}
+
 /// Passing a structured values object into a helper via `dict` should map the
 /// helper-local field accesses back to descendant values paths, not treat the
 /// parent object itself as a scalar leaf at the rendered output path.
@@ -956,6 +1406,19 @@ fn helper_direct_boolean_render_keeps_provider_shape() {
 #[test]
 fn nested_bound_helper_keeps_structured_parent_object() {
     let helpers = indoc! {r#"
+        {{- define "common.tplvalues.render" -}}
+        {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+        {{- if contains "{{" (toJson .value) }}
+          {{- if .scope }}
+              {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+          {{- else }}
+            {{- tpl $value .context }}
+          {{- end }}
+        {{- else -}}
+            {{- $value }}
+        {{- end -}}
+        {{- end -}}
+
         {{- define "common.images.image" -}}
         {{- printf "%s/%s:%s" .imageRoot.registry .imageRoot.repository .imageRoot.tag -}}
         {{- end -}}
@@ -1001,6 +1464,145 @@ fn nested_bound_helper_keeps_structured_parent_object() {
         Some("string"),
         "image.registry should stay string-typed, got {image}"
     );
+}
+
+#[test]
+fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
+    let helpers = indoc! {r#"
+        {{- define "common.names.fullname" -}}
+        {{- if .Values.fullnameOverride -}}
+        {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+        {{- else -}}
+        {{- $name := default .Chart.Name .Values.nameOverride -}}
+        {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "common.ingress.backend" -}}
+        service:
+          name: {{ .serviceName }}
+          port:
+            name: {{ .servicePort }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        spec:
+          rules:
+            - http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" .) "servicePort" "http" "context" .) | nindent 22 }}
+    "#};
+    let values_yaml = indoc! {"
+        nameOverride: \"\"
+        fullnameOverride: \"\"
+    "};
+
+    let ast = FusedRustParser.parse(src).expect("parse");
+    let mut define_index = DefineIndex::new();
+    define_index
+        .add_source(&FusedRustParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let name_override = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+    assert!(
+        permits_empty_string(name_override),
+        "defaulted nameOverride should accept the chart's empty-string sentinel, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        permits_type(name_override, "string"),
+        "nameOverride should stay string-like, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        !permits_type(name_override, "object"),
+        "scalar helper input should not inherit the Ingress backend object schema, got {name_override}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn image_pull_secret_fragment_helper_does_not_project_image_root_as_pod_spec() {
+    let helpers = indoc! {r#"
+        {{- define "common.images.image" -}}
+        {{- printf "%s/%s:%s" .imageRoot.registry .imageRoot.repository .imageRoot.tag -}}
+        {{- end -}}
+
+        {{- define "common.images.renderPullSecrets" -}}
+          {{- $pullSecrets := list }}
+          {{- range .images -}}
+            {{- range .pullSecrets -}}
+              {{- if kindIs "map" . -}}
+                {{- $pullSecrets = append $pullSecrets (include "common.tplvalues.render" (dict "value" .name "context" $.context)) -}}
+              {{- else -}}
+                {{- $pullSecrets = append $pullSecrets (include "common.tplvalues.render" (dict "value" . "context" $.context)) -}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+          {{- if (not (empty $pullSecrets)) -}}
+        imagePullSecrets:
+            {{- range $pullSecrets | uniq }}
+          - name: {{ . }}
+            {{- end }}
+          {{- end }}
+        {{- end -}}
+
+        {{- define "workload.image" -}}
+        {{ include "common.images.image" (dict "imageRoot" .Values.image) }}
+        {{- end -}}
+
+        {{- define "workload.imagePullSecrets" -}}
+        {{- include "common.images.renderPullSecrets" (dict "images" (list .Values.image .Values.clientImage) "context" $) -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          {{- include "workload.imagePullSecrets" . | nindent 2 }}
+          containers:
+            - name: app
+              image: {{ include "workload.image" . }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          registry: docker.io
+          repository: example/app
+          tag: stable
+        clientImage:
+          registry: docker.io
+          repository: example/client
+          tag: stable
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    for pointer in ["/properties/image", "/properties/clientImage"] {
+        let image = schema.pointer(pointer).expect("image root present");
+        assert!(
+            image
+                .get("required")
+                .and_then(Value::as_array)
+                .is_none_or(|required| !required.iter().any(|key| key == "containers")),
+            "{pointer} should not inherit PodSpec.required from imagePullSecrets, got {image}"
+        );
+        assert_eq!(
+            image
+                .pointer("/properties/registry/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "{pointer}.registry should stay string-typed, got {image}"
+        );
+    }
 }
 
 #[test]
@@ -1099,6 +1701,91 @@ fn template_call_in_scalar_slot_propagates_helper_value_types() {
     );
 }
 
+#[test]
+fn nested_printf_helper_call_preserves_helper_output_guards() {
+    let helpers = indoc! {r#"
+        {{- define "common.fullname" -}}
+        {{- if .Values.fullnameOverride -}}
+        {{- .Values.fullnameOverride -}}
+        {{- else -}}
+        {{- default .Chart.Name .Values.nameOverride -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ printf "%s-sfx" (include "common.fullname" .) }}
+    "#};
+    let values_yaml = indoc! {"
+        fullnameOverride:
+        nameOverride:
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let fullname = schema
+        .pointer("/properties/fullnameOverride")
+        .expect("fullnameOverride present");
+    assert!(
+        permits_null(fullname),
+        "nested printf helper output should keep fullnameOverride nullable, got {fullname}; ir={ir:?}"
+    );
+    let name = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+    assert!(
+        permits_null(name),
+        "nested printf helper output should keep nameOverride nullable, got {name}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn assigned_nested_printf_helper_call_preserves_helper_output_guards() {
+    let helpers = indoc! {r#"
+        {{- define "common.fullname" -}}
+        {{- if .Values.fullnameOverride -}}
+        {{- .Values.fullnameOverride -}}
+        {{- else -}}
+        {{- default .Chart.Name .Values.nameOverride -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- $fullname := include "common.fullname" . }}
+          name: {{ printf "%s-sfx" $fullname }}
+    "#};
+    let values_yaml = indoc! {"
+        fullnameOverride:
+        nameOverride:
+    "};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let fullname = schema
+        .pointer("/properties/fullnameOverride")
+        .expect("fullnameOverride present");
+    assert!(
+        permits_null(fullname),
+        "assigned nested helper output should keep fullnameOverride nullable, got {fullname}; ir={ir:?}"
+    );
+    let name = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+    assert!(
+        permits_null(name),
+        "assigned nested helper output should keep nameOverride nullable, got {name}; ir={ir:?}"
+    );
+}
+
 /// A destructured `range $k, $v := .` inside an outer `with .Values.X` should
 /// still attribute the rendered map field back to `X`, so provider schemas can
 /// type it as an open string map.
@@ -1121,13 +1808,6 @@ fn with_bound_range_dot_annotations_stay_string_map() {
           foo: bar
     "};
     let ir = parse_ir(src);
-    if std::env::var("IR_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&serde_json::to_value(&ir).expect("ir json"))
-                .expect("pretty ir")
-        );
-    }
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
     let annotations = schema
@@ -1139,6 +1819,177 @@ fn with_bound_range_dot_annotations_stay_string_map() {
             .and_then(Value::as_str),
         Some("string"),
         "annotations should stay an open string map, got {annotations}"
+    );
+}
+
+#[test]
+fn with_defaulted_object_body_rebinds_dot_to_fallback_path() {
+    let src = indoc! {r#"
+        {{- range $db, $cfg := .Values.jobs }}
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: runner
+              {{- with (.image | default $.Values.globalImage) }}
+              image: "{{ .repository }}:{{ .tag }}"
+              {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        globalImage:
+          repository: repo/app
+        jobs:
+          first: {}
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    assert_eq!(
+        schema
+            .pointer("/properties/globalImage/properties/tag/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "defaulted object in with-body should rebind dot so fallback object fields are attributed, got {schema}"
+    );
+}
+
+#[test]
+fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        spec:
+          {{- with .Values.dataSource }}
+          dataSource: {{- toYaml . | nindent 4 }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        dataSource: {}
+    "};
+
+    let (ir, facts) = parse_ir_and_chart_facts(src);
+    let schema = generate_values_schema_full_with_facts(
+        &ir,
+        &provider(),
+        Some(values_yaml),
+        &BTreeMap::new(),
+        &facts,
+    );
+    let parameters = schema
+        .pointer("/properties/dataSource")
+        .expect("dataSource present");
+
+    let empty_variant = any_of_variant_matching(parameters, |variant| {
+        variant.get("type").and_then(Value::as_str) == Some("object")
+            && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
+    })
+    .unwrap_or_else(|| {
+        panic!(
+            "exact empty object placeholder variant missing: {parameters}; facts={:?}; ir={ir:?}",
+            facts.path_facts.get("dataSource")
+        )
+    });
+    assert_eq!(
+        empty_variant
+            .get("additionalProperties")
+            .and_then(Value::as_bool),
+        Some(false),
+    );
+}
+
+#[test]
+fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: app
+              image: busybox
+              env:
+              {{- range .Values.env }}
+                - name: {{ .name }}
+                  {{- if .valueFrom }}
+                  valueFrom: {{- toYaml .valueFrom | nindent 20 }}
+                  {{- else }}
+                  value: {{ .value | quote }}
+                  {{- end }}
+              {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        env: {}
+    "};
+
+    let (ir, facts) = parse_ir_and_chart_facts(src);
+    let schema = generate_values_schema_full_with_facts(
+        &ir,
+        &provider(),
+        Some(values_yaml),
+        &BTreeMap::new(),
+        &facts,
+    );
+    let env = schema.pointer("/properties/env").expect("env present");
+
+    any_of_variant_matching(env, |variant| {
+        variant.get("type").and_then(Value::as_str) == Some("object")
+            && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
+    })
+    .unwrap_or_else(|| {
+        panic!(
+            "exact empty object off-state missing: {env}; facts={:?}",
+            facts.path_facts.get("env")
+        )
+    });
+
+    any_of_variant_matching(env, |variant| {
+        variant.get("type").and_then(Value::as_str) == Some("array")
+    })
+    .unwrap_or_else(|| panic!("non-empty array form missing: {env}"));
+}
+
+#[test]
+fn guard_only_empty_map_default_stays_open_object() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+          {{- if .Values.config }}
+          annotations:
+            config-enabled: "true"
+          {{- end }}
+        spec:
+          containers:
+            - name: app
+              image: busybox
+    "#};
+    let values_yaml = indoc! {"
+        config: {}
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let config = schema
+        .pointer("/properties/config")
+        .expect("config present");
+    assert_eq!(
+        config.get("type").and_then(Value::as_str),
+        Some("object"),
+        "guard-only empty-map default should keep the values.yaml object evidence, got {config}"
+    );
+    assert_eq!(
+        config
+            .get("additionalProperties")
+            .and_then(Value::as_object)
+            .map(serde_json::Map::len),
+        Some(0),
+        "guard-only empty-map default should remain open, got {config}"
+    );
+    assert!(
+        config.get("anyOf").is_none(),
+        "guard-only empty-map default should not become an exact-empty-or-boolean union, got {config}"
     );
 }
 
@@ -1269,13 +2120,6 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    if std::env::var("IR_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&serde_json::to_value(&ir).expect("ir json"))
-                .expect("pretty ir")
-        );
-    }
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
     assert_eq!(
@@ -1608,12 +2452,9 @@ fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call()
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
-    assert_eq!(
-        pod_labels
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "podLabels should stay an open string map when reused through a local fragment variable, got {pod_labels}"
+    assert_open_string_map_or_templated_string(
+        pod_labels,
+        "podLabels reused through a local fragment variable",
     );
 }
 
@@ -1645,12 +2486,9 @@ fn assigned_annotations_fragment_variable_keeps_open_string_map() {
     let annotations = schema
         .pointer("/properties/serviceAccount/properties/annotations")
         .expect("serviceAccount.annotations present");
-    assert_eq!(
-        annotations
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "serviceAccount.annotations should stay an open string map when reused through a local fragment variable, got {annotations}"
+    assert_open_string_map_or_templated_string(
+        annotations,
+        "serviceAccount.annotations reused through a local fragment variable",
     );
 }
 
@@ -1688,12 +2526,9 @@ fn direct_rendered_annotations_helper_keeps_open_string_map() {
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
         .expect("podAnnotations present");
-    assert_eq!(
-        pod_annotations
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "podAnnotations should stay an open string map through common.tplvalues.render, got {pod_annotations}"
+    assert_open_string_map_or_templated_string(
+        pod_annotations,
+        "podAnnotations rendered through common.tplvalues.render",
     );
 }
 
@@ -1732,12 +2567,9 @@ fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map()
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
         .expect("podAnnotations present");
-    assert_eq!(
-        pod_annotations
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "empty-map podAnnotations should still keep the provider string-map shape through helper render, got {pod_annotations}"
+    assert_open_string_map_or_templated_string(
+        pod_annotations,
+        "empty-map podAnnotations rendered through common.tplvalues.render",
     );
 }
 
@@ -1766,12 +2598,61 @@ fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
-    assert_eq!(
-        pod_labels
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "empty-map podLabels should still keep the provider string-map shape through the assigned fragment helper path, got {pod_labels}"
+    assert_open_string_map_or_templated_string(
+        pod_labels,
+        "empty-map podLabels rendered through the assigned fragment helper path",
+    );
+}
+
+#[test]
+fn helper_built_matchlabels_keeps_name_override_scalar() {
+    let helpers = format!(
+        "{}\n{}",
+        bitnami_tplvalues_helpers(),
+        indoc! {r#"
+            {{- define "common.names.name" -}}
+            {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+
+            {{- define "common.labels.matchLabels" -}}
+            {{- if and (hasKey . "customLabels") (hasKey . "context") -}}
+            {{ merge (pick (include "common.tplvalues.render" (dict "value" .customLabels "context" .context) | fromYaml) "app.kubernetes.io/name" "app.kubernetes.io/instance") (dict "app.kubernetes.io/name" (include "common.names.name" .context) "app.kubernetes.io/instance" .context.Release.Name ) | toYaml }}
+            {{- else -}}
+            app.kubernetes.io/name: {{ include "common.names.name" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+            {{- end -}}
+            {{- end -}}
+        "#}
+    );
+    let src = indoc! {r#"
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        spec:
+          podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" (dict "customLabels" .Values.podLabels "context" .) | nindent 6 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        nameOverride: ""
+        podLabels: {}
+    "#};
+
+    let ir = parse_ir_with_helpers(src, &helpers);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let name_override = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
+
+    assert!(
+        permits_empty_string(name_override),
+        "defaulted nameOverride should allow the shipped empty string, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        permits_type(name_override, "string"),
+        "nameOverride should stay string-valued, got {name_override}; ir={ir:?}"
+    );
+    assert!(
+        !permits_type(name_override, "object"),
+        "helper-built matchLabels map must not project its object schema onto nameOverride, got {name_override}; ir={ir:?}"
     );
 }
 
@@ -1809,23 +2690,17 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
-    assert_eq!(
-        pod_labels
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "metadata.labels should keep podLabels as an open string map even when workload kind is unresolved, got {pod_labels}"
+    assert_open_string_map_or_templated_string(
+        pod_labels,
+        "metadata.labels podLabels with unresolved workload kind",
     );
 
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
         .expect("podAnnotations present");
-    assert_eq!(
-        pod_annotations
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
-        "metadata.annotations should keep podAnnotations as an open string map even when workload kind is unresolved, got {pod_annotations}"
+    assert_open_string_map_or_templated_string(
+        pod_annotations,
+        "metadata.annotations podAnnotations with unresolved workload kind",
     );
 }
 

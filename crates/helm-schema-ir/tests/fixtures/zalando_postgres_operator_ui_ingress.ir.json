@@ -1,9 +1,133 @@
 [
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "name"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.hosts",
+        "type": "range"
+      },
+      {
+        "path": "ingress.hosts.*.paths",
+        "type": "range"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "rules[*]",
+      "http",
+      "paths[*]",
+      "backend",
+      "service",
+      "name"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.hosts",
+        "type": "range"
+      },
+      {
+        "path": "ingress.hosts.*.paths",
+        "type": "range"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "rules[*]",
+      "http",
+      "paths[*]",
+      "backend",
+      "serviceName"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
     "source_expr": "fullnameOverride"
   },
   {
@@ -282,10 +406,122 @@
     "source_expr": "ingress.tls.*.secretName"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "name"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.hosts",
+        "type": "range"
+      },
+      {
+        "path": "ingress.hosts.*.paths",
+        "type": "range"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "rules[*]",
+      "http",
+      "paths[*]",
+      "backend",
+      "service",
+      "name"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.hosts",
+        "type": "range"
+      },
+      {
+        "path": "ingress.hosts.*.paths",
+        "type": "range"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "rules[*]",
+      "http",
+      "paths[*]",
+      "backend",
+      "serviceName"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
     "source_expr": "nameOverride"
   },
   {

@@ -12,6 +12,9 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
         parser,
         &test_util::read_testdata("charts/bitnami-redis/templates/_helpers.tpl"),
     );
+    for src in test_util::read_testdata_dir("charts/common/templates", "tpl") {
+        let _ = idx.add_source(parser, &src);
+    }
     idx
 }
 

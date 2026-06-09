@@ -121,7 +121,12 @@
     "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -173,17 +178,72 @@
     "source_expr": "fullnameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "global.labels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.labels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "autoscaling.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "autoscaling/v2beta1",
+      "kind": "HorizontalPodAutoscaler"
+    },
     "source_expr": "nameOverride"
   },
   {

@@ -58,7 +58,12 @@
     "source_expr": "controllerID.create"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "controllerID.create",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -107,6 +112,76 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "controllerID.create",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "controllerID.create",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "configTarget",
+        "type": "eq",
+        "value": "ConfigMap"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "configTarget",
+        "type": "eq",
+        "value": "ConfigMap"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -228,6 +303,31 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "controllerID.create",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "configTarget",
+        "type": "eq",
+        "value": "ConfigMap"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -445,23 +545,10 @@
     "source_expr": "securityContext"
   },
   {
-    "guards": [
-      {
-        "path": "serviceAccount.name",
-        "type": "default"
-      }
-    ],
+    "guards": [],
     "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "serviceAccountName"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
+    "path": [],
+    "resource": null,
     "source_expr": "serviceAccount.name"
   },
   {

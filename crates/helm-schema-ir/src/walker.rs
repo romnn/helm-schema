@@ -192,6 +192,7 @@ pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Opt
 /// after `Values` must be a real identifier, matching the old regex's
 /// `[\w]+(?:\.(?:[\w]+|\*))*` shape.
 #[must_use]
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn extract_values_paths(text: &str) -> Vec<String> {
     let mut paths: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     for top in parse_bare_expression_text(text) {
@@ -391,6 +392,13 @@ pub fn parse_condition(text: &str) -> Vec<Guard> {
                     return vec![Guard::Truthy { path }];
                 }
             }
+            "typeIs" => {
+                if let Some(path) = single(&paths)
+                    && let Some(schema_type) = type_is_schema_type(args.first())
+                {
+                    return vec![Guard::TypeIs { path, schema_type }];
+                }
+            }
             // Other keywords (`and`, plus unrecognised builtins) fall
             // through to the default truthy-collection branch below —
             // every embedded `.Values.X` reference becomes its own
@@ -403,6 +411,26 @@ pub fn parse_condition(text: &str) -> Vec<Guard> {
         .into_iter()
         .map(|path| Guard::Truthy { path })
         .collect()
+}
+
+fn type_is_schema_type(expr: Option<&helm_schema_ast::TemplateExpr>) -> Option<String> {
+    let helm_schema_ast::TemplateExpr::Literal(
+        helm_schema_ast::Literal::String(type_name)
+        | helm_schema_ast::Literal::RawString(type_name),
+    ) = expr?.deparen()
+    else {
+        return None;
+    };
+    let schema_type = match type_name.as_str() {
+        "bool" | "boolean" => "boolean",
+        "float64" | "number" => "number",
+        "int" | "int64" | "integer" => "integer",
+        "list" | "slice" | "array" => "array",
+        "map" | "dict" | "object" => "object",
+        "string" => "string",
+        _ => return None,
+    };
+    Some(schema_type.to_string())
 }
 
 /// Return the single element of `paths` (cloned) if there's exactly

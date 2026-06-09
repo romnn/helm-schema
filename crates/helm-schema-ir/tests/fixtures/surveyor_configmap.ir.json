@@ -314,24 +314,100 @@
     "source_expr": "config.jetstream.enabled"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "config.jetstream.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "fullnameOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "config.jetstream.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "config.jetstream.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "global.labels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "config.jetstream.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.labels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "ConfigMap"
+    },
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "config.jetstream.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "config.jetstream.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "ConfigMap"
+    },
     "source_expr": "nameOverride"
   }
 ]

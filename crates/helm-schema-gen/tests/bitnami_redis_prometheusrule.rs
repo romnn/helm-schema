@@ -10,6 +10,9 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
         parser,
         &test_util::read_testdata("charts/bitnami-redis/templates/_helpers.tpl"),
     );
+    for src in test_util::read_testdata_dir("charts/common/templates", "tpl") {
+        let _ = idx.add_source(parser, &src);
+    }
     idx
 }
 
@@ -41,16 +44,48 @@ fn schema_fused_rust() {
   "additionalProperties": false,
   "properties": {
     "commonAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "commonLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "fullnameOverride": {
+      "anyOf": [
+        {
+          "description": "Name of the rule group.",
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "enum": [
+            ""
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "metrics": {
       "additionalProperties": false,
@@ -62,10 +97,17 @@ fn schema_fused_rust() {
           "additionalProperties": false,
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "enabled": {
               "type": "boolean"
@@ -81,73 +123,101 @@ fn schema_fused_rust() {
               ]
             },
             "rules": {
-              "description": "List of alerting and recording rules.",
-              "items": {
-                "additionalProperties": false,
-                "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                "properties": {
-                  "alert": {
-                    "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                    "type": "string"
-                  },
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                    "type": "object"
-                  },
-                  "expr": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
+              "anyOf": [
+                {
+                  "description": "List of alerting and recording rules.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
+                    "properties": {
+                      "alert": {
+                        "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
+                        "type": "string"
                       },
-                      {
+                      "annotations": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
+                        "type": "object"
+                      },
+                      "expr": {
+                        "anyOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "PromQL expression to evaluate.",
+                        "x-kubernetes-int-or-string": true
+                      },
+                      "for": {
+                        "description": "Alerts are considered firing once they have been returned for this long.",
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
+                      },
+                      "keep_firing_for": {
+                        "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
+                        "minLength": 1,
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
+                      },
+                      "labels": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "Labels to add or overwrite.",
+                        "type": "object"
+                      },
+                      "record": {
+                        "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
                         "type": "string"
                       }
-                    ],
-                    "description": "PromQL expression to evaluate.",
-                    "x-kubernetes-int-or-string": true
-                  },
-                  "for": {
-                    "description": "Alerts are considered firing once they have been returned for this long.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "keep_firing_for": {
-                    "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                    "minLength": 1,
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
                     },
-                    "description": "Labels to add or overwrite.",
+                    "required": [
+                      "expr"
+                    ],
                     "type": "object"
                   },
-                  "record": {
-                    "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                    "type": "string"
-                  }
+                  "type": "array"
                 },
-                "required": [
-                  "expr"
-                ],
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
         }
       },
       "type": "object"
+    },
+    "nameOverride": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "namespaceOverride": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
     }
   },
   "type": "object"
 }
+
 "#,
     )
     .expect("parse expected");

@@ -427,6 +427,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
                   (Scalar "failureThreshold")
                   (HelmExpr ".failureThreshold")))))))))
   (HelmExpr "$nodeSelector := .Values.global.nodeSelector | default dict")
+  (HelmExpr "$nodeSelector = merge $nodeSelector (.Values.nodeSelector | default dict)")
   (With "$nodeSelector"
     (body
       (Mapping

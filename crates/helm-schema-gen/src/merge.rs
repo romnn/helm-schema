@@ -27,6 +27,36 @@ pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
     it.fold(first, merge_two_schemas)
 }
 
+pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
+    match schemas.len() {
+        0 => return Value::Object(Map::new()),
+        1 => return schemas.pop().unwrap_or_else(|| Value::Object(Map::new())),
+        _ => {}
+    }
+
+    let mut out: Vec<Value> = Vec::new();
+    for schema in schemas {
+        out.extend(flatten_union_variants(schema));
+    }
+    if out
+        .iter()
+        .any(|schema| !schema.as_object().is_some_and(Map::is_empty))
+    {
+        out.retain(|schema| !schema.as_object().is_some_and(Map::is_empty));
+    }
+    out = dedup_schemas(out);
+    out.sort_by_key(canonical_json_string);
+    if out.len() == 1 {
+        out.into_iter().next().expect("len == 1")
+    } else {
+        Value::Object(
+            [("anyOf".to_string(), Value::Array(out))]
+                .into_iter()
+                .collect(),
+        )
+    }
+}
+
 pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     if a == b {
         return a;
@@ -270,6 +300,13 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
         obj.get("additionalProperties")
             .and_then(|value| value.as_object())
             .is_some_and(|map| !map.is_empty())
+            || preserves_unknown_fields(obj)
+    }
+
+    fn preserves_unknown_fields(obj: &Map<String, Value>) -> bool {
+        obj.get("x-kubernetes-preserve-unknown-fields")
+            .and_then(Value::as_bool)
+            == Some(true)
     }
 
     fn is_structured_object(obj: &Map<String, Value>) -> bool {
@@ -298,11 +335,16 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
 
     let a_map_like = has_meaningful_additional_properties(&out);
     let b_map_like = has_meaningful_additional_properties(bobj);
+    let a_preserves_unknown = preserves_unknown_fields(&out);
+    let b_preserves_unknown = preserves_unknown_fields(bobj);
 
     match (
         out.get("additionalProperties").cloned(),
         bobj.get("additionalProperties").cloned(),
     ) {
+        _ if a_preserves_unknown || b_preserves_unknown => {
+            out.remove("additionalProperties");
+        }
         (Some(ap_a), Some(ap_b)) if a_map_like && b_map_like => {
             out.insert(
                 "additionalProperties".to_string(),
@@ -495,6 +537,42 @@ mod tests {
                 .pointer("/properties/requests/properties/cpu/type")
                 .and_then(|value| value.as_str()),
             Some("string"),
+        );
+    }
+
+    #[test]
+    fn merge_preserve_unknown_fields_object_with_closed_values_object_stays_open() {
+        let provider = json!({
+            "type": "object",
+            "x-kubernetes-preserve-unknown-fields": true
+        });
+        let values_yaml = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "replicas": { "type": "integer" },
+                "logLevel": { "type": "string" }
+            }
+        });
+
+        let merged = merge_two_schemas(provider, values_yaml);
+
+        assert_eq!(
+            merged.get("additionalProperties"),
+            None,
+            "preserve-unknown-fields object should stay open, got {merged}"
+        );
+        assert_eq!(
+            merged
+                .pointer("/properties/replicas/type")
+                .and_then(serde_json::Value::as_str),
+            Some("integer"),
+        );
+        assert_eq!(
+            merged
+                .get("x-kubernetes-preserve-unknown-fields")
+                .and_then(serde_json::Value::as_bool),
+            Some(true),
         );
     }
 

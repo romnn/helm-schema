@@ -13,10 +13,10 @@ use std::path::Path;
 use std::time::{Duration, Instant};
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::{GenerationProfile, generate_values_schema_full_profiled};
+use helm_schema_gen::{GenerationProfile, generate_values_schema_full_profiled_with_facts};
 use helm_schema_ir::{
-    Guard, IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints,
-    extract_define_blocks, extract_helper_calls,
+    ChartFacts, Guard, IrGenerator, SymbolicIrGenerator, ValueUse, derive_chart_facts_from_ast,
+    extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
 use serde_json::Value;
@@ -449,6 +449,7 @@ fn generate_values_schema_for_chart_with_diagnostics_profiled(
 
     let ChartIrCollection {
         mut uses,
+        chart_facts,
         type_hints,
         call_graph,
     } = profiler.measure(ProfilePhase::IrCollection, || {
@@ -461,7 +462,13 @@ fn generate_values_schema_for_chart_with_diagnostics_profiled(
     });
 
     let generated_schema = profiler.measure(ProfilePhase::SchemaGeneration, || {
-        generate_values_schema_full_profiled(&uses, &provider, values_yaml.as_deref(), &type_hints)
+        generate_values_schema_full_profiled_with_facts(
+            &uses,
+            &provider,
+            values_yaml.as_deref(),
+            &type_hints,
+            &chart_facts,
+        )
     });
     let mut schema = generated_schema.schema;
 
@@ -493,6 +500,7 @@ fn generate_values_schema_for_chart_with_diagnostics_profiled(
 /// IR + auxiliary signals collected from a chart's templates.
 pub(crate) struct ChartIrCollection {
     pub(crate) uses: Vec<ValueUse>,
+    pub(crate) chart_facts: ChartFacts,
     pub(crate) type_hints: BTreeMap<String, Vec<Value>>,
     pub(crate) call_graph: HelperCallGraph,
 }
@@ -664,6 +672,7 @@ fn collect_ir_for_charts(
     include_tests: bool,
 ) -> CliResult<ChartIrCollection> {
     let mut uses: Vec<ValueUse> = Vec::new();
+    let mut chart_facts = ChartFacts::default();
     let mut type_hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
 
     for c in charts {
@@ -675,6 +684,10 @@ fn collect_ir_for_charts(
             let mut src = String::new();
             path.open_file()?.read_to_string(&mut src)?;
             let ast = TreeSitterParser.parse(&src)?;
+            merge_chart_facts(
+                &mut chart_facts,
+                scope_chart_facts(derive_chart_facts_from_ast(&ast), &c.values_prefix),
+            );
             let manifest_uses = SymbolicIrGenerator.generate(&src, &ast, defines);
             for u in manifest_uses {
                 uses.push(scope_value_use(u, &c.values_prefix));
@@ -697,9 +710,38 @@ fn collect_ir_for_charts(
 
     Ok(ChartIrCollection {
         uses,
+        chart_facts,
         type_hints,
         call_graph,
     })
+}
+
+fn scope_chart_facts(chart_facts: ChartFacts, prefix: &[String]) -> ChartFacts {
+    ChartFacts {
+        path_facts: chart_facts
+            .path_facts
+            .into_iter()
+            .map(|(path, fact)| (scope_values_path(&path, prefix), fact))
+            .collect(),
+    }
+}
+
+fn merge_chart_facts(dst: &mut ChartFacts, src: ChartFacts) {
+    for (path, fact) in src.path_facts {
+        let entry = dst.path_facts.entry(path).or_default();
+        let had_render_use = entry.has_render_use;
+        if fact.has_render_use {
+            entry.all_render_uses_self_guarded = if had_render_use {
+                entry.all_render_uses_self_guarded && fact.all_render_uses_self_guarded
+            } else {
+                fact.all_render_uses_self_guarded
+            };
+        }
+        entry.has_render_use |= fact.has_render_use;
+        entry.has_fragment_render |= fact.has_fragment_render;
+        entry.descendant_accessed |= fact.descendant_accessed;
+        entry.has_self_range_guard_render_use |= fact.has_self_range_guard_render_use;
+    }
 }
 
 fn apply_type_hints_to(
@@ -755,6 +797,10 @@ fn scope_guard(g: Guard, prefix: &[String]) -> Guard {
         Guard::Default { path } => Guard::Default {
             path: scope_values_path(&path, prefix),
         },
+        Guard::TypeIs { path, schema_type } => Guard::TypeIs {
+            path: scope_values_path(&path, prefix),
+            schema_type,
+        },
     }
 }
 
@@ -780,4 +826,54 @@ fn load_json_file(path: &Path) -> CliResult<Value> {
     let bytes = std::fs::read(path)?;
     let v: Value = serde_json::from_slice(&bytes)?;
     Ok(v)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use helm_schema_ir::PathFact;
+
+    fn chart_facts_for(path: &str, all_render_uses_self_guarded: bool) -> ChartFacts {
+        let mut chart_facts = ChartFacts::default();
+        chart_facts.path_facts.insert(
+            path.to_string(),
+            PathFact {
+                has_render_use: true,
+                all_render_uses_self_guarded,
+                ..PathFact::default()
+            },
+        );
+        chart_facts
+    }
+
+    #[test]
+    fn merge_chart_facts_initializes_self_guarded_state_from_first_render_use() {
+        let mut merged = ChartFacts::default();
+
+        merge_chart_facts(&mut merged, chart_facts_for("annotations", true));
+
+        assert_eq!(
+            merged
+                .path_facts
+                .get("annotations")
+                .map(|fact| fact.all_render_uses_self_guarded),
+            Some(true),
+        );
+    }
+
+    #[test]
+    fn merge_chart_facts_conjoins_self_guarded_state_across_render_uses() {
+        let mut merged = ChartFacts::default();
+
+        merge_chart_facts(&mut merged, chart_facts_for("annotations", true));
+        merge_chart_facts(&mut merged, chart_facts_for("annotations", false));
+
+        assert_eq!(
+            merged
+                .path_facts
+                .get("annotations")
+                .map(|fact| fact.all_render_uses_self_guarded),
+            Some(false),
+        );
+    }
 }

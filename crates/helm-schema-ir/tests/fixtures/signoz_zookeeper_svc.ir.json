@@ -1,6 +1,18 @@
 [
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "commonAnnotations",
+          "service.annotations"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "commonAnnotations",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -60,7 +72,12 @@
     "source_expr": "commonAnnotations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -102,10 +119,60 @@
     "source_expr": "fullnameOverride"
   },
   {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
     "guards": [],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "selector",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
     "source_expr": "nameOverride"
   },
   {
@@ -116,7 +183,31 @@
     "source_expr": "namespaceOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "namespaceOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "commonAnnotations",
+          "service.annotations"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "service.annotations",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -236,7 +327,12 @@
     "source_expr": "service.externalTrafficPolicy"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "service.extraPorts",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -513,7 +609,12 @@
     "source_expr": "service.sessionAffinity"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "service.sessionAffinityConfig",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,

@@ -52,101 +52,467 @@ fn symbolic_ir_full() {
         );
     }
 
-    let sa = serde_json::json!({"api_version": "v1", "kind": "ServiceAccount"});
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
-    let d = |p: &str| serde_json::json!({"type": "default", "path": p});
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+[
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.jetstream.fileStore.pvc"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.jetstream.fileStore.pvc.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.merge"
+  },
+  {
+    "guards": [
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.patch"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.resolver.pvc"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.resolver.pvc.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.websocket.ingress"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.websocket.ingress.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "configMap"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "configMap.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.labels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "ServiceAccount"
+    },
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "headlessService"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "headlessService.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "ServiceAccount"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "namespaceOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "namespace"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "ServiceAccount"
+    },
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contentsSecret"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contentsSecret.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contexts"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contextsSecret"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contextsSecret.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.deployment"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.deployment.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.serviceAccount"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.serviceAccount.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podDisruptionBudget"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podDisruptionBudget.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "promExporter.podMonitor"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "promExporter.podMonitor.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount.merge"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceAccount.name",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "ServiceAccount"
+    },
+    "source_expr": "serviceAccount.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount",
+        "type": "with"
+      },
+      {
+        "path": "serviceAccount.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount.patch"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "statefulSet"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "statefulSet.name"
+  }
+]
 
-    let expected = serde_json::json!([
-        {
-            "source_expr": "config",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global.labels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "namespaceOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "natsBox.contexts",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceAccount",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("serviceAccount")],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceAccount",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceAccount.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("serviceAccount")],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceAccount.merge",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "serviceAccount.name",
-            "path": ["metadata", "name"],
-            "kind": "Scalar",
-            "guards": [
-                w("serviceAccount"),
-                t("serviceAccount.enabled"),
-                d("serviceAccount.name"),
-            ],
-            "resource": sa
-        },
-        {
-            "source_expr": "serviceAccount.patch",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("serviceAccount"), t("serviceAccount.enabled")],
-            "resource": null
-        }
-    ]);
+"#,
+    )
+    .expect("parse expected");
 
     similar_asserts::assert_eq!(actual, expected);
 }

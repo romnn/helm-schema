@@ -774,7 +774,16 @@
       "type": "object"
     },
     "configTarget": {
-      "type": "string"
+      "anyOf": [
+        {
+          "enum": [
+            "ConfigMap"
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "controllerID": {
       "additionalProperties": false,
@@ -1288,17 +1297,7 @@
     "serviceAccount": {
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
+        "name": {}
       },
       "type": "object"
     },

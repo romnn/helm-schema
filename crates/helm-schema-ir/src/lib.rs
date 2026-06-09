@@ -1,8 +1,10 @@
+mod abstract_eval;
 pub mod helper_eval;
 pub mod required_inference;
 mod symbolic;
 mod walker;
 
+pub use abstract_eval::{ChartFacts, PathFact, derive_chart_facts, derive_chart_facts_from_ast};
 pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
     helper_literal_outputs,
@@ -101,6 +103,13 @@ pub enum Guard {
     /// accepted chart input for that render site even when `values.yaml` ships
     /// a non-null default.
     Default { path: String },
+    /// A `typeIs "<json type>" <path>` check in template logic.
+    ///
+    /// This is not a truthiness guard. It is a structural type declaration:
+    /// helpers such as Bitnami's `common.tplvalues.render` explicitly branch on
+    /// `typeIs "string" .value`, so callers may supply that values path as a
+    /// string even when another branch renders it as a YAML object fragment.
+    TypeIs { path: String, schema_type: String },
 }
 
 impl Guard {
@@ -113,7 +122,8 @@ impl Guard {
             | Guard::Eq { path, .. }
             | Guard::Range { path }
             | Guard::With { path }
-            | Guard::Default { path } => {
+            | Guard::Default { path }
+            | Guard::TypeIs { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),

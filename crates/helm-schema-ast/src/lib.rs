@@ -254,6 +254,9 @@ impl DefineIndex {
     }
 
     pub fn add_file_source(&mut self, path: &str, src: &str) {
+        self.files.retain(|existing_path, existing_src| {
+            !is_inline_source(existing_path, existing_src, src)
+        });
         self.files.insert(path.to_string(), src.to_string());
     }
 
@@ -263,8 +266,10 @@ impl DefineIndex {
     }
 
     pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str)> {
-        self.files
-            .iter()
+        let mut entries: Vec<_> = self.files.iter().collect();
+        entries.sort_by(|(left_path, _), (right_path, _)| left_path.cmp(right_path));
+        entries
+            .into_iter()
             .map(|(path, src)| (path.as_str(), src.as_str()))
     }
 
@@ -276,6 +281,17 @@ impl DefineIndex {
     pub fn add_source(&mut self, parser: &dyn HelmParser, src: &str) -> Result<(), ParseError> {
         let tree = parser.parse(src)?;
         self.collect_defines(&tree);
+        if !self.files.values().any(|existing| existing == src) {
+            let mut index = self.files.len();
+            loop {
+                let path = format!("<inline:{index}>");
+                if !self.files.contains_key(&path) {
+                    self.files.insert(path, src.to_string());
+                    break;
+                }
+                index += 1;
+            }
+        }
         Ok(())
     }
 
@@ -335,6 +351,10 @@ impl DefineIndex {
             HelmAst::Scalar { .. } | HelmAst::HelmExpr { .. } | HelmAst::HelmComment { .. } => {}
         }
     }
+}
+
+fn is_inline_source(path: &str, existing_src: &str, src: &str) -> bool {
+    path.starts_with("<inline:") && path.ends_with('>') && existing_src == src
 }
 
 #[cfg(test)]

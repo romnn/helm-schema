@@ -263,9 +263,7 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
                     push_to_current(&mut stack, &mut out, FusedNode::HelmComment { text });
                 }
                 HelmTok::Expr { text } => {
-                    if !is_silent_reassignment_expr(&text) {
-                        push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
-                    }
+                    push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
                 }
             }
 
@@ -400,9 +398,7 @@ pub fn parse_fused_yaml_helm(src: &str) -> Result<FusedNode, FusedParseError> {
                     push_to_current(&mut stack, &mut out, FusedNode::HelmComment { text });
                 }
                 HelmTok::Expr { text } => {
-                    if !is_silent_reassignment_expr(&text) {
-                        push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
-                    }
+                    push_to_current(&mut stack, &mut out, FusedNode::HelmExpr { text });
                 }
             }
 
@@ -485,17 +481,6 @@ enum HelmTok {
     End,
     Comment { text: String },
     Expr { text: String },
-}
-
-fn is_silent_reassignment_expr(text: &str) -> bool {
-    let mut it = text.split_whitespace();
-    let Some(first) = it.next() else {
-        return false;
-    };
-    let Some(second) = it.next() else {
-        return false;
-    };
-    first.starts_with('$') && second == "="
 }
 
 fn parse_helm_template_text(raw: &str) -> HelmTok {

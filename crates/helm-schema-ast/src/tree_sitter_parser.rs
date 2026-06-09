@@ -10,17 +10,6 @@ fn is_template_delim_start(kind: &str) -> bool {
     kind == "{{" || kind == "{{-"
 }
 
-fn is_silent_reassignment_expr(text: &str) -> bool {
-    let mut it = text.split_whitespace();
-    let Some(first) = it.next() else {
-        return false;
-    };
-    let Some(second) = it.next() else {
-        return false;
-    };
-    first.starts_with('$') && second == "="
-}
-
 fn is_fragment_injector_expr(text: &str) -> bool {
     let mut it = text.split_whitespace();
     let first = it.next().unwrap_or("");
@@ -477,11 +466,6 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                     let span_text = &src[start.min(src.len())..end.min(src.len())];
                     let normalized = normalize_helm_template_text(span_text);
 
-                    if is_silent_reassignment_expr(&normalized) {
-                        i = j + 1;
-                        continue;
-                    }
-
                     if !in_control_flow
                         && action_indent > 0
                         && is_fragment_injector_expr(&normalized)
@@ -544,12 +528,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
             let text = b.utf8_text(src.as_bytes()).unwrap_or("");
             let normalized = normalize_helm_template_text(text);
 
-            if is_silent_reassignment_expr(&normalized) {
-                // Ignore silent reassignments like `$x = ...`.
-            } else if !in_control_flow
-                && action_indent > 0
-                && is_fragment_injector_expr(&normalized)
-            {
+            if !in_control_flow && action_indent > 0 && is_fragment_injector_expr(&normalized) {
                 // Skip top-level fragment injectors; they typically expand to YAML.
             } else if is_yaml_value_continuation {
                 let r = b.byte_range();

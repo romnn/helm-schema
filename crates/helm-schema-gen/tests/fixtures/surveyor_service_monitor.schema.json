@@ -9,14 +9,23 @@
       "additionalProperties": false,
       "properties": {
         "labels": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         }
       },
       "type": "object"
     },
     "nameOverride": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "serviceMonitor": {
       "additionalProperties": false,

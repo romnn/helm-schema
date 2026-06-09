@@ -18,8 +18,12 @@
             },
             "tag": {
               "anyOf": [
-                { "type": "null" },
-                { "type": "string" }
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
@@ -1048,7 +1052,11 @@
       "additionalProperties": false,
       "properties": {
         "commonLabels": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "properties": {},
           "type": "object"
         },
         "hostUsers": {
@@ -1126,8 +1134,12 @@
           ]
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
         },
         "podSecurityPolicy": {
           "additionalProperties": false,
@@ -1228,13 +1240,16 @@
     "image": {
       "additionalProperties": false,
       "properties": {
+        "digest": {},
         "pullPolicy": {
           "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
           "type": "string"
         },
+        "registry": {},
         "repository": {
           "type": "string"
-        }
+        },
+        "tag": {}
       },
       "type": "object"
     },
@@ -1355,13 +1370,17 @@
       ]
     },
     "nodeSelector": {
-      "additionalProperties": false,
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
       "properties": {
         "kubernetes.io/os": {
           "type": "string"
         }
       },
-      "type": "object"
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
     },
     "podAnnotations": {
       "additionalProperties": {

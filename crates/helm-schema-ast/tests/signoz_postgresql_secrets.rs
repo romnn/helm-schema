@@ -10,13 +10,21 @@ const EXPECTED_SEXPR: &str = r#"(Document
   (HelmExpr "$port := include \"postgresql.v1.service.port\" .")
   (HelmExpr "$customUser := include \"postgresql.v1.username\" .")
   (HelmExpr "$postgresPassword := include \"common.secrets.lookup\" (dict \"secret\" (include \"postgresql.v1.secretName\" .) \"key\" (coalesce .Values.global.postgresql.auth.secretKeys.adminPasswordKey .Values.auth.secretKeys.adminPasswordKey) \"defaultValue\" (ternary (coalesce .Values.global.postgresql.auth.password .Values.auth.password .Values.global.postgresql.auth.postgresPassword .Values.auth.postgresPassword) (coalesce .Values.global.postgresql.auth.postgresPassword .Values.auth.postgresPassword) (or (empty $customUser) (eq $customUser \"postgres\"))) \"context\" $) | trimAll \"\\\"\" | b64dec")
-  (If "and (not $postgresPassword) .Values.auth.enablePostgresUser")
+  (If "and (not $postgresPassword) .Values.auth.enablePostgresUser"
+    (then
+      (HelmExpr "$postgresPassword = randAlphaNum 10")))
   (HelmExpr "$replicationPassword := \"\"")
-  (If "eq .Values.architecture \"replication\"")
+  (If "eq .Values.architecture \"replication\""
+    (then
+      (HelmExpr "$replicationPassword = include \"common.secrets.passwords.manage\" (dict \"secret\" (include \"postgresql.v1.secretName\" .) \"key\" (coalesce .Values.global.postgresql.auth.secretKeys.replicationPasswordKey .Values.auth.secretKeys.replicationPasswordKey) \"providedValues\" (list \"auth.replicationPassword\") \"context\" $) | trimAll \"\\\"\" | b64dec")))
   (HelmExpr "$ldapPassword := \"\"")
-  (If "and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw)")
+  (If "and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw)"
+    (then
+      (HelmExpr "$ldapPassword = coalesce .Values.ldap.bind_password .Values.ldap.bindpw")))
   (HelmExpr "$password := \"\"")
-  (If "and (not (empty $customUser)) (ne $customUser \"postgres\")")
+  (If "and (not (empty $customUser)) (ne $customUser \"postgres\")"
+    (then
+      (HelmExpr "$password = include \"common.secrets.passwords.manage\" (dict \"secret\" (include \"postgresql.v1.secretName\" .) \"key\" (coalesce .Values.global.postgresql.auth.secretKeys.userPasswordKey .Values.auth.secretKeys.userPasswordKey) \"providedValues\" (list \"global.postgresql.auth.password\" \"auth.password\") \"context\" $) | trimAll \"\\\"\" | b64dec")))
   (HelmExpr "$database := include \"postgresql.v1.database\" .")
   (If "(include \"postgresql.v1.createSecret\" .)"
     (then

@@ -651,6 +651,70 @@ fn list_bound_helper_fragment_keeps_metadata_map_paths() {
 }
 
 #[test]
+fn bitnami_tplvalues_merge_list_items_stay_on_labels_path() {
+    let helpers = indoc! {r#"
+        {{- define "common.tplvalues.render" -}}
+        {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+        {{- if contains "{{" (toJson .value) }}
+          {{- if .scope }}
+              {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+          {{- else }}
+            {{- tpl $value .context }}
+          {{- end }}
+        {{- else }}
+            {{- $value }}
+        {{- end }}
+        {{- end -}}
+
+        {{- define "common.tplvalues.merge" -}}
+        {{- $dst := dict -}}
+        {{- range .values -}}
+        {{- $dst = include "common.tplvalues.render" (dict "value" . "context" $.context "scope" $.scope) | fromYaml | merge $dst -}}
+        {{- end -}}
+        {{ $dst | toYaml }}
+        {{- end -}}
+
+        {{- define "common.names.name" -}}demo{{- end -}}
+        {{- define "common.names.chart" -}}demo{{- end -}}
+
+        {{- define "common.labels.standard" -}}
+        {{- $default := dict "app.kubernetes.io/name" (include "common.names.name" .context) "helm.sh/chart" (include "common.names.chart" .context) -}}
+        {{ template "common.tplvalues.merge" (dict "values" (list .customLabels $default) "context" .context) }}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.podLabels .Values.commonLabels) "context" .) }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          labels: {{- include "common.labels.standard" (dict "customLabels" $podLabels "context" .) | nindent 4 }}
+    "#};
+
+    let ir = generate(template, helpers);
+    if std::env::var("IR_DUMP").is_ok() {
+        eprintln!("{ir:#?}");
+    }
+
+    let labels_path = ["metadata".to_string(), "labels".to_string()];
+    for source_expr in ["podLabels", "commonLabels"] {
+        assert!(
+            ir.iter().any(|use_| {
+                use_.source_expr == source_expr
+                    && use_.path.0 == labels_path
+                    && use_.kind == helm_schema_ir::ValueKind::Fragment
+            }),
+            "expected {source_expr} to stay attached to metadata.labels: {ir:#?}",
+        );
+        assert!(
+            ir.iter().all(|use_| {
+                !(use_.source_expr == source_expr && use_.path.0.contains(&"values[*]".to_string()))
+            }),
+            "{source_expr} must not be projected through the helper argument list envelope: {ir:#?}",
+        );
+    }
+}
+
+#[test]
 fn conditional_annotations_fragment_stays_under_annotations_path() {
     let template = indoc! {r#"
         apiVersion: apps/v1

@@ -8,10 +8,10 @@ use std::time::{Duration, Instant};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ChartFacts, Guard, PathFact, ValueKind, ValueUse, derive_chart_facts};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
-use merge::{merge_schema_list, merge_two_schemas};
+use merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 
 struct UseSignals {
     referenced_value_paths: BTreeSet<String>,
@@ -31,6 +31,7 @@ struct PathMetadata {
 struct ValuesYamlPathInfo {
     schema: Value,
     is_explicit_null: bool,
+    is_empty_string: bool,
     is_empty_map: bool,
     is_mapping: bool,
 }
@@ -75,8 +76,8 @@ pub trait ValuesSchemaGenerator {
 /// Default values schema generator.
 ///
 /// Collects all `.Values.*` uses, infers their types from the K8s schema
-/// provider and heuristics, merges conflicting schemas, and builds a nested
-/// JSON Schema tree.
+/// provider and template-derived facts, merges conflicting schemas, and builds
+/// a nested JSON Schema tree.
 pub struct DefaultValuesSchemaGenerator;
 
 impl ValuesSchemaGenerator for DefaultValuesSchemaGenerator {
@@ -132,7 +133,26 @@ pub fn generate_values_schema_full(
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> Value {
-    generate_values_schema_full_profiled(uses, provider, values_yaml, type_hints).schema
+    let chart_facts = derive_chart_facts(uses);
+    generate_values_schema_full_with_facts(uses, provider, values_yaml, type_hints, &chart_facts)
+}
+
+#[tracing::instrument(skip_all)]
+pub fn generate_values_schema_full_with_facts(
+    uses: &[ValueUse],
+    provider: &dyn K8sSchemaProvider,
+    values_yaml: Option<&str>,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    chart_facts: &ChartFacts,
+) -> Value {
+    generate_values_schema_full_profiled_with_facts(
+        uses,
+        provider,
+        values_yaml,
+        type_hints,
+        chart_facts,
+    )
+    .schema
 }
 
 #[tracing::instrument(skip_all)]
@@ -141,6 +161,24 @@ pub fn generate_values_schema_full_profiled(
     provider: &dyn K8sSchemaProvider,
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
+) -> GeneratedValuesSchema {
+    let chart_facts = derive_chart_facts(uses);
+    generate_values_schema_full_profiled_with_facts(
+        uses,
+        provider,
+        values_yaml,
+        type_hints,
+        &chart_facts,
+    )
+}
+
+#[tracing::instrument(skip_all)]
+pub fn generate_values_schema_full_profiled_with_facts(
+    uses: &[ValueUse],
+    provider: &dyn K8sSchemaProvider,
+    values_yaml: Option<&str>,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    chart_facts: &ChartFacts,
 ) -> GeneratedValuesSchema {
     // When a value is rendered inside the body guarded by its own truthiness,
     // that body use is stronger evidence than the guard itself. The guard only
@@ -161,7 +199,13 @@ pub fn generate_values_schema_full_profiled(
         .unwrap_or(YamlValue::Null);
 
     let build_root_schema_start = Instant::now();
-    let root_schema = build_root_schema(signals, &path_metadata, &values_yaml_doc, type_hints);
+    let root_schema = build_root_schema(
+        signals,
+        &path_metadata,
+        &values_yaml_doc,
+        type_hints,
+        chart_facts,
+    );
     let build_root_schema_elapsed = build_root_schema_start.elapsed();
 
     let mut out = Map::new();
@@ -237,11 +281,9 @@ fn collect_use_signals(
                     ranged_value_paths.insert(path.to_string());
                 }
 
-                if scalar_paths_with_self_truthy_output_use.contains(path) {
-                    continue;
-                }
-
-                if let Some(schema) = infer_guard_boolish_schema(g) {
+                if !scalar_paths_with_self_truthy_output_use.contains(path)
+                    && let Some(schema) = infer_guard_boolish_schema(g)
+                {
                     guard_boolish_by_value_path
                         .entry(path.to_string())
                         .or_default()
@@ -320,6 +362,7 @@ fn build_root_schema(
     path_metadata: &PathMetadata,
     values_yaml_doc: &YamlValue,
     type_hints: &BTreeMap<String, Vec<Value>>,
+    chart_facts: &ChartFacts,
 ) -> Value {
     let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
     let mut root_schema = object_schema(Map::new());
@@ -330,7 +373,9 @@ fn build_root_schema(
             .get(&vp)
             .expect("referenced path must have cached path segments");
         let values_yaml_info = path_caches.values_yaml.get(&vp);
+        let path_fact = chart_facts.path_facts.get(&vp).cloned().unwrap_or_default();
         let used_as_fragment = signals.value_paths_used_as_fragment.contains(&vp);
+        let is_ranged_source = signals.ranged_value_paths.contains(&vp);
         let provider_schemas = signals
             .provider_schemas_by_value_path
             .remove(&vp)
@@ -359,16 +404,21 @@ fn build_root_schema(
             path_metadata.nullable_paths.contains(&vp) || type_hints.contains_key(&vp);
         let preserve_explicit_null_default = path_is_nullable
             && values_yaml_info.is_some_and(|path_info| path_info.is_explicit_null);
-        let values_yaml_schema = if used_as_fragment
-            && schema_type(&provider_schema) == Some("object")
-            && values_yaml_info.is_some_and(|path_info| path_info.is_empty_map)
-        {
-            empty_schema()
-        } else {
-            values_yaml_info
-                .map(|path_info| path_info.schema.clone())
-                .unwrap_or_else(empty_schema)
-        };
+        let preserve_empty_string_fallback = values_yaml_info
+            .is_some_and(|path_info| path_info.is_empty_string)
+            && path_fact.has_render_use
+            && path_fact.all_render_uses_self_guarded;
+        let values_yaml_schema = values_yaml_info
+            .map(|path_info| {
+                values_yaml_schema_for_path(
+                    path_info,
+                    &path_fact,
+                    &provider_schema,
+                    used_as_fragment,
+                    is_ranged_source,
+                )
+            })
+            .unwrap_or_else(empty_schema);
         let values_yaml_schema = if signals.ranged_value_paths.contains(&vp)
             && values_yaml_info.is_some_and(|path_info| path_info.is_mapping)
         {
@@ -392,6 +442,14 @@ fn build_root_schema(
             .cloned()
             .map_or_else(empty_schema, merge_schema_list);
 
+        let should_preserve_empty_placeholder = preserve_explicit_empty_placeholder(
+            values_yaml_info,
+            &path_fact,
+            &provider_schema,
+            used_as_fragment,
+            is_ranged_source,
+        );
+
         let merged = resolve_schema_for_value_path(
             path_metadata.paths_with_descendants.contains(&vp),
             used_as_fragment,
@@ -400,12 +458,15 @@ fn build_root_schema(
             guard_boolish_schema,
             guard_constraint_schema,
             type_hint_schema,
+            preserve_empty_string_fallback,
         );
-        let merged = if is_scalar_like_schema(&merged)
-            && (preserve_explicit_null_default || path_metadata.nullable_paths.contains(&vp))
+        let merged = if (preserve_explicit_null_default
+            || (is_scalar_like_schema(&merged) && path_metadata.nullable_paths.contains(&vp)))
             && !is_empty_schema(&merged)
         {
-            merge_two_schemas(merged, type_schema("null"))
+            add_null_schema(merged)
+        } else if should_preserve_empty_placeholder {
+            merge_explicit_empty_placeholder(merged, values_yaml_info.expect("placeholder info"))
         } else {
             merged
         };
@@ -455,27 +516,6 @@ fn is_string_like_schema(v: &Value) -> bool {
     false
 }
 
-fn infer_metadata_path_schema(path: &[String]) -> Option<Value> {
-    let last = path.last()?.as_str();
-    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
-    if prev != "metadata" {
-        return None;
-    }
-
-    match last {
-        "labels" | "annotations" => Some(string_map_schema()),
-        "name" | "namespace" => Some(type_schema("string")),
-        _ => None,
-    }
-}
-
-fn string_map_schema() -> Value {
-    let mut schema = Map::new();
-    schema.insert("type".to_string(), Value::String("object".to_string()));
-    schema.insert("additionalProperties".to_string(), type_schema("string"));
-    Value::Object(schema)
-}
-
 fn is_scalar_like_schema(v: &Value) -> bool {
     if is_scalar_schema(v) {
         return true;
@@ -501,6 +541,27 @@ fn is_scalar_like_schema(v: &Value) -> bool {
     }
 
     false
+}
+
+fn infer_metadata_path_schema(path: &[String]) -> Option<Value> {
+    let last = path.last()?.as_str();
+    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
+    if prev != "metadata" {
+        return None;
+    }
+
+    match last {
+        "labels" | "annotations" => Some(string_map_schema()),
+        "name" | "namespace" => Some(type_schema("string")),
+        _ => None,
+    }
+}
+
+fn string_map_schema() -> Value {
+    let mut schema = Map::new();
+    schema.insert("type".to_string(), Value::String("object".to_string()));
+    schema.insert("additionalProperties".to_string(), type_schema("string"));
+    Value::Object(schema)
 }
 
 fn is_object_or_array_schema(v: &Value) -> bool {
@@ -556,6 +617,28 @@ fn schema_allows_scalar_type(schema: &Value, scalar_ty: &str) -> bool {
     false
 }
 
+fn schema_allows_type(schema: &Value, expected_ty: &str) -> bool {
+    if let Some(ty) = schema_type(schema) {
+        return ty == expected_ty;
+    }
+
+    let Some(obj) = schema.as_object() else {
+        return false;
+    };
+
+    for key in ["oneOf", "anyOf"] {
+        if let Some(Value::Array(variants)) = obj.get(key)
+            && variants
+                .iter()
+                .any(|variant| schema_allows_type(variant, expected_ty))
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
 fn resolve_schema_for_value_path(
     has_referenced_descendants: bool,
     used_as_fragment: bool,
@@ -564,6 +647,7 @@ fn resolve_schema_for_value_path(
     guard_boolish_schema: Value,
     guard_constraint_schema: Value,
     type_hint_schema: Value,
+    preserve_empty_string_fallback: bool,
 ) -> Value {
     let base = if !is_empty_schema(&provider_schema) {
         if is_empty_schema(&values_yaml_schema) {
@@ -592,7 +676,14 @@ fn resolve_schema_for_value_path(
                 && is_scalar_schema(&values_yaml_schema)
                 && schema_allows_scalar_type(&provider_schema, values_yaml_ty)
             {
-                provider_schema
+                if preserve_empty_string_fallback
+                    && values_yaml_ty == "string"
+                    && !schema_permits_empty_string(&provider_schema)
+                {
+                    union_schema_list(vec![provider_schema, empty_string_schema()])
+                } else {
+                    provider_schema
+                }
             } else {
                 merge_two_schemas(provider_schema, values_yaml_schema)
             }
@@ -630,6 +721,60 @@ fn resolve_schema_for_value_path(
     }
 }
 
+fn add_null_schema(schema: Value) -> Value {
+    if schema.get("anyOf").and_then(Value::as_array).is_some()
+        || schema.get("oneOf").and_then(Value::as_array).is_some()
+    {
+        union_schema_list(vec![schema, type_schema("null")])
+    } else {
+        merge_two_schemas(schema, type_schema("null"))
+    }
+}
+
+fn empty_string_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("string".to_string())),
+            (
+                "enum".to_string(),
+                Value::Array(vec![Value::String(String::new())]),
+            ),
+        ]
+        .into_iter()
+        .collect(),
+    )
+}
+
+fn schema_permits_empty_string(schema: &Value) -> bool {
+    if let Some(variants) = schema.get("anyOf").and_then(Value::as_array) {
+        return variants.iter().any(schema_permits_empty_string);
+    }
+    if let Some(variants) = schema.get("oneOf").and_then(Value::as_array) {
+        return variants.iter().any(schema_permits_empty_string);
+    }
+
+    let Some(obj) = schema.as_object() else {
+        return false;
+    };
+    if let Some(values) = obj.get("enum").and_then(Value::as_array) {
+        return values.iter().any(|value| value.as_str() == Some(""));
+    }
+    if obj.get("pattern").is_some() {
+        return false;
+    }
+
+    let type_allows_string = obj.get("type").and_then(Value::as_str) == Some("string")
+        || obj
+            .get("type")
+            .and_then(Value::as_array)
+            .is_some_and(|types| types.iter().any(|value| value.as_str() == Some("string")));
+    type_allows_string
+        && obj
+            .get("minLength")
+            .and_then(Value::as_u64)
+            .is_none_or(|min_length| min_length == 0)
+}
+
 fn is_empty_schema(v: &Value) -> bool {
     v.as_object().is_some_and(serde_json::Map::is_empty)
 }
@@ -645,33 +790,48 @@ fn infer_guard_boolish_schema(guard: &Guard) -> Option<Value> {
         // boolean type hint. `eq` constrains the value but the constraint is
         // emitted separately by `infer_guard_constraint_schema`. `default`
         // guards express fallback/nullability, not booleans.
-        Guard::Eq { .. } | Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => None,
+        Guard::Eq { .. }
+        | Guard::Range { .. }
+        | Guard::With { .. }
+        | Guard::Default { .. }
+        | Guard::TypeIs { .. } => None,
         _ => Some(type_schema("boolean")),
     }
 }
 
 fn infer_guard_constraint_schema(guard: &Guard) -> Option<Value> {
-    let Guard::Eq { value, .. } = guard else {
-        return None;
-    };
-    Some(Value::Object(
-        [(
-            "anyOf".to_string(),
-            Value::Array(vec![
-                Value::Object(
-                    [(
-                        "enum".to_string(),
-                        Value::Array(vec![Value::String(value.clone())]),
-                    )]
-                    .into_iter()
-                    .collect(),
-                ),
-                type_schema("string"),
-            ]),
-        )]
-        .into_iter()
-        .collect(),
-    ))
+    match guard {
+        Guard::Eq { value, .. } => Some(Value::Object(
+            [(
+                "anyOf".to_string(),
+                Value::Array(vec![
+                    Value::Object(
+                        [(
+                            "enum".to_string(),
+                            Value::Array(vec![Value::String(value.clone())]),
+                        )]
+                        .into_iter()
+                        .collect(),
+                    ),
+                    type_schema("string"),
+                ]),
+            )]
+            .into_iter()
+            .collect(),
+        )),
+        Guard::TypeIs { schema_type, .. } => match schema_type.as_str() {
+            "array" | "boolean" | "integer" | "number" | "object" | "string" => {
+                Some(type_schema(schema_type))
+            }
+            _ => None,
+        },
+        Guard::Truthy { .. }
+        | Guard::Not { .. }
+        | Guard::Or { .. }
+        | Guard::Range { .. }
+        | Guard::With { .. }
+        | Guard::Default { .. } => None,
+    }
 }
 
 #[tracing::instrument(skip_all)]
@@ -721,6 +881,9 @@ fn lookup_values_yaml_path_info(
 
     let schema = merge_schema_list(values.iter().copied().map(schema_from_yaml_value).collect());
     let is_explicit_null = values.len() == 1 && matches!(values[0], YamlValue::Null);
+    let is_empty_string = values
+        .iter()
+        .any(|value| matches!(value, YamlValue::String(value) if value.is_empty()));
     let is_empty_map = values
         .iter()
         .all(|value| matches!(value, YamlValue::Mapping(map) if map.is_empty()));
@@ -731,9 +894,94 @@ fn lookup_values_yaml_path_info(
     Some(ValuesYamlPathInfo {
         schema,
         is_explicit_null,
+        is_empty_string,
         is_empty_map,
         is_mapping,
     })
+}
+
+fn values_yaml_schema_for_path(
+    path_info: &ValuesYamlPathInfo,
+    path_fact: &PathFact,
+    provider_schema: &Value,
+    used_as_fragment: bool,
+    is_ranged_source: bool,
+) -> Value {
+    if path_info.is_empty_map
+        && empty_map_placeholder_has_structural_object_use(
+            path_fact,
+            provider_schema,
+            used_as_fragment,
+            is_ranged_source,
+        )
+    {
+        return empty_schema();
+    }
+
+    path_info.schema.clone()
+}
+
+fn preserve_explicit_empty_placeholder(
+    path_info: Option<&ValuesYamlPathInfo>,
+    path_fact: &PathFact,
+    provider_schema: &Value,
+    used_as_fragment: bool,
+    is_ranged_source: bool,
+) -> bool {
+    path_info.is_some_and(|info| info.is_empty_map)
+        && empty_map_placeholder_has_structural_object_use(
+            path_fact,
+            provider_schema,
+            used_as_fragment,
+            is_ranged_source,
+        )
+}
+
+fn empty_map_placeholder_has_structural_object_use(
+    path_fact: &PathFact,
+    provider_schema: &Value,
+    used_as_fragment: bool,
+    is_ranged_source: bool,
+) -> bool {
+    is_ranged_source
+        || path_fact.has_self_range_guard_render_use
+        || (used_as_fragment && schema_type(provider_schema) == Some("object"))
+}
+
+fn merge_explicit_empty_placeholder(schema: Value, path_info: &ValuesYamlPathInfo) -> Value {
+    if path_info.is_empty_map {
+        if schema_accepts_empty_object(&schema) {
+            return schema;
+        }
+        union_schema_list(vec![schema, exact_empty_object_schema()])
+    } else {
+        schema
+    }
+}
+
+fn schema_accepts_empty_object(schema: &Value) -> bool {
+    if schema
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .is_some_and(|variants| variants.iter().any(schema_accepts_empty_object))
+    {
+        return true;
+    }
+
+    if !schema_allows_type(schema, "object") {
+        return false;
+    }
+
+    let required_is_empty = schema
+        .get("required")
+        .and_then(Value::as_array)
+        .is_none_or(Vec::is_empty);
+    let min_properties_allows_empty = schema
+        .get("minProperties")
+        .and_then(Value::as_u64)
+        .is_none_or(|min| min == 0);
+
+    required_is_empty && min_properties_allows_empty
 }
 
 fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
@@ -768,6 +1016,19 @@ fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
     Value::Object(out)
 }
 
+fn exact_empty_object_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("object".to_string())),
+            ("properties".to_string(), Value::Object(Map::new())),
+            ("additionalProperties".to_string(), Value::Bool(false)),
+            ("maxProperties".to_string(), Value::Number(0.into())),
+        ]
+        .into_iter()
+        .collect(),
+    )
+}
+
 /// Identify value paths for which an explicit `null` default in values.yaml is
 /// contractually valid according to the template control flow.
 ///
@@ -792,7 +1053,7 @@ fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
 /// without any special case here.
 ///
 /// We intentionally do not widen pure control-flow paths on the strength of
-/// guard heuristics alone. Without a rendered use, a truthy/or/not condition
+/// guard conditions alone. Without a rendered use, a truthy/or/not condition
 /// still does not tell us whether the underlying values type is boolean,
 /// string, list, or object.
 ///
@@ -825,7 +1086,7 @@ fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path } => path == &use_.source_expr,
-            Guard::Not { .. } | Guard::Or { .. } => false,
+            Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => false,
         })
     }
 
@@ -1028,6 +1289,14 @@ fn ensure_items_schema(array_schema: &mut Value) -> &mut Value {
         .expect("array schema must have items")
 }
 
+fn clear_exact_empty_constraint_for_descendant(node: &mut Value) {
+    if let Value::Object(obj) = node
+        && obj.get("maxProperties").and_then(Value::as_u64) == Some(0)
+    {
+        obj.remove("maxProperties");
+    }
+}
+
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 
 fn is_object_like_schema(v: &Value) -> bool {
@@ -1178,6 +1447,9 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
     }
 
     if path_segments[0] == MAP_WILDCARD_SEGMENT {
+        if path_segments.len() > 1 {
+            clear_exact_empty_constraint_for_descendant(node);
+        }
         ensure_object_schema(node);
         let obj = node.as_object_mut().expect("object schema");
         let ap = obj
@@ -1193,12 +1465,20 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
                 other => merge_two_schemas(other, leaf),
             };
         } else {
+            clear_exact_empty_constraint_for_descendant(ap);
             insert_schema_at_parts(ap, &path_segments[1..], leaf);
         }
         return;
     }
 
     if path_segments[0] == "*" {
+        if !is_empty_schema(node) && !is_array_like_schema(node) {
+            let existing = std::mem::replace(node, Value::Null);
+            let mut array_variant = new_union_variant_for_head("*");
+            insert_schema_at_parts(&mut array_variant, path_segments, leaf);
+            *node = union_schema_list(vec![existing, array_variant]);
+            return;
+        }
         ensure_array_schema(node);
         let items = ensure_items_schema(node);
         if path_segments.len() == 1 {
@@ -1213,6 +1493,9 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
         return;
     }
 
+    if path_segments.len() > 1 {
+        clear_exact_empty_constraint_for_descendant(node);
+    }
     ensure_object_schema(node);
     let props = node
         .as_object_mut()
@@ -1235,9 +1518,16 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
     }
 
     let key = path_segments[0].clone();
-    let child = props
-        .entry(key)
-        .or_insert_with(|| object_schema(Map::new()));
+    let child = props.entry(key).or_insert_with(|| {
+        if path_segments.get(1).is_some_and(|segment| segment == "*") {
+            new_union_variant_for_head("*")
+        } else {
+            object_schema(Map::new())
+        }
+    });
+    if path_segments.get(1).is_none_or(|segment| segment != "*") {
+        clear_exact_empty_constraint_for_descendant(child);
+    }
     insert_schema_at_parts(child, &path_segments[1..], leaf);
 }
 

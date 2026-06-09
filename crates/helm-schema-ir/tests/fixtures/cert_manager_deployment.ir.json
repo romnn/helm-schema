@@ -521,6 +521,53 @@
   {
     "guards": [
       {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceAccount.create",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "config",
+          "volumes"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
         "paths": [
           "config",
           "volumes"
@@ -566,6 +613,44 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "global.commonLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.commonLabels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
+    "source_expr": "global.commonLabels"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.commonLabels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "apps/v1",
+      "kind": "Deployment"
+    },
     "source_expr": "global.commonLabels"
   },
   {
@@ -822,11 +907,7 @@
     "guards": [
       {
         "path": "global.nodeSelector",
-        "type": "with"
-      },
-      {
-        "path": "nodeSelector",
-        "type": "with"
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -841,11 +922,28 @@
     "guards": [
       {
         "path": "global.nodeSelector",
-        "type": "default"
+        "type": "with"
+      },
+      {
+        "path": "nodeSelector",
+        "type": "with"
+      },
+      {
+        "path": "global.nodeSelector",
+        "type": "range"
+      },
+      {
+        "path": "nodeSelector",
+        "type": "range"
       }
     ],
-    "kind": "Scalar",
-    "path": [],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "nodeSelector"
+    ],
     "resource": {
       "api_version": "apps/v1",
       "kind": "Deployment"
@@ -1027,18 +1125,32 @@
   {
     "guards": [],
     "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "image"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
+    "path": [],
+    "resource": null,
     "source_expr": "image"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.digest"
+  },
+  {
+    "guards": [
+      {
+        "path": "image",
+        "type": "truthy"
+      },
+      {
+        "path": "image.digest",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.digest"
   },
   {
     "guards": [],
@@ -1055,6 +1167,69 @@
       "kind": "Deployment"
     },
     "source_expr": "image.pullPolicy"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.registry"
+  },
+  {
+    "guards": [
+      {
+        "path": "image",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.registry"
+  },
+  {
+    "guards": [
+      {
+        "path": "image",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.repository"
+  },
+  {
+    "guards": [
+      {
+        "path": "image",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.repository"
+  },
+  {
+    "guards": [
+      {
+        "path": "image",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.tag"
   },
   {
     "guards": [
@@ -1392,6 +1567,37 @@
   {
     "guards": [
       {
+        "path": "serviceAccount.create",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "config",
+          "volumes"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
         "paths": [
           "config",
           "volumes"
@@ -1480,12 +1686,8 @@
   {
     "guards": [
       {
-        "path": "global.nodeSelector",
-        "type": "with"
-      },
-      {
         "path": "nodeSelector",
-        "type": "with"
+        "type": "default"
       }
     ],
     "kind": "Scalar",
@@ -1499,12 +1701,29 @@
   {
     "guards": [
       {
+        "path": "global.nodeSelector",
+        "type": "with"
+      },
+      {
         "path": "nodeSelector",
-        "type": "default"
+        "type": "with"
+      },
+      {
+        "path": "global.nodeSelector",
+        "type": "range"
+      },
+      {
+        "path": "nodeSelector",
+        "type": "range"
       }
     ],
-    "kind": "Scalar",
-    "path": [],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "nodeSelector"
+    ],
     "resource": {
       "api_version": "apps/v1",
       "kind": "Deployment"

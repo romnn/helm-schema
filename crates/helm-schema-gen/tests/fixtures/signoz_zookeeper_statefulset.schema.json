@@ -903,14 +903,30 @@
           ]
         },
         "election": {
-          "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-          "format": "int32",
-          "type": "integer"
+          "anyOf": [
+            {
+              "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+              "type": "string"
+            }
+          ]
         },
         "follower": {
-          "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-          "format": "int32",
-          "type": "integer"
+          "anyOf": [
+            {
+              "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+              "type": "string"
+            }
+          ]
         },
         "tls": {
           "anyOf": [
@@ -3277,15 +3293,34 @@
       "additionalProperties": false,
       "properties": {
         "imagePullSecrets": {
-          "items": {},
+          "items": {
+            "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+            "type": "string"
+          },
           "type": "array"
         },
         "imageRegistry": {
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "kubeVersion": {},
         "storageClass": {
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
@@ -3347,18 +3382,29 @@
           ]
         },
         "digest": {
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
           "type": "string"
         },
         "pullPolicy": {
           "type": "string"
         },
         "pullSecrets": {
-          "items": {},
+          "items": {
+            "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+            "type": "string"
+          },
           "type": "array"
         },
         "registry": {
-          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "repository": {
           "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
@@ -3736,7 +3782,15 @@
       "type": "object"
     },
     "minServerId": {
-      "type": "integer"
+      "anyOf": [
+        {
+          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        }
+      ]
     },
     "nameOverride": {
       "anyOf": [
@@ -3749,7 +3803,15 @@
       ]
     },
     "namespaceOverride": {
-      "type": "string"
+      "anyOf": [
+        {
+          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "nodeAffinityPreset": {
       "additionalProperties": false,
@@ -3761,191 +3823,10 @@
           "type": "string"
         },
         "values": {
-          "anyOf": [
-            {
-              "description": "Node affinity is a group of node affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
-                  "items": {
-                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
-                    "properties": {
-                      "preference": {
-                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-                        "properties": {
-                          "matchExpressions": {
-                            "description": "A list of node selector requirements by node's labels.",
-                            "items": {
-                              "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                              "properties": {
-                                "key": {
-                                  "description": "The label key that the selector applies to.",
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array",
-                                  "x-kubernetes-list-type": "atomic"
-                                }
-                              },
-                              "required": [
-                                "key",
-                                "operator"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array",
-                            "x-kubernetes-list-type": "atomic"
-                          },
-                          "matchFields": {
-                            "description": "A list of node selector requirements by node's fields.",
-                            "items": {
-                              "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                              "properties": {
-                                "key": {
-                                  "description": "The label key that the selector applies to.",
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array",
-                                  "x-kubernetes-list-type": "atomic"
-                                }
-                              },
-                              "required": [
-                                "key",
-                                "operator"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array",
-                            "x-kubernetes-list-type": "atomic"
-                          }
-                        },
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "weight": {
-                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
-                        "format": "int32",
-                        "type": "integer"
-                      }
-                    },
-                    "required": [
-                      "weight",
-                      "preference"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array",
-                  "x-kubernetes-list-type": "atomic"
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
-                  "properties": {
-                    "nodeSelectorTerms": {
-                      "description": "Required. A list of node selector terms. The terms are ORed.",
-                      "items": {
-                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-                        "properties": {
-                          "matchExpressions": {
-                            "description": "A list of node selector requirements by node's labels.",
-                            "items": {
-                              "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                              "properties": {
-                                "key": {
-                                  "description": "The label key that the selector applies to.",
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array",
-                                  "x-kubernetes-list-type": "atomic"
-                                }
-                              },
-                              "required": [
-                                "key",
-                                "operator"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array",
-                            "x-kubernetes-list-type": "atomic"
-                          },
-                          "matchFields": {
-                            "description": "A list of node selector requirements by node's fields.",
-                            "items": {
-                              "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                              "properties": {
-                                "key": {
-                                  "description": "The label key that the selector applies to.",
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array",
-                                  "x-kubernetes-list-type": "atomic"
-                                }
-                              },
-                              "required": [
-                                "key",
-                                "operator"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array",
-                            "x-kubernetes-list-type": "atomic"
-                          }
-                        },
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "type": "array",
-                      "x-kubernetes-list-type": "atomic"
-                    }
-                  },
-                  "required": [
-                    "nodeSelectorTerms"
-                  ],
-                  "type": "object",
-                  "x-kubernetes-map-type": "atomic"
-                }
-              },
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            }
-          ]
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -4037,19 +3918,12 @@
               "x-kubernetes-map-type": "atomic"
             },
             "size": {
-              "anyOf": [
-                {
-                  "oneOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ]
-                },
+              "oneOf": [
                 {
                   "type": "string"
+                },
+                {
+                  "type": "number"
                 }
               ]
             }
@@ -4124,24 +3998,25 @@
           "x-kubernetes-map-type": "atomic"
         },
         "size": {
-          "anyOf": [
-            {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
-              ]
-            },
+          "oneOf": [
             {
               "type": "string"
+            },
+            {
+              "type": "number"
             }
           ]
         },
         "storageClass": {
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
@@ -4599,8 +4474,15 @@
               ]
             },
             "existingSecret": {
-              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "keystorePassword": {
               "type": "string"
@@ -4620,7 +4502,14 @@
               ]
             },
             "passwordsSecretName": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "passwordsSecretTruststoreKey": {
               "anyOf": [
@@ -4667,8 +4556,15 @@
               ]
             },
             "existingSecret": {
-              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-              "type": "string"
+              "anyOf": [
+                {
+                  "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "keystorePassword": {
               "type": "string"
@@ -4688,7 +4584,14 @@
               ]
             },
             "passwordsSecretName": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "passwordsSecretTruststoreKey": {
               "anyOf": [
@@ -5118,7 +5021,10 @@
               ]
             },
             "pullSecrets": {
-              "items": {},
+              "items": {
+                "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                "type": "string"
+              },
               "type": "array"
             },
             "registry": {

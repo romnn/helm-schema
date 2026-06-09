@@ -52,329 +52,1121 @@ fn symbolic_ir_full() {
         );
     }
 
-    let svc = serde_json::json!({"api_version": "v1", "kind": "Service"});
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let w = |p: &str| serde_json::json!({"type": "with", "path": p});
-    let d = |p: &str| serde_json::json!({"type": "default", "path": p});
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+[
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.cluster.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.cluster.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.cluster.tls.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.gateway.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.gateway.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.gateway.tls.enabled"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.jetstream.fileStore.pvc"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.jetstream.fileStore.pvc.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.leafnodes.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.leafnodes.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.leafnodes.tls.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.merge"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.monitor.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.monitor.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.monitor.tls.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.mqtt.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.mqtt.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.mqtt.tls.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.nats.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.nats.tls.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "config",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.patch"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.profiling.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.profiling.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.profiling.tls.enabled"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.resolver.pvc"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.resolver.pvc.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.websocket.enabled"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.websocket.ingress"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "config.websocket.ingress.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.websocket.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "config.websocket.tls.enabled"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "configMap"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "configMap.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.labels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "metadata",
+      "labels"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "global.labels"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "headlessService"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "headlessService.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "selector",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "namespaceOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "namespace"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contentsSecret"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contentsSecret.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contexts"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contextsSecret"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.contextsSecret.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.deployment"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.deployment.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.serviceAccount"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "natsBox.serviceAccount.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podDisruptionBudget"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "podDisruptionBudget.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "promExporter.podMonitor"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "promExporter.podMonitor.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service.merge"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.name",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "name"
+    ],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.name"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "service.patch"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.cluster.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.gateway.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.leafnodes.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.monitor.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.mqtt.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.nats.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.profiling.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "service",
+        "type": "with"
+      },
+      {
+        "path": "service.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.ports.websocket.enabled"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "serviceAccount.name"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "statefulSet"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "statefulSet.name"
+  }
+]
 
-    // Note: `nats.defaultValues` is intentionally ignored for IR purposes; it's a side-effect helper.
-    let expected = serde_json::json!([
-        {
-            "source_expr": "config",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "config",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.cluster.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.cluster.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.cluster.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.gateway.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.gateway.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.gateway.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.leafnodes.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.leafnodes.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.leafnodes.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.monitor.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.monitor.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.monitor.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.mqtt.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.mqtt.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.mqtt.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.nats.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.nats.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.profiling.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.profiling.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.profiling.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.websocket.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.websocket.port",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "config.websocket.tls.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "fullnameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "global.labels",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "nameOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "namespaceOverride",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "natsBox.contexts",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [],
-            "resource": null
-        },
-        {
-            "source_expr": "service",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service")],
-            "resource": null
-        },
-        {
-            "source_expr": "service",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "service.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service")],
-            "resource": null
-        },
-        {
-            "source_expr": "service.merge",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "service.name",
-            "path": ["metadata", "name"],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled"), d("service.name")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.patch",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": null
-        },
-        {
-            "source_expr": "service.ports",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.cluster.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.gateway.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.leafnodes.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.monitor.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.mqtt.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.nats.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.profiling.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        },
-        {
-            "source_expr": "service.ports.websocket.enabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [w("service"), t("service.enabled")],
-            "resource": svc
-        }
-    ]);
+"#,
+    )
+    .expect("parse expected");
 
     similar_asserts::assert_eq!(actual, expected);
 }

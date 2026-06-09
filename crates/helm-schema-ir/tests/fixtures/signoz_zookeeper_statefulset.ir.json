@@ -1,6 +1,11 @@
 [
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "affinity",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -106,7 +111,12 @@
     "source_expr": "auth.client.enabled"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "auth.client.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -123,7 +133,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -206,7 +216,12 @@
     "source_expr": "auth.quorum.enabled"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "auth.quorum.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -223,7 +238,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -353,7 +368,12 @@
     "source_expr": "clusterDomain"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      }
+    ],
     "kind": "Scalar",
     "path": [
       "spec",
@@ -374,7 +394,12 @@
     "source_expr": "clusterDomain"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "commonAnnotations",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -417,7 +442,12 @@
     "source_expr": "commonAnnotations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "commonLabels",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -535,6 +565,32 @@
     "source_expr": "containerPorts.election"
   },
   {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "env[*]",
+      "value"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.election"
+  },
+  {
     "guards": [],
     "kind": "Scalar",
     "path": [
@@ -559,6 +615,32 @@
     "guards": [],
     "kind": "Scalar",
     "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.follower"
+  },
+  {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "env[*]",
+      "value"
+    ],
     "resource": {
       "api_version": "",
       "api_version_candidates": [
@@ -786,7 +868,16 @@
     "source_expr": "containerSecurityContext.runAsUser"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -841,7 +932,16 @@
     "source_expr": "customLivenessProbe"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -896,7 +996,16 @@
     "source_expr": "customReadinessProbe"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customStartupProbe",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1156,7 +1265,12 @@
     "source_expr": "dataLogDir"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1188,7 +1302,41 @@
     "source_expr": "diagnosticMode.args"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "diagnosticMode.args",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "args"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "diagnosticMode.args"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1198,6 +1346,35 @@
     "guards": [
       {
         "path": "diagnosticMode.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "diagnosticMode.command"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "diagnosticMode.command",
         "type": "truthy"
       }
     ],
@@ -1255,7 +1432,15 @@
     "source_expr": "diagnosticMode.enabled"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "configuration",
+          "existingConfigmap"
+        ],
+        "type": "or"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1289,7 +1474,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -1309,7 +1494,12 @@
     "source_expr": "existingConfigmap"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "extraEnvVars",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1357,7 +1547,19 @@
     "source_expr": "extraEnvVars"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "extraEnvVarsCM",
+          "extraEnvVarsSecret"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "extraEnvVarsCM",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1434,7 +1636,19 @@
     "source_expr": "extraEnvVarsCM"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "extraEnvVarsCM",
+          "extraEnvVarsSecret"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "extraEnvVarsSecret",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1511,7 +1725,12 @@
     "source_expr": "extraEnvVarsSecret"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "extraVolumeMounts",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1557,7 +1776,12 @@
     "source_expr": "extraVolumeMounts"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "extraVolumes",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -1632,6 +1856,234 @@
   {
     "guards": [
       {
+        "path": "auth.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "auth.quorum.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      },
+      {
+        "path": "serviceAccount.create",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.keystorePassword",
+          "tls.client.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.passwordsSecretName",
+          "tls.client.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.keystorePassword",
+          "tls.quorum.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.passwordsSecretName",
+          "tls.quorum.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "configuration",
+          "existingConfigmap"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
         "path": "fullnameOverride",
         "type": "truthy"
       }
@@ -1640,6 +2092,36 @@
     "path": [
       "spec",
       "serviceName"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "fullnameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      },
+      {
+        "path": "fullnameOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "env[*]",
+      "value"
     ],
     "resource": {
       "api_version": "",
@@ -2100,14 +2582,7 @@
     ],
     "kind": "Scalar",
     "path": [],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
+    "resource": null,
     "source_expr": "global"
   },
   {
@@ -2131,14 +2606,23 @@
     ],
     "kind": "Scalar",
     "path": [],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
+    "resource": null,
+    "source_expr": "global"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
     "source_expr": "global"
   },
   {
@@ -2149,6 +2633,154 @@
           "tls.quorum.enabled"
         ],
         "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.imagePullSecrets"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "imagePullSecrets[*]",
+      "name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "global.imagePullSecrets.*"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "imagePullSecrets[*]",
+      "name[*]"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "global.imagePullSecrets.*"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.imageRegistry"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.imageRegistry"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.imageRegistry"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.imageRegistry"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.imageRegistry"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -2167,20 +2799,6 @@
       ],
       "kind": "StatefulSet"
     },
-    "source_expr": "global"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "global.imagePullSecrets"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
     "source_expr": "global.imageRegistry"
   },
   {
@@ -2191,10 +2809,139 @@
     "source_expr": "global.kubeVersion"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "global.storageClass"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "global.storageClass"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      },
+      {
+        "path": "global.storageClass",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.storageClass",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "volumeClaimTemplates[*]",
+      "spec",
+      "storageClassName"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "global.storageClass"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      },
+      {
+        "path": "global.storageClass",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.storageClass",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "volumeClaimTemplates[*]",
+      "spec",
+      "storageClassName"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
     "source_expr": "global.storageClass"
   },
   {
@@ -2219,7 +2966,12 @@
     "source_expr": "heapSize"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "hostAliases",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2271,34 +3023,6 @@
     "source_expr": "image"
   },
   {
-    "guards": [
-      {
-        "paths": [
-          "tls.client.enabled",
-          "tls.quorum.enabled"
-        ],
-        "type": "or"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "initContainers[*]",
-      "image"
-    ],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
-    "source_expr": "image"
-  },
-  {
     "guards": [],
     "kind": "Scalar",
     "path": [
@@ -2324,6 +3048,101 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "image.digest"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.digest"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.digest"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers[*]",
+      "image"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "image.digest"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers[*]",
+      "image"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
     "source_expr": "image.digest"
   },
   {
@@ -2379,6 +3198,69 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "image.pullSecrets"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "imagePullSecrets[*]",
+      "name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "image.pullSecrets.*"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "imagePullSecrets[*]",
+      "name[*]"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "image.pullSecrets.*"
+  },
+  {
+    "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.registry"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
     "source_expr": "image.registry"
   },
   {
@@ -2389,6 +3271,29 @@
           "tls.quorum.enabled"
         ],
         "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.registry"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -2411,6 +3316,22 @@
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.repository"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2445,7 +3366,59 @@
     "source_expr": "image.repository"
   },
   {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers[*]",
+      "image"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "image.repository"
+  },
+  {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "image.tag"
+  },
+  {
+    "guards": [
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2480,7 +3453,48 @@
     "source_expr": "image.tag"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers[*]",
+      "image"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "image.tag"
+  },
+  {
+    "guards": [
+      {
+        "path": "initContainers",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2594,7 +3608,12 @@
     "source_expr": "kubeVersion"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "lifecycleHooks",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2804,7 +3823,226 @@
     "source_expr": "minServerId"
   },
   {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "env[*]",
+      "value"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "minServerId"
+  },
+  {
     "guards": [],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "auth.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "auth.quorum.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "serviceAccount.create",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.keystorePassword",
+          "tls.client.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.passwordsSecretName",
+          "tls.client.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.keystorePassword",
+          "tls.quorum.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.passwordsSecretName",
+          "tls.quorum.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "configuration",
+          "existingConfigmap"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -2818,9 +4056,264 @@
       }
     ],
     "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "selector",
+      "matchLabels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
     "path": [
       "spec",
       "serviceName"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "metadata",
+      "labels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "podAffinityPreset",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "affinity",
+      "podAffinity",
+      "preferredDuringSchedulingIgnoredDuringExecution[*]",
+      "podAffinityTerm",
+      "labelSelector",
+      "matchLabels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "podAffinityPreset",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "affinity",
+      "podAffinity",
+      "requiredDuringSchedulingIgnoredDuringExecution[*]",
+      "labelSelector",
+      "matchLabels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "podAntiAffinityPreset",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "affinity",
+      "podAntiAffinity",
+      "preferredDuringSchedulingIgnoredDuringExecution[*]",
+      "podAffinityTerm",
+      "labelSelector",
+      "matchLabels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "podAntiAffinityPreset",
+        "type": "truthy"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "affinity",
+      "podAntiAffinity",
+      "requiredDuringSchedulingIgnoredDuringExecution[*]",
+      "labelSelector",
+      "matchLabels",
+      "app.kubernetes.io/name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      },
+      {
+        "path": "nameOverride",
+        "type": "default"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "env[*]",
+      "value"
     ],
     "resource": {
       "api_version": "",
@@ -3261,21 +4754,113 @@
     "source_expr": "namespaceOverride"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "namespaceOverride",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
-    "source_expr": "nodeAffinityPreset.key"
+    "source_expr": "namespaceOverride"
   },
   {
-    "guards": [],
-    "kind": "Fragment",
+    "guards": [
+      {
+        "path": "namespaceOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      },
+      {
+        "path": "namespaceOverride",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "env[*]",
+      "value"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "namespaceOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "nodeAffinityPreset.type",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
     "path": [
       "spec",
       "template",
       "spec",
       "affinity",
-      "nodeAffinity"
+      "nodeAffinity",
+      "preferredDuringSchedulingIgnoredDuringExecution[*]",
+      "preference",
+      "matchExpressions[*]",
+      "key"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nodeAffinityPreset.key"
+  },
+  {
+    "guards": [
+      {
+        "path": "nodeAffinityPreset.type",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "affinity",
+      "nodeAffinity",
+      "requiredDuringSchedulingIgnoredDuringExecution",
+      "nodeSelectorTerms[*]",
+      "matchExpressions[*]",
+      "key"
     ],
     "resource": {
       "api_version": "",
@@ -3296,40 +4881,33 @@
   },
   {
     "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "affinity",
-      "nodeAffinity"
-    ],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
-    "source_expr": "nodeAffinityPreset.type"
-  },
-  {
-    "guards": [],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "nodeAffinityPreset.values"
   },
   {
-    "guards": [],
-    "kind": "Fragment",
+    "guards": [
+      {
+        "path": "nodeAffinityPreset.type",
+        "type": "truthy"
+      },
+      {
+        "path": "nodeAffinityPreset.values",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
     "path": [
       "spec",
       "template",
       "spec",
       "affinity",
-      "nodeAffinity"
+      "nodeAffinity",
+      "preferredDuringSchedulingIgnoredDuringExecution[*]",
+      "preference",
+      "matchExpressions[*]",
+      "values[*]"
     ],
     "resource": {
       "api_version": "",
@@ -3339,10 +4917,48 @@
       ],
       "kind": "StatefulSet"
     },
-    "source_expr": "nodeAffinityPreset.values"
+    "source_expr": "nodeAffinityPreset.values.*"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "nodeAffinityPreset.type",
+        "type": "truthy"
+      },
+      {
+        "path": "nodeAffinityPreset.values",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "affinity",
+      "nodeAffinity",
+      "requiredDuringSchedulingIgnoredDuringExecution",
+      "nodeSelectorTerms[*]",
+      "matchExpressions[*]",
+      "values[*]"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "nodeAffinityPreset.values.*"
+  },
+  {
+    "guards": [
+      {
+        "path": "nodeSelector",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -3403,68 +5019,6 @@
       {
         "path": "dataLogDir",
         "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
-    "source_expr": "persistence"
-  },
-  {
-    "guards": [
-      {
-        "path": "persistence.dataLogDir.existingClaim",
-        "type": "truthy"
-      },
-      {
-        "path": "persistence.enabled",
-        "type": "truthy"
-      },
-      {
-        "path": "persistence.existingClaim",
-        "type": "truthy"
-      },
-      {
-        "path": "persistence.existingClaim",
-        "type": "not"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
-    "source_expr": "persistence"
-  },
-  {
-    "guards": [
-      {
-        "path": "persistence.dataLogDir.existingClaim",
-        "type": "truthy"
-      },
-      {
-        "path": "persistence.enabled",
-        "type": "truthy"
-      },
-      {
-        "path": "persistence.existingClaim",
-        "type": "truthy"
-      },
-      {
-        "path": "dataLogDir",
-        "type": "truthy"
       },
       {
         "path": "persistence.accessModes",
@@ -3609,7 +5163,56 @@
     "source_expr": "persistence.accessModes.*"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.annotations",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.annotations"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      },
+      {
+        "path": "persistence.annotations",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -3833,7 +5436,28 @@
     "source_expr": "persistence.dataLogDir.existingClaim"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.dataLogDir.selector",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -4081,7 +5705,56 @@
     "source_expr": "persistence.existingClaim"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.labels",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.labels"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      },
+      {
+        "path": "persistence.labels",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -4230,7 +5903,28 @@
     "source_expr": "persistence.labels"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      },
+      {
+        "path": "persistence.selector",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -4346,10 +6040,139 @@
     "source_expr": "persistence.size"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
+    "source_expr": "persistence.storageClass"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "persistence.storageClass"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      },
+      {
+        "path": "global.storageClass",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.storageClass",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "volumeClaimTemplates[*]",
+      "spec",
+      "storageClassName"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "persistence.storageClass"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.dataLogDir.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.existingClaim",
+        "type": "not"
+      },
+      {
+        "path": "global.storageClass",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.storageClass",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "volumeClaimTemplates[*]",
+      "spec",
+      "storageClassName"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
     "source_expr": "persistence.storageClass"
   },
   {
@@ -4360,27 +6183,12 @@
     "source_expr": "podAffinityPreset"
   },
   {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "affinity",
-      "podAffinity"
+    "guards": [
+      {
+        "path": "podAnnotations",
+        "type": "truthy"
+      }
     ],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
-    "source_expr": "podAffinityPreset"
-  },
-  {
-    "guards": [],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -4432,27 +6240,12 @@
     "source_expr": "podAntiAffinityPreset"
   },
   {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "affinity",
-      "podAntiAffinity"
+    "guards": [
+      {
+        "path": "podLabels",
+        "type": "truthy"
+      }
     ],
-    "resource": {
-      "api_version": "",
-      "api_version_candidates": [
-        "apps/v1beta1",
-        "apps/v1"
-      ],
-      "kind": "StatefulSet"
-    },
-    "source_expr": "podAntiAffinityPreset"
-  },
-  {
-    "guards": [],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -4687,6 +6480,25 @@
     "source_expr": "replicaCount"
   },
   {
+    "guards": [
+      {
+        "path": "replicaCount",
+        "type": "range"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "replicaCount"
+  },
+  {
     "guards": [],
     "kind": "Scalar",
     "path": [
@@ -4831,7 +6643,12 @@
     "source_expr": "serviceAccount.name"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "sidecars",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -5054,6 +6871,22 @@
       }
     ],
     "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.client.existingSecret"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.existingSecret",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5118,7 +6951,39 @@
     "source_expr": "tls.client.keystorePath"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.keystorePassword",
+          "tls.client.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.client.passwordsSecretKeystoreKey"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -5208,7 +7073,59 @@
     "source_expr": "tls.client.passwordsSecretKeystoreKey"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.keystorePassword",
+          "tls.client.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.client.passwordsSecretName"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.passwordsSecretName",
+          "tls.client.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.client.passwordsSecretName"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -5268,9 +7185,13 @@
           "tls.client.passwordsSecretName"
         ],
         "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5304,9 +7225,13 @@
           "tls.client.truststorePassword"
         ],
         "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5341,7 +7266,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5363,7 +7288,39 @@
     "source_expr": "tls.client.passwordsSecretName"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.client.autoGenerated",
+          "tls.client.passwordsSecretName",
+          "tls.client.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.client.passwordsSecretTruststoreKey"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.client.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -5612,6 +7569,22 @@
       }
     ],
     "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.quorum.existingSecret"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.quorum.existingSecret",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5676,7 +7649,39 @@
     "source_expr": "tls.quorum.keystorePath"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.keystorePassword",
+          "tls.quorum.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.quorum.passwordsSecretKeystoreKey"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -5766,7 +7771,59 @@
     "source_expr": "tls.quorum.passwordsSecretKeystoreKey"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.keystorePassword",
+          "tls.quorum.passwordsSecretName"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.quorum.passwordsSecretName"
+  },
+  {
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.passwordsSecretName",
+          "tls.quorum.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.quorum.passwordsSecretName"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -5826,9 +7883,13 @@
           "tls.quorum.passwordsSecretName"
         ],
         "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5862,9 +7923,13 @@
           "tls.quorum.truststorePassword"
         ],
         "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5899,7 +7964,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "Fragment",
     "path": [
       "spec",
       "template",
@@ -5921,7 +7986,39 @@
     "source_expr": "tls.quorum.passwordsSecretName"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tls.quorum.enabled",
+        "type": "truthy"
+      },
+      {
+        "paths": [
+          "tls.quorum.autoGenerated",
+          "tls.quorum.passwordsSecretName",
+          "tls.quorum.truststorePassword"
+        ],
+        "type": "or"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "tls.quorum.passwordsSecretTruststoreKey"
+  },
+  {
+    "guards": [
+      {
+        "paths": [
+          "tls.client.enabled",
+          "tls.quorum.enabled"
+        ],
+        "type": "or"
+      },
+      {
+        "path": "tls.quorum.passwordsSecretName",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -6110,7 +8207,12 @@
     "source_expr": "tls.resources"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "tolerations",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -6155,7 +8257,12 @@
     "source_expr": "tolerations"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "topologySpreadConstraints",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -6318,7 +8425,40 @@
     "source_expr": "volumePermissions.image"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "volumePermissions.image.digest"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.image.registry",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
@@ -6362,17 +8502,143 @@
     "kind": "Scalar",
     "path": [],
     "resource": null,
-    "source_expr": "volumePermissions.image.registry"
+    "source_expr": "volumePermissions.image.pullSecrets"
   },
   {
     "guards": [],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "imagePullSecrets[*]",
+      "name"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "volumePermissions.image.pullSecrets.*"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "volumePermissions.image.registry"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "volumePermissions.image.registry"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
     "source_expr": "volumePermissions.image.repository"
   },
   {
-    "guards": [],
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.image.registry",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "volumePermissions.image.repository"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "volumePermissions.image.tag"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "global.imageRegistry",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.image.registry",
+        "type": "truthy"
+      }
+    ],
     "kind": "Scalar",
     "path": [],
     "resource": null,
