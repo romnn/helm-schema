@@ -299,5 +299,75 @@
     "path": [],
     "resource": null,
     "source_expr": "service.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.hosts",
+        "type": "range"
+      },
+      {
+        "path": "ingress.hosts.*.paths",
+        "type": "range"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "rules[*]",
+      "http",
+      "paths[*]",
+      "backend",
+      "service",
+      "port",
+      "number"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "service.port"
+  },
+  {
+    "guards": [
+      {
+        "path": "ingress.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "ingress.hosts",
+        "type": "range"
+      },
+      {
+        "path": "ingress.hosts.*.paths",
+        "type": "range"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [
+      "spec",
+      "rules[*]",
+      "http",
+      "paths[*]",
+      "backend",
+      "servicePort"
+    ],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "api_version_candidates": [
+        "networking.k8s.io/v1beta1",
+        "extensions/v1beta1"
+      ],
+      "kind": "Ingress"
+    },
+    "source_expr": "service.port"
   }
 ]

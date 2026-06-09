@@ -50,6 +50,7 @@ struct SymbolicWalker<'a> {
     range_domains: HashMap<String, Vec<String>>,
     get_bindings: HashMap<String, GetBinding>,
     template_bindings: HashMap<String, FragmentBinding>,
+    template_default_paths: HashMap<String, BTreeSet<String>>,
 
     inline_helpers_in_fragments: bool,
     root_bindings: HashMap<String, HelperBinding>,
@@ -148,6 +149,16 @@ impl BoundHelperAnalysis {
         entry.guards.extend(guards.iter().cloned());
         entry.defaulted |= defaulted;
     }
+}
+
+fn merge_local_default_paths(
+    mut base: HashMap<String, BTreeSet<String>>,
+    other: HashMap<String, BTreeSet<String>>,
+) -> HashMap<String, BTreeSet<String>> {
+    for (key, paths) in other {
+        base.entry(key).or_default().extend(paths);
+    }
+    base
 }
 
 #[derive(Clone, Debug)]
@@ -628,6 +639,7 @@ impl<'a> SymbolicWalker<'a> {
             range_domains: HashMap::new(),
             get_bindings: HashMap::new(),
             template_bindings: HashMap::new(),
+            template_default_paths: HashMap::new(),
 
             inline_helpers_in_fragments: false,
             root_bindings: HashMap::new(),
@@ -1166,7 +1178,7 @@ impl<'a> SymbolicWalker<'a> {
         // contribute YAML structure themselves, so letting their physical
         // indentation mutate the shape stack can incorrectly pop surrounding
         // mapping context before the controlled body is walked.
-        if node.kind() != "template_action" {
+        if !matches!(node.kind(), "template_action" | "variable") {
             return;
         }
 
@@ -1320,6 +1332,14 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
 
+        if !self.template_bindings.is_empty() {
+            for expr in &exprs {
+                expr.walk(|node| {
+                    paths.extend(self.local_alias_paths_for_expr(node));
+                });
+            }
+        }
+
         if paths.is_empty()
             && let Some(Some(dot_prefix)) = self.dot_stack.last()
         {
@@ -1356,11 +1376,50 @@ impl<'a> SymbolicWalker<'a> {
 
     fn resolved_default_fallback_paths_in_context(&self, text: &str) -> BTreeSet<String> {
         let current_dot = self.current_dot_binding();
-        Self::resolved_default_fallback_paths_for_text(
+        let mut paths = Self::resolved_default_fallback_paths_for_text(
             text,
             Some(&self.root_bindings),
             current_dot.as_ref(),
-        )
+        );
+        if !self.template_default_paths.is_empty() {
+            for expr in Self::parse_expr_text(text) {
+                expr.walk(|node| {
+                    paths.extend(self.local_alias_default_paths_for_expr(node));
+                });
+            }
+        }
+        paths
+    }
+
+    fn local_alias_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+        match expr {
+            TemplateExpr::Variable(var) if !var.is_empty() => self
+                .template_bindings
+                .get(var)
+                .map(Self::fragment_paths)
+                .unwrap_or_default(),
+            TemplateExpr::Selector { operand, path } => match operand.as_ref() {
+                TemplateExpr::Variable(var) if !var.is_empty() => self
+                    .template_bindings
+                    .get(var)
+                    .and_then(|binding| Self::fragment_apply_binding(binding, path))
+                    .map(|binding| Self::fragment_paths(&binding))
+                    .unwrap_or_default(),
+                _ => BTreeSet::new(),
+            },
+            _ => BTreeSet::new(),
+        }
+    }
+
+    fn local_alias_default_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+        match expr {
+            TemplateExpr::Variable(var) if !var.is_empty() => self
+                .template_default_paths
+                .get(var)
+                .cloned()
+                .unwrap_or_default(),
+            _ => BTreeSet::new(),
+        }
     }
 
     fn condition_guards_in_context(&self, text: &str) -> Vec<Guard> {
@@ -1476,47 +1535,6 @@ impl<'a> SymbolicWalker<'a> {
             ValueKind::Scalar
         };
 
-        let helper_inlined = self.inline_exact_helper_call(text);
-
-        let values = self.resolved_values_paths_in_context(text);
-        let default_fallback_values = self.resolved_default_fallback_paths_in_context(text);
-
-        let bound_values = self.extract_bound_values(text);
-
-        let mut helper_output_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-        let mut helper_fragment_output_values: Vec<String> = Vec::new();
-        let mut helper_guard_values: BTreeSet<String> = BTreeSet::new();
-        let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
-        if !helper_inlined {
-            let bound = self.analyze_bound_helper_calls(text);
-            helper_output_values.extend(bound.output);
-            if kind == ValueKind::Fragment {
-                helper_fragment_output_values.extend(bound.fragment_output);
-                helper_fragment_output_values
-                    .extend(self.analyze_bound_fragment_helper_calls_in_context(text));
-            }
-            helper_guard_values.extend(bound.guard_paths);
-            suppress_direct_values.extend(bound.suppress_roots);
-            // Stash chart-level `set X "K" (X.K | default V)` mutations
-            // discovered in any helper called from this text. Subsequent
-            // `emit_use` calls in this walker (same template scope) will
-            // attach `Guard::Default { path }` for matching reads,
-            // modeling that the helper's `set` has already run by the
-            // time those reads are evaluated.
-            self.chart_value_defaults.extend(bound.chart_defaults);
-            helper_fragment_output_values.sort();
-            helper_fragment_output_values.dedup();
-        }
-
-        if values.is_empty()
-            && bound_values.is_empty()
-            && helper_output_values.is_empty()
-            && helper_fragment_output_values.is_empty()
-            && helper_guard_values.is_empty()
-        {
-            return;
-        }
-
         let in_mapping_key = self.output_node_is_mapping_key_part(node);
         let mut path = if in_mapping_key {
             YamlPath(Vec::new())
@@ -1558,6 +1576,47 @@ impl<'a> SymbolicWalker<'a> {
             if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
                 path.0.pop();
             }
+        }
+
+        let helper_inlined = self.inline_exact_helper_call(text);
+
+        let values = self.resolved_values_paths_in_context(text);
+        let default_fallback_values = self.resolved_default_fallback_paths_in_context(text);
+
+        let bound_values = self.extract_bound_values(text);
+
+        let mut helper_output_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+        let mut helper_fragment_output_values: Vec<String> = Vec::new();
+        let mut helper_guard_values: BTreeSet<String> = BTreeSet::new();
+        let mut suppress_direct_values: BTreeSet<String> = BTreeSet::new();
+        if !helper_inlined {
+            let bound = self.analyze_bound_helper_calls(text);
+            helper_output_values.extend(bound.output);
+            if kind == ValueKind::Fragment {
+                helper_fragment_output_values.extend(bound.fragment_output);
+                helper_fragment_output_values
+                    .extend(self.analyze_bound_fragment_helper_calls_in_context(text));
+            }
+            helper_guard_values.extend(bound.guard_paths);
+            suppress_direct_values.extend(bound.suppress_roots);
+            // Stash chart-level `set X "K" (X.K | default V)` mutations
+            // discovered in any helper called from this text. Subsequent
+            // `emit_use` calls in this walker (same template scope) will
+            // attach `Guard::Default { path }` for matching reads,
+            // modeling that the helper's `set` has already run by the
+            // time those reads are evaluated.
+            self.chart_value_defaults.extend(bound.chart_defaults);
+            helper_fragment_output_values.sort();
+            helper_fragment_output_values.dedup();
+        }
+
+        if values.is_empty()
+            && bound_values.is_empty()
+            && helper_output_values.is_empty()
+            && helper_fragment_output_values.is_empty()
+            && helper_guard_values.is_empty()
+        {
+            return;
         }
         for v in values {
             if suppress_direct_values.contains(&v) {
@@ -2606,6 +2665,7 @@ impl<'a> SymbolicWalker<'a> {
             }
             "template_action"
             | "dot"
+            | "variable"
             | "field"
             | "chained_pipeline"
             | "parenthesized_pipeline"
@@ -2920,12 +2980,16 @@ impl<'a> SymbolicWalker<'a> {
         let mut analysis = BoundHelperAnalysis::default();
         if let Some(body) = defines.get(name) {
             let active_output_guards = BTreeSet::new();
+            let mut local_bindings = HashMap::new();
+            let mut local_default_paths = HashMap::new();
             for node in body {
                 Self::collect_bound_helper_values_from_ast(
                     node,
                     &bindings,
                     helper_body_dot.as_ref(),
                     &active_output_guards,
+                    &mut local_bindings,
+                    &mut local_default_paths,
                     defines,
                     define_sources,
                     define_tree_cache,
@@ -3002,6 +3066,58 @@ impl<'a> SymbolicWalker<'a> {
         out
     }
 
+    fn local_bound_paths_from_text(
+        text: &str,
+        locals: &HashMap<String, FragmentBinding>,
+    ) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| match node {
+                TemplateExpr::Variable(var) if !var.is_empty() => {
+                    if let Some(binding) = locals.get(var) {
+                        out.extend(Self::fragment_paths(binding));
+                    }
+                }
+                TemplateExpr::Selector { operand, path } => {
+                    let TemplateExpr::Variable(var) = operand.as_ref() else {
+                        return;
+                    };
+                    if var.is_empty() {
+                        return;
+                    }
+                    if let Some(binding) = locals.get(var)
+                        && let Some(bound) = Self::fragment_apply_binding(binding, path)
+                    {
+                        out.extend(Self::fragment_paths(&bound));
+                    }
+                }
+                _ => {}
+            });
+        }
+        out
+    }
+
+    fn local_default_paths_from_text(
+        text: &str,
+        local_default_paths: &HashMap<String, BTreeSet<String>>,
+    ) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        for expr in Self::parse_expr_text(text) {
+            expr.walk(|node| {
+                let TemplateExpr::Variable(var) = node else {
+                    return;
+                };
+                if var.is_empty() {
+                    return;
+                }
+                if let Some(paths) = local_default_paths.get(var) {
+                    out.extend(paths.iter().cloned());
+                }
+            });
+        }
+        out
+    }
+
     /// Walk a helper's AST node collecting bound helper values.
     ///
     /// `current_dot` tracks the value the current `.` resolves to as
@@ -3026,6 +3142,8 @@ impl<'a> SymbolicWalker<'a> {
         bindings: &HashMap<String, HelperBinding>,
         current_dot: Option<&HelperBinding>,
         active_output_guards: &BTreeSet<String>,
+        local_bindings: &mut HashMap<String, FragmentBinding>,
+        local_default_paths: &mut HashMap<String, BTreeSet<String>>,
         defines: &DefineIndex,
         define_sources: &HashMap<String, String>,
         define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
@@ -3047,6 +3165,8 @@ impl<'a> SymbolicWalker<'a> {
                         bindings,
                         current_dot,
                         active_output_guards,
+                        local_bindings,
+                        local_default_paths,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3062,6 +3182,8 @@ impl<'a> SymbolicWalker<'a> {
                     bindings,
                     current_dot,
                     active_output_guards,
+                    local_bindings,
+                    local_default_paths,
                     defines,
                     define_sources,
                     define_tree_cache,
@@ -3075,6 +3197,8 @@ impl<'a> SymbolicWalker<'a> {
                         bindings,
                         current_dot,
                         active_output_guards,
+                        local_bindings,
+                        local_default_paths,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3085,17 +3209,59 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelmAst::HelmExpr { text } => {
+                if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(text) {
+                    let current_dot_fragment =
+                        current_dot.map(Self::fragment_binding_from_helper_binding);
+                    let mut seen_rhs = HashSet::new();
+                    if let Some(binding) = Self::fragment_binding_from_text(
+                        &rhs,
+                        local_bindings,
+                        current_dot_fragment.as_ref(),
+                        defines,
+                        define_sources,
+                        define_tree_cache,
+                        fragment_helper_body_cache,
+                        &mut seen_rhs,
+                    ) {
+                        local_bindings.insert(var.clone(), binding);
+                    }
+                    let mut defaulted_paths = Self::resolved_default_fallback_paths_for_text(
+                        &rhs,
+                        Some(bindings),
+                        current_dot,
+                    );
+                    defaulted_paths.extend(Self::local_default_paths_from_text(
+                        &rhs,
+                        local_default_paths,
+                    ));
+                    if defaulted_paths.is_empty() {
+                        local_default_paths.remove(&var);
+                    } else {
+                        local_default_paths.insert(var, defaulted_paths);
+                    }
+                }
+
                 let direct_outputs = Self::direct_bound_paths_from_text(text, bindings);
                 let fallback_paths = Self::resolved_default_fallback_paths_for_text(
                     text,
                     Some(bindings),
                     current_dot,
                 );
+                let local_outputs = Self::local_bound_paths_from_text(text, local_bindings);
+                let local_fallback_paths =
+                    Self::local_default_paths_from_text(text, local_default_paths);
                 for output in direct_outputs {
                     analysis.add_output(
                         output.clone(),
                         active_output_guards,
                         fallback_paths.contains(&output),
+                    );
+                }
+                for output in local_outputs {
+                    analysis.add_output(
+                        output.clone(),
+                        active_output_guards,
+                        local_fallback_paths.contains(&output),
                     );
                 }
                 let nested = Self::analyze_bound_helper_calls_with_bindings(
@@ -3140,12 +3306,16 @@ impl<'a> SymbolicWalker<'a> {
                     .extend(branch_guard_paths.iter().cloned());
                 let mut then_output_guards = active_output_guards.clone();
                 then_output_guards.extend(branch_guard_paths);
+                let mut then_bindings = local_bindings.clone();
+                let mut then_default_paths = local_default_paths.clone();
                 for item in then_branch {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
                         current_dot,
                         &then_output_guards,
+                        &mut then_bindings,
+                        &mut then_default_paths,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3154,12 +3324,16 @@ impl<'a> SymbolicWalker<'a> {
                         analysis,
                     );
                 }
+                let mut else_bindings = local_bindings.clone();
+                let mut else_default_paths = local_default_paths.clone();
                 for item in else_branch {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
                         current_dot,
                         active_output_guards,
+                        &mut else_bindings,
+                        &mut else_default_paths,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3168,6 +3342,9 @@ impl<'a> SymbolicWalker<'a> {
                         analysis,
                     );
                 }
+                *local_bindings = Self::merge_fragment_locals(then_bindings, else_bindings);
+                *local_default_paths =
+                    merge_local_default_paths(then_default_paths, else_default_paths);
             }
             HelmAst::Range {
                 header,
@@ -3213,12 +3390,16 @@ impl<'a> SymbolicWalker<'a> {
                 };
                 let mut body_output_guards = active_output_guards.clone();
                 body_output_guards.extend(branch_guard_paths);
+                let mut body_bindings = local_bindings.clone();
+                let mut body_default_paths = local_default_paths.clone();
                 for item in body {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
                         body_dot.as_ref(),
                         &body_output_guards,
+                        &mut body_bindings,
+                        &mut body_default_paths,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3227,6 +3408,8 @@ impl<'a> SymbolicWalker<'a> {
                         analysis,
                     );
                 }
+                let mut else_bindings = local_bindings.clone();
+                let mut else_default_paths = local_default_paths.clone();
                 for item in else_branch {
                     // `with ... else ...` else-branch executes with the
                     // outer `.`, not the with-shifted one.
@@ -3235,6 +3418,8 @@ impl<'a> SymbolicWalker<'a> {
                         bindings,
                         current_dot,
                         active_output_guards,
+                        &mut else_bindings,
+                        &mut else_default_paths,
                         defines,
                         define_sources,
                         define_tree_cache,
@@ -3243,6 +3428,9 @@ impl<'a> SymbolicWalker<'a> {
                         analysis,
                     );
                 }
+                *local_bindings = Self::merge_fragment_locals(body_bindings, else_bindings);
+                *local_default_paths =
+                    merge_local_default_paths(body_default_paths, else_default_paths);
             }
             HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
         }
@@ -3650,6 +3838,7 @@ impl<'a> SymbolicWalker<'a> {
             }
             "template_action"
             | "dot"
+            | "variable"
             | "field"
             | "chained_pipeline"
             | "parenthesized_pipeline"
@@ -3691,7 +3880,13 @@ impl<'a> SymbolicWalker<'a> {
                     &self.fragment_helper_body_cache,
                     &mut seen,
                 ) {
-                    self.template_bindings.insert(var, binding);
+                    self.template_bindings.insert(var.clone(), binding);
+                }
+                let default_paths = self.resolved_default_fallback_paths_in_context(&rhs);
+                if default_paths.is_empty() {
+                    self.template_default_paths.remove(&var);
+                } else {
+                    self.template_default_paths.insert(var, default_paths);
                 }
             }
         }
@@ -3709,6 +3904,7 @@ impl<'a> SymbolicWalker<'a> {
         let saved_domains = self.range_domains.clone();
         let saved_bindings = self.get_bindings.clone();
         let saved_template_bindings = self.template_bindings.clone();
+        let saved_template_default_paths = self.template_default_paths.clone();
 
         if let Some(cond) = node.child_by_field_name("condition")
             && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
@@ -3725,6 +3921,7 @@ impl<'a> SymbolicWalker<'a> {
         self.range_domains = saved_domains;
         self.get_bindings = saved_bindings;
         self.template_bindings = saved_template_bindings;
+        self.template_default_paths = saved_template_default_paths;
 
         // Note: else-if chains are represented as repeated condition/option fields.
         // For now, we only handle the plain else branch.
@@ -3740,6 +3937,7 @@ impl<'a> SymbolicWalker<'a> {
         let saved_domains = self.range_domains.clone();
         let saved_bindings = self.get_bindings.clone();
         let saved_template_bindings = self.template_bindings.clone();
+        let saved_template_default_paths = self.template_default_paths.clone();
 
         if let Some(cond) = node.child_by_field_name("condition")
             && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
@@ -3758,6 +3956,7 @@ impl<'a> SymbolicWalker<'a> {
         self.range_domains = saved_domains;
         self.get_bindings = saved_bindings;
         self.template_bindings = saved_template_bindings;
+        self.template_default_paths = saved_template_default_paths;
 
         let alternative = Self::children_with_field(node, "alternative");
         for ch in alternative {
@@ -3771,6 +3970,7 @@ impl<'a> SymbolicWalker<'a> {
         let saved_domains = self.range_domains.clone();
         let saved_bindings = self.get_bindings.clone();
         let saved_template_bindings = self.template_bindings.clone();
+        let saved_template_default_paths = self.template_default_paths.clone();
 
         let mut header_text: Option<String> = None;
         let mut has_variable_definition = false;
@@ -3878,6 +4078,7 @@ impl<'a> SymbolicWalker<'a> {
         self.range_domains = saved_domains;
         self.get_bindings = saved_bindings;
         self.template_bindings = saved_template_bindings;
+        self.template_default_paths = saved_template_default_paths;
 
         let alternative = Self::children_with_field(node, "alternative");
         for ch in alternative {
@@ -4397,6 +4598,7 @@ impl ResourceDetector {
 #[cfg(test)]
 mod fragment_binding_unit_tests {
     use super::{FragmentBinding, SymbolicWalker};
+    use helm_schema_ast::DefineIndex;
     use std::collections::BTreeMap;
 
     #[test]
@@ -4420,6 +4622,39 @@ mod fragment_binding_unit_tests {
         let binding = FragmentBinding::ValuesPath("fullnameOverride".to_string());
         let merged = SymbolicWalker::fragment_union(Some(binding.clone()), Some(binding.clone()));
         assert_eq!(merged, Some(binding));
+    }
+
+    #[test]
+    fn fragment_binding_tracks_defaulted_storage_class_assignment_rhs() {
+        let rhs = "(.Values.global).storageClass | default .Values.persistence.storageClass | default (.Values.global).defaultStorageClass | default \"\"";
+        let binding = SymbolicWalker::fragment_binding_from_text(
+            rhs,
+            &Default::default(),
+            None,
+            &DefineIndex::new(),
+            &Default::default(),
+            &Default::default(),
+            &Default::default(),
+            &mut Default::default(),
+        );
+        assert_eq!(
+            binding,
+            Some(FragmentBinding::ValuesPath(
+                "global.storageClass".to_string()
+            ))
+        );
+    }
+
+    #[test]
+    fn local_alias_value_path_resolution_uses_template_bindings() {
+        let defines = DefineIndex::new();
+        let mut walker = SymbolicWalker::new("", &defines);
+        walker.template_bindings.insert(
+            "storageClass".to_string(),
+            FragmentBinding::ValuesPath("global.storageClass".to_string()),
+        );
+        let resolved = walker.resolved_values_paths_in_context("$storageClass");
+        assert_eq!(resolved, vec!["global.storageClass".to_string()]);
     }
 }
 

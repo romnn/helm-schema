@@ -224,6 +224,38 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
 }
 
 #[test]
+fn local_storage_class_alias_emits_guarded_leaf_use() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        spec:
+          resources:
+            requests:
+              storage: {{ .Values.persistence.size | quote }}
+          {{- $storageClass := (.Values.global).storageClass | default .Values.persistence.storageClass | default (.Values.global).defaultStorageClass | default "" -}}
+          {{- if $storageClass -}}
+          storageClassName: {{ $storageClass }}
+          {{- end -}}
+    "#};
+
+    let ir = generate(template, "");
+    let matching_uses: Vec<&ValueUse> = ir
+        .iter()
+        .filter(|use_| use_.source_expr == "global.storageClass")
+        .collect();
+    assert!(
+        matching_uses.iter().any(|use_| {
+            use_.path.0 == ["spec".to_string(), "storageClassName".to_string()]
+                && use_.guards.contains(&truthy("global.storageClass"))
+                && use_.guards.contains(&Guard::Default {
+                    path: "global.storageClass".to_string(),
+                })
+        }),
+        "expected a rendered `storageClassName` use for global.storageClass carrying both Truthy and Default guards; got {ir:#?}",
+    );
+}
+
+#[test]
 fn scalar_item_range_keeps_parent_collection_path() {
     let template = indoc! {r#"
         apiVersion: v1
