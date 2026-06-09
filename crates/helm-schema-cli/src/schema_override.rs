@@ -60,6 +60,12 @@ fn apply_override_inner(base: Value, override_schema: Value) -> Value {
     if override_obj.contains_key("$ref") || had_replace_marker {
         return Value::Object(override_obj);
     }
+    if override_obj.contains_key("anyOf")
+        || override_obj.contains_key("oneOf")
+        || override_obj.contains_key("allOf")
+    {
+        return Value::Object(override_obj);
+    }
 
     for (k, ov) in override_obj {
         if k == "$schema" {
@@ -196,6 +202,45 @@ mod tests {
             "properties": {
                 "cloud": {
                     "enum": [null, "azure", "minikube"]
+                }
+            }
+        });
+
+        similar_asserts::assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn composition_override_replaces_conflicting_scalar_constraints() {
+        let base = serde_json::json!({
+            "type": "object",
+            "properties": {
+                "imageRegistry": {
+                    "type": "string"
+                }
+            }
+        });
+
+        let ov = serde_json::json!({
+            "properties": {
+                "imageRegistry": {
+                    "anyOf": [
+                        { "type": "null" },
+                        { "type": "string" }
+                    ]
+                }
+            }
+        });
+
+        let actual = apply_schema_override(base, ov);
+
+        let expected = serde_json::json!({
+            "type": "object",
+            "properties": {
+                "imageRegistry": {
+                    "anyOf": [
+                        { "type": "null" },
+                        { "type": "string" }
+                    ]
                 }
             }
         });

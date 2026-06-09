@@ -77,6 +77,26 @@ fn symbolic_ir_full() {
         "type": "truthy"
       },
       {
+        "path": "architecture",
+        "type": "eq",
+        "value": "replication"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
+    "source_expr": "architecture"
+  },
+  {
+    "guards": [
+      {
+        "path": "networkPolicy.enabled",
+        "type": "truthy"
+      },
+      {
         "path": "commonAnnotations",
         "type": "truthy"
       }

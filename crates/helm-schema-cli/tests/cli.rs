@@ -92,7 +92,10 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         &chart_dir.join("Chart.yaml")?,
         "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
     )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        "kid:\n  persistence:\n    enabled: true\n",
+    )?;
 
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
@@ -151,6 +154,15 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
               "type": "integer"
             },
             "global": global_schema,
+            "persistence": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
           },
           "type": "object"
         }

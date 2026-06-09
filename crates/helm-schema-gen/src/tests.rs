@@ -627,6 +627,42 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
     );
 }
 
+/// Explicit `null` defaults stay valid for range-only collection values.
+/// Helm treats a nil range source as empty, so a chart that ships `snapshots:`
+/// and later ranges over it accepts both null and concrete arrays.
+#[test]
+fn nullable_array_preserved_for_range_only_collection_use() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          initialize.sh: |
+            exec ./entrypoint.sh {{ range .Values.snapshots }} --snapshot {{ . }} {{ end }}
+    "#};
+    let values_yaml = indoc! {"
+        snapshots:
+    "};
+    let ir = parse_ir(src);
+    let nullable_paths = collect_nullable_value_paths(&ir);
+    assert!(
+        nullable_paths.contains("snapshots"),
+        "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
+    );
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+
+    let snapshots = schema
+        .pointer("/properties/snapshots")
+        .expect("snapshots present");
+    assert!(
+        permits_null(snapshots),
+        "snapshots should allow null, got {snapshots}"
+    );
+    assert!(
+        permits_type(snapshots, "array"),
+        "snapshots should also allow concrete arrays, got {snapshots}"
+    );
+}
+
 /// Truthy-guarded optional scalars should accept null even when values.yaml
 /// chooses an empty-string default instead of an explicit YAML null.
 #[test]
@@ -1786,6 +1822,323 @@ fn assigned_nested_printf_helper_call_preserves_helper_output_guards() {
     );
 }
 
+#[test]
+fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
+    let helpers = indoc! {r#"
+        {{- define "collector.config" -}}
+        receivers:
+          k8s_cluster:
+            collection_interval: {{ .Values.presets.clusterMetrics.collectionInterval }}
+            allocatable_types_to_report:
+              {{- toYaml .Values.presets.clusterMetrics.allocatableTypesToReport | nindent 10 }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: collector
+        data:
+          collector.yaml: |-
+            {{- include "collector.config" . | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {"
+        presets:
+          clusterMetrics:
+            collectionInterval: 30s
+            allocatableTypesToReport:
+              - cpu
+              - memory
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "presets": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "clusterMetrics": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "allocatableTypesToReport": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "collectionInterval": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    similar_asserts::assert_eq!(schema, expected);
+}
+
+#[test]
+fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() {
+    let helpers = indoc! {r#"
+        {{- define "collector.config" -}}
+        {{- $config := include "collector.baseConfig" . | fromYaml }}
+        {{- if .Values.presets.clusterMetrics.enabled }}
+        {{- $config = (include "collector.applyClusterMetricsConfig" (dict "Values" . "config" $config) | fromYaml) }}
+        {{- end }}
+        {{- tpl (toYaml $config) . }}
+        {{- end -}}
+
+        {{- define "collector.baseConfig" -}}
+        service:
+          pipelines:
+            metrics:
+              receivers: []
+              exporters: []
+        {{- end -}}
+
+        {{- define "collector.applyClusterMetricsConfig" -}}
+        {{- $config := mustMergeOverwrite (include "collector.clusterMetricsConfig" .Values | fromYaml) .config }}
+        {{- $config | toYaml }}
+        {{- end -}}
+
+        {{- define "collector.clusterMetricsConfig" -}}
+        receivers:
+          k8s_cluster:
+            collection_interval: {{ .Values.presets.clusterMetrics.collectionInterval }}
+            allocatable_types_to_report:
+              {{- toYaml .Values.presets.clusterMetrics.allocatableTypesToReport | nindent 10 }}
+        service:
+          pipelines:
+            metrics:
+              receivers:
+                - k8s_cluster
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: collector
+        data:
+          collector.yaml: |-
+            {{- include "collector.config" . | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {"
+        presets:
+          clusterMetrics:
+            enabled: true
+            collectionInterval: 30s
+            allocatableTypesToReport:
+              - cpu
+              - memory
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "presets": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "clusterMetrics": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "allocatableTypesToReport": {
+                                "anyOf": [
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "type": "string"
+                                    }
+                                ]
+                            },
+                            "collectionInterval": {
+                                "anyOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "type": "string"
+                                    }
+                                ]
+                            },
+                            "enabled": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    similar_asserts::assert_eq!(schema, expected);
+}
+
+#[test]
+fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
+    let src = indoc! {r#"
+        apiVersion: example.com/v1
+        kind: Widget
+        spec:
+          {{- $storageClass := default .Values.persistence.storageClass .Values.global.storageClass -}}
+          {{- if $storageClass }}
+          {{- if (eq "-" $storageClass) }}
+          storageClassName: ""
+          {{- else }}
+          storageClassName: {{ $storageClass }}
+          {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        global:
+          storageClass:
+        persistence:
+          storageClass:
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "global": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "storageClass": {
+                        "anyOf": [
+                            {
+                                "enum": [
+                                    "-"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            },
+            "persistence": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "storageClass": {
+                        "anyOf": [
+                            {
+                                "enum": [
+                                    "-"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    });
+    similar_asserts::assert_eq!(schema, expected);
+}
+
+#[test]
+fn unconstrained_object_fragment_keeps_nested_maps_open() {
+    let src = indoc! {r#"
+        apiVersion: example.com/v1
+        kind: Widget
+        spec:
+          resources: {{ toYaml .Values.resources | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+    "};
+
+    let schema =
+        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "resources": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "cpu": {
+                            "type": "string"
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "properties": {
+                    "requests": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "properties": {
+                            "cpu": {
+                                "type": "string"
+                            },
+                            "memory": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    similar_asserts::assert_eq!(schema, expected);
+}
+
 /// A destructured `range $k, $v := .` inside an outer `with .Values.X` should
 /// still attribute the rendered map field back to `X`, so provider schemas can
 /// type it as an open string map.
@@ -1856,6 +2209,54 @@ fn with_defaulted_object_body_rebinds_dot_to_fallback_path() {
 }
 
 #[test]
+fn ranged_with_defaulted_object_body_attributes_defaulted_leaf_to_fallback_path() {
+    let src = indoc! {r#"
+        {{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
+        {{- range $db, $cfg := .Values.migrations.databases }}
+        apiVersion: batch/v1
+        kind: Job
+        spec:
+          template:
+            spec:
+              containers:
+                - name: runner
+                  {{- with (.image | default $.Values.migrations.image) }}
+                  image: "{{ .repository }}:{{ .tag | default $tag }}"
+                  imagePullPolicy: {{ .pullPolicy | default "Always" }}
+                  {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          tag: app-version
+        migrations:
+          image:
+            repository: repo/app
+            pullPolicy: Always
+          databases:
+            first: {}
+    "};
+
+    let ir = parse_ir(src);
+    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let image = schema
+        .pointer("/properties/migrations/properties/image")
+        .expect("migrations image schema present");
+
+    let tag = image
+        .pointer("/properties/tag")
+        .expect("migrations image tag schema present");
+    assert!(
+        permits_type(tag, "string"),
+        "with-body fallback image should attribute string .tag to migrations.image.tag, got {image}; ir={ir:?}"
+    );
+    assert!(
+        permits_null(tag),
+        "defaulted .tag should allow null/missing fallback, got {image}; ir={ir:?}"
+    );
+}
+
+#[test]
 fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
     let src = indoc! {r#"
         apiVersion: v1
@@ -1897,6 +2298,53 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
             .and_then(Value::as_bool),
         Some(false),
     );
+}
+
+#[test]
+fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placeholder() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        spec:
+          {{- if .Values.persistence.dataSource }}
+          dataSource: {{- include "common.tplvalues.render" (dict "value" .Values.persistence.dataSource "context" .) | nindent 4 }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        persistence:
+          dataSource: {}
+    "};
+    let helpers = bitnami_tplvalues_helpers();
+
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let mut define_index = DefineIndex::new();
+    define_index.add_file_source("helpers.tpl", helpers);
+    define_index
+        .add_source(&TreeSitterParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let facts = derive_chart_facts_from_ast(&ast);
+    let schema = generate_values_schema_full_with_facts(
+        &ir,
+        &provider(),
+        Some(values_yaml),
+        &BTreeMap::new(),
+        &facts,
+    );
+    let data_source = schema
+        .pointer("/properties/persistence/properties/dataSource")
+        .expect("persistence.dataSource present");
+
+    any_of_variant_matching(data_source, |variant| {
+        variant.get("type").and_then(Value::as_str) == Some("object")
+            && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
+    })
+    .unwrap_or_else(|| {
+        panic!(
+            "exact empty object placeholder variant missing from helper-rendered object union: {data_source}; facts={:?}; ir={ir:?}",
+            facts.path_facts.get("persistence.dataSource")
+        )
+    });
 }
 
 #[test]

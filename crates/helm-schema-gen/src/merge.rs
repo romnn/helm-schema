@@ -178,6 +178,13 @@ fn schema_type(v: &Value) -> Option<&str> {
     v.as_object()?.get("type").and_then(|t| t.as_str())
 }
 
+fn is_exact_empty_object_schema(v: &Value) -> bool {
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+    schema_type(v) == Some("object") && obj.get("maxProperties").and_then(Value::as_u64) == Some(0)
+}
+
 fn try_merge_compatible(a: &Value, b: &Value) -> Option<Value> {
     let ta = schema_type(a)?;
     let tb = schema_type(b)?;
@@ -186,6 +193,7 @@ fn try_merge_compatible(a: &Value, b: &Value) -> Option<Value> {
     }
 
     match ta {
+        "object" if is_exact_empty_object_schema(a) || is_exact_empty_object_schema(b) => None,
         "object" => merge_object_schemas(a, b),
         "array" => merge_array_schemas(a, b),
         _ => merge_scalar_like_schemas(a, b),
@@ -459,6 +467,7 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
 #[cfg(test)]
 mod tests {
     use super::merge_two_schemas;
+    use serde_json::Value;
     use serde_json::json;
 
     #[test]
@@ -573,6 +582,61 @@ mod tests {
                 .get("x-kubernetes-preserve-unknown-fields")
                 .and_then(serde_json::Value::as_bool),
             Some(true),
+        );
+    }
+
+    #[test]
+    fn merge_open_values_object_with_exact_empty_union_preserves_empty_branch() {
+        let values_placeholder = json!({
+            "type": "object",
+            "additionalProperties": {}
+        });
+        let exact_empty = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {},
+            "maxProperties": 0
+        });
+        let provider = json!({
+            "type": "object",
+            "required": ["kind", "name"],
+            "properties": {
+                "kind": { "type": "string" },
+                "name": { "type": "string" }
+            }
+        });
+
+        let merged = merge_two_schemas(
+            values_placeholder,
+            json!({
+                "anyOf": [
+                    exact_empty,
+                    provider
+                ]
+            }),
+        );
+        let variants = merged
+            .get("anyOf")
+            .and_then(Value::as_array)
+            .unwrap_or_else(|| panic!("expected exact-empty/provider union, got {merged}"));
+
+        assert!(
+            variants
+                .iter()
+                .any(|variant| variant.get("maxProperties").and_then(Value::as_u64) == Some(0)),
+            "exact empty object branch should survive merge, got {merged}",
+        );
+        assert!(
+            variants.iter().any(|variant| {
+                variant
+                    .get("required")
+                    .and_then(Value::as_array)
+                    .is_some_and(|required| {
+                        required.iter().any(|value| value.as_str() == Some("kind"))
+                            && required.iter().any(|value| value.as_str() == Some("name"))
+                    })
+            }),
+            "provider-required object branch should survive merge, got {merged}",
         );
     }
 

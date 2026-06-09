@@ -697,8 +697,8 @@ pub fn derive_chart_facts(uses: &[ValueUse]) -> ChartFacts {
                 .guards
                 .iter()
                 .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr));
+            acc.all_render_uses_self_guarded &= use_is_self_guarded(use_);
         }
-        acc.all_render_uses_self_guarded &= use_is_self_guarded(use_);
 
         for guard in &use_.guards {
             for path in guard.value_paths() {

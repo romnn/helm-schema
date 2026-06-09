@@ -19,7 +19,7 @@ use helm_schema_ir::{
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
-use serde_json::Value;
+use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
@@ -85,6 +85,7 @@ struct GenerationStats {
 struct GeneratedSchema {
     schema: Value,
     stats: GenerationStats,
+    subchart_value_prefixes: Vec<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -285,6 +286,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     let GeneratedSchema {
         mut schema,
         mut stats,
+        subchart_value_prefixes,
     } = generate_values_schema_for_chart_with_diagnostics_profiled(
         &opts,
         Some(&diagnostics),
@@ -336,6 +338,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
             schema_override::apply_schema_override(schema, override_schema)
         });
     }
+    mirror_global_schema_into_subcharts(&mut schema, &subchart_value_prefixes);
 
     if !cli.output.keep_refs {
         let allow_net = !cli.k8s.offline;
@@ -494,7 +497,55 @@ fn generate_values_schema_for_chart_with_diagnostics_profiled(
             output_bytes: 0,
             generator_profile: Some(generated_schema.profile),
         },
+        subchart_value_prefixes: charts
+            .iter()
+            .filter(|chart| !chart.values_prefix.is_empty())
+            .map(|chart| chart.values_prefix.clone())
+            .collect(),
     })
+}
+
+fn mirror_global_schema_into_subcharts(schema: &mut Value, subchart_prefixes: &[Vec<String>]) {
+    let Some(root_global_schema) = schema.pointer("/properties/global").cloned() else {
+        return;
+    };
+
+    for prefix in subchart_prefixes {
+        let subchart_schema = schema_object_at_values_prefix(schema, prefix);
+        let subchart_global_schema = schema_property_mut(subchart_schema, "global");
+        let existing = std::mem::take(subchart_global_schema);
+        *subchart_global_schema =
+            schema_override::apply_schema_override(existing, root_global_schema.clone());
+    }
+}
+
+fn schema_object_at_values_prefix<'a>(schema: &'a mut Value, prefix: &[String]) -> &'a mut Value {
+    let mut current = schema;
+    for segment in prefix {
+        current = schema_property_mut(current, segment);
+    }
+    current
+}
+
+fn schema_property_mut<'a>(schema: &'a mut Value, property: &str) -> &'a mut Value {
+    let object = ensure_json_object(schema);
+    let properties = object
+        .entry("properties".to_string())
+        .or_insert_with(|| Value::Object(Map::new()));
+    let properties = ensure_json_object(properties);
+    properties
+        .entry(property.to_string())
+        .or_insert_with(|| Value::Object(Map::new()))
+}
+
+fn ensure_json_object(value: &mut Value) -> &mut Map<String, Value> {
+    if !value.is_object() {
+        *value = Value::Object(Map::new());
+    }
+    match value {
+        Value::Object(object) => object,
+        _ => unreachable!("json value was just replaced with an object"),
+    }
 }
 
 /// IR + auxiliary signals collected from a chart's templates.
@@ -832,6 +883,8 @@ fn load_json_file(path: &Path) -> CliResult<Value> {
 mod tests {
     use super::*;
     use helm_schema_ir::PathFact;
+    use helm_schema_ir::derive_chart_facts;
+    use vfs::VfsPath;
 
     fn chart_facts_for(path: &str, all_render_uses_self_guarded: bool) -> ChartFacts {
         let mut chart_facts = ChartFacts::default();
@@ -874,6 +927,168 @@ mod tests {
                 .get("annotations")
                 .map(|fact| fact.all_render_uses_self_guarded),
             Some(false),
+        );
+    }
+
+    #[test]
+    fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact()
+    -> color_eyre::eyre::Result<()> {
+        let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+        test_util::write(
+            &chart_dir.join("Chart.yaml")?,
+            "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+        )?;
+        test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+        test_util::write(
+            &chart_dir.join("charts/child/Chart.yaml")?,
+            "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/values.yaml")?,
+            "controller:\n  ingressClassResource:\n    parameters: {}\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/templates/_helpers.tpl")?,
+            r#"{{- define "common.tplvalues.render" -}}
+{{- .value | toYaml -}}
+{{- end -}}
+"#,
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/templates/ingressclass.yaml")?,
+            r#"apiVersion: networking.k8s.io/v1
+kind: IngressClass
+spec:
+  {{- with .Values.controller.ingressClassResource.parameters }}
+  parameters: {{ include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
+  {{- end }}
+"#,
+        )?;
+
+        let discovery = chart::discover_chart_contexts(&chart_dir)?;
+        let defines = chart::build_define_index(&discovery.charts, false)?;
+        let collection = collect_ir_for_charts(&discovery.charts, &defines, false)?;
+        let path = "kid.controller.ingressClassResource.parameters";
+
+        let ir_facts = derive_chart_facts(&collection.uses);
+        let ir_fact = ir_facts.path_facts.get(path).unwrap_or_else(|| {
+            panic!("missing IR-derived fact for {path}: {:#?}", collection.uses)
+        });
+        assert!(
+            ir_fact.all_render_uses_self_guarded,
+            "IR-derived chart fact should stay self-guarded: {ir_fact:#?}; uses={:#?}",
+            collection.uses
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn shared_global_override_schema_is_mirrored_into_nested_subcharts() {
+        let mut schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "global": {
+                    "additionalProperties": true,
+                    "properties": {
+                        "kube-score/ignore": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "oauth2-proxy": {
+                    "additionalProperties": false,
+                    "properties": {
+                        "global": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "imageRegistry": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "redis": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "global": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "storageClass": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        });
+
+        mirror_global_schema_into_subcharts(
+            &mut schema,
+            &[
+                vec!["oauth2-proxy".to_string()],
+                vec!["oauth2-proxy".to_string(), "redis".to_string()],
+            ],
+        );
+
+        let child_global = schema
+            .pointer("/properties/oauth2-proxy/properties/global")
+            .expect("child global schema");
+        assert_eq!(
+            child_global
+                .pointer("/properties/kube-score~1ignore/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "shared global property should be mirrored into child global: {child_global}"
+        );
+        assert_eq!(
+            child_global
+                .pointer("/properties/imageRegistry/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "child global-specific properties should be preserved: {child_global}"
+        );
+        assert_eq!(
+            child_global
+                .get("additionalProperties")
+                .and_then(Value::as_bool),
+            Some(true),
+            "shared open-global policy should be mirrored into child global: {child_global}"
+        );
+
+        let nested_global = schema
+            .pointer("/properties/oauth2-proxy/properties/redis/properties/global")
+            .expect("nested global schema");
+        assert_eq!(
+            nested_global
+                .pointer("/properties/kube-score~1ignore/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "shared global property should be mirrored into nested child global: {nested_global}"
+        );
+        assert_eq!(
+            nested_global
+                .pointer("/properties/storageClass/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "nested child global-specific properties should be preserved: {nested_global}"
+        );
+        assert_eq!(
+            nested_global
+                .get("additionalProperties")
+                .and_then(Value::as_bool),
+            Some(true),
+            "shared open-global policy should be mirrored into nested child global: {nested_global}"
         );
     }
 }

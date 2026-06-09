@@ -133,7 +133,7 @@ pub fn generate_values_schema_full(
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> Value {
-    let chart_facts = derive_chart_facts(uses);
+    let chart_facts = ChartFacts::default();
     generate_values_schema_full_with_facts(uses, provider, values_yaml, type_hints, &chart_facts)
 }
 
@@ -162,7 +162,7 @@ pub fn generate_values_schema_full_profiled(
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> GeneratedValuesSchema {
-    let chart_facts = derive_chart_facts(uses);
+    let chart_facts = ChartFacts::default();
     generate_values_schema_full_profiled_with_facts(
         uses,
         provider,
@@ -193,6 +193,8 @@ pub fn generate_values_schema_full_profiled_with_facts(
     let collect_path_metadata_start = Instant::now();
     let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
     let collect_path_metadata_elapsed = collect_path_metadata_start.elapsed();
+    let mut merged_chart_facts = derive_chart_facts(uses);
+    merge_chart_facts(&mut merged_chart_facts, chart_facts);
 
     let values_yaml_doc = values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
@@ -204,7 +206,7 @@ pub fn generate_values_schema_full_profiled_with_facts(
         &path_metadata,
         &values_yaml_doc,
         type_hints,
-        chart_facts,
+        &merged_chart_facts,
     );
     let build_root_schema_elapsed = build_root_schema_start.elapsed();
 
@@ -356,6 +358,24 @@ fn collect_path_metadata(
     }
 }
 
+fn merge_chart_facts(dst: &mut ChartFacts, src: &ChartFacts) {
+    for (path, fact) in &src.path_facts {
+        let entry = dst.path_facts.entry(path.clone()).or_default();
+        let had_render_use = entry.has_render_use;
+        if fact.has_render_use {
+            entry.all_render_uses_self_guarded = if had_render_use {
+                entry.all_render_uses_self_guarded && fact.all_render_uses_self_guarded
+            } else {
+                fact.all_render_uses_self_guarded
+            };
+        }
+        entry.has_render_use |= fact.has_render_use;
+        entry.has_fragment_render |= fact.has_fragment_render;
+        entry.descendant_accessed |= fact.descendant_accessed;
+        entry.has_self_range_guard_render_use |= fact.has_self_range_guard_render_use;
+    }
+}
+
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
     mut signals: UseSignals,
@@ -419,6 +439,11 @@ fn build_root_schema(
                 )
             })
             .unwrap_or_else(empty_schema);
+        let values_yaml_schema = if used_as_fragment && is_empty_schema(&provider_schema) {
+            open_fragment_values_schema(values_yaml_schema)
+        } else {
+            values_yaml_schema
+        };
         let values_yaml_schema = if signals.ranged_value_paths.contains(&vp)
             && values_yaml_info.is_some_and(|path_info| path_info.is_mapping)
         {
@@ -442,14 +467,6 @@ fn build_root_schema(
             .cloned()
             .map_or_else(empty_schema, merge_schema_list);
 
-        let should_preserve_empty_placeholder = preserve_explicit_empty_placeholder(
-            values_yaml_info,
-            &path_fact,
-            &provider_schema,
-            used_as_fragment,
-            is_ranged_source,
-        );
-
         let merged = resolve_schema_for_value_path(
             path_metadata.paths_with_descendants.contains(&vp),
             used_as_fragment,
@@ -460,17 +477,25 @@ fn build_root_schema(
             type_hint_schema,
             preserve_empty_string_fallback,
         );
+        let should_preserve_empty_placeholder = preserve_explicit_empty_placeholder(
+            values_yaml_info,
+            &path_fact,
+            &merged,
+            used_as_fragment,
+            is_ranged_source,
+        );
         let merged = if (preserve_explicit_null_default
             || (is_scalar_like_schema(&merged) && path_metadata.nullable_paths.contains(&vp)))
             && !is_empty_schema(&merged)
         {
             add_null_schema(merged)
+        } else if preserve_explicit_null_default {
+            type_schema("null")
         } else if should_preserve_empty_placeholder {
             merge_explicit_empty_placeholder(merged, values_yaml_info.expect("placeholder info"))
         } else {
             merged
         };
-
         insert_schema_at_path_segments(&mut root_schema, path_segments, merged);
     }
 
@@ -501,6 +526,13 @@ fn is_string_like_schema(v: &Value) -> bool {
         return false;
     };
 
+    if let Some(Value::Array(values)) = obj.get("enum") {
+        return !values.is_empty()
+            && values
+                .iter()
+                .all(|value| matches!(value, Value::String(_) | Value::Null));
+    }
+
     if let Some(Value::Array(types)) = obj.get("type") {
         return types
             .iter()
@@ -524,6 +556,16 @@ fn is_scalar_like_schema(v: &Value) -> bool {
     let Some(obj) = v.as_object() else {
         return false;
     };
+
+    if let Some(Value::Array(values)) = obj.get("enum") {
+        return !values.is_empty()
+            && values.iter().all(|value| {
+                matches!(
+                    value,
+                    Value::String(_) | Value::Number(_) | Value::Bool(_) | Value::Null
+                )
+            });
+    }
 
     if let Some(Value::Array(types)) = obj.get("type") {
         return types.iter().all(|value| {
@@ -945,7 +987,9 @@ fn empty_map_placeholder_has_structural_object_use(
 ) -> bool {
     is_ranged_source
         || path_fact.has_self_range_guard_render_use
-        || (used_as_fragment && schema_type(provider_schema) == Some("object"))
+        || (schema_allows_type(provider_schema, "object")
+            && (used_as_fragment
+                || (path_fact.has_render_use && path_fact.all_render_uses_self_guarded)))
 }
 
 fn merge_explicit_empty_placeholder(schema: Value, path_info: &ValuesYamlPathInfo) -> Value {
@@ -960,12 +1004,12 @@ fn merge_explicit_empty_placeholder(schema: Value, path_info: &ValuesYamlPathInf
 }
 
 fn schema_accepts_empty_object(schema: &Value) -> bool {
-    if schema
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .is_some_and(|variants| variants.iter().any(schema_accepts_empty_object))
-    {
-        return true;
+    if let Some(variants) = schema.get("anyOf").and_then(Value::as_array) {
+        return variants.iter().any(schema_accepts_empty_object);
+    }
+
+    if let Some(variants) = schema.get("oneOf").and_then(Value::as_array) {
+        return variants.iter().any(schema_accepts_empty_object);
     }
 
     if !schema_allows_type(schema, "object") {
@@ -1014,6 +1058,67 @@ fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
     let mut out = obj.clone();
     out.insert("additionalProperties".to_string(), merged_value_schema);
     Value::Object(out)
+}
+
+fn open_fragment_values_schema(schema: Value) -> Value {
+    match schema {
+        Value::Object(mut object) => {
+            if let Some(Value::Array(variants)) = object.remove("anyOf") {
+                object.insert(
+                    "anyOf".to_string(),
+                    Value::Array(
+                        variants
+                            .into_iter()
+                            .map(open_fragment_values_schema)
+                            .collect(),
+                    ),
+                );
+                return Value::Object(object);
+            }
+            if let Some(Value::Array(variants)) = object.remove("oneOf") {
+                object.insert(
+                    "oneOf".to_string(),
+                    Value::Array(
+                        variants
+                            .into_iter()
+                            .map(open_fragment_values_schema)
+                            .collect(),
+                    ),
+                );
+                return Value::Object(object);
+            }
+
+            if let Some(items) = object.remove("items") {
+                object.insert("items".to_string(), open_fragment_values_schema(items));
+            }
+
+            let is_object = object.get("type").and_then(Value::as_str) == Some("object");
+            if is_object {
+                let mut properties = object
+                    .remove("properties")
+                    .and_then(|value| match value {
+                        Value::Object(properties) => Some(properties),
+                        _ => None,
+                    })
+                    .unwrap_or_default();
+                for value in properties.values_mut() {
+                    *value = open_fragment_values_schema(value.take());
+                }
+                let additional_properties = if properties.is_empty() {
+                    empty_schema()
+                } else {
+                    merge_schema_list(properties.values().cloned().collect())
+                };
+                if !properties.is_empty() {
+                    object.insert("properties".to_string(), Value::Object(properties));
+                }
+                object.insert("additionalProperties".to_string(), additional_properties);
+            }
+
+            Value::Object(object)
+        }
+        other => other,
+    }
 }
 
 fn exact_empty_object_schema() -> Value {
@@ -1096,10 +1201,22 @@ fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
             continue;
         }
         let info = by_path.entry(u.source_expr.as_str()).or_default();
-        if !u.path.0.is_empty() {
+        let has_self_range_guard = u
+            .guards
+            .iter()
+            .any(|guard| matches!(guard, Guard::Range { path } if path == &u.source_expr));
+        if !u.path.0.is_empty() || has_self_range_guard {
             info.has_render_use = true;
         }
         info.all_uses_nullable &= use_is_null_tolerant(u);
+
+        for guard in &u.guards {
+            if let Guard::Range { path } = guard
+                && !path.trim().is_empty()
+            {
+                by_path.entry(path.as_str()).or_default().has_render_use = true;
+            }
+        }
     }
     by_path
         .into_iter()

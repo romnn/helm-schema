@@ -39,6 +39,7 @@ struct SymbolicWalker<'a> {
     no_output_depth: usize,
     dot_stack: Vec<Option<FragmentBinding>>,
     shape: Shape,
+    output_inside_block_scalar: bool,
     resource_detector: ResourceDetector,
     text_spans: Vec<(usize, usize)>,
     text_span_idx: usize,
@@ -140,6 +141,7 @@ enum FragmentBinding {
     },
     StringSet(BTreeSet<String>),
     PathSet(BTreeSet<String>),
+    OutputSet(BTreeSet<String>),
     Choice(BTreeSet<FragmentBinding>),
 }
 
@@ -253,6 +255,7 @@ struct Shape {
     clear_pending_on_newline_at_indent: Option<usize>,
     prefix: Vec<String>,
     stack_floor: usize,
+    block_scalar_parent_indent: Option<usize>,
 }
 
 impl Default for Shape {
@@ -263,6 +266,7 @@ impl Default for Shape {
             clear_pending_on_newline_at_indent: None,
             prefix: Vec::new(),
             stack_floor: 0,
+            block_scalar_parent_indent: None,
         }
     }
 }
@@ -273,25 +277,33 @@ enum Container {
     Sequence,
 }
 
-fn parse_yaml_key(after: &str) -> Option<(String, bool)> {
-    fn finalize_yaml_key(key: String, rest: &str) -> Option<(String, bool)> {
+struct ParsedYamlKey {
+    key: String,
+    scalar_value_present: bool,
+    starts_block_scalar: bool,
+}
+
+fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
+    fn finalize_yaml_key(key: String, rest: &str) -> Option<ParsedYamlKey> {
         if key.is_empty() {
             return None;
         }
         let rest = rest.trim_start();
         let rest = rest.strip_prefix(':').unwrap_or(rest);
         let rest = rest.trim_start();
+        let starts_block_scalar = rest.starts_with('|') || rest.starts_with('>');
         let is_template = rest.starts_with("{{");
         let is_template_fragment = is_template
             && (rest.contains("toYaml")
                 || rest.contains("nindent")
                 || rest.contains("indent")
                 || rest.contains("tpl"));
-        let is_block = rest.is_empty()
-            || rest.starts_with('|')
-            || rest.starts_with('>')
-            || is_template_fragment;
-        Some((key, !is_block))
+        let is_block = rest.is_empty() || starts_block_scalar || is_template_fragment;
+        Some(ParsedYamlKey {
+            key,
+            scalar_value_present: !is_block,
+            starts_block_scalar,
+        })
     }
 
     let after = after.trim_end();
@@ -423,6 +435,11 @@ impl Shape {
 
     fn sync_action_position(&mut self, indent: usize, col: usize, allow_clear_pending: bool) {
         let effective = std::cmp::max(indent, col);
+        if self.is_inside_block_scalar_line(indent) {
+            return;
+        }
+        self.block_scalar_parent_indent = None;
+
         while let Some((top_indent, _, _)) = self.stack.last().cloned() {
             if top_indent > effective {
                 if self.stack.len() <= self.stack_floor {
@@ -456,6 +473,11 @@ impl Shape {
                 self.clear_pending_on_newline_at_indent = Some(i);
             }
         }
+    }
+
+    fn is_inside_block_scalar_line(&self, indent: usize) -> bool {
+        self.block_scalar_parent_indent
+            .is_some_and(|parent_indent| indent > parent_indent)
     }
 
     #[allow(clippy::too_many_lines)]
@@ -495,6 +517,12 @@ impl Shape {
                 self.at_line_start = is_newline_terminated;
                 continue;
             }
+
+            if self.is_inside_block_scalar_line(indent) {
+                self.at_line_start = is_newline_terminated;
+                continue;
+            }
+            self.block_scalar_parent_indent = None;
 
             if trimmed == "---" || trimmed == "..." {
                 self.stack.truncate(self.stack_floor);
@@ -542,9 +570,11 @@ impl Shape {
                         .push((child_indent, Container::Mapping, Some(key)));
 
                     let rest = after[colon + 1..].trim_start();
-                    let scalar_value_present =
-                        !rest.is_empty() && !rest.starts_with('|') && !rest.starts_with('>');
-                    if scalar_value_present {
+                    let starts_block_scalar = rest.starts_with('|') || rest.starts_with('>');
+                    if starts_block_scalar {
+                        self.block_scalar_parent_indent = Some(child_indent);
+                    }
+                    if !rest.is_empty() && !starts_block_scalar {
                         if is_newline_terminated {
                             clear_pending_at_indent(&mut self.stack, child_indent);
                         } else {
@@ -557,7 +587,7 @@ impl Shape {
                 continue;
             }
 
-            if let Some((key, scalar_value_present)) = parse_yaml_key(after) {
+            if let Some(parsed_key) = parse_yaml_key(after) {
                 // If we were in a sequence at this indent and now see a mapping key,
                 // treat it as ending the sequence and starting a sibling mapping entry.
                 //
@@ -570,18 +600,24 @@ impl Shape {
                 }
                 match self.stack.last_mut() {
                     Some((top_indent, Container::Mapping, pending)) if *top_indent == indent => {
-                        *pending = Some(key);
+                        *pending = Some(parsed_key.key);
                     }
                     Some((top_indent, _, _)) if *top_indent < indent => {
-                        self.stack.push((indent, Container::Mapping, Some(key)));
+                        self.stack
+                            .push((indent, Container::Mapping, Some(parsed_key.key)));
                     }
                     None => {
-                        self.stack.push((indent, Container::Mapping, Some(key)));
+                        self.stack
+                            .push((indent, Container::Mapping, Some(parsed_key.key)));
                     }
                     _ => {}
                 }
 
-                if scalar_value_present {
+                if parsed_key.starts_block_scalar {
+                    self.block_scalar_parent_indent = Some(indent);
+                }
+
+                if parsed_key.scalar_value_present {
                     if is_newline_terminated {
                         clear_pending_at_indent(&mut self.stack, indent);
                     } else {
@@ -652,6 +688,7 @@ impl<'a> SymbolicWalker<'a> {
             no_output_depth: 0,
             dot_stack: Vec::new(),
             shape: Shape::default(),
+            output_inside_block_scalar: false,
             resource_detector: ResourceDetector::default(),
             text_spans: Vec::new(),
             text_span_idx: 0,
@@ -1292,6 +1329,7 @@ impl<'a> SymbolicWalker<'a> {
         self.text_pos = 0;
         self.resource_detector = ResourceDetector::default();
         self.shape = Shape::default();
+        self.output_inside_block_scalar = false;
         self.guards = self.seed_guards.clone();
         self.dot_stack.clear();
         if let Some(dot) = self.seed_dot.clone() {
@@ -1515,6 +1553,7 @@ impl<'a> SymbolicWalker<'a> {
         }
 
         let (physical_indent, physical_col) = self.line_indent_and_col(pos);
+        self.output_inside_block_scalar = self.shape.is_inside_block_scalar_line(physical_indent);
 
         // Only clear a pending mapping key at end-of-line when this looks like an inline scalar
         // value (e.g. `name: {{ ... }}`), not when the template action expands to a YAML fragment
@@ -1683,6 +1722,7 @@ impl<'a> SymbolicWalker<'a> {
                 | FragmentBinding::Overlay { .. }
                 | FragmentBinding::StringSet(_)
                 | FragmentBinding::PathSet(_)
+                | FragmentBinding::OutputSet(_)
                 | FragmentBinding::Choice(_) => None,
             })
     }
@@ -1765,6 +1805,20 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
+    fn resolve_expr_to_values_paths_in_context(
+        expr: &TemplateExpr,
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+    ) -> BTreeSet<String> {
+        if let Some(path) = values_path_from_expr(expr) {
+            return [path].into_iter().collect();
+        }
+
+        Self::binding_from_expr(expr, bindings, current_dot)
+            .map(|binding| Self::helper_binding_paths(&binding))
+            .unwrap_or_default()
+    }
+
     fn resolved_default_fallback_paths_in_context(&self, text: &str) -> BTreeSet<String> {
         let current_dot = self.current_dot_binding();
         let mut paths = Self::resolved_default_fallback_paths_for_text(
@@ -1772,6 +1826,9 @@ impl<'a> SymbolicWalker<'a> {
             Some(&self.root_bindings),
             current_dot.as_ref(),
         );
+        for expr in Self::parse_expr_text(text) {
+            paths.extend(self.resolved_default_fallback_paths_for_expr_in_current_context(&expr));
+        }
         if !self.template_default_paths.is_empty() {
             for expr in Self::parse_expr_text(text) {
                 expr.walk(|node| {
@@ -1780,6 +1837,70 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
         paths
+    }
+
+    fn resolved_default_fallback_paths_for_expr_in_current_context(
+        &self,
+        expr: &TemplateExpr,
+    ) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        expr.walk(|node| match node {
+            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
+                out.extend(self.resolve_expr_to_values_paths_in_current_context(&args[1]));
+            }
+            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
+                for window in stages.windows(2) {
+                    let TemplateExpr::Call { function, .. } = &window[1] else {
+                        continue;
+                    };
+                    if function != "default" {
+                        continue;
+                    }
+                    out.extend(self.resolve_expr_to_values_paths_in_current_context(&window[0]));
+                }
+            }
+            _ => {}
+        });
+        out
+    }
+
+    fn resolve_expr_to_values_paths_in_current_context(
+        &self,
+        expr: &TemplateExpr,
+    ) -> BTreeSet<String> {
+        if let Some(path) = values_path_from_expr(expr) {
+            return [path].into_iter().collect();
+        }
+
+        let mut locals = self.template_bindings.clone();
+        for (key, value) in &self.root_bindings {
+            locals.insert(
+                key.clone(),
+                Self::fragment_binding_from_helper_binding(value),
+            );
+        }
+
+        let current_dot_fragment = self.current_dot_fragment();
+        let current_dot_binding = self.current_dot_binding();
+        let outer_binding = Self::fragment_binding_from_outer_expr(
+            expr,
+            Some(&locals),
+            Some(&self.root_bindings),
+            current_dot_binding.as_ref(),
+        );
+        let binding = match outer_binding {
+            Some(binding) if !Self::fragment_paths(&binding).is_empty() => Some(binding),
+            _ => self.fragment_binding_in_context(expr, current_dot_fragment.as_ref()),
+        };
+
+        binding
+            .map(|binding| {
+                Self::fragment_paths(&binding)
+                    .into_iter()
+                    .filter(|path| !path.trim().is_empty())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     fn local_alias_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
@@ -1880,14 +2001,186 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn condition_guards_in_context(&self, text: &str) -> Vec<Guard> {
-        let cond_guards = parse_condition(text);
+        let mut cond_guards = parse_condition(text);
+        let alias_guards = self.condition_guards_from_aliases_in_context(text);
+        cond_guards
+            .retain(|guard| !Self::guard_is_subsumed_by_alias_or_guard(guard, &alias_guards));
+        for guard in alias_guards {
+            if !cond_guards.contains(&guard) {
+                cond_guards.push(guard);
+            }
+        }
         if !cond_guards.is_empty() {
             return cond_guards;
+        }
+        if self.condition_has_unrepresentable_values_comparison(text) {
+            return Vec::new();
         }
         self.resolved_values_paths_in_expr_tree_context(text)
             .into_iter()
             .map(|path| Guard::Truthy { path })
             .collect()
+    }
+
+    fn guard_is_subsumed_by_alias_or_guard(guard: &Guard, alias_guards: &[Guard]) -> bool {
+        if !matches!(guard, Guard::Truthy { .. } | Guard::Or { .. }) {
+            return false;
+        }
+
+        alias_guards.iter().any(|alias_guard| {
+            let Guard::Or { paths } = alias_guard else {
+                return false;
+            };
+            guard.value_paths().iter().all(|path| {
+                paths
+                    .iter()
+                    .any(|alias_guard_path| alias_guard_path == path)
+            })
+        })
+    }
+
+    fn expr_needs_context_value_resolution(&self, expr: &TemplateExpr) -> bool {
+        !self.local_alias_paths_for_expr(expr).is_empty()
+            || (values_path_from_expr(expr).is_none()
+                && !self
+                    .resolve_expr_to_values_paths_in_current_context(expr)
+                    .is_empty())
+    }
+
+    fn condition_guards_from_aliases_in_context(&self, text: &str) -> Vec<Guard> {
+        fn string_literal(arg: &TemplateExpr) -> Option<String> {
+            match arg.deparen() {
+                TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+                    Some(value.clone())
+                }
+                _ => None,
+            }
+        }
+
+        fn paths_for_expr(walker: &SymbolicWalker<'_>, expr: &TemplateExpr) -> BTreeSet<String> {
+            let mut paths = walker.resolve_expr_to_values_paths_in_current_context(expr);
+            paths.extend(walker.local_alias_paths_for_expr(expr));
+            paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty())
+                .collect()
+        }
+
+        let mut out = Vec::new();
+        for expr in Self::parse_expr_text(text) {
+            let TemplateExpr::Call { function, args } = expr.deparen() else {
+                continue;
+            };
+            match function.as_str() {
+                "not" => {
+                    let [arg] = args.as_slice() else {
+                        continue;
+                    };
+                    if !self.expr_needs_context_value_resolution(arg) {
+                        continue;
+                    }
+                    let paths = paths_for_expr(self, arg);
+                    out.extend(paths.into_iter().map(|path| Guard::Not { path }));
+                }
+                "or" => {
+                    if !args
+                        .iter()
+                        .any(|arg| self.expr_needs_context_value_resolution(arg))
+                    {
+                        continue;
+                    }
+                    let paths: BTreeSet<String> = args
+                        .iter()
+                        .flat_map(|arg| paths_for_expr(self, arg))
+                        .collect();
+                    if !paths.is_empty() {
+                        out.push(Guard::Or {
+                            paths: paths.into_iter().collect(),
+                        });
+                    }
+                }
+                "eq" => {
+                    let [left, right] = args.as_slice() else {
+                        continue;
+                    };
+                    if !self.expr_needs_context_value_resolution(left)
+                        && !self.expr_needs_context_value_resolution(right)
+                    {
+                        continue;
+                    }
+                    let (value, paths) = match (string_literal(left), string_literal(right)) {
+                        (Some(value), None) => (value, paths_for_expr(self, right)),
+                        (None, Some(value)) => (value, paths_for_expr(self, left)),
+                        _ => continue,
+                    };
+                    out.extend(paths.into_iter().map(|path| Guard::Eq {
+                        path,
+                        value: value.clone(),
+                    }));
+                }
+                "typeIs" => {
+                    let Some(schema_type) = Self::type_is_schema_type(args.first()) else {
+                        continue;
+                    };
+                    if !args
+                        .iter()
+                        .skip(1)
+                        .any(|arg| self.expr_needs_context_value_resolution(arg))
+                    {
+                        continue;
+                    }
+                    let paths: BTreeSet<String> = args
+                        .iter()
+                        .skip(1)
+                        .flat_map(|arg| paths_for_expr(self, arg))
+                        .collect();
+                    out.extend(paths.into_iter().map(|path| Guard::TypeIs {
+                        path,
+                        schema_type: schema_type.clone(),
+                    }));
+                }
+                _ => {}
+            }
+        }
+        out
+    }
+
+    fn condition_has_unrepresentable_values_comparison(&self, text: &str) -> bool {
+        fn string_literal(arg: &TemplateExpr) -> Option<&str> {
+            match arg.deparen() {
+                TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+                    Some(value)
+                }
+                _ => None,
+            }
+        }
+
+        Self::parse_expr_text(text).into_iter().any(|expr| {
+            let TemplateExpr::Call { function, args } = expr.deparen() else {
+                return false;
+            };
+            match function.as_str() {
+                "eq" => {
+                    let has_values_path = args
+                        .iter()
+                        .any(|arg| self.expr_needs_context_value_resolution(arg));
+                    if !has_values_path {
+                        return false;
+                    }
+                    let [left, right] = args.as_slice() else {
+                        return true;
+                    };
+                    !matches!(
+                        (string_literal(left), string_literal(right)),
+                        (Some(_), None) | (None, Some(_))
+                    )
+                }
+                "ne" | "typeIs" => args
+                    .iter()
+                    .any(|arg| self.expr_needs_context_value_resolution(arg)),
+                _ => false,
+            }
+        })
     }
 
     fn resolved_values_paths_in_expr_tree_context(&self, text: &str) -> BTreeSet<String> {
@@ -2168,11 +2461,18 @@ impl<'a> SymbolicWalker<'a> {
                 path = inline_path;
             }
         }
+        if self.output_inside_block_scalar {
+            path = YamlPath(Vec::new());
+        }
 
         let helper_inlined = self.inline_exact_helper_call(text);
 
-        let values = self.resolved_values_paths_in_context(text);
         let default_fallback_values = self.resolved_default_fallback_paths_in_context(text);
+        let mut values: BTreeSet<String> = self
+            .resolved_values_paths_in_context(text)
+            .into_iter()
+            .collect();
+        values.extend(default_fallback_values.iter().cloned());
         let local_output_meta = self.local_alias_output_meta_for_text(text);
 
         let bound_values = self.extract_bound_values(text);
@@ -2403,7 +2703,7 @@ impl<'a> SymbolicWalker<'a> {
             return None;
         }
         let trimmed = line.trim_start();
-        let (key, _scalar_value_present) = parse_yaml_key(trimmed)?;
+        let key = parse_yaml_key(trimmed)?.key;
         let mut path = self.shape.current_path();
         if path.0.last().is_none_or(|segment| segment != &key) {
             path.0.push(key);
@@ -2571,14 +2871,7 @@ impl<'a> SymbolicWalker<'a> {
             HelperBinding::OutputSet(outputs) => Some(HelperBinding::OutputSet(
                 outputs
                     .iter()
-                    .map(|(path, meta)| {
-                        let item_path = if path.is_empty() {
-                            "*".to_string()
-                        } else {
-                            format!("{path}.*")
-                        };
-                        (item_path, meta.clone())
-                    })
+                    .map(|(path, meta)| (path.clone(), meta.clone()))
                     .collect(),
             )),
             HelperBinding::Dict(entries) => {
@@ -2699,16 +2992,7 @@ impl<'a> SymbolicWalker<'a> {
             HelperBinding::OutputSet(outputs) => Some(HelperBinding::OutputSet(
                 outputs
                     .iter()
-                    .map(|(path, meta)| {
-                        let appended = if rest.is_empty() {
-                            path.clone()
-                        } else if path.is_empty() {
-                            rest.join(".")
-                        } else {
-                            format!("{path}.{}", rest.join("."))
-                        };
-                        (appended, meta.clone())
-                    })
+                    .map(|(path, meta)| (path.clone(), meta.clone()))
                     .collect(),
             )),
             HelperBinding::PathSet(paths) => {
@@ -3321,7 +3605,7 @@ impl<'a> SymbolicWalker<'a> {
             HelperBinding::RootContext => FragmentBinding::RootContext,
             HelperBinding::Unknown => FragmentBinding::Unknown,
             HelperBinding::OutputSet(outputs) => {
-                FragmentBinding::PathSet(outputs.keys().cloned().collect())
+                FragmentBinding::OutputSet(outputs.keys().cloned().collect())
             }
             HelperBinding::PathSet(paths) => FragmentBinding::PathSet(paths.clone()),
             HelperBinding::Dict(map) => FragmentBinding::Dict(
@@ -3369,6 +3653,12 @@ impl<'a> SymbolicWalker<'a> {
             FragmentBinding::Unknown | FragmentBinding::StringSet(_) => {
                 Some(HelperBinding::Unknown)
             }
+            FragmentBinding::OutputSet(paths) => Some(HelperBinding::OutputSet(
+                paths
+                    .iter()
+                    .map(|path| (path.clone(), HelperOutputMeta::default()))
+                    .collect(),
+            )),
             FragmentBinding::PathSet(paths) => Some(HelperBinding::PathSet(paths.clone())),
             FragmentBinding::Dict(map) => Some(HelperBinding::Dict(
                 map.iter()
@@ -3427,6 +3717,7 @@ impl<'a> SymbolicWalker<'a> {
     fn fragment_paths(binding: &FragmentBinding) -> BTreeSet<String> {
         match binding {
             FragmentBinding::ValuesPath(path) => [path.clone()].into_iter().collect(),
+            FragmentBinding::OutputSet(paths) => paths.clone(),
             FragmentBinding::PathSet(paths) => paths.clone(),
             FragmentBinding::Overlay { entries, fallback } => entries
                 .values()
@@ -3464,7 +3755,8 @@ impl<'a> SymbolicWalker<'a> {
 
     fn merge_fragment_bindings(bindings: Vec<FragmentBinding>) -> Option<FragmentBinding> {
         let mut map = BTreeMap::new();
-        let mut non_dict_paths = BTreeSet::new();
+        let mut non_dict_value_paths = BTreeSet::new();
+        let mut non_dict_output_paths = BTreeSet::new();
         let mut non_dict_strings = BTreeSet::new();
 
         let mut pending = bindings;
@@ -3490,22 +3782,38 @@ impl<'a> SymbolicWalker<'a> {
                         }
                     }
                 }
-                other => {
-                    non_dict_paths.extend(Self::fragment_paths(&other));
-                    non_dict_strings.extend(Self::fragment_strings(&other));
+                FragmentBinding::ValuesPath(path) => {
+                    non_dict_value_paths.insert(path);
                 }
+                FragmentBinding::ValuesRoot => {
+                    non_dict_value_paths.insert(String::new());
+                }
+                FragmentBinding::PathSet(paths) => {
+                    non_dict_value_paths.extend(paths);
+                }
+                FragmentBinding::OutputSet(paths) => {
+                    non_dict_output_paths.extend(paths);
+                }
+                FragmentBinding::StringSet(strings) => {
+                    non_dict_strings.extend(strings);
+                }
+                FragmentBinding::RootContext
+                | FragmentBinding::Unknown
+                | FragmentBinding::List(_) => {}
             }
         }
 
-        let fallback = match (non_dict_paths.is_empty(), non_dict_strings.is_empty()) {
-            (true, true) => None,
-            (false, true) => Some(FragmentBinding::PathSet(non_dict_paths)),
-            (true, false) => Some(FragmentBinding::StringSet(non_dict_strings)),
-            (false, false) => Self::fragment_choice(vec![
-                FragmentBinding::PathSet(non_dict_paths),
-                FragmentBinding::StringSet(non_dict_strings),
-            ]),
-        };
+        let mut fallback_choices = Vec::new();
+        if !non_dict_value_paths.is_empty() {
+            fallback_choices.push(FragmentBinding::PathSet(non_dict_value_paths));
+        }
+        if !non_dict_output_paths.is_empty() {
+            fallback_choices.push(FragmentBinding::OutputSet(non_dict_output_paths));
+        }
+        if !non_dict_strings.is_empty() {
+            fallback_choices.push(FragmentBinding::StringSet(non_dict_strings));
+        }
+        let fallback = Self::fragment_choice(fallback_choices);
 
         if map.is_empty() {
             fallback
@@ -3534,6 +3842,14 @@ impl<'a> SymbolicWalker<'a> {
             | FragmentBinding::RootContext
             | FragmentBinding::Unknown
             | FragmentBinding::StringSet(_) => Some(binding),
+            FragmentBinding::OutputSet(mut paths) => {
+                paths.retain(|path| !remove.contains(path));
+                if paths.is_empty() {
+                    None
+                } else {
+                    Some(FragmentBinding::OutputSet(paths))
+                }
+            }
             FragmentBinding::PathSet(mut paths) => {
                 paths.retain(|path| !remove.contains(path));
                 if paths.is_empty() {
@@ -3598,7 +3914,7 @@ impl<'a> SymbolicWalker<'a> {
         source_expr: String,
         relative_path: &YamlPath,
     ) -> FragmentBinding {
-        let mut binding = FragmentBinding::PathSet([source_expr].into_iter().collect());
+        let mut binding = FragmentBinding::OutputSet([source_expr].into_iter().collect());
         for segment in relative_path.0.iter().rev() {
             binding = FragmentBinding::Dict(BTreeMap::from([(segment.clone(), binding)]));
         }
@@ -3639,14 +3955,14 @@ impl<'a> SymbolicWalker<'a> {
             if !structured_sources.contains(&source)
                 && !Self::values_path_has_descendant(&source, &rendered_sources)
             {
-                bindings.push(FragmentBinding::PathSet([source].into_iter().collect()));
+                bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
             }
         }
         for source in analysis.output.into_keys() {
             if !structured_sources.contains(&source)
                 && !Self::values_path_has_descendant(&source, &rendered_sources)
             {
-                bindings.push(FragmentBinding::PathSet([source].into_iter().collect()));
+                bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
             }
         }
         Self::merge_fragment_bindings(bindings)
@@ -3747,6 +4063,7 @@ impl<'a> SymbolicWalker<'a> {
                     .collect();
                 Some(FragmentBinding::PathSet(appended))
             }
+            FragmentBinding::OutputSet(paths) => Some(FragmentBinding::OutputSet(paths.clone())),
             FragmentBinding::Overlay { entries, fallback } => {
                 let (first, tail) = rest.split_first()?;
                 if let Some(binding) = entries.get(first) {
@@ -3787,6 +4104,7 @@ impl<'a> SymbolicWalker<'a> {
                     })
                     .collect(),
             )),
+            FragmentBinding::OutputSet(paths) => Some(FragmentBinding::OutputSet(paths.clone())),
             FragmentBinding::List(items) => Self::fragment_choice(items.clone()),
             FragmentBinding::Choice(choices) => Self::fragment_choice(
                 choices
@@ -5158,7 +5476,7 @@ impl<'a> SymbolicWalker<'a> {
             return None;
         };
         let format = printf_format(expr)?;
-        let (key, _scalar_value_present) = parse_yaml_key(format.trim_start())?;
+        let key = parse_yaml_key(format.trim_start())?.key;
         Some(YamlPath(vec![key]))
     }
 
@@ -5200,6 +5518,7 @@ impl<'a> SymbolicWalker<'a> {
             | FragmentBinding::Unknown
             | FragmentBinding::StringSet(_)
             | FragmentBinding::PathSet(_)
+            | FragmentBinding::OutputSet(_)
             | FragmentBinding::Choice(_) => ValueKind::Scalar,
         }
     }
@@ -5252,6 +5571,20 @@ impl<'a> SymbolicWalker<'a> {
                 );
             }
             FragmentBinding::PathSet(paths) => {
+                for path in paths {
+                    Self::push_helper_fragment_output(
+                        outputs,
+                        path.clone(),
+                        relative_path,
+                        kind,
+                        HelperOutputMeta {
+                            guards: active_output_guards.clone(),
+                            defaulted: defaulted_paths.contains(path),
+                        },
+                    );
+                }
+            }
+            FragmentBinding::OutputSet(paths) => {
                 for path in paths {
                     Self::push_helper_fragment_output(
                         outputs,
@@ -7203,11 +7536,11 @@ impl<'a> SymbolicWalker<'a> {
         let mut out = BTreeSet::new();
         expr.walk(|node| match node {
             TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                if let Some(path) =
-                    Self::resolve_expr_to_values_path_in_context(&args[1], bindings, current_dot)
-                {
-                    out.insert(path);
-                }
+                out.extend(Self::resolve_expr_to_values_paths_in_context(
+                    &args[1],
+                    bindings,
+                    current_dot,
+                ));
             }
             TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
                 for window in stages.windows(2) {
@@ -7217,13 +7550,11 @@ impl<'a> SymbolicWalker<'a> {
                     if function != "default" {
                         continue;
                     }
-                    if let Some(path) = Self::resolve_expr_to_values_path_in_context(
+                    out.extend(Self::resolve_expr_to_values_paths_in_context(
                         &window[0],
                         bindings,
                         current_dot,
-                    ) {
-                        out.insert(path);
-                    }
+                    ));
                 }
             }
             _ => {}
@@ -7365,6 +7696,14 @@ impl<'a> SymbolicWalker<'a> {
         for g in &cond_guards {
             for path in g.value_paths() {
                 self.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
+                if matches!(g, Guard::Eq { .. } | Guard::TypeIs { .. }) {
+                    self.emit_use_with_extra_guards(
+                        path.to_string(),
+                        YamlPath(Vec::new()),
+                        ValueKind::Scalar,
+                        std::slice::from_ref(g),
+                    );
+                }
             }
             if !self.guards.contains(g) {
                 self.guards.push(g.clone());
@@ -8341,8 +8680,11 @@ impl ResourceDetector {
 
 #[cfg(test)]
 mod fragment_binding_unit_tests {
-    use super::{FragmentBinding, HelperBinding, SymbolicWalker, bound_helper_dependency_paths};
-    use crate::ValueKind;
+    use super::{
+        FragmentBinding, HelperBinding, SymbolicIrGenerator, SymbolicWalker,
+        bound_helper_dependency_paths,
+    };
+    use crate::{IrGenerator, ValueKind};
     use helm_schema_ast::{
         DefineIndex, FusedRustParser, HelmAst, HelmParser, Literal, TemplateExpr, TreeSitterParser,
     };
@@ -8484,6 +8826,49 @@ mod fragment_binding_unit_tests {
             }),
             "helper toYaml fragment should be exposed as a guarded root-relative fragment use, got {:?}",
             analysis.fragment_output_uses
+        );
+    }
+
+    #[test]
+    fn helper_fragment_render_inside_with_stays_self_guarded_in_chart_facts() {
+        let mut defines = DefineIndex::new();
+        defines
+            .add_source(
+                &TreeSitterParser,
+                r#"
+{{- define "common.tplvalues.render" -}}
+{{- .value | toYaml -}}
+{{- end -}}
+"#,
+            )
+            .expect("parse helpers");
+        let src = r#"
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+spec:
+  {{- with .Values.controller.ingressClassResource.parameters }}
+  parameters: {{ include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
+  {{- end }}
+"#;
+        let ast = TreeSitterParser.parse(src).expect("parse template");
+        let ir = crate::IrGenerator::generate(&crate::SymbolicIrGenerator, src, &ast, &defines);
+        let facts = crate::derive_chart_facts(&ir);
+        let fact = facts
+            .path_facts
+            .get("controller.ingressClassResource.parameters")
+            .unwrap_or_else(|| {
+                panic!(
+                    "expected chart facts for ingressClass parameters; ir={ir:#?}; facts={facts:#?}"
+                )
+            });
+
+        assert!(
+            fact.has_render_use,
+            "helper-rendered ingressClass parameters should be a render use; ir={ir:#?}; facts={facts:#?}"
+        );
+        assert!(
+            fact.all_render_uses_self_guarded,
+            "the with-header guard must survive helper-fragment interpretation; ir={ir:#?}; facts={facts:#?}"
         );
     }
 
@@ -9703,6 +10088,202 @@ requiredDuringSchedulingIgnoredDuringExecution:
         );
         let resolved = walker.resolved_values_paths_in_context("$storageClass");
         assert_eq!(resolved, vec!["global.storageClass".to_string()]);
+    }
+
+    #[test]
+    fn default_function_binding_preserves_given_and_fallback_paths() {
+        let defines = DefineIndex::new();
+        let mut seen = HashSet::new();
+        let binding = SymbolicWalker::fragment_binding_from_text(
+            "default .Values.persistence.storageClass .Values.global.storageClass",
+            &HashMap::new(),
+            None,
+            &defines,
+            &HashMap::new(),
+            &std::cell::RefCell::new(HashMap::new()),
+            &std::cell::RefCell::new(BTreeMap::new()),
+            &mut seen,
+        )
+        .expect("binding");
+
+        let paths = SymbolicWalker::fragment_paths(&binding);
+        assert_eq!(
+            paths,
+            BTreeSet::from([
+                "global.storageClass".to_string(),
+                "persistence.storageClass".to_string(),
+            ])
+        );
+    }
+
+    #[test]
+    fn eq_condition_on_default_alias_surfaces_all_alias_paths() {
+        let defines = DefineIndex::new();
+        let mut walker = SymbolicWalker::new("", &defines);
+        walker.template_bindings.insert(
+            "storageClass".to_string(),
+            FragmentBinding::Choice(BTreeSet::from([
+                FragmentBinding::ValuesPath("global.storageClass".to_string()),
+                FragmentBinding::ValuesPath("persistence.storageClass".to_string()),
+            ])),
+        );
+
+        for condition in [r#"(eq "-" $storageClass)"#, r#"eq "-" $storageClass"#] {
+            let guards = walker.condition_guards_in_context(condition);
+            assert_eq!(
+                guards,
+                vec![
+                    crate::Guard::Eq {
+                        path: "global.storageClass".to_string(),
+                        value: "-".to_string(),
+                    },
+                    crate::Guard::Eq {
+                        path: "persistence.storageClass".to_string(),
+                        value: "-".to_string(),
+                    },
+                ],
+                "condition {condition}"
+            );
+        }
+    }
+
+    #[test]
+    fn ne_condition_on_default_alias_does_not_invent_truthy_guard() {
+        let defines = DefineIndex::new();
+        let mut walker = SymbolicWalker::new("", &defines);
+        walker.template_bindings.insert(
+            "storageClass".to_string(),
+            FragmentBinding::Choice(BTreeSet::from([
+                FragmentBinding::ValuesPath("global.storageClass".to_string()),
+                FragmentBinding::ValuesPath("persistence.storageClass".to_string()),
+            ])),
+        );
+
+        let guards = walker.condition_guards_in_context(r#"ne "-" $storageClass"#);
+        assert!(
+            guards.is_empty(),
+            "`ne` has no exact guard representation and must not be widened to truthiness: {guards:#?}"
+        );
+    }
+
+    #[test]
+    fn multi_arg_eq_condition_on_default_alias_does_not_pick_one_literal() {
+        let defines = DefineIndex::new();
+        let mut walker = SymbolicWalker::new("", &defines);
+        walker.template_bindings.insert(
+            "storageClass".to_string(),
+            FragmentBinding::Choice(BTreeSet::from([
+                FragmentBinding::ValuesPath("global.storageClass".to_string()),
+                FragmentBinding::ValuesPath("persistence.storageClass".to_string()),
+            ])),
+        );
+
+        let guards = walker.condition_guards_in_context(r#"eq $storageClass "-" "" "#);
+        assert!(
+            guards.is_empty(),
+            "multi-argument `eq` is a disjunction and must not become a single equality guard: {guards:#?}"
+        );
+    }
+
+    #[test]
+    fn not_condition_on_default_alias_surfaces_not_guards() {
+        let defines = DefineIndex::new();
+        let mut walker = SymbolicWalker::new("", &defines);
+        walker.template_bindings.insert(
+            "storageClass".to_string(),
+            FragmentBinding::Choice(BTreeSet::from([
+                FragmentBinding::ValuesPath("global.storageClass".to_string()),
+                FragmentBinding::ValuesPath("persistence.storageClass".to_string()),
+            ])),
+        );
+
+        let guards = walker.condition_guards_in_context(r#"not $storageClass"#);
+        assert_eq!(
+            guards,
+            vec![
+                crate::Guard::Not {
+                    path: "global.storageClass".to_string(),
+                },
+                crate::Guard::Not {
+                    path: "persistence.storageClass".to_string(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn or_condition_on_default_alias_surfaces_or_guard() {
+        let defines = DefineIndex::new();
+        let mut walker = SymbolicWalker::new("", &defines);
+        walker.template_bindings.insert(
+            "storageClass".to_string(),
+            FragmentBinding::Choice(BTreeSet::from([
+                FragmentBinding::ValuesPath("global.storageClass".to_string()),
+                FragmentBinding::ValuesPath("persistence.storageClass".to_string()),
+            ])),
+        );
+
+        let guards = walker.condition_guards_in_context(r#"or $storageClass .Values.enabled"#);
+        assert_eq!(
+            guards,
+            vec![crate::Guard::Or {
+                paths: vec![
+                    "enabled".to_string(),
+                    "global.storageClass".to_string(),
+                    "persistence.storageClass".to_string(),
+                ],
+            }]
+        );
+    }
+
+    #[test]
+    fn default_alias_render_surfaces_given_and_fallback_paths() {
+        let src = r#"
+apiVersion: example.com/v1
+kind: Widget
+spec:
+  {{- $storageClass := default .Values.persistence.storageClass .Values.global.storageClass -}}
+  {{- if $storageClass }}
+  {{- if (eq "-" $storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ $storageClass }}
+  {{- end }}
+  {{- end }}
+"#;
+        let ast = TreeSitterParser.parse(src).expect("parse");
+        let defines = DefineIndex::new();
+        let uses = SymbolicIrGenerator.generate(src, &ast, &defines);
+        let rendered_paths: BTreeSet<String> = uses
+            .iter()
+            .filter(|use_| !use_.path.0.is_empty())
+            .map(|use_| use_.source_expr.clone())
+            .collect();
+
+        assert!(
+            rendered_paths.contains("global.storageClass"),
+            "global storage class should render through alias: {uses:#?}"
+        );
+        assert!(
+            rendered_paths.contains("persistence.storageClass"),
+            "persistence storage class should render through alias: {uses:#?}"
+        );
+        let eq_guard_paths: BTreeSet<String> = uses
+            .iter()
+            .flat_map(|use_| &use_.guards)
+            .filter_map(|guard| match guard {
+                crate::Guard::Eq { path, value } if value == "-" => Some(path.clone()),
+                _ => None,
+            })
+            .collect();
+        assert!(
+            eq_guard_paths.contains("global.storageClass"),
+            "global storage class should carry eq guard: {uses:#?}"
+        );
+        assert!(
+            eq_guard_paths.contains("persistence.storageClass"),
+            "persistence storage class should carry eq guard: {uses:#?}"
+        );
     }
 }
 
