@@ -1,9 +1,7 @@
 #![recursion_limit = "512"]
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 const TEMPLATE_PATH: &str = "charts/surveyor/templates/configmap.yaml";
 
@@ -15,22 +13,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     )
     .expect("helpers");
     idx
-}
-
-#[test]
-fn resource_detection() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "ConfigMap".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]

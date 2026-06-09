@@ -1,9 +1,7 @@
 #![recursion_limit = "512"]
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -12,22 +10,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
         &test_util::read_testdata("charts/nats-operator/templates/_helpers.tpl"),
     );
     idx
-}
-
-#[test]
-fn resource_detection() {
-    let src = test_util::read_testdata("charts/nats-operator/templates/rbac.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: "rbac.authorization.k8s.io/v1".to_string(),
-            kind: "ClusterRole".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]
@@ -58,7 +40,10 @@ fn symbolic_ir_full() {
             "path": [],
             "kind": "Scalar",
             "guards": [t("rbacEnabled")],
-            "resource": null
+            "resource": serde_json::json!({
+                "api_version": "rbac.authorization.k8s.io/v1",
+                "kind": "ClusterRole"
+            })
         },
         {
             "source_expr": "clusterScoped",

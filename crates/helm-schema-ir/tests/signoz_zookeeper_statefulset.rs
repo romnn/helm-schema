@@ -1,9 +1,7 @@
 #![recursion_limit = "1024"]
 
 use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml";
@@ -20,22 +18,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
         let _ = idx.add_source(parser, &src);
     }
     idx
-}
-
-#[test]
-fn resource_detection() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: String::new(),
-            kind: "StatefulSet".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]

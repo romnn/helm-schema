@@ -85,24 +85,13 @@ That is the bar that keeps helm-schema aligned with its purpose: a smart, typed,
 - Inside crates, prefer typed error enums (e.g. `std::result::Result<T, MyError>`) for precise variants.
 - Convert typed errors to `color_eyre::eyre::Report` only at the outer boundary (e.g. `main`).
 
-## Known architectural debt: dual resource detector
+## Known architectural debt: List envelope descent
 
-> Design for the cleanup lives in [`plan/unify-resource-detector.md`](plan/unify-resource-detector.md).
-> The `kind: List` items[*] descent follow-up has its own plan in
-> [`plan/list-envelope-items-descent.md`](plan/list-envelope-items-descent.md) — it depends on
-> the unified detector landing first. Both AGENTS.md sections (this one and the warning embedded
-> in the last paragraph) come out in the same PR that implements the respective plan.
-
-There are currently two resource-identity detectors in `helm-schema-ir`. They have drifted and should be unified.
-
-- `DefaultResourceDetector` (`crates/helm-schema-ir/src/lib.rs`) is the original AST-walking detector. Given a parsed `HelmAst`, it scans the top-level `Mapping` for `apiVersion` / `kind` scalar pairs and returns one `ResourceRef`. It is simple, structural, and has no notion of multi-document files, helper-returned apiVersions, or `kind: List` envelopes.
-- `SymbolicWalker::ResourceDetector` (`crates/helm-schema-ir/src/symbolic.rs`) is the line-based detector used by the production `SymbolicIrGenerator`. It accumulates raw template source (with template-action text preserved via the dual-buffer split in `ingest_text_up_to`), tracks `---` document boundaries, evaluates helper-returned apiVersions via `helper_literal_outputs`, and preserves multi-branch helper alternatives as ambiguous candidates per the "preserve exact alternatives" design rule.
-
-This split is a structural smell. The production walker is line-based but already needs (and partly implements) structural concepts the AST-based detector handles natively (document boundaries, nested structure). The right end state is one detector — an AST-driven implementation that absorbs the line-detector's capabilities — so that `DefaultResourceDetector` and `SymbolicIrGenerator` share the same source of truth.
-
-When working in this area, prefer to extend `ResourceDetector` in `symbolic.rs` for now (it's the production code path) but treat any new logic that would be easier to express against `HelmAst` as a signal to start the unification. In particular, structural recursion (e.g. proper `kind: List` items[*] descent — see the next paragraph) belongs in an AST-driven design, not in line-based state.
-
-`kind: List` envelope handling is currently partial: the chain layer suppresses `MissingSchema` for the wrapper (in both `Chain::schema_for_use` and `Chain::commit_missing_schema`), but the IR walker does NOT recurse into `items[*]` to attribute uses inside each item to the item's own `apiVersion` / `kind`. That would require structural traversal of the YAML items sequence and is the canonical example of where the unified AST-based detector is needed. Until then, uses inside `items[*]` carry the `List` wrapper's identity and are validated against nothing.
+`kind: List` envelope handling is currently partial: the chain layer suppresses `MissingSchema` for
+the wrapper (in both `Chain::schema_for_use` and `Chain::commit_missing_schema`), but the IR walker
+does NOT recurse into `items[*]` to attribute uses inside each item to the item's own `apiVersion` /
+`kind`. The unified AST resource detector is now the right place to build that follow-up. See
+[`plan/list-envelope-items-descent.md`](plan/list-envelope-items-descent.md).
 
 ## Cache is a speed optimisation, not a correctness oracle
 

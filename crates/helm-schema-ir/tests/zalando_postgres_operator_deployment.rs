@@ -1,9 +1,7 @@
 #![recursion_limit = "512"]
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -13,23 +11,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     )
     .expect("helpers");
     idx
-}
-
-#[test]
-fn resource_detection() {
-    let src =
-        test_util::read_testdata("charts/zalando-postgres-operator/templates/deployment.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: "apps/v1".to_string(),
-            kind: "Deployment".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]

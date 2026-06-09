@@ -1,6 +1,7 @@
 mod abstract_eval;
 pub mod helper_eval;
 pub mod required_inference;
+mod resource_detector;
 mod symbolic;
 mod walker;
 
@@ -138,73 +139,6 @@ impl Guard {
 /// Generates IR (`Vec<ValueUse>`) from a parsed Helm+YAML AST.
 pub trait IrGenerator {
     fn generate(&self, src: &str, ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse>;
-}
-
-/// Detects the Kubernetes resource type from an AST node.
-///
-/// The default walker uses inline detection (tracking `apiVersion`/`kind` pairs
-/// during the walk). This trait allows alternative strategies.
-pub trait ResourceDetector {
-    fn detect(&self, ast: &HelmAst) -> Option<ResourceRef>;
-}
-
-/// Default resource detector that scans top-level mapping pairs for
-/// `apiVersion` and `kind` scalars.
-pub struct DefaultResourceDetector;
-
-impl ResourceDetector for DefaultResourceDetector {
-    fn detect(&self, ast: &HelmAst) -> Option<ResourceRef> {
-        let mut api_version = None;
-        let mut kind = None;
-        scan_for_resource(ast, &mut api_version, &mut kind);
-        match (api_version, kind) {
-            (Some(av), Some(k)) => Some(ResourceRef {
-                api_version: av,
-                kind: k,
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            }),
-            // Many Helm charts use `{{ template "..." }}` for apiVersion,
-            // so we still detect the resource if only `kind` is found.
-            (None, Some(k)) => Some(ResourceRef {
-                api_version: String::new(),
-                kind: k,
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            }),
-            _ => None,
-        }
-    }
-}
-
-fn scan_for_resource(node: &HelmAst, api_version: &mut Option<String>, kind: &mut Option<String>) {
-    match node {
-        HelmAst::Document { items } | HelmAst::Mapping { items } => {
-            for item in items {
-                scan_for_resource(item, api_version, kind);
-            }
-        }
-        HelmAst::Pair { key, value } => {
-            if let HelmAst::Scalar { text: key_text } = key.as_ref()
-                && let Some(val_text) = value.as_ref().and_then(|v| match v.as_ref() {
-                    HelmAst::Scalar { text } => Some(text.as_str()),
-                    _ => None,
-                })
-            {
-                if key_text == "apiVersion" {
-                    *api_version = Some(val_text.to_string());
-                } else if key_text == "kind" {
-                    *kind = Some(val_text.to_string());
-                }
-            }
-        }
-        HelmAst::If { then_branch, .. } => {
-            for item in then_branch {
-                scan_for_resource(item, api_version, kind);
-            }
-        }
-        _ => {}
-    }
 }
 
 #[cfg(test)]

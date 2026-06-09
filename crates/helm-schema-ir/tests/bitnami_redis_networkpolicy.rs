@@ -1,7 +1,5 @@
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -14,25 +12,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
         let _ = idx.add_source(parser, &src);
     }
     idx
-}
-
-/// Resource detection for networkpolicy (kind is scalar, apiVersion is template).
-#[test]
-fn resource_detection() {
-    let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    // apiVersion is a template call, not a scalar, so it won't be detected.
-    // kind: NetworkPolicy IS a scalar.
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: String::new(),
-            kind: "NetworkPolicy".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]
@@ -946,7 +925,10 @@ fn symbolic_ir_full() {
     "guards": [],
     "kind": "Scalar",
     "path": [],
-    "resource": null,
+    "resource": {
+      "api_version": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy"
+    },
     "source_expr": "networkPolicy.enabled"
   },
   {

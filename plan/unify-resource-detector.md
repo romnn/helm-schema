@@ -1,5 +1,17 @@
 # helm-schema — unify the dual resource detector
 
+Status: implemented.
+
+The shipped implementation lives in `crates/helm-schema-ir/src/resource_detector.rs`. It removes
+the old `DefaultResourceDetector` API and the line-oriented detector embedded in
+`symbolic.rs`; both direct detector tests and `SymbolicIrGenerator` now use the AST resource
+detector. Production attribution is handled by a byte-position cursor over tree-sitter document
+spans, while resource identity itself is derived from parsed manifest structure and helper
+evaluation.
+
+The remaining sections are the original design note, retained as historical context for what was
+removed and why.
+
 Collapse the two parallel resource-identity detectors in `helm-schema-ir` into a single AST-driven
 implementation, so the production CLI path and the IR test suite both exercise the same code.
 

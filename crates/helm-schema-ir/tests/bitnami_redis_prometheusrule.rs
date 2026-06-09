@@ -1,7 +1,5 @@
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -14,23 +12,6 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
         let _ = idx.add_source(parser, &src);
     }
     idx
-}
-
-/// `DefaultResourceDetector` finds the `PrometheusRule` resource type.
-#[test]
-fn resource_detection() {
-    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: "monitoring.coreos.com/v1".to_string(),
-            kind: "PrometheusRule".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]
@@ -308,7 +289,10 @@ fn symbolic_ir_full() {
     "guards": [],
     "kind": "Scalar",
     "path": [],
-    "resource": null,
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
     "source_expr": "metrics.enabled"
   },
   {
@@ -439,7 +423,10 @@ fn symbolic_ir_full() {
     ],
     "kind": "Scalar",
     "path": [],
-    "resource": null,
+    "resource": {
+      "api_version": "monitoring.coreos.com/v1",
+      "kind": "PrometheusRule"
+    },
     "source_expr": "metrics.prometheusRule.enabled"
   },
   {

@@ -1,9 +1,7 @@
 #![recursion_limit = "1024"]
 
-use helm_schema_ast::{DefineIndex, FusedRustParser, HelmParser, TreeSitterParser};
-use helm_schema_ir::{
-    DefaultResourceDetector, IrGenerator, ResourceDetector, ResourceRef, SymbolicIrGenerator,
-};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
 
 fn build_cert_manager_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -13,22 +11,6 @@ fn build_cert_manager_define_index(parser: &dyn HelmParser) -> DefineIndex {
     )
     .expect("cert-manager helpers");
     idx
-}
-
-#[test]
-fn resource_detection() {
-    let src = test_util::read_testdata("charts/cert-manager/templates/service.yaml");
-    let ast = FusedRustParser.parse(&src).expect("parse");
-    let resource = DefaultResourceDetector.detect(&ast);
-    assert_eq!(
-        resource,
-        Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "Service".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
-    );
 }
 
 #[test]
