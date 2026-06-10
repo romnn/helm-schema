@@ -4,6 +4,7 @@ pub mod required_inference;
 mod resource_detector;
 mod symbolic;
 mod walker;
+mod yaml_shape;
 
 pub use abstract_eval::{ChartFacts, PathFact, derive_chart_facts, derive_chart_facts_from_ast};
 pub use helper_eval::{

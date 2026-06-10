@@ -23,3 +23,13 @@ pub enum ChainLookupOutcome {
         tried_filenames: Vec<String>,
     },
 }
+
+impl ChainLookupOutcome {
+    /// Return the resolved schema, intentionally discarding chain metadata.
+    pub(crate) fn into_schema(self) -> Option<Value> {
+        match self {
+            Self::Resolved { schema, .. } => schema,
+            Self::MissingSchema { .. } => None,
+        }
+    }
+}

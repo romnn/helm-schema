@@ -1,7 +1,7 @@
 //! Kubernetes / CRD schema providers.
 //!
 //! Composed from these cross-cutting modules:
-//!   - [`fetch`]: HTTP seam (`HttpFetcher` trait + `UreqFetcher` /
+//!   - [`fetch`]: HTTP boundary (`HttpFetcher` trait + `UreqFetcher` /
 //!     `MockFetcher`).
 //!   - [`cache`]: per-source layout, marker-based invalidation,
 //!     negative cache.

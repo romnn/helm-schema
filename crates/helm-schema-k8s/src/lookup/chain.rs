@@ -111,7 +111,7 @@ impl Chain {
     /// candidates silently and, on total exhaustion, commits ONE
     /// `MissingSchema` attributed to the user-written primary
     /// `api_version` (not to any speculative candidate). Speculative
-    /// per-candidate misses never reach the sink (Finding 4).
+    /// per-candidate misses never reach the sink.
     #[tracing::instrument(
         skip_all,
         fields(
@@ -143,14 +143,10 @@ impl Chain {
                     source,
                     origin,
                 } => {
-                    // Round-3 Finding 3, Option B: InferredApiVersion is
-                    // an informational diagnostic that helps users
-                    // notice when an apiVersion was guessed. For built-in
-                    // K8s kinds (`ConfigMap → v1`, `Deployment → apps/v1`,
-                    // `ClusterRole → rbac.authorization.k8s.io/v1`, …)
-                    // the inference is trivially correct and adds noise.
-                    // We still RESOLVE the inferred apiVersion below;
-                    // we just don't tell the user about it for built-ins.
+                    // InferredApiVersion is diagnostic-only: resolution still
+                    // uses the inferred apiVersion below. Built-in K8s kinds
+                    // are obvious enough that reporting the guess would add
+                    // noise without helping the chart author.
                     let inferred_group = api_version.split_once('/').map_or("", |(g, _)| g);
                     let is_builtin = crate::is_k8s_builtin_group(inferred_group);
                     if !is_builtin && let Some(sink) = &self.sink {
@@ -169,7 +165,7 @@ impl Chain {
                     };
                     return self
                         .resolve_against_chain(&inferred_ref, &use_.path)
-                        .into_value();
+                        .into_schema();
                 }
                 ApiVersionInferenceOutcome::Ambiguous { candidates } => {
                     if let Some(sink) = &self.sink {
@@ -183,23 +179,17 @@ impl Chain {
                 ApiVersionInferenceOutcome::NoMatch => {
                     return self
                         .resolve_against_chain(resource, &use_.path)
-                        .into_value();
+                        .into_schema();
                 }
             }
         }
 
-        // Round-8 Finding 1 + round-12 Finding 1: when typed branches
-        // are present, evaluate their guards against the primary K8s
-        // version's bundle (the authoritative capability oracle) and
-        // try ONLY the live branch's literals. `live_literals`
-        // recurses through `HelperBranchBody::Nested` so guard
-        // structure composes through delegation depth — e.g. outer
-        // `if Has A then (include branched_inner) else Y` correctly
-        // picks the inner if-branch when both A and B are live.
-        // This makes resource identity match what the chart would
-        // actually emit at runtime — both for resolution and for
-        // MissingSchema attribution. Without typed branches, fall
-        // back to the existing flat-candidate iteration.
+        // Typed apiVersion branches are evaluated against the primary K8s
+        // version's capability oracle, and only live branch literals are
+        // probed. Nested helper branch bodies compose through delegation
+        // depth, so resource identity matches the manifest the chart would
+        // emit at runtime. Without typed branches, fall back to the flat
+        // candidate list.
         let iteration_versions: Vec<String> = if !resource.api_version_branches.is_empty() {
             let live = capability_eval::live_literals(&resource.api_version_branches, self);
             if live.is_empty() {
@@ -350,23 +340,11 @@ impl Chain {
             return;
         };
 
-        // Round-8 Finding 1: when typed branches are present, emit
-        // ONE MissingSchema attributing to the LIVE branch (the one
-        // the chart would emit at runtime for the configured primary
-        // K8s version). This catches real chart bugs — e.g. the
-        // elasticsearch PSP template's `if Has "policy/v1"` evaluates
-        // to true in K8s 1.35 (PDB is at policy/v1), so the chart
-        // emits `apiVersion: policy/v1`, but PSP doesn't exist there;
-        // the diagnostic correctly attributes to policy/v1, not the
-        // else-branch's policy/v1beta1.
-        //
-        // Mutually-exclusive branches aren't peer misses: at runtime
-        // exactly one branch is taken, so emitting one diagnostic per
-        // branch would misrepresent what the chart emits. Without
-        // typed branches, fall back to per-candidate attribution (the
-        // Round-6 behaviour) so the user still sees the full set of
-        // attempted apiVersions instead of the uninformative
-        // empty-string attribution.
+        // Typed branches are mutually exclusive at runtime, so a final miss is
+        // attributed only to the live branch the chart would emit for the
+        // configured primary K8s version. Without typed branches, fall back to
+        // per-candidate attribution so users still see every attempted
+        // apiVersion instead of an uninformative empty-string attribution.
         let attributions: Vec<String> = if !resource.api_version_branches.is_empty() {
             // live_literals recurses through nested branch bodies, so
             // the picked literal correctly reflects composed guards.
@@ -383,7 +361,7 @@ impl Chain {
                 None => vec![resource.api_version.clone()],
             }
         } else if resource.api_version.is_empty() && !resource.api_version_candidates.is_empty() {
-            // Fallback: untyped multi-candidate (Round-6 contract).
+            // Fallback for untyped multi-candidate resources.
             resource.api_version_candidates.clone()
         } else {
             vec![resource.api_version.clone()]
@@ -488,25 +466,13 @@ fn needs_inference(resource: &ResourceRef) -> bool {
         .any(|v| !v.trim().is_empty())
 }
 
-impl ChainLookupOutcome {
-    /// Convenience for legacy `Option<Value>`-shaped callers — discards
-    /// the typed outcome and returns the inner schema if any.
-    #[must_use]
-    pub fn into_value(self) -> Option<Value> {
-        match self {
-            ChainLookupOutcome::Resolved { schema, .. } => schema,
-            ChainLookupOutcome::MissingSchema { .. } => None,
-        }
-    }
-}
-
 impl K8sSchemaProvider for Chain {
     fn schema_for_use(&self, use_: &ValueUse) -> Option<Value> {
         self.schema_for_use(use_)
     }
 
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        self.resolve_against_chain(resource, path).into_value()
+        self.resolve_against_chain(resource, path).into_schema()
     }
 
     fn origin(&self) -> ProviderOrigin {
