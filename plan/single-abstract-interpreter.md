@@ -351,7 +351,7 @@ Current result:
 
 ### Phase 2 — move expression facts onto `eval_expr`
 
-Status: **pending**
+Status: **complete**
 
 Goal:
 
@@ -365,9 +365,22 @@ Deletion candidates after this phase:
 - `expression_analysis::resolved_type_is_paths_for_text`
 - `expression_analysis::resolved_string_transform_paths_for_text`
 
+Current result:
+
+- `crates/helm-schema-ir/src/expr_eval.rs` is the shared expression transfer
+  function for value paths, selectors, constructors, `default`, `typeIs`,
+  string transforms, provenance-preserving wrappers, and pipelines.
+- `EvalResult::effects` now carries reads, default-fallback paths, type hints,
+  and string-transform hints.
+- The old `expression_analysis` public helpers are compatibility wrappers over
+  `eval_expr`; the duplicate default/type/string expression walkers are gone.
+- Multi-argument string wrappers such as
+  `printf "%s-%s" .Values.primary.name .Values.suffix | trunc 63` now preserve
+  every values-path argument as string evidence.
+
 ### Phase 3 — move fragment expression evaluation onto `eval_expr`
 
-Status: **pending**
+Status: **in progress**
 
 Goal:
 
@@ -375,6 +388,22 @@ Goal:
   shared `AbstractValue`
 - keep conversion shims from `AbstractValue` to current `FragmentBinding` /
   `HelperBinding` until helper output traversal is migrated
+
+Current result:
+
+- `AbstractValue` now models the existing helper-binding shapes needed by
+  production analysis: `Unknown`, `OutputSet`, `Overlay`, `Dict`, `List`,
+  `Choice`, `RootContext`, and values paths.
+- `EvalEnv` separates current dot, helper argument fields under `.`, and `$`
+  locals. This keeps helper calls like
+  `include "common.serviceAccountName" (dict "ctx" $ "config" .Values.serviceAccount)`
+  structural instead of relying on string matching.
+- `helper_binding_eval::binding_from_expr` is now a compatibility shim over
+  `eval_expr` plus `AbstractValue -> HelperBinding` conversion.
+- Full `FragmentBinding` migration is intentionally not complete yet because
+  fragments still carry string literal sets and rendered-output semantics that
+  should become first-class `AbstractValue` / `Effects` concepts before the old
+  evaluator is removed.
 
 ### Phase 4 — move node/control-flow evaluation onto `eval_node`
 

@@ -4,6 +4,8 @@ mod binding;
 mod bound_value_analysis;
 mod define_body_cache;
 mod eval_effect;
+mod eval_env;
+mod expr_eval;
 mod expression_analysis;
 mod fragment_binding_eval;
 mod fragment_expr_eval;

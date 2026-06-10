@@ -1,10 +1,10 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_ast::{HelmAst, Literal, TemplateExpr, parse_action_expressions};
+use helm_schema_ast::{HelmAst, parse_action_expressions};
 use serde::{Deserialize, Serialize};
 
-use crate::abstract_value::AbstractValue;
-use crate::eval_effect::EvalResult;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::{apply_assignment_expr, eval_expr, eval_expr_value};
 use crate::walker::is_fragment_expr;
 use crate::{Guard, ValueKind, ValueUse};
 
@@ -38,209 +38,6 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
         all_render_uses_self_guarded: bool,
         has_fragment_render: bool,
         has_self_range_guard_render_use: bool,
-    }
-
-    #[derive(Clone, Default)]
-    struct Env {
-        dot: Option<AbstractValue>,
-        locals: HashMap<String, AbstractValue>,
-    }
-
-    fn eval_expr(expr: &TemplateExpr, env: &Env) -> EvalResult {
-        match eval_expr_value(expr, env) {
-            Some(value) => EvalResult::from_value(value),
-            None => EvalResult::none(),
-        }
-    }
-
-    fn eval_expr_value(expr: &TemplateExpr, env: &Env) -> Option<AbstractValue> {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => eval_expr_value(inner, env),
-            TemplateExpr::Field(path)
-                if path.first().is_some_and(|segment| segment == "Values") =>
-            {
-                if path.len() == 1 {
-                    Some(AbstractValue::values_root())
-                } else {
-                    Some(AbstractValue::ValuesPath(path[1..].join(".")))
-                }
-            }
-            TemplateExpr::Field(path) if path.is_empty() => {
-                env.dot.clone().or(Some(AbstractValue::RootContext))
-            }
-            TemplateExpr::Field(path) => {
-                env.dot.as_ref().and_then(|value| value.apply_to_path(path))
-            }
-            TemplateExpr::Selector { operand, path }
-                if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
-                    && path.first().is_some_and(|segment| segment == "Values") =>
-            {
-                if path.len() == 1 {
-                    Some(AbstractValue::values_root())
-                } else {
-                    Some(AbstractValue::ValuesPath(path[1..].join(".")))
-                }
-            }
-            TemplateExpr::Variable(var) if var.is_empty() => Some(AbstractValue::RootContext),
-            TemplateExpr::Variable(var) if !var.is_empty() => env.locals.get(var).cloned(),
-            TemplateExpr::Selector { operand, path } => {
-                let base = eval_expr_value(operand, env)?;
-                base.apply_to_path(path)
-            }
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                let mut options = Vec::new();
-                if let Some(primary) = eval_expr_value(&args[1], env) {
-                    options.push(primary);
-                }
-                if let Some(fallback) = eval_expr_value(&args[0], env) {
-                    options.push(fallback);
-                }
-                AbstractValue::choice(options)
-            }
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = BTreeMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) =
-                        &args[index]
-                    else {
-                        index += 1;
-                        continue;
-                    };
-                    if let Some(value) = eval_expr_value(&args[index + 1], env) {
-                        map.insert(key.clone(), value);
-                    }
-                    index += 2;
-                }
-                Some(AbstractValue::Dict(map))
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "list" | "tuple") =>
-            {
-                let mut items = Vec::new();
-                for arg in args {
-                    if let Some(value) = eval_expr_value(arg, env) {
-                        items.push(value);
-                    }
-                }
-                Some(AbstractValue::List(items))
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "merge" | "mergeOverwrite") =>
-            {
-                let mut paths = BTreeSet::new();
-                for arg in args {
-                    if let Some(value) = eval_expr_value(arg, env) {
-                        paths.extend(value.paths());
-                    }
-                }
-                Some(AbstractValue::PathSet(paths))
-            }
-            TemplateExpr::Call { function, args } if function == "index" => {
-                let base = eval_expr_value(args.first()?, env)?;
-                match base {
-                    AbstractValue::Dict(map) if args.len() == 2 => {
-                        let key = match &args[1] {
-                            TemplateExpr::Literal(
-                                Literal::String(value) | Literal::RawString(value),
-                            ) => value.clone(),
-                            _ => return None,
-                        };
-                        map.get(&key).cloned()
-                    }
-                    AbstractValue::List(items) if args.len() == 2 => {
-                        let index = match &args[1] {
-                            TemplateExpr::Literal(Literal::Int(value)) => {
-                                usize::try_from(*value).ok()?
-                            }
-                            _ => return None,
-                        };
-                        items.get(index).cloned()
-                    }
-                    binding => {
-                        let mut segments = Vec::new();
-                        for arg in &args[1..] {
-                            let TemplateExpr::Literal(
-                                Literal::String(value) | Literal::RawString(value),
-                            ) = arg
-                            else {
-                                return None;
-                            };
-                            segments.push(value.clone());
-                        }
-                        binding.apply_to_path(&segments)
-                    }
-                }
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(
-                    function.as_str(),
-                    "toYaml"
-                        | "fromYaml"
-                        | "quote"
-                        | "indent"
-                        | "nindent"
-                        | "tpl"
-                        | "printf"
-                        | "trimPrefix"
-                        | "trimSuffix"
-                        | "trunc"
-                        | "replace"
-                        | "int"
-                ) =>
-            {
-                args.iter().find_map(|arg| eval_expr_value(arg, env))
-            }
-            TemplateExpr::Pipeline(stages) => {
-                let Some(first_stage) = stages.first() else {
-                    return None;
-                };
-                let mut current = eval_expr_value(first_stage, env);
-                for stage in &stages[1..] {
-                    let TemplateExpr::Call { function, args } = stage else {
-                        continue;
-                    };
-                    current = match function.as_str() {
-                        "default" => {
-                            let mut options = Vec::new();
-                            if let Some(current) = current {
-                                options.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) = eval_expr_value(arg, env) {
-                                    options.push(binding);
-                                }
-                            }
-                            AbstractValue::choice(options)
-                        }
-                        "merge" | "mergeOverwrite" => {
-                            let mut paths = current
-                                .as_ref()
-                                .map(AbstractValue::paths)
-                                .unwrap_or_default();
-                            for arg in args {
-                                if let Some(binding) = eval_expr_value(arg, env) {
-                                    paths.extend(binding.paths());
-                                }
-                            }
-                            Some(AbstractValue::PathSet(paths))
-                        }
-                        "toYaml" | "fromYaml" | "quote" | "indent" | "nindent" | "tpl"
-                        | "printf" | "trimPrefix" | "trimSuffix" | "trunc" | "replace" | "int" => {
-                            current
-                        }
-                        _ => None,
-                    };
-                }
-                current
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Call { .. }
-            | TemplateExpr::Unknown(_)
-            | TemplateExpr::VariableDefinition { .. }
-            | TemplateExpr::Assignment { .. } => None,
-        }
     }
 
     fn update_descendant_paths(descendant_paths: &mut BTreeSet<String>, path: &str) {
@@ -296,25 +93,9 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
         }
     }
 
-    fn update_env_from_expr(expr: &TemplateExpr, env: &mut Env) -> bool {
-        match expr {
-            TemplateExpr::VariableDefinition { name, value }
-            | TemplateExpr::Assignment { name, value } => {
-                let name = name.trim_start_matches('$');
-                if let Some(binding) = eval_expr_value(value, env) {
-                    env.locals.insert(name.to_string(), binding);
-                } else {
-                    env.locals.remove(name);
-                }
-                true
-            }
-            _ => false,
-        }
-    }
-
     fn walk(
         node: &HelmAst,
-        env: &mut Env,
+        env: &mut EvalEnv,
         active_controls: &[ControlFrame],
         facts: &mut BTreeMap<String, Acc>,
         descendant_paths: &mut BTreeSet<String>,
@@ -343,7 +124,7 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                 let exprs = parse_action_expressions(&format!("{{{{ {text} }}}}"));
                 let mut paths = BTreeSet::new();
                 for expr in &exprs {
-                    if update_env_from_expr(expr, env) {
+                    if apply_assignment_expr(expr, env) {
                         continue;
                     }
                     let result = eval_expr(expr, env);
@@ -493,7 +274,7 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
 
     let mut facts = BTreeMap::new();
     let mut descendant_paths = BTreeSet::new();
-    let mut env = Env::default();
+    let mut env = EvalEnv::default();
     walk(ast, &mut env, &[], &mut facts, &mut descendant_paths);
 
     ChartFacts {
