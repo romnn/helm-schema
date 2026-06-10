@@ -1,13 +1,16 @@
 mod abstract_eval;
 mod binding;
+mod define_body_cache;
 mod helper_analysis;
 pub mod helper_eval;
+mod output_path;
 mod rendered_yaml_context;
 pub mod required_inference;
 mod resource_detector;
 mod resource_locator;
 mod symbolic;
 mod template_expr_cache;
+mod value_use_postprocess;
 mod walker;
 mod yaml_shape;
 

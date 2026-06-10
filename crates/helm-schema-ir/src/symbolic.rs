@@ -7,16 +7,19 @@ use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_
 use crate::binding::{
     BoundHelperCallsCacheKey, FragmentBinding, HelperBinding, StaticFileTemplate,
 };
+use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::helper_analysis::{
     BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta, bound_helper_condition_paths,
     bound_helper_dependency_paths, convert_fragment_outputs_to_dependency_outputs,
     extend_type_hints, insert_type_hint, merge_helper_output_meta_maps, merge_local_default_paths,
 };
+use crate::output_path;
 use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::resource_detector::AstResourceDetector;
 use crate::template_expr_cache::{
     clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
 };
+use crate::value_use_postprocess::postprocess_value_uses;
 use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
 use crate::yaml_shape::{first_mapping_colon_offset, parse_yaml_key};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
@@ -51,8 +54,7 @@ pub struct SymbolicIrContext {
 }
 
 struct SymbolicIrContextInner {
-    define_body_sources: HashMap<String, String>,
-    define_tree_cache: RefCell<HashMap<String, tree_sitter::Tree>>,
+    define_bodies: DefineBodyCache,
     bound_helper_calls_cache: RefCell<BTreeMap<BoundHelperCallsCacheKey, BoundHelperAnalysis>>,
 }
 
@@ -62,8 +64,7 @@ impl SymbolicIrContext {
         clear_template_expr_cache();
         Self {
             inner: Rc::new(SymbolicIrContextInner {
-                define_body_sources: SymbolicWalker::collect_define_body_sources(defines),
-                define_tree_cache: RefCell::new(HashMap::new()),
+                define_bodies: DefineBodyCache::new(defines),
                 bound_helper_calls_cache: RefCell::new(BTreeMap::new()),
             }),
         }
@@ -71,13 +72,7 @@ impl SymbolicIrContext {
 
     #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     pub fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse> {
-        let language =
-            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-        let mut parser = tree_sitter::Parser::new();
-        if parser.set_language(&language).is_err() {
-            return Vec::new();
-        }
-        let Some(tree) = parser.parse(src, None) else {
+        let Some(tree) = parse_go_template(src) else {
             return Vec::new();
         };
 
@@ -147,20 +142,14 @@ struct LiteralHelperCall {
 #[derive(Clone, Copy)]
 struct FragmentEvalContext<'a> {
     defines: &'a DefineIndex,
-    define_sources: &'a HashMap<String, String>,
-    define_tree_cache: &'a RefCell<HashMap<String, tree_sitter::Tree>>,
+    define_bodies: &'a DefineBodyCache,
 }
 
 impl<'a> FragmentEvalContext<'a> {
-    fn new(
-        defines: &'a DefineIndex,
-        define_sources: &'a HashMap<String, String>,
-        define_tree_cache: &'a RefCell<HashMap<String, tree_sitter::Tree>>,
-    ) -> Self {
+    fn new(defines: &'a DefineIndex, define_bodies: &'a DefineBodyCache) -> Self {
         Self {
             defines,
-            define_sources,
-            define_tree_cache,
+            define_bodies,
         }
     }
 
@@ -340,11 +329,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
-        FragmentEvalContext::new(
-            self.defines,
-            &self.ir_context.inner.define_body_sources,
-            &self.ir_context.inner.define_tree_cache,
-        )
+        FragmentEvalContext::new(self.defines, &self.ir_context.inner.define_bodies)
     }
 
     /// Seed this walker's chart-level defaults from a parent walker so a
@@ -355,46 +340,6 @@ impl<'a> SymbolicWalker<'a> {
     fn with_chart_value_defaults(mut self, defaults: BTreeSet<String>) -> Self {
         self.chart_value_defaults = defaults;
         self
-    }
-
-    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
-    fn parse_go_template(src: &str) -> Option<tree_sitter::Tree> {
-        let language =
-            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-        let mut parser = tree_sitter::Parser::new();
-        if parser.set_language(&language).is_err() {
-            return None;
-        }
-        parser.parse(src, None)
-    }
-
-    #[tracing::instrument(skip_all)]
-    fn define_body_tree_from_cache(
-        name: &str,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-    ) -> Option<tree_sitter::Tree> {
-        if let Some(tree) = define_tree_cache.borrow().get(name) {
-            return Some(tree.clone());
-        }
-
-        let src = define_sources.get(name)?;
-        let tree = Self::parse_go_template(src)?;
-        define_tree_cache
-            .borrow_mut()
-            .insert(name.to_string(), tree.clone());
-        Some(tree)
-    }
-
-    #[tracing::instrument(skip_all)]
-    fn collect_define_body_sources(defines: &DefineIndex) -> HashMap<String, String> {
-        let mut out = HashMap::new();
-        for (_path, src) in defines.file_sources() {
-            for block in crate::extract_define_blocks(src) {
-                out.insert(block.name, block.body);
-            }
-        }
-        out
     }
 
     fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
@@ -579,7 +524,7 @@ impl<'a> SymbolicWalker<'a> {
         let Some(src) = self.defines.get_file(&request.path) else {
             return;
         };
-        let Some(tree) = Self::parse_go_template(src) else {
+        let Some(tree) = parse_go_template(src) else {
             return;
         };
 
@@ -606,120 +551,8 @@ impl<'a> SymbolicWalker<'a> {
         }
         self.no_output_depth = 0;
         self.walk(tree.root_node());
-        Self::drop_default_guard_subsumed_duplicates(&mut self.uses);
-        Self::drop_values_list_envelope_duplicates(&mut self.uses);
-        Self::merge_pathless_resource_variants(&mut self.uses);
-        self.uses.sort_by(|a, b| {
-            a.source_expr
-                .cmp(&b.source_expr)
-                .then_with(|| a.path.0.cmp(&b.path.0))
-                .then_with(|| (a.kind as u8).cmp(&(b.kind as u8)))
-                .then_with(|| a.resource.cmp(&b.resource))
-                .then_with(|| a.guards.cmp(&b.guards))
-        });
-        self.uses.dedup();
+        postprocess_value_uses(&mut self.uses);
         std::mem::take(&mut self.uses)
-    }
-
-    fn merge_pathless_resource_variants(uses: &mut Vec<ValueUse>) {
-        let mut merged = Vec::with_capacity(uses.len());
-        let mut pathless_index_by_identity: BTreeMap<(String, ValueKind, Vec<Guard>), usize> =
-            BTreeMap::new();
-
-        for use_ in std::mem::take(uses) {
-            if use_.path.0.is_empty() {
-                let key = (use_.source_expr.clone(), use_.kind, use_.guards.clone());
-                if let Some(index) = pathless_index_by_identity.get(&key).copied() {
-                    let existing_resource = merged
-                        .get(index)
-                        .and_then(|existing: &ValueUse| existing.resource.clone());
-                    match (existing_resource, &use_.resource) {
-                        (None, Some(_)) => {
-                            if let Some(existing) = merged.get_mut(index) {
-                                existing.resource = use_.resource;
-                            }
-                            continue;
-                        }
-                        (None, None) => continue,
-                        (Some(existing), Some(resource)) if existing == *resource => continue,
-                        (Some(_), None) => continue,
-                        (Some(_), Some(_)) => {}
-                    }
-                }
-                pathless_index_by_identity.insert(key, merged.len());
-            }
-            merged.push(use_);
-        }
-
-        *uses = merged;
-    }
-
-    fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ValueUse>) {
-        let defaulted_render_sites: BTreeSet<_> = uses
-            .iter()
-            .filter(|use_| {
-                use_.guards.iter().any(
-                    |guard| matches!(guard, Guard::Default { path } if path == &use_.source_expr),
-                )
-            })
-            .map(|use_| {
-                (
-                    use_.source_expr.clone(),
-                    use_.path.clone(),
-                    use_.kind,
-                    use_.resource.clone(),
-                )
-            })
-            .collect();
-
-        uses.retain(|use_| {
-            if use_
-                .guards
-                .iter()
-                .any(|guard| matches!(guard, Guard::Default { path } if path == &use_.source_expr))
-            {
-                return true;
-            }
-            !defaulted_render_sites.contains(&(
-                use_.source_expr.clone(),
-                use_.path.clone(),
-                use_.kind,
-                use_.resource.clone(),
-            ))
-        });
-    }
-
-    fn drop_values_list_envelope_duplicates(uses: &mut Vec<ValueUse>) {
-        let render_sites: BTreeSet<_> = uses
-            .iter()
-            .map(|use_| {
-                (
-                    use_.source_expr.clone(),
-                    use_.path.clone(),
-                    use_.kind,
-                    use_.resource.clone(),
-                )
-            })
-            .collect();
-
-        uses.retain(|use_| {
-            let Some(index) = use_
-                .path
-                .0
-                .iter()
-                .position(|segment| segment == "values[*]")
-            else {
-                return true;
-            };
-            let mut collapsed_path = use_.path.clone();
-            collapsed_path.0.remove(index);
-            !render_sites.contains(&(
-                use_.source_expr.clone(),
-                collapsed_path,
-                use_.kind,
-                use_.resource.clone(),
-            ))
-        });
     }
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]
@@ -873,21 +706,6 @@ impl<'a> SymbolicWalker<'a> {
             });
         }
         guards
-    }
-
-    fn values_path_has_descendant(path: &str, sources: &BTreeSet<String>) -> bool {
-        sources
-            .iter()
-            .any(|source| Self::values_path_is_strict_descendant(source, path))
-    }
-
-    fn values_path_is_strict_descendant(path: &str, ancestor: &str) -> bool {
-        if ancestor.trim().is_empty() {
-            return !path.trim().is_empty();
-        }
-
-        path.strip_prefix(ancestor)
-            .is_some_and(|rest| rest.starts_with('.'))
     }
 
     fn current_dot_binding(&self) -> Option<HelperBinding> {
@@ -1049,10 +867,7 @@ impl<'a> SymbolicWalker<'a> {
 
         let mut locals = self.template_bindings.clone();
         for (key, value) in &self.root_bindings {
-            locals.insert(
-                key.clone(),
-                Self::fragment_binding_from_helper_binding(value),
-            );
+            locals.insert(key.clone(), value.to_fragment_binding());
         }
 
         let current_dot_fragment = self.current_dot_fragment();
@@ -1362,10 +1177,7 @@ impl<'a> SymbolicWalker<'a> {
     fn resolved_values_paths_in_expr_tree_context(&self, text: &str) -> BTreeSet<String> {
         let mut locals = self.template_bindings.clone();
         for (key, value) in &self.root_bindings {
-            locals.insert(
-                key.clone(),
-                Self::fragment_binding_from_helper_binding(value),
-            );
+            locals.insert(key.clone(), value.to_fragment_binding());
         }
 
         let current_dot_fragment = self.current_dot_fragment();
@@ -1515,11 +1327,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn define_body_source(&self, name: &str) -> Option<&str> {
-        self.ir_context
-            .inner
-            .define_body_sources
-            .get(name)
-            .map(String::as_str)
+        self.ir_context.inner.define_bodies.source(name)
     }
 
     fn define_body_resource(&self, name: &str) -> Option<ResourceRef> {
@@ -1556,11 +1364,7 @@ impl<'a> SymbolicWalker<'a> {
         if self.inline_stack.iter().any(|entry| entry == &token) {
             return false;
         }
-        let Some(tree) = Self::define_body_tree_from_cache(
-            name,
-            &self.ir_context.inner.define_body_sources,
-            &self.ir_context.inner.define_tree_cache,
-        ) else {
+        let Some(tree) = self.ir_context.inner.define_bodies.tree(name) else {
             return false;
         };
 
@@ -1787,7 +1591,7 @@ impl<'a> SymbolicWalker<'a> {
                 continue;
             }
             let has_rendered_descendant =
-                Self::values_path_has_descendant(v, &helper_rendered_sources);
+                output_path::values_path_has_descendant(v, &helper_rendered_sources);
             if helper_call_caller_scalar_path && !has_rendered_descendant {
                 let extra_guards = Self::helper_output_extra_guards(v, meta);
                 self.emit_use_with_extra_guards(v.clone(), path.clone(), kind, &extra_guards);
@@ -1799,10 +1603,12 @@ impl<'a> SymbolicWalker<'a> {
 
         for output in helper_fragment_output_uses {
             let extra_guards = Self::helper_output_extra_guards(&output.source_expr, &output.meta);
-            let has_rendered_descendant =
-                Self::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
+            let has_rendered_descendant = output_path::values_path_has_descendant(
+                &output.source_expr,
+                &helper_rendered_sources,
+            );
             if helper_call_caller_structured_path && !has_rendered_descendant {
-                let emit_path = Self::helper_fragment_output_path(&path, &output.relative_path);
+                let emit_path = output_path::append_relative_path(&path, &output.relative_path);
                 self.emit_use_with_extra_guards(
                     output.source_expr,
                     emit_path,
@@ -1825,7 +1631,7 @@ impl<'a> SymbolicWalker<'a> {
                 continue;
             }
             let has_rendered_descendant =
-                Self::values_path_has_descendant(&v, &helper_rendered_sources);
+                output_path::values_path_has_descendant(&v, &helper_rendered_sources);
             if helper_call_caller_fragment_path && !has_rendered_descendant {
                 self.emit_use(v, path.clone(), kind);
             } else {
@@ -2261,13 +2067,13 @@ impl<'a> SymbolicWalker<'a> {
             }
             TemplateExpr::Variable(var) if !var.is_empty() => fragment_locals
                 .get(var)
-                .and_then(Self::helper_binding_from_fragment_binding),
+                .and_then(FragmentBinding::to_helper_binding),
             TemplateExpr::Selector { operand, path } => {
                 if let TemplateExpr::Variable(var) = operand.as_ref()
                     && !var.is_empty()
                     && let Some(binding) = fragment_locals
                         .get(var)
-                        .and_then(Self::helper_binding_from_fragment_binding)
+                        .and_then(FragmentBinding::to_helper_binding)
                 {
                     return binding.apply_to_binding(path);
                 }
@@ -2497,104 +2303,6 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn fragment_binding_from_helper_binding(binding: &HelperBinding) -> FragmentBinding {
-        match binding {
-            HelperBinding::ValuesPath(path) => FragmentBinding::ValuesPath(path.clone()),
-            HelperBinding::RootContext => FragmentBinding::RootContext,
-            HelperBinding::Unknown => FragmentBinding::Unknown,
-            HelperBinding::OutputSet(outputs) => {
-                FragmentBinding::OutputSet(outputs.keys().cloned().collect())
-            }
-            HelperBinding::PathSet(paths) => FragmentBinding::PathSet(paths.clone()),
-            HelperBinding::Dict(map) => FragmentBinding::Dict(
-                map.iter()
-                    .map(|(key, value)| {
-                        (
-                            key.clone(),
-                            Self::fragment_binding_from_helper_binding(value),
-                        )
-                    })
-                    .collect(),
-            ),
-            HelperBinding::List(items) => FragmentBinding::List(
-                items
-                    .iter()
-                    .map(Self::fragment_binding_from_helper_binding)
-                    .collect(),
-            ),
-            HelperBinding::Overlay { entries, fallback } => FragmentBinding::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| {
-                        (
-                            key.clone(),
-                            Self::fragment_binding_from_helper_binding(value),
-                        )
-                    })
-                    .collect(),
-                fallback: Box::new(Self::fragment_binding_from_helper_binding(fallback)),
-            },
-            HelperBinding::Choice(choices) => FragmentBinding::Choice(
-                choices
-                    .iter()
-                    .map(Self::fragment_binding_from_helper_binding)
-                    .collect(),
-            ),
-        }
-    }
-
-    fn helper_binding_from_fragment_binding(binding: &FragmentBinding) -> Option<HelperBinding> {
-        match binding {
-            FragmentBinding::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
-            FragmentBinding::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
-            FragmentBinding::RootContext => Some(HelperBinding::RootContext),
-            FragmentBinding::Unknown | FragmentBinding::StringSet(_) => {
-                Some(HelperBinding::Unknown)
-            }
-            FragmentBinding::OutputSet(paths) => Some(HelperBinding::OutputSet(
-                paths
-                    .iter()
-                    .map(|path| (path.clone(), HelperOutputMeta::default()))
-                    .collect(),
-            )),
-            FragmentBinding::PathSet(paths) => Some(HelperBinding::PathSet(paths.clone())),
-            FragmentBinding::Dict(map) => Some(HelperBinding::Dict(
-                map.iter()
-                    .map(|(key, value)| {
-                        Some((
-                            key.clone(),
-                            Self::helper_binding_from_fragment_binding(value)?,
-                        ))
-                    })
-                    .collect::<Option<BTreeMap<_, _>>>()?,
-            )),
-            FragmentBinding::List(items) => Some(HelperBinding::List(
-                items
-                    .iter()
-                    .map(Self::helper_binding_from_fragment_binding)
-                    .collect::<Option<Vec<_>>>()?,
-            )),
-            FragmentBinding::Overlay { entries, fallback } => Some(HelperBinding::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| {
-                        Some((
-                            key.clone(),
-                            Self::helper_binding_from_fragment_binding(value)?,
-                        ))
-                    })
-                    .collect::<Option<BTreeMap<_, _>>>()?,
-                fallback: Box::new(Self::helper_binding_from_fragment_binding(fallback)?),
-            }),
-            FragmentBinding::Choice(choices) => HelperBinding::choice(
-                choices
-                    .iter()
-                    .filter_map(Self::helper_binding_from_fragment_binding)
-                    .collect(),
-            ),
-        }
-    }
-
     fn fragment_binding_from_helper_analysis(
         mut analysis: BoundHelperAnalysis,
     ) -> Option<FragmentBinding> {
@@ -2617,7 +2325,7 @@ impl<'a> SymbolicWalker<'a> {
         }
         for source in analysis.fragment_output {
             if !structured_sources.contains(&source)
-                && !Self::values_path_has_descendant(&source, &rendered_sources)
+                && !output_path::values_path_has_descendant(&source, &rendered_sources)
             {
                 bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
             }
@@ -2625,7 +2333,7 @@ impl<'a> SymbolicWalker<'a> {
         if !has_fragment_outputs {
             for source in analysis.output.into_keys() {
                 if !structured_sources.contains(&source)
-                    && !Self::values_path_has_descendant(&source, &rendered_sources)
+                    && !output_path::values_path_has_descendant(&source, &rendered_sources)
                 {
                     bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
                 }
@@ -2658,7 +2366,7 @@ impl<'a> SymbolicWalker<'a> {
         }
         for source in analysis.fragment_output {
             if !structured_sources.contains(&source)
-                && !Self::values_path_has_descendant(&source, &rendered_sources)
+                && !output_path::values_path_has_descendant(&source, &rendered_sources)
             {
                 bindings.push(HelperBinding::PathSet([source].into_iter().collect()));
             }
@@ -2666,7 +2374,7 @@ impl<'a> SymbolicWalker<'a> {
         if !has_fragment_outputs {
             for (source, meta) in analysis.output {
                 if !structured_sources.contains(&source)
-                    && !Self::values_path_has_descendant(&source, &rendered_sources)
+                    && !output_path::values_path_has_descendant(&source, &rendered_sources)
                 {
                     bindings.push(HelperBinding::OutputSet(
                         [(source, meta)].into_iter().collect(),
@@ -2699,17 +2407,12 @@ impl<'a> SymbolicWalker<'a> {
                     return Some(FragmentBinding::Dict(
                         bindings
                             .iter()
-                            .map(|(key, binding)| {
-                                (
-                                    key.clone(),
-                                    Self::fragment_binding_from_helper_binding(binding),
-                                )
-                            })
+                            .map(|(key, binding)| (key.clone(), binding.to_fragment_binding()))
                             .collect(),
                     ));
                 }
                 current_dot
-                    .map(Self::fragment_binding_from_helper_binding)
+                    .map(HelperBinding::to_fragment_binding)
                     .or(Some(FragmentBinding::RootContext))
             }
             TemplateExpr::Field(path)
@@ -2722,12 +2425,7 @@ impl<'a> SymbolicWalker<'a> {
                     return Some(FragmentBinding::Dict(
                         bindings
                             .iter()
-                            .map(|(key, binding)| {
-                                (
-                                    key.clone(),
-                                    Self::fragment_binding_from_helper_binding(binding),
-                                )
-                            })
+                            .map(|(key, binding)| (key.clone(), binding.to_fragment_binding()))
                             .collect(),
                     ));
                 }
@@ -2802,7 +2500,7 @@ impl<'a> SymbolicWalker<'a> {
                 FragmentBinding::choice(choices)
             }
             _ => Self::binding_from_expr(expr, outer, current_dot)
-                .map(|binding| Self::fragment_binding_from_helper_binding(&binding)),
+                .map(|binding| binding.to_fragment_binding()),
         }
     }
 
@@ -3056,8 +2754,7 @@ impl<'a> SymbolicWalker<'a> {
                 let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
                     return None;
                 };
-                let current_dot_helper =
-                    current_dot.and_then(Self::helper_binding_from_fragment_binding);
+                let current_dot_helper = current_dot.and_then(FragmentBinding::to_helper_binding);
                 let analysis = Self::analyze_bound_helper_call_with_fragment_locals(
                     name,
                     args.get(1),
@@ -3586,110 +3283,6 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn ast_key_segment(node: &HelmAst) -> Option<String> {
-        match node {
-            HelmAst::Scalar { text } => Some(text.clone()),
-            _ => None,
-        }
-    }
-
-    fn pending_mapping_key_path(node: &HelmAst, relative_path: &YamlPath) -> Option<YamlPath> {
-        let segment = match node {
-            HelmAst::Mapping { items } => {
-                let [HelmAst::Pair { key, value: None }] = items.as_slice() else {
-                    return None;
-                };
-                Self::ast_key_segment(key)?
-            }
-            HelmAst::Pair { key, value: None } => Self::ast_key_segment(key)?,
-            _ => return None,
-        };
-        let mut path = relative_path.clone();
-        path.0.push(segment);
-        Some(path)
-    }
-
-    fn sequence_item_output_path(relative_path: &YamlPath) -> YamlPath {
-        let mut path = relative_path.clone();
-        if let Some(last) = path.0.last_mut() {
-            if !last.ends_with("[*]") {
-                last.push_str("[*]");
-            }
-        } else {
-            path.0.push("[*]".to_string());
-        }
-        path
-    }
-
-    fn trailing_pending_mapping_key_path(
-        node: &HelmAst,
-        relative_path: &YamlPath,
-    ) -> Option<YamlPath> {
-        match node {
-            HelmAst::Document { items }
-            | HelmAst::Mapping { items }
-            | HelmAst::Define { body: items, .. }
-            | HelmAst::Block { body: items, .. } => items
-                .last()
-                .and_then(|item| Self::trailing_pending_mapping_key_path(item, relative_path)),
-            HelmAst::Pair { key, value } => {
-                let segment = Self::ast_key_segment(key)?;
-                let mut value_path = relative_path.clone();
-                value_path.0.push(segment);
-                match value {
-                    Some(value) => Self::trailing_pending_mapping_key_path(value, &value_path),
-                    None => Some(value_path),
-                }
-            }
-            HelmAst::Sequence { items } => {
-                let item_path = Self::sequence_item_output_path(relative_path);
-                items
-                    .last()
-                    .and_then(|item| Self::trailing_pending_mapping_key_path(item, &item_path))
-            }
-            HelmAst::If {
-                then_branch,
-                else_branch,
-                ..
-            } => then_branch
-                .last()
-                .and_then(|item| Self::trailing_pending_mapping_key_path(item, relative_path))
-                .or_else(|| {
-                    else_branch.last().and_then(|item| {
-                        Self::trailing_pending_mapping_key_path(item, relative_path)
-                    })
-                }),
-            HelmAst::With {
-                body, else_branch, ..
-            }
-            | HelmAst::Range {
-                body, else_branch, ..
-            } => body
-                .last()
-                .and_then(|item| Self::trailing_pending_mapping_key_path(item, relative_path))
-                .or_else(|| {
-                    else_branch.last().and_then(|item| {
-                        Self::trailing_pending_mapping_key_path(item, relative_path)
-                    })
-                }),
-            HelmAst::Scalar { .. } | HelmAst::HelmExpr { .. } | HelmAst::HelmComment { .. } => None,
-        }
-    }
-
-    fn helper_output_meta_with_guards(
-        mut meta: HelperOutputMeta,
-        active_output_guards: &BTreeSet<String>,
-    ) -> HelperOutputMeta {
-        meta.guards.extend(active_output_guards.iter().cloned());
-        meta
-    }
-
-    fn helper_fragment_output_path(base: &YamlPath, relative: &YamlPath) -> YamlPath {
-        let mut out = base.clone();
-        out.0.extend(relative.0.iter().cloned());
-        out
-    }
-
     fn expression_output_use_is_keyed_map_projection(
         output: &HelperFragmentOutputUse,
         expression_base: &YamlPath,
@@ -3726,6 +3319,14 @@ impl<'a> SymbolicWalker<'a> {
         let format = printf_format(expr)?;
         let key = parse_yaml_key(format.trim_start())?.into_key();
         Some(YamlPath(vec![key]))
+    }
+
+    fn helper_output_meta_with_guards(
+        mut meta: HelperOutputMeta,
+        active_output_guards: &BTreeSet<String>,
+    ) -> HelperOutputMeta {
+        meta.guards.extend(active_output_guards.iter().cloned());
+        meta
     }
 
     fn push_helper_fragment_output(
@@ -3794,7 +3395,7 @@ impl<'a> SymbolicWalker<'a> {
             }
             FragmentBinding::Dict(entries) => {
                 for (key, value) in entries {
-                    let child_path = Self::helper_fragment_output_path(
+                    let child_path = output_path::append_relative_path(
                         relative_path,
                         &YamlPath(vec![key.clone()]),
                     );
@@ -3818,7 +3419,7 @@ impl<'a> SymbolicWalker<'a> {
                     defaulted_paths,
                 );
                 for (key, value) in entries {
-                    let child_path = Self::helper_fragment_output_path(
+                    let child_path = output_path::append_relative_path(
                         relative_path,
                         &YamlPath(vec![key.clone()]),
                     );
@@ -3845,7 +3446,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             FragmentBinding::List(items) => {
-                let item_path = Self::sequence_item_output_path(relative_path);
+                let item_path = output_path::sequence_item_path(relative_path);
                 for item in items {
                     Self::collect_fragment_binding_output_uses(
                         outputs,
@@ -3919,7 +3520,7 @@ impl<'a> SymbolicWalker<'a> {
             }
             HelperBinding::Dict(entries) => {
                 for (key, value) in entries {
-                    let child_path = Self::helper_fragment_output_path(
+                    let child_path = output_path::append_relative_path(
                         relative_path,
                         &YamlPath(vec![key.clone()]),
                     );
@@ -3943,7 +3544,7 @@ impl<'a> SymbolicWalker<'a> {
                     defaulted_paths,
                 );
                 for (key, value) in entries {
-                    let child_path = Self::helper_fragment_output_path(
+                    let child_path = output_path::append_relative_path(
                         relative_path,
                         &YamlPath(vec![key.clone()]),
                     );
@@ -3970,7 +3571,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelperBinding::List(items) => {
-                let item_path = Self::sequence_item_output_path(relative_path);
+                let item_path = output_path::sequence_item_path(relative_path);
                 for item in items {
                     Self::collect_helper_binding_output_uses(
                         outputs,
@@ -4089,7 +3690,7 @@ impl<'a> SymbolicWalker<'a> {
     ) {
         let mut pending_path: Option<YamlPath> = None;
         for item in items {
-            if let Some(path) = Self::pending_mapping_key_path(item, relative_path) {
+            if let Some(path) = output_path::pending_mapping_key_path(item, relative_path) {
                 pending_path = Some(path);
                 continue;
             }
@@ -4107,7 +3708,7 @@ impl<'a> SymbolicWalker<'a> {
                 seen,
                 outputs,
             );
-            pending_path = Self::trailing_pending_mapping_key_path(item, item_path);
+            pending_path = output_path::trailing_pending_mapping_key_path(item, item_path);
         }
     }
 
@@ -4144,7 +3745,7 @@ impl<'a> SymbolicWalker<'a> {
                 );
             }
             HelmAst::Sequence { items } => {
-                let item_path = Self::sequence_item_output_path(relative_path);
+                let item_path = output_path::sequence_item_path(relative_path);
                 for item in items {
                     Self::collect_bound_fragment_output_uses_from_ast(
                         item,
@@ -4162,7 +3763,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelmAst::Pair { key, value } => {
-                if let Some(segment) = Self::ast_key_segment(key) {
+                if let Some(segment) = output_path::key_segment(key) {
                     let mut value_path = relative_path.clone();
                     value_path.0.push(segment);
                     if let Some(value) = value {
@@ -4305,7 +3906,7 @@ impl<'a> SymbolicWalker<'a> {
                 };
                 let output_path = Self::static_yaml_fragment_output_path(text)
                     .map(|output_path| {
-                        Self::helper_fragment_output_path(relative_path, &output_path)
+                        output_path::append_relative_path(relative_path, &output_path)
                     })
                     .unwrap_or_else(|| relative_path.clone());
                 let direct_outputs =
@@ -4479,7 +4080,7 @@ impl<'a> SymbolicWalker<'a> {
                     Self::push_helper_fragment_output(
                         outputs,
                         nested_output.source_expr,
-                        &Self::helper_fragment_output_path(
+                        &output_path::append_relative_path(
                             relative_path,
                             &nested_output.relative_path,
                         ),
@@ -4566,9 +4167,7 @@ impl<'a> SymbolicWalker<'a> {
                 body_guards.extend(branch_guard_paths);
                 let mut body_bindings = local_bindings.clone();
                 let mut body_defaults = local_default_paths.clone();
-                let body_dot_fragment = body_dot
-                    .as_ref()
-                    .map(Self::fragment_binding_from_helper_binding);
+                let body_dot_fragment = body_dot.as_ref().map(HelperBinding::to_fragment_binding);
                 Self::collect_bound_fragment_output_uses_from_items(
                     body,
                     bindings,
@@ -4632,7 +4231,7 @@ impl<'a> SymbolicWalker<'a> {
                     .and_then(FragmentBinding::item_binding);
                 let body_dot = body_dot_fragment
                     .as_ref()
-                    .and_then(Self::helper_binding_from_fragment_binding);
+                    .and_then(FragmentBinding::to_helper_binding);
 
                 let mut body_guards = active_output_guards.clone();
                 body_guards.extend(branch_guard_paths);
@@ -4644,7 +4243,7 @@ impl<'a> SymbolicWalker<'a> {
                         if let Some(range_var) = &range_var {
                             body_bindings.insert(range_var.clone(), item_binding.clone());
                         }
-                        let item_dot = Self::helper_binding_from_fragment_binding(item_binding);
+                        let item_dot = item_binding.to_helper_binding();
                         let mut item_seen = seen.clone();
                         Self::collect_bound_fragment_output_uses_from_items(
                             body,
@@ -4866,12 +4465,8 @@ impl<'a> SymbolicWalker<'a> {
                 current_dot,
             )
         });
-        if let Some(src) = context.define_sources.get(name)
-            && let Some(tree) = Self::define_body_tree_from_cache(
-                name,
-                context.define_sources,
-                context.define_tree_cache,
-            )
+        if let Some(src) = context.define_bodies.source(name)
+            && let Some(tree) = context.define_bodies.tree(name)
         {
             Self::collect_bound_fragment_outputs_from_tree(
                 tree.root_node(),
@@ -5201,8 +4796,7 @@ impl<'a> SymbolicWalker<'a> {
                         ),
                     );
 
-                    let current_dot_fragment =
-                        current_dot.map(Self::fragment_binding_from_helper_binding);
+                    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_set = HashSet::new();
                     if Self::apply_local_set_mutations(
                         text,
@@ -5311,8 +4905,7 @@ impl<'a> SymbolicWalker<'a> {
                     return;
                 }
 
-                let current_dot_fragment =
-                    current_dot.map(Self::fragment_binding_from_helper_binding);
+                let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                 let mut seen_set = HashSet::new();
                 if Self::apply_local_set_mutations(
                     text,
@@ -5515,8 +5108,7 @@ impl<'a> SymbolicWalker<'a> {
                 let mut range_fragment_binding = None;
                 let mut range_binding = None;
                 if !is_with {
-                    let current_dot_fragment =
-                        current_dot.map(Self::fragment_binding_from_helper_binding);
+                    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_range = HashSet::new();
                     range_fragment_binding = Self::range_iterable_binding(
                         header,
@@ -5527,7 +5119,7 @@ impl<'a> SymbolicWalker<'a> {
                     );
                     range_binding = range_fragment_binding
                         .as_ref()
-                        .and_then(Self::helper_binding_from_fragment_binding);
+                        .and_then(FragmentBinding::to_helper_binding);
                 }
                 // Inside a `with` body the dot re-roots to the value of
                 // the with-header. Inside a `range` body the dot re-roots
@@ -5544,8 +5136,7 @@ impl<'a> SymbolicWalker<'a> {
                 let mut body_default_paths = local_default_paths.clone();
                 let mut body_output_meta = local_output_meta.clone();
                 if !is_with {
-                    let header_dot_fragment =
-                        current_dot.map(Self::fragment_binding_from_helper_binding);
+                    let header_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_range = HashSet::new();
                     if let Some((var, binding)) = Self::range_variable_item_binding(
                         header,
@@ -5563,7 +5154,7 @@ impl<'a> SymbolicWalker<'a> {
                         if let Some(range_var) = &range_var {
                             body_bindings.insert(range_var.clone(), item_binding.clone());
                         }
-                        let item_dot = Self::helper_binding_from_fragment_binding(item_binding);
+                        let item_dot = item_binding.to_helper_binding();
                         let mut item_seen = seen.clone();
                         for item in body {
                             Self::collect_bound_helper_values_from_ast(
@@ -6008,10 +5599,7 @@ impl<'a> SymbolicWalker<'a> {
     fn push_with_dot_binding(&mut self, header_text: &str) {
         let mut locals = self.template_bindings.clone();
         for (key, value) in &self.root_bindings {
-            locals.insert(
-                key.clone(),
-                Self::fragment_binding_from_helper_binding(value),
-            );
+            locals.insert(key.clone(), value.to_fragment_binding());
         }
         let current_dot = self.current_dot_fragment();
         let current_dot_binding = self.current_dot_binding();
@@ -6183,14 +5771,11 @@ impl<'a> SymbolicWalker<'a> {
             if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(txt) {
                 let mut locals = self.template_bindings.clone();
                 for (key, value) in &self.root_bindings {
-                    locals.insert(
-                        key.clone(),
-                        Self::fragment_binding_from_helper_binding(value),
-                    );
+                    locals.insert(key.clone(), value.to_fragment_binding());
                 }
                 let current_dot = self
                     .current_dot_binding()
-                    .map(|binding| Self::fragment_binding_from_helper_binding(&binding));
+                    .map(|binding| binding.to_fragment_binding());
                 let context = self.fragment_eval_context();
                 let mut seen = HashSet::new();
                 if let Some(binding) = Self::fragment_binding_from_text(

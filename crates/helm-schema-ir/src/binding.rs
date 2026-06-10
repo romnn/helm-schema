@@ -26,6 +26,36 @@ pub(crate) enum HelperBinding {
 }
 
 impl HelperBinding {
+    pub(crate) fn to_fragment_binding(&self) -> FragmentBinding {
+        match self {
+            Self::ValuesPath(path) => FragmentBinding::ValuesPath(path.clone()),
+            Self::RootContext => FragmentBinding::RootContext,
+            Self::Unknown => FragmentBinding::Unknown,
+            Self::OutputSet(outputs) => {
+                FragmentBinding::OutputSet(outputs.keys().cloned().collect())
+            }
+            Self::PathSet(paths) => FragmentBinding::PathSet(paths.clone()),
+            Self::Dict(map) => FragmentBinding::Dict(
+                map.iter()
+                    .map(|(key, value)| (key.clone(), value.to_fragment_binding()))
+                    .collect(),
+            ),
+            Self::List(items) => {
+                FragmentBinding::List(items.iter().map(Self::to_fragment_binding).collect())
+            }
+            Self::Overlay { entries, fallback } => FragmentBinding::Overlay {
+                entries: entries
+                    .iter()
+                    .map(|(key, value)| (key.clone(), value.to_fragment_binding()))
+                    .collect(),
+                fallback: Box::new(fallback.to_fragment_binding()),
+            },
+            Self::Choice(choices) => {
+                FragmentBinding::Choice(choices.iter().map(Self::to_fragment_binding).collect())
+            }
+        }
+    }
+
     pub(crate) fn for_output_path(
         source_expr: String,
         relative_path: &YamlPath,
@@ -284,6 +314,43 @@ pub(crate) enum FragmentBinding {
 }
 
 impl FragmentBinding {
+    pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
+        match self {
+            Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
+            Self::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
+            Self::RootContext => Some(HelperBinding::RootContext),
+            Self::Unknown | Self::StringSet(_) => Some(HelperBinding::Unknown),
+            Self::OutputSet(paths) => Some(HelperBinding::OutputSet(
+                paths
+                    .iter()
+                    .map(|path| (path.clone(), HelperOutputMeta::default()))
+                    .collect(),
+            )),
+            Self::PathSet(paths) => Some(HelperBinding::PathSet(paths.clone())),
+            Self::Dict(map) => Some(HelperBinding::Dict(
+                map.iter()
+                    .map(|(key, value)| Some((key.clone(), value.to_helper_binding()?)))
+                    .collect::<Option<BTreeMap<_, _>>>()?,
+            )),
+            Self::List(items) => Some(HelperBinding::List(
+                items
+                    .iter()
+                    .map(Self::to_helper_binding)
+                    .collect::<Option<Vec<_>>>()?,
+            )),
+            Self::Overlay { entries, fallback } => Some(HelperBinding::Overlay {
+                entries: entries
+                    .iter()
+                    .map(|(key, value)| Some((key.clone(), value.to_helper_binding()?)))
+                    .collect::<Option<BTreeMap<_, _>>>()?,
+                fallback: Box::new(fallback.to_helper_binding()?),
+            }),
+            Self::Choice(choices) => {
+                HelperBinding::choice(choices.iter().filter_map(Self::to_helper_binding).collect())
+            }
+        }
+    }
+
     pub(crate) fn choice(bindings: Vec<Self>) -> Option<Self> {
         let mut flat = BTreeSet::new();
         for binding in bindings {
