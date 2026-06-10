@@ -5,11 +5,34 @@ use std::rc::Rc;
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
 use crate::binding::{BoundHelperCallsCacheKey, FragmentBinding, HelperBinding};
+use crate::bound_value_analysis::{
+    GetBinding, extract_bound_values, parse_get_binding, parse_literal_list_range,
+};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
+use crate::expression_analysis::{
+    resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
+    resolved_type_is_paths_for_text, set_default_chart_paths_for_text, type_is_schema_type,
+};
+use crate::fragment_binding_eval::{
+    fragment_binding_from_helper_analysis, fragment_binding_from_outer_expr,
+};
+use crate::fragment_expr_eval::{
+    FragmentEvalContext, bindings_for_helper_arg_with_fragment_locals, fragment_binding_from_text,
+    helper_binding_from_expr_with_fragment_locals,
+};
+use crate::fragment_scope_eval::{
+    apply_local_set_mutations, merge_fragment_locals, parse_helper_assignment,
+    range_body_emits_sequence_item_from_source, range_has_destructured_variable_definition,
+    range_header_text_from_source, range_iterable_binding, range_variable_item_binding,
+    range_variable_name,
+};
 use crate::helper_analysis::{
     BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta, bound_helper_condition_paths,
     bound_helper_dependency_paths, convert_fragment_outputs_to_dependency_outputs,
-    extend_type_hints, insert_type_hint, merge_helper_output_meta_maps, merge_local_default_paths,
+    extend_type_hints, merge_helper_output_meta_maps, merge_local_default_paths,
+};
+use crate::helper_binding_eval::{
+    binding_from_expr, bindings_for_helper_arg, resolve_bound_path_expr,
 };
 use crate::output_path;
 use crate::rendered_yaml_context::RenderedYamlContext;
@@ -18,8 +41,8 @@ use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests, literal_helper_calls,
 };
 use crate::template_expr_analysis::{
-    expr_contains_helper_call, is_merge_function, text_pipeline_merges_into_var,
-    text_starts_with_helper_call, walk_expr_excluding_helper_call_args,
+    expr_contains_helper_call, text_pipeline_merges_into_var, text_starts_with_helper_call,
+    walk_expr_excluding_helper_call_args,
 };
 use crate::template_expr_cache::{
     clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
@@ -28,15 +51,6 @@ use crate::value_use_postprocess::postprocess_value_uses;
 use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
 use crate::yaml_shape::{first_mapping_colon_offset, parse_yaml_key};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
-
-fn strip_template_action_wrapping(line: &str) -> Option<String> {
-    let after_open = line.trim_start().strip_prefix("{{")?;
-    let close_at = after_open.find("}}")?;
-    let body = &after_open[..close_at];
-    let body = body.strip_prefix('-').unwrap_or(body);
-    let body = body.strip_suffix('-').unwrap_or(body);
-    Some(body.trim().to_string())
-}
 
 pub struct SymbolicIrGenerator;
 
@@ -132,37 +146,6 @@ struct SymbolicWalker<'a> {
     chart_value_defaults: BTreeSet<String>,
 }
 
-#[derive(Clone, Debug)]
-struct GetBinding {
-    base: String,
-    key_var: String,
-}
-
-#[derive(Clone, Copy)]
-struct FragmentEvalContext<'a> {
-    defines: &'a DefineIndex,
-    define_bodies: &'a DefineBodyCache,
-}
-
-impl<'a> FragmentEvalContext<'a> {
-    fn new(defines: &'a DefineIndex, define_bodies: &'a DefineBodyCache) -> Self {
-        Self {
-            defines,
-            define_bodies,
-        }
-    }
-
-    fn fragment_binding_from_expr(
-        &self,
-        expr: &TemplateExpr,
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
-        SymbolicWalker::fragment_binding_from_expr(expr, locals, current_dot, *self, seen)
-    }
-}
-
 impl<'a> SymbolicWalker<'a> {
     fn new_with_context(
         source: &'a str,
@@ -223,7 +206,11 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
-        FragmentEvalContext::new(self.defines, &self.ir_context.inner.define_bodies)
+        FragmentEvalContext::new(
+            self.defines,
+            &self.ir_context.inner.define_bodies,
+            Self::analyze_bound_helper_call_with_fragment_locals,
+        )
     }
 
     /// Seed this walker's chart-level defaults from a parent walker so a
@@ -234,134 +221,6 @@ impl<'a> SymbolicWalker<'a> {
     fn with_chart_value_defaults(mut self, defaults: BTreeSet<String>) -> Self {
         self.chart_value_defaults = defaults;
         self
-    }
-
-    fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
-        if !header.contains("list") {
-            return None;
-        }
-
-        let toks: Vec<&str> = header.split_whitespace().collect();
-        let list_pos = toks.iter().position(|t| *t == "list")?;
-
-        // `range $k := list ...` or `$k := list ...` or `list ...` (in some tree-sitter nodes).
-        // We only care about the bound variable name and the literal domain.
-        let var = toks
-            .iter()
-            .take(list_pos)
-            .find_map(|t| t.strip_prefix('$'))
-            .filter(|v| !v.is_empty() && !v.contains('.') && !v.contains('/') && !v.contains('('))
-            .map(std::string::ToString::to_string)?;
-
-        let mut out = Vec::new();
-        for t in toks.iter().skip(list_pos + 1) {
-            if let Some(s) = t.strip_prefix('"').and_then(|x| x.strip_suffix('"'))
-                && !s.is_empty()
-            {
-                out.push(s.to_string());
-            }
-        }
-        if out.is_empty() {
-            None
-        } else {
-            Some((var, out))
-        }
-    }
-
-    fn parse_get_binding(text: &str) -> Option<(String, GetBinding)> {
-        // Patterns like:
-        //   $x := get $.Values.foo.bar $k
-        //   $x = get $.Values.foo $k
-        let toks: Vec<&str> = text.split_whitespace().collect();
-        let get_pos = toks.iter().position(|t| *t == "get")?;
-        if get_pos < 2 {
-            return None;
-        }
-        if get_pos + 2 >= toks.len() {
-            return None;
-        }
-
-        let op = toks[get_pos - 1];
-        if op != ":=" && op != "=" {
-            return None;
-        }
-
-        let var_tok = toks[get_pos - 2];
-        let var = var_tok.strip_prefix('$')?.to_string();
-
-        let base_tok = toks[get_pos + 1];
-        let base = base_tok
-            .strip_prefix("$.Values.")
-            .or_else(|| base_tok.strip_prefix(".Values."))?
-            .to_string();
-
-        let key_tok = toks[get_pos + 2];
-        let key_var = key_tok.strip_prefix('$')?.to_string();
-        Some((var, GetBinding { base, key_var }))
-    }
-
-    fn eq_literals_for_var(text: &str, var: &str) -> Vec<String> {
-        let needle = format!("eq ${var} \"");
-        let mut literals = Vec::new();
-        let mut rest = text;
-        while let Some(i) = rest.find(&needle) {
-            let after = &rest[(i + needle.len())..];
-            if let Some(end) = after.find('"') {
-                let lit = &after[..end];
-                if !lit.is_empty() {
-                    literals.push(lit.to_string());
-                }
-                rest = &after[end..];
-            } else {
-                break;
-            }
-        }
-        literals
-    }
-
-    fn extract_bound_values(&self, text: &str) -> Vec<String> {
-        let mut out: Vec<String> = Vec::new();
-
-        // Track `$var.field[.subfield]...` reads for templates that bind
-        // `$var := get $.Values.someMap $key` inside a known key-domain range.
-        for tok in text.split_whitespace() {
-            let Some(tok) = tok.strip_prefix('$') else {
-                continue;
-            };
-            let Some((var, rest)) = tok.split_once('.') else {
-                continue;
-            };
-
-            let rest = rest
-                .trim_end_matches(',')
-                .trim_end_matches(')')
-                .trim_end_matches('}')
-                .trim_end_matches('|');
-
-            let Some(binding) = self.get_bindings.get(var) else {
-                continue;
-            };
-            let Some(domain) = self.range_domains.get(&binding.key_var) else {
-                continue;
-            };
-
-            let mut skip_literals: HashSet<String> = HashSet::new();
-            if rest == "enabled" && binding.base == "config" {
-                for lit in Self::eq_literals_for_var(text, &binding.key_var) {
-                    skip_literals.insert(lit);
-                }
-            }
-            for v in domain {
-                if skip_literals.contains(v) {
-                    continue;
-                }
-                out.push(format!("{}.{}.{}", binding.base, v, rest));
-            }
-        }
-
-        out.sort();
-        out.dedup();
-        out
     }
 
     fn inline_static_file_templates_from_helper_calls(&mut self, text: &str) {
@@ -602,7 +461,7 @@ impl<'a> SymbolicWalker<'a> {
         if !self.root_bindings.is_empty() {
             for expr in &exprs {
                 walk_expr_excluding_helper_call_args(expr, &mut |node| {
-                    if let Some(path) = Self::resolve_bound_path_expr(node, &self.root_bindings) {
+                    if let Some(path) = resolve_bound_path_expr(node, &self.root_bindings) {
                         paths.insert(path);
                     }
                 });
@@ -636,38 +495,9 @@ impl<'a> SymbolicWalker<'a> {
         paths
     }
 
-    fn resolve_expr_to_values_path_in_context(
-        expr: &TemplateExpr,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> Option<String> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return Some(path);
-        }
-
-        match Self::binding_from_expr(expr, bindings, current_dot) {
-            Some(HelperBinding::ValuesPath(path)) => Some(path),
-            _ => None,
-        }
-    }
-
-    fn resolve_expr_to_values_paths_in_context(
-        expr: &TemplateExpr,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeSet<String> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return [path].into_iter().collect();
-        }
-
-        Self::binding_from_expr(expr, bindings, current_dot)
-            .map(|binding| binding.paths())
-            .unwrap_or_default()
-    }
-
     fn resolved_default_fallback_paths_in_context(&self, text: &str) -> BTreeSet<String> {
         let current_dot = self.current_dot_binding();
-        let mut paths = Self::resolved_default_fallback_paths_for_text(
+        let mut paths = resolved_default_fallback_paths_for_text(
             text,
             Some(&self.root_bindings),
             current_dot.as_ref(),
@@ -725,7 +555,7 @@ impl<'a> SymbolicWalker<'a> {
 
         let current_dot_fragment = self.current_dot_fragment();
         let current_dot_binding = self.current_dot_binding();
-        let outer_binding = Self::fragment_binding_from_outer_expr(
+        let outer_binding = fragment_binding_from_outer_expr(
             expr,
             Some(&locals),
             Some(&self.root_bindings),
@@ -962,7 +792,7 @@ impl<'a> SymbolicWalker<'a> {
                     }));
                 }
                 "typeIs" => {
-                    let Some(schema_type) = Self::type_is_schema_type(args.first()) else {
+                    let Some(schema_type) = type_is_schema_type(args.first()) else {
                         continue;
                     };
                     if !args
@@ -1041,7 +871,7 @@ impl<'a> SymbolicWalker<'a> {
                 if expr_contains_helper_call(node) {
                     return;
                 }
-                let outer_binding = Self::fragment_binding_from_outer_expr(
+                let outer_binding = fragment_binding_from_outer_expr(
                     node,
                     Some(&locals),
                     Some(&self.root_bindings),
@@ -1072,9 +902,7 @@ impl<'a> SymbolicWalker<'a> {
         match expr {
             TemplateExpr::Parenthesized(inner) => Self::is_direct_path_expr(inner, bindings),
             TemplateExpr::Field(_) => true,
-            TemplateExpr::Selector { .. } => {
-                Self::resolve_bound_path_expr(expr, bindings).is_some()
-            }
+            TemplateExpr::Selector { .. } => resolve_bound_path_expr(expr, bindings).is_some(),
             _ => false,
         }
     }
@@ -1130,11 +958,8 @@ impl<'a> SymbolicWalker<'a> {
         };
 
         let current_dot = self.current_dot_binding();
-        let bindings = Self::bindings_for_helper_arg(
-            args.get(1),
-            Some(&self.root_bindings),
-            current_dot.as_ref(),
-        );
+        let bindings =
+            bindings_for_helper_arg(args.get(1), Some(&self.root_bindings), current_dot.as_ref());
         let mut stack = self.inline_stack.clone();
         stack.push(token);
         let mut nested =
@@ -1227,7 +1052,7 @@ impl<'a> SymbolicWalker<'a> {
         values.extend(default_fallback_values.iter().cloned());
         let local_output_meta = self.local_alias_output_meta_for_text(text);
 
-        let bound_values = self.extract_bound_values(text);
+        let bound_values = extract_bound_values(text, &self.range_domains, &self.get_bindings);
 
         let mut helper_output_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         let mut helper_fragment_output_values: Vec<String> = Vec::new();
@@ -1516,1373 +1341,6 @@ impl<'a> SymbolicWalker<'a> {
         parse_cached_expr_text(text)
     }
 
-    fn resolve_bound_path_expr(
-        expr: &TemplateExpr,
-        bindings: &HashMap<String, HelperBinding>,
-    ) -> Option<String> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return Some(path);
-        }
-
-        match expr {
-            TemplateExpr::Parenthesized(inner) => Self::resolve_bound_path_expr(inner, bindings),
-            TemplateExpr::Field(path) => Self::resolve_bound_segments(path, bindings),
-            TemplateExpr::Selector { operand, path } => {
-                if let TemplateExpr::Variable(var) = operand.as_ref()
-                    && var.is_empty()
-                    && let Some((head, tail)) = path.split_first()
-                    && let Some(binding) = bindings.get(head)
-                {
-                    return binding.apply_unique_path(tail);
-                }
-                if let Some(binding) = Self::binding_from_expr(operand, Some(bindings), None) {
-                    return binding.apply_unique_path(path);
-                }
-                None
-            }
-            _ => None,
-        }
-    }
-
-    fn resolve_bound_segments(
-        segments: &[String],
-        bindings: &HashMap<String, HelperBinding>,
-    ) -> Option<String> {
-        let binding = Self::binding_from_bound_segments(segments, bindings)?;
-        let paths = binding.paths();
-        let mut paths = paths.into_iter();
-        let first = paths.next()?;
-        if paths.next().is_none() {
-            Some(first)
-        } else {
-            None
-        }
-    }
-
-    fn binding_from_bound_segments(
-        segments: &[String],
-        bindings: &HashMap<String, HelperBinding>,
-    ) -> Option<HelperBinding> {
-        let (first, rest) = segments.split_first()?;
-        let binding = bindings.get(first)?;
-        binding.apply_to_binding(rest)
-    }
-
-    fn binding_from_expr(
-        expr: &TemplateExpr,
-        outer: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> Option<HelperBinding> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return Some(HelperBinding::ValuesPath(path));
-        }
-
-        match expr {
-            TemplateExpr::Parenthesized(inner) => {
-                Self::binding_from_expr(inner, outer, current_dot)
-            }
-            TemplateExpr::Field(path) if path.is_empty() => {
-                current_dot.cloned().or(Some(HelperBinding::RootContext))
-            }
-            TemplateExpr::Variable(var) if var.is_empty() => Some(HelperBinding::RootContext),
-            TemplateExpr::Variable(_) => None,
-            TemplateExpr::Selector { operand, path } => {
-                let binding = Self::binding_from_expr(operand, outer, current_dot)?;
-                binding.apply_to_binding(path)
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "list" | "tuple") =>
-            {
-                let mut items = Vec::new();
-                for arg in args {
-                    items.push(
-                        Self::binding_from_expr(arg, outer, current_dot)
-                            .unwrap_or(HelperBinding::Unknown),
-                    );
-                }
-                Some(HelperBinding::List(items))
-            }
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = BTreeMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) =
-                        &args[index]
-                    else {
-                        index += 1;
-                        continue;
-                    };
-                    let binding = Self::binding_from_expr(&args[index + 1], outer, current_dot)
-                        .unwrap_or(HelperBinding::Unknown);
-                    map.insert(key.clone(), binding);
-                    index += 2;
-                }
-                Some(HelperBinding::Dict(map))
-            }
-            TemplateExpr::Call { function, args } if is_merge_function(function) => {
-                let mut bindings = Vec::new();
-                for arg in args {
-                    if let Some(binding) = Self::binding_from_expr(arg, outer, current_dot) {
-                        bindings.push(binding);
-                    }
-                }
-                HelperBinding::merge_all(bindings)
-            }
-            TemplateExpr::Call { function, args } if function == "coalesce" => {
-                let mut choices = Vec::new();
-                for arg in args {
-                    if let Some(binding) = Self::binding_from_expr(arg, outer, current_dot) {
-                        choices.push(binding);
-                    }
-                }
-                HelperBinding::choice(choices)
-            }
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                let mut choices = Vec::new();
-                if let Some(primary) = Self::binding_from_expr(&args[1], outer, current_dot) {
-                    choices.push(primary);
-                }
-                if let Some(fallback) = Self::binding_from_expr(&args[0], outer, current_dot) {
-                    choices.push(fallback);
-                }
-                HelperBinding::choice(choices)
-            }
-            TemplateExpr::Call { function, args } if function == "ternary" => {
-                let mut choices = Vec::new();
-                for arg in args.iter().take(2) {
-                    if let Some(binding) = Self::binding_from_expr(arg, outer, current_dot) {
-                        choices.push(binding);
-                    }
-                }
-                HelperBinding::choice(choices)
-            }
-            TemplateExpr::Pipeline(stages) => {
-                let mut current = Self::binding_from_expr(&stages[0], outer, current_dot);
-                for stage in &stages[1..] {
-                    let TemplateExpr::Call { function, args } = stage else {
-                        continue;
-                    };
-                    current = match function.as_str() {
-                        "default" => {
-                            let mut choices = Vec::new();
-                            if let Some(current) = current {
-                                choices.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) =
-                                    Self::binding_from_expr(arg, outer, current_dot)
-                                {
-                                    choices.push(binding);
-                                }
-                            }
-                            HelperBinding::choice(choices)
-                        }
-                        function if is_merge_function(function) => {
-                            let mut bindings = Vec::new();
-                            if let Some(current) = current {
-                                bindings.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) =
-                                    Self::binding_from_expr(arg, outer, current_dot)
-                                {
-                                    bindings.push(binding);
-                                }
-                            }
-                            HelperBinding::merge_all(bindings)
-                        }
-                        "toYaml" | "fromYaml" | "quote" | "toString" | "deepCopy" | "tpl"
-                        | "nindent" | "indent" => current,
-                        _ => None,
-                    };
-                }
-                current
-            }
-            TemplateExpr::Call { function, args } if function == "index" => {
-                let mut binding = Self::binding_from_expr(args.first()?, outer, current_dot)?;
-                for arg in &args[1..] {
-                    let segment = match arg {
-                        TemplateExpr::Literal(
-                            Literal::String(value) | Literal::RawString(value),
-                        ) => value.clone(),
-                        TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
-                        _ => return None,
-                    };
-                    binding = match &binding {
-                        HelperBinding::ValuesPath(_)
-                        | HelperBinding::RootContext
-                        | HelperBinding::Unknown
-                        | HelperBinding::OutputSet(_)
-                        | HelperBinding::PathSet(_)
-                        | HelperBinding::Dict(_)
-                        | HelperBinding::List(_)
-                        | HelperBinding::Overlay { .. }
-                        | HelperBinding::Choice(_) => binding.apply_to_binding(&[segment])?,
-                    };
-                }
-                Some(binding)
-            }
-            TemplateExpr::Field(path) => {
-                // Helper bindings take priority: a `Field` whose head
-                // names a helper-bound key resolves through that
-                // binding (e.g. a `dict "ctx" .Values.cfg` helper call
-                // binds `ctx`, so the callee's `.ctx.X` becomes
-                // `cfg.X`).
-                if let Some(bound) =
-                    outer.and_then(|bindings| Self::binding_from_bound_segments(path, bindings))
-                {
-                    return Some(bound);
-                }
-                // Otherwise apply the field selector to the current dot.
-                // This covers direct values dots (`with .Values.foo`) and
-                // overlay dots produced by helper arguments like
-                // `merge (dict "file" "...") .`, where explicit dict keys
-                // shadow the fallback map but missing keys still resolve
-                // through that fallback.
-                if let Some(current_dot) = current_dot
-                    && let Some(bound) = current_dot.apply_to_binding(path)
-                {
-                    return Some(bound);
-                }
-                None
-            }
-            _ => outer
-                .and_then(|bindings| Self::resolve_bound_path_expr(expr, bindings))
-                .map(HelperBinding::ValuesPath),
-        }
-    }
-
-    fn bindings_for_helper_arg(
-        arg: Option<&TemplateExpr>,
-        outer: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> HashMap<String, HelperBinding> {
-        let Some(arg) = arg else {
-            return HashMap::new();
-        };
-
-        match arg {
-            TemplateExpr::Parenthesized(inner) => {
-                Self::bindings_for_helper_arg(Some(inner), outer, current_dot)
-            }
-            TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
-            TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut bindings = HashMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
-                        index += 1;
-                        continue;
-                    };
-                    let binding = Self::binding_from_expr(&args[index + 1], outer, current_dot)
-                        .unwrap_or(HelperBinding::Unknown);
-                    bindings.insert(key.clone(), binding);
-                    index += 2;
-                }
-                bindings
-            }
-            TemplateExpr::Call { function, args } if is_merge_function(function) => {
-                let mut merged = HashMap::new();
-                for arg in args {
-                    match Self::binding_from_expr(arg, outer, current_dot) {
-                        Some(HelperBinding::Dict(map)) => {
-                            for (key, value) in map {
-                                merged.insert(key, value);
-                            }
-                        }
-                        Some(HelperBinding::RootContext) => {
-                            if let Some(outer) = outer {
-                                for (key, value) in outer {
-                                    merged.insert(key.clone(), value.clone());
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                merged
-            }
-            _ => HashMap::new(),
-        }
-    }
-
-    fn helper_binding_from_expr_with_fragment_locals(
-        expr: &TemplateExpr,
-        fragment_locals: &HashMap<String, FragmentBinding>,
-        outer: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Option<HelperBinding> {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => {
-                Self::helper_binding_from_expr_with_fragment_locals(
-                    inner,
-                    fragment_locals,
-                    outer,
-                    current_dot,
-                    context,
-                    seen,
-                )
-            }
-            TemplateExpr::Variable(var) if !var.is_empty() => fragment_locals
-                .get(var)
-                .and_then(FragmentBinding::to_helper_binding),
-            TemplateExpr::Selector { operand, path } => {
-                if let TemplateExpr::Variable(var) = operand.as_ref()
-                    && !var.is_empty()
-                    && let Some(binding) = fragment_locals
-                        .get(var)
-                        .and_then(FragmentBinding::to_helper_binding)
-                {
-                    return binding.apply_to_binding(path);
-                }
-                Self::binding_from_expr(expr, outer, current_dot)
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "include" | "template") =>
-            {
-                let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
-                    return None;
-                };
-                let analysis = Self::analyze_bound_helper_call_with_fragment_locals(
-                    name,
-                    args.get(1),
-                    outer,
-                    current_dot,
-                    fragment_locals,
-                    context,
-                    seen,
-                );
-                Self::helper_binding_from_helper_analysis(analysis)
-            }
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = BTreeMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) =
-                        &args[index]
-                    else {
-                        index += 1;
-                        continue;
-                    };
-                    let binding = Self::helper_binding_from_expr_with_fragment_locals(
-                        &args[index + 1],
-                        fragment_locals,
-                        outer,
-                        current_dot,
-                        context,
-                        seen,
-                    )
-                    .unwrap_or(HelperBinding::Unknown);
-                    map.insert(key.clone(), binding);
-                    index += 2;
-                }
-                Some(HelperBinding::Dict(map))
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "list" | "tuple") =>
-            {
-                Some(HelperBinding::List(
-                    args.iter()
-                        .map(|arg| {
-                            Self::helper_binding_from_expr_with_fragment_locals(
-                                arg,
-                                fragment_locals,
-                                outer,
-                                current_dot,
-                                context,
-                                seen,
-                            )
-                            .unwrap_or(HelperBinding::Unknown)
-                        })
-                        .collect(),
-                ))
-            }
-            TemplateExpr::Call { function, args } if is_merge_function(function) => {
-                let bindings = args
-                    .iter()
-                    .filter_map(|arg| {
-                        Self::helper_binding_from_expr_with_fragment_locals(
-                            arg,
-                            fragment_locals,
-                            outer,
-                            current_dot,
-                            context,
-                            seen,
-                        )
-                    })
-                    .collect();
-                HelperBinding::merge_all(bindings)
-            }
-            TemplateExpr::Pipeline(stages) => {
-                let mut current = Self::helper_binding_from_expr_with_fragment_locals(
-                    &stages[0],
-                    fragment_locals,
-                    outer,
-                    current_dot,
-                    context,
-                    seen,
-                );
-                for stage in &stages[1..] {
-                    let TemplateExpr::Call { function, args } = stage else {
-                        continue;
-                    };
-                    current = match function.as_str() {
-                        "default" => {
-                            let mut bindings = Vec::new();
-                            if let Some(current) = current {
-                                bindings.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) =
-                                    Self::helper_binding_from_expr_with_fragment_locals(
-                                        arg,
-                                        fragment_locals,
-                                        outer,
-                                        current_dot,
-                                        context,
-                                        seen,
-                                    )
-                                {
-                                    bindings.push(binding);
-                                }
-                            }
-                            HelperBinding::choice(bindings)
-                        }
-                        function if is_merge_function(function) => {
-                            let mut bindings = Vec::new();
-                            if let Some(current) = current {
-                                bindings.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) =
-                                    Self::helper_binding_from_expr_with_fragment_locals(
-                                        arg,
-                                        fragment_locals,
-                                        outer,
-                                        current_dot,
-                                        context,
-                                        seen,
-                                    )
-                                {
-                                    bindings.push(binding);
-                                }
-                            }
-                            HelperBinding::merge_all(bindings)
-                        }
-                        "toYaml" | "fromYaml" | "toJson" | "fromJson" | "quote" | "toString"
-                        | "deepCopy" | "tpl" | "nindent" | "indent" => current,
-                        _ => None,
-                    };
-                }
-                current
-            }
-            _ => Self::binding_from_expr(expr, outer, current_dot),
-        }
-    }
-
-    fn bindings_for_helper_arg_with_fragment_locals(
-        arg: Option<&TemplateExpr>,
-        outer: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        fragment_locals: &HashMap<String, FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> HashMap<String, HelperBinding> {
-        let Some(arg) = arg else {
-            return HashMap::new();
-        };
-
-        match arg {
-            TemplateExpr::Parenthesized(inner) => {
-                Self::bindings_for_helper_arg_with_fragment_locals(
-                    Some(inner),
-                    outer,
-                    current_dot,
-                    fragment_locals,
-                    context,
-                    seen,
-                )
-            }
-            TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
-            TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut bindings = HashMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) =
-                        &args[index]
-                    else {
-                        index += 1;
-                        continue;
-                    };
-                    let binding = Self::helper_binding_from_expr_with_fragment_locals(
-                        &args[index + 1],
-                        fragment_locals,
-                        outer,
-                        current_dot,
-                        context,
-                        seen,
-                    )
-                    .unwrap_or(HelperBinding::Unknown);
-                    bindings.insert(key.clone(), binding);
-                    index += 2;
-                }
-                bindings
-            }
-            TemplateExpr::Call { function, args } if is_merge_function(function) => {
-                let mut merged = HashMap::new();
-                for arg in args {
-                    match Self::helper_binding_from_expr_with_fragment_locals(
-                        arg,
-                        fragment_locals,
-                        outer,
-                        current_dot,
-                        context,
-                        seen,
-                    ) {
-                        Some(HelperBinding::Dict(map)) => {
-                            for (key, value) in map {
-                                merged.insert(key, value);
-                            }
-                        }
-                        Some(HelperBinding::RootContext) => {
-                            if let Some(outer) = outer {
-                                for (key, value) in outer {
-                                    merged.insert(key.clone(), value.clone());
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                merged
-            }
-            _ => HashMap::new(),
-        }
-    }
-
-    fn fragment_binding_from_helper_analysis(
-        mut analysis: BoundHelperAnalysis,
-    ) -> Option<FragmentBinding> {
-        let structured_sources: BTreeSet<String> = analysis
-            .fragment_output_uses
-            .iter()
-            .map(|output| output.source_expr.clone())
-            .collect();
-        let has_fragment_outputs =
-            !analysis.fragment_output.is_empty() || !analysis.fragment_output_uses.is_empty();
-        let mut rendered_sources = structured_sources.clone();
-        rendered_sources.extend(analysis.fragment_output.iter().cloned());
-        rendered_sources.extend(analysis.output.keys().cloned());
-        let mut bindings = Vec::new();
-        for output in analysis.fragment_output_uses.drain(..) {
-            bindings.push(FragmentBinding::for_output_path(
-                output.source_expr,
-                &output.relative_path,
-            ));
-        }
-        for source in analysis.fragment_output {
-            if !structured_sources.contains(&source)
-                && !output_path::values_path_has_descendant(&source, &rendered_sources)
-            {
-                bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
-            }
-        }
-        if !has_fragment_outputs {
-            for source in analysis.output.into_keys() {
-                if !structured_sources.contains(&source)
-                    && !output_path::values_path_has_descendant(&source, &rendered_sources)
-                {
-                    bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
-                }
-            }
-        }
-        FragmentBinding::merge_all(bindings)
-    }
-
-    fn helper_binding_from_helper_analysis(
-        mut analysis: BoundHelperAnalysis,
-    ) -> Option<HelperBinding> {
-        let structured_sources: BTreeSet<String> = analysis
-            .fragment_output_uses
-            .iter()
-            .map(|output| output.source_expr.clone())
-            .collect();
-        let has_fragment_outputs =
-            !analysis.fragment_output.is_empty() || !analysis.fragment_output_uses.is_empty();
-        let mut rendered_sources = structured_sources.clone();
-        rendered_sources.extend(analysis.fragment_output.iter().cloned());
-        rendered_sources.extend(analysis.output.keys().cloned());
-
-        let mut bindings = Vec::new();
-        for output in analysis.fragment_output_uses.drain(..) {
-            bindings.push(HelperBinding::for_output_path(
-                output.source_expr,
-                &output.relative_path,
-                output.meta,
-            ));
-        }
-        for source in analysis.fragment_output {
-            if !structured_sources.contains(&source)
-                && !output_path::values_path_has_descendant(&source, &rendered_sources)
-            {
-                bindings.push(HelperBinding::PathSet([source].into_iter().collect()));
-            }
-        }
-        if !has_fragment_outputs {
-            for (source, meta) in analysis.output {
-                if !structured_sources.contains(&source)
-                    && !output_path::values_path_has_descendant(&source, &rendered_sources)
-                {
-                    bindings.push(HelperBinding::OutputSet(
-                        [(source, meta)].into_iter().collect(),
-                    ));
-                }
-            }
-        }
-        HelperBinding::merge_all(bindings)
-    }
-
-    fn fragment_binding_from_outer_expr(
-        expr: &TemplateExpr,
-        outer_locals: Option<&HashMap<String, FragmentBinding>>,
-        outer: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> Option<FragmentBinding> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return Some(FragmentBinding::ValuesPath(path));
-        }
-
-        match expr {
-            TemplateExpr::Literal(Literal::String(value)) => Some(FragmentBinding::StringSet(
-                [value.clone()].into_iter().collect(),
-            )),
-            TemplateExpr::Parenthesized(inner) => {
-                Self::fragment_binding_from_outer_expr(inner, outer_locals, outer, current_dot)
-            }
-            TemplateExpr::Field(path) if path.is_empty() => {
-                if let Some(bindings) = outer {
-                    return Some(FragmentBinding::Dict(
-                        bindings
-                            .iter()
-                            .map(|(key, binding)| (key.clone(), binding.to_fragment_binding()))
-                            .collect(),
-                    ));
-                }
-                current_dot
-                    .map(HelperBinding::to_fragment_binding)
-                    .or(Some(FragmentBinding::RootContext))
-            }
-            TemplateExpr::Field(path)
-                if path.first().is_some_and(|segment| segment == "Values") =>
-            {
-                Some(FragmentBinding::ValuesPath(path[1..].join(".")))
-            }
-            TemplateExpr::Variable(var) if var.is_empty() => {
-                if let Some(bindings) = outer {
-                    return Some(FragmentBinding::Dict(
-                        bindings
-                            .iter()
-                            .map(|(key, binding)| (key.clone(), binding.to_fragment_binding()))
-                            .collect(),
-                    ));
-                }
-                Some(FragmentBinding::RootContext)
-            }
-            TemplateExpr::Variable(var) if !var.is_empty() => {
-                outer_locals.and_then(|locals| locals.get(var).cloned())
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "list" | "tuple") =>
-            {
-                let mut items = Vec::new();
-                for arg in args {
-                    items.push(
-                        Self::fragment_binding_from_outer_expr(
-                            arg,
-                            outer_locals,
-                            outer,
-                            current_dot,
-                        )
-                        .unwrap_or(FragmentBinding::Unknown),
-                    );
-                }
-                Some(FragmentBinding::List(items))
-            }
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = BTreeMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
-                        index += 1;
-                        continue;
-                    };
-                    if let Some(binding) = Self::fragment_binding_from_outer_expr(
-                        &args[index + 1],
-                        outer_locals,
-                        outer,
-                        current_dot,
-                    ) {
-                        map.insert(key.clone(), binding);
-                    }
-                    index += 2;
-                }
-                Some(FragmentBinding::Dict(map))
-            }
-            TemplateExpr::Call { function, args } if function == "coalesce" => {
-                let mut choices = Vec::new();
-                for arg in args {
-                    if let Some(binding) = Self::fragment_binding_from_outer_expr(
-                        arg,
-                        outer_locals,
-                        outer,
-                        current_dot,
-                    ) {
-                        choices.push(binding);
-                    }
-                }
-                FragmentBinding::choice(choices)
-            }
-            TemplateExpr::Call { function, args } if function == "ternary" => {
-                let mut choices = Vec::new();
-                for arg in args.iter().take(2) {
-                    if let Some(binding) = Self::fragment_binding_from_outer_expr(
-                        arg,
-                        outer_locals,
-                        outer,
-                        current_dot,
-                    ) {
-                        choices.push(binding);
-                    }
-                }
-                FragmentBinding::choice(choices)
-            }
-            _ => Self::binding_from_expr(expr, outer, current_dot)
-                .map(|binding| binding.to_fragment_binding()),
-        }
-    }
-
-    fn fragment_binding_from_expr(
-        expr: &TemplateExpr,
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return Some(FragmentBinding::ValuesPath(path));
-        }
-
-        match expr {
-            TemplateExpr::Literal(Literal::String(value)) => Some(FragmentBinding::StringSet(
-                [value.clone()].into_iter().collect(),
-            )),
-            TemplateExpr::Parenthesized(inner) => {
-                Self::fragment_binding_from_expr(inner, locals, current_dot, context, seen)
-            }
-            TemplateExpr::Field(path)
-                if path.first().is_some_and(|segment| segment == "Values") =>
-            {
-                Some(FragmentBinding::ValuesPath(path[1..].join(".")))
-            }
-            TemplateExpr::Field(path) if path.is_empty() => {
-                current_dot.cloned().or(Some(FragmentBinding::RootContext))
-            }
-            TemplateExpr::Field(path) => {
-                let dot = current_dot?;
-                dot.apply_to_binding(path)
-            }
-            TemplateExpr::Variable(var) if var.is_empty() => Some(FragmentBinding::RootContext),
-            TemplateExpr::Variable(var) => locals.get(var).cloned(),
-            TemplateExpr::Selector { operand, path } => {
-                if let TemplateExpr::Variable(var) = operand.as_ref()
-                    && var.is_empty()
-                    && let Some((head, tail)) = path.split_first()
-                    && let Some(binding) = locals.get(head)
-                {
-                    return binding.apply_to_binding(tail);
-                }
-                let binding =
-                    Self::fragment_binding_from_expr(operand, locals, current_dot, context, seen)?;
-                binding.apply_to_binding(path)
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "list" | "tuple") =>
-            {
-                let mut items = Vec::new();
-                for arg in args {
-                    items.push(
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
-                            .unwrap_or(FragmentBinding::Unknown),
-                    );
-                }
-                Some(FragmentBinding::List(items))
-            }
-            TemplateExpr::Call { function, args } if function == "append" => {
-                let mut items = match Self::fragment_binding_from_expr(
-                    args.first()?,
-                    locals,
-                    current_dot,
-                    context,
-                    seen,
-                ) {
-                    Some(FragmentBinding::List(items)) => items,
-                    Some(binding) => vec![binding],
-                    None => Vec::new(),
-                };
-                for arg in &args[1..] {
-                    if let Some(binding) =
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
-                    {
-                        items.push(binding);
-                    }
-                }
-                Some(FragmentBinding::List(items))
-            }
-            TemplateExpr::Call { function, args } if function == "dict" => {
-                let mut map = BTreeMap::new();
-                let mut index = 0usize;
-                while index + 1 < args.len() {
-                    let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
-                        index += 1;
-                        continue;
-                    };
-                    if let Some(binding) = Self::fragment_binding_from_expr(
-                        &args[index + 1],
-                        locals,
-                        current_dot,
-                        context,
-                        seen,
-                    ) {
-                        map.insert(key.clone(), binding);
-                    }
-                    index += 2;
-                }
-                Some(FragmentBinding::Dict(map))
-            }
-            TemplateExpr::Call { function, args } if is_merge_function(function) => {
-                let mut bindings = Vec::new();
-                for arg in args {
-                    let Some(binding) =
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
-                    else {
-                        continue;
-                    };
-                    bindings.push(binding);
-                }
-                FragmentBinding::merge_all(bindings)
-            }
-            TemplateExpr::Call { function, args } if function == "coalesce" => {
-                let mut choices = Vec::new();
-                for arg in args {
-                    if let Some(binding) =
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
-                    {
-                        choices.push(binding);
-                    }
-                }
-                FragmentBinding::choice(choices)
-            }
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                let mut choices = Vec::new();
-                if let Some(binding) =
-                    Self::fragment_binding_from_expr(&args[1], locals, current_dot, context, seen)
-                {
-                    choices.push(binding);
-                }
-                if let Some(binding) =
-                    Self::fragment_binding_from_expr(&args[0], locals, current_dot, context, seen)
-                {
-                    choices.push(binding);
-                }
-                FragmentBinding::choice(choices)
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(
-                    function.as_str(),
-                    "toYaml"
-                        | "fromYaml"
-                        | "quote"
-                        | "toString"
-                        | "int"
-                        | "tpl"
-                        | "b64enc"
-                        | "b64dec"
-                ) =>
-            {
-                Self::fragment_binding_from_expr(args.first()?, locals, current_dot, context, seen)
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "indent" | "nindent" | "trimAll") =>
-            {
-                Self::fragment_binding_from_expr(args.last()?, locals, current_dot, context, seen)
-            }
-            TemplateExpr::Call { function, args } if function == "printf" => {
-                let TemplateExpr::Literal(Literal::String(format)) = args.first()? else {
-                    return None;
-                };
-                let mut rendered: BTreeSet<String> = [format.clone()].into_iter().collect();
-                for arg in &args[1..] {
-                    let strings = FragmentBinding::strings(&Self::fragment_binding_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        context,
-                        seen,
-                    )?);
-                    if strings.is_empty() {
-                        return None;
-                    }
-                    let mut next = BTreeSet::new();
-                    for current in &rendered {
-                        for value in &strings {
-                            next.insert(current.replacen("%s", value, 1));
-                        }
-                    }
-                    rendered = next;
-                }
-                Some(FragmentBinding::StringSet(rendered))
-            }
-            TemplateExpr::Call { function, args } if function == "index" => {
-                let base = Self::fragment_binding_from_expr(
-                    args.first()?,
-                    locals,
-                    current_dot,
-                    context,
-                    seen,
-                )?;
-                match base {
-                    FragmentBinding::List(items) if args.len() == 2 => {
-                        let index = match &args[1] {
-                            TemplateExpr::Literal(Literal::Int(value)) => {
-                                usize::try_from(*value).ok()?
-                            }
-                            _ => {
-                                let strings =
-                                    FragmentBinding::strings(&Self::fragment_binding_from_expr(
-                                        &args[1],
-                                        locals,
-                                        current_dot,
-                                        context,
-                                        seen,
-                                    )?);
-                                strings.iter().next()?.parse::<usize>().ok()?
-                            }
-                        };
-                        items.get(index).cloned()
-                    }
-                    binding => {
-                        let mut segment_options: Vec<Vec<String>> = Vec::new();
-                        for arg in &args[1..] {
-                            let arg_binding = Self::fragment_binding_from_expr(
-                                arg,
-                                locals,
-                                current_dot,
-                                context,
-                                seen,
-                            );
-                            let strings = FragmentBinding::strings(&arg_binding?);
-                            if strings.is_empty() {
-                                return None;
-                            }
-                            segment_options.push(strings.into_iter().collect());
-                        }
-
-                        let mut bindings = vec![binding.clone()];
-                        for options in segment_options {
-                            let mut next = Vec::new();
-                            for binding in &bindings {
-                                for option in &options {
-                                    if let Some(bound) =
-                                        binding.apply_to_binding(std::slice::from_ref(option))
-                                    {
-                                        next.push(bound);
-                                    }
-                                }
-                            }
-                            bindings = next;
-                        }
-                        FragmentBinding::choice(bindings)
-                    }
-                }
-            }
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "include" | "template") =>
-            {
-                let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
-                    return None;
-                };
-                let current_dot_helper = current_dot.and_then(FragmentBinding::to_helper_binding);
-                let analysis = Self::analyze_bound_helper_call_with_fragment_locals(
-                    name,
-                    args.get(1),
-                    None,
-                    current_dot_helper.as_ref(),
-                    locals,
-                    context,
-                    seen,
-                );
-                Self::fragment_binding_from_helper_analysis(analysis)
-            }
-            TemplateExpr::Call { function, args } if function == "tpl" => {
-                Self::fragment_binding_from_expr(args.first()?, locals, current_dot, context, seen)
-            }
-            TemplateExpr::Call { function, args } if function == "ternary" => {
-                let mut choices = Vec::new();
-                for arg in args.iter().take(2) {
-                    if let Some(binding) =
-                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
-                    {
-                        choices.push(binding);
-                    }
-                }
-                FragmentBinding::choice(choices)
-            }
-            TemplateExpr::Pipeline(stages) => {
-                let mut current = Self::fragment_binding_from_expr(
-                    &stages[0],
-                    locals,
-                    current_dot,
-                    context,
-                    seen,
-                );
-                for stage in &stages[1..] {
-                    let TemplateExpr::Call { function, args } = stage else {
-                        continue;
-                    };
-                    current = match function.as_str() {
-                        "quote" | "toString" | "toYaml" | "fromYaml" | "indent" | "nindent"
-                        | "trimAll" | "trimPrefix" | "trimSuffix" | "trunc" | "replace" | "int"
-                        | "uniq" | "b64enc" | "b64dec" => current,
-                        function if is_merge_function(function) => {
-                            let mut bindings = Vec::new();
-                            if let Some(current) = current {
-                                bindings.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) = Self::fragment_binding_from_expr(
-                                    arg,
-                                    locals,
-                                    current_dot,
-                                    context,
-                                    seen,
-                                ) {
-                                    bindings.push(binding);
-                                }
-                            }
-                            FragmentBinding::merge_all(bindings)
-                        }
-                        "default" => {
-                            let mut choices = Vec::new();
-                            if let Some(current) = current {
-                                choices.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) = Self::fragment_binding_from_expr(
-                                    arg,
-                                    locals,
-                                    current_dot,
-                                    context,
-                                    seen,
-                                ) {
-                                    choices.push(binding);
-                                }
-                            }
-                            FragmentBinding::choice(choices)
-                        }
-                        "ternary" => {
-                            let mut choices = Vec::new();
-                            if let Some(current) = current {
-                                choices.push(current);
-                            }
-                            for arg in args {
-                                if let Some(binding) = Self::fragment_binding_from_expr(
-                                    arg,
-                                    locals,
-                                    current_dot,
-                                    context,
-                                    seen,
-                                ) {
-                                    choices.push(binding);
-                                }
-                            }
-                            FragmentBinding::choice(choices)
-                        }
-                        _ => return None,
-                    };
-                }
-                current
-            }
-            _ => None,
-        }
-    }
-
-    fn parse_helper_assignment(text: &str) -> Option<(String, bool, String)> {
-        let owned;
-        let trimmed = if text.trim_start().starts_with("{{") {
-            owned = strip_template_action_wrapping(text)?;
-            owned.trim()
-        } else {
-            text.trim()
-        };
-        if let Some(index) = trimmed.find(":=") {
-            let var = trimmed[..index].trim().strip_prefix('$')?.to_string();
-            return Some((var, true, trimmed[index + 2..].trim().to_string()));
-        }
-        if let Some(index) = trimmed.find(" = ") {
-            let var = trimmed[..index].trim().strip_prefix('$')?.to_string();
-            return Some((var, false, trimmed[index + 3..].trim().to_string()));
-        }
-        None
-    }
-
-    fn merge_fragment_locals(
-        mut base: HashMap<String, FragmentBinding>,
-        other: HashMap<String, FragmentBinding>,
-    ) -> HashMap<String, FragmentBinding> {
-        for (key, value) in other {
-            let merged = FragmentBinding::union(base.remove(&key), Some(value));
-            if let Some(merged) = merged {
-                base.insert(key, merged);
-            }
-        }
-        base
-    }
-
-    fn shadow_fragment_binding_keys(
-        binding: FragmentBinding,
-        keys: BTreeSet<String>,
-    ) -> FragmentBinding {
-        if keys.is_empty() {
-            return binding;
-        }
-        let new_entries: BTreeMap<String, FragmentBinding> = keys
-            .into_iter()
-            .map(|key| (key, FragmentBinding::Unknown))
-            .collect();
-        match binding {
-            FragmentBinding::Overlay {
-                mut entries,
-                fallback,
-            } => {
-                entries.extend(new_entries);
-                FragmentBinding::Overlay { entries, fallback }
-            }
-            other => FragmentBinding::Overlay {
-                entries: new_entries,
-                fallback: Box::new(other),
-            },
-        }
-    }
-
-    fn local_set_mutation_target_and_keys(
-        text: &str,
-        local_bindings: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Vec<(String, BTreeSet<String>)> {
-        let mut out = Vec::new();
-        for expr in Self::parse_expr_text(text) {
-            expr.walk(|node| {
-                let TemplateExpr::Call { function, args } = node else {
-                    return;
-                };
-                if function != "set" || args.len() < 2 {
-                    return;
-                }
-                let TemplateExpr::Variable(var) = &args[0] else {
-                    return;
-                };
-                if var.is_empty() || !local_bindings.contains_key(var) {
-                    return;
-                }
-                let Some(key_binding) =
-                    context.fragment_binding_from_expr(&args[1], local_bindings, current_dot, seen)
-                else {
-                    return;
-                };
-                let keys = FragmentBinding::strings(&key_binding);
-                if !keys.is_empty() {
-                    out.push((var.clone(), keys));
-                }
-            });
-        }
-        out
-    }
-
-    fn apply_local_set_mutations(
-        text: &str,
-        local_bindings: &mut HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> bool {
-        let mutations = Self::local_set_mutation_target_and_keys(
-            text,
-            local_bindings,
-            current_dot,
-            context,
-            seen,
-        );
-        let has_mutation = !mutations.is_empty();
-        for (var, keys) in mutations {
-            if let Some(binding) = local_bindings.remove(&var) {
-                local_bindings.insert(var, Self::shadow_fragment_binding_keys(binding, keys));
-            }
-        }
-        has_mutation
-    }
-
-    fn range_variable_item_binding(
-        header: &str,
-        local_bindings: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Option<(String, FragmentBinding)> {
-        let header = header
-            .trim()
-            .strip_prefix("range ")
-            .unwrap_or_else(|| header.trim());
-        let exprs = Self::parse_expr_text(header);
-        let [TemplateExpr::VariableDefinition { name, value }] = exprs.as_slice() else {
-            return None;
-        };
-        let binding = Self::fragment_binding_from_range_value_expr(
-            value,
-            local_bindings,
-            current_dot,
-            context,
-            seen,
-        )?;
-        let item = FragmentBinding::item_binding(&binding)?;
-        Some((name.trim_start_matches('$').to_string(), item))
-    }
-
-    fn range_variable_name(header: &str) -> Option<String> {
-        let header = header
-            .trim()
-            .strip_prefix("range ")
-            .unwrap_or_else(|| header.trim());
-        let exprs = Self::parse_expr_text(header);
-        let [TemplateExpr::VariableDefinition { name, .. }] = exprs.as_slice() else {
-            return None;
-        };
-        Some(name.trim_start_matches('$').to_string())
-    }
-
-    fn range_iterable_binding(
-        header: &str,
-        local_bindings: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
-        let header = header
-            .trim()
-            .strip_prefix("range ")
-            .unwrap_or_else(|| header.trim());
-        let exprs = Self::parse_expr_text(header);
-        let value = match exprs.as_slice() {
-            [TemplateExpr::VariableDefinition { value, .. }]
-            | [TemplateExpr::Assignment { value, .. }] => value.as_ref(),
-            [expr] => expr,
-            _ => return None,
-        };
-        Self::fragment_binding_from_range_value_expr(
-            value,
-            local_bindings,
-            current_dot,
-            context,
-            seen,
-        )
-    }
-
-    fn fragment_binding_from_range_value_expr(
-        value: &TemplateExpr,
-        local_bindings: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
-        context.fragment_binding_from_expr(value, local_bindings, current_dot, seen)
-    }
-
-    fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
-        if let Some(range) = node.child_by_field_name("range") {
-            return range
-                .utf8_text(source.as_bytes())
-                .ok()
-                .map(|text| text.trim().to_string());
-        }
-        let mut walker = node.walk();
-        for child in node.named_children(&mut walker) {
-            if child.kind() == "range_variable_definition"
-                && let Some(range) = child.child_by_field_name("range")
-            {
-                return range
-                    .utf8_text(source.as_bytes())
-                    .ok()
-                    .map(|text| text.trim().to_string());
-            }
-        }
-        None
-    }
-
-    fn range_body_emits_sequence_item_from_source(
-        node: tree_sitter::Node<'_>,
-        source: &str,
-    ) -> bool {
-        for body_node in Self::children_with_field(node, "body") {
-            let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
-                continue;
-            };
-            for line in text.lines() {
-                let trimmed = line.trim_start();
-                if trimmed.starts_with("- ") || trimmed == "-" {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-
-    fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
-        let mut walker = node.walk();
-        node.named_children(&mut walker)
-            .find(|child| child.kind() == "range_variable_definition")
-            .is_some_and(|definition| {
-                let mut definition_walker = definition.walk();
-                definition
-                    .named_children(&mut definition_walker)
-                    .filter(|child| child.kind() == "variable")
-                    .count()
-                    >= 2
-            })
-    }
-
-    fn fragment_binding_from_text(
-        text: &str,
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
-        let mut bindings = Vec::new();
-        for expr in Self::parse_expr_text(text) {
-            if let Some(binding) =
-                context.fragment_binding_from_expr(&expr, locals, current_dot, seen)
-            {
-                bindings.push(binding);
-            }
-        }
-        FragmentBinding::choice(bindings)
-    }
-
     fn collect_bound_fragment_outputs_from_tree(
         node: tree_sitter::Node<'_>,
         source: &str,
@@ -2895,17 +1353,12 @@ impl<'a> SymbolicWalker<'a> {
         match node.kind() {
             "variable_definition" | "assignment" => {
                 if let Ok(text) = node.utf8_text(source.as_bytes()) {
-                    if Self::apply_local_set_mutations(text, locals, current_dot, context, seen) {
+                    if apply_local_set_mutations(text, locals, current_dot, context, seen) {
                         return;
                     }
-                    if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(text) {
-                        let binding = Self::fragment_binding_from_text(
-                            &rhs,
-                            locals,
-                            current_dot,
-                            context,
-                            seen,
-                        );
+                    if let Some((var, _declares, rhs)) = parse_helper_assignment(text) {
+                        let binding =
+                            fragment_binding_from_text(&rhs, locals, current_dot, context, seen);
                         if let Some(binding) = binding {
                             locals.insert(var, binding);
                         }
@@ -2923,7 +1376,7 @@ impl<'a> SymbolicWalker<'a> {
             | "method_call" => {
                 if let Ok(text) = node.utf8_text(source.as_bytes())
                     && let Some(binding) =
-                        Self::fragment_binding_from_text(text, locals, current_dot, context, seen)
+                        fragment_binding_from_text(text, locals, current_dot, context, seen)
                 {
                     outputs.extend(FragmentBinding::paths(&binding));
                 }
@@ -2955,14 +1408,14 @@ impl<'a> SymbolicWalker<'a> {
                     );
                 }
 
-                *locals = Self::merge_fragment_locals(then_locals, else_locals);
+                *locals = merge_fragment_locals(then_locals, else_locals);
             }
             "with_action" => {
                 let binding = node
                     .child_by_field_name("condition")
                     .and_then(|condition| condition.utf8_text(source.as_bytes()).ok())
                     .and_then(|text| {
-                        Self::fragment_binding_from_text(text, locals, current_dot, context, seen)
+                        fragment_binding_from_text(text, locals, current_dot, context, seen)
                     });
 
                 let mut body_locals = locals.clone();
@@ -2993,13 +1446,13 @@ impl<'a> SymbolicWalker<'a> {
             }
             "range_action" => {
                 let has_destructured_variable_definition =
-                    Self::range_has_destructured_variable_definition(node);
-                let header = Self::range_header_text_from_source(node, source);
+                    range_has_destructured_variable_definition(node);
+                let header = range_header_text_from_source(node, source);
                 let binding = header.as_deref().and_then(|text| {
-                    Self::range_iterable_binding(text, locals, current_dot, context, seen)
+                    range_iterable_binding(text, locals, current_dot, context, seen)
                 });
                 if has_destructured_variable_definition
-                    && !Self::range_body_emits_sequence_item_from_source(node, source)
+                    && !range_body_emits_sequence_item_from_source(node, source)
                     && let Some(binding) = &binding
                 {
                     outputs.extend(FragmentBinding::paths(binding));
@@ -3024,7 +1477,7 @@ impl<'a> SymbolicWalker<'a> {
                 {
                     *locals = body_locals;
                 } else {
-                    *locals = Self::merge_fragment_locals(locals.clone(), body_locals);
+                    *locals = merge_fragment_locals(locals.clone(), body_locals);
                 }
             }
             _ => {
@@ -3362,7 +1815,7 @@ impl<'a> SymbolicWalker<'a> {
             return;
         }
 
-        if let Some(binding) = Self::binding_from_expr(expr, Some(bindings), current_dot) {
+        if let Some(binding) = binding_from_expr(expr, Some(bindings), current_dot) {
             Self::collect_helper_binding_output_uses(
                 outputs,
                 &binding,
@@ -3576,7 +2029,7 @@ impl<'a> SymbolicWalker<'a> {
             }
             HelmAst::HelmExpr { text } => {
                 let mut seen_set = HashSet::new();
-                if Self::apply_local_set_mutations(
+                if apply_local_set_mutations(
                     text,
                     local_bindings,
                     current_dot_fragment,
@@ -3586,9 +2039,9 @@ impl<'a> SymbolicWalker<'a> {
                     return;
                 }
 
-                if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(text) {
+                if let Some((var, _declares, rhs)) = parse_helper_assignment(text) {
                     let mut seen_rhs = HashSet::new();
-                    let mut binding = Self::fragment_binding_from_text(
+                    let mut binding = fragment_binding_from_text(
                         &rhs,
                         local_bindings,
                         current_dot_fragment,
@@ -3607,8 +2060,7 @@ impl<'a> SymbolicWalker<'a> {
                             &mut rhs_seen,
                         );
                         top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
-                        if let Some(nested_binding) =
-                            Self::fragment_binding_from_helper_analysis(nested)
+                        if let Some(nested_binding) = fragment_binding_from_helper_analysis(nested)
                         {
                             binding = match binding {
                                 Some(binding) => {
@@ -3643,11 +2095,8 @@ impl<'a> SymbolicWalker<'a> {
                     if let Some(binding) = binding {
                         local_bindings.insert(var.clone(), binding);
                     }
-                    let mut defaulted_paths = Self::resolved_default_fallback_paths_for_text(
-                        &rhs,
-                        Some(bindings),
-                        current_dot,
-                    );
+                    let mut defaulted_paths =
+                        resolved_default_fallback_paths_for_text(&rhs, Some(bindings), current_dot);
                     defaulted_paths.extend(Self::local_default_paths_from_text(
                         &rhs,
                         local_default_paths,
@@ -3672,11 +2121,8 @@ impl<'a> SymbolicWalker<'a> {
                     .unwrap_or_else(|| relative_path.clone());
                 let direct_outputs =
                     Self::direct_bound_paths_from_text_in_context(text, bindings, current_dot);
-                let fallback_paths = Self::resolved_default_fallback_paths_for_text(
-                    text,
-                    Some(bindings),
-                    current_dot,
-                );
+                let fallback_paths =
+                    resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
                 let local_outputs = Self::local_rendered_paths_from_text(text, local_bindings);
                 let handled_outputs: BTreeSet<String> = direct_outputs
                     .iter()
@@ -3768,7 +2214,7 @@ impl<'a> SymbolicWalker<'a> {
                     if !expr_contains_helper_call(&expr) {
                         continue;
                     }
-                    if let Some(binding) = Self::helper_binding_from_expr_with_fragment_locals(
+                    if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
                         &expr,
                         local_bindings,
                         Some(bindings),
@@ -3901,7 +2347,7 @@ impl<'a> SymbolicWalker<'a> {
                     seen,
                     outputs,
                 );
-                *local_bindings = Self::merge_fragment_locals(then_bindings, else_bindings);
+                *local_bindings = merge_fragment_locals(then_bindings, else_bindings);
                 *local_default_paths = merge_local_default_paths(then_defaults, else_defaults);
             }
             HelmAst::With {
@@ -3958,7 +2404,7 @@ impl<'a> SymbolicWalker<'a> {
                     seen,
                     outputs,
                 );
-                *local_bindings = Self::merge_fragment_locals(body_bindings, else_bindings);
+                *local_bindings = merge_fragment_locals(body_bindings, else_bindings);
                 *local_default_paths = merge_local_default_paths(body_defaults, else_defaults);
             }
             HelmAst::Range {
@@ -3980,7 +2426,7 @@ impl<'a> SymbolicWalker<'a> {
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
                 let mut seen_range_binding = HashSet::new();
-                let range_binding = Self::range_iterable_binding(
+                let range_binding = range_iterable_binding(
                     header,
                     local_bindings,
                     current_dot_fragment,
@@ -3999,7 +2445,7 @@ impl<'a> SymbolicWalker<'a> {
                 let mut body_bindings = local_bindings.clone();
                 let mut body_defaults = local_default_paths.clone();
                 if let Some(FragmentBinding::List(items)) = &range_binding {
-                    let range_var = Self::range_variable_name(header);
+                    let range_var = range_variable_name(header);
                     for item_binding in items {
                         if let Some(range_var) = &range_var {
                             body_bindings.insert(range_var.clone(), item_binding.clone());
@@ -4058,7 +2504,7 @@ impl<'a> SymbolicWalker<'a> {
                         seen,
                         outputs,
                     );
-                    *local_bindings = Self::merge_fragment_locals(body_bindings, else_bindings);
+                    *local_bindings = merge_fragment_locals(body_bindings, else_bindings);
                     *local_default_paths = merge_local_default_paths(body_defaults, else_defaults);
                 }
             }
@@ -4168,7 +2614,7 @@ impl<'a> SymbolicWalker<'a> {
         }
 
         let mut binding_seen = seen.clone();
-        let bindings = Self::bindings_for_helper_arg_with_fragment_locals(
+        let bindings = bindings_for_helper_arg_with_fragment_locals(
             arg,
             outer_bindings,
             current_dot,
@@ -4185,7 +2631,7 @@ impl<'a> SymbolicWalker<'a> {
         let helper_body_dot = {
             let mut dot_seen = seen.clone();
             arg.and_then(|expr| {
-                Self::helper_binding_from_expr_with_fragment_locals(
+                helper_binding_from_expr_with_fragment_locals(
                     expr,
                     fragment_locals,
                     outer_bindings,
@@ -4219,7 +2665,7 @@ impl<'a> SymbolicWalker<'a> {
         }
         let mut helper_fragment_locals = HashMap::new();
         let helper_dot = arg.and_then(|expr| {
-            Self::fragment_binding_from_outer_expr(
+            fragment_binding_from_outer_expr(
                 expr,
                 Some(fragment_locals),
                 outer_bindings,
@@ -4301,7 +2747,7 @@ impl<'a> SymbolicWalker<'a> {
                 if expr_contains_helper_call(node) {
                     return;
                 }
-                if let Some(binding) = Self::binding_from_expr(node, Some(bindings), current_dot) {
+                if let Some(binding) = binding_from_expr(node, Some(bindings), current_dot) {
                     out.extend(binding.paths());
                 }
             });
@@ -4540,26 +2986,22 @@ impl<'a> SymbolicWalker<'a> {
                 }
             }
             HelmAst::HelmExpr { text } => {
-                if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(text) {
+                if let Some((var, _declares, rhs)) = parse_helper_assignment(text) {
                     let set_default_paths =
-                        Self::set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+                        set_default_chart_paths_for_text(text, Some(bindings), current_dot);
                     analysis.chart_defaults.extend(set_default_paths);
                     extend_type_hints(
                         &mut analysis.type_hints,
-                        Self::resolved_type_is_paths_for_text(&rhs, Some(bindings), current_dot),
+                        resolved_type_is_paths_for_text(&rhs, Some(bindings), current_dot),
                     );
                     extend_type_hints(
                         &mut analysis.type_hints,
-                        Self::resolved_string_transform_paths_for_text(
-                            &rhs,
-                            Some(bindings),
-                            current_dot,
-                        ),
+                        resolved_string_transform_paths_for_text(&rhs, Some(bindings), current_dot),
                     );
 
                     let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_set = HashSet::new();
-                    if Self::apply_local_set_mutations(
+                    if apply_local_set_mutations(
                         text,
                         local_bindings,
                         current_dot_fragment.as_ref(),
@@ -4569,11 +3011,8 @@ impl<'a> SymbolicWalker<'a> {
                         return;
                     }
 
-                    let fallback_paths = Self::resolved_default_fallback_paths_for_text(
-                        &rhs,
-                        Some(bindings),
-                        current_dot,
-                    );
+                    let fallback_paths =
+                        resolved_default_fallback_paths_for_text(&rhs, Some(bindings), current_dot);
                     let direct_outputs =
                         Self::direct_bound_paths_from_text_in_context(&rhs, bindings, current_dot);
                     let local_fallback_paths =
@@ -4628,7 +3067,7 @@ impl<'a> SymbolicWalker<'a> {
                     }
 
                     let mut seen_rhs = HashSet::new();
-                    if let Some(binding) = Self::fragment_binding_from_text(
+                    if let Some(binding) = fragment_binding_from_text(
                         &rhs,
                         local_bindings,
                         current_dot_fragment.as_ref(),
@@ -4668,7 +3107,7 @@ impl<'a> SymbolicWalker<'a> {
 
                 let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                 let mut seen_set = HashSet::new();
-                if Self::apply_local_set_mutations(
+                if apply_local_set_mutations(
                     text,
                     local_bindings,
                     current_dot_fragment.as_ref(),
@@ -4676,29 +3115,22 @@ impl<'a> SymbolicWalker<'a> {
                     &mut seen_set,
                 ) {
                     let set_default_paths =
-                        Self::set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+                        set_default_chart_paths_for_text(text, Some(bindings), current_dot);
                     analysis.chart_defaults.extend(set_default_paths);
                     return;
                 }
 
                 let direct_outputs =
                     Self::direct_bound_paths_from_text_in_context(text, bindings, current_dot);
-                let fallback_paths = Self::resolved_default_fallback_paths_for_text(
-                    text,
-                    Some(bindings),
-                    current_dot,
+                let fallback_paths =
+                    resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
+                extend_type_hints(
+                    &mut analysis.type_hints,
+                    resolved_type_is_paths_for_text(text, Some(bindings), current_dot),
                 );
                 extend_type_hints(
                     &mut analysis.type_hints,
-                    Self::resolved_type_is_paths_for_text(text, Some(bindings), current_dot),
-                );
-                extend_type_hints(
-                    &mut analysis.type_hints,
-                    Self::resolved_string_transform_paths_for_text(
-                        text,
-                        Some(bindings),
-                        current_dot,
-                    ),
+                    resolved_string_transform_paths_for_text(text, Some(bindings), current_dot),
                 );
                 let local_outputs = Self::local_rendered_paths_from_text(text, local_bindings);
                 let local_fallback_paths =
@@ -4773,7 +3205,7 @@ impl<'a> SymbolicWalker<'a> {
                     analysis.extend(nested);
                 }
                 let set_default_paths =
-                    Self::set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+                    set_default_chart_paths_for_text(text, Some(bindings), current_dot);
                 analysis.chart_defaults.extend(set_default_paths);
             }
             HelmAst::If {
@@ -4832,7 +3264,7 @@ impl<'a> SymbolicWalker<'a> {
                         analysis,
                     );
                 }
-                *local_bindings = Self::merge_fragment_locals(then_bindings, else_bindings);
+                *local_bindings = merge_fragment_locals(then_bindings, else_bindings);
                 *local_default_paths =
                     merge_local_default_paths(then_default_paths, else_default_paths);
                 *local_output_meta =
@@ -4871,7 +3303,7 @@ impl<'a> SymbolicWalker<'a> {
                 if !is_with {
                     let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_range = HashSet::new();
-                    range_fragment_binding = Self::range_iterable_binding(
+                    range_fragment_binding = range_iterable_binding(
                         header,
                         local_bindings,
                         current_dot_fragment.as_ref(),
@@ -4899,7 +3331,7 @@ impl<'a> SymbolicWalker<'a> {
                 if !is_with {
                     let header_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_range = HashSet::new();
-                    if let Some((var, binding)) = Self::range_variable_item_binding(
+                    if let Some((var, binding)) = range_variable_item_binding(
                         header,
                         &body_bindings,
                         header_dot_fragment.as_ref(),
@@ -4910,7 +3342,7 @@ impl<'a> SymbolicWalker<'a> {
                     }
                 }
                 if !is_with && let Some(FragmentBinding::List(items)) = &range_fragment_binding {
-                    let range_var = Self::range_variable_name(header);
+                    let range_var = range_variable_name(header);
                     for item_binding in items {
                         if let Some(range_var) = &range_var {
                             body_bindings.insert(range_var.clone(), item_binding.clone());
@@ -4976,7 +3408,7 @@ impl<'a> SymbolicWalker<'a> {
                             analysis,
                         );
                     }
-                    *local_bindings = Self::merge_fragment_locals(body_bindings, else_bindings);
+                    *local_bindings = merge_fragment_locals(body_bindings, else_bindings);
                     *local_default_paths =
                         merge_local_default_paths(body_default_paths, else_default_paths);
                     *local_output_meta =
@@ -5016,270 +3448,13 @@ impl<'a> SymbolicWalker<'a> {
         {
             return Some(HelperBinding::ValuesPath(String::new()));
         }
-        Self::binding_from_expr(expr, Some(bindings), current_dot)
-    }
-
-    fn resolved_default_fallback_paths_for_text(
-        text: &str,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-
-        for expr in Self::parse_expr_text(text) {
-            out.extend(Self::resolved_default_fallback_paths_for_expr(
-                &expr,
-                bindings,
-                current_dot,
-            ));
-        }
-
-        out
-    }
-
-    fn resolved_default_fallback_paths_for_expr(
-        expr: &TemplateExpr,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        expr.walk(|node| match node {
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                out.extend(Self::resolve_expr_to_values_paths_in_context(
-                    &args[1],
-                    bindings,
-                    current_dot,
-                ));
-            }
-            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
-                for window in stages.windows(2) {
-                    let TemplateExpr::Call { function, .. } = &window[1] else {
-                        continue;
-                    };
-                    if function != "default" {
-                        continue;
-                    }
-                    out.extend(Self::resolve_expr_to_values_paths_in_context(
-                        &window[0],
-                        bindings,
-                        current_dot,
-                    ));
-                }
-            }
-            _ => {}
-        });
-        out
-    }
-
-    fn resolved_type_is_paths_for_text(
-        text: &str,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeMap<String, BTreeSet<String>> {
-        let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for expr in Self::parse_expr_text(text) {
-            expr.walk(|node| {
-                let TemplateExpr::Call { function, args } = node else {
-                    return;
-                };
-                if function != "typeIs" || args.len() < 2 {
-                    return;
-                }
-                let Some(schema_type) = Self::type_is_schema_type(args.first()) else {
-                    return;
-                };
-                let Some(binding) = Self::binding_from_expr(&args[1], bindings, current_dot) else {
-                    return;
-                };
-                for path in binding.paths() {
-                    if !path.trim().is_empty() {
-                        out.entry(path).or_default().insert(schema_type.clone());
-                    }
-                }
-            });
-        }
-        out
-    }
-
-    fn resolved_string_transform_paths_for_text(
-        text: &str,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeMap<String, BTreeSet<String>> {
-        let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for expr in Self::parse_expr_text(text) {
-            Self::resolved_string_transform_paths_for_expr(&expr, bindings, current_dot, &mut out);
-        }
-        out
-    }
-
-    fn resolved_string_transform_paths_for_expr(
-        expr: &TemplateExpr,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        out: &mut BTreeMap<String, BTreeSet<String>>,
-    ) {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => {
-                Self::resolved_string_transform_paths_for_expr(inner, bindings, current_dot, out);
-            }
-            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
-                let mut current = stages.first();
-                for stage in &stages[1..] {
-                    let TemplateExpr::Call { function, .. } = stage else {
-                        continue;
-                    };
-                    if Self::is_string_transform_function(function)
-                        && let Some(current) = current
-                    {
-                        for path in Self::resolve_expr_to_values_paths_in_context(
-                            current,
-                            bindings,
-                            current_dot,
-                        ) {
-                            insert_type_hint(out, path, "string");
-                        }
-                    }
-                    current = Some(stage);
-                }
-            }
-            TemplateExpr::Call { function, args }
-                if Self::is_string_transform_function(function) =>
-            {
-                for arg in args {
-                    for path in
-                        Self::resolve_expr_to_values_paths_in_context(arg, bindings, current_dot)
-                    {
-                        insert_type_hint(out, path, "string");
-                    }
-                    Self::resolved_string_transform_paths_for_expr(arg, bindings, current_dot, out);
-                }
-            }
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    Self::resolved_string_transform_paths_for_expr(arg, bindings, current_dot, out);
-                }
-            }
-            TemplateExpr::Selector { operand, .. } => {
-                Self::resolved_string_transform_paths_for_expr(operand, bindings, current_dot, out);
-            }
-            _ => {}
-        }
-    }
-
-    fn is_string_transform_function(function: &str) -> bool {
-        matches!(
-            function,
-            "quote"
-                | "squote"
-                | "toString"
-                | "trunc"
-                | "trim"
-                | "trimAll"
-                | "trimPrefix"
-                | "trimSuffix"
-                | "replace"
-        )
-    }
-
-    fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
-        let TemplateExpr::Literal(Literal::String(type_name) | Literal::RawString(type_name)) =
-            expr?.deparen()
-        else {
-            return None;
-        };
-        let schema_type = match type_name.as_str() {
-            "bool" | "boolean" => "boolean",
-            "float64" | "number" => "number",
-            "int" | "int64" | "integer" => "integer",
-            "list" | "slice" | "array" => "array",
-            "map" | "dict" | "object" => "object",
-            "string" => "string",
-            _ => return None,
-        };
-        Some(schema_type.to_string())
-    }
-
-    /// Extract Values-rooted paths that this helper-body text declares
-    /// as chart-level defaults via the canonical pattern
-    ///
-    /// ```text
-    /// {{- $_ := set OPERAND "KEY" (OPERAND.KEY | default V) }}
-    /// ```
-    ///
-    /// This is the chart writer asserting "this path is defaulted before
-    /// any subsequent read." Matched here (and *only* here, not by the
-    /// broader `resolved_default_fallback_paths_for_text` which fires
-    /// on every `| default` regardless of context — including condition
-    /// fallbacks like `if X | default false` that do not mutate values).
-    ///
-    /// Requirements for a match:
-    ///   - The action is a `set` call with exactly three arguments.
-    ///   - The first argument resolves to a Values-rooted path through
-    ///     the active bindings and `current_dot` (so `with .Values` shifts
-    ///     correctly).
-    ///   - The second argument is a string literal — the dict key being
-    ///     defaulted.
-    ///   - The third argument's expression tree contains a `default` call
-    ///     anywhere within it. The chart writer's `| default V` (or
-    ///     `default V .` form) is what signals the path is optional; a
-    ///     bare `set X "K" V` without a default falls outside this rule
-    ///     because it unconditionally overwrites and tells us nothing
-    ///     about the values.yaml schema's null-tolerance.
-    ///
-    /// The emitted path is `<resolved-operand>.<key>` (or just `<key>`
-    /// when the operand resolves to the Values root, i.e. inside a bare
-    /// `with .Values` block).
-    fn set_default_chart_paths_for_text(
-        text: &str,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeSet<String> {
-        fn literal_string(expr: &TemplateExpr) -> Option<&str> {
-            match expr {
-                TemplateExpr::Literal(Literal::String(s) | Literal::RawString(s)) => Some(s),
-                TemplateExpr::Parenthesized(inner) => literal_string(inner),
-                _ => None,
-            }
-        }
-
-        let mut out = BTreeSet::new();
-        for expr in Self::parse_expr_text(text) {
-            expr.walk(|node| {
-                let TemplateExpr::Call { function, args } = node else {
-                    return;
-                };
-                if function != "set" || args.len() != 3 {
-                    return;
-                }
-                let Some(operand_path) =
-                    Self::resolve_expr_to_values_path_in_context(&args[0], bindings, current_dot)
-                else {
-                    return;
-                };
-                let Some(key) = literal_string(&args[1]) else {
-                    return;
-                };
-                let target_path = if operand_path.is_empty() {
-                    key.to_string()
-                } else {
-                    format!("{operand_path}.{key}")
-                };
-                let defaulted_paths =
-                    Self::resolved_default_fallback_paths_for_expr(&args[2], bindings, current_dot);
-                if !defaulted_paths.contains(&target_path) {
-                    return;
-                }
-                out.insert(target_path);
-            });
-        }
-        out
+        binding_from_expr(expr, Some(bindings), current_dot)
     }
 
     fn collect_if_with_guards(&mut self, cond_text: &str) {
         let cond_guards = self.condition_guards_in_context(cond_text);
 
-        for v in self.extract_bound_values(cond_text) {
+        for v in extract_bound_values(cond_text, &self.range_domains, &self.get_bindings) {
             self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
         }
 
@@ -5346,7 +3521,7 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
 
-        for v in self.extract_bound_values(cond_text) {
+        for v in extract_bound_values(cond_text, &self.range_domains, &self.get_bindings) {
             self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
         }
 
@@ -5366,7 +3541,7 @@ impl<'a> SymbolicWalker<'a> {
         let current_dot_binding = self.current_dot_binding();
         let exprs = Self::parse_expr_text(header_text);
         let binding = match exprs.as_slice() {
-            [expr] => Self::fragment_binding_from_outer_expr(
+            [expr] => fragment_binding_from_outer_expr(
                 expr,
                 Some(&locals),
                 Some(&self.root_bindings),
@@ -5525,11 +3700,11 @@ impl<'a> SymbolicWalker<'a> {
 
     fn handle_variable_definition_or_assignment(&mut self, node: tree_sitter::Node<'_>) {
         if let Ok(txt) = node.utf8_text(self.source.as_bytes()) {
-            if let Some((var, binding)) = Self::parse_get_binding(txt) {
+            if let Some((var, binding)) = parse_get_binding(txt) {
                 self.get_bindings.insert(var, binding);
             }
 
-            if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(txt) {
+            if let Some((var, _declares, rhs)) = parse_helper_assignment(txt) {
                 let mut locals = self.template_bindings.clone();
                 for (key, value) in &self.root_bindings {
                     locals.insert(key.clone(), value.to_fragment_binding());
@@ -5539,7 +3714,7 @@ impl<'a> SymbolicWalker<'a> {
                     .map(|binding| binding.to_fragment_binding());
                 let context = self.fragment_eval_context();
                 let mut seen = HashSet::new();
-                if let Some(binding) = Self::fragment_binding_from_text(
+                if let Some(binding) = fragment_binding_from_text(
                     &rhs,
                     &locals,
                     current_dot.as_ref(),
@@ -5682,7 +3857,7 @@ impl<'a> SymbolicWalker<'a> {
             !has_variable_definition && self.range_body_renders_scalar_sequence_items(node);
         if let Some(txt) = self.range_header_text(node) {
             header_text = Some(txt.clone());
-            if let Some((var, literals)) = Self::parse_literal_list_range(&txt) {
+            if let Some((var, literals)) = parse_literal_list_range(&txt) {
                 self.range_domains.insert(var, literals);
             }
             let current_path = self.rendered_yaml.current_path();
