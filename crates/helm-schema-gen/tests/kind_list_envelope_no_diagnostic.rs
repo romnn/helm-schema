@@ -1,22 +1,19 @@
-//! Round-7 Finding 4: end-to-end regression for the `kind: List`
-//! envelope. Vendored alertmanager templates
-//! (`ingressperreplica.yaml`, `serviceperreplica.yaml`) wrap real
-//! resources in a `kind: List` envelope. The envelope itself is a
-//! transparent K8s wrapper, not a meaningful schema target — emitting
-//! `MissingSchema(kind=List, api_version=v1)` for the wrapper is
-//! noise the user can't act on.
+//! End-to-end regression for Kubernetes `kind: List` envelopes.
 //!
-//! Round-5 and round-6 added chain-layer suppression in two paths
-//! (`Chain::schema_for_use` and `Chain::commit_missing_schema`).
-//! This test pins the full pipeline (parser → SymbolicIrGenerator →
-//! Chain) end-to-end so the suppression is exercised through the
-//! real IR shape vendored charts produce, not just synthetic
-//! ResourceRefs in chain-only unit tests.
+//! Vendored alertmanager templates (`ingressperreplica.yaml`,
+//! `serviceperreplica.yaml`) wrap real resources in a `kind: List`
+//! envelope. The envelope itself is transparent structural plumbing:
+//! `.Values.*` uses inside `items[*]` must be attributed to the inner
+//! resource and rebased from `items[*].spec...` to the inner
+//! resource's `spec...` path.
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_with_values_yaml;
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
-use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
+use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator, YamlPath};
+use helm_schema_k8s::{
+    Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
+};
+use serde_json::{Value, json};
 
 const KIND_LIST_TEMPLATE: &str = "\
 apiVersion: v1
@@ -39,24 +36,37 @@ host: example.com
 ";
 
 #[test]
-fn kind_list_envelope_emits_no_missing_schema_diagnostic() {
+fn kind_list_envelope_descends_into_inner_resource() {
     let ast = TreeSitterParser.parse(KIND_LIST_TEMPLATE).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(KIND_LIST_TEMPLATE, &ast, &idx);
+    assert!(
+        ir.iter().any(|use_| {
+            use_.source_expr == "host"
+                && use_.path.0
+                    == [
+                        "spec".to_string(),
+                        "rules[*]".to_string(),
+                        "host".to_string(),
+                    ]
+                && use_.resource.as_ref().is_some_and(|resource| {
+                    resource.kind == "Ingress" && resource.api_version == "networking.k8s.io/v1"
+                })
+        }),
+        "host use must be attributed to the inner Ingress with a rebased path: {:#?}",
+        ir
+    );
 
     let diagnostics = DiagnosticSink::new();
-    // Use an offline provider — the List envelope short-circuits
-    // before any K8s lookup, so download isn't needed for the
-    // diagnostic assertion. (Inner items[*] uses currently carry the
-    // wrapper's identity per the documented dual-detector limitation
-    // in AGENTS.md, which is why we only assert the wrapper isn't
-    // emitted — not that the inner Ingress is validated.)
-    let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
-        .with_allow_download(false)
-        .with_diagnostic_sink(diagnostics.clone());
-    let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
+    let chain =
+        Chain::new(vec![Box::new(FakeIngressProvider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let _schema = generate_values_schema_with_values_yaml(&ir, &chain, Some(KIND_LIST_VALUES));
+    let schema = generate_values_schema_with_values_yaml(&ir, &chain, Some(KIND_LIST_VALUES));
+    assert_eq!(
+        schema.pointer("/properties/host/description"),
+        Some(&Value::String("inner ingress host".to_string())),
+        "host must be validated through the inner Ingress spec.rules[*].host schema; got {schema}"
+    );
 
     let snapshot = diagnostics.snapshot();
     let list_missing = snapshot
@@ -72,4 +82,50 @@ fn kind_list_envelope_emits_no_missing_schema_diagnostic() {
         list_missing, 0,
         "Chain must not emit MissingSchema(kind=List, ...) for the K8s List envelope; got diagnostics: {snapshot:?}"
     );
+}
+
+#[derive(Debug)]
+struct FakeIngressProvider;
+
+impl K8sSchemaProvider for FakeIngressProvider {
+    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+        if is_ingress_host(resource, path) {
+            Some(json!({
+                "description": "inner ingress host",
+                "type": "string"
+            }))
+        } else {
+            None
+        }
+    }
+
+    fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
+        match self.schema_for_resource_path(resource, path) {
+            Some(schema) => ProviderLookupResult::Found {
+                schema,
+                resolved_k8s_version: None,
+            },
+            None if self.has_resource(resource) => ProviderLookupResult::PathUnresolved,
+            None => ProviderLookupResult::NotOwned,
+        }
+    }
+
+    fn has_resource(&self, resource: &ResourceRef) -> bool {
+        resource.kind == "Ingress" && resource.api_version == "networking.k8s.io/v1"
+    }
+
+    fn origin(&self) -> ProviderOrigin {
+        ProviderOrigin::KubernetesOpenApi
+    }
+}
+
+fn is_ingress_host(resource: &ResourceRef, path: &YamlPath) -> bool {
+    resource.kind == "Ingress"
+        && resource.api_version == "networking.k8s.io/v1"
+        && path.0
+            == [
+                "spec".to_string(),
+                "rules[*]".to_string(),
+                "host".to_string(),
+            ]
 }

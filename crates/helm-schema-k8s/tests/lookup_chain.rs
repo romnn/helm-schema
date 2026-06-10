@@ -361,40 +361,6 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
     );
 }
 
-// Pins Finding (round 6) #3 — the round-5 `kind: List` suppression
-// in schema_for_use was incomplete: direct callers of
-// schema_for_resource_path / resolve_against_chain still emitted
-// MissingSchema(kind=List, ...). The suppression now lives in
-// commit_missing_schema so every diagnostic emission path honours
-// the envelope contract.
-#[test]
-fn chain_resolve_against_chain_kind_list_envelope_emits_no_diagnostic() {
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let diagnostics = DiagnosticSink::new();
-    let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
-
-    let resource = ResourceRef {
-        api_version: "v1".to_string(),
-        kind: "List".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
-    // schema_for_resource_path → resolve_against_chain → commit_missing_schema.
-    // The List suppression must catch us at commit time, not just in
-    // schema_for_use.
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
-
-    let snapshot = diagnostics.snapshot();
-    assert!(
-        snapshot.is_empty(),
-        "List envelope must emit zero diagnostics from any code path; got {snapshot:?}"
-    );
-}
-
 // Pins Finding (round 6) #2/#4 — multi-branch helper preserves
 // candidates as ambiguous alternatives (empty primary + N
 // candidates). On total failure, commit_missing_schema must emit ONE
@@ -737,50 +703,6 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
         "exactly one MissingSchema; got {missing:?}"
     );
     assert_eq!(missing[0].1, "policy/v1");
-}
-
-// Pins Finding (round 5) #3 — `kind: List` is the K8s envelope used by
-// vendored alertmanager templates (ingressperreplica.yaml,
-// serviceperreplica.yaml) to emit multiple resources from a single
-// template. The envelope itself isn't a meaningful schema target —
-// emitting `MissingSchema(kind=List, api_version=v1)` is noise the
-// user can't act on. The chain must short-circuit on `kind: List`
-// and emit no diagnostic.
-#[test]
-fn chain_schema_for_use_kind_list_envelope_emits_no_diagnostic() {
-    use helm_schema_ir::ValueUse;
-
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let diagnostics = DiagnosticSink::new();
-    let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
-
-    let use_ = ValueUse {
-        source_expr: "x".to_string(),
-        path: YamlPath(Vec::new()),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "List".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        }),
-    };
-    let schema = chain.schema_for_use(&use_);
-    assert!(
-        schema.is_none(),
-        "List envelope must short-circuit to None (no schema lookup attempted)"
-    );
-
-    let snapshot = diagnostics.snapshot();
-    assert!(
-        snapshot.is_empty(),
-        "List envelope must emit zero diagnostics; got {snapshot:?}"
-    );
 }
 
 // Pins Finding (round 2) #1 — schema_for_use must NOT turn an

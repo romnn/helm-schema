@@ -85,14 +85,6 @@ That is the bar that keeps helm-schema aligned with its purpose: a smart, typed,
 - Inside crates, prefer typed error enums (e.g. `std::result::Result<T, MyError>`) for precise variants.
 - Convert typed errors to `color_eyre::eyre::Report` only at the outer boundary (e.g. `main`).
 
-## Known architectural debt: List envelope descent
-
-`kind: List` envelope handling is currently partial: the chain layer suppresses `MissingSchema` for
-the wrapper (in both `Chain::schema_for_use` and `Chain::commit_missing_schema`), but the IR walker
-does NOT recurse into `items[*]` to attribute uses inside each item to the item's own `apiVersion` /
-`kind`. The unified AST resource detector is now the right place to build that follow-up. See
-[`plan/list-envelope-items-descent.md`](plan/list-envelope-items-descent.md).
-
 ## Cache is a speed optimisation, not a correctness oracle
 
 The K8s schema cache (and the CRD catalog cache) exists solely to make

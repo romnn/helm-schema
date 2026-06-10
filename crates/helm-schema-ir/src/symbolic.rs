@@ -1814,7 +1814,7 @@ impl<'a> SymbolicWalker<'a> {
         let path = if self.no_output_depth > 0 {
             YamlPath(Vec::new())
         } else {
-            path
+            self.resource_cursor.rebase_path(path)
         };
 
         let mut guards = self.guards.clone();

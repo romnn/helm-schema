@@ -30,9 +30,8 @@ correctness, output-size, parser, comments, and performance passes.
 
 ## Recommended order
 
-1. **Implement `kind: List` items[*] structural descent**
-2. **Targeted architecture cleanup in the hot IR / generator path**
-3. **Broader refactor / abstraction work only after the above is stable**
+1. **Targeted architecture cleanup in the hot IR / generator path**
+2. **Broader refactor / abstraction work only after the above is stable**
 
 ## Completed work
 
@@ -119,13 +118,9 @@ Representative latest measurements from this pass:
 The remaining Temporal cost is acceptable for now. Any future pass should stay
 profiling-driven and preserve RSS as a first-class metric.
 
-## Next active priority
-
 ### List-envelope descent
 
-Follow `./list-envelope-items-descent.md`.
-
-Success criteria:
+Completed criteria:
 
 - `kind: List` wrappers no longer suppress inner validation
 - inner resources resolve against their actual `apiVersion` / `kind`
@@ -133,14 +128,23 @@ Success criteria:
 - focused tests cover mixed lists, templated list items, and non-list resources
   so normal resource detection does not regress
 
-This is the next structural correctness item because detector unification has
-landed and there is now one resource identity path to extend.
+The unified resource cursor descends into `items[*]` mappings for transparent
+`kind: List` envelopes, attributes `.Values.*` uses to each inner resource, and
+rebases rendered YAML paths by stripping the structural `items[*]` prefix.
 
-## Later work
+## Next active priority
 
 ### Focused architecture cleanup
 
-After list descent:
+The next useful work is a narrow cleanup pass over the hot IR/generator path,
+especially where recent correctness and performance work left stable but dense
+helper-analysis code.
+
+## Later work
+
+### Cleanup scope
+
+Suggested order:
 
 1. Split oversized files only where there is a stable ownership boundary.
 2. Remove dead helper-analysis scaffolding that did not survive the
@@ -152,12 +156,13 @@ After list descent:
 ### Broader refactor last
 
 "More modular, more DRY, more trait-based" is only high-value if it reduces
-proven complexity. It should not come before list-envelope descent, because that
-work may still clarify the stable module boundaries.
+proven complexity. It should not come before the targeted cleanup pass, because
+that work should clarify any stable module boundaries.
 
 Avoid:
 
-- broad trait-heavy redesign before the list-descent boundary settles
+- broad trait-heavy redesign before targeted cleanup clarifies the stable
+  boundaries
 - generic abstraction work without a measured performance, correctness, or
   maintenance payoff
 - more chart-specific correctness hunts before a migration diff classification

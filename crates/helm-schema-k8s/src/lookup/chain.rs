@@ -131,21 +131,6 @@ impl Chain {
     pub fn schema_for_use(&self, use_: &ValueUse) -> Option<Value> {
         let resource = use_.resource.as_ref()?;
 
-        // Round-5 Finding 3: `kind: List` is the standard K8s envelope
-        // for emitting multiple resources from a single template (used
-        // by `alertmanager/templates/ingressperreplica.yaml`,
-        // `serviceperreplica.yaml`, etc.). The envelope itself isn't
-        // a validated resource type — its only schema-relevant field
-        // is `items[*]` which contains real resource manifests. The
-        // detector currently attributes uses inside `items[*]` to
-        // the wrapper, but emitting `MissingSchema(kind=List, …)` is
-        // noise the user can't act on. Skip validation for the
-        // envelope; the inner resources keep their own attribution
-        // when the detector recognises them at higher indent.
-        if resource.kind == "List" {
-            return None;
-        }
-
         if needs_inference(resource) {
             let inferred = if self.inference_enabled {
                 self.infer_api_version_for_kind(&resource.kind)
@@ -364,17 +349,6 @@ impl Chain {
         let Some(sink) = &self.sink else {
             return;
         };
-        // Round-6 Finding 3 (extended): `kind: List` is a transparent
-        // K8s envelope (used by alertmanager's ingressperreplica.yaml,
-        // serviceperreplica.yaml, …). The envelope itself isn't a
-        // validatable resource — emitting MissingSchema for it is noise.
-        // schema_for_use already short-circuits on List, but every
-        // direct caller of resolve_against_chain (tests, other
-        // providers, …) also routes through this commit, so the
-        // suppression has to live here too.
-        if resource.kind == "List" {
-            return;
-        }
 
         // Round-8 Finding 1: when typed branches are present, emit
         // ONE MissingSchema attributing to the LIVE branch (the one
