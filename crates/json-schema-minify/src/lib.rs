@@ -54,7 +54,6 @@ pub struct MinimizeResult {
 
 #[derive(Debug, Clone)]
 struct Candidate {
-    value: Value,
     occurrences: usize,
     bytes: usize,
 }
@@ -68,7 +67,6 @@ struct CandidateFingerprint {
 #[derive(Debug, Clone)]
 struct PlannedDefinition {
     name: String,
-    value: Value,
 }
 
 /// Deduplicate repeated JSON Schema subtrees into root-level `$defs`.
@@ -106,18 +104,17 @@ pub fn minimize_schema(schema: Value, options: &MinimizeOptions) -> MinimizeResu
     }
 
     let mut schema = schema;
-    let mut used_names = BTreeSet::new();
+    let mut definitions = BTreeMap::new();
     let mut replacements = 0;
     rewrite_schema(
         &mut schema,
         true,
         &planned,
         options.min_subtree_bytes,
-        &mut used_names,
+        &mut definitions,
         &mut replacements,
     );
 
-    let definitions = definitions_for_used_names(&planned, &used_names);
     let definitions_added = definitions.len();
     if definitions_added > 0 {
         insert_definitions(&mut schema, definitions);
@@ -155,7 +152,6 @@ fn collect_candidates(
             .entry(fingerprint.canonical)
             .and_modify(|candidate| candidate.occurrences += 1)
             .or_insert_with(|| Candidate {
-                value: schema.clone(),
                 occurrences: 1,
                 bytes: fingerprint.bytes,
             });
@@ -192,13 +188,7 @@ fn plan_definitions(
         }
         existing_names.insert(name.clone());
         next_id = following_id;
-        planned.insert(
-            canonical,
-            PlannedDefinition {
-                name,
-                value: candidate.value,
-            },
-        );
+        planned.insert(canonical, PlannedDefinition { name });
     }
     planned
 }
@@ -230,15 +220,17 @@ fn rewrite_schema(
     is_root: bool,
     planned: &BTreeMap<String, PlannedDefinition>,
     min_subtree_bytes: usize,
-    used_names: &mut BTreeSet<String>,
+    definitions: &mut BTreeMap<String, Value>,
     replacements: &mut usize,
 ) {
     if !is_root
         && let Some(fingerprint) = candidate_fingerprint(schema, min_subtree_bytes)
         && let Some(definition) = planned.get(&fingerprint.canonical)
     {
+        definitions
+            .entry(definition.name.clone())
+            .or_insert_with(|| schema.clone());
         *schema = reference_schema(&definition.name);
-        used_names.insert(definition.name.clone());
         *replacements += 1;
         return;
     }
@@ -249,23 +241,10 @@ fn rewrite_schema(
             false,
             planned,
             min_subtree_bytes,
-            used_names,
+            definitions,
             replacements,
         );
     });
-}
-
-fn definitions_for_used_names(
-    planned: &BTreeMap<String, PlannedDefinition>,
-    used_names: &BTreeSet<String>,
-) -> BTreeMap<String, Value> {
-    let mut definitions = BTreeMap::new();
-    for definition in planned.values() {
-        if used_names.contains(&definition.name) {
-            definitions.insert(definition.name.clone(), definition.value.clone());
-        }
-    }
-    definitions
 }
 
 fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) {

@@ -1,221 +1,42 @@
-# helm-schema — next priorities after items 1-3
+# helm-schema next priorities
 
-This plan covers the next high-level work after the recent correctness push.
+This plan tracks the high-level work after the luup3 migration and the recent
+correctness, output-size, parser, comments, and performance passes.
 
 ## Current state
 
 - The luup3 migration is complete: active charts use generated schemas by
-  default and the remaining override layer is limited to non-inferable
+  default, and the remaining override layer is limited to non-inferable
   deployment-pipeline values.
 - The large correctness bugs we chased in chart inference are fixed:
   helper-bound objects, open string maps, nullable helper defaults, wrapper
   chart projection issues, and the `inbucket` drift class.
 - `helm-schema` test coverage is much stronger than before, including large
   real-chart fixtures plus focused regression tests.
-- The Temporal runaway bug is fixed in the sense that generation now finishes
-  reliably instead of exhausting swap and RAM.
-- Temporal is still far too slow in release mode for its size and usage target.
 - Opt-in JSON Schema minimization exists as a Helm-independent output transform
   that deduplicates repeated schema-position subtrees into root-level `$defs`.
 - Resource detection has been unified around the AST-driven detector; the old
   line-oriented detector and `DefaultResourceDetector` split are gone.
 - Parser ownership is unified around the tree-sitter-backed parser. The older
   fused Rust/yaml-rust parser and its workspace crate are gone.
-- Inferred schema descriptions still mostly come from upstream Kubernetes / CRD
-  schemas. Chart-authored comments in `values.yaml` and layered values files
-  are not yet carried into generated JSON Schema descriptions.
-
-That means the highest-value work is no longer "basic correctness for one more
-chart". The bottleneck has moved.
+- Values-file comments are carried into generated JSON Schema descriptions as
+  metadata only. They do not create values paths or influence inferred types,
+  nullability, requiredness, or object shape.
+- The Temporal runaway bug is fixed. Generation now finishes reliably instead
+  of exhausting swap and RAM.
+- The current Temporal-class performance/RSS pass is good enough for local
+  iteration. Further performance work should be profiling-driven, but it is no
+  longer the next priority.
 
 ## Recommended order
 
-1. **Carry values-file YAML comments into schema descriptions**
-2. **Continue performance work for Temporal-class charts**
-3. **Implement `kind: List` items[*] structural descent**
-4. **Targeted architecture cleanup in the hot IR / generator path**
-5. **Broader refactor / abstraction work only after the above is stable**
+1. **Implement `kind: List` items[*] structural descent**
+2. **Targeted architecture cleanup in the hot IR / generator path**
+3. **Broader refactor / abstraction work only after the above is stable**
 
-## Why this order
+## Completed work
 
-### 1. Parser unification is complete
-
-After detector unification, the next duplicated structural layer was parsing.
-That split is now removed: production and tests use the tree-sitter-backed
-parser, and the old yaml-rust fused parser crate is no longer part of the
-workspace.
-
-### 2. Values-file comments become schema descriptions
-
-Many Helm chart authors treat `values.yaml` comments as the documentation source
-for generated `values.schema.json` descriptions. helm-schema should support that
-directly.
-
-This is now the next natural feature because the remaining parser foundation is
-tree-sitter-backed and comment-preserving. Normal YAML deserializers discard
-comments, so this metadata pass should be built from source ranges and AST
-structure, not from deserialized YAML values.
-
-The values-file comment layer should stay separate from template inference:
-
-- templates answer which values are accepted and what types/nullability/shape
-  they have;
-- values files provide chart-authored documentation metadata for those paths.
-
-Descriptions from values-file comments should generally take precedence over
-upstream Kubernetes / CRD descriptions when they attach to the same values path.
-The chart author is documenting the chart input contract, while upstream
-descriptions document the rendered Kubernetes field. In practice conflicts
-should be rare, but chart-authored comments are usually the better user-facing
-description for `.Values.*`.
-
-Commented-out values need a careful policy. They may represent supported but
-unset inputs, examples, or just prose. The first pass should attach comments to
-existing inferred/defaulted values paths; later work can decide whether and how
-to infer optional properties from commented-out examples.
-
-### 3. Performance remains important
-
-The current Temporal run no longer blows up memory indefinitely, but it is still
-slow enough to distort local iteration and CI ergonomics. We already know:
-
-- small and medium charts like `inbucket` are fast enough
-- Temporal is the outlier
-- the generated Temporal schema is extremely large
-- the remaining time is no longer explained by the original runaway helper bug
-
-This should stay on the roadmap, but it no longer blocks values-comment work.
-Parser unification has created a cleaner base for comment-aware values parsing.
-
-### 4. Detector unification is complete
-
-`./unify-resource-detector.md` has landed.
-
-The production symbolic path and detector tests now share the same resource
-identity logic. That removed the largest duplicated interpretation path and
-created a cleaner foundation for the next cleanup work.
-
-### 5. JSON Schema minimization is complete
-
-The luup3 cutover is complete, so the output-size feature is implemented as a
-general JSON Schema transform rather than another chart-specific migration
-step.
-
-This should stay independent from Helm template inference:
-
-- the minimizer lives in a small helm-agnostic workspace crate
-- input is an arbitrary JSON Schema document
-- output preserves semantics while replacing repeated schema-position subtrees
-  with `$defs` and `$ref`
-- the CLI exposes it as opt-in `--minimize`
-- description stripping remains a simpler orthogonal output transform
-
-### 6. `kind: List` descent after parser/comment cleanup
-
-`./list-envelope-items-descent.md` should come after detector unification, not
-before it.
-
-The plan is structurally correct: proper list-envelope descent now belongs on
-top of the unified AST detector. It can unlock real correctness improvements for
-charts that currently treat `List` wrappers as validation black holes.
-
-### 7. Architecture cleanup after comments/list work
-
-There is real cleanup value in the current `symbolic.rs` / generator code, but
-it should be constrained and follow the performance, comments, and list descent
-work.
-
-Reasons:
-
-- performance work needs profiling-driven edits, not premature abstractions
-- comment extraction will likely delete or move code anyway
-- broad modularization before those changes would churn files without reducing
-  long-term complexity much
-
-So cleanup should be real and targeted, not a style exercise.
-
-### 8. Broad refactor last
-
-"More modular, more DRY, more trait-based" is only high-value if it reduces
-proven complexity. It should not come before:
-
-- fixing the remaining painful performance problem
-- adding the values-comment metadata layer
-
-Otherwise it risks becoming motion without leverage.
-
-## Additional workstreams worth tracking
-
-These are important enough to name explicitly. They are not all "do now", but
-they should stay visible.
-
-### A. Performance observability and benchmarks
-
-Perfetto tracing is now the source of truth for runtime analysis. The old
-hand-maintained `ProfilePhase` / `--profile-phases` path has been removed, with
-the useful phase boundaries represented by `tracing::instrument` annotations
-instead.
-
-The remaining gap is a stable benchmark harness and acceptance target.
-
-We need a stable way to answer:
-
-- which phase is slow: chart loading, IR extraction, provider lookup, schema
-  merge/build, flattening, serialization
-- which charts are the worst offenders
-- whether a change improved release-mode runtime and peak RSS
-
-This is the enabling work for getting Temporal closer to sub-second output.
-
-### B. Output deduplication / structural sharing
-
-The Temporal schema size strongly suggests repeated large subtrees are being
-cloned into the final output. We should explicitly investigate:
-
-- whether repeated Kubernetes-derived fragments can be shared structurally in
-  memory during merge/build as a performance optimization
-
-The output-size side of this work is complete: the independent JSON Schema
-minimizer can already move repeated output subtrees under `$defs` with `$ref`
-reuse. The remaining question is whether similar sharing should happen earlier
-inside schema construction for runtime and memory efficiency.
-
-### C. Completed luup3 migration contract
-
-The practical cutover is complete. Keep this contract visible so future
-override additions do not become hidden generator bug workarounds:
-
-- which chart-specific overrides are justified
-- which hand-written schemas or shared schema refs can be deleted
-- how generated schemas are tracked in git
-- what CI checks become mandatory after the cutover
-
-This is separate from core helm-schema code; it is a maintenance contract for
-future chart changes, not a blocker for the completed migration.
-
-### D. Dead-complexity cleanup from exploratory optimization paths
-
-Recent performance work added some scaffolding in the symbolic path. Before
-shipping a large follow-up performance PR, we should make sure only the
-measured wins remain. This is not a primary workstream, but it should be part
-of the review bar for the next performance iteration.
-
-### E. Values-file comment extraction
-
-Use tree-sitter YAML as a lossless-enough parser for values files:
-
-- preserve comment nodes and byte ranges
-- associate leading comments with the nearest following YAML key by path and
-  indentation
-- support layered values files, not just root `values.yaml`
-- surface attached comments as JSON Schema `description`
-- prefer chart-authored values comments over upstream K8s / CRD descriptions
-  for the same generated values path
-- keep commented-out keys out of type inference until an explicit policy exists
-
-## Concrete next work items
-
-### Completed — JSON Schema minimization
+### JSON Schema minimization
 
 The minimizer is implemented as a self-contained crate that:
 
@@ -227,9 +48,10 @@ The minimizer is implemented as a self-contained crate that:
   luup3-specific policy
 
 The CLI exposes this as `--minimize`, after override merging and reference
-flattening and before final writing.
+flattening and before final writing. Description stripping remains a simpler,
+orthogonal output transform.
 
-### Completed — Detector unification
+### Resource detector unification
 
 `./unify-resource-detector.md` has landed.
 
@@ -239,7 +61,7 @@ Completed criteria:
 - IR tests and production CLI share the same identity logic
 - dead line-oriented detector code removed
 
-### Completed — Parser unification and dead-code cleanup
+### Parser unification and dead-code cleanup
 
 Completed criteria:
 
@@ -250,78 +72,119 @@ Completed criteria:
   parser implementation
 - dead code left from the old resource detector, parser split, and abandoned
   optimization scaffolding is removed
-- tree-sitter YAML grammar support remains available for future values-file
-  comment extraction
 
-### Priority 1 — Values-file comments as schema descriptions
+Tree-sitter YAML comment support is now used by values-file description
+extraction.
 
-Success criteria:
+### Values-file comments as schema descriptions
+
+Completed criteria:
 
 - parse `values.yaml` and additional values files with tree-sitter YAML while
   preserving comments and source ranges
-- associate leading and inline comments with stable `.Values.*` paths
+- associate leading, inline, trailing-example, and Helm-docs `@param` comments
+  with stable `.Values.*` paths
 - feed those comments into schema generation as `description`
 - chart-authored values-file descriptions take precedence over upstream K8s /
   CRD descriptions for the same values path
-- no type/shape inference from commented-out keys until there is an explicit,
-  tested policy for that behavior
+- commented-out keys do not create schema paths and do not participate in
+  type/shape/nullability/requiredness inference
 
-### Priority 2 — Temporal performance pass
+This stays separate from template inference: templates answer which values are
+accepted and what schema they have; values files provide documentation metadata
+for paths that already exist in the inferred schema.
 
-1. Use Perfetto traces from `tracing::instrument` spans as the primary
-   profiling signal.
-2. Keep a repeatable release benchmark task for a small set of representative
-   charts:
-   - `inbucket`
-   - `temporal`
-   - `signoz`
-   - `minio`
-3. Identify the largest remaining Temporal hot path.
-4. Optimize that path with a measured before/after benchmark.
-5. Repeat until the chart is substantially closer to acceptable local
-   iteration time.
+### Temporal performance/RSS pass
 
-### Priority 3 — List-envelope descent
+Completed criteria:
+
+- use Perfetto traces from `tracing::instrument` spans as the primary profiling
+  signal
+- measure representative release-mode charts including `inbucket`, `minio`,
+  `signoz`, and `temporal`
+- track peak RSS alongside wall time
+- identify the remaining Temporal hot path around output minimization
+- reduce minimizer peak RSS by deferring cloned schema subtrees until a planned
+  definition is actually used
+- keep minimized output byte-for-byte unchanged for the selected optimization
+
+Representative latest measurements from this pass:
+
+- `inbucket`: about 70 ms wall, 23 MB peak RSS
+- `minio`: about 640 ms wall, 34 MB peak RSS
+- `signoz`: about 950 ms wall, 61 MB peak RSS
+- `temporal` with luup3 minimization flags: about 2 seconds wall, 177 MB peak
+  RSS after the deferred-clone minimizer fix
+
+The remaining Temporal cost is acceptable for now. Any future pass should stay
+profiling-driven and preserve RSS as a first-class metric.
+
+## Next active priority
+
+### List-envelope descent
 
 Follow `./list-envelope-items-descent.md`.
 
 Success criteria:
 
 - `kind: List` wrappers no longer suppress inner validation
-- inner resources resolve against their actual apiVersion/kind
-- existing suppression logic in the chain is deleted
+- inner resources resolve against their actual `apiVersion` / `kind`
+- existing suppression logic in the provider chain is deleted
+- focused tests cover mixed lists, templated list items, and non-list resources
+  so normal resource detection does not regress
 
-### Priority 4 — Focused architecture cleanup
+This is the next structural correctness item because detector unification has
+landed and there is now one resource identity path to extend.
 
-After priorities 1-3:
+## Later work
+
+### Focused architecture cleanup
+
+After list descent:
 
 1. Split oversized files only where there is a stable ownership boundary.
-2. Remove dead helper-analysis scaffolding that did not survive the performance
-   pass.
+2. Remove dead helper-analysis scaffolding that did not survive the
+   performance pass.
 3. Consolidate duplicated schema-merge and path-attribution helpers where the
    behavior is already stable.
 4. Keep refactors test-backed and benchmark-checked.
 
-## What should not be prioritized next
+### Broader refactor last
 
-- A broad trait-heavy redesign before the comments and list-descent boundaries
-  settle.
-- Generic abstraction work without a measured performance, correctness, or
-  maintenance payoff.
-- More chart-specific correctness hunts before the migration diff classification
-  says they are still needed.
+"More modular, more DRY, more trait-based" is only high-value if it reduces
+proven complexity. It should not come before list-envelope descent, because that
+work may still clarify the stable module boundaries.
 
-## Recommendation
+Avoid:
 
-If we only pick one thing next, it should be:
+- broad trait-heavy redesign before the list-descent boundary settles
+- generic abstraction work without a measured performance, correctness, or
+  maintenance payoff
+- more chart-specific correctness hunts before a migration diff classification
+  says they are needed
 
-**values-file comments as schema descriptions.**
+## Maintenance contracts
 
-That has the highest practical value right now:
+### Completed luup3 migration contract
 
-- parser unification just landed, so the source-range parser foundation is fresh
-  in context
-- values comments are a user-visible quality improvement that chart authors
-  already expect from schema generation tools
-- keeping this as metadata avoids mixing documentation extraction into template
-  type inference
+Keep this visible so future override additions do not become hidden generator
+bug workarounds:
+
+- chart-specific overrides should be justified as application logic,
+  deployment-pipeline injected values, or genuinely non-inferable policy
+- structural inference gaps should be fixed upstream in helm-schema
+- generated schemas should stay tracked and refreshed by the chart tasks
+- CI should keep validating and linting charts against generated schemas
+
+### Performance observability
+
+Perfetto tracing is the source of truth for runtime analysis. The old
+hand-maintained `ProfilePhase` / `--profile-phases` path has been removed, with
+the useful phase boundaries represented by `tracing::instrument` annotations.
+
+Future performance work should answer:
+
+- which phase is slow: chart loading, IR extraction, provider lookup, schema
+  merge/build, minimization, flattening, serialization
+- which charts are the worst offenders
+- whether a change improved release-mode runtime and peak RSS
