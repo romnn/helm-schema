@@ -1,7 +1,7 @@
-//! Regression tests for the `ResourceDetector` that lives inside
+//! Regression tests for the resource-context path used by
 //! `SymbolicIrGenerator`. The detector reads `apiVersion` / `kind` out
-//! of the document header so the IR can stamp each `ValueUse` with its
-//! owning Kubernetes resource type.
+//! of each document header, and the locator attaches that resource
+//! context to each `ValueUse`.
 //!
 //! These tests pin the contract observed at the public API surface:
 //! every `ValueUse` produced from a templated value in the body must

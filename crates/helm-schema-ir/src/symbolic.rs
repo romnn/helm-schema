@@ -4,7 +4,8 @@ use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
-use crate::resource_detector::{AstResourceDetector, ResourceCursor};
+use crate::resource_detector::AstResourceDetector;
+use crate::resource_locator::{AstResourceLocator, ResourceLocator};
 use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
 use crate::yaml_shape::{
     Shape, first_mapping_colon_offset, parse_yaml_key, source_line_starts_block_scalar,
@@ -98,7 +99,7 @@ struct SymbolicWalker<'a> {
     dot_stack: Vec<Option<FragmentBinding>>,
     shape: Shape,
     output_inside_block_scalar: bool,
-    resource_cursor: ResourceCursor,
+    resource_locator: Box<dyn ResourceLocator>,
     text_spans: Vec<(usize, usize)>,
     text_span_idx: usize,
     text_pos: usize,
@@ -437,7 +438,7 @@ impl<'a> SymbolicWalker<'a> {
             dot_stack: Vec::new(),
             shape: Shape::default(),
             output_inside_block_scalar: false,
-            resource_cursor: ResourceCursor::default(),
+            resource_locator: Box::new(AstResourceLocator::default()),
             text_spans: Vec::new(),
             text_span_idx: 0,
             text_pos: 0,
@@ -1116,7 +1117,8 @@ impl<'a> SymbolicWalker<'a> {
         self.text_spans = merged;
         self.text_span_idx = 0;
         self.text_pos = 0;
-        self.resource_cursor = ResourceCursor::from_source(self.source, self.defines);
+        self.resource_locator =
+            Box::new(AstResourceLocator::from_source(self.source, self.defines));
         self.shape = Shape::default();
         self.output_inside_block_scalar = false;
         self.guards = self.seed_guards.clone();
@@ -1421,7 +1423,7 @@ impl<'a> SymbolicWalker<'a> {
         let path = if self.no_output_depth > 0 {
             YamlPath(Vec::new())
         } else {
-            self.resource_cursor.rebase_path(path)
+            self.resource_locator.rebase_path(path)
         };
 
         let mut guards = self.guards.clone();
@@ -1453,7 +1455,7 @@ impl<'a> SymbolicWalker<'a> {
             path,
             kind,
             guards,
-            resource: self.resource_cursor.current(),
+            resource: self.resource_locator.current_resource().cloned(),
         });
     }
 
@@ -7928,7 +7930,7 @@ impl<'a> SymbolicWalker<'a> {
 
     fn walk(&mut self, node: tree_sitter::Node<'_>) {
         self.ingest_text_up_to(node.start_byte());
-        self.resource_cursor.advance_to(node.start_byte());
+        self.resource_locator.advance_to(node.start_byte());
         self.sync_action_for_node(node);
 
         if self.walk_control_node(node) {

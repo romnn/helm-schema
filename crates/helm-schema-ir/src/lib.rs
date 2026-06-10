@@ -2,6 +2,7 @@ mod abstract_eval;
 pub mod helper_eval;
 pub mod required_inference;
 mod resource_detector;
+mod resource_locator;
 mod symbolic;
 mod walker;
 mod yaml_shape;
