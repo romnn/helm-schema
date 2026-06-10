@@ -4,9 +4,7 @@ use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
-use crate::binding::{
-    BoundHelperCallsCacheKey, FragmentBinding, HelperBinding, StaticFileTemplate,
-};
+use crate::binding::{BoundHelperCallsCacheKey, FragmentBinding, HelperBinding};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::helper_analysis::{
     BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta, bound_helper_condition_paths,
@@ -16,6 +14,13 @@ use crate::helper_analysis::{
 use crate::output_path;
 use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::resource_detector::AstResourceDetector;
+use crate::static_file_template::{
+    StaticFileTemplate, collect_template_requests, literal_helper_calls,
+};
+use crate::template_expr_analysis::{
+    expr_contains_helper_call, is_merge_function, text_pipeline_merges_into_var,
+    text_starts_with_helper_call, walk_expr_excluding_helper_call_args,
+};
 use crate::template_expr_cache::{
     clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
 };
@@ -133,12 +138,6 @@ struct GetBinding {
     key_var: String,
 }
 
-#[derive(Clone, Debug)]
-struct LiteralHelperCall {
-    name: String,
-    arg: Option<TemplateExpr>,
-}
-
 #[derive(Clone, Copy)]
 struct FragmentEvalContext<'a> {
     defines: &'a DefineIndex,
@@ -161,111 +160,6 @@ impl<'a> FragmentEvalContext<'a> {
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
         SymbolicWalker::fragment_binding_from_expr(expr, locals, current_dot, *self, seen)
-    }
-}
-
-struct StaticFileTemplateResolver<'context, 'bindings, 'seen> {
-    context: FragmentEvalContext<'context>,
-    locals: &'bindings HashMap<String, FragmentBinding>,
-    current_dot: Option<&'bindings FragmentBinding>,
-    seen: &'seen mut HashSet<String>,
-}
-
-impl<'context, 'bindings, 'seen> StaticFileTemplateResolver<'context, 'bindings, 'seen> {
-    fn new(
-        context: FragmentEvalContext<'context>,
-        locals: &'bindings HashMap<String, FragmentBinding>,
-        current_dot: Option<&'bindings FragmentBinding>,
-        seen: &'seen mut HashSet<String>,
-    ) -> Self {
-        Self {
-            context,
-            locals,
-            current_dot,
-            seen,
-        }
-    }
-
-    fn fragment_binding(&mut self, expr: &TemplateExpr) -> Option<FragmentBinding> {
-        self.context
-            .fragment_binding_from_expr(expr, self.locals, self.current_dot, self.seen)
-    }
-
-    fn collect_template_requests(
-        &mut self,
-        expr: &TemplateExpr,
-        requests: &mut BTreeSet<StaticFileTemplate>,
-    ) {
-        if let TemplateExpr::Call { function, args } = expr
-            && function == "tpl"
-            && let Some(template_arg) = args.first()
-        {
-            let dot = args.get(1).and_then(|arg| self.fragment_binding(arg));
-            let mut paths = BTreeSet::new();
-            self.collect_files_get_paths(template_arg, &mut paths);
-            for path in paths {
-                requests.insert(StaticFileTemplate {
-                    path,
-                    dot: dot.clone(),
-                });
-            }
-        }
-
-        match expr {
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    self.collect_template_requests(arg, requests);
-                }
-            }
-            TemplateExpr::Selector { operand, .. }
-            | TemplateExpr::Parenthesized(operand)
-            | TemplateExpr::VariableDefinition { value: operand, .. }
-            | TemplateExpr::Assignment { value: operand, .. } => {
-                self.collect_template_requests(operand, requests);
-            }
-            TemplateExpr::Pipeline(stages) => {
-                for stage in stages {
-                    self.collect_template_requests(stage, requests);
-                }
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
-    }
-
-    fn collect_files_get_paths(&mut self, expr: &TemplateExpr, out: &mut BTreeSet<String>) {
-        if let TemplateExpr::Call { function, args } = expr
-            && SymbolicWalker::is_static_files_get_call(function)
-            && let Some(path_arg) = args.first()
-            && let Some(binding) = self.fragment_binding(path_arg)
-        {
-            out.extend(FragmentBinding::strings(&binding));
-        }
-
-        match expr {
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    self.collect_files_get_paths(arg, out);
-                }
-            }
-            TemplateExpr::Selector { operand, .. }
-            | TemplateExpr::Parenthesized(operand)
-            | TemplateExpr::VariableDefinition { value: operand, .. }
-            | TemplateExpr::Assignment { value: operand, .. } => {
-                self.collect_files_get_paths(operand, out);
-            }
-            TemplateExpr::Pipeline(stages) => {
-                for stage in stages {
-                    self.collect_files_get_paths(stage, out);
-                }
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
     }
 }
 
@@ -471,19 +365,18 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn inline_static_file_templates_from_helper_calls(&mut self, text: &str) {
-        for helper_call in Self::literal_helper_calls(text) {
+        for helper_call in literal_helper_calls(text) {
             let requests = {
                 let context = self.fragment_eval_context();
                 let current_dot = self.current_dot_fragment();
                 let mut seen = HashSet::new();
                 let helper_dot = helper_call.arg.as_ref().and_then(|arg| {
-                    StaticFileTemplateResolver::new(
-                        context,
+                    context.fragment_binding_from_expr(
+                        arg,
                         &self.template_bindings,
                         current_dot.as_ref(),
                         &mut seen,
                     )
-                    .fragment_binding(arg)
                 });
                 self.static_file_templates_from_helper(&helper_call.name, helper_dot.as_ref())
             };
@@ -506,14 +399,15 @@ impl<'a> SymbolicWalker<'a> {
         let mut requests = BTreeSet::new();
         for expr in parse_action_expressions(src) {
             let mut seen = HashSet::new();
-            StaticFileTemplateResolver::new(context, &locals, helper_dot, &mut seen)
-                .collect_template_requests(&expr, &mut requests);
+            collect_template_requests(
+                &expr,
+                &mut |expr| {
+                    context.fragment_binding_from_expr(expr, &locals, helper_dot, &mut seen)
+                },
+                &mut requests,
+            );
         }
         requests
-    }
-
-    fn is_static_files_get_call(function: &str) -> bool {
-        function == "Files.Get" || function == ".Files.Get" || function.ends_with(".Files.Get")
     }
 
     fn inline_static_file_template(&mut self, request: StaticFileTemplate) {
@@ -553,35 +447,6 @@ impl<'a> SymbolicWalker<'a> {
         self.walk(tree.root_node());
         postprocess_value_uses(&mut self.uses);
         std::mem::take(&mut self.uses)
-    }
-
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn literal_helper_calls(text: &str) -> Vec<LiteralHelperCall> {
-        let mut out = Vec::new();
-        for expr in Self::parse_expr_text(text) {
-            expr.walk(|node| {
-                let TemplateExpr::Call { function, args } = node else {
-                    return;
-                };
-                if !matches!(function.as_str(), "include" | "template") {
-                    return;
-                }
-                let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
-                    return;
-                };
-                out.push(LiteralHelperCall {
-                    name: name.clone(),
-                    arg: args.get(1).cloned(),
-                });
-            });
-        }
-        out.sort_by(|left, right| {
-            left.name
-                .cmp(&right.name)
-                .then_with(|| format!("{:?}", left.arg).cmp(&format!("{:?}", right.arg)))
-        });
-        out.dedup_by(|left, right| left.name == right.name && left.arg == right.arg);
-        out
     }
 
     fn children_with_field<'n>(
@@ -712,19 +577,7 @@ impl<'a> SymbolicWalker<'a> {
         self.dot_stack
             .last()
             .and_then(|binding| binding.as_ref())
-            .and_then(|binding| match binding {
-                FragmentBinding::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
-                FragmentBinding::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
-                FragmentBinding::RootContext => Some(HelperBinding::RootContext),
-                FragmentBinding::Unknown
-                | FragmentBinding::Dict(_)
-                | FragmentBinding::List(_)
-                | FragmentBinding::Overlay { .. }
-                | FragmentBinding::StringSet(_)
-                | FragmentBinding::PathSet(_)
-                | FragmentBinding::OutputSet(_)
-                | FragmentBinding::Choice(_) => None,
-            })
+            .and_then(FragmentBinding::to_current_dot_helper_binding)
     }
 
     fn current_dot_fragment(&self) -> Option<FragmentBinding> {
@@ -748,7 +601,7 @@ impl<'a> SymbolicWalker<'a> {
 
         if !self.root_bindings.is_empty() {
             for expr in &exprs {
-                Self::walk_expr_excluding_helper_call_args(expr, &mut |node| {
+                walk_expr_excluding_helper_call_args(expr, &mut |node| {
                     if let Some(path) = Self::resolve_bound_path_expr(node, &self.root_bindings) {
                         paths.insert(path);
                     }
@@ -758,7 +611,7 @@ impl<'a> SymbolicWalker<'a> {
 
         if !self.template_bindings.is_empty() {
             for expr in &exprs {
-                Self::walk_expr_excluding_helper_call_args(expr, &mut |node| {
+                walk_expr_excluding_helper_call_args(expr, &mut |node| {
                     paths.extend(self.local_alias_paths_for_expr(node));
                 });
             }
@@ -774,7 +627,7 @@ impl<'a> SymbolicWalker<'a> {
     fn direct_values_paths_from_exprs(exprs: &[TemplateExpr]) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         for expr in exprs {
-            Self::walk_expr_excluding_helper_call_args(expr, &mut |node| {
+            walk_expr_excluding_helper_call_args(expr, &mut |node| {
                 if let Some(path) = values_path_from_expr(node) {
                     paths.insert(path);
                 }
@@ -927,7 +780,7 @@ impl<'a> SymbolicWalker<'a> {
     fn local_alias_output_meta_for_text(&self, text: &str) -> BTreeMap<String, HelperOutputMeta> {
         let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         for expr in Self::parse_expr_text(text) {
-            Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                 for (path, meta) in self.local_alias_output_meta_for_expr(node) {
                     let entry = out.entry(path).or_default();
                     entry.guards.extend(meta.guards);
@@ -1184,8 +1037,8 @@ impl<'a> SymbolicWalker<'a> {
         let current_dot_binding = self.current_dot_binding();
         let mut paths = BTreeSet::new();
         for expr in Self::parse_expr_text(text) {
-            Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-                if Self::expr_contains_helper_call(node) {
+            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+                if expr_contains_helper_call(node) {
                     return;
                 }
                 let outer_binding = Self::fragment_binding_from_outer_expr(
@@ -1208,98 +1061,6 @@ impl<'a> SymbolicWalker<'a> {
             });
         }
         paths
-    }
-
-    fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
-        let mut contains = false;
-        expr.walk(|node| {
-            if matches!(
-                node,
-                TemplateExpr::Call { function, .. }
-                    if matches!(function.as_str(), "include" | "template")
-            ) {
-                contains = true;
-            }
-        });
-        contains
-    }
-
-    fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => Self::expr_starts_with_helper_call(inner),
-            TemplateExpr::Call { function, .. } => {
-                matches!(function.as_str(), "include" | "template")
-            }
-            TemplateExpr::Pipeline(stages) => stages
-                .first()
-                .is_some_and(Self::expr_starts_with_helper_call),
-            _ => false,
-        }
-    }
-
-    fn text_starts_with_helper_call(text: &str) -> bool {
-        let exprs = Self::parse_expr_text(text);
-        matches!(exprs.as_slice(), [expr] if Self::expr_starts_with_helper_call(expr))
-    }
-
-    fn text_pipeline_merges_into_var(text: &str, var: &str) -> bool {
-        let exprs = Self::parse_expr_text(text);
-        let [TemplateExpr::Pipeline(stages)] = exprs.as_slice() else {
-            return false;
-        };
-        stages.iter().skip(1).any(|stage| {
-            let TemplateExpr::Call { function, args } = stage else {
-                return false;
-            };
-            Self::is_merge_function(function)
-                && args
-                    .iter()
-                    .any(|arg| matches!(arg, TemplateExpr::Variable(name) if name == var))
-        })
-    }
-
-    fn is_merge_function(function: &str) -> bool {
-        matches!(
-            function,
-            "merge" | "mergeOverwrite" | "mustMerge" | "mustMergeOverwrite"
-        )
-    }
-
-    fn walk_expr_excluding_helper_call_args<F>(expr: &TemplateExpr, visit: &mut F)
-    where
-        F: FnMut(&TemplateExpr),
-    {
-        visit(expr);
-        match expr {
-            TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "include" | "template") =>
-            {
-                // Values passed as helper arguments configure that helper;
-                // they are not rendered directly by the caller expression.
-            }
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    Self::walk_expr_excluding_helper_call_args(arg, visit);
-                }
-            }
-            TemplateExpr::Selector { operand, .. } => {
-                Self::walk_expr_excluding_helper_call_args(operand, visit);
-            }
-            TemplateExpr::Pipeline(stages) => {
-                for stage in stages {
-                    Self::walk_expr_excluding_helper_call_args(stage, visit);
-                }
-            }
-            TemplateExpr::Parenthesized(inner)
-            | TemplateExpr::VariableDefinition { value: inner, .. }
-            | TemplateExpr::Assignment { value: inner, .. } => {
-                Self::walk_expr_excluding_helper_call_args(inner, visit);
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
     }
 
     fn single_resolved_values_path(&self, text: &str) -> Option<String> {
@@ -1858,7 +1619,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
                 Some(HelperBinding::Dict(map))
             }
-            TemplateExpr::Call { function, args } if Self::is_merge_function(function) => {
+            TemplateExpr::Call { function, args } if is_merge_function(function) => {
                 let mut bindings = Vec::new();
                 for arg in args {
                     if let Some(binding) = Self::binding_from_expr(arg, outer, current_dot) {
@@ -1916,7 +1677,7 @@ impl<'a> SymbolicWalker<'a> {
                             }
                             HelperBinding::choice(choices)
                         }
-                        function if Self::is_merge_function(function) => {
+                        function if is_merge_function(function) => {
                             let mut bindings = Vec::new();
                             if let Some(current) = current {
                                 bindings.push(current);
@@ -2021,7 +1782,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
                 bindings
             }
-            TemplateExpr::Call { function, args } if Self::is_merge_function(function) => {
+            TemplateExpr::Call { function, args } if is_merge_function(function) => {
                 let mut merged = HashMap::new();
                 for arg in args {
                     match Self::binding_from_expr(arg, outer, current_dot) {
@@ -2139,7 +1900,7 @@ impl<'a> SymbolicWalker<'a> {
                         .collect(),
                 ))
             }
-            TemplateExpr::Call { function, args } if Self::is_merge_function(function) => {
+            TemplateExpr::Call { function, args } if is_merge_function(function) => {
                 let bindings = args
                     .iter()
                     .filter_map(|arg| {
@@ -2190,7 +1951,7 @@ impl<'a> SymbolicWalker<'a> {
                             }
                             HelperBinding::choice(bindings)
                         }
-                        function if Self::is_merge_function(function) => {
+                        function if is_merge_function(function) => {
                             let mut bindings = Vec::new();
                             if let Some(current) = current {
                                 bindings.push(current);
@@ -2271,7 +2032,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
                 bindings
             }
-            TemplateExpr::Call { function, args } if Self::is_merge_function(function) => {
+            TemplateExpr::Call { function, args } if is_merge_function(function) => {
                 let mut merged = HashMap::new();
                 for arg in args {
                     match Self::helper_binding_from_expr_with_fragment_locals(
@@ -2602,7 +2363,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
                 Some(FragmentBinding::Dict(map))
             }
-            TemplateExpr::Call { function, args } if Self::is_merge_function(function) => {
+            TemplateExpr::Call { function, args } if is_merge_function(function) => {
                 let mut bindings = Vec::new();
                 for arg in args {
                     let Some(binding) =
@@ -2796,7 +2557,7 @@ impl<'a> SymbolicWalker<'a> {
                         "quote" | "toString" | "toYaml" | "fromYaml" | "indent" | "nindent"
                         | "trimAll" | "trimPrefix" | "trimSuffix" | "trunc" | "replace" | "int"
                         | "uniq" | "b64enc" | "b64dec" => current,
-                        function if Self::is_merge_function(function) => {
+                        function if is_merge_function(function) => {
                             let mut bindings = Vec::new();
                             if let Some(current) = current {
                                 bindings.push(current);
@@ -3597,7 +3358,7 @@ impl<'a> SymbolicWalker<'a> {
         defaulted_paths: &BTreeSet<String>,
         outputs: &mut Vec<HelperFragmentOutputUse>,
     ) {
-        if Self::expr_contains_helper_call(expr) {
+        if expr_contains_helper_call(expr) {
             return;
         }
 
@@ -3835,7 +3596,7 @@ impl<'a> SymbolicWalker<'a> {
                         &mut seen_rhs,
                     );
                     let mut top_level_helper_dependency_paths = BTreeSet::new();
-                    if Self::text_starts_with_helper_call(&rhs) {
+                    if text_starts_with_helper_call(&rhs) {
                         let mut rhs_seen = seen.clone();
                         let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                             &rhs,
@@ -3857,7 +3618,7 @@ impl<'a> SymbolicWalker<'a> {
                             };
                         }
                     }
-                    if Self::text_pipeline_merges_into_var(&rhs, &var)
+                    if text_pipeline_merges_into_var(&rhs, &var)
                         && let Some(current_dot_fragment) = current_dot_fragment
                         && matches!(
                             current_dot_fragment,
@@ -3941,7 +3702,7 @@ impl<'a> SymbolicWalker<'a> {
                     Self::local_default_paths_from_text(text, local_default_paths);
                 let mut local_output_uses = Vec::new();
                 for expr in Self::parse_expr_text(text) {
-                    Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+                    walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                         let binding = match node {
                             TemplateExpr::Variable(var) if !var.is_empty() => {
                                 local_bindings.get(var).cloned()
@@ -4004,7 +3765,7 @@ impl<'a> SymbolicWalker<'a> {
                 let mut expression_output_uses = Vec::new();
                 let mut expression_seen = seen.clone();
                 for expr in Self::parse_expr_text(text) {
-                    if !Self::expr_contains_helper_call(&expr) {
+                    if !expr_contains_helper_call(&expr) {
                         continue;
                     }
                     if let Some(binding) = Self::helper_binding_from_expr_with_fragment_locals(
@@ -4367,7 +4128,7 @@ impl<'a> SymbolicWalker<'a> {
     ) -> BoundHelperAnalysis {
         let mut analysis = BoundHelperAnalysis::default();
         for expr in Self::parse_expr_text(text) {
-            Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                 let TemplateExpr::Call { function, args } = node else {
                     return;
                 };
@@ -4536,8 +4297,8 @@ impl<'a> SymbolicWalker<'a> {
     ) -> BTreeSet<String> {
         let mut out = BTreeSet::new();
         for expr in Self::parse_expr_text(text) {
-            Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-                if Self::expr_contains_helper_call(node) {
+            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+                if expr_contains_helper_call(node) {
                     return;
                 }
                 if let Some(binding) = Self::binding_from_expr(node, Some(bindings), current_dot) {
@@ -4569,7 +4330,7 @@ impl<'a> SymbolicWalker<'a> {
     ) -> BTreeSet<String> {
         let mut out = BTreeSet::new();
         for expr in Self::parse_expr_text(text) {
-            Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| match node {
+            walk_expr_excluding_helper_call_args(&expr, &mut |node| match node {
                 TemplateExpr::Variable(var) if !var.is_empty() => {
                     if let Some(binding) = locals.get(var) {
                         out.extend(extract_paths(binding));
@@ -4622,7 +4383,7 @@ impl<'a> SymbolicWalker<'a> {
     ) -> BTreeMap<String, HelperOutputMeta> {
         let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         for expr in Self::parse_expr_text(text) {
-            Self::walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                 for (path, meta) in
                     Self::local_output_meta_from_expr(node, local_bindings, local_output_meta)
                 {

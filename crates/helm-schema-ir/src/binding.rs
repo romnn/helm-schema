@@ -4,12 +4,6 @@ use crate::helper_analysis::HelperOutputMeta;
 use crate::{ValueKind, YamlPath};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct StaticFileTemplate {
-    pub(crate) path: String,
-    pub(crate) dot: Option<FragmentBinding>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum HelperBinding {
     ValuesPath(String),
     RootContext,
@@ -314,6 +308,22 @@ pub(crate) enum FragmentBinding {
 }
 
 impl FragmentBinding {
+    pub(crate) fn to_current_dot_helper_binding(&self) -> Option<HelperBinding> {
+        match self {
+            Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
+            Self::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
+            Self::RootContext => Some(HelperBinding::RootContext),
+            Self::Unknown
+            | Self::Dict(_)
+            | Self::List(_)
+            | Self::Overlay { .. }
+            | Self::StringSet(_)
+            | Self::PathSet(_)
+            | Self::OutputSet(_)
+            | Self::Choice(_) => None,
+        }
+    }
+
     pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
         match self {
             Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
