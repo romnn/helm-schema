@@ -1,6 +1,7 @@
 use std::io::Read;
 
 use color_eyre::eyre::{Report, WrapErr};
+use helm_schema_ast::extract_values_yaml_descriptions;
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
 use serde_json::Value;
 use vfs::VfsPath;
@@ -66,6 +67,7 @@ pub fn generate_chart_schema(chart: &str) -> std::result::Result<Value, Report> 
         chart_dir: chart_dir.clone(),
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
@@ -108,6 +110,54 @@ pub fn values_yaml_as_json(chart: &str) -> std::result::Result<Value, Report> {
 
 #[allow(dead_code)]
 pub fn assert_values_json_validates(values_json: &Value, schema: &Value) {
-    let errors = validate_json_against_schema(&values_json, &schema);
+    let errors = validate_json_against_schema(values_json, schema);
     similar_asserts::assert_eq!(errors, Vec::<String>::new());
+}
+
+#[allow(dead_code)]
+pub fn assert_chart_values_comments_apply_to_existing_schema_paths(
+    chart: &str,
+    schema: &Value,
+    min_applied: usize,
+) -> std::result::Result<(), Report> {
+    let chart_dir = chart_dir(chart);
+    let values_yaml = read_values_yaml(&chart_dir).wrap_err("read values.yaml")?;
+    let descriptions =
+        extract_values_yaml_descriptions(&values_yaml).wrap_err("extract values comments")?;
+
+    let mut applied = 0;
+    for (path, expected_description) in descriptions {
+        let Some(schema_node) = schema_node_for_values_path(schema, &path) else {
+            continue;
+        };
+        applied += 1;
+        similar_asserts::assert_eq!(
+            schema_node
+                .get("description")
+                .and_then(serde_json::Value::as_str),
+            Some(expected_description.as_str()),
+            "description mismatch for values path {path}"
+        );
+    }
+
+    assert!(
+        applied >= min_applied,
+        "expected at least {min_applied} values comments to apply for {chart}, got {applied}"
+    );
+    Ok(())
+}
+
+fn schema_node_for_values_path<'schema>(
+    schema: &'schema Value,
+    path: &str,
+) -> Option<&'schema Value> {
+    let mut current = schema;
+    for segment in path.split('.').filter(|segment| !segment.is_empty()) {
+        current = if segment == "*" {
+            current.get("items")?
+        } else {
+            current.get("properties")?.get(segment)?
+        };
+    }
+    Some(current)
 }

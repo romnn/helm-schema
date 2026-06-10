@@ -91,6 +91,7 @@ fn library_helper_non_literal_default_suppresses_required() -> color_eyre::eyre:
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: true,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],

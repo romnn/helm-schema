@@ -9,10 +9,10 @@ pub mod schema_override;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{BufWriter, Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_full_with_facts;
+use helm_schema_gen::generate_values_schema_full_with_facts_and_descriptions;
 use helm_schema_ir::{
     ChartFacts, Guard, SymbolicIrContext, ValueUse, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
@@ -36,6 +36,7 @@ pub struct GenerateOptions {
     pub chart_dir: VfsPath,
     pub include_tests: bool,
     pub include_subchart_values: bool,
+    pub values_files: Vec<PathBuf>,
     pub infer_required: bool,
     pub provider: ProviderOptions,
 }
@@ -117,6 +118,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         chart_dir,
         include_tests: !cli.chart.exclude_tests,
         include_subchart_values: !cli.chart.no_subchart_values,
+        values_files: cli.chart.values_files.clone(),
         infer_required: cli.chart.infer_required,
         provider: provider_options,
     };
@@ -336,6 +338,11 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     let defines = chart::build_define_index(charts, opts.include_tests)?;
 
     let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
+    let values_descriptions = chart::build_composed_values_descriptions(
+        charts,
+        opts.include_subchart_values,
+        &opts.values_files,
+    )?;
 
     let ChartIrCollection {
         mut uses,
@@ -347,12 +354,13 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
 
     let provider = provider_builder::build_provider(&opts.provider, diagnostic_sink);
 
-    let mut schema = generate_values_schema_full_with_facts(
+    let mut schema = generate_values_schema_full_with_facts_and_descriptions(
         &uses,
         &provider,
         values_yaml.as_deref(),
         &type_hints,
         &chart_facts,
+        &values_descriptions,
     );
 
     if opts.infer_required {
@@ -765,7 +773,7 @@ fn scope_guard(g: Guard, prefix: &[String]) -> Guard {
     }
 }
 
-fn scope_values_path(path: &str, prefix: &[String]) -> String {
+pub(crate) fn scope_values_path(path: &str, prefix: &[String]) -> String {
     let path = path.trim();
     if path.is_empty() {
         return String::new();

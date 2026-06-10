@@ -76,6 +76,7 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> color_eyre::eyr
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],

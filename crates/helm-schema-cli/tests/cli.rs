@@ -19,6 +19,7 @@ fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     assert!(!cli.k8s.no_k8s_schemas);
     assert!(!cli.chart.exclude_tests);
     assert!(!cli.chart.no_subchart_values);
+    assert!(cli.chart.values_files.is_empty());
     assert!(cli.override_schema.is_empty());
     assert!(!cli.output.compact);
 
@@ -57,6 +58,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -80,6 +82,207 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
     .wrap_err("parse expected schema fixture")?;
 
     similar_asserts::assert_eq!(actual, expected);
+    Ok(())
+}
+
+#[test]
+fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            # -- Root enabled docs
+            enabled: true
+            # -- Comment-only docs
+            # commentedOnly: true
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/cm.yaml")?,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              enabled: "{{ .Values.enabled }}"
+        "#},
+    )?;
+
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        indoc! {"
+            image:
+              # -- Child image tag docs
+              tag: \"1.0.0\"
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/cm.yaml")?,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: child
+            data:
+              tag: "{{ .Values.image.tag }}"
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    assert_eq!(
+        actual
+            .pointer("/properties/enabled/description")
+            .and_then(serde_json::Value::as_str),
+        Some("Root enabled docs")
+    );
+    assert_eq!(
+        actual
+            .pointer("/properties/child/properties/image/properties/tag/description")
+            .and_then(serde_json::Value::as_str),
+        Some("Child image tag docs")
+    );
+    assert!(
+        actual.pointer("/properties/commentedOnly").is_none(),
+        "comment-only values must not create schema paths: {actual}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn layered_values_file_comments_override_and_add_descriptions_only() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: layered\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            # -- Chart enabled docs
+            enabled: true
+            replicas: 1
+            image:
+              tag: latest
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/cm.yaml")?,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: layered
+            data:
+              enabled: "{{ .Values.enabled }}"
+              replicas: "{{ .Values.replicas }}"
+              tag: "{{ .Values.image.tag }}"
+        "#},
+    )?;
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "helm-schema-layered-values-comments-{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir)?;
+    let layer_one = temp_dir.join("layer-one.yaml");
+    let layer_two = temp_dir.join("layer-two.yaml");
+    std::fs::write(
+        &layer_one,
+        indoc! {"
+            # -- Layer one replicas docs
+            replicas: 2
+
+            ## @param layerOnly This comment must not create a schema path
+            # layerOnly: true
+        "},
+    )?;
+    std::fs::write(
+        &layer_two,
+        indoc! {"
+            # -- Layer two enabled docs
+            enabled: false
+            image:
+              # -- Layer two image tag docs
+              tag: stable
+        "},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: vec![layer_one, layer_two],
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    assert_eq!(
+        actual
+            .pointer("/properties/enabled/description")
+            .and_then(serde_json::Value::as_str),
+        Some("Layer two enabled docs")
+    );
+    assert_eq!(
+        actual
+            .pointer("/properties/replicas/description")
+            .and_then(serde_json::Value::as_str),
+        Some("Layer one replicas docs")
+    );
+    assert_eq!(
+        actual
+            .pointer("/properties/image/properties/tag/description")
+            .and_then(serde_json::Value::as_str),
+        Some("Layer two image tag docs")
+    );
+    assert!(
+        actual.pointer("/properties/layerOnly").is_none(),
+        "values-file comments must not create schema paths: {actual}"
+    );
+
     Ok(())
 }
 
@@ -113,6 +316,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -218,6 +422,7 @@ spec:
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -319,6 +524,7 @@ storageClassName: {{ $storageClass }}
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -404,6 +610,7 @@ spec:
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -469,6 +676,7 @@ spec:
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -543,6 +751,7 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> color_eyre::
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -623,6 +832,7 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -728,6 +938,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -817,6 +1028,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
@@ -907,6 +1119,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],

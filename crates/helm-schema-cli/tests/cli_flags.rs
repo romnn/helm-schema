@@ -40,6 +40,18 @@ fn cli_output_strip_descriptions_flag_parses() {
 }
 
 #[test]
+fn cli_values_files_flag_is_repeatable() {
+    let cli = parse(&["-f", "/tmp/base.yaml", "--values", "/tmp/override.yaml"]).expect("parse");
+    assert_eq!(
+        cli.chart.values_files,
+        vec![
+            std::path::PathBuf::from("/tmp/base.yaml"),
+            std::path::PathBuf::from("/tmp/override.yaml")
+        ]
+    );
+}
+
+#[test]
 fn cli_repeated_k8s_version_preserves_order() {
     let cli = parse(&["--k8s-version", "v1.24.0", "--k8s-version", "v1.35.0"]).expect("parse");
     assert_eq!(

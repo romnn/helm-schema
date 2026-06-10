@@ -1,8 +1,10 @@
 pub mod expr;
 mod tree_sitter_parser;
+mod values_comments;
 
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
 pub use tree_sitter_parser::TreeSitterParser;
+pub use values_comments::extract_values_yaml_descriptions;
 
 use std::collections::HashMap;
 use std::fmt::Write;

@@ -97,6 +97,7 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],

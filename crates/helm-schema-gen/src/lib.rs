@@ -131,6 +131,30 @@ pub fn generate_values_schema_full_with_facts(
     type_hints: &BTreeMap<String, Vec<Value>>,
     chart_facts: &ChartFacts,
 ) -> Value {
+    generate_values_schema_full_with_facts_and_descriptions(
+        uses,
+        provider,
+        values_yaml,
+        type_hints,
+        chart_facts,
+        &BTreeMap::new(),
+    )
+}
+
+/// Generate a JSON Schema with chart-authored values-file descriptions.
+///
+/// `values_descriptions` is metadata only. A description is applied only when
+/// the schema node already exists from template or values evidence, so comments
+/// cannot create accepted values paths or influence inferred types.
+#[tracing::instrument(skip_all)]
+pub fn generate_values_schema_full_with_facts_and_descriptions(
+    uses: &[ValueUse],
+    provider: &dyn K8sSchemaProvider,
+    values_yaml: Option<&str>,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    chart_facts: &ChartFacts,
+    values_descriptions: &BTreeMap<String, String>,
+) -> Value {
     let signals = collect_use_signals(uses, provider);
     let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
     let mut merged_chart_facts = derive_chart_facts(uses);
@@ -146,6 +170,7 @@ pub fn generate_values_schema_full_with_facts(
         &values_yaml_doc,
         type_hints,
         &merged_chart_facts,
+        values_descriptions,
     );
 
     let mut out = Map::new();
@@ -578,6 +603,7 @@ fn build_root_schema(
     values_yaml_doc: &YamlValue,
     type_hints: &BTreeMap<String, Vec<Value>>,
     chart_facts: &ChartFacts,
+    values_descriptions: &BTreeMap<String, String>,
 ) -> Value {
     let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
     let mut root_schema = object_schema(Map::new());
@@ -695,6 +721,8 @@ fn build_root_schema(
         };
         insert_schema_at_path_segments(&mut root_schema, path_segments, merged);
     }
+
+    apply_values_descriptions(&mut root_schema, values_descriptions);
 
     root_schema
 }
@@ -1526,6 +1554,79 @@ fn insert_schema_at_path_segments(root: &mut Value, path_segments: &[String], le
         return;
     }
     insert_schema_at_parts(root, path_segments, leaf);
+}
+
+fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {
+    for (path, description) in descriptions {
+        let path_segments: Vec<String> = path
+            .split('.')
+            .filter(|segment| !segment.is_empty())
+            .map(std::string::ToString::to_string)
+            .collect();
+        apply_description_at_path_segments(root, &path_segments, description);
+    }
+}
+
+fn apply_description_at_path_segments(
+    node: &mut Value,
+    path_segments: &[String],
+    description: &str,
+) {
+    if path_segments.is_empty() {
+        set_schema_description(node, description);
+        return;
+    }
+
+    let Some((head, tail)) = path_segments.split_first() else {
+        return;
+    };
+
+    let Value::Object(obj) = node else {
+        return;
+    };
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(Value::Array(variants)) = obj.get_mut(key) {
+            for variant in variants {
+                apply_description_at_path_segments(variant, path_segments, description);
+            }
+        }
+    }
+
+    if head == "*" {
+        if let Some(items) = obj.get_mut("items") {
+            apply_description_at_path_segments(items, tail, description);
+        }
+        return;
+    }
+
+    if head == MAP_WILDCARD_SEGMENT {
+        if let Some(additional_properties) = obj.get_mut("additionalProperties") {
+            apply_description_at_path_segments(additional_properties, tail, description);
+        }
+        return;
+    }
+
+    let Some(properties) = obj.get_mut("properties").and_then(Value::as_object_mut) else {
+        return;
+    };
+    let Some(child) = properties.get_mut(head) else {
+        return;
+    };
+    apply_description_at_path_segments(child, tail, description);
+}
+
+fn set_schema_description(node: &mut Value, description: &str) {
+    if description.trim().is_empty() {
+        return;
+    }
+
+    if let Value::Object(obj) = node {
+        obj.insert(
+            "description".to_string(),
+            Value::String(description.to_string()),
+        );
+    }
 }
 
 fn ensure_object_schema(v: &mut Value) {

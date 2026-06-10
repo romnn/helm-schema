@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use flate2::read::GzDecoder;
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser, extract_values_yaml_descriptions};
 use serde::Deserialize;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
@@ -449,6 +449,73 @@ pub fn build_composed_values_yaml(
     } else {
         Ok(Some(serialized))
     }
+}
+
+#[instrument(skip_all)]
+pub fn build_composed_values_descriptions(
+    charts: &[ChartContext],
+    include_subchart_values: bool,
+    values_files: &[PathBuf],
+) -> CliResult<BTreeMap<String, String>> {
+    let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
+    let mut descriptions = BTreeMap::new();
+
+    add_values_file_descriptions(&root.chart_dir, &[], &mut descriptions)?;
+
+    if include_subchart_values {
+        for chart in charts {
+            if chart.values_prefix.is_empty() {
+                continue;
+            }
+            add_values_file_descriptions(
+                &chart.chart_dir,
+                &chart.values_prefix,
+                &mut descriptions,
+            )?;
+        }
+    }
+
+    for path in values_files {
+        add_layered_values_file_descriptions(path, &mut descriptions)?;
+    }
+
+    Ok(descriptions)
+}
+
+fn add_values_file_descriptions(
+    chart_dir: &VfsPath,
+    prefix: &[String],
+    out: &mut BTreeMap<String, String>,
+) -> CliResult<()> {
+    let values_path = chart_dir.join("values.yaml")?;
+    if !values_path.is_file()? {
+        return Ok(());
+    }
+
+    let mut src = String::new();
+    values_path.open_file()?.read_to_string(&mut src)?;
+    let descriptions = extract_values_yaml_descriptions(&src)?;
+
+    for (path, description) in descriptions {
+        let scoped_path = crate::scope_values_path(&path, prefix);
+        out.entry(scoped_path).or_insert(description);
+    }
+
+    Ok(())
+}
+
+fn add_layered_values_file_descriptions(
+    values_path: &Path,
+    out: &mut BTreeMap<String, String>,
+) -> CliResult<()> {
+    let src = std::fs::read_to_string(values_path)?;
+    let descriptions = extract_values_yaml_descriptions(&src)?;
+
+    for (path, description) in descriptions {
+        out.insert(path, description);
+    }
+
+    Ok(())
 }
 
 #[instrument(skip_all)]

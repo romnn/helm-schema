@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Args;
 
 #[derive(Args, Debug, Clone)]
@@ -7,6 +9,12 @@ pub struct ChartArgs {
 
     #[arg(long)]
     pub no_subchart_values: bool,
+
+    /// Additional values files whose comments should be layered into
+    /// schema descriptions. These files are documentation metadata only
+    /// and do not contribute type hints or accepted value paths.
+    #[arg(short = 'f', long = "values", value_name = "VALUES_FILE")]
+    pub values_files: Vec<PathBuf>,
 
     /// Mark paths used in unconditional template guards
     /// (`if .Values.X`/`eq .Values.X "..."` with no enclosing guard) as

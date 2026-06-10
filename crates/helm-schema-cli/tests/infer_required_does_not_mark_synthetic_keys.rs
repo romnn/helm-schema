@@ -51,6 +51,7 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> color_eyre::eyre::Re
         chart_dir: dir.clone(),
         include_tests: false,
         include_subchart_values: true,
+        values_files: Vec::new(),
         infer_required: true,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],

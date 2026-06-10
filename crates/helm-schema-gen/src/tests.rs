@@ -6,6 +6,7 @@ use serde_json::Value;
 use crate::{
     DefaultValuesSchemaGenerator, ValuesSchemaGenerator, collect_nullable_value_paths,
     generate_values_schema_full, generate_values_schema_full_with_facts,
+    generate_values_schema_full_with_facts_and_descriptions,
     generate_values_schema_with_values_yaml,
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
@@ -13,7 +14,7 @@ use helm_schema_ir::{
     ChartFacts, Guard, IrGenerator, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
     YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
 };
-use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
+use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
 fn provider() -> KubernetesJsonSchemaProvider {
     KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
@@ -106,6 +107,103 @@ fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
     assert!(
         schema_contains_type(schema, "string"),
         "{label} should include a templated string branch, got {schema}"
+    );
+}
+
+#[derive(Debug)]
+struct DescriptionProvider;
+
+impl K8sSchemaProvider for DescriptionProvider {
+    fn schema_for_use(&self, _use_: &ValueUse) -> Option<Value> {
+        Some(serde_json::json!({
+            "description": "provider description",
+            "type": "string",
+        }))
+    }
+
+    fn schema_for_resource_path(&self, _resource: &ResourceRef, _path: &YamlPath) -> Option<Value> {
+        None
+    }
+
+    fn origin(&self) -> ProviderOrigin {
+        ProviderOrigin::KubernetesOpenApi
+    }
+
+    fn has_resource(&self, _resource: &ResourceRef) -> bool {
+        true
+    }
+}
+
+#[test]
+fn values_yaml_comments_override_provider_descriptions() {
+    let uses = vec![ValueUse {
+        source_expr: "name".to_string(),
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        resource: Some(ResourceRef {
+            api_version: "v1".to_string(),
+            kind: "ConfigMap".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }),
+        guards: Vec::new(),
+        kind: ValueKind::Scalar,
+    }];
+    let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
+
+    let schema = generate_values_schema_full_with_facts_and_descriptions(
+        &uses,
+        &DescriptionProvider,
+        Some("name: example\n"),
+        &BTreeMap::new(),
+        &ChartFacts::default(),
+        &descriptions,
+    );
+
+    assert_eq!(
+        schema
+            .pointer("/properties/name/description")
+            .and_then(Value::as_str),
+        Some("chart description")
+    );
+}
+
+#[test]
+fn values_yaml_comments_do_not_create_schema_paths() {
+    let uses = parse_ir(
+        r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ .Values.name }}
+        "#,
+    );
+    let descriptions = BTreeMap::from([
+        ("name".to_string(), "name description".to_string()),
+        (
+            "commentedOut.enabled".to_string(),
+            "comment-only path".to_string(),
+        ),
+    ]);
+    let provider = Chain::new(Vec::new());
+
+    let schema = generate_values_schema_full_with_facts_and_descriptions(
+        &uses,
+        &provider,
+        Some("name: example\n"),
+        &BTreeMap::new(),
+        &ChartFacts::default(),
+        &descriptions,
+    );
+
+    assert_eq!(
+        schema
+            .pointer("/properties/name/description")
+            .and_then(Value::as_str),
+        Some("name description")
+    );
+    assert!(
+        schema.pointer("/properties/commentedOut").is_none(),
+        "description metadata must not create schema paths: {schema}"
     );
 }
 
