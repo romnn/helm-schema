@@ -1,9 +1,11 @@
 mod abstract_eval;
 pub mod helper_eval;
+mod rendered_yaml_context;
 pub mod required_inference;
 mod resource_detector;
 mod resource_locator;
 mod symbolic;
+mod template_expr_cache;
 mod walker;
 mod yaml_shape;
 

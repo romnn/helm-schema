@@ -4,22 +4,14 @@ use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
+use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::resource_detector::AstResourceDetector;
-use crate::resource_locator::{AstResourceLocator, ResourceLocator};
-use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
-use crate::yaml_shape::{
-    Shape, first_mapping_colon_offset, parse_yaml_key, source_line_starts_block_scalar,
+use crate::template_expr_cache::{
+    clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
 };
+use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
+use crate::yaml_shape::{first_mapping_colon_offset, parse_yaml_key};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
-
-thread_local! {
-    static TEMPLATE_EXPR_CACHE: RefCell<HashMap<String, Vec<TemplateExpr>>> =
-        RefCell::new(HashMap::new());
-}
-
-fn clear_template_expr_cache() {
-    TEMPLATE_EXPR_CACHE.with(|cache| cache.borrow_mut().clear());
-}
 
 fn strip_template_action_wrapping(line: &str) -> Option<String> {
     let after_open = line.trim_start().strip_prefix("{{")?;
@@ -97,12 +89,7 @@ struct SymbolicWalker<'a> {
     seed_dot: Option<FragmentBinding>,
     no_output_depth: usize,
     dot_stack: Vec<Option<FragmentBinding>>,
-    shape: Shape,
-    output_inside_block_scalar: bool,
-    resource_locator: Box<dyn ResourceLocator>,
-    text_spans: Vec<(usize, usize)>,
-    text_span_idx: usize,
-    text_pos: usize,
+    rendered_yaml: RenderedYamlContext<'a>,
 
     inline_stack: Vec<String>,
 
@@ -385,41 +372,6 @@ fn merge_helper_output_meta_maps(
 }
 
 impl<'a> SymbolicWalker<'a> {
-    fn shape_text_for_gap(gap: &str) -> String {
-        if !(gap.contains("{{") || gap.contains("}}")) {
-            gap.to_string()
-        } else {
-            // Preserve the literal YAML bytes around inline template actions so
-            // shape tracking still sees sequence markers, keys, and scalar
-            // prefixes on mixed text/template lines.
-            let mut sanitized = String::with_capacity(gap.len());
-            let bytes = gap.as_bytes();
-            let mut idx = 0usize;
-            let mut in_action = false;
-            while idx < bytes.len() {
-                if !in_action && bytes.get(idx..idx + 2) == Some(b"{{") {
-                    in_action = true;
-                    idx += 2;
-                    continue;
-                }
-                if in_action && bytes.get(idx..idx + 2) == Some(b"}}") {
-                    in_action = false;
-                    idx += 2;
-                    continue;
-                }
-
-                let Some(ch) = gap[idx..].chars().next() else {
-                    break;
-                };
-                if !in_action || matches!(ch, '\n' | ' ' | '\t') {
-                    sanitized.push(ch);
-                }
-                idx += ch.len_utf8();
-            }
-            sanitized
-        }
-    }
-
     fn new_with_context(
         source: &'a str,
         defines: &'a DefineIndex,
@@ -436,12 +388,7 @@ impl<'a> SymbolicWalker<'a> {
             seed_dot: None,
             no_output_depth: 0,
             dot_stack: Vec::new(),
-            shape: Shape::default(),
-            output_inside_block_scalar: false,
-            resource_locator: Box::new(AstResourceLocator::default()),
-            text_spans: Vec::new(),
-            text_span_idx: 0,
-            text_pos: 0,
+            rendered_yaml: RenderedYamlContext::new(source, defines),
 
             inline_stack: Vec::new(),
 
@@ -931,7 +878,13 @@ impl<'a> SymbolicWalker<'a> {
 
     #[tracing::instrument(skip_all)]
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
-        self.reset_text_spans(tree);
+        self.rendered_yaml.reset_for_tree(tree);
+        self.guards = self.seed_guards.clone();
+        self.dot_stack.clear();
+        if let Some(dot) = self.seed_dot.clone() {
+            self.dot_stack.push(Some(dot));
+        }
+        self.no_output_depth = 0;
         self.walk(tree.root_node());
         Self::drop_default_guard_subsumed_duplicates(&mut self.uses);
         Self::drop_values_list_envelope_duplicates(&mut self.uses);
@@ -1078,327 +1031,6 @@ impl<'a> SymbolicWalker<'a> {
         out
     }
 
-    #[tracing::instrument(skip_all)]
-    fn reset_text_spans(&mut self, tree: &tree_sitter::Tree) {
-        let mut spans = Vec::<(usize, usize)>::new();
-        let mut stack = vec![tree.root_node()];
-        while let Some(n) = stack.pop() {
-            if n.is_named() {
-                if matches!(n.kind(), "text" | "yaml_no_injection_text") {
-                    let r = n.byte_range();
-                    spans.push((r.start, r.end));
-                }
-                let mut w = n.walk();
-                for ch in n.children(&mut w) {
-                    if ch.is_named() {
-                        stack.push(ch);
-                    }
-                }
-            }
-        }
-        spans.sort_by_key(|(s, _)| *s);
-
-        // Merge adjacent spans so we don't split YAML line prefixes (notably `- `)
-        // across multiple `ingest()` calls.
-        let mut merged: Vec<(usize, usize)> = Vec::new();
-        for (s, e) in spans {
-            match merged.last_mut() {
-                Some((ms, me)) if s <= *me => {
-                    let _ = ms;
-                    *me = (*me).max(e);
-                }
-                Some((_ms, me)) if s == *me => {
-                    *me = e;
-                }
-                _ => merged.push((s, e)),
-            }
-        }
-
-        self.text_spans = merged;
-        self.text_span_idx = 0;
-        self.text_pos = 0;
-        self.resource_locator =
-            Box::new(AstResourceLocator::from_source(self.source, self.defines));
-        self.shape = Shape::default();
-        self.output_inside_block_scalar = false;
-        self.guards = self.seed_guards.clone();
-        self.dot_stack.clear();
-        if let Some(dot) = self.seed_dot.clone() {
-            self.dot_stack.push(Some(dot));
-        }
-        self.no_output_depth = 0;
-    }
-
-    fn ingest_text_up_to(&mut self, target: usize) {
-        let target = target.min(self.source.len());
-        if target <= self.text_pos {
-            return;
-        }
-
-        // Keep the gap content sanitized to whitespace so the
-        // indent/shape tracker doesn't see template actions as YAML
-        // keys. Resource identity is handled by the AST resource
-        // cursor, so this path no longer needs a raw-text detector
-        // stream.
-        let mut shape_buf = String::new();
-
-        while self.text_span_idx < self.text_spans.len() {
-            let (s, e) = self.text_spans[self.text_span_idx];
-
-            if e <= self.text_pos {
-                self.text_span_idx += 1;
-                continue;
-            }
-            if s >= target {
-                // The gap from text_pos up to target is purely
-                // non-span (template actions etc.).
-                if self.text_pos < target {
-                    let gap = &self.source[self.text_pos..target];
-                    let shape_gap = Self::shape_text_for_gap(gap);
-                    if !shape_gap.is_empty() {
-                        shape_buf.push_str(&shape_gap);
-                    }
-                    self.text_pos = target;
-                }
-                break;
-            }
-
-            // Fill the leading gap (from text_pos to current span's
-            // start) before processing the span itself. Previous
-            // calls to `ingest_text_up_to` may have left text_pos in
-            // the middle of an inter-span gap.
-            if self.text_pos < s {
-                let gap = &self.source[self.text_pos..s];
-                let shape_gap = Self::shape_text_for_gap(gap);
-                if !shape_gap.is_empty() {
-                    shape_buf.push_str(&shape_gap);
-                }
-                self.text_pos = s;
-            }
-
-            let start = s.max(self.text_pos);
-            let end = e.min(target);
-            if start < end {
-                let txt = &self.source[start..end];
-                shape_buf.push_str(txt);
-                self.text_pos = end;
-            }
-
-            if self.text_pos >= e {
-                self.text_span_idx += 1;
-            }
-
-            if self.text_pos >= target {
-                break;
-            }
-
-            if self.text_span_idx < self.text_spans.len() {
-                let (ns, _) = self.text_spans[self.text_span_idx];
-                if self.text_pos < ns {
-                    let end = ns.min(target);
-                    if self.text_pos < end {
-                        let gap = &self.source[self.text_pos..end];
-                        let shape_gap = Self::shape_text_for_gap(gap);
-                        if !shape_gap.is_empty() {
-                            shape_buf.push_str(&shape_gap);
-                        }
-                        self.text_pos = end;
-                    }
-                }
-            } else {
-                self.text_pos = target;
-            }
-
-            if shape_buf.len() > 4096 {
-                self.shape.ingest(&shape_buf);
-                shape_buf.clear();
-            }
-        }
-
-        if self.text_pos < target {
-            self.text_pos = target;
-        }
-
-        if !shape_buf.is_empty() {
-            self.shape.ingest(&shape_buf);
-        }
-    }
-
-    fn line_indent_and_col(&self, byte_pos: usize) -> (usize, usize) {
-        let bytes = self.source.as_bytes();
-        let mut line_start = byte_pos.min(bytes.len());
-        while line_start > 0 {
-            if bytes[line_start - 1] == b'\n' {
-                break;
-            }
-            line_start -= 1;
-        }
-
-        let col = byte_pos.saturating_sub(line_start);
-        let mut indent = 0usize;
-        while line_start + indent < bytes.len() {
-            if bytes[line_start + indent] == b' ' {
-                indent += 1;
-            } else {
-                break;
-            }
-        }
-        (indent, col)
-    }
-
-    fn source_position_is_inside_block_scalar(&self, byte_pos: usize, indent: usize) -> bool {
-        let bytes = self.source.as_bytes();
-        let mut line_start = byte_pos.min(bytes.len());
-        while line_start > 0 {
-            if bytes[line_start - 1] == b'\n' {
-                break;
-            }
-            line_start -= 1;
-        }
-
-        while line_start > 0 {
-            let previous_line_end = line_start.saturating_sub(1);
-            let mut previous_line_start = previous_line_end;
-            while previous_line_start > 0 {
-                if bytes[previous_line_start - 1] == b'\n' {
-                    break;
-                }
-                previous_line_start -= 1;
-            }
-
-            let line = &self.source[previous_line_start..previous_line_end];
-            let previous_indent = line.chars().take_while(|&ch| ch == ' ').count();
-            let after_indent = &line[previous_indent..];
-            let trimmed = after_indent.trim();
-
-            if trimmed.is_empty() {
-                line_start = previous_line_start;
-                continue;
-            }
-
-            if previous_indent >= indent || trimmed.starts_with("{{") {
-                line_start = previous_line_start;
-                continue;
-            }
-
-            return source_line_starts_block_scalar(after_indent);
-        }
-
-        false
-    }
-
-    fn starts_template_action_line(&self, byte_pos: usize) -> bool {
-        let bytes = self.source.as_bytes();
-        let mut line_start = byte_pos.min(bytes.len());
-        while line_start > 0 {
-            if bytes[line_start - 1] == b'\n' {
-                break;
-            }
-            line_start -= 1;
-        }
-
-        let prefix = &self.source[line_start..byte_pos.min(self.source.len())];
-        let trimmed = prefix.trim_start();
-        trimmed.starts_with("{{")
-    }
-
-    fn fragment_indent_width(text: &str) -> Option<usize> {
-        fn call_indent_width(expr: &TemplateExpr) -> Option<usize> {
-            match expr {
-                TemplateExpr::Call { function, args }
-                    if matches!(function.as_str(), "indent" | "nindent") =>
-                {
-                    match args.first() {
-                        Some(TemplateExpr::Literal(Literal::Int(n))) => usize::try_from(*n).ok(),
-                        Some(TemplateExpr::Parenthesized(inner)) => call_indent_width(inner),
-                        _ => None,
-                    }
-                }
-                TemplateExpr::Parenthesized(inner) => call_indent_width(inner),
-                TemplateExpr::Pipeline(stages) => stages.iter().rev().find_map(call_indent_width),
-                _ => None,
-            }
-        }
-
-        Self::parse_expr_text(text)
-            .iter()
-            .rev()
-            .find_map(call_indent_width)
-    }
-
-    fn sync_action_for_node(&mut self, node: tree_sitter::Node<'_>) {
-        if matches!(node.kind(), "text" | "yaml_no_injection_text") {
-            return;
-        }
-
-        // Only sync placement for emitted template-output nodes. Control-action
-        // lines (`if` / `with` / `range` / `define` / `block`) do not
-        // contribute YAML structure themselves, so letting their physical
-        // indentation mutate the shape stack can incorrectly pop surrounding
-        // mapping context before the controlled body is walked.
-        if !matches!(node.kind(), "template_action" | "variable") {
-            return;
-        }
-
-        let mut pos = node.start_byte().min(self.source.len());
-        let end = node.end_byte().min(self.source.len());
-        while pos < end {
-            match self.source.as_bytes()[pos] {
-                b' ' | b'\t' | b'\n' | b'\r' => pos += 1,
-                _ => break,
-            }
-        }
-
-        if pos > node.start_byte() {
-            let leading = &self.source[node.start_byte()..pos];
-            let mut sanitized = String::with_capacity(leading.len());
-            for ch in leading.chars() {
-                if ch == '\n' || ch == ' ' || ch == '\t' {
-                    sanitized.push(ch);
-                }
-            }
-            if !sanitized.is_empty() {
-                self.shape.ingest(&sanitized);
-                self.text_pos = pos;
-            }
-        }
-
-        let (physical_indent, physical_col) = self.line_indent_and_col(pos);
-        let shape_inside_block_scalar = self.shape.is_inside_block_scalar_line(physical_indent);
-        let source_inside_block_scalar =
-            self.source_position_is_inside_block_scalar(pos, physical_indent);
-        self.output_inside_block_scalar = shape_inside_block_scalar || source_inside_block_scalar;
-
-        // Only clear a pending mapping key at end-of-line when this looks like an inline scalar
-        // value (e.g. `name: {{ ... }}`), not when the template action expands to a YAML fragment
-        // via `nindent` / `toYaml` / `tpl`.
-        let allow_clear_pending = if node.kind() == "template_action" {
-            if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
-                !is_fragment_expr(text)
-            } else {
-                true
-            }
-        } else {
-            false
-        };
-
-        let (indent, col) = if node.kind() == "template_action" && !allow_clear_pending {
-            if let Ok(text) = node.utf8_text(self.source.as_bytes())
-                && let Some(virtual_indent) = Self::fragment_indent_width(text)
-                && virtual_indent > physical_indent
-            {
-                (virtual_indent, virtual_indent)
-            } else {
-                (physical_indent, physical_col)
-            }
-        } else {
-            (physical_indent, physical_col)
-        };
-
-        self.shape
-            .sync_action_position(indent, col, allow_clear_pending);
-    }
-
     fn children_with_field<'n>(
         node: tree_sitter::Node<'n>,
         field: &str,
@@ -1423,7 +1055,7 @@ impl<'a> SymbolicWalker<'a> {
         let path = if self.no_output_depth > 0 {
             YamlPath(Vec::new())
         } else {
-            self.resource_locator.rebase_path(path)
+            self.rendered_yaml.rebase_path(path)
         };
 
         let mut guards = self.guards.clone();
@@ -1455,7 +1087,7 @@ impl<'a> SymbolicWalker<'a> {
             path,
             kind,
             guards,
-            resource: self.resource_locator.current_resource().cloned(),
+            resource: self.rendered_yaml.current_resource().cloned(),
         });
     }
 
@@ -2263,20 +1895,25 @@ impl<'a> SymbolicWalker<'a> {
         let mut path = if in_mapping_key {
             YamlPath(Vec::new())
         } else {
-            self.shape.current_path()
+            self.rendered_yaml.current_path()
         };
         if kind == ValueKind::Fragment
             && let Ok(node_text) = node.utf8_text(self.source.as_bytes())
         {
-            let (physical_indent, _physical_col) = self.line_indent_and_col(node.start_byte());
-            if self.starts_template_action_line(node.start_byte()) {
+            let (physical_indent, _physical_col) =
+                self.rendered_yaml.line_indent_and_col(node.start_byte());
+            if self
+                .rendered_yaml
+                .starts_template_action_line(node.start_byte())
+            {
                 let mut logical_indent = physical_indent;
-                if let Some(virtual_indent) = Self::fragment_indent_width(node_text) {
+                if let Some(virtual_indent) = RenderedYamlContext::fragment_indent_width(node_text)
+                {
                     logical_indent = virtual_indent;
                 }
 
                 let trailing_pending_segments = self
-                    .shape
+                    .rendered_yaml
                     .trailing_pending_mapping_segments_at_or_above(logical_indent);
                 for _ in 0..trailing_pending_segments {
                     path.0.pop();
@@ -2292,14 +1929,14 @@ impl<'a> SymbolicWalker<'a> {
             if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
                 path.0.pop();
             }
-            if let Some(inline_path) = self.inline_mapping_value_path(node) {
+            if let Some(inline_path) = self.rendered_yaml.inline_mapping_value_path(node) {
                 path = inline_path;
             }
         }
-        let (node_physical_indent, _) = self.line_indent_and_col(node.start_byte());
-        let output_inside_block_scalar = self.output_inside_block_scalar
-            || self.source_position_is_inside_block_scalar(node.start_byte(), node_physical_indent);
-        if output_inside_block_scalar {
+        if self
+            .rendered_yaml
+            .output_inside_block_scalar_at(node.start_byte())
+        {
             path = YamlPath(Vec::new());
         }
 
@@ -2545,28 +2182,6 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn inline_mapping_value_path(&self, node: tree_sitter::Node<'_>) -> Option<YamlPath> {
-        let start = node.start_byte();
-        let end = node.end_byte();
-        let line_start = self.source[..start].rfind('\n').map_or(0, |idx| idx + 1);
-        let line_end = self.source[end..]
-            .find('\n')
-            .map_or(self.source.len(), |idx| end + idx);
-        let line = &self.source[line_start..line_end];
-        let rel_start = start - line_start;
-        let colon_offset = first_mapping_colon_offset(line)?;
-        if rel_start <= colon_offset {
-            return None;
-        }
-        let trimmed = line.trim_start();
-        let key = parse_yaml_key(trimmed)?.into_key();
-        let mut path = self.shape.current_path();
-        if path.0.last().is_none_or(|segment| segment != &key) {
-            path.0.push(key);
-        }
-        Some(path)
-    }
-
     fn output_node_is_entire_scalar_value(&self, node: tree_sitter::Node<'_>) -> bool {
         fn normalize_value_text(value_text: &str) -> &str {
             let trimmed = value_text.trim();
@@ -2619,28 +2234,7 @@ impl<'a> SymbolicWalker<'a> {
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
-        let trimmed = text.trim();
-        if trimmed.is_empty() {
-            return Vec::new();
-        }
-
-        let normalized = if trimmed.starts_with("{{") {
-            trimmed.to_string()
-        } else {
-            format!("{{{{ {trimmed} }}}}")
-        };
-
-        if let Some(cached) =
-            TEMPLATE_EXPR_CACHE.with(|cache| cache.borrow().get(&normalized).cloned())
-        {
-            return cached;
-        }
-
-        let parsed = parse_action_expressions(&normalized);
-        TEMPLATE_EXPR_CACHE.with(|cache| {
-            cache.borrow_mut().insert(normalized, parsed.clone());
-        });
-        parsed
+        parse_cached_expr_text(text)
     }
 
     fn resolve_bound_path_expr(
@@ -7929,9 +7523,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn walk(&mut self, node: tree_sitter::Node<'_>) {
-        self.ingest_text_up_to(node.start_byte());
-        self.resource_locator.advance_to(node.start_byte());
-        self.sync_action_for_node(node);
+        self.rendered_yaml.enter_node(node);
 
         if self.walk_control_node(node) {
             return;
@@ -7949,7 +7541,7 @@ impl<'a> SymbolicWalker<'a> {
     fn walk_control_node(&mut self, node: tree_sitter::Node<'_>) -> bool {
         match node.kind() {
             "text" | "yaml_no_injection_text" => {
-                self.ingest_text_up_to(node.end_byte());
+                self.rendered_yaml.ingest_text_up_to(node.end_byte());
                 true
             }
             "define_action" | "block_action" => true,
@@ -8158,7 +7750,7 @@ impl<'a> SymbolicWalker<'a> {
             if let Some((var, literals)) = Self::parse_literal_list_range(&txt) {
                 self.range_domains.insert(var, literals);
             }
-            let current_path = self.shape.current_path();
+            let current_path = self.rendered_yaml.current_path();
             let direct_iterable_header_path = self.direct_iterable_header_path(&txt);
             let guard_path = if has_variable_definition {
                 // Destructured range headers (`range $k, $v := .Values.map`) describe
@@ -8176,7 +7768,7 @@ impl<'a> SymbolicWalker<'a> {
                 // A direct iterable source contributes the whole collection to the
                 // current YAML sequence field only when each input item becomes the
                 // rendered sequence item directly (`- {{ . }}`).
-                self.shape.current_path()
+                self.rendered_yaml.current_path()
             } else {
                 YamlPath(Vec::new())
             };
