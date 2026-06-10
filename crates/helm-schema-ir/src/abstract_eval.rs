@@ -3,6 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::{HelmAst, Literal, TemplateExpr, parse_action_expressions};
 use serde::{Deserialize, Serialize};
 
+use crate::abstract_value::AbstractValue;
+use crate::eval_effect::EvalResult;
 use crate::walker::is_fragment_expr;
 use crate::{Guard, ValueKind, ValueUse};
 
@@ -23,17 +25,6 @@ pub struct PathFact {
 #[must_use]
 #[tracing::instrument(skip_all)]
 pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
-    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-    enum Binding {
-        ValuesPath(String),
-        ValuesRoot,
-        RootContext,
-        PathSet(BTreeSet<String>),
-        Choice(BTreeSet<Binding>),
-        Dict(BTreeMap<String, Binding>),
-        List(Vec<Binding>),
-    }
-
     #[derive(Clone, Debug)]
     struct ControlFrame {
         path: String,
@@ -51,173 +42,60 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
 
     #[derive(Clone, Default)]
     struct Env {
-        dot: Option<Binding>,
-        locals: HashMap<String, Binding>,
+        dot: Option<AbstractValue>,
+        locals: HashMap<String, AbstractValue>,
     }
 
-    fn binding_paths(binding: &Binding) -> BTreeSet<String> {
-        match binding {
-            Binding::ValuesPath(path) => [path.clone()].into_iter().collect(),
-            Binding::ValuesRoot => [String::new()].into_iter().collect(),
-            Binding::RootContext => BTreeSet::new(),
-            Binding::PathSet(paths) => paths.clone(),
-            Binding::Choice(choices) => choices.iter().flat_map(binding_paths).collect(),
-            Binding::Dict(map) => map.values().flat_map(binding_paths).collect(),
-            Binding::List(items) => items.iter().flat_map(binding_paths).collect(),
+    fn eval_expr(expr: &TemplateExpr, env: &Env) -> EvalResult {
+        match eval_expr_value(expr, env) {
+            Some(value) => EvalResult::from_value(value),
+            None => EvalResult::none(),
         }
     }
 
-    fn choice(bindings: Vec<Binding>) -> Option<Binding> {
-        let mut flat = BTreeSet::new();
-        for binding in bindings {
-            match binding {
-                Binding::Choice(inner) => flat.extend(inner),
-                other => {
-                    flat.insert(other);
-                }
-            }
-        }
-        match flat.len() {
-            0 => None,
-            1 => flat.into_iter().next(),
-            _ => Some(Binding::Choice(flat)),
-        }
-    }
-
-    fn apply(binding: &Binding, rest: &[String]) -> Option<Binding> {
-        match binding {
-            Binding::ValuesPath(prefix) => {
-                if rest.is_empty() {
-                    Some(Binding::ValuesPath(prefix.clone()))
-                } else if prefix.is_empty() {
-                    Some(Binding::ValuesPath(rest.join(".")))
-                } else {
-                    Some(Binding::ValuesPath(format!("{prefix}.{}", rest.join("."))))
-                }
-            }
-            Binding::ValuesRoot => {
-                if rest.is_empty() {
-                    Some(Binding::ValuesRoot)
-                } else {
-                    Some(Binding::ValuesPath(rest.join(".")))
-                }
-            }
-            Binding::RootContext => {
-                if rest.first().is_some_and(|segment| segment == "Values") {
-                    if rest.len() == 1 {
-                        Some(Binding::ValuesRoot)
-                    } else {
-                        Some(Binding::ValuesPath(rest[1..].join(".")))
-                    }
-                } else {
-                    None
-                }
-            }
-            Binding::PathSet(paths) => {
-                let appended = paths
-                    .iter()
-                    .map(|path| {
-                        if rest.is_empty() {
-                            path.clone()
-                        } else if path.is_empty() {
-                            rest.join(".")
-                        } else {
-                            format!("{path}.{}", rest.join("."))
-                        }
-                    })
-                    .collect();
-                Some(Binding::PathSet(appended))
-            }
-            Binding::Choice(choices) => {
-                let mut out = Vec::new();
-                for binding in choices {
-                    if let Some(bound) = apply(binding, rest) {
-                        out.push(bound);
-                    }
-                }
-                choice(out)
-            }
-            Binding::Dict(map) if rest.len() == 1 => map.get(&rest[0]).cloned(),
-            Binding::List(items) if rest.len() == 1 => {
-                let index = rest[0].parse::<usize>().ok()?;
-                items.get(index).cloned()
-            }
-            Binding::Dict(_) | Binding::List(_) => None,
-        }
-    }
-
-    fn item_binding(binding: &Binding) -> Option<Binding> {
-        match binding {
-            Binding::ValuesPath(path) => Some(Binding::ValuesPath(format!("{path}.*"))),
-            Binding::ValuesRoot => Some(Binding::ValuesPath("*".to_string())),
-            Binding::RootContext => None,
-            Binding::PathSet(paths) => Some(Binding::PathSet(
-                paths
-                    .iter()
-                    .map(|path| {
-                        if path.is_empty() {
-                            "*".to_string()
-                        } else {
-                            format!("{path}.*")
-                        }
-                    })
-                    .collect(),
-            )),
-            Binding::Choice(choices) => {
-                let mut out = Vec::new();
-                for choice_binding in choices {
-                    if let Some(bound) = item_binding(choice_binding) {
-                        out.push(bound);
-                    }
-                }
-                choice(out)
-            }
-            Binding::List(items) => choice(items.clone()),
-            Binding::Dict(map) => choice(map.values().cloned().collect()),
-        }
-    }
-
-    fn eval_expr(expr: &TemplateExpr, env: &Env) -> Option<Binding> {
+    fn eval_expr_value(expr: &TemplateExpr, env: &Env) -> Option<AbstractValue> {
         match expr {
-            TemplateExpr::Parenthesized(inner) => eval_expr(inner, env),
+            TemplateExpr::Parenthesized(inner) => eval_expr_value(inner, env),
             TemplateExpr::Field(path)
                 if path.first().is_some_and(|segment| segment == "Values") =>
             {
                 if path.len() == 1 {
-                    Some(Binding::ValuesRoot)
+                    Some(AbstractValue::values_root())
                 } else {
-                    Some(Binding::ValuesPath(path[1..].join(".")))
+                    Some(AbstractValue::ValuesPath(path[1..].join(".")))
                 }
             }
             TemplateExpr::Field(path) if path.is_empty() => {
-                env.dot.clone().or(Some(Binding::RootContext))
+                env.dot.clone().or(Some(AbstractValue::RootContext))
             }
-            TemplateExpr::Field(path) => env.dot.as_ref().and_then(|binding| apply(binding, path)),
+            TemplateExpr::Field(path) => {
+                env.dot.as_ref().and_then(|value| value.apply_to_path(path))
+            }
             TemplateExpr::Selector { operand, path }
                 if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
                     && path.first().is_some_and(|segment| segment == "Values") =>
             {
                 if path.len() == 1 {
-                    Some(Binding::ValuesRoot)
+                    Some(AbstractValue::values_root())
                 } else {
-                    Some(Binding::ValuesPath(path[1..].join(".")))
+                    Some(AbstractValue::ValuesPath(path[1..].join(".")))
                 }
             }
-            TemplateExpr::Variable(var) if var.is_empty() => Some(Binding::RootContext),
+            TemplateExpr::Variable(var) if var.is_empty() => Some(AbstractValue::RootContext),
             TemplateExpr::Variable(var) if !var.is_empty() => env.locals.get(var).cloned(),
             TemplateExpr::Selector { operand, path } => {
-                let base = eval_expr(operand, env)?;
-                apply(&base, path)
+                let base = eval_expr_value(operand, env)?;
+                base.apply_to_path(path)
             }
             TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
                 let mut options = Vec::new();
-                if let Some(primary) = eval_expr(&args[1], env) {
+                if let Some(primary) = eval_expr_value(&args[1], env) {
                     options.push(primary);
                 }
-                if let Some(fallback) = eval_expr(&args[0], env) {
+                if let Some(fallback) = eval_expr_value(&args[0], env) {
                     options.push(fallback);
                 }
-                choice(options)
+                AbstractValue::choice(options)
             }
             TemplateExpr::Call { function, args } if function == "dict" => {
                 let mut map = BTreeMap::new();
@@ -229,39 +107,39 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                         index += 1;
                         continue;
                     };
-                    if let Some(value) = eval_expr(&args[index + 1], env) {
+                    if let Some(value) = eval_expr_value(&args[index + 1], env) {
                         map.insert(key.clone(), value);
                     }
                     index += 2;
                 }
-                Some(Binding::Dict(map))
+                Some(AbstractValue::Dict(map))
             }
             TemplateExpr::Call { function, args }
                 if matches!(function.as_str(), "list" | "tuple") =>
             {
                 let mut items = Vec::new();
                 for arg in args {
-                    if let Some(value) = eval_expr(arg, env) {
+                    if let Some(value) = eval_expr_value(arg, env) {
                         items.push(value);
                     }
                 }
-                Some(Binding::List(items))
+                Some(AbstractValue::List(items))
             }
             TemplateExpr::Call { function, args }
                 if matches!(function.as_str(), "merge" | "mergeOverwrite") =>
             {
                 let mut paths = BTreeSet::new();
                 for arg in args {
-                    if let Some(value) = eval_expr(arg, env) {
-                        paths.extend(binding_paths(&value));
+                    if let Some(value) = eval_expr_value(arg, env) {
+                        paths.extend(value.paths());
                     }
                 }
-                Some(Binding::PathSet(paths))
+                Some(AbstractValue::PathSet(paths))
             }
             TemplateExpr::Call { function, args } if function == "index" => {
-                let base = eval_expr(args.first()?, env)?;
+                let base = eval_expr_value(args.first()?, env)?;
                 match base {
-                    Binding::Dict(map) if args.len() == 2 => {
+                    AbstractValue::Dict(map) if args.len() == 2 => {
                         let key = match &args[1] {
                             TemplateExpr::Literal(
                                 Literal::String(value) | Literal::RawString(value),
@@ -270,7 +148,7 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                         };
                         map.get(&key).cloned()
                     }
-                    Binding::List(items) if args.len() == 2 => {
+                    AbstractValue::List(items) if args.len() == 2 => {
                         let index = match &args[1] {
                             TemplateExpr::Literal(Literal::Int(value)) => {
                                 usize::try_from(*value).ok()?
@@ -290,7 +168,7 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                             };
                             segments.push(value.clone());
                         }
-                        apply(&binding, &segments)
+                        binding.apply_to_path(&segments)
                     }
                 }
             }
@@ -311,13 +189,13 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                         | "int"
                 ) =>
             {
-                args.iter().find_map(|arg| eval_expr(arg, env))
+                args.iter().find_map(|arg| eval_expr_value(arg, env))
             }
             TemplateExpr::Pipeline(stages) => {
                 let Some(first_stage) = stages.first() else {
                     return None;
                 };
-                let mut current = eval_expr(first_stage, env);
+                let mut current = eval_expr_value(first_stage, env);
                 for stage in &stages[1..] {
                     let TemplateExpr::Call { function, args } = stage else {
                         continue;
@@ -329,20 +207,23 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                                 options.push(current);
                             }
                             for arg in args {
-                                if let Some(binding) = eval_expr(arg, env) {
+                                if let Some(binding) = eval_expr_value(arg, env) {
                                     options.push(binding);
                                 }
                             }
-                            choice(options)
+                            AbstractValue::choice(options)
                         }
                         "merge" | "mergeOverwrite" => {
-                            let mut paths = current.as_ref().map(binding_paths).unwrap_or_default();
+                            let mut paths = current
+                                .as_ref()
+                                .map(AbstractValue::paths)
+                                .unwrap_or_default();
                             for arg in args {
-                                if let Some(binding) = eval_expr(arg, env) {
-                                    paths.extend(binding_paths(&binding));
+                                if let Some(binding) = eval_expr_value(arg, env) {
+                                    paths.extend(binding.paths());
                                 }
                             }
-                            Some(Binding::PathSet(paths))
+                            Some(AbstractValue::PathSet(paths))
                         }
                         "toYaml" | "fromYaml" | "quote" | "indent" | "nindent" | "tpl"
                         | "printf" | "trimPrefix" | "trimSuffix" | "trunc" | "replace" | "int" => {
@@ -420,7 +301,7 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
             TemplateExpr::VariableDefinition { name, value }
             | TemplateExpr::Assignment { name, value } => {
                 let name = name.trim_start_matches('$');
-                if let Some(binding) = eval_expr(value, env) {
+                if let Some(binding) = eval_expr_value(value, env) {
                     env.locals.insert(name.to_string(), binding);
                 } else {
                     env.locals.remove(name);
@@ -465,9 +346,8 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                     if update_env_from_expr(expr, env) {
                         continue;
                     }
-                    if let Some(binding) = eval_expr(expr, env) {
-                        paths.extend(binding_paths(&binding));
-                    }
+                    let result = eval_expr(expr, env);
+                    paths.extend(result.effects.reads);
                 }
                 if !paths.is_empty() {
                     record_render(
@@ -536,8 +416,8 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                 let exprs = parse_action_expressions(&format!("{{{{ {header} }}}}"));
                 let mut body_env = env.clone();
                 let mut body_controls = active_controls.to_vec();
-                if let Some(binding) = exprs.first().and_then(|expr| eval_expr(expr, env)) {
-                    let paths = binding_paths(&binding);
+                if let Some(binding) = exprs.first().and_then(|expr| eval_expr_value(expr, env)) {
+                    let paths = binding.paths();
                     for path in paths {
                         if path.trim().is_empty() {
                             continue;
@@ -574,8 +454,8 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                 let exprs = parse_action_expressions(&format!("{{{{ {header} }}}}"));
                 let mut body_env = env.clone();
                 let mut body_controls = active_controls.to_vec();
-                if let Some(binding) = exprs.first().and_then(|expr| eval_expr(expr, env)) {
-                    let paths = binding_paths(&binding);
+                if let Some(binding) = exprs.first().and_then(|expr| eval_expr_value(expr, env)) {
+                    let paths = binding.paths();
                     for path in paths {
                         if path.trim().is_empty() {
                             continue;
@@ -586,7 +466,7 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                             is_range: true,
                         });
                     }
-                    body_env.dot = item_binding(&binding);
+                    body_env.dot = binding.item();
                 }
                 for item in body {
                     walk(item, &mut body_env, &body_controls, facts, descendant_paths);
