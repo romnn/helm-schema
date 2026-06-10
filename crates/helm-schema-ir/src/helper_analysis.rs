@@ -123,6 +123,33 @@ pub(crate) fn bound_helper_condition_paths(analysis: &BoundHelperAnalysis) -> BT
     out
 }
 
+pub(crate) fn helper_output_meta_from_analysis(
+    analysis: &BoundHelperAnalysis,
+) -> BTreeMap<String, HelperOutputMeta> {
+    let mut out = analysis.output.clone();
+    for output in &analysis.fragment_output_uses {
+        let entry = out.entry(output.source_expr.clone()).or_default();
+        entry.guards.extend(output.meta.guards.iter().cloned());
+        entry.defaulted |= output.meta.defaulted;
+    }
+    for path in &analysis.fragment_output {
+        out.entry(path.clone()).or_default();
+    }
+    out
+}
+
+pub(crate) fn helper_dependency_meta_from_analysis(
+    analysis: &BoundHelperAnalysis,
+) -> BTreeMap<String, HelperOutputMeta> {
+    let mut out = analysis.dependency_meta.clone();
+    for (path, meta) in helper_output_meta_from_analysis(analysis) {
+        let entry = out.entry(path).or_default();
+        entry.guards.extend(meta.guards);
+        entry.defaulted |= meta.defaulted;
+    }
+    out
+}
+
 pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut BoundHelperAnalysis) {
     let fragment_output = std::mem::take(&mut analysis.fragment_output);
     for source_expr in fragment_output {

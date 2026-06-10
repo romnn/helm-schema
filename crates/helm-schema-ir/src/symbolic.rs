@@ -11,7 +11,7 @@ use crate::bound_value_analysis::{
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::expression_analysis::{
     resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
-    resolved_type_is_paths_for_text, set_default_chart_paths_for_text, type_is_schema_type,
+    resolved_type_is_paths_for_text, set_default_chart_paths_for_text,
 };
 use crate::fragment_binding_eval::{
     fragment_binding_from_helper_analysis, fragment_binding_from_outer_expr,
@@ -29,10 +29,19 @@ use crate::fragment_scope_eval::{
 use crate::helper_analysis::{
     BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta, bound_helper_condition_paths,
     bound_helper_dependency_paths, convert_fragment_outputs_to_dependency_outputs,
-    extend_type_hints, merge_helper_output_meta_maps, merge_local_default_paths,
+    extend_type_hints, helper_dependency_meta_from_analysis, helper_output_meta_from_analysis,
+    merge_helper_output_meta_maps, merge_local_default_paths,
 };
-use crate::helper_binding_eval::{
-    binding_from_expr, bindings_for_helper_arg, resolve_bound_path_expr,
+use crate::helper_binding_eval::{binding_from_expr, bindings_for_helper_arg};
+use crate::helper_output_projection::{
+    HelperOutputExprContext, collect_fragment_binding_output_uses,
+    collect_helper_binding_output_uses, collect_helper_binding_output_uses_from_expr,
+    expression_output_use_is_keyed_map_projection, helper_output_meta_with_guards,
+    push_helper_fragment_output, static_yaml_fragment_output_path,
+};
+use crate::local_projection::{
+    direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
+    local_default_paths_from_text, local_output_meta_from_text, local_rendered_paths_from_text,
 };
 use crate::output_path;
 use crate::rendered_yaml_context::RenderedYamlContext;
@@ -47,8 +56,9 @@ use crate::template_expr_analysis::{
 use crate::template_expr_cache::{
     clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
 };
+use crate::value_path_context::ValuePathContext;
 use crate::value_use_postprocess::postprocess_value_uses;
-use crate::walker::{is_fragment_expr, parse_condition, values_path_from_expr};
+use crate::walker::is_fragment_expr;
 use crate::yaml_shape::{first_mapping_colon_offset, parse_yaml_key};
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 
@@ -146,16 +156,6 @@ struct SymbolicWalker<'a> {
     chart_value_defaults: BTreeSet<String>,
 }
 
-#[derive(Clone, Copy)]
-struct HelperOutputExprContext<'a> {
-    bindings: &'a HashMap<String, HelperBinding>,
-    current_dot: Option<&'a HelperBinding>,
-    relative_path: &'a YamlPath,
-    kind: ValueKind,
-    active_output_guards: &'a BTreeSet<String>,
-    defaulted_paths: &'a BTreeSet<String>,
-}
-
 struct FragmentOutputWalkState<'context, 'state> {
     local_bindings: &'state mut HashMap<String, FragmentBinding>,
     local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
@@ -238,6 +238,18 @@ impl<'a> SymbolicWalker<'a> {
             &self.ir_context.inner.define_bodies,
             Self::analyze_bound_helper_call_with_fragment_locals,
         )
+    }
+
+    fn value_path_context(&self) -> ValuePathContext<'_> {
+        ValuePathContext {
+            root_bindings: &self.root_bindings,
+            template_bindings: &self.template_bindings,
+            template_default_paths: &self.template_default_paths,
+            template_output_meta: &self.template_output_meta,
+            fragment_context: self.fragment_eval_context(),
+            current_dot_fragment: self.current_dot_fragment(),
+            current_dot_binding: self.current_dot_binding(),
+        }
     }
 
     /// Seed this walker's chart-level defaults from a parent walker so a
@@ -480,170 +492,10 @@ impl<'a> SymbolicWalker<'a> {
         context.fragment_binding_from_expr(expr, &self.template_bindings, current_dot, &mut seen)
     }
 
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn resolved_values_paths_in_context(&self, text: &str) -> Vec<String> {
-        let exprs = Self::parse_expr_text(text);
-        let mut paths = Self::direct_values_paths_from_exprs(&exprs);
-
-        if !self.root_bindings.is_empty() {
-            for expr in &exprs {
-                walk_expr_excluding_helper_call_args(expr, &mut |node| {
-                    if let Some(path) = resolve_bound_path_expr(node, &self.root_bindings) {
-                        paths.insert(path);
-                    }
-                });
-            }
-        }
-
-        if !self.template_bindings.is_empty() {
-            for expr in &exprs {
-                walk_expr_excluding_helper_call_args(expr, &mut |node| {
-                    paths.extend(self.local_alias_paths_for_expr(node));
-                });
-            }
-        }
-
-        paths.extend(self.resolved_values_paths_in_expr_tree_context(text));
-
-        paths.into_iter().collect()
-    }
-
-    fn direct_values_paths_from_exprs(exprs: &[TemplateExpr]) -> BTreeSet<String> {
-        let mut paths = BTreeSet::new();
-        for expr in exprs {
-            walk_expr_excluding_helper_call_args(expr, &mut |node| {
-                if let Some(path) = values_path_from_expr(node) {
-                    paths.insert(path);
-                }
-            });
-        }
-        paths
-    }
-
-    fn resolved_default_fallback_paths_in_context(&self, text: &str) -> BTreeSet<String> {
-        let current_dot = self.current_dot_binding();
-        let mut paths = resolved_default_fallback_paths_for_text(
-            text,
-            Some(&self.root_bindings),
-            current_dot.as_ref(),
-        );
-        for expr in Self::parse_expr_text(text) {
-            paths.extend(self.resolved_default_fallback_paths_for_expr_in_current_context(&expr));
-        }
-        if !self.template_default_paths.is_empty() {
-            for expr in Self::parse_expr_text(text) {
-                expr.walk(|node| {
-                    paths.extend(self.local_alias_default_paths_for_expr(node));
-                });
-            }
-        }
-        paths
-    }
-
-    fn resolved_default_fallback_paths_for_expr_in_current_context(
-        &self,
-        expr: &TemplateExpr,
-    ) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        expr.walk(|node| match node {
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                out.extend(self.resolve_expr_to_values_paths_in_current_context(&args[1]));
-            }
-            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
-                for window in stages.windows(2) {
-                    let TemplateExpr::Call { function, .. } = &window[1] else {
-                        continue;
-                    };
-                    if function != "default" {
-                        continue;
-                    }
-                    out.extend(self.resolve_expr_to_values_paths_in_current_context(&window[0]));
-                }
-            }
-            _ => {}
-        });
-        out
-    }
-
-    fn resolve_expr_to_values_paths_in_current_context(
-        &self,
-        expr: &TemplateExpr,
-    ) -> BTreeSet<String> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return [path].into_iter().collect();
-        }
-
-        let mut locals = self.template_bindings.clone();
-        for (key, value) in &self.root_bindings {
-            locals.insert(key.clone(), value.to_fragment_binding());
-        }
-
-        let current_dot_fragment = self.current_dot_fragment();
-        let current_dot_binding = self.current_dot_binding();
-        let outer_binding = fragment_binding_from_outer_expr(
-            expr,
-            Some(&locals),
-            Some(&self.root_bindings),
-            current_dot_binding.as_ref(),
-        );
-        let fragment_binding =
-            self.fragment_binding_in_context(expr, current_dot_fragment.as_ref());
-
-        outer_binding
-            .into_iter()
-            .chain(fragment_binding)
-            .flat_map(|binding| FragmentBinding::paths(&binding))
-            .filter(|path| !path.trim().is_empty())
-            .collect()
-    }
-
-    fn local_alias_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        match expr {
-            TemplateExpr::Variable(var) if !var.is_empty() => self
-                .template_bindings
-                .get(var)
-                .map(FragmentBinding::paths)
-                .unwrap_or_default(),
-            TemplateExpr::Selector { operand, path } => match operand.as_ref() {
-                TemplateExpr::Variable(var) if !var.is_empty() => self
-                    .template_bindings
-                    .get(var)
-                    .and_then(|binding| binding.apply_to_binding(path))
-                    .map(|binding| FragmentBinding::paths(&binding))
-                    .unwrap_or_default(),
-                _ => BTreeSet::new(),
-            },
-            _ => BTreeSet::new(),
-        }
-    }
-
-    fn local_alias_default_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        match expr {
-            TemplateExpr::Variable(var) if !var.is_empty() => self
-                .template_default_paths
-                .get(var)
-                .cloned()
-                .unwrap_or_default(),
-            _ => BTreeSet::new(),
-        }
-    }
-
-    fn local_alias_output_meta_for_text(&self, text: &str) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-        for expr in Self::parse_expr_text(text) {
-            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-                for (path, meta) in self.local_alias_output_meta_for_expr(node) {
-                    let entry = out.entry(path).or_default();
-                    entry.guards.extend(meta.guards);
-                    entry.defaulted |= meta.defaulted;
-                }
-            });
-        }
-        out
-    }
-
     fn helper_output_meta_for_text(&self, text: &str) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self.local_alias_output_meta_for_text(text);
+        let mut out = self
+            .value_path_context()
+            .local_alias_output_meta_for_text(text);
         let analysis = self.analyze_bound_helper_calls(text);
         for (path, meta) in analysis.output {
             let entry = out.entry(path).or_default();
@@ -656,282 +508,6 @@ impl<'a> SymbolicWalker<'a> {
             entry.defaulted |= output.meta.defaulted;
         }
         out
-    }
-
-    fn local_alias_output_meta_for_expr(
-        &self,
-        expr: &TemplateExpr,
-    ) -> BTreeMap<String, HelperOutputMeta> {
-        match expr {
-            TemplateExpr::Variable(var) if !var.is_empty() => self
-                .template_output_meta
-                .get(var)
-                .cloned()
-                .unwrap_or_default(),
-            TemplateExpr::Selector { operand, path } => {
-                let TemplateExpr::Variable(var) = operand.as_ref() else {
-                    return BTreeMap::new();
-                };
-                if var.is_empty() {
-                    return BTreeMap::new();
-                }
-                let Some(binding) = self.template_bindings.get(var) else {
-                    return BTreeMap::new();
-                };
-                let Some(bound) = binding.apply_to_binding(path) else {
-                    return BTreeMap::new();
-                };
-                let selected_paths = FragmentBinding::paths(&bound);
-                self.template_output_meta
-                    .get(var)
-                    .into_iter()
-                    .flat_map(|meta_by_path| meta_by_path.iter())
-                    .filter(|(path, _meta)| selected_paths.contains(*path))
-                    .map(|(path, meta)| (path.clone(), meta.clone()))
-                    .collect()
-            }
-            _ => BTreeMap::new(),
-        }
-    }
-
-    fn condition_guards_in_context(&self, text: &str) -> Vec<Guard> {
-        let mut cond_guards = parse_condition(text);
-        let alias_guards = self.condition_guards_from_aliases_in_context(text);
-        cond_guards
-            .retain(|guard| !Self::guard_is_subsumed_by_alias_or_guard(guard, &alias_guards));
-        for guard in alias_guards {
-            if !cond_guards.contains(&guard) {
-                cond_guards.push(guard);
-            }
-        }
-        if !cond_guards.is_empty() {
-            return cond_guards;
-        }
-        if self.condition_has_unrepresentable_values_comparison(text) {
-            return Vec::new();
-        }
-        self.resolved_values_paths_in_expr_tree_context(text)
-            .into_iter()
-            .map(|path| Guard::Truthy { path })
-            .collect()
-    }
-
-    fn guard_is_subsumed_by_alias_or_guard(guard: &Guard, alias_guards: &[Guard]) -> bool {
-        if !matches!(guard, Guard::Truthy { .. } | Guard::Or { .. }) {
-            return false;
-        }
-
-        alias_guards.iter().any(|alias_guard| {
-            let Guard::Or { paths } = alias_guard else {
-                return false;
-            };
-            guard.value_paths().iter().all(|path| {
-                paths
-                    .iter()
-                    .any(|alias_guard_path| alias_guard_path == path)
-            })
-        })
-    }
-
-    fn expr_needs_context_value_resolution(&self, expr: &TemplateExpr) -> bool {
-        !self.local_alias_paths_for_expr(expr).is_empty()
-            || (values_path_from_expr(expr).is_none()
-                && !self
-                    .resolve_expr_to_values_paths_in_current_context(expr)
-                    .is_empty())
-    }
-
-    fn condition_guards_from_aliases_in_context(&self, text: &str) -> Vec<Guard> {
-        fn string_literal(arg: &TemplateExpr) -> Option<String> {
-            match arg.deparen() {
-                TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-                    Some(value.clone())
-                }
-                _ => None,
-            }
-        }
-
-        fn paths_for_expr(walker: &SymbolicWalker<'_>, expr: &TemplateExpr) -> BTreeSet<String> {
-            let mut paths = walker.resolve_expr_to_values_paths_in_current_context(expr);
-            paths.extend(walker.local_alias_paths_for_expr(expr));
-            paths
-                .into_iter()
-                .filter(|path| !path.trim().is_empty())
-                .collect()
-        }
-
-        let mut out = Vec::new();
-        for expr in Self::parse_expr_text(text) {
-            let TemplateExpr::Call { function, args } = expr.deparen() else {
-                continue;
-            };
-            match function.as_str() {
-                "not" => {
-                    let [arg] = args.as_slice() else {
-                        continue;
-                    };
-                    if !self.expr_needs_context_value_resolution(arg) {
-                        continue;
-                    }
-                    let paths = paths_for_expr(self, arg);
-                    out.extend(paths.into_iter().map(|path| Guard::Not { path }));
-                }
-                "or" => {
-                    if !args
-                        .iter()
-                        .any(|arg| self.expr_needs_context_value_resolution(arg))
-                    {
-                        continue;
-                    }
-                    let paths: BTreeSet<String> = args
-                        .iter()
-                        .flat_map(|arg| paths_for_expr(self, arg))
-                        .collect();
-                    if !paths.is_empty() {
-                        out.push(Guard::Or {
-                            paths: paths.into_iter().collect(),
-                        });
-                    }
-                }
-                "eq" => {
-                    let [left, right] = args.as_slice() else {
-                        continue;
-                    };
-                    if !self.expr_needs_context_value_resolution(left)
-                        && !self.expr_needs_context_value_resolution(right)
-                    {
-                        continue;
-                    }
-                    let (value, paths) = match (string_literal(left), string_literal(right)) {
-                        (Some(value), None) => (value, paths_for_expr(self, right)),
-                        (None, Some(value)) => (value, paths_for_expr(self, left)),
-                        _ => continue,
-                    };
-                    out.extend(paths.into_iter().map(|path| Guard::Eq {
-                        path,
-                        value: value.clone(),
-                    }));
-                }
-                "typeIs" => {
-                    let Some(schema_type) = type_is_schema_type(args.first()) else {
-                        continue;
-                    };
-                    if !args
-                        .iter()
-                        .skip(1)
-                        .any(|arg| self.expr_needs_context_value_resolution(arg))
-                    {
-                        continue;
-                    }
-                    let paths: BTreeSet<String> = args
-                        .iter()
-                        .skip(1)
-                        .flat_map(|arg| paths_for_expr(self, arg))
-                        .collect();
-                    out.extend(paths.into_iter().map(|path| Guard::TypeIs {
-                        path,
-                        schema_type: schema_type.clone(),
-                    }));
-                }
-                _ => {}
-            }
-        }
-        out
-    }
-
-    fn condition_has_unrepresentable_values_comparison(&self, text: &str) -> bool {
-        fn string_literal(arg: &TemplateExpr) -> Option<&str> {
-            match arg.deparen() {
-                TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-                    Some(value)
-                }
-                _ => None,
-            }
-        }
-
-        Self::parse_expr_text(text).into_iter().any(|expr| {
-            let TemplateExpr::Call { function, args } = expr.deparen() else {
-                return false;
-            };
-            match function.as_str() {
-                "eq" => {
-                    let has_values_path = args
-                        .iter()
-                        .any(|arg| self.expr_needs_context_value_resolution(arg));
-                    if !has_values_path {
-                        return false;
-                    }
-                    let [left, right] = args.as_slice() else {
-                        return true;
-                    };
-                    !matches!(
-                        (string_literal(left), string_literal(right)),
-                        (Some(_), None) | (None, Some(_))
-                    )
-                }
-                "ne" | "typeIs" => args
-                    .iter()
-                    .any(|arg| self.expr_needs_context_value_resolution(arg)),
-                _ => false,
-            }
-        })
-    }
-
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn resolved_values_paths_in_expr_tree_context(&self, text: &str) -> BTreeSet<String> {
-        let mut locals = self.template_bindings.clone();
-        for (key, value) in &self.root_bindings {
-            locals.insert(key.clone(), value.to_fragment_binding());
-        }
-
-        let current_dot_fragment = self.current_dot_fragment();
-        let current_dot_binding = self.current_dot_binding();
-        let mut paths = BTreeSet::new();
-        for expr in Self::parse_expr_text(text) {
-            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-                if expr_contains_helper_call(node) {
-                    return;
-                }
-                let outer_binding = fragment_binding_from_outer_expr(
-                    node,
-                    Some(&locals),
-                    Some(&self.root_bindings),
-                    current_dot_binding.as_ref(),
-                );
-                let fragment_binding =
-                    self.fragment_binding_in_context(node, current_dot_fragment.as_ref());
-                paths.extend(
-                    outer_binding
-                        .into_iter()
-                        .chain(fragment_binding)
-                        .flat_map(|binding| FragmentBinding::paths(&binding))
-                        .filter(|path| !path.trim().is_empty()),
-                );
-            });
-        }
-        paths
-    }
-
-    fn single_resolved_values_path(&self, text: &str) -> Option<String> {
-        let mut paths = self.resolved_values_paths_in_context(text);
-        if paths.len() == 1 { paths.pop() } else { None }
-    }
-
-    fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, HelperBinding>) -> bool {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => Self::is_direct_path_expr(inner, bindings),
-            TemplateExpr::Field(_) => true,
-            TemplateExpr::Selector { .. } => resolve_bound_path_expr(expr, bindings).is_some(),
-            _ => false,
-        }
-    }
-
-    fn single_direct_iterable_range_path(&self, text: &str) -> Option<String> {
-        let exprs = Self::parse_expr_text(text);
-        if exprs.len() != 1 || !Self::is_direct_path_expr(&exprs[0], &self.root_bindings) {
-            return None;
-        }
-        self.single_resolved_values_path(text)
     }
 
     fn define_body_source(&self, name: &str) -> Option<&str> {
@@ -1063,13 +639,15 @@ impl<'a> SymbolicWalker<'a> {
 
         let helper_inlined = self.inline_exact_helper_call(text);
 
-        let default_fallback_values = self.resolved_default_fallback_paths_in_context(text);
-        let mut values: BTreeSet<String> = self
-            .resolved_values_paths_in_context(text)
-            .into_iter()
-            .collect();
-        values.extend(default_fallback_values.iter().cloned());
-        let local_output_meta = self.local_alias_output_meta_for_text(text);
+        let (default_fallback_values, values, local_output_meta) = {
+            let context = self.value_path_context();
+            let default_fallback_values = context.resolved_default_fallback_paths(text);
+            let mut values: BTreeSet<String> =
+                context.resolved_values_paths(text).into_iter().collect();
+            let local_output_meta = context.local_alias_output_meta_for_text(text);
+            values.extend(default_fallback_values.iter().cloned());
+            (default_fallback_values, values, local_output_meta)
+        };
 
         let bound_values = extract_bound_values(text, &self.range_domains, &self.get_bindings);
 
@@ -1516,358 +1094,6 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn expression_output_use_is_keyed_map_projection(
-        output: &HelperFragmentOutputUse,
-        expression_base: &YamlPath,
-    ) -> bool {
-        let suffix = if output.relative_path.0.starts_with(&expression_base.0) {
-            &output.relative_path.0[expression_base.0.len()..]
-        } else {
-            output.relative_path.0.as_slice()
-        };
-        !suffix.is_empty() && suffix.iter().all(|segment| !segment.ends_with("[*]"))
-    }
-
-    fn static_yaml_fragment_output_path(text: &str) -> Option<YamlPath> {
-        fn printf_format(expr: &TemplateExpr) -> Option<&str> {
-            match expr {
-                TemplateExpr::Parenthesized(inner) => printf_format(inner),
-                TemplateExpr::Call { function, args } if function == "printf" => {
-                    let TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) =
-                        args.first()?
-                    else {
-                        return None;
-                    };
-                    Some(format)
-                }
-                TemplateExpr::Pipeline(stages) => stages.first().and_then(printf_format),
-                _ => None,
-            }
-        }
-
-        let exprs = Self::parse_expr_text(text);
-        let [expr] = exprs.as_slice() else {
-            return None;
-        };
-        let format = printf_format(expr)?;
-        let key = parse_yaml_key(format.trim_start())?.into_key();
-        Some(YamlPath(vec![key]))
-    }
-
-    fn helper_output_meta_with_guards(
-        mut meta: HelperOutputMeta,
-        active_output_guards: &BTreeSet<String>,
-    ) -> HelperOutputMeta {
-        meta.guards.extend(active_output_guards.iter().cloned());
-        meta
-    }
-
-    fn push_helper_fragment_output(
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        source_expr: String,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        meta: HelperOutputMeta,
-    ) {
-        outputs.push(HelperFragmentOutputUse {
-            source_expr,
-            relative_path: relative_path.clone(),
-            kind,
-            meta,
-        });
-    }
-
-    fn collect_fragment_binding_output_uses(
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        binding: &FragmentBinding,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        active_output_guards: &BTreeSet<String>,
-        defaulted_paths: &BTreeSet<String>,
-    ) {
-        match binding {
-            FragmentBinding::ValuesPath(path) => {
-                Self::push_helper_fragment_output(
-                    outputs,
-                    path.clone(),
-                    relative_path,
-                    kind,
-                    HelperOutputMeta {
-                        guards: active_output_guards.clone(),
-                        defaulted: defaulted_paths.contains(path),
-                    },
-                );
-            }
-            FragmentBinding::PathSet(paths) => {
-                for path in paths {
-                    Self::push_helper_fragment_output(
-                        outputs,
-                        path.clone(),
-                        relative_path,
-                        kind,
-                        HelperOutputMeta {
-                            guards: active_output_guards.clone(),
-                            defaulted: defaulted_paths.contains(path),
-                        },
-                    );
-                }
-            }
-            FragmentBinding::OutputSet(paths) => {
-                for path in paths {
-                    Self::push_helper_fragment_output(
-                        outputs,
-                        path.clone(),
-                        relative_path,
-                        kind,
-                        HelperOutputMeta {
-                            guards: active_output_guards.clone(),
-                            defaulted: defaulted_paths.contains(path),
-                        },
-                    );
-                }
-            }
-            FragmentBinding::Dict(entries) => {
-                for (key, value) in entries {
-                    let child_path = output_path::append_relative_path(
-                        relative_path,
-                        &YamlPath(vec![key.clone()]),
-                    );
-                    Self::collect_fragment_binding_output_uses(
-                        outputs,
-                        value,
-                        &child_path,
-                        value.output_child_kind(),
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            FragmentBinding::Overlay { entries, fallback } => {
-                Self::collect_fragment_binding_output_uses(
-                    outputs,
-                    fallback,
-                    relative_path,
-                    kind,
-                    active_output_guards,
-                    defaulted_paths,
-                );
-                for (key, value) in entries {
-                    let child_path = output_path::append_relative_path(
-                        relative_path,
-                        &YamlPath(vec![key.clone()]),
-                    );
-                    Self::collect_fragment_binding_output_uses(
-                        outputs,
-                        value,
-                        &child_path,
-                        value.output_child_kind(),
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            FragmentBinding::Choice(choices) => {
-                for choice in choices {
-                    Self::collect_fragment_binding_output_uses(
-                        outputs,
-                        choice,
-                        relative_path,
-                        kind,
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            FragmentBinding::List(items) => {
-                let item_path = output_path::sequence_item_path(relative_path);
-                for item in items {
-                    Self::collect_fragment_binding_output_uses(
-                        outputs,
-                        item,
-                        &item_path,
-                        item.output_child_kind(),
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            FragmentBinding::ValuesRoot
-            | FragmentBinding::RootContext
-            | FragmentBinding::Unknown
-            | FragmentBinding::StringSet(_) => {}
-        }
-    }
-
-    fn collect_helper_binding_output_uses(
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        binding: &HelperBinding,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        active_output_guards: &BTreeSet<String>,
-        defaulted_paths: &BTreeSet<String>,
-    ) {
-        match binding {
-            HelperBinding::ValuesPath(path) => {
-                Self::push_helper_fragment_output(
-                    outputs,
-                    path.clone(),
-                    relative_path,
-                    kind,
-                    HelperOutputMeta {
-                        guards: active_output_guards.clone(),
-                        defaulted: defaulted_paths.contains(path),
-                    },
-                );
-            }
-            HelperBinding::PathSet(paths) => {
-                for path in paths {
-                    Self::push_helper_fragment_output(
-                        outputs,
-                        path.clone(),
-                        relative_path,
-                        kind,
-                        HelperOutputMeta {
-                            guards: active_output_guards.clone(),
-                            defaulted: defaulted_paths.contains(path),
-                        },
-                    );
-                }
-            }
-            HelperBinding::OutputSet(outputs_by_path) => {
-                for (path, meta) in outputs_by_path {
-                    let meta = Self::helper_output_meta_with_guards(
-                        HelperOutputMeta {
-                            guards: meta.guards.clone(),
-                            defaulted: meta.defaulted || defaulted_paths.contains(path),
-                        },
-                        active_output_guards,
-                    );
-                    Self::push_helper_fragment_output(
-                        outputs,
-                        path.clone(),
-                        relative_path,
-                        kind,
-                        meta,
-                    );
-                }
-            }
-            HelperBinding::Dict(entries) => {
-                for (key, value) in entries {
-                    let child_path = output_path::append_relative_path(
-                        relative_path,
-                        &YamlPath(vec![key.clone()]),
-                    );
-                    Self::collect_helper_binding_output_uses(
-                        outputs,
-                        value,
-                        &child_path,
-                        value.output_child_kind(),
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            HelperBinding::Overlay { entries, fallback } => {
-                Self::collect_helper_binding_output_uses(
-                    outputs,
-                    fallback,
-                    relative_path,
-                    kind,
-                    active_output_guards,
-                    defaulted_paths,
-                );
-                for (key, value) in entries {
-                    let child_path = output_path::append_relative_path(
-                        relative_path,
-                        &YamlPath(vec![key.clone()]),
-                    );
-                    Self::collect_helper_binding_output_uses(
-                        outputs,
-                        value,
-                        &child_path,
-                        value.output_child_kind(),
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            HelperBinding::Choice(choices) => {
-                for choice in choices {
-                    Self::collect_helper_binding_output_uses(
-                        outputs,
-                        choice,
-                        relative_path,
-                        kind,
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            HelperBinding::List(items) => {
-                let item_path = output_path::sequence_item_path(relative_path);
-                for item in items {
-                    Self::collect_helper_binding_output_uses(
-                        outputs,
-                        item,
-                        &item_path,
-                        item.output_child_kind(),
-                        active_output_guards,
-                        defaulted_paths,
-                    );
-                }
-            }
-            HelperBinding::RootContext | HelperBinding::Unknown => {}
-        }
-    }
-
-    fn collect_helper_binding_output_uses_from_expr(
-        expr: &TemplateExpr,
-        context: HelperOutputExprContext<'_>,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-    ) {
-        if expr_contains_helper_call(expr) {
-            return;
-        }
-
-        if let Some(binding) = binding_from_expr(expr, Some(context.bindings), context.current_dot)
-        {
-            Self::collect_helper_binding_output_uses(
-                outputs,
-                &binding,
-                context.relative_path,
-                context.kind,
-                context.active_output_guards,
-                context.defaulted_paths,
-            );
-            return;
-        }
-
-        match expr {
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    Self::collect_helper_binding_output_uses_from_expr(arg, context, outputs);
-                }
-            }
-            TemplateExpr::Selector { operand, .. } => {
-                Self::collect_helper_binding_output_uses_from_expr(operand, context, outputs);
-            }
-            TemplateExpr::Pipeline(stages) => {
-                for stage in stages {
-                    Self::collect_helper_binding_output_uses_from_expr(stage, context, outputs);
-                }
-            }
-            TemplateExpr::Parenthesized(inner)
-            | TemplateExpr::VariableDefinition { value: inner, .. }
-            | TemplateExpr::Assignment { value: inner, .. } => {
-                Self::collect_helper_binding_output_uses_from_expr(inner, context, outputs);
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
-    }
-
     fn collect_bound_fragment_output_uses_from_items(
         items: &[HelmAst],
         bindings: &HashMap<String, HelperBinding>,
@@ -2044,7 +1270,7 @@ impl<'a> SymbolicWalker<'a> {
                     }
                     let mut defaulted_paths =
                         resolved_default_fallback_paths_for_text(&rhs, Some(bindings), current_dot);
-                    defaulted_paths.extend(Self::local_default_paths_from_text(
+                    defaulted_paths.extend(local_default_paths_from_text(
                         &rhs,
                         state.local_default_paths,
                     ));
@@ -2063,17 +1289,16 @@ impl<'a> SymbolicWalker<'a> {
                 } else {
                     ValueKind::Scalar
                 };
-                let output_path = Self::static_yaml_fragment_output_path(text)
+                let output_path = static_yaml_fragment_output_path(text)
                     .map(|output_path| {
                         output_path::append_relative_path(relative_path, &output_path)
                     })
                     .unwrap_or_else(|| relative_path.clone());
                 let direct_outputs =
-                    Self::direct_bound_paths_from_text_in_context(text, bindings, current_dot);
+                    direct_bound_paths_from_text_in_context(text, bindings, current_dot);
                 let fallback_paths =
                     resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
-                let local_outputs =
-                    Self::local_rendered_paths_from_text(text, state.local_bindings);
+                let local_outputs = local_rendered_paths_from_text(text, state.local_bindings);
                 let handled_outputs: BTreeSet<String> = direct_outputs
                     .iter()
                     .chain(local_outputs.iter())
@@ -2081,7 +1306,7 @@ impl<'a> SymbolicWalker<'a> {
                     .collect();
                 let mut direct_output_uses = Vec::new();
                 for expr in Self::parse_expr_text(text) {
-                    Self::collect_helper_binding_output_uses_from_expr(
+                    collect_helper_binding_output_uses_from_expr(
                         &expr,
                         HelperOutputExprContext {
                             bindings,
@@ -2097,7 +1322,7 @@ impl<'a> SymbolicWalker<'a> {
                 state.outputs.extend(direct_output_uses);
 
                 let local_fallback_paths =
-                    Self::local_default_paths_from_text(text, state.local_default_paths);
+                    local_default_paths_from_text(text, state.local_default_paths);
                 let mut local_output_uses = Vec::new();
                 for expr in Self::parse_expr_text(text) {
                     walk_expr_excluding_helper_call_args(&expr, &mut |node| {
@@ -2120,7 +1345,7 @@ impl<'a> SymbolicWalker<'a> {
                             _ => None,
                         };
                         if let Some(binding) = binding {
-                            Self::collect_fragment_binding_output_uses(
+                            collect_fragment_binding_output_uses(
                                 &mut local_output_uses,
                                 &binding,
                                 &output_path,
@@ -2149,10 +1374,7 @@ impl<'a> SymbolicWalker<'a> {
                     .fragment_output_uses
                     .iter()
                     .filter(|output| {
-                        Self::expression_output_use_is_keyed_map_projection(
-                            output,
-                            &empty_output_path,
-                        )
+                        expression_output_use_is_keyed_map_projection(output, &empty_output_path)
                     })
                     .map(|output| output.source_expr.clone())
                     .collect();
@@ -2175,7 +1397,7 @@ impl<'a> SymbolicWalker<'a> {
                         state.context,
                         &mut expression_seen,
                     ) {
-                        Self::collect_helper_binding_output_uses(
+                        collect_helper_binding_output_uses(
                             &mut expression_output_uses,
                             &binding,
                             &output_path,
@@ -2186,7 +1408,7 @@ impl<'a> SymbolicWalker<'a> {
                     }
                 }
                 expression_output_uses.retain(|output| {
-                    Self::expression_output_use_is_keyed_map_projection(output, &output_path)
+                    expression_output_use_is_keyed_map_projection(output, &output_path)
                 });
                 let expression_descendant_sources: BTreeSet<String> = expression_output_uses
                     .iter()
@@ -2214,8 +1436,8 @@ impl<'a> SymbolicWalker<'a> {
                     {
                         continue;
                     }
-                    let meta = Self::helper_output_meta_with_guards(meta, active_output_guards);
-                    Self::push_helper_fragment_output(
+                    let meta = helper_output_meta_with_guards(meta, active_output_guards);
+                    push_helper_fragment_output(
                         state.outputs,
                         source_expr,
                         relative_path,
@@ -2233,11 +1455,9 @@ impl<'a> SymbolicWalker<'a> {
                     {
                         continue;
                     }
-                    let meta = Self::helper_output_meta_with_guards(
-                        nested_output.meta,
-                        active_output_guards,
-                    );
-                    Self::push_helper_fragment_output(
+                    let meta =
+                        helper_output_meta_with_guards(nested_output.meta, active_output_guards);
+                    push_helper_fragment_output(
                         state.outputs,
                         nested_output.source_expr,
                         &output_path::append_relative_path(
@@ -2255,11 +1475,8 @@ impl<'a> SymbolicWalker<'a> {
                 else_branch,
             } => {
                 let mut branch_guard_paths =
-                    Self::direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(
-                    cond,
-                    state.local_bindings,
-                ));
+                    direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
+                branch_guard_paths.extend(local_bound_paths_from_text(cond, state.local_bindings));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     cond,
                     Some(bindings),
@@ -2319,11 +1536,9 @@ impl<'a> SymbolicWalker<'a> {
                 else_branch,
             } => {
                 let mut branch_guard_paths =
-                    Self::direct_bound_paths_from_text_in_context(header, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(
-                    header,
-                    state.local_bindings,
-                ));
+                    direct_bound_paths_from_text_in_context(header, bindings, current_dot);
+                branch_guard_paths
+                    .extend(local_bound_paths_from_text(header, state.local_bindings));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     header,
                     Some(bindings),
@@ -2385,11 +1600,9 @@ impl<'a> SymbolicWalker<'a> {
                 else_branch,
             } => {
                 let mut branch_guard_paths =
-                    Self::direct_bound_paths_from_text_in_context(header, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(
-                    header,
-                    state.local_bindings,
-                ));
+                    direct_bound_paths_from_text_in_context(header, bindings, current_dot);
+                branch_guard_paths
+                    .extend(local_bound_paths_from_text(header, state.local_bindings));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     header,
                     Some(bindings),
@@ -2726,174 +1939,6 @@ impl<'a> SymbolicWalker<'a> {
         analysis
     }
 
-    fn direct_bound_paths_from_text_in_context(
-        text: &str,
-        bindings: &HashMap<String, HelperBinding>,
-        current_dot: Option<&HelperBinding>,
-    ) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        for expr in Self::parse_expr_text(text) {
-            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-                if expr_contains_helper_call(node) {
-                    return;
-                }
-                if let Some(binding) = binding_from_expr(node, Some(bindings), current_dot) {
-                    out.extend(binding.paths());
-                }
-            });
-        }
-        out
-    }
-
-    fn local_bound_paths_from_text(
-        text: &str,
-        locals: &HashMap<String, FragmentBinding>,
-    ) -> BTreeSet<String> {
-        Self::local_paths_from_text(text, locals, FragmentBinding::paths)
-    }
-
-    fn local_rendered_paths_from_text(
-        text: &str,
-        locals: &HashMap<String, FragmentBinding>,
-    ) -> BTreeSet<String> {
-        Self::local_paths_from_text(text, locals, FragmentBinding::rendered_paths)
-    }
-
-    fn local_paths_from_text(
-        text: &str,
-        locals: &HashMap<String, FragmentBinding>,
-        extract_paths: fn(&FragmentBinding) -> BTreeSet<String>,
-    ) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        for expr in Self::parse_expr_text(text) {
-            walk_expr_excluding_helper_call_args(&expr, &mut |node| match node {
-                TemplateExpr::Variable(var) if !var.is_empty() => {
-                    if let Some(binding) = locals.get(var) {
-                        out.extend(extract_paths(binding));
-                    }
-                }
-                TemplateExpr::Selector { operand, path } => {
-                    let TemplateExpr::Variable(var) = operand.as_ref() else {
-                        return;
-                    };
-                    if var.is_empty() {
-                        return;
-                    }
-                    if let Some(binding) = locals.get(var)
-                        && let Some(bound) = binding.apply_to_binding(path)
-                    {
-                        out.extend(extract_paths(&bound));
-                    }
-                }
-                _ => {}
-            });
-        }
-        out
-    }
-
-    fn local_default_paths_from_text(
-        text: &str,
-        local_default_paths: &HashMap<String, BTreeSet<String>>,
-    ) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        for expr in Self::parse_expr_text(text) {
-            expr.walk(|node| {
-                let TemplateExpr::Variable(var) = node else {
-                    return;
-                };
-                if var.is_empty() {
-                    return;
-                }
-                if let Some(paths) = local_default_paths.get(var) {
-                    out.extend(paths.iter().cloned());
-                }
-            });
-        }
-        out
-    }
-
-    fn local_output_meta_from_text(
-        text: &str,
-        local_bindings: &HashMap<String, FragmentBinding>,
-        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    ) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-        for expr in Self::parse_expr_text(text) {
-            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-                for (path, meta) in
-                    Self::local_output_meta_from_expr(node, local_bindings, local_output_meta)
-                {
-                    let entry = out.entry(path).or_default();
-                    entry.guards.extend(meta.guards);
-                    entry.defaulted |= meta.defaulted;
-                }
-            });
-        }
-        out
-    }
-
-    fn local_output_meta_from_expr(
-        expr: &TemplateExpr,
-        local_bindings: &HashMap<String, FragmentBinding>,
-        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    ) -> BTreeMap<String, HelperOutputMeta> {
-        match expr {
-            TemplateExpr::Variable(var) if !var.is_empty() => {
-                local_output_meta.get(var).cloned().unwrap_or_default()
-            }
-            TemplateExpr::Selector { operand, path } => {
-                let TemplateExpr::Variable(var) = operand.as_ref() else {
-                    return BTreeMap::new();
-                };
-                if var.is_empty() {
-                    return BTreeMap::new();
-                }
-                let Some(binding) = local_bindings.get(var) else {
-                    return BTreeMap::new();
-                };
-                let Some(bound) = binding.apply_to_binding(path) else {
-                    return BTreeMap::new();
-                };
-                let selected_paths = FragmentBinding::paths(&bound);
-                local_output_meta
-                    .get(var)
-                    .into_iter()
-                    .flat_map(|meta_by_path| meta_by_path.iter())
-                    .filter(|(path, _meta)| selected_paths.contains(*path))
-                    .map(|(path, meta)| (path.clone(), meta.clone()))
-                    .collect()
-            }
-            _ => BTreeMap::new(),
-        }
-    }
-
-    fn helper_output_meta_from_analysis(
-        analysis: &BoundHelperAnalysis,
-    ) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = analysis.output.clone();
-        for output in &analysis.fragment_output_uses {
-            let entry = out.entry(output.source_expr.clone()).or_default();
-            entry.guards.extend(output.meta.guards.iter().cloned());
-            entry.defaulted |= output.meta.defaulted;
-        }
-        for path in &analysis.fragment_output {
-            out.entry(path.clone()).or_default();
-        }
-        out
-    }
-
-    fn helper_dependency_meta_from_analysis(
-        analysis: &BoundHelperAnalysis,
-    ) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = analysis.dependency_meta.clone();
-        for (path, meta) in Self::helper_output_meta_from_analysis(analysis) {
-            let entry = out.entry(path).or_default();
-            entry.guards.extend(meta.guards);
-            entry.defaulted |= meta.defaulted;
-        }
-        out
-    }
-
     /// Walk a helper's AST node collecting bound helper values.
     ///
     /// `current_dot` tracks the value the current `.` resolves to as
@@ -2984,12 +2029,11 @@ impl<'a> SymbolicWalker<'a> {
                     let fallback_paths =
                         resolved_default_fallback_paths_for_text(&rhs, Some(bindings), current_dot);
                     let direct_outputs =
-                        Self::direct_bound_paths_from_text_in_context(&rhs, bindings, current_dot);
+                        direct_bound_paths_from_text_in_context(&rhs, bindings, current_dot);
                     let local_fallback_paths =
-                        Self::local_default_paths_from_text(&rhs, state.local_default_paths);
-                    let local_outputs =
-                        Self::local_bound_paths_from_text(&rhs, state.local_bindings);
-                    let local_meta_by_path = Self::local_output_meta_from_text(
+                        local_default_paths_from_text(&rhs, state.local_default_paths);
+                    let local_outputs = local_bound_paths_from_text(&rhs, state.local_bindings);
+                    let local_meta_by_path = local_output_meta_from_text(
                         &rhs,
                         state.local_bindings,
                         state.local_output_meta,
@@ -3019,9 +2063,9 @@ impl<'a> SymbolicWalker<'a> {
                         .analysis
                         .dependency_paths
                         .extend(bound_helper_dependency_paths(&nested));
-                    state.analysis.add_dependency_meta_map(
-                        Self::helper_dependency_meta_from_analysis(&nested),
-                    );
+                    state
+                        .analysis
+                        .add_dependency_meta_map(helper_dependency_meta_from_analysis(&nested));
 
                     let mut rhs_output_meta: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
                     for output in &direct_outputs {
@@ -3037,8 +2081,8 @@ impl<'a> SymbolicWalker<'a> {
                         entry.guards.extend(meta.guards);
                         entry.defaulted |= meta.defaulted;
                     }
-                    for (output, meta) in Self::helper_output_meta_from_analysis(&nested) {
-                        let meta = Self::helper_output_meta_with_guards(meta, active_output_guards);
+                    for (output, meta) in helper_output_meta_from_analysis(&nested) {
+                        let meta = helper_output_meta_with_guards(meta, active_output_guards);
                         let entry = rhs_output_meta.entry(output).or_default();
                         entry.guards.extend(meta.guards);
                         entry.defaulted |= meta.defaulted;
@@ -3101,7 +2145,7 @@ impl<'a> SymbolicWalker<'a> {
                 }
 
                 let direct_outputs =
-                    Self::direct_bound_paths_from_text_in_context(text, bindings, current_dot);
+                    direct_bound_paths_from_text_in_context(text, bindings, current_dot);
                 let fallback_paths =
                     resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
                 extend_type_hints(
@@ -3112,11 +2156,10 @@ impl<'a> SymbolicWalker<'a> {
                     &mut state.analysis.type_hints,
                     resolved_string_transform_paths_for_text(text, Some(bindings), current_dot),
                 );
-                let local_outputs =
-                    Self::local_rendered_paths_from_text(text, state.local_bindings);
+                let local_outputs = local_rendered_paths_from_text(text, state.local_bindings);
                 let local_fallback_paths =
-                    Self::local_default_paths_from_text(text, state.local_default_paths);
-                let local_meta_by_path = Self::local_output_meta_from_text(
+                    local_default_paths_from_text(text, state.local_default_paths);
+                let local_meta_by_path = local_output_meta_from_text(
                     text,
                     state.local_bindings,
                     state.local_output_meta,
@@ -3157,7 +2200,7 @@ impl<'a> SymbolicWalker<'a> {
                         state.analysis.add_output_meta(output, meta);
                     }
                     for output in nested.fragment_output {
-                        Self::push_helper_fragment_output(
+                        push_helper_fragment_output(
                             &mut state.analysis.fragment_output_uses,
                             output,
                             &empty_path,
@@ -3203,11 +2246,8 @@ impl<'a> SymbolicWalker<'a> {
                 else_branch,
             } => {
                 let mut branch_guard_paths =
-                    Self::direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(
-                    cond,
-                    state.local_bindings,
-                ));
+                    direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
+                branch_guard_paths.extend(local_bound_paths_from_text(cond, state.local_bindings));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     cond,
                     Some(bindings),
@@ -3281,11 +2321,9 @@ impl<'a> SymbolicWalker<'a> {
             } => {
                 let is_with = matches!(node, HelmAst::With { .. });
                 let mut branch_guard_paths =
-                    Self::direct_bound_paths_from_text_in_context(header, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(
-                    header,
-                    state.local_bindings,
-                ));
+                    direct_bound_paths_from_text_in_context(header, bindings, current_dot);
+                branch_guard_paths
+                    .extend(local_bound_paths_from_text(header, state.local_bindings));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     header,
                     Some(bindings),
@@ -3445,7 +2483,7 @@ impl<'a> SymbolicWalker<'a> {
         let [expr] = exprs.as_slice() else {
             return None;
         };
-        // Bare `.Values` — `single_resolved_values_path` returns None
+        // Bare `.Values` resolves to the values root rather than a concrete descendant path.
         // for this because the strict path extractor requires at least
         // one segment after `Values`. Treat it as a Values-root binding
         // so the body's `.X` resolves to `.Values.X`.
@@ -3463,7 +2501,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn collect_if_with_guards(&mut self, cond_text: &str) {
-        let cond_guards = self.condition_guards_in_context(cond_text);
+        let cond_guards = self.value_path_context().condition_guards(cond_text);
 
         for v in extract_bound_values(cond_text, &self.range_domains, &self.get_bindings) {
             self.emit_use(v, YamlPath(Vec::new()), ValueKind::Scalar);
@@ -3485,7 +2523,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn collect_with_guards(&mut self, cond_text: &str) {
-        let cond_guards = self.condition_guards_in_context(cond_text);
+        let cond_guards = self.value_path_context().condition_guards(cond_text);
 
         // In a `with` block, every path that contributes to the binding is
         // null-tolerant (`with nil` skips the body). Tag each such path with
@@ -3583,7 +2621,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn range_source_paths(&self, header_text: &str) -> Vec<String> {
-        self.resolved_values_paths_in_context(header_text)
+        self.value_path_context().resolved_values_paths(header_text)
     }
 
     fn range_header_text(&self, node: tree_sitter::Node<'_>) -> Option<String> {
@@ -3645,7 +2683,8 @@ impl<'a> SymbolicWalker<'a> {
             break;
         }
 
-        self.single_direct_iterable_range_path(txt)
+        self.value_path_context()
+            .single_direct_iterable_range_path(txt)
     }
 
     fn walk(&mut self, node: tree_sitter::Node<'_>) {
@@ -3734,7 +2773,9 @@ impl<'a> SymbolicWalker<'a> {
                 ) {
                     self.template_bindings.insert(var.clone(), binding);
                 }
-                let default_paths = self.resolved_default_fallback_paths_in_context(&rhs);
+                let default_paths = self
+                    .value_path_context()
+                    .resolved_default_fallback_paths(&rhs);
                 if default_paths.is_empty() {
                     self.template_default_paths.remove(&var);
                 } else {

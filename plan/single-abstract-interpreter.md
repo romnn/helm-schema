@@ -400,6 +400,14 @@ Current result:
   structural instead of relying on string matching.
 - `helper_binding_eval::binding_from_expr` is now a compatibility shim over
   `eval_expr` plus `AbstractValue -> HelperBinding` conversion.
+- `symbolic.rs` no longer owns local projection, helper output projection, or
+  value-path/guard context resolution. Those compatibility responsibilities now
+  live in focused modules:
+  - `local_projection.rs`
+  - `helper_output_projection.rs`
+  - `value_path_context.rs`
+  This keeps `SymbolicWalker` closer to traversal/orchestration while the
+  shared interpreter absorbs expression semantics.
 - Full `FragmentBinding` migration is intentionally not complete yet because
   fragments still carry string literal sets and rendered-output semantics that
   should become first-class `AbstractValue` / `Effects` concepts before the old
