@@ -1,4 +1,6 @@
 mod abstract_eval;
+mod binding;
+mod helper_analysis;
 pub mod helper_eval;
 mod rendered_yaml_context;
 pub mod required_inference;
