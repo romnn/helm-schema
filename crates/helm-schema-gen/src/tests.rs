@@ -2734,11 +2734,10 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
-    assert_eq!(
+    assert!(
         schema
             .pointer("/properties/ingress/properties/className")
             .is_some(),
-        true,
         "helper body should propagate ingress.className, got {schema}"
     );
     assert!(
@@ -2828,11 +2827,10 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
 
-    assert_eq!(
+    assert!(
         schema
             .pointer("/properties/ingress/properties/className")
             .is_some(),
-        true,
         "with-bound dot helper call should propagate ingress.className, got {schema}"
     );
     assert!(

@@ -546,10 +546,7 @@ pub fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {
 
         if inner == "end" || inner.starts_with("end ") || inner.starts_with("end\t") {
             depth = depth.saturating_sub(1);
-            if let Some(open) = stack.last()
-                && open.depth_when_opened == depth
-            {
-                let opened = stack.pop().expect("stack non-empty");
+            if let Some(opened) = stack.pop_if(|open| open.depth_when_opened == depth) {
                 let body = src
                     .get(opened.body_start..action_match.start())
                     .unwrap_or("")

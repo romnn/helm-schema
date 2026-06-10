@@ -1,17 +1,19 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
 
+use crate::abstract_value::AbstractValue;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::define_body_cache::DefineBodyCache;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::{eval_expr, literal_printf_format, render_printf_string_sets};
 use crate::fragment_binding_eval::{
     fragment_binding_from_helper_analysis, helper_binding_from_helper_analysis,
 };
 use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding_eval::binding_from_expr;
-use crate::template_expr_analysis::is_merge_function;
+use crate::template_expr_analysis::{expr_contains_helper_call, is_merge_function};
 use crate::template_expr_cache::parse_expr_text;
-use crate::walker::values_path_from_expr;
 
 pub(crate) type AnalyzeBoundHelperCall<'a> = fn(
     &str,
@@ -308,29 +310,16 @@ pub(crate) fn fragment_binding_from_expr(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Option<FragmentBinding> {
-    if let Some(path) = values_path_from_expr(expr) {
-        return Some(FragmentBinding::ValuesPath(path));
+    if !expr_contains_helper_call(expr)
+        && let Some(binding) = shared_fragment_binding_from_expr(expr, locals, current_dot)
+    {
+        return Some(binding);
     }
 
     match expr {
-        TemplateExpr::Literal(Literal::String(value)) => Some(FragmentBinding::StringSet(
-            [value.clone()].into_iter().collect(),
-        )),
         TemplateExpr::Parenthesized(inner) => {
             fragment_binding_from_expr(inner, locals, current_dot, context, seen)
         }
-        TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            Some(FragmentBinding::ValuesPath(path[1..].join(".")))
-        }
-        TemplateExpr::Field(path) if path.is_empty() => {
-            current_dot.cloned().or(Some(FragmentBinding::RootContext))
-        }
-        TemplateExpr::Field(path) => {
-            let dot = current_dot?;
-            dot.apply_to_binding(path)
-        }
-        TemplateExpr::Variable(var) if var.is_empty() => Some(FragmentBinding::RootContext),
-        TemplateExpr::Variable(var) => locals.get(var).cloned(),
         TemplateExpr::Selector { operand, path } => {
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && var.is_empty()
@@ -437,10 +426,8 @@ pub(crate) fn fragment_binding_from_expr(
             fragment_binding_from_expr(args.last()?, locals, current_dot, context, seen)
         }
         TemplateExpr::Call { function, args } if function == "printf" => {
-            let TemplateExpr::Literal(Literal::String(format)) = args.first()? else {
-                return None;
-            };
-            let mut rendered: BTreeSet<String> = [format.clone()].into_iter().collect();
+            let format = literal_printf_format(args)?;
+            let mut arg_strings = Vec::new();
             for arg in &args[1..] {
                 let strings = FragmentBinding::strings(&fragment_binding_from_expr(
                     arg,
@@ -452,15 +439,12 @@ pub(crate) fn fragment_binding_from_expr(
                 if strings.is_empty() {
                     return None;
                 }
-                let mut next = BTreeSet::new();
-                for current in &rendered {
-                    for value in &strings {
-                        next.insert(current.replacen("%s", value, 1));
-                    }
-                }
-                rendered = next;
+                arg_strings.push(strings);
             }
-            Some(FragmentBinding::StringSet(rendered))
+            Some(FragmentBinding::StringSet(render_printf_string_sets(
+                format,
+                &arg_strings,
+            )?))
         }
         TemplateExpr::Call { function, args } if function == "index" => {
             let base =
@@ -606,6 +590,18 @@ pub(crate) fn fragment_binding_from_expr(
         }
         _ => None,
     }
+}
+
+fn shared_fragment_binding_from_expr(
+    expr: &TemplateExpr,
+    locals: &HashMap<String, FragmentBinding>,
+    current_dot: Option<&FragmentBinding>,
+) -> Option<FragmentBinding> {
+    let env = EvalEnv::from_fragment_context(locals, current_dot);
+    eval_expr(expr, &env)
+        .value
+        .as_ref()
+        .and_then(AbstractValue::to_fragment_binding)
 }
 
 pub(crate) fn fragment_binding_from_text(

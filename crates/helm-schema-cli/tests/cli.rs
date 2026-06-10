@@ -8,6 +8,31 @@ fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
     e.into()
 }
 
+fn schema_accepts_type(schema: &serde_json::Value, schema_type: &str) -> bool {
+    (match schema.get("type") {
+        Some(serde_json::Value::String(value)) => value == schema_type,
+        Some(serde_json::Value::Array(values)) => values
+            .iter()
+            .any(|value| value.as_str() == Some(schema_type)),
+        _ => false,
+    }) || schema
+        .get("anyOf")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|variants| {
+            variants
+                .iter()
+                .any(|variant| schema_accepts_type(variant, schema_type))
+        })
+        || schema
+            .get("oneOf")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|variants| {
+                variants
+                    .iter()
+                    .any(|variant| schema_accepts_type(variant, schema_type))
+            })
+}
+
 #[test]
 fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     let cli =
@@ -374,6 +399,89 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
     });
 
     similar_asserts::assert_eq!(actual, expected);
+    Ok(())
+}
+
+#[test]
+fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        indoc! {"
+            image:
+              repository: example/app
+              tag: latest
+              digest:
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/_helpers.tpl")?,
+        indoc! {r#"
+            {{- define "child.image" }}
+              {{- if .digest }}
+              image: {{ printf "%s@%s" .repository .digest | quote }}
+              {{- else }}
+              image: {{ printf "%s:%s" .repository .tag | quote }}
+              {{- end }}
+            {{- end }}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/configmap.yaml")?,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: child
+            data:
+              {{- include "child.image" .Values.image | nindent 2 }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let digest = actual
+        .pointer("/properties/kid/properties/image/properties/digest")
+        .ok_or_else(|| eyre!("missing kid.image.digest schema: {actual}"))?;
+    assert!(
+        schema_accepts_type(digest, "string"),
+        "kid.image.digest should keep the string evidence from printf, got {digest}"
+    );
+    assert!(
+        schema_accepts_type(digest, "null"),
+        "kid.image.digest should still accept the explicit null default from subchart values.yaml, got {digest}"
+    );
+
     Ok(())
 }
 
@@ -1048,7 +1156,12 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
-            "other": {},
+            "other": {
+                "anyOf": [
+                    { "type": "null" },
+                    { "type": "string" }
+                ]
+            },
             "serviceAccount": {
                 "additionalProperties": false,
                 "properties": {

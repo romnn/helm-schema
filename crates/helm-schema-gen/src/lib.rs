@@ -649,8 +649,13 @@ fn build_root_schema(
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
 
-        let path_is_nullable =
-            path_metadata.nullable_paths.contains(&vp) || type_hints.contains_key(&vp);
+        let has_explicit_null_scalar_default = values_yaml_info
+            .is_some_and(|path_info| path_info.is_explicit_null)
+            && (is_scalar_like_schema(&type_hint_schema)
+                || is_scalar_like_schema(&guard_constraint_schema));
+        let path_is_nullable = path_metadata.nullable_paths.contains(&vp)
+            || type_hints.contains_key(&vp)
+            || has_explicit_null_scalar_default;
         let preserve_explicit_null_default = path_is_nullable
             && values_yaml_info.is_some_and(|path_info| path_info.is_explicit_null);
         let preserve_empty_string_fallback = values_yaml_info

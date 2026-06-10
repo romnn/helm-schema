@@ -21,14 +21,16 @@ pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
             EvalResult::from_value(env.dot.clone().unwrap_or(AbstractValue::RootContext))
         }
         TemplateExpr::Field(path) => {
-            let value = path
-                .split_first()
-                .and_then(|(head, tail)| {
-                    env.root_fields
-                        .get(head)
-                        .and_then(|value| value.apply_to_path(tail))
-                })
-                .or_else(|| env.dot.as_ref().and_then(|value| value.apply_to_path(path)));
+            let value = env.dot.as_ref().and_then(|value| value.apply_to_path(path));
+            let value = value.or_else(|| {
+                if !env.allow_field_root_lookup {
+                    return None;
+                }
+                let (head, tail) = path.split_first()?;
+                env.root_fields
+                    .get(head)
+                    .and_then(|value| value.apply_to_path(tail))
+            });
             value
                 .map(EvalResult::from_value)
                 .unwrap_or_else(EvalResult::none)
@@ -53,6 +55,16 @@ pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
             .map(EvalResult::from_value)
             .unwrap_or_else(EvalResult::none),
         TemplateExpr::Selector { operand, path } => {
+            if let TemplateExpr::Variable(var) = operand.as_ref()
+                && var.is_empty()
+                && let Some((head, tail)) = path.split_first()
+                && let Some(value) = env
+                    .root_fields
+                    .get(head)
+                    .and_then(|value| value.apply_to_path(tail))
+            {
+                return EvalResult::from_value(value);
+            }
             let base = eval_expr(operand, env);
             let value = base
                 .value
@@ -66,6 +78,11 @@ pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
         }
         TemplateExpr::Call { function, args } => eval_call(function, args, env),
         TemplateExpr::Pipeline(stages) => eval_pipeline(stages, env),
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+            EvalResult::from_value(AbstractValue::StringSet(
+                [value.clone()].into_iter().collect(),
+            ))
+        }
         TemplateExpr::Literal(_)
         | TemplateExpr::Variable(_)
         | TemplateExpr::Unknown(_)
@@ -145,6 +162,7 @@ fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult
             }
             EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
         }
+        "append" => eval_append(args, env),
         function if is_merge_function(function) => {
             let mut values = Vec::new();
             let mut effects = Effects::default();
@@ -183,6 +201,7 @@ fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult
             }
             EvalResult::with_effects(AbstractValue::choice(values), effects)
         }
+        "printf" => eval_printf(args, env),
         "index" => eval_index(args, env),
         "typeIs" if args.len() >= 2 => {
             let mut result = eval_all_args(args, env);
@@ -219,24 +238,192 @@ fn eval_index(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     };
     let base = eval_expr(base_expr, env);
     let mut effects = base.effects;
-    let Some(mut value) = base.value else {
+    let Some(value) = base.value else {
         return EvalResult::with_effects(None, effects);
     };
 
+    let mut values = vec![value];
     for arg in &args[1..] {
         let arg_result = eval_expr(arg, env);
         effects.merge(arg_result.effects);
-        let Some(segment) = literal_path_segment(arg) else {
+        let Some(options) = path_segment_options(arg, arg_result.value.as_ref()) else {
             return EvalResult::with_effects(None, effects);
         };
-        let Some(next) = value.apply_to_path(&[segment]) else {
-            return EvalResult::with_effects(None, effects);
-        };
-        value = next;
+        let mut next_values = Vec::new();
+        for value in &values {
+            for segment in &options {
+                if let Some(next) = value.apply_to_path(std::slice::from_ref(segment)) {
+                    next_values.push(next);
+                }
+            }
+        }
+        values = next_values;
     }
 
-    effects.reads.extend(value.paths());
-    EvalResult::with_effects(Some(value), effects)
+    let value = AbstractValue::choice(values);
+    if let Some(value) = &value {
+        effects.reads.extend(value.paths());
+    }
+    EvalResult::with_effects(value, effects)
+}
+
+fn eval_append(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut items = match args.first().map(|expr| eval_expr(expr, env)) {
+        Some(result) => {
+            effects.merge(result.effects);
+            match result.value {
+                Some(AbstractValue::List(items)) => items,
+                Some(value) => vec![value],
+                None => Vec::new(),
+            }
+        }
+        None => Vec::new(),
+    };
+    for arg in &args[1..] {
+        let result = eval_expr(arg, env);
+        effects.merge(result.effects);
+        if let Some(value) = result.value {
+            items.push(value);
+        }
+    }
+    EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
+}
+
+fn eval_printf(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut provenance_paths = BTreeSet::new();
+    let mut values = Vec::with_capacity(args.len());
+
+    for arg in args {
+        let result = eval_expr(arg, env);
+        provenance_paths.extend(value_paths(&result.value));
+        effects.merge(result.effects);
+        values.push(result.value);
+    }
+
+    let rendered = literal_printf_format(args).and_then(|format| {
+        let arg_strings = values
+            .iter()
+            .skip(1)
+            .map(|value| {
+                value
+                    .as_ref()
+                    .map(AbstractValue::strings)
+                    .unwrap_or_default()
+            })
+            .collect::<Vec<_>>();
+        render_printf_string_sets(format, &arg_strings)
+    });
+
+    effects.add_string_hints(provenance_paths.clone());
+    let mut values = Vec::new();
+    if let Some(rendered) = rendered {
+        values.push(AbstractValue::StringSet(rendered));
+    }
+    if !provenance_paths.is_empty() {
+        values.push(AbstractValue::PathSet(provenance_paths));
+    }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+pub(crate) fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
+    match args.first()?.deparen() {
+        TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) => {
+            Some(format.as_str())
+        }
+        _ => None,
+    }
+}
+
+pub(crate) fn render_printf_string_sets(
+    format: &str,
+    arg_strings: &[BTreeSet<String>],
+) -> Option<BTreeSet<String>> {
+    let parts = parse_supported_printf_format(format)?;
+    let substitutions = parts
+        .iter()
+        .filter(|part| matches!(part, PrintfPart::Substitution))
+        .count();
+    if substitutions != arg_strings.len() {
+        return None;
+    }
+
+    let mut rendered: BTreeSet<String> = [String::new()].into_iter().collect();
+    let mut arg_index = 0usize;
+    for part in parts {
+        match part {
+            PrintfPart::Literal(literal) => {
+                rendered = rendered
+                    .into_iter()
+                    .map(|mut current| {
+                        current.push_str(literal);
+                        current
+                    })
+                    .collect();
+            }
+            PrintfPart::Substitution => {
+                let strings = arg_strings.get(arg_index)?;
+                if strings.is_empty() {
+                    return None;
+                }
+                let mut next = BTreeSet::new();
+                for current in &rendered {
+                    for value in strings {
+                        let mut rendered_value = current.clone();
+                        rendered_value.push_str(value);
+                        next.insert(rendered_value);
+                    }
+                }
+                rendered = next;
+                arg_index += 1;
+            }
+        }
+    }
+    Some(rendered)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PrintfPart<'a> {
+    Literal(&'a str),
+    Substitution,
+}
+
+fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
+    let mut parts = Vec::new();
+    let mut literal_start = 0usize;
+    let bytes = format.as_bytes();
+    let mut index = 0usize;
+    while index < bytes.len() {
+        if bytes[index] != b'%' {
+            index += 1;
+            continue;
+        }
+
+        if literal_start < index {
+            parts.push(PrintfPart::Literal(format.get(literal_start..index)?));
+        }
+
+        match *bytes.get(index + 1)? {
+            b'%' => {
+                parts.push(PrintfPart::Literal("%"));
+                index += 2;
+                literal_start = index;
+            }
+            b's' => {
+                parts.push(PrintfPart::Substitution);
+                index += 2;
+                literal_start = index;
+            }
+            _ => return None,
+        }
+    }
+
+    if literal_start < format.len() {
+        parts.push(PrintfPart::Literal(format.get(literal_start..)?));
+    }
+
+    Some(parts)
 }
 
 fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
@@ -323,13 +510,25 @@ fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
     value.as_ref().map(AbstractValue::paths).unwrap_or_default()
 }
 
-fn literal_path_segment(expr: &TemplateExpr) -> Option<String> {
+fn path_segment_options(
+    expr: &TemplateExpr,
+    evaluated_value: Option<&AbstractValue>,
+) -> Option<Vec<String>> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            Some(value.clone())
+            Some(vec![value.clone()])
         }
-        TemplateExpr::Literal(Literal::Int(value)) => Some(value.to_string()),
-        _ => None,
+        TemplateExpr::Literal(Literal::Int(value)) => Some(vec![value.to_string()]),
+        _ => {
+            let strings = evaluated_value
+                .map(AbstractValue::strings)
+                .unwrap_or_default();
+            if strings.is_empty() {
+                None
+            } else {
+                Some(strings.into_iter().collect())
+            }
+        }
     }
 }
 
@@ -403,6 +602,42 @@ mod tests {
     }
 
     #[test]
+    fn printf_exact_rendering_only_accepts_supported_string_formats() {
+        let values = [BTreeSet::from(["x".to_string()])];
+
+        assert_eq!(
+            render_printf_string_sets("prefix-%s-%%", &values),
+            Some(BTreeSet::from(["prefix-x-%".to_string()]))
+        );
+        assert_eq!(render_printf_string_sets("%d", &values), None);
+        assert_eq!(
+            render_printf_string_sets("literal", &[BTreeSet::from(["unused".to_string()])]),
+            None
+        );
+        assert_eq!(render_printf_string_sets("%s-%s", &values), None);
+    }
+
+    #[test]
+    fn unsupported_printf_format_preserves_string_hint_without_exact_string() {
+        let expr = single_expr(r#"printf "%d" .Values.count"#);
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert!(
+            result.effects.string_hints.contains("count"),
+            "unsupported printf formats still prove scalar string-context use"
+        );
+        assert!(
+            result
+                .value
+                .as_ref()
+                .map(AbstractValue::strings)
+                .unwrap_or_default()
+                .is_empty(),
+            "unsupported printf formats must not synthesize exact strings"
+        );
+    }
+
+    #[test]
     fn helper_argument_fields_resolve_from_dot_root() {
         let expr = single_expr(r#"default "generated" .config.name"#);
         let env = EvalEnv {
@@ -410,6 +645,7 @@ mod tests {
                 "config".to_string(),
                 AbstractValue::ValuesPath("serviceAccount".to_string()),
             )]),
+            allow_field_root_lookup: true,
             ..EvalEnv::default()
         };
 

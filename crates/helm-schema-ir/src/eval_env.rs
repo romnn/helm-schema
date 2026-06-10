@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::abstract_value::AbstractValue;
-use crate::binding::HelperBinding;
+use crate::binding::{FragmentBinding, HelperBinding};
 
 /// Abstract interpreter environment for Helm expression evaluation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -9,6 +9,7 @@ pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) root_fields: HashMap<String, AbstractValue>,
     pub(crate) locals: HashMap<String, AbstractValue>,
+    pub(crate) allow_field_root_lookup: bool,
 }
 
 impl EvalEnv {
@@ -29,6 +30,23 @@ impl EvalEnv {
                 })
                 .unwrap_or_default(),
             locals: HashMap::new(),
+            allow_field_root_lookup: true,
+        }
+    }
+
+    pub(crate) fn from_fragment_context(
+        locals: &HashMap<String, FragmentBinding>,
+        current_dot: Option<&FragmentBinding>,
+    ) -> Self {
+        let locals: HashMap<String, AbstractValue> = locals
+            .iter()
+            .map(|(name, binding)| (name.clone(), AbstractValue::from_fragment_binding(binding)))
+            .collect();
+        Self {
+            dot: current_dot.map(AbstractValue::from_fragment_binding),
+            root_fields: locals.clone(),
+            locals,
+            allow_field_root_lookup: false,
         }
     }
 }

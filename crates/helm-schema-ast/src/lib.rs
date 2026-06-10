@@ -6,7 +6,7 @@ pub use expr::{Literal, TemplateExpr, parse_action_expressions};
 pub use tree_sitter_parser::TreeSitterParser;
 pub use values_comments::extract_values_yaml_descriptions;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, hash_map::Entry};
 use std::fmt::Write;
 
 #[derive(Debug, thiserror::Error)]
@@ -261,7 +261,7 @@ impl DefineIndex {
 
     pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str)> {
         let mut entries: Vec<_> = self.files.iter().collect();
-        entries.sort_by(|(left_path, _), (right_path, _)| left_path.cmp(right_path));
+        entries.sort_by_key(|(path, _)| *path);
         entries
             .into_iter()
             .map(|(path, src)| (path.as_str(), src.as_str()))
@@ -279,8 +279,8 @@ impl DefineIndex {
             let mut index = self.files.len();
             loop {
                 let path = format!("<inline:{index}>");
-                if !self.files.contains_key(&path) {
-                    self.files.insert(path, src.to_string());
+                if let Entry::Vacant(entry) = self.files.entry(path) {
+                    entry.insert(src.to_string());
                     break;
                 }
                 index += 1;

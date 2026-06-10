@@ -146,6 +146,33 @@ struct SymbolicWalker<'a> {
     chart_value_defaults: BTreeSet<String>,
 }
 
+#[derive(Clone, Copy)]
+struct HelperOutputExprContext<'a> {
+    bindings: &'a HashMap<String, HelperBinding>,
+    current_dot: Option<&'a HelperBinding>,
+    relative_path: &'a YamlPath,
+    kind: ValueKind,
+    active_output_guards: &'a BTreeSet<String>,
+    defaulted_paths: &'a BTreeSet<String>,
+}
+
+struct FragmentOutputWalkState<'context, 'state> {
+    local_bindings: &'state mut HashMap<String, FragmentBinding>,
+    local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
+    context: FragmentEvalContext<'context>,
+    seen: &'state mut HashSet<String>,
+    outputs: &'state mut Vec<HelperFragmentOutputUse>,
+}
+
+struct HelperValuesWalkState<'context, 'state> {
+    local_bindings: &'state mut HashMap<String, FragmentBinding>,
+    local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
+    local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    context: FragmentEvalContext<'context>,
+    seen: &'state mut HashSet<String>,
+    analysis: &'state mut BoundHelperAnalysis,
+}
+
 impl<'a> SymbolicWalker<'a> {
     fn new_with_context(
         source: &'a str,
@@ -476,9 +503,7 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
 
-        if paths.is_empty() {
-            paths.extend(self.resolved_values_paths_in_expr_tree_context(text));
-        }
+        paths.extend(self.resolved_values_paths_in_expr_tree_context(text));
 
         paths.into_iter().collect()
     }
@@ -561,19 +586,15 @@ impl<'a> SymbolicWalker<'a> {
             Some(&self.root_bindings),
             current_dot_binding.as_ref(),
         );
-        let binding = match outer_binding {
-            Some(binding) if !FragmentBinding::paths(&binding).is_empty() => Some(binding),
-            _ => self.fragment_binding_in_context(expr, current_dot_fragment.as_ref()),
-        };
+        let fragment_binding =
+            self.fragment_binding_in_context(expr, current_dot_fragment.as_ref());
 
-        binding
-            .map(|binding| {
-                FragmentBinding::paths(&binding)
-                    .into_iter()
-                    .filter(|path| !path.trim().is_empty())
-                    .collect()
-            })
-            .unwrap_or_default()
+        outer_binding
+            .into_iter()
+            .chain(fragment_binding)
+            .flat_map(|binding| FragmentBinding::paths(&binding))
+            .filter(|path| !path.trim().is_empty())
+            .collect()
     }
 
     fn local_alias_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
@@ -877,17 +898,15 @@ impl<'a> SymbolicWalker<'a> {
                     Some(&self.root_bindings),
                     current_dot_binding.as_ref(),
                 );
-                let binding = match outer_binding {
-                    Some(binding) if !FragmentBinding::paths(&binding).is_empty() => Some(binding),
-                    _ => self.fragment_binding_in_context(node, current_dot_fragment.as_ref()),
-                };
-                if let Some(binding) = binding {
-                    paths.extend(
-                        FragmentBinding::paths(&binding)
-                            .into_iter()
-                            .filter(|path| !path.trim().is_empty()),
-                    );
-                }
+                let fragment_binding =
+                    self.fragment_binding_in_context(node, current_dot_fragment.as_ref());
+                paths.extend(
+                    outer_binding
+                        .into_iter()
+                        .chain(fragment_binding)
+                        .flat_map(|binding| FragmentBinding::paths(&binding))
+                        .filter(|path| !path.trim().is_empty()),
+                );
             });
         }
         paths
@@ -1803,26 +1822,22 @@ impl<'a> SymbolicWalker<'a> {
 
     fn collect_helper_binding_output_uses_from_expr(
         expr: &TemplateExpr,
-        bindings: &HashMap<String, HelperBinding>,
-        current_dot: Option<&HelperBinding>,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        active_output_guards: &BTreeSet<String>,
-        defaulted_paths: &BTreeSet<String>,
+        context: HelperOutputExprContext<'_>,
         outputs: &mut Vec<HelperFragmentOutputUse>,
     ) {
         if expr_contains_helper_call(expr) {
             return;
         }
 
-        if let Some(binding) = binding_from_expr(expr, Some(bindings), current_dot) {
+        if let Some(binding) = binding_from_expr(expr, Some(context.bindings), context.current_dot)
+        {
             Self::collect_helper_binding_output_uses(
                 outputs,
                 &binding,
-                relative_path,
-                kind,
-                active_output_guards,
-                defaulted_paths,
+                context.relative_path,
+                context.kind,
+                context.active_output_guards,
+                context.defaulted_paths,
             );
             return;
         }
@@ -1830,57 +1845,21 @@ impl<'a> SymbolicWalker<'a> {
         match expr {
             TemplateExpr::Call { args, .. } => {
                 for arg in args {
-                    Self::collect_helper_binding_output_uses_from_expr(
-                        arg,
-                        bindings,
-                        current_dot,
-                        relative_path,
-                        kind,
-                        active_output_guards,
-                        defaulted_paths,
-                        outputs,
-                    );
+                    Self::collect_helper_binding_output_uses_from_expr(arg, context, outputs);
                 }
             }
             TemplateExpr::Selector { operand, .. } => {
-                Self::collect_helper_binding_output_uses_from_expr(
-                    operand,
-                    bindings,
-                    current_dot,
-                    relative_path,
-                    kind,
-                    active_output_guards,
-                    defaulted_paths,
-                    outputs,
-                );
+                Self::collect_helper_binding_output_uses_from_expr(operand, context, outputs);
             }
             TemplateExpr::Pipeline(stages) => {
                 for stage in stages {
-                    Self::collect_helper_binding_output_uses_from_expr(
-                        stage,
-                        bindings,
-                        current_dot,
-                        relative_path,
-                        kind,
-                        active_output_guards,
-                        defaulted_paths,
-                        outputs,
-                    );
+                    Self::collect_helper_binding_output_uses_from_expr(stage, context, outputs);
                 }
             }
             TemplateExpr::Parenthesized(inner)
             | TemplateExpr::VariableDefinition { value: inner, .. }
             | TemplateExpr::Assignment { value: inner, .. } => {
-                Self::collect_helper_binding_output_uses_from_expr(
-                    inner,
-                    bindings,
-                    current_dot,
-                    relative_path,
-                    kind,
-                    active_output_guards,
-                    defaulted_paths,
-                    outputs,
-                );
+                Self::collect_helper_binding_output_uses_from_expr(inner, context, outputs);
             }
             TemplateExpr::Literal(_)
             | TemplateExpr::Field(_)
@@ -1896,11 +1875,7 @@ impl<'a> SymbolicWalker<'a> {
         current_dot_fragment: Option<&FragmentBinding>,
         relative_path: &YamlPath,
         active_output_guards: &BTreeSet<String>,
-        local_bindings: &mut HashMap<String, FragmentBinding>,
-        local_default_paths: &mut HashMap<String, BTreeSet<String>>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
+        state: &mut FragmentOutputWalkState<'_, '_>,
     ) {
         let mut pending_path: Option<YamlPath> = None;
         for item in items {
@@ -1916,11 +1891,7 @@ impl<'a> SymbolicWalker<'a> {
                 current_dot_fragment,
                 item_path,
                 active_output_guards,
-                local_bindings,
-                local_default_paths,
-                context,
-                seen,
-                outputs,
+                state,
             );
             pending_path = output_path::trailing_pending_mapping_key_path(item, item_path);
         }
@@ -1933,11 +1904,7 @@ impl<'a> SymbolicWalker<'a> {
         current_dot_fragment: Option<&FragmentBinding>,
         relative_path: &YamlPath,
         active_output_guards: &BTreeSet<String>,
-        local_bindings: &mut HashMap<String, FragmentBinding>,
-        local_default_paths: &mut HashMap<String, BTreeSet<String>>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
+        state: &mut FragmentOutputWalkState<'_, '_>,
     ) {
         match node {
             HelmAst::Document { items }
@@ -1951,11 +1918,7 @@ impl<'a> SymbolicWalker<'a> {
                     current_dot_fragment,
                     relative_path,
                     active_output_guards,
-                    local_bindings,
-                    local_default_paths,
-                    context,
-                    seen,
-                    outputs,
+                    state,
                 );
             }
             HelmAst::Sequence { items } => {
@@ -1968,11 +1931,7 @@ impl<'a> SymbolicWalker<'a> {
                         current_dot_fragment,
                         &item_path,
                         active_output_guards,
-                        local_bindings,
-                        local_default_paths,
-                        context,
-                        seen,
-                        outputs,
+                        state,
                     );
                 }
             }
@@ -1988,11 +1947,7 @@ impl<'a> SymbolicWalker<'a> {
                             current_dot_fragment,
                             &value_path,
                             active_output_guards,
-                            local_bindings,
-                            local_default_paths,
-                            context,
-                            seen,
-                            outputs,
+                            state,
                         );
                     }
                     return;
@@ -2005,11 +1960,7 @@ impl<'a> SymbolicWalker<'a> {
                     current_dot_fragment,
                     relative_path,
                     active_output_guards,
-                    local_bindings,
-                    local_default_paths,
-                    context,
-                    seen,
-                    outputs,
+                    state,
                 );
                 if let Some(value) = value {
                     Self::collect_bound_fragment_output_uses_from_ast(
@@ -2019,11 +1970,7 @@ impl<'a> SymbolicWalker<'a> {
                         current_dot_fragment,
                         relative_path,
                         active_output_guards,
-                        local_bindings,
-                        local_default_paths,
-                        context,
-                        seen,
-                        outputs,
+                        state,
                     );
                 }
             }
@@ -2031,9 +1978,9 @@ impl<'a> SymbolicWalker<'a> {
                 let mut seen_set = HashSet::new();
                 if apply_local_set_mutations(
                     text,
-                    local_bindings,
+                    state.local_bindings,
                     current_dot_fragment,
-                    context,
+                    state.context,
                     &mut seen_set,
                 ) {
                     return;
@@ -2043,20 +1990,20 @@ impl<'a> SymbolicWalker<'a> {
                     let mut seen_rhs = HashSet::new();
                     let mut binding = fragment_binding_from_text(
                         &rhs,
-                        local_bindings,
+                        state.local_bindings,
                         current_dot_fragment,
-                        context,
+                        state.context,
                         &mut seen_rhs,
                     );
                     let mut top_level_helper_dependency_paths = BTreeSet::new();
                     if text_starts_with_helper_call(&rhs) {
-                        let mut rhs_seen = seen.clone();
+                        let mut rhs_seen = state.seen.clone();
                         let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                             &rhs,
                             Some(bindings),
                             current_dot,
-                            local_bindings,
-                            context,
+                            state.local_bindings,
+                            state.context,
                             &mut rhs_seen,
                         );
                         top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
@@ -2093,18 +2040,20 @@ impl<'a> SymbolicWalker<'a> {
                         };
                     }
                     if let Some(binding) = binding {
-                        local_bindings.insert(var.clone(), binding);
+                        state.local_bindings.insert(var.clone(), binding);
                     }
                     let mut defaulted_paths =
                         resolved_default_fallback_paths_for_text(&rhs, Some(bindings), current_dot);
                     defaulted_paths.extend(Self::local_default_paths_from_text(
                         &rhs,
-                        local_default_paths,
+                        state.local_default_paths,
                     ));
                     if defaulted_paths.is_empty() {
-                        local_default_paths.remove(&var);
+                        state.local_default_paths.remove(&var);
                     } else {
-                        local_default_paths.insert(var.clone(), defaulted_paths);
+                        state
+                            .local_default_paths
+                            .insert(var.clone(), defaulted_paths);
                     }
                     return;
                 }
@@ -2123,7 +2072,8 @@ impl<'a> SymbolicWalker<'a> {
                     Self::direct_bound_paths_from_text_in_context(text, bindings, current_dot);
                 let fallback_paths =
                     resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
-                let local_outputs = Self::local_rendered_paths_from_text(text, local_bindings);
+                let local_outputs =
+                    Self::local_rendered_paths_from_text(text, state.local_bindings);
                 let handled_outputs: BTreeSet<String> = direct_outputs
                     .iter()
                     .chain(local_outputs.iter())
@@ -2133,25 +2083,27 @@ impl<'a> SymbolicWalker<'a> {
                 for expr in Self::parse_expr_text(text) {
                     Self::collect_helper_binding_output_uses_from_expr(
                         &expr,
-                        bindings,
-                        current_dot,
-                        &output_path,
-                        kind,
-                        active_output_guards,
-                        &fallback_paths,
+                        HelperOutputExprContext {
+                            bindings,
+                            current_dot,
+                            relative_path: &output_path,
+                            kind,
+                            active_output_guards,
+                            defaulted_paths: &fallback_paths,
+                        },
                         &mut direct_output_uses,
                     );
                 }
-                outputs.extend(direct_output_uses);
+                state.outputs.extend(direct_output_uses);
 
                 let local_fallback_paths =
-                    Self::local_default_paths_from_text(text, local_default_paths);
+                    Self::local_default_paths_from_text(text, state.local_default_paths);
                 let mut local_output_uses = Vec::new();
                 for expr in Self::parse_expr_text(text) {
                     walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                         let binding = match node {
                             TemplateExpr::Variable(var) if !var.is_empty() => {
-                                local_bindings.get(var).cloned()
+                                state.local_bindings.get(var).cloned()
                             }
                             TemplateExpr::Selector { operand, path } => {
                                 let TemplateExpr::Variable(var) = operand.as_ref() else {
@@ -2160,7 +2112,8 @@ impl<'a> SymbolicWalker<'a> {
                                 if var.is_empty() {
                                     return;
                                 }
-                                local_bindings
+                                state
+                                    .local_bindings
                                     .get(var)
                                     .and_then(|binding| binding.apply_to_binding(path))
                             }
@@ -2182,9 +2135,9 @@ impl<'a> SymbolicWalker<'a> {
                     text,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 let nested_structured_sources: BTreeSet<String> = nested
                     .fragment_output_uses
@@ -2209,17 +2162,17 @@ impl<'a> SymbolicWalker<'a> {
                     !nested.fragment_output.is_empty() || !nested.fragment_output_uses.is_empty();
 
                 let mut expression_output_uses = Vec::new();
-                let mut expression_seen = seen.clone();
+                let mut expression_seen = state.seen.clone();
                 for expr in Self::parse_expr_text(text) {
                     if !expr_contains_helper_call(&expr) {
                         continue;
                     }
                     if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
                         &expr,
-                        local_bindings,
+                        state.local_bindings,
                         Some(bindings),
                         current_dot,
-                        context,
+                        state.context,
                         &mut expression_seen,
                     ) {
                         Self::collect_helper_binding_output_uses(
@@ -2241,7 +2194,7 @@ impl<'a> SymbolicWalker<'a> {
                     .map(|output| output.source_expr.clone())
                     .collect();
 
-                outputs.extend(local_output_uses);
+                state.outputs.extend(local_output_uses);
                 for output in expression_output_uses {
                     if output.relative_path.0.is_empty()
                         && (handled_outputs.contains(&output.source_expr)
@@ -2250,7 +2203,7 @@ impl<'a> SymbolicWalker<'a> {
                     {
                         continue;
                     }
-                    outputs.push(output);
+                    state.outputs.push(output);
                 }
                 for (source_expr, meta) in nested.output {
                     if kind == ValueKind::Fragment && nested_has_fragment_outputs {
@@ -2263,7 +2216,7 @@ impl<'a> SymbolicWalker<'a> {
                     }
                     let meta = Self::helper_output_meta_with_guards(meta, active_output_guards);
                     Self::push_helper_fragment_output(
-                        outputs,
+                        state.outputs,
                         source_expr,
                         relative_path,
                         kind,
@@ -2285,7 +2238,7 @@ impl<'a> SymbolicWalker<'a> {
                         active_output_guards,
                     );
                     Self::push_helper_fragment_output(
-                        outputs,
+                        state.outputs,
                         nested_output.source_expr,
                         &output_path::append_relative_path(
                             relative_path,
@@ -2303,21 +2256,31 @@ impl<'a> SymbolicWalker<'a> {
             } => {
                 let mut branch_guard_paths =
                     Self::direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(cond, local_bindings));
+                branch_guard_paths.extend(Self::local_bound_paths_from_text(
+                    cond,
+                    state.local_bindings,
+                ));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     cond,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
 
                 let mut then_guards = active_output_guards.clone();
                 then_guards.extend(branch_guard_paths);
-                let mut then_bindings = local_bindings.clone();
-                let mut then_defaults = local_default_paths.clone();
+                let mut then_bindings = state.local_bindings.clone();
+                let mut then_defaults = state.local_default_paths.clone();
+                let mut then_state = FragmentOutputWalkState {
+                    local_bindings: &mut then_bindings,
+                    local_default_paths: &mut then_defaults,
+                    context: state.context,
+                    seen: state.seen,
+                    outputs: state.outputs,
+                };
                 Self::collect_bound_fragment_output_uses_from_items(
                     then_branch,
                     bindings,
@@ -2325,15 +2288,18 @@ impl<'a> SymbolicWalker<'a> {
                     current_dot_fragment,
                     relative_path,
                     &then_guards,
-                    &mut then_bindings,
-                    &mut then_defaults,
-                    context,
-                    seen,
-                    outputs,
+                    &mut then_state,
                 );
 
-                let mut else_bindings = local_bindings.clone();
-                let mut else_defaults = local_default_paths.clone();
+                let mut else_bindings = state.local_bindings.clone();
+                let mut else_defaults = state.local_default_paths.clone();
+                let mut else_state = FragmentOutputWalkState {
+                    local_bindings: &mut else_bindings,
+                    local_default_paths: &mut else_defaults,
+                    context: state.context,
+                    seen: state.seen,
+                    outputs: state.outputs,
+                };
                 Self::collect_bound_fragment_output_uses_from_items(
                     else_branch,
                     bindings,
@@ -2341,14 +2307,11 @@ impl<'a> SymbolicWalker<'a> {
                     current_dot_fragment,
                     relative_path,
                     active_output_guards,
-                    &mut else_bindings,
-                    &mut else_defaults,
-                    context,
-                    seen,
-                    outputs,
+                    &mut else_state,
                 );
-                *local_bindings = merge_fragment_locals(then_bindings, else_bindings);
-                *local_default_paths = merge_local_default_paths(then_defaults, else_defaults);
+                *state.local_bindings = merge_fragment_locals(then_bindings, else_bindings);
+                *state.local_default_paths =
+                    merge_local_default_paths(then_defaults, else_defaults);
             }
             HelmAst::With {
                 header,
@@ -2357,24 +2320,33 @@ impl<'a> SymbolicWalker<'a> {
             } => {
                 let mut branch_guard_paths =
                     Self::direct_bound_paths_from_text_in_context(header, bindings, current_dot);
-                branch_guard_paths
-                    .extend(Self::local_bound_paths_from_text(header, local_bindings));
+                branch_guard_paths.extend(Self::local_bound_paths_from_text(
+                    header,
+                    state.local_bindings,
+                ));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     header,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
                 let body_dot = Self::computed_with_body_dot(header, bindings, current_dot);
 
                 let mut body_guards = active_output_guards.clone();
                 body_guards.extend(branch_guard_paths);
-                let mut body_bindings = local_bindings.clone();
-                let mut body_defaults = local_default_paths.clone();
+                let mut body_bindings = state.local_bindings.clone();
+                let mut body_defaults = state.local_default_paths.clone();
                 let body_dot_fragment = body_dot.as_ref().map(HelperBinding::to_fragment_binding);
+                let mut body_state = FragmentOutputWalkState {
+                    local_bindings: &mut body_bindings,
+                    local_default_paths: &mut body_defaults,
+                    context: state.context,
+                    seen: state.seen,
+                    outputs: state.outputs,
+                };
                 Self::collect_bound_fragment_output_uses_from_items(
                     body,
                     bindings,
@@ -2382,15 +2354,18 @@ impl<'a> SymbolicWalker<'a> {
                     body_dot_fragment.as_ref(),
                     relative_path,
                     &body_guards,
-                    &mut body_bindings,
-                    &mut body_defaults,
-                    context,
-                    seen,
-                    outputs,
+                    &mut body_state,
                 );
 
-                let mut else_bindings = local_bindings.clone();
-                let mut else_defaults = local_default_paths.clone();
+                let mut else_bindings = state.local_bindings.clone();
+                let mut else_defaults = state.local_default_paths.clone();
+                let mut else_state = FragmentOutputWalkState {
+                    local_bindings: &mut else_bindings,
+                    local_default_paths: &mut else_defaults,
+                    context: state.context,
+                    seen: state.seen,
+                    outputs: state.outputs,
+                };
                 Self::collect_bound_fragment_output_uses_from_items(
                     else_branch,
                     bindings,
@@ -2398,14 +2373,11 @@ impl<'a> SymbolicWalker<'a> {
                     current_dot_fragment,
                     relative_path,
                     active_output_guards,
-                    &mut else_bindings,
-                    &mut else_defaults,
-                    context,
-                    seen,
-                    outputs,
+                    &mut else_state,
                 );
-                *local_bindings = merge_fragment_locals(body_bindings, else_bindings);
-                *local_default_paths = merge_local_default_paths(body_defaults, else_defaults);
+                *state.local_bindings = merge_fragment_locals(body_bindings, else_bindings);
+                *state.local_default_paths =
+                    merge_local_default_paths(body_defaults, else_defaults);
             }
             HelmAst::Range {
                 header,
@@ -2414,23 +2386,25 @@ impl<'a> SymbolicWalker<'a> {
             } => {
                 let mut branch_guard_paths =
                     Self::direct_bound_paths_from_text_in_context(header, bindings, current_dot);
-                branch_guard_paths
-                    .extend(Self::local_bound_paths_from_text(header, local_bindings));
+                branch_guard_paths.extend(Self::local_bound_paths_from_text(
+                    header,
+                    state.local_bindings,
+                ));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     header,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
                 let mut seen_range_binding = HashSet::new();
                 let range_binding = range_iterable_binding(
                     header,
-                    local_bindings,
+                    state.local_bindings,
                     current_dot_fragment,
-                    context,
+                    state.context,
                     &mut seen_range_binding,
                 );
                 let body_dot_fragment = range_binding
@@ -2442,8 +2416,8 @@ impl<'a> SymbolicWalker<'a> {
 
                 let mut body_guards = active_output_guards.clone();
                 body_guards.extend(branch_guard_paths);
-                let mut body_bindings = local_bindings.clone();
-                let mut body_defaults = local_default_paths.clone();
+                let mut body_bindings = state.local_bindings.clone();
+                let mut body_defaults = state.local_default_paths.clone();
                 if let Some(FragmentBinding::List(items)) = &range_binding {
                     let range_var = range_variable_name(header);
                     for item_binding in items {
@@ -2451,7 +2425,14 @@ impl<'a> SymbolicWalker<'a> {
                             body_bindings.insert(range_var.clone(), item_binding.clone());
                         }
                         let item_dot = item_binding.to_helper_binding();
-                        let mut item_seen = seen.clone();
+                        let mut item_seen = state.seen.clone();
+                        let mut item_state = FragmentOutputWalkState {
+                            local_bindings: &mut body_bindings,
+                            local_default_paths: &mut body_defaults,
+                            context: state.context,
+                            seen: &mut item_seen,
+                            outputs: state.outputs,
+                        };
                         Self::collect_bound_fragment_output_uses_from_items(
                             body,
                             bindings,
@@ -2459,14 +2440,17 @@ impl<'a> SymbolicWalker<'a> {
                             Some(item_binding),
                             relative_path,
                             &body_guards,
-                            &mut body_bindings,
-                            &mut body_defaults,
-                            context,
-                            &mut item_seen,
-                            outputs,
+                            &mut item_state,
                         );
                     }
                 } else {
+                    let mut body_state = FragmentOutputWalkState {
+                        local_bindings: &mut body_bindings,
+                        local_default_paths: &mut body_defaults,
+                        context: state.context,
+                        seen: state.seen,
+                        outputs: state.outputs,
+                    };
                     Self::collect_bound_fragment_output_uses_from_items(
                         body,
                         bindings,
@@ -2474,11 +2458,7 @@ impl<'a> SymbolicWalker<'a> {
                         body_dot_fragment.as_ref(),
                         relative_path,
                         &body_guards,
-                        &mut body_bindings,
-                        &mut body_defaults,
-                        context,
-                        seen,
-                        outputs,
+                        &mut body_state,
                     );
                 }
 
@@ -2486,11 +2466,18 @@ impl<'a> SymbolicWalker<'a> {
                     .as_ref()
                     .is_some_and(FragmentBinding::definitely_nonempty_iterable)
                 {
-                    *local_bindings = body_bindings;
-                    *local_default_paths = body_defaults;
+                    *state.local_bindings = body_bindings;
+                    *state.local_default_paths = body_defaults;
                 } else {
-                    let mut else_bindings = local_bindings.clone();
-                    let mut else_defaults = local_default_paths.clone();
+                    let mut else_bindings = state.local_bindings.clone();
+                    let mut else_defaults = state.local_default_paths.clone();
+                    let mut else_state = FragmentOutputWalkState {
+                        local_bindings: &mut else_bindings,
+                        local_default_paths: &mut else_defaults,
+                        context: state.context,
+                        seen: state.seen,
+                        outputs: state.outputs,
+                    };
                     Self::collect_bound_fragment_output_uses_from_items(
                         else_branch,
                         bindings,
@@ -2498,14 +2485,11 @@ impl<'a> SymbolicWalker<'a> {
                         current_dot_fragment,
                         relative_path,
                         active_output_guards,
-                        &mut else_bindings,
-                        &mut else_defaults,
-                        context,
-                        seen,
-                        outputs,
+                        &mut else_state,
                     );
-                    *local_bindings = merge_fragment_locals(body_bindings, else_bindings);
-                    *local_default_paths = merge_local_default_paths(body_defaults, else_defaults);
+                    *state.local_bindings = merge_fragment_locals(body_bindings, else_bindings);
+                    *state.local_default_paths =
+                        merge_local_default_paths(body_defaults, else_defaults);
                 }
             }
             HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
@@ -2648,18 +2632,21 @@ impl<'a> SymbolicWalker<'a> {
             let mut local_bindings = HashMap::new();
             let mut local_default_paths = HashMap::new();
             let mut local_output_meta = HashMap::new();
+            let mut helper_values_state = HelperValuesWalkState {
+                local_bindings: &mut local_bindings,
+                local_default_paths: &mut local_default_paths,
+                local_output_meta: &mut local_output_meta,
+                context,
+                seen,
+                analysis: &mut analysis,
+            };
             for node in body {
                 Self::collect_bound_helper_values_from_ast(
                     node,
                     &bindings,
                     helper_body_dot.as_ref(),
                     &active_output_guards,
-                    &mut local_bindings,
-                    &mut local_default_paths,
-                    &mut local_output_meta,
-                    context,
-                    seen,
-                    &mut analysis,
+                    &mut helper_values_state,
                 );
             }
         }
@@ -2690,6 +2677,13 @@ impl<'a> SymbolicWalker<'a> {
             let mut local_bindings = helper_fragment_locals;
             let mut local_default_paths = HashMap::new();
             let active_output_guards = BTreeSet::new();
+            let mut fragment_output_state = FragmentOutputWalkState {
+                local_bindings: &mut local_bindings,
+                local_default_paths: &mut local_default_paths,
+                context,
+                seen,
+                outputs: &mut fragment_output_uses,
+            };
             Self::collect_bound_fragment_output_uses_from_items(
                 body,
                 &bindings,
@@ -2697,11 +2691,7 @@ impl<'a> SymbolicWalker<'a> {
                 helper_dot.as_ref(),
                 &YamlPath(Vec::new()),
                 &active_output_guards,
-                &mut local_bindings,
-                &mut local_default_paths,
-                context,
-                seen,
-                &mut fragment_output_uses,
+                &mut fragment_output_state,
             );
             for source in analysis.output.keys() {
                 analysis.fragment_output.remove(source);
@@ -2929,12 +2919,7 @@ impl<'a> SymbolicWalker<'a> {
         bindings: &HashMap<String, HelperBinding>,
         current_dot: Option<&HelperBinding>,
         active_output_guards: &BTreeSet<String>,
-        local_bindings: &mut HashMap<String, FragmentBinding>,
-        local_default_paths: &mut HashMap<String, BTreeSet<String>>,
-        local_output_meta: &mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-        analysis: &mut BoundHelperAnalysis,
+        state: &mut HelperValuesWalkState<'_, '_>,
     ) {
         match node {
             HelmAst::Document { items }
@@ -2948,12 +2933,7 @@ impl<'a> SymbolicWalker<'a> {
                         bindings,
                         current_dot,
                         active_output_guards,
-                        local_bindings,
-                        local_default_paths,
-                        local_output_meta,
-                        context,
-                        seen,
-                        analysis,
+                        state,
                     );
                 }
             }
@@ -2963,12 +2943,7 @@ impl<'a> SymbolicWalker<'a> {
                     bindings,
                     current_dot,
                     active_output_guards,
-                    local_bindings,
-                    local_default_paths,
-                    local_output_meta,
-                    context,
-                    seen,
-                    analysis,
+                    state,
                 );
                 if let Some(value) = value {
                     Self::collect_bound_helper_values_from_ast(
@@ -2976,12 +2951,7 @@ impl<'a> SymbolicWalker<'a> {
                         bindings,
                         current_dot,
                         active_output_guards,
-                        local_bindings,
-                        local_default_paths,
-                        local_output_meta,
-                        context,
-                        seen,
-                        analysis,
+                        state,
                     );
                 }
             }
@@ -2989,13 +2959,13 @@ impl<'a> SymbolicWalker<'a> {
                 if let Some((var, _declares, rhs)) = parse_helper_assignment(text) {
                     let set_default_paths =
                         set_default_chart_paths_for_text(text, Some(bindings), current_dot);
-                    analysis.chart_defaults.extend(set_default_paths);
+                    state.analysis.chart_defaults.extend(set_default_paths);
                     extend_type_hints(
-                        &mut analysis.type_hints,
+                        &mut state.analysis.type_hints,
                         resolved_type_is_paths_for_text(&rhs, Some(bindings), current_dot),
                     );
                     extend_type_hints(
-                        &mut analysis.type_hints,
+                        &mut state.analysis.type_hints,
                         resolved_string_transform_paths_for_text(&rhs, Some(bindings), current_dot),
                     );
 
@@ -3003,9 +2973,9 @@ impl<'a> SymbolicWalker<'a> {
                     let mut seen_set = HashSet::new();
                     if apply_local_set_mutations(
                         text,
-                        local_bindings,
+                        state.local_bindings,
                         current_dot_fragment.as_ref(),
-                        context,
+                        state.context,
                         &mut seen_set,
                     ) {
                         return;
@@ -3016,34 +2986,42 @@ impl<'a> SymbolicWalker<'a> {
                     let direct_outputs =
                         Self::direct_bound_paths_from_text_in_context(&rhs, bindings, current_dot);
                     let local_fallback_paths =
-                        Self::local_default_paths_from_text(&rhs, local_default_paths);
-                    let local_outputs = Self::local_bound_paths_from_text(&rhs, local_bindings);
-                    let local_meta_by_path =
-                        Self::local_output_meta_from_text(&rhs, local_bindings, local_output_meta);
-                    analysis
+                        Self::local_default_paths_from_text(&rhs, state.local_default_paths);
+                    let local_outputs =
+                        Self::local_bound_paths_from_text(&rhs, state.local_bindings);
+                    let local_meta_by_path = Self::local_output_meta_from_text(
+                        &rhs,
+                        state.local_bindings,
+                        state.local_output_meta,
+                    );
+                    state
+                        .analysis
                         .dependency_paths
                         .extend(direct_outputs.iter().cloned());
-                    analysis
+                    state
+                        .analysis
                         .dependency_paths
                         .extend(local_outputs.iter().cloned());
                     let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                         &rhs,
                         Some(bindings),
                         current_dot,
-                        local_bindings,
-                        context,
-                        seen,
+                        state.local_bindings,
+                        state.context,
+                        state.seen,
                     );
-                    analysis
+                    state
+                        .analysis
                         .chart_defaults
                         .extend(nested.chart_defaults.clone());
-                    extend_type_hints(&mut analysis.type_hints, nested.type_hints.clone());
-                    analysis
+                    extend_type_hints(&mut state.analysis.type_hints, nested.type_hints.clone());
+                    state
+                        .analysis
                         .dependency_paths
                         .extend(bound_helper_dependency_paths(&nested));
-                    analysis.add_dependency_meta_map(Self::helper_dependency_meta_from_analysis(
-                        &nested,
-                    ));
+                    state.analysis.add_dependency_meta_map(
+                        Self::helper_dependency_meta_from_analysis(&nested),
+                    );
 
                     let mut rhs_output_meta: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
                     for output in &direct_outputs {
@@ -3069,12 +3047,12 @@ impl<'a> SymbolicWalker<'a> {
                     let mut seen_rhs = HashSet::new();
                     if let Some(binding) = fragment_binding_from_text(
                         &rhs,
-                        local_bindings,
+                        state.local_bindings,
                         current_dot_fragment.as_ref(),
-                        context,
+                        state.context,
                         &mut seen_rhs,
                     ) {
-                        local_bindings.insert(var.clone(), binding);
+                        state.local_bindings.insert(var.clone(), binding);
                     }
                     let mut defaulted_paths = fallback_paths;
                     defaulted_paths.extend(local_fallback_paths);
@@ -3093,14 +3071,16 @@ impl<'a> SymbolicWalker<'a> {
                             .map(|output| output.source_expr.clone()),
                     );
                     if defaulted_paths.is_empty() {
-                        local_default_paths.remove(&var);
+                        state.local_default_paths.remove(&var);
                     } else {
-                        local_default_paths.insert(var.clone(), defaulted_paths);
+                        state
+                            .local_default_paths
+                            .insert(var.clone(), defaulted_paths);
                     }
                     if rhs_output_meta.is_empty() {
-                        local_output_meta.remove(&var);
+                        state.local_output_meta.remove(&var);
                     } else {
-                        local_output_meta.insert(var, rhs_output_meta);
+                        state.local_output_meta.insert(var, rhs_output_meta);
                     }
                     return;
                 }
@@ -3109,14 +3089,14 @@ impl<'a> SymbolicWalker<'a> {
                 let mut seen_set = HashSet::new();
                 if apply_local_set_mutations(
                     text,
-                    local_bindings,
+                    state.local_bindings,
                     current_dot_fragment.as_ref(),
-                    context,
+                    state.context,
                     &mut seen_set,
                 ) {
                     let set_default_paths =
                         set_default_chart_paths_for_text(text, Some(bindings), current_dot);
-                    analysis.chart_defaults.extend(set_default_paths);
+                    state.analysis.chart_defaults.extend(set_default_paths);
                     return;
                 }
 
@@ -3125,18 +3105,22 @@ impl<'a> SymbolicWalker<'a> {
                 let fallback_paths =
                     resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
                 extend_type_hints(
-                    &mut analysis.type_hints,
+                    &mut state.analysis.type_hints,
                     resolved_type_is_paths_for_text(text, Some(bindings), current_dot),
                 );
                 extend_type_hints(
-                    &mut analysis.type_hints,
+                    &mut state.analysis.type_hints,
                     resolved_string_transform_paths_for_text(text, Some(bindings), current_dot),
                 );
-                let local_outputs = Self::local_rendered_paths_from_text(text, local_bindings);
+                let local_outputs =
+                    Self::local_rendered_paths_from_text(text, state.local_bindings);
                 let local_fallback_paths =
-                    Self::local_default_paths_from_text(text, local_default_paths);
-                let local_meta_by_path =
-                    Self::local_output_meta_from_text(text, local_bindings, local_output_meta);
+                    Self::local_default_paths_from_text(text, state.local_default_paths);
+                let local_meta_by_path = Self::local_output_meta_from_text(
+                    text,
+                    state.local_bindings,
+                    state.local_output_meta,
+                );
                 let expression_kind = if is_fragment_expr(text) {
                     ValueKind::Fragment
                 } else {
@@ -3149,32 +3133,32 @@ impl<'a> SymbolicWalker<'a> {
                             guards: active_output_guards.clone(),
                             defaulted: fallback_paths.contains(&output),
                         };
-                        analysis.add_output_meta(output, meta);
+                        state.analysis.add_output_meta(output, meta);
                     }
                     for output in local_outputs {
                         let mut meta = local_meta_by_path.get(&output).cloned().unwrap_or_default();
                         meta.guards.extend(active_output_guards.iter().cloned());
                         meta.defaulted |= local_fallback_paths.contains(&output);
-                        analysis.add_output_meta(output, meta);
+                        state.analysis.add_output_meta(output, meta);
                     }
                 }
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     text,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 let mut nested = nested;
                 if expression_kind == ValueKind::Fragment {
                     for (output, mut meta) in nested.output {
                         meta.guards.extend(active_output_guards.iter().cloned());
-                        analysis.add_output_meta(output, meta);
+                        state.analysis.add_output_meta(output, meta);
                     }
                     for output in nested.fragment_output {
                         Self::push_helper_fragment_output(
-                            &mut analysis.fragment_output_uses,
+                            &mut state.analysis.fragment_output_uses,
                             output,
                             &empty_path,
                             expression_kind,
@@ -3189,24 +3173,29 @@ impl<'a> SymbolicWalker<'a> {
                             .meta
                             .guards
                             .extend(active_output_guards.iter().cloned());
-                        analysis.fragment_output_uses.push(output);
+                        state.analysis.fragment_output_uses.push(output);
                     }
-                    analysis.dependency_paths.extend(nested.dependency_paths);
-                    analysis.add_dependency_meta_map(nested.dependency_meta);
-                    analysis.guard_paths.extend(nested.guard_paths);
-                    extend_type_hints(&mut analysis.type_hints, nested.type_hints);
-                    analysis.suppress_roots.extend(nested.suppress_roots);
-                    analysis.chart_defaults.extend(nested.chart_defaults);
+                    state
+                        .analysis
+                        .dependency_paths
+                        .extend(nested.dependency_paths);
+                    state
+                        .analysis
+                        .add_dependency_meta_map(nested.dependency_meta);
+                    state.analysis.guard_paths.extend(nested.guard_paths);
+                    extend_type_hints(&mut state.analysis.type_hints, nested.type_hints);
+                    state.analysis.suppress_roots.extend(nested.suppress_roots);
+                    state.analysis.chart_defaults.extend(nested.chart_defaults);
                 } else {
                     convert_fragment_outputs_to_dependency_outputs(&mut nested);
                     for meta in nested.output.values_mut() {
                         meta.guards.extend(active_output_guards.iter().cloned());
                     }
-                    analysis.extend(nested);
+                    state.analysis.extend(nested);
                 }
                 let set_default_paths =
                     set_default_chart_paths_for_text(text, Some(bindings), current_dot);
-                analysis.chart_defaults.extend(set_default_paths);
+                state.analysis.chart_defaults.extend(set_default_paths);
             }
             HelmAst::If {
                 cond,
@@ -3215,59 +3204,69 @@ impl<'a> SymbolicWalker<'a> {
             } => {
                 let mut branch_guard_paths =
                     Self::direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
-                branch_guard_paths.extend(Self::local_bound_paths_from_text(cond, local_bindings));
+                branch_guard_paths.extend(Self::local_bound_paths_from_text(
+                    cond,
+                    state.local_bindings,
+                ));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     cond,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
-                analysis
+                state
+                    .analysis
                     .guard_paths
                     .extend(branch_guard_paths.iter().cloned());
                 let mut then_output_guards = active_output_guards.clone();
                 then_output_guards.extend(branch_guard_paths);
-                let mut then_bindings = local_bindings.clone();
-                let mut then_default_paths = local_default_paths.clone();
-                let mut then_output_meta = local_output_meta.clone();
+                let mut then_bindings = state.local_bindings.clone();
+                let mut then_default_paths = state.local_default_paths.clone();
+                let mut then_output_meta = state.local_output_meta.clone();
+                let mut then_state = HelperValuesWalkState {
+                    local_bindings: &mut then_bindings,
+                    local_default_paths: &mut then_default_paths,
+                    local_output_meta: &mut then_output_meta,
+                    context: state.context,
+                    seen: state.seen,
+                    analysis: state.analysis,
+                };
                 for item in then_branch {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
                         current_dot,
                         &then_output_guards,
-                        &mut then_bindings,
-                        &mut then_default_paths,
-                        &mut then_output_meta,
-                        context,
-                        seen,
-                        analysis,
+                        &mut then_state,
                     );
                 }
-                let mut else_bindings = local_bindings.clone();
-                let mut else_default_paths = local_default_paths.clone();
-                let mut else_output_meta = local_output_meta.clone();
+                let mut else_bindings = state.local_bindings.clone();
+                let mut else_default_paths = state.local_default_paths.clone();
+                let mut else_output_meta = state.local_output_meta.clone();
+                let mut else_state = HelperValuesWalkState {
+                    local_bindings: &mut else_bindings,
+                    local_default_paths: &mut else_default_paths,
+                    local_output_meta: &mut else_output_meta,
+                    context: state.context,
+                    seen: state.seen,
+                    analysis: state.analysis,
+                };
                 for item in else_branch {
                     Self::collect_bound_helper_values_from_ast(
                         item,
                         bindings,
                         current_dot,
                         active_output_guards,
-                        &mut else_bindings,
-                        &mut else_default_paths,
-                        &mut else_output_meta,
-                        context,
-                        seen,
-                        analysis,
+                        &mut else_state,
                     );
                 }
-                *local_bindings = merge_fragment_locals(then_bindings, else_bindings);
-                *local_default_paths =
+                *state.local_bindings = merge_fragment_locals(then_bindings, else_bindings);
+                *state.local_default_paths =
                     merge_local_default_paths(then_default_paths, else_default_paths);
-                *local_output_meta =
+                *state.local_output_meta =
                     merge_helper_output_meta_maps(then_output_meta, else_output_meta);
             }
             HelmAst::Range {
@@ -3283,18 +3282,21 @@ impl<'a> SymbolicWalker<'a> {
                 let is_with = matches!(node, HelmAst::With { .. });
                 let mut branch_guard_paths =
                     Self::direct_bound_paths_from_text_in_context(header, bindings, current_dot);
-                branch_guard_paths
-                    .extend(Self::local_bound_paths_from_text(header, local_bindings));
+                branch_guard_paths.extend(Self::local_bound_paths_from_text(
+                    header,
+                    state.local_bindings,
+                ));
                 let nested = Self::analyze_bound_helper_calls_with_fragment_locals(
                     header,
                     Some(bindings),
                     current_dot,
-                    local_bindings,
-                    context,
-                    seen,
+                    state.local_bindings,
+                    state.context,
+                    state.seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
-                analysis
+                state
+                    .analysis
                     .guard_paths
                     .extend(branch_guard_paths.iter().cloned());
 
@@ -3305,9 +3307,9 @@ impl<'a> SymbolicWalker<'a> {
                     let mut seen_range = HashSet::new();
                     range_fragment_binding = range_iterable_binding(
                         header,
-                        local_bindings,
+                        state.local_bindings,
                         current_dot_fragment.as_ref(),
-                        context,
+                        state.context,
                         &mut seen_range,
                     );
                     range_binding = range_fragment_binding
@@ -3325,9 +3327,9 @@ impl<'a> SymbolicWalker<'a> {
                 };
                 let mut body_output_guards = active_output_guards.clone();
                 body_output_guards.extend(branch_guard_paths);
-                let mut body_bindings = local_bindings.clone();
-                let mut body_default_paths = local_default_paths.clone();
-                let mut body_output_meta = local_output_meta.clone();
+                let mut body_bindings = state.local_bindings.clone();
+                let mut body_default_paths = state.local_default_paths.clone();
+                let mut body_output_meta = state.local_output_meta.clone();
                 if !is_with {
                     let header_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
                     let mut seen_range = HashSet::new();
@@ -3335,7 +3337,7 @@ impl<'a> SymbolicWalker<'a> {
                         header,
                         &body_bindings,
                         header_dot_fragment.as_ref(),
-                        context,
+                        state.context,
                         &mut seen_range,
                     ) {
                         body_bindings.insert(var, binding);
@@ -3348,35 +3350,41 @@ impl<'a> SymbolicWalker<'a> {
                             body_bindings.insert(range_var.clone(), item_binding.clone());
                         }
                         let item_dot = item_binding.to_helper_binding();
-                        let mut item_seen = seen.clone();
+                        let mut item_seen = state.seen.clone();
+                        let mut item_state = HelperValuesWalkState {
+                            local_bindings: &mut body_bindings,
+                            local_default_paths: &mut body_default_paths,
+                            local_output_meta: &mut body_output_meta,
+                            context: state.context,
+                            seen: &mut item_seen,
+                            analysis: state.analysis,
+                        };
                         for item in body {
                             Self::collect_bound_helper_values_from_ast(
                                 item,
                                 bindings,
                                 item_dot.as_ref(),
                                 &body_output_guards,
-                                &mut body_bindings,
-                                &mut body_default_paths,
-                                &mut body_output_meta,
-                                context,
-                                &mut item_seen,
-                                analysis,
+                                &mut item_state,
                             );
                         }
                     }
                 } else {
+                    let mut body_state = HelperValuesWalkState {
+                        local_bindings: &mut body_bindings,
+                        local_default_paths: &mut body_default_paths,
+                        local_output_meta: &mut body_output_meta,
+                        context: state.context,
+                        seen: state.seen,
+                        analysis: state.analysis,
+                    };
                     for item in body {
                         Self::collect_bound_helper_values_from_ast(
                             item,
                             bindings,
                             body_dot.as_ref(),
                             &body_output_guards,
-                            &mut body_bindings,
-                            &mut body_default_paths,
-                            &mut body_output_meta,
-                            context,
-                            seen,
-                            analysis,
+                            &mut body_state,
                         );
                     }
                 }
@@ -3385,13 +3393,21 @@ impl<'a> SymbolicWalker<'a> {
                         .as_ref()
                         .is_some_and(HelperBinding::definitely_nonempty_iterable)
                 {
-                    *local_bindings = body_bindings;
-                    *local_default_paths = body_default_paths;
-                    *local_output_meta = body_output_meta;
+                    *state.local_bindings = body_bindings;
+                    *state.local_default_paths = body_default_paths;
+                    *state.local_output_meta = body_output_meta;
                 } else {
-                    let mut else_bindings = local_bindings.clone();
-                    let mut else_default_paths = local_default_paths.clone();
-                    let mut else_output_meta = local_output_meta.clone();
+                    let mut else_bindings = state.local_bindings.clone();
+                    let mut else_default_paths = state.local_default_paths.clone();
+                    let mut else_output_meta = state.local_output_meta.clone();
+                    let mut else_state = HelperValuesWalkState {
+                        local_bindings: &mut else_bindings,
+                        local_default_paths: &mut else_default_paths,
+                        local_output_meta: &mut else_output_meta,
+                        context: state.context,
+                        seen: state.seen,
+                        analysis: state.analysis,
+                    };
                     for item in else_branch {
                         // `with ... else ...` else-branch executes with
                         // the outer `.`, not the with-shifted one.
@@ -3400,18 +3416,13 @@ impl<'a> SymbolicWalker<'a> {
                             bindings,
                             current_dot,
                             active_output_guards,
-                            &mut else_bindings,
-                            &mut else_default_paths,
-                            &mut else_output_meta,
-                            context,
-                            seen,
-                            analysis,
+                            &mut else_state,
                         );
                     }
-                    *local_bindings = merge_fragment_locals(body_bindings, else_bindings);
-                    *local_default_paths =
+                    *state.local_bindings = merge_fragment_locals(body_bindings, else_bindings);
+                    *state.local_default_paths =
                         merge_local_default_paths(body_default_paths, else_default_paths);
-                    *local_output_meta =
+                    *state.local_output_meta =
                         merge_helper_output_meta_maps(body_output_meta, else_output_meta);
                 }
             }

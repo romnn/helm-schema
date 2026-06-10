@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::binding::HelperBinding;
+use crate::binding::{FragmentBinding, HelperBinding};
 use crate::helper_analysis::HelperOutputMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -9,6 +9,7 @@ pub(crate) enum AbstractValue {
     ValuesPath(String),
     RootContext,
     OutputSet(BTreeMap<String, HelperOutputMeta>),
+    StringSet(BTreeSet<String>),
     PathSet(BTreeSet<String>),
     Dict(BTreeMap<String, AbstractValue>),
     List(Vec<AbstractValue>),
@@ -37,7 +38,15 @@ impl AbstractValue {
                 .chain(fallback.paths())
                 .collect(),
             Self::Choice(choices) => choices.iter().flat_map(Self::paths).collect(),
-            Self::Unknown | Self::RootContext => BTreeSet::new(),
+            Self::Unknown | Self::RootContext | Self::StringSet(_) => BTreeSet::new(),
+        }
+    }
+
+    pub(crate) fn strings(&self) -> BTreeSet<String> {
+        match self {
+            Self::StringSet(strings) => strings.clone(),
+            Self::Choice(choices) => choices.iter().flat_map(Self::strings).collect(),
+            _ => BTreeSet::new(),
         }
     }
 
@@ -84,6 +93,7 @@ impl AbstractValue {
                 }
             }
             Self::Unknown => None,
+            Self::StringSet(_) => None,
             Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
             Self::PathSet(paths) => {
                 let appended = paths
@@ -154,6 +164,7 @@ impl AbstractValue {
                     .collect(),
             )),
             Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
+            Self::StringSet(_) => None,
             Self::Choice(choices) => {
                 let mut out = Vec::new();
                 for choice_value in choices {
@@ -253,11 +264,50 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn from_fragment_binding(binding: &FragmentBinding) -> Self {
+        match binding {
+            FragmentBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),
+            FragmentBinding::ValuesRoot => Self::ValuesPath(String::new()),
+            FragmentBinding::RootContext => Self::RootContext,
+            FragmentBinding::Unknown => Self::Unknown,
+            FragmentBinding::OutputSet(paths) => Self::OutputSet(
+                paths
+                    .iter()
+                    .map(|path| (path.clone(), HelperOutputMeta::default()))
+                    .collect(),
+            ),
+            FragmentBinding::StringSet(strings) => Self::StringSet(strings.clone()),
+            FragmentBinding::PathSet(paths) => Self::PathSet(paths.clone()),
+            FragmentBinding::Dict(map) => Self::Dict(
+                map.iter()
+                    .map(|(key, value)| (key.clone(), Self::from_fragment_binding(value)))
+                    .collect(),
+            ),
+            FragmentBinding::List(items) => {
+                Self::List(items.iter().map(Self::from_fragment_binding).collect())
+            }
+            FragmentBinding::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .iter()
+                    .map(|(key, value)| (key.clone(), Self::from_fragment_binding(value)))
+                    .collect(),
+                fallback: Box::new(Self::from_fragment_binding(fallback)),
+            },
+            FragmentBinding::Choice(choices) => Self::Choice(
+                choices
+                    .iter()
+                    .map(Self::from_fragment_binding)
+                    .collect::<BTreeSet<_>>(),
+            ),
+        }
+    }
+
     pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
         match self {
             Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
             Self::RootContext => Some(HelperBinding::RootContext),
             Self::Unknown => Some(HelperBinding::Unknown),
+            Self::StringSet(_) => Some(HelperBinding::Unknown),
             Self::OutputSet(outputs) => Some(HelperBinding::OutputSet(outputs.clone())),
             Self::PathSet(paths) => Some(HelperBinding::PathSet(paths.clone())),
             Self::Dict(map) => Some(HelperBinding::Dict(
@@ -284,6 +334,44 @@ impl AbstractValue {
                     .map(Self::to_helper_binding)
                     .collect::<Option<BTreeSet<_>>>()?,
             )),
+        }
+    }
+
+    pub(crate) fn to_fragment_binding(&self) -> Option<FragmentBinding> {
+        match self {
+            Self::ValuesPath(path) if path.is_empty() => Some(FragmentBinding::ValuesRoot),
+            Self::ValuesPath(path) => Some(FragmentBinding::ValuesPath(path.clone())),
+            Self::RootContext => Some(FragmentBinding::RootContext),
+            Self::Unknown => Some(FragmentBinding::Unknown),
+            Self::OutputSet(outputs) => Some(FragmentBinding::OutputSet(
+                outputs.keys().cloned().collect(),
+            )),
+            Self::StringSet(strings) => Some(FragmentBinding::StringSet(strings.clone())),
+            Self::PathSet(paths) => Some(FragmentBinding::PathSet(paths.clone())),
+            Self::Dict(map) => Some(FragmentBinding::Dict(
+                map.iter()
+                    .map(|(key, value)| Some((key.clone(), value.to_fragment_binding()?)))
+                    .collect::<Option<BTreeMap<_, _>>>()?,
+            )),
+            Self::List(items) => Some(FragmentBinding::List(
+                items
+                    .iter()
+                    .map(Self::to_fragment_binding)
+                    .collect::<Option<Vec<_>>>()?,
+            )),
+            Self::Overlay { entries, fallback } => Some(FragmentBinding::Overlay {
+                entries: entries
+                    .iter()
+                    .map(|(key, value)| Some((key.clone(), value.to_fragment_binding()?)))
+                    .collect::<Option<BTreeMap<_, _>>>()?,
+                fallback: Box::new(fallback.to_fragment_binding()?),
+            }),
+            Self::Choice(choices) => FragmentBinding::choice(
+                choices
+                    .iter()
+                    .filter_map(Self::to_fragment_binding)
+                    .collect(),
+            ),
         }
     }
 }

@@ -127,7 +127,7 @@ impl CrdsCatalogSchemaProvider {
         self.layout_checker.check_and_prepare(
             &self.cache_dir,
             self.diagnostic_sink.as_ref(),
-            |root| crd_root_has_legacy_layout(root),
+            crd_root_has_legacy_layout,
         )
     }
 
