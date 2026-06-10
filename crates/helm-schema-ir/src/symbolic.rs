@@ -82,7 +82,6 @@ struct SymbolicWalker<'a> {
     source: &'a str,
     defines: &'a DefineIndex,
     ir_context: SymbolicIrContext,
-    fragment_helper_body_cache: RefCell<BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>>,
     uses: Vec<ValueUse>,
     guards: Vec<Guard>,
     seed_guards: Vec<Guard>,
@@ -192,18 +191,147 @@ enum FragmentBinding {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct FragmentHelperBodyCacheKey {
-    name: String,
-    helper_dot: Option<FragmentBinding>,
-    locals: BTreeMap<String, FragmentBinding>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct BoundHelperCallsCacheKey {
     text: String,
     current_dot: Option<HelperBinding>,
     root_bindings: BTreeMap<String, HelperBinding>,
     fragment_locals: BTreeMap<String, FragmentBinding>,
+}
+
+#[derive(Clone, Copy)]
+struct FragmentEvalContext<'a> {
+    defines: &'a DefineIndex,
+    define_sources: &'a HashMap<String, String>,
+    define_tree_cache: &'a RefCell<HashMap<String, tree_sitter::Tree>>,
+}
+
+impl<'a> FragmentEvalContext<'a> {
+    fn new(
+        defines: &'a DefineIndex,
+        define_sources: &'a HashMap<String, String>,
+        define_tree_cache: &'a RefCell<HashMap<String, tree_sitter::Tree>>,
+    ) -> Self {
+        Self {
+            defines,
+            define_sources,
+            define_tree_cache,
+        }
+    }
+
+    fn fragment_binding_from_expr(
+        &self,
+        expr: &TemplateExpr,
+        locals: &HashMap<String, FragmentBinding>,
+        current_dot: Option<&FragmentBinding>,
+        seen: &mut HashSet<String>,
+    ) -> Option<FragmentBinding> {
+        SymbolicWalker::fragment_binding_from_expr(expr, locals, current_dot, *self, seen)
+    }
+}
+
+struct StaticFileTemplateResolver<'context, 'bindings, 'seen> {
+    context: FragmentEvalContext<'context>,
+    locals: &'bindings HashMap<String, FragmentBinding>,
+    current_dot: Option<&'bindings FragmentBinding>,
+    seen: &'seen mut HashSet<String>,
+}
+
+impl<'context, 'bindings, 'seen> StaticFileTemplateResolver<'context, 'bindings, 'seen> {
+    fn new(
+        context: FragmentEvalContext<'context>,
+        locals: &'bindings HashMap<String, FragmentBinding>,
+        current_dot: Option<&'bindings FragmentBinding>,
+        seen: &'seen mut HashSet<String>,
+    ) -> Self {
+        Self {
+            context,
+            locals,
+            current_dot,
+            seen,
+        }
+    }
+
+    fn fragment_binding(&mut self, expr: &TemplateExpr) -> Option<FragmentBinding> {
+        self.context
+            .fragment_binding_from_expr(expr, self.locals, self.current_dot, self.seen)
+    }
+
+    fn collect_template_requests(
+        &mut self,
+        expr: &TemplateExpr,
+        requests: &mut BTreeSet<StaticFileTemplate>,
+    ) {
+        if let TemplateExpr::Call { function, args } = expr
+            && function == "tpl"
+            && let Some(template_arg) = args.first()
+        {
+            let dot = args.get(1).and_then(|arg| self.fragment_binding(arg));
+            let mut paths = BTreeSet::new();
+            self.collect_files_get_paths(template_arg, &mut paths);
+            for path in paths {
+                requests.insert(StaticFileTemplate {
+                    path,
+                    dot: dot.clone(),
+                });
+            }
+        }
+
+        match expr {
+            TemplateExpr::Call { args, .. } => {
+                for arg in args {
+                    self.collect_template_requests(arg, requests);
+                }
+            }
+            TemplateExpr::Selector { operand, .. }
+            | TemplateExpr::Parenthesized(operand)
+            | TemplateExpr::VariableDefinition { value: operand, .. }
+            | TemplateExpr::Assignment { value: operand, .. } => {
+                self.collect_template_requests(operand, requests);
+            }
+            TemplateExpr::Pipeline(stages) => {
+                for stage in stages {
+                    self.collect_template_requests(stage, requests);
+                }
+            }
+            TemplateExpr::Literal(_)
+            | TemplateExpr::Field(_)
+            | TemplateExpr::Variable(_)
+            | TemplateExpr::Unknown(_) => {}
+        }
+    }
+
+    fn collect_files_get_paths(&mut self, expr: &TemplateExpr, out: &mut BTreeSet<String>) {
+        if let TemplateExpr::Call { function, args } = expr
+            && SymbolicWalker::is_static_files_get_call(function)
+            && let Some(path_arg) = args.first()
+            && let Some(binding) = self.fragment_binding(path_arg)
+        {
+            out.extend(SymbolicWalker::fragment_strings(&binding));
+        }
+
+        match expr {
+            TemplateExpr::Call { args, .. } => {
+                for arg in args {
+                    self.collect_files_get_paths(arg, out);
+                }
+            }
+            TemplateExpr::Selector { operand, .. }
+            | TemplateExpr::Parenthesized(operand)
+            | TemplateExpr::VariableDefinition { value: operand, .. }
+            | TemplateExpr::Assignment { value: operand, .. } => {
+                self.collect_files_get_paths(operand, out);
+            }
+            TemplateExpr::Pipeline(stages) => {
+                for stage in stages {
+                    self.collect_files_get_paths(stage, out);
+                }
+            }
+            TemplateExpr::Literal(_)
+            | TemplateExpr::Field(_)
+            | TemplateExpr::Variable(_)
+            | TemplateExpr::Unknown(_) => {}
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -381,7 +509,6 @@ impl<'a> SymbolicWalker<'a> {
             source,
             defines,
             ir_context,
-            fragment_helper_body_cache: RefCell::new(BTreeMap::new()),
             uses: Vec::new(),
             guards: Vec::new(),
             seed_guards: Vec::new(),
@@ -429,6 +556,14 @@ impl<'a> SymbolicWalker<'a> {
     fn with_helper_bindings(mut self, bindings: HashMap<String, HelperBinding>) -> Self {
         self.root_bindings = bindings;
         self
+    }
+
+    fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
+        FragmentEvalContext::new(
+            self.defines,
+            &self.ir_context.inner.define_body_sources,
+            &self.ir_context.inner.define_tree_cache,
+        )
     }
 
     /// Seed this walker's chart-level defaults from a parent walker so a
@@ -611,22 +746,21 @@ impl<'a> SymbolicWalker<'a> {
 
     fn inline_static_file_templates_from_helper_calls(&mut self, text: &str) {
         for helper_call in Self::literal_helper_calls(text) {
-            let current_dot = self.current_dot_fragment();
-            let mut seen = HashSet::new();
-            let helper_dot = helper_call.arg.as_ref().and_then(|arg| {
-                Self::fragment_binding_from_expr(
-                    arg,
-                    &self.template_bindings,
-                    current_dot.as_ref(),
-                    self.defines,
-                    &self.ir_context.inner.define_body_sources,
-                    &self.ir_context.inner.define_tree_cache,
-                    &self.fragment_helper_body_cache,
-                    &mut seen,
-                )
-            });
-            let requests =
-                self.static_file_templates_from_helper(&helper_call.name, helper_dot.as_ref());
+            let requests = {
+                let context = self.fragment_eval_context();
+                let current_dot = self.current_dot_fragment();
+                let mut seen = HashSet::new();
+                let helper_dot = helper_call.arg.as_ref().and_then(|arg| {
+                    StaticFileTemplateResolver::new(
+                        context,
+                        &self.template_bindings,
+                        current_dot.as_ref(),
+                        &mut seen,
+                    )
+                    .fragment_binding(arg)
+                });
+                self.static_file_templates_from_helper(&helper_call.name, helper_dot.as_ref())
+            };
             for request in requests {
                 self.inline_static_file_template(request);
             }
@@ -642,209 +776,14 @@ impl<'a> SymbolicWalker<'a> {
             return BTreeSet::new();
         };
         let locals = HashMap::new();
+        let context = self.fragment_eval_context();
         let mut requests = BTreeSet::new();
         for expr in parse_action_expressions(src) {
             let mut seen = HashSet::new();
-            Self::collect_static_file_templates_from_expr(
-                &expr,
-                &locals,
-                helper_dot,
-                self.defines,
-                &self.ir_context.inner.define_body_sources,
-                &self.ir_context.inner.define_tree_cache,
-                &self.fragment_helper_body_cache,
-                &mut seen,
-                &mut requests,
-            );
+            StaticFileTemplateResolver::new(context, &locals, helper_dot, &mut seen)
+                .collect_template_requests(&expr, &mut requests);
         }
         requests
-    }
-
-    fn collect_static_file_templates_from_expr(
-        expr: &TemplateExpr,
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
-        seen: &mut HashSet<String>,
-        requests: &mut BTreeSet<StaticFileTemplate>,
-    ) {
-        if let TemplateExpr::Call { function, args } = expr
-            && function == "tpl"
-            && let Some(template_arg) = args.first()
-        {
-            let dot = args.get(1).and_then(|arg| {
-                Self::fragment_binding_from_expr(
-                    arg,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                )
-            });
-            let mut paths = BTreeSet::new();
-            Self::collect_static_files_get_paths_from_expr(
-                template_arg,
-                locals,
-                current_dot,
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
-                seen,
-                &mut paths,
-            );
-            for path in paths {
-                requests.insert(StaticFileTemplate {
-                    path,
-                    dot: dot.clone(),
-                });
-            }
-        }
-
-        match expr {
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    Self::collect_static_file_templates_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                        requests,
-                    );
-                }
-            }
-            TemplateExpr::Selector { operand, .. }
-            | TemplateExpr::Parenthesized(operand)
-            | TemplateExpr::VariableDefinition { value: operand, .. }
-            | TemplateExpr::Assignment { value: operand, .. } => {
-                Self::collect_static_file_templates_from_expr(
-                    operand,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                    requests,
-                );
-            }
-            TemplateExpr::Pipeline(stages) => {
-                for stage in stages {
-                    Self::collect_static_file_templates_from_expr(
-                        stage,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                        requests,
-                    );
-                }
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
-    }
-
-    fn collect_static_files_get_paths_from_expr(
-        expr: &TemplateExpr,
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
-        seen: &mut HashSet<String>,
-        out: &mut BTreeSet<String>,
-    ) {
-        if let TemplateExpr::Call { function, args } = expr
-            && Self::is_static_files_get_call(function)
-            && let Some(path_arg) = args.first()
-            && let Some(binding) = Self::fragment_binding_from_expr(
-                path_arg,
-                locals,
-                current_dot,
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
-                seen,
-            )
-        {
-            out.extend(Self::fragment_strings(&binding));
-        }
-
-        match expr {
-            TemplateExpr::Call { args, .. } => {
-                for arg in args {
-                    Self::collect_static_files_get_paths_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                        out,
-                    );
-                }
-            }
-            TemplateExpr::Selector { operand, .. }
-            | TemplateExpr::Parenthesized(operand)
-            | TemplateExpr::VariableDefinition { value: operand, .. }
-            | TemplateExpr::Assignment { value: operand, .. } => {
-                Self::collect_static_files_get_paths_from_expr(
-                    operand,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                    out,
-                );
-            }
-            TemplateExpr::Pipeline(stages) => {
-                for stage in stages {
-                    Self::collect_static_files_get_paths_from_expr(
-                        stage,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                        out,
-                    );
-                }
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
     }
 
     fn is_static_files_get_call(function: &str) -> bool {
@@ -1198,17 +1137,9 @@ impl<'a> SymbolicWalker<'a> {
         expr: &TemplateExpr,
         current_dot: Option<&FragmentBinding>,
     ) -> Option<FragmentBinding> {
+        let context = self.fragment_eval_context();
         let mut seen = HashSet::new();
-        Self::fragment_binding_from_expr(
-            expr,
-            &self.template_bindings,
-            current_dot,
-            self.defines,
-            &self.ir_context.inner.define_body_sources,
-            &self.ir_context.inner.define_tree_cache,
-            &self.fragment_helper_body_cache,
-            &mut seen,
-        )
+        context.fragment_binding_from_expr(expr, &self.template_bindings, current_dot, &mut seen)
     }
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]
@@ -2301,7 +2232,7 @@ impl<'a> SymbolicWalker<'a> {
             HelperBinding::Overlay { entries, fallback } => entries
                 .values()
                 .flat_map(Self::helper_binding_paths)
-                .chain(Self::helper_binding_paths(fallback).into_iter())
+                .chain(Self::helper_binding_paths(fallback))
                 .collect(),
             HelperBinding::Choice(choices) => choices
                 .iter()
@@ -2760,12 +2691,7 @@ impl<'a> SymbolicWalker<'a> {
         fragment_locals: &HashMap<String, FragmentBinding>,
         outer: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Option<HelperBinding> {
         match expr {
@@ -2775,10 +2701,7 @@ impl<'a> SymbolicWalker<'a> {
                     fragment_locals,
                     outer,
                     current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 )
             }
@@ -2808,10 +2731,7 @@ impl<'a> SymbolicWalker<'a> {
                     outer,
                     current_dot,
                     fragment_locals,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 Self::helper_binding_from_helper_analysis(analysis)
@@ -2831,10 +2751,7 @@ impl<'a> SymbolicWalker<'a> {
                         fragment_locals,
                         outer,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                     )
                     .unwrap_or(HelperBinding::Unknown);
@@ -2854,10 +2771,7 @@ impl<'a> SymbolicWalker<'a> {
                                 fragment_locals,
                                 outer,
                                 current_dot,
-                                defines,
-                                define_sources,
-                                define_tree_cache,
-                                fragment_helper_body_cache,
+                                context,
                                 seen,
                             )
                             .unwrap_or(HelperBinding::Unknown)
@@ -2874,10 +2788,7 @@ impl<'a> SymbolicWalker<'a> {
                             fragment_locals,
                             outer,
                             current_dot,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             seen,
                         )
                     })
@@ -2890,10 +2801,7 @@ impl<'a> SymbolicWalker<'a> {
                     fragment_locals,
                     outer,
                     current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 for stage in &stages[1..] {
@@ -2913,10 +2821,7 @@ impl<'a> SymbolicWalker<'a> {
                                         fragment_locals,
                                         outer,
                                         current_dot,
-                                        defines,
-                                        define_sources,
-                                        define_tree_cache,
-                                        fragment_helper_body_cache,
+                                        context,
                                         seen,
                                     )
                                 {
@@ -2937,10 +2842,7 @@ impl<'a> SymbolicWalker<'a> {
                                         fragment_locals,
                                         outer,
                                         current_dot,
-                                        defines,
-                                        define_sources,
-                                        define_tree_cache,
-                                        fragment_helper_body_cache,
+                                        context,
                                         seen,
                                     )
                                 {
@@ -2965,12 +2867,7 @@ impl<'a> SymbolicWalker<'a> {
         outer: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
         fragment_locals: &HashMap<String, FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> HashMap<String, HelperBinding> {
         let Some(arg) = arg else {
@@ -2984,10 +2881,7 @@ impl<'a> SymbolicWalker<'a> {
                     outer,
                     current_dot,
                     fragment_locals,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 )
             }
@@ -3008,10 +2902,7 @@ impl<'a> SymbolicWalker<'a> {
                         fragment_locals,
                         outer,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                     )
                     .unwrap_or(HelperBinding::Unknown);
@@ -3028,10 +2919,7 @@ impl<'a> SymbolicWalker<'a> {
                         fragment_locals,
                         outer,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                     ) {
                         Some(HelperBinding::Dict(map)) => {
@@ -3178,7 +3066,7 @@ impl<'a> SymbolicWalker<'a> {
             FragmentBinding::Overlay { entries, fallback } => entries
                 .values()
                 .flat_map(Self::fragment_paths)
-                .chain(Self::fragment_paths(fallback).into_iter())
+                .chain(Self::fragment_paths(fallback))
                 .collect(),
             FragmentBinding::Choice(choices) => {
                 choices.iter().flat_map(Self::fragment_paths).collect()
@@ -3203,7 +3091,7 @@ impl<'a> SymbolicWalker<'a> {
             FragmentBinding::Overlay { entries, fallback } => entries
                 .values()
                 .flat_map(Self::fragment_rendered_paths)
-                .chain(Self::fragment_rendered_paths(fallback).into_iter())
+                .chain(Self::fragment_rendered_paths(fallback))
                 .collect(),
             FragmentBinding::Choice(choices) => choices
                 .iter()
@@ -3756,12 +3644,7 @@ impl<'a> SymbolicWalker<'a> {
         expr: &TemplateExpr,
         locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
         if let Some(path) = values_path_from_expr(expr) {
@@ -3772,16 +3655,9 @@ impl<'a> SymbolicWalker<'a> {
             TemplateExpr::Literal(Literal::String(value)) => Some(FragmentBinding::StringSet(
                 [value.clone()].into_iter().collect(),
             )),
-            TemplateExpr::Parenthesized(inner) => Self::fragment_binding_from_expr(
-                inner,
-                locals,
-                current_dot,
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
-                seen,
-            ),
+            TemplateExpr::Parenthesized(inner) => {
+                Self::fragment_binding_from_expr(inner, locals, current_dot, context, seen)
+            }
             TemplateExpr::Field(path)
                 if path.first().is_some_and(|segment| segment == "Values") =>
             {
@@ -3804,16 +3680,8 @@ impl<'a> SymbolicWalker<'a> {
                 {
                     return Self::fragment_apply_binding(binding, tail);
                 }
-                let binding = Self::fragment_binding_from_expr(
-                    operand,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                )?;
+                let binding =
+                    Self::fragment_binding_from_expr(operand, locals, current_dot, context, seen)?;
                 Self::fragment_apply_binding(&binding, path)
             }
             TemplateExpr::Call { function, args }
@@ -3822,17 +3690,8 @@ impl<'a> SymbolicWalker<'a> {
                 let mut items = Vec::new();
                 for arg in args {
                     items.push(
-                        Self::fragment_binding_from_expr(
-                            arg,
-                            locals,
-                            current_dot,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
-                            seen,
-                        )
-                        .unwrap_or(FragmentBinding::Unknown),
+                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
+                            .unwrap_or(FragmentBinding::Unknown),
                     );
                 }
                 Some(FragmentBinding::List(items))
@@ -3842,10 +3701,7 @@ impl<'a> SymbolicWalker<'a> {
                     args.first()?,
                     locals,
                     current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 ) {
                     Some(FragmentBinding::List(items)) => items,
@@ -3853,16 +3709,9 @@ impl<'a> SymbolicWalker<'a> {
                     None => Vec::new(),
                 };
                 for arg in &args[1..] {
-                    if let Some(binding) = Self::fragment_binding_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    ) {
+                    if let Some(binding) =
+                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
+                    {
                         items.push(binding);
                     }
                 }
@@ -3880,10 +3729,7 @@ impl<'a> SymbolicWalker<'a> {
                         &args[index + 1],
                         locals,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                     ) {
                         map.insert(key.clone(), binding);
@@ -3895,16 +3741,9 @@ impl<'a> SymbolicWalker<'a> {
             TemplateExpr::Call { function, args } if Self::is_merge_function(function) => {
                 let mut bindings = Vec::new();
                 for arg in args {
-                    let Some(binding) = Self::fragment_binding_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    ) else {
+                    let Some(binding) =
+                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
+                    else {
                         continue;
                     };
                     bindings.push(binding);
@@ -3914,16 +3753,9 @@ impl<'a> SymbolicWalker<'a> {
             TemplateExpr::Call { function, args } if function == "coalesce" => {
                 let mut choices = Vec::new();
                 for arg in args {
-                    if let Some(binding) = Self::fragment_binding_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    ) {
+                    if let Some(binding) =
+                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
+                    {
                         choices.push(binding);
                     }
                 }
@@ -3931,28 +3763,14 @@ impl<'a> SymbolicWalker<'a> {
             }
             TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
                 let mut choices = Vec::new();
-                if let Some(binding) = Self::fragment_binding_from_expr(
-                    &args[1],
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                ) {
+                if let Some(binding) =
+                    Self::fragment_binding_from_expr(&args[1], locals, current_dot, context, seen)
+                {
                     choices.push(binding);
                 }
-                if let Some(binding) = Self::fragment_binding_from_expr(
-                    &args[0],
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                ) {
+                if let Some(binding) =
+                    Self::fragment_binding_from_expr(&args[0], locals, current_dot, context, seen)
+                {
                     choices.push(binding);
                 }
                 Self::fragment_choice(choices)
@@ -3970,30 +3788,12 @@ impl<'a> SymbolicWalker<'a> {
                         | "b64dec"
                 ) =>
             {
-                Self::fragment_binding_from_expr(
-                    args.first()?,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                )
+                Self::fragment_binding_from_expr(args.first()?, locals, current_dot, context, seen)
             }
             TemplateExpr::Call { function, args }
                 if matches!(function.as_str(), "indent" | "nindent" | "trimAll") =>
             {
-                Self::fragment_binding_from_expr(
-                    args.last()?,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                )
+                Self::fragment_binding_from_expr(args.last()?, locals, current_dot, context, seen)
             }
             TemplateExpr::Call { function, args } if function == "printf" => {
                 let TemplateExpr::Literal(Literal::String(format)) = args.first()? else {
@@ -4005,10 +3805,7 @@ impl<'a> SymbolicWalker<'a> {
                         arg,
                         locals,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                     )?);
                     if strings.is_empty() {
@@ -4029,10 +3826,7 @@ impl<'a> SymbolicWalker<'a> {
                     args.first()?,
                     locals,
                     current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 )?;
                 match base {
@@ -4047,10 +3841,7 @@ impl<'a> SymbolicWalker<'a> {
                                         &args[1],
                                         locals,
                                         current_dot,
-                                        defines,
-                                        define_sources,
-                                        define_tree_cache,
-                                        fragment_helper_body_cache,
+                                        context,
                                         seen,
                                     )?);
                                 strings.iter().next()?.parse::<usize>().ok()?
@@ -4065,10 +3856,7 @@ impl<'a> SymbolicWalker<'a> {
                                 arg,
                                 locals,
                                 current_dot,
-                                defines,
-                                define_sources,
-                                define_tree_cache,
-                                fragment_helper_body_cache,
+                                context,
                                 seen,
                             );
                             let strings = Self::fragment_strings(&arg_binding?);
@@ -4111,39 +3899,20 @@ impl<'a> SymbolicWalker<'a> {
                     None,
                     current_dot_helper.as_ref(),
                     locals,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 Self::fragment_binding_from_helper_analysis(analysis)
             }
             TemplateExpr::Call { function, args } if function == "tpl" => {
-                Self::fragment_binding_from_expr(
-                    args.first()?,
-                    locals,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                )
+                Self::fragment_binding_from_expr(args.first()?, locals, current_dot, context, seen)
             }
             TemplateExpr::Call { function, args } if function == "ternary" => {
                 let mut choices = Vec::new();
                 for arg in args.iter().take(2) {
-                    if let Some(binding) = Self::fragment_binding_from_expr(
-                        arg,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    ) {
+                    if let Some(binding) =
+                        Self::fragment_binding_from_expr(arg, locals, current_dot, context, seen)
+                    {
                         choices.push(binding);
                     }
                 }
@@ -4154,10 +3923,7 @@ impl<'a> SymbolicWalker<'a> {
                     &stages[0],
                     locals,
                     current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 for stage in &stages[1..] {
@@ -4178,10 +3944,7 @@ impl<'a> SymbolicWalker<'a> {
                                     arg,
                                     locals,
                                     current_dot,
-                                    defines,
-                                    define_sources,
-                                    define_tree_cache,
-                                    fragment_helper_body_cache,
+                                    context,
                                     seen,
                                 ) {
                                     bindings.push(binding);
@@ -4199,10 +3962,7 @@ impl<'a> SymbolicWalker<'a> {
                                     arg,
                                     locals,
                                     current_dot,
-                                    defines,
-                                    define_sources,
-                                    define_tree_cache,
-                                    fragment_helper_body_cache,
+                                    context,
                                     seen,
                                 ) {
                                     choices.push(binding);
@@ -4220,10 +3980,7 @@ impl<'a> SymbolicWalker<'a> {
                                     arg,
                                     locals,
                                     current_dot,
-                                    defines,
-                                    define_sources,
-                                    define_tree_cache,
-                                    fragment_helper_body_cache,
+                                    context,
                                     seen,
                                 ) {
                                     choices.push(binding);
@@ -4302,12 +4059,7 @@ impl<'a> SymbolicWalker<'a> {
         text: &str,
         local_bindings: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Vec<(String, BTreeSet<String>)> {
         let mut out = Vec::new();
@@ -4325,16 +4077,9 @@ impl<'a> SymbolicWalker<'a> {
                 if var.is_empty() || !local_bindings.contains_key(var) {
                     return;
                 }
-                let Some(key_binding) = Self::fragment_binding_from_expr(
-                    &args[1],
-                    local_bindings,
-                    current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
-                    seen,
-                ) else {
+                let Some(key_binding) =
+                    context.fragment_binding_from_expr(&args[1], local_bindings, current_dot, seen)
+                else {
                     return;
                 };
                 let keys = Self::fragment_strings(&key_binding);
@@ -4350,22 +4095,14 @@ impl<'a> SymbolicWalker<'a> {
         text: &str,
         local_bindings: &mut HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> bool {
         let mutations = Self::local_set_mutation_target_and_keys(
             text,
             local_bindings,
             current_dot,
-            defines,
-            define_sources,
-            define_tree_cache,
-            fragment_helper_body_cache,
+            context,
             seen,
         );
         let has_mutation = !mutations.is_empty();
@@ -4381,12 +4118,7 @@ impl<'a> SymbolicWalker<'a> {
         header: &str,
         local_bindings: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Option<(String, FragmentBinding)> {
         let header = header
@@ -4401,10 +4133,7 @@ impl<'a> SymbolicWalker<'a> {
             value,
             local_bindings,
             current_dot,
-            defines,
-            define_sources,
-            define_tree_cache,
-            fragment_helper_body_cache,
+            context,
             seen,
         )?;
         let item = Self::fragment_item_binding(&binding)?;
@@ -4427,12 +4156,7 @@ impl<'a> SymbolicWalker<'a> {
         header: &str,
         local_bindings: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
         let header = header
@@ -4450,10 +4174,7 @@ impl<'a> SymbolicWalker<'a> {
             value,
             local_bindings,
             current_dot,
-            defines,
-            define_sources,
-            define_tree_cache,
-            fragment_helper_body_cache,
+            context,
             seen,
         )
     }
@@ -4462,24 +4183,10 @@ impl<'a> SymbolicWalker<'a> {
         value: &TemplateExpr,
         local_bindings: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
-        Self::fragment_binding_from_expr(
-            value,
-            local_bindings,
-            current_dot,
-            defines,
-            define_sources,
-            define_tree_cache,
-            fragment_helper_body_cache,
-            seen,
-        )
+        context.fragment_binding_from_expr(value, local_bindings, current_dot, seen)
     }
 
     fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
@@ -4539,26 +4246,14 @@ impl<'a> SymbolicWalker<'a> {
         text: &str,
         locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> Option<FragmentBinding> {
         let mut bindings = Vec::new();
         for expr in Self::parse_expr_text(text) {
-            if let Some(binding) = Self::fragment_binding_from_expr(
-                &expr,
-                locals,
-                current_dot,
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
-                seen,
-            ) {
+            if let Some(binding) =
+                context.fragment_binding_from_expr(&expr, locals, current_dot, seen)
+            {
                 bindings.push(binding);
             }
         }
@@ -4570,28 +4265,14 @@ impl<'a> SymbolicWalker<'a> {
         source: &str,
         locals: &mut HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
         outputs: &mut BTreeSet<String>,
     ) {
         match node.kind() {
             "variable_definition" | "assignment" => {
                 if let Ok(text) = node.utf8_text(source.as_bytes()) {
-                    if Self::apply_local_set_mutations(
-                        text,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    ) {
+                    if Self::apply_local_set_mutations(text, locals, current_dot, context, seen) {
                         return;
                     }
                     if let Some((var, _declares, rhs)) = Self::parse_helper_assignment(text) {
@@ -4599,10 +4280,7 @@ impl<'a> SymbolicWalker<'a> {
                             &rhs,
                             locals,
                             current_dot,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             seen,
                         );
                         if let Some(binding) = binding {
@@ -4621,16 +4299,8 @@ impl<'a> SymbolicWalker<'a> {
             | "function_call"
             | "method_call" => {
                 if let Ok(text) = node.utf8_text(source.as_bytes())
-                    && let Some(binding) = Self::fragment_binding_from_text(
-                        text,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    )
+                    && let Some(binding) =
+                        Self::fragment_binding_from_text(text, locals, current_dot, context, seen)
                 {
                     outputs.extend(Self::fragment_paths(&binding));
                 }
@@ -4643,10 +4313,7 @@ impl<'a> SymbolicWalker<'a> {
                         source,
                         &mut then_locals,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -4659,10 +4326,7 @@ impl<'a> SymbolicWalker<'a> {
                         source,
                         &mut else_locals,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -4675,16 +4339,7 @@ impl<'a> SymbolicWalker<'a> {
                     .child_by_field_name("condition")
                     .and_then(|condition| condition.utf8_text(source.as_bytes()).ok())
                     .and_then(|text| {
-                        Self::fragment_binding_from_text(
-                            text,
-                            locals,
-                            current_dot,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
-                            seen,
-                        )
+                        Self::fragment_binding_from_text(text, locals, current_dot, context, seen)
                     });
 
                 let mut body_locals = locals.clone();
@@ -4694,10 +4349,7 @@ impl<'a> SymbolicWalker<'a> {
                         source,
                         &mut body_locals,
                         binding.as_ref(),
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -4710,10 +4362,7 @@ impl<'a> SymbolicWalker<'a> {
                         source,
                         &mut else_locals,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -4724,16 +4373,7 @@ impl<'a> SymbolicWalker<'a> {
                     Self::range_has_destructured_variable_definition(node);
                 let header = Self::range_header_text_from_source(node, source);
                 let binding = header.as_deref().and_then(|text| {
-                    Self::range_iterable_binding(
-                        text,
-                        locals,
-                        current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
-                        seen,
-                    )
+                    Self::range_iterable_binding(text, locals, current_dot, context, seen)
                 });
                 if has_destructured_variable_definition
                     && !Self::range_body_emits_sequence_item_from_source(node, source)
@@ -4750,10 +4390,7 @@ impl<'a> SymbolicWalker<'a> {
                         source,
                         &mut body_locals,
                         body_dot.as_ref(),
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -4775,10 +4412,7 @@ impl<'a> SymbolicWalker<'a> {
                         source,
                         locals,
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -5338,12 +4972,7 @@ impl<'a> SymbolicWalker<'a> {
         active_output_guards: &BTreeSet<String>,
         local_bindings: &mut HashMap<String, FragmentBinding>,
         local_default_paths: &mut HashMap<String, BTreeSet<String>>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
         outputs: &mut Vec<HelperFragmentOutputUse>,
     ) {
@@ -5363,10 +4992,7 @@ impl<'a> SymbolicWalker<'a> {
                 active_output_guards,
                 local_bindings,
                 local_default_paths,
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
+                context,
                 seen,
                 outputs,
             );
@@ -5383,12 +5009,7 @@ impl<'a> SymbolicWalker<'a> {
         active_output_guards: &BTreeSet<String>,
         local_bindings: &mut HashMap<String, FragmentBinding>,
         local_default_paths: &mut HashMap<String, BTreeSet<String>>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
         outputs: &mut Vec<HelperFragmentOutputUse>,
     ) {
@@ -5406,10 +5027,7 @@ impl<'a> SymbolicWalker<'a> {
                     active_output_guards,
                     local_bindings,
                     local_default_paths,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     outputs,
                 );
@@ -5426,10 +5044,7 @@ impl<'a> SymbolicWalker<'a> {
                         active_output_guards,
                         local_bindings,
                         local_default_paths,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -5449,10 +5064,7 @@ impl<'a> SymbolicWalker<'a> {
                             active_output_guards,
                             local_bindings,
                             local_default_paths,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             seen,
                             outputs,
                         );
@@ -5469,10 +5081,7 @@ impl<'a> SymbolicWalker<'a> {
                     active_output_guards,
                     local_bindings,
                     local_default_paths,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     outputs,
                 );
@@ -5486,10 +5095,7 @@ impl<'a> SymbolicWalker<'a> {
                         active_output_guards,
                         local_bindings,
                         local_default_paths,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -5501,10 +5107,7 @@ impl<'a> SymbolicWalker<'a> {
                     text,
                     local_bindings,
                     current_dot_fragment,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     &mut seen_set,
                 ) {
                     return;
@@ -5516,10 +5119,7 @@ impl<'a> SymbolicWalker<'a> {
                         &rhs,
                         local_bindings,
                         current_dot_fragment,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         &mut seen_rhs,
                     );
                     let mut top_level_helper_dependency_paths = BTreeSet::new();
@@ -5530,10 +5130,7 @@ impl<'a> SymbolicWalker<'a> {
                             Some(bindings),
                             current_dot,
                             local_bindings,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             &mut rhs_seen,
                         );
                         top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
@@ -5668,10 +5265,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 let nested_structured_sources: BTreeSet<String> = nested
@@ -5707,10 +5301,7 @@ impl<'a> SymbolicWalker<'a> {
                         local_bindings,
                         Some(bindings),
                         current_dot,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         &mut expression_seen,
                     ) {
                         Self::collect_helper_binding_output_uses(
@@ -5800,10 +5391,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
@@ -5821,10 +5409,7 @@ impl<'a> SymbolicWalker<'a> {
                     &then_guards,
                     &mut then_bindings,
                     &mut then_defaults,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     outputs,
                 );
@@ -5840,10 +5425,7 @@ impl<'a> SymbolicWalker<'a> {
                     active_output_guards,
                     &mut else_bindings,
                     &mut else_defaults,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     outputs,
                 );
@@ -5864,10 +5446,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
@@ -5889,10 +5468,7 @@ impl<'a> SymbolicWalker<'a> {
                     &body_guards,
                     &mut body_bindings,
                     &mut body_defaults,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     outputs,
                 );
@@ -5908,10 +5484,7 @@ impl<'a> SymbolicWalker<'a> {
                     active_output_guards,
                     &mut else_bindings,
                     &mut else_defaults,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     outputs,
                 );
@@ -5932,10 +5505,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
@@ -5944,10 +5514,7 @@ impl<'a> SymbolicWalker<'a> {
                     header,
                     local_bindings,
                     current_dot_fragment,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     &mut seen_range_binding,
                 );
                 let body_dot_fragment =
@@ -5977,10 +5544,7 @@ impl<'a> SymbolicWalker<'a> {
                             &body_guards,
                             &mut body_bindings,
                             &mut body_defaults,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             &mut item_seen,
                             outputs,
                         );
@@ -5995,10 +5559,7 @@ impl<'a> SymbolicWalker<'a> {
                         &body_guards,
                         &mut body_bindings,
                         &mut body_defaults,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -6022,10 +5583,7 @@ impl<'a> SymbolicWalker<'a> {
                         active_output_guards,
                         &mut else_bindings,
                         &mut else_defaults,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         outputs,
                     );
@@ -6067,6 +5625,7 @@ impl<'a> SymbolicWalker<'a> {
         }
 
         let mut seen = HashSet::new();
+        let context = self.fragment_eval_context();
         let analysis = Self::analyze_bound_helper_calls_with_fragment_locals(
             text,
             if self.root_bindings.is_empty() {
@@ -6076,10 +5635,7 @@ impl<'a> SymbolicWalker<'a> {
             },
             current_dot.as_ref(),
             &self.template_bindings,
-            self.defines,
-            &self.ir_context.inner.define_body_sources,
-            &self.ir_context.inner.define_tree_cache,
-            &self.fragment_helper_body_cache,
+            context,
             &mut seen,
         );
         self.ir_context
@@ -6096,12 +5652,7 @@ impl<'a> SymbolicWalker<'a> {
         bindings: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
         fragment_locals: &HashMap<String, FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> BoundHelperAnalysis {
         let mut analysis = BoundHelperAnalysis::default();
@@ -6122,10 +5673,7 @@ impl<'a> SymbolicWalker<'a> {
                     bindings,
                     current_dot,
                     fragment_locals,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 analysis.extend(nested);
@@ -6141,12 +5689,7 @@ impl<'a> SymbolicWalker<'a> {
         outer_bindings: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
         fragment_locals: &HashMap<String, FragmentBinding>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> BoundHelperAnalysis {
         if !seen.insert(name.to_string()) {
@@ -6159,10 +5702,7 @@ impl<'a> SymbolicWalker<'a> {
             outer_bindings,
             current_dot,
             fragment_locals,
-            defines,
-            define_sources,
-            define_tree_cache,
-            fragment_helper_body_cache,
+            context,
             &mut binding_seen,
         );
         // Inside the helper body, `.` is what the caller passed as the
@@ -6179,17 +5719,14 @@ impl<'a> SymbolicWalker<'a> {
                     fragment_locals,
                     outer_bindings,
                     current_dot,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     &mut dot_seen,
                 )
             })
             .or_else(|| current_dot.cloned())
         };
         let mut analysis = BoundHelperAnalysis::default();
-        if let Some(body) = defines.get(name) {
+        if let Some(body) = context.defines.get(name) {
             let active_output_guards = BTreeSet::new();
             let mut local_bindings = HashMap::new();
             let mut local_default_paths = HashMap::new();
@@ -6203,10 +5740,7 @@ impl<'a> SymbolicWalker<'a> {
                     &mut local_bindings,
                     &mut local_default_paths,
                     &mut local_output_meta,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     &mut analysis,
                 );
@@ -6221,24 +5755,24 @@ impl<'a> SymbolicWalker<'a> {
                 current_dot,
             )
         });
-        if let Some(src) = define_sources.get(name)
-            && let Some(tree) =
-                Self::define_body_tree_from_cache(name, define_sources, define_tree_cache)
+        if let Some(src) = context.define_sources.get(name)
+            && let Some(tree) = Self::define_body_tree_from_cache(
+                name,
+                context.define_sources,
+                context.define_tree_cache,
+            )
         {
             Self::collect_bound_fragment_outputs_from_tree(
                 tree.root_node(),
                 src,
                 &mut helper_fragment_locals,
                 helper_dot.as_ref(),
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
+                context,
                 seen,
                 &mut analysis.fragment_output,
             );
         }
-        if let Some(body) = defines.get(name) {
+        if let Some(body) = context.defines.get(name) {
             let mut fragment_output_uses = Vec::new();
             let mut local_bindings = helper_fragment_locals;
             let mut local_default_paths = HashMap::new();
@@ -6252,10 +5786,7 @@ impl<'a> SymbolicWalker<'a> {
                 &active_output_guards,
                 &mut local_bindings,
                 &mut local_default_paths,
-                defines,
-                define_sources,
-                define_tree_cache,
-                fragment_helper_body_cache,
+                context,
                 seen,
                 &mut fragment_output_uses,
             );
@@ -6488,12 +6019,7 @@ impl<'a> SymbolicWalker<'a> {
         local_bindings: &mut HashMap<String, FragmentBinding>,
         local_default_paths: &mut HashMap<String, BTreeSet<String>>,
         local_output_meta: &mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-        defines: &DefineIndex,
-        define_sources: &HashMap<String, String>,
-        define_tree_cache: &RefCell<HashMap<String, tree_sitter::Tree>>,
-        fragment_helper_body_cache: &RefCell<
-            BTreeMap<FragmentHelperBodyCacheKey, BTreeSet<String>>,
-        >,
+        context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
         analysis: &mut BoundHelperAnalysis,
     ) {
@@ -6512,10 +6038,7 @@ impl<'a> SymbolicWalker<'a> {
                         local_bindings,
                         local_default_paths,
                         local_output_meta,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         analysis,
                     );
@@ -6530,10 +6053,7 @@ impl<'a> SymbolicWalker<'a> {
                     local_bindings,
                     local_default_paths,
                     local_output_meta,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                     analysis,
                 );
@@ -6546,10 +6066,7 @@ impl<'a> SymbolicWalker<'a> {
                         local_bindings,
                         local_default_paths,
                         local_output_meta,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         analysis,
                     );
@@ -6580,10 +6097,7 @@ impl<'a> SymbolicWalker<'a> {
                         text,
                         local_bindings,
                         current_dot_fragment.as_ref(),
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         &mut seen_set,
                     ) {
                         return;
@@ -6612,10 +6126,7 @@ impl<'a> SymbolicWalker<'a> {
                         Some(bindings),
                         current_dot,
                         local_bindings,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                     );
                     analysis
@@ -6655,10 +6166,7 @@ impl<'a> SymbolicWalker<'a> {
                         &rhs,
                         local_bindings,
                         current_dot_fragment.as_ref(),
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         &mut seen_rhs,
                     ) {
                         local_bindings.insert(var.clone(), binding);
@@ -6669,11 +6177,16 @@ impl<'a> SymbolicWalker<'a> {
                         nested
                             .output
                             .iter()
-                            .filter_map(|(path, meta)| meta.defaulted.then(|| path.clone())),
+                            .filter(|(_path, meta)| meta.defaulted)
+                            .map(|(path, _meta)| path.clone()),
                     );
-                    defaulted_paths.extend(nested.fragment_output_uses.iter().filter_map(
-                        |output| output.meta.defaulted.then(|| output.source_expr.clone()),
-                    ));
+                    defaulted_paths.extend(
+                        nested
+                            .fragment_output_uses
+                            .iter()
+                            .filter(|output| output.meta.defaulted)
+                            .map(|output| output.source_expr.clone()),
+                    );
                     if defaulted_paths.is_empty() {
                         local_default_paths.remove(&var);
                     } else {
@@ -6694,10 +6207,7 @@ impl<'a> SymbolicWalker<'a> {
                     text,
                     local_bindings,
                     current_dot_fragment.as_ref(),
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     &mut seen_set,
                 ) {
                     let set_default_paths =
@@ -6756,10 +6266,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 let mut nested = nested;
@@ -6817,10 +6324,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
@@ -6841,10 +6345,7 @@ impl<'a> SymbolicWalker<'a> {
                         &mut then_bindings,
                         &mut then_default_paths,
                         &mut then_output_meta,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         analysis,
                     );
@@ -6861,10 +6362,7 @@ impl<'a> SymbolicWalker<'a> {
                         &mut else_bindings,
                         &mut else_default_paths,
                         &mut else_output_meta,
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         seen,
                         analysis,
                     );
@@ -6895,10 +6393,7 @@ impl<'a> SymbolicWalker<'a> {
                     Some(bindings),
                     current_dot,
                     local_bindings,
-                    defines,
-                    define_sources,
-                    define_tree_cache,
-                    fragment_helper_body_cache,
+                    context,
                     seen,
                 );
                 branch_guard_paths.extend(bound_helper_condition_paths(&nested));
@@ -6916,10 +6411,7 @@ impl<'a> SymbolicWalker<'a> {
                         header,
                         local_bindings,
                         current_dot_fragment.as_ref(),
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         &mut seen_range,
                     );
                     range_binding = range_fragment_binding
@@ -6948,10 +6440,7 @@ impl<'a> SymbolicWalker<'a> {
                         header,
                         &body_bindings,
                         header_dot_fragment.as_ref(),
-                        defines,
-                        define_sources,
-                        define_tree_cache,
-                        fragment_helper_body_cache,
+                        context,
                         &mut seen_range,
                     ) {
                         body_bindings.insert(var, binding);
@@ -6974,10 +6463,7 @@ impl<'a> SymbolicWalker<'a> {
                                 &mut body_bindings,
                                 &mut body_default_paths,
                                 &mut body_output_meta,
-                                defines,
-                                define_sources,
-                                define_tree_cache,
-                                fragment_helper_body_cache,
+                                context,
                                 &mut item_seen,
                                 analysis,
                             );
@@ -6993,10 +6479,7 @@ impl<'a> SymbolicWalker<'a> {
                             &mut body_bindings,
                             &mut body_default_paths,
                             &mut body_output_meta,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             seen,
                             analysis,
                         );
@@ -7025,10 +6508,7 @@ impl<'a> SymbolicWalker<'a> {
                             &mut else_bindings,
                             &mut else_default_paths,
                             &mut else_output_meta,
-                            defines,
-                            define_sources,
-                            define_tree_cache,
-                            fragment_helper_body_cache,
+                            context,
                             seen,
                             analysis,
                         );
@@ -7600,15 +7080,13 @@ impl<'a> SymbolicWalker<'a> {
                 let current_dot = self
                     .current_dot_binding()
                     .map(|binding| Self::fragment_binding_from_helper_binding(&binding));
+                let context = self.fragment_eval_context();
                 let mut seen = HashSet::new();
                 if let Some(binding) = Self::fragment_binding_from_text(
                     &rhs,
                     &locals,
                     current_dot.as_ref(),
-                    self.defines,
-                    &self.ir_context.inner.define_body_sources,
-                    &self.ir_context.inner.define_tree_cache,
-                    &self.fragment_helper_body_cache,
+                    context,
                     &mut seen,
                 ) {
                     self.template_bindings.insert(var.clone(), binding);
