@@ -557,14 +557,23 @@ Current result:
   `else`/alternative branches and restores the guard scope afterward, so false
   branch uses become more precise without leaking branch guards to following
   nodes.
+- `symbolic_local_state.rs` now owns the tree-sitter walker's compatibility
+  local maps for range domains, get bindings, fragment locals, default-path
+  aliases, helper-output metadata, and chart-level default mutations discovered
+  from structural `set X "K" (X.K | default V)` helper calls.
+  `SymbolicWalker` snapshots and restores one local-state object instead of
+  cloning separate maps, which creates a single seam for moving that state to
+  explicit scoped joins. This also prevents branch-local default mutations from
+  leaking onto later unconditional reads.
 
 Remaining A1 work:
 
-- Move the tree-sitter `SymbolicWalker` compatibility state from manual
-  snapshot/restore maps to an `EvalEnv`-shaped state object with explicit branch
-  joins.
-- Make `=` assignment update the defining compatibility scope once the walker
-  uses `EvalEnv` for locals instead of direct `template_bindings` map writes.
+- Teach `SymbolicLocalState` explicit local scopes and branch out-state joins,
+  then make the tree-sitter `SymbolicWalker` use that instead of restoring the
+  entire local state after each branch.
+- Make `=` assignment update the defining compatibility scope once
+  `SymbolicLocalState` carries scoped declarations instead of flat fragment
+  local map writes.
 - Replace the remaining flat guard-stack internals with predicates and keep
   flat `Guard` projection only at the current `ValueUse` compatibility output.
 - Introduce a deliberate `Top` value distinct from today's compatibility

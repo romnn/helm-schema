@@ -638,7 +638,7 @@ storageClassName: {{ $storageClass }}
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: true,
-            disable_k8s_schemas: false,
+            disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
         },
@@ -1177,6 +1177,78 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
     });
 
     similar_asserts::assert_eq!(actual, expected);
+    Ok(())
+}
+
+#[test]
+fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: synth-branch-default\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            enabled: false
+            serviceAccount:
+              name:
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc! {r#"
+            {{- define "synth.defaultValues" }}
+            {{- with .Values }}
+            {{- $_ := set .serviceAccount "name" (.serviceAccount.name | default "synth") }}
+            {{- end }}
+            {{- end }}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/sa.yaml")?,
+        indoc! {r#"
+            {{- if .Values.enabled }}
+            {{- include "synth.defaultValues" . }}
+            {{- end }}
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: {{ .Values.serviceAccount.name | quote }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: false,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    let name = actual
+        .pointer("/properties/serviceAccount/properties/name")
+        .ok_or_else(|| eyre!("missing serviceAccount.name schema: {actual}"))?;
+
+    assert!(
+        !schema_accepts_type(name, "null"),
+        "branch-local default mutation must not make later unconditional reads nullable: {name}"
+    );
+
     Ok(())
 }
 

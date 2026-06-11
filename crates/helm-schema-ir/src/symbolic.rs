@@ -23,6 +23,7 @@ use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls,
 };
+use crate::symbolic_local_state::{SymbolicLocalState, SymbolicLocalStateSnapshot};
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 use crate::value_use_postprocess::postprocess_value_uses;
@@ -90,46 +91,16 @@ struct SymbolicWalker<'a> {
 
     inline_stack: Vec<String>,
 
-    range_domains: HashMap<String, Vec<String>>,
-    get_bindings: HashMap<String, GetBinding>,
-    template_bindings: HashMap<String, FragmentBinding>,
-    template_default_paths: HashMap<String, BTreeSet<String>>,
-    template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    local_state: SymbolicLocalState,
 
     inline_helpers_in_fragments: bool,
     root_bindings: HashMap<String, HelperBinding>,
-
-    /// Paths the chart has structurally declared as null-tolerant via a
-    /// `set OPERAND "KEY" (OPERAND.KEY | default V)` mutation inside a
-    /// helper. Populated as the walker traverses templates that include
-    /// such helpers; consumed by `emit_use_with_extra_guards` to attach
-    /// `Guard::Default { path }` to any subsequent ValueUse whose
-    /// `source_expr` matches.
-    ///
-    /// This models Helm's render-time semantics: a `set` action in a
-    /// chart helper run before downstream reads (typical pattern: a
-    /// `<chart>.defaultValues` helper `include`d at the top of every
-    /// consumer template) means the merged values dict has the default
-    /// applied before any read. Reads of that path therefore tolerate a
-    /// null from values.yaml — `helm-lint --strict` sees the post-`set`
-    /// value, not the raw user input.
-    ///
-    /// Walker scope is per-template, so a path is only widened in
-    /// templates that actually traverse through an include of the
-    /// defaulting helper. Templates that read `.Values.X` without
-    /// running the helper produce ungrouped uses that the nullability
-    /// pass treats as null-intolerant, which is the conservative read.
-    chart_value_defaults: BTreeSet<String>,
 }
 
 struct WalkerScopeSnapshot {
     guards_len: usize,
     dot_stack_len: Option<usize>,
-    range_domains: HashMap<String, Vec<String>>,
-    get_bindings: HashMap<String, GetBinding>,
-    template_bindings: HashMap<String, FragmentBinding>,
-    template_default_paths: HashMap<String, BTreeSet<String>>,
-    template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    local_state: SymbolicLocalStateSnapshot,
 }
 
 impl<'a> SymbolicWalker<'a> {
@@ -152,16 +123,10 @@ impl<'a> SymbolicWalker<'a> {
 
             inline_stack: Vec::new(),
 
-            range_domains: HashMap::new(),
-            get_bindings: HashMap::new(),
-            template_bindings: HashMap::new(),
-            template_default_paths: HashMap::new(),
-            template_output_meta: HashMap::new(),
+            local_state: SymbolicLocalState::default(),
 
             inline_helpers_in_fragments: false,
             root_bindings: HashMap::new(),
-
-            chart_value_defaults: BTreeSet::new(),
         }
     }
 
@@ -202,9 +167,9 @@ impl<'a> SymbolicWalker<'a> {
     fn value_path_context(&self) -> ValuePathContext<'_> {
         ValuePathContext {
             root_bindings: &self.root_bindings,
-            template_bindings: &self.template_bindings,
-            template_default_paths: &self.template_default_paths,
-            template_output_meta: &self.template_output_meta,
+            template_bindings: &self.local_state.fragment_bindings,
+            template_default_paths: &self.local_state.default_paths,
+            template_output_meta: &self.local_state.output_meta,
             fragment_context: self.fragment_eval_context(),
             current_dot_fragment: self.current_dot_fragment(),
             current_dot_binding: self.current_dot_binding(),
@@ -217,7 +182,7 @@ impl<'a> SymbolicWalker<'a> {
     /// already ran above the nested fragment in source order, so the
     /// fragment's reads see the same defaulted state.
     fn with_chart_value_defaults(mut self, defaults: BTreeSet<String>) -> Self {
-        self.chart_value_defaults = defaults;
+        self.local_state.set_chart_value_defaults(defaults);
         self
     }
 
@@ -225,11 +190,7 @@ impl<'a> SymbolicWalker<'a> {
         WalkerScopeSnapshot {
             guards_len: self.guards.len(),
             dot_stack_len: include_dot_stack.then_some(self.dot_stack.len()),
-            range_domains: self.range_domains.clone(),
-            get_bindings: self.get_bindings.clone(),
-            template_bindings: self.template_bindings.clone(),
-            template_default_paths: self.template_default_paths.clone(),
-            template_output_meta: self.template_output_meta.clone(),
+            local_state: self.local_state.snapshot(),
         }
     }
 
@@ -238,11 +199,7 @@ impl<'a> SymbolicWalker<'a> {
         if let Some(dot_stack_len) = snapshot.dot_stack_len {
             self.dot_stack.truncate(dot_stack_len);
         }
-        self.range_domains = snapshot.range_domains;
-        self.get_bindings = snapshot.get_bindings;
-        self.template_bindings = snapshot.template_bindings;
-        self.template_default_paths = snapshot.template_default_paths;
-        self.template_output_meta = snapshot.template_output_meta;
+        self.local_state.restore(snapshot.local_state);
     }
 
     fn inline_static_file_templates_from_helper_calls(&mut self, text: &str) {
@@ -254,7 +211,7 @@ impl<'a> SymbolicWalker<'a> {
                 let helper_dot = helper_call.arg.as_ref().and_then(|arg| {
                     context.fragment_binding_from_expr(
                         arg,
-                        &self.template_bindings,
+                        &self.local_state.fragment_bindings,
                         current_dot.as_ref(),
                         &mut seen,
                     )
@@ -291,7 +248,7 @@ impl<'a> SymbolicWalker<'a> {
                 .with_initial_dot_binding(request.dot)
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
-                .with_chart_value_defaults(self.chart_value_defaults.clone());
+                .with_chart_value_defaults(self.local_state.chart_value_defaults.clone());
         let uses = nested.run(&tree);
         self.uses.extend(uses);
     }
@@ -342,7 +299,7 @@ impl<'a> SymbolicWalker<'a> {
         // applies only to reads with a non-empty `path` (i.e. ones
         // contributing to a rendered field): without a render use the
         // guard would be meaningless.
-        if !path.0.is_empty() && self.chart_value_defaults.contains(&source_expr) {
+        if !path.0.is_empty() && self.local_state.chart_value_defaults.contains(&source_expr) {
             let default_guard = Guard::Default {
                 path: source_expr.clone(),
             };
@@ -445,7 +402,7 @@ impl<'a> SymbolicWalker<'a> {
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
                 .with_helper_bindings(bindings)
-                .with_chart_value_defaults(self.chart_value_defaults.clone());
+                .with_chart_value_defaults(self.local_state.chart_value_defaults.clone());
         let uses = nested.run(&plan.tree);
         self.uses.extend(uses);
         true
@@ -474,8 +431,8 @@ impl<'a> SymbolicWalker<'a> {
             text,
             kind,
             &value_path_context,
-            &self.range_domains,
-            &self.get_bindings,
+            &self.local_state.range_domains,
+            &self.local_state.get_bindings,
             helper_analysis,
         );
         // Stash chart-level `set X "K" (X.K | default V)` mutations discovered
@@ -483,8 +440,8 @@ impl<'a> SymbolicWalker<'a> {
         // this walker attach `Guard::Default { path }` for matching reads,
         // modeling that the helper's `set` has already run by the time those
         // reads are evaluated.
-        self.chart_value_defaults
-            .append(&mut output_values.chart_value_defaults);
+        self.local_state
+            .append_chart_value_defaults(&mut output_values.chart_value_defaults);
         if output_values.is_empty() {
             return;
         }
@@ -498,7 +455,7 @@ impl<'a> SymbolicWalker<'a> {
             text,
             &self.root_bindings,
             self.current_dot_binding(),
-            &self.template_bindings,
+            &self.local_state.fragment_bindings,
             self.fragment_eval_context(),
         )
     }
@@ -587,7 +544,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         plan_assignment_action(
             text,
             fragment_context,
-            &self.template_bindings,
+            &self.local_state.fragment_bindings,
             &self.root_bindings,
             current_dot.as_ref(),
         )
@@ -598,8 +555,8 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         plan_if_condition(
             header,
             &value_path_context,
-            &self.range_domains,
-            &self.get_bindings,
+            &self.local_state.range_domains,
+            &self.local_state.get_bindings,
         )
     }
 
@@ -608,8 +565,8 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         plan_with_condition(
             header,
             &value_path_context,
-            &self.range_domains,
-            &self.get_bindings,
+            &self.local_state.range_domains,
+            &self.local_state.get_bindings,
         )
     }
 
@@ -625,36 +582,27 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
 
 impl NodeActionEffectSink for SymbolicWalker<'_> {
     fn insert_get_binding(&mut self, variable: String, binding: GetBinding) {
-        self.get_bindings.insert(variable, binding);
+        self.local_state.insert_get_binding(variable, binding);
     }
 
     fn declare_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
-        self.template_bindings.insert(variable, binding);
+        self.local_state.declare_fragment_binding(variable, binding);
     }
 
     fn assign_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
-        self.template_bindings.insert(variable, binding);
+        self.local_state.assign_fragment_binding(variable, binding);
     }
 
     fn refresh_default_paths(&mut self, variable: &str, rhs: &str) {
         let default_paths = self
             .value_path_context()
             .resolved_default_fallback_paths(rhs);
-        if default_paths.is_empty() {
-            self.template_default_paths.remove(variable);
-        } else {
-            self.template_default_paths
-                .insert(variable.to_string(), default_paths);
-        }
+        self.local_state.set_default_paths(variable, default_paths);
     }
 
     fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str) {
         let helper_meta = self.helper_output_meta_for_text(rhs);
-        if helper_meta.is_empty() {
-            self.template_output_meta.remove(&variable);
-        } else {
-            self.template_output_meta.insert(variable, helper_meta);
-        }
+        self.local_state.set_output_meta(variable, helper_meta);
     }
 
     fn push_guard_if_absent(&mut self, guard: Guard) {
@@ -668,6 +616,6 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
     }
 
     fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
-        self.range_domains.insert(variable, literals);
+        self.local_state.insert_range_domain(variable, literals);
     }
 }
