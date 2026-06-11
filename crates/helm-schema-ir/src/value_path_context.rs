@@ -193,6 +193,13 @@ impl ValuePathContext<'_> {
             .collect()
     }
 
+    pub(crate) fn with_condition_guards(&self, text: &str) -> Vec<Guard> {
+        self.condition_guards(text)
+            .into_iter()
+            .flat_map(with_guards_from_condition_guard)
+            .collect()
+    }
+
     pub(crate) fn single_resolved_values_path(&self, text: &str) -> Option<String> {
         let mut paths = self.resolved_values_paths(text);
         if paths.len() == 1 { paths.pop() } else { None }
@@ -472,6 +479,28 @@ fn guard_is_subsumed_by_alias_or_guard(guard: &Guard, alias_guards: &[Guard]) ->
                 .any(|alias_guard_path| alias_guard_path == path)
         })
     })
+}
+
+fn with_guards_from_condition_guard(guard: Guard) -> Vec<Guard> {
+    match guard {
+        Guard::Truthy { path } => vec![Guard::With { path }],
+        Guard::Or { paths } => {
+            let mut out: Vec<Guard> = paths
+                .iter()
+                .map(|path| Guard::With { path: path.clone() })
+                .collect();
+            out.push(Guard::Or { paths });
+            out
+        }
+        Guard::Not { path } => vec![Guard::With { path: path.clone() }, Guard::Not { path }],
+        Guard::Eq { path, value } => vec![
+            Guard::With { path: path.clone() },
+            Guard::Eq { path, value },
+        ],
+        Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } | Guard::TypeIs { .. } => {
+            vec![guard]
+        }
+    }
 }
 
 fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, HelperBinding>) -> bool {

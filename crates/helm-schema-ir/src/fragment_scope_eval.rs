@@ -5,6 +5,9 @@ use helm_schema_ast::TemplateExpr;
 use crate::binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
+use crate::tree_sitter_utils::children_with_field;
+use crate::walker::is_fragment_expr;
+use crate::yaml_shape::parse_yaml_key;
 
 fn strip_template_action_wrapping(line: &str) -> Option<String> {
     let after_open = line.trim_start().strip_prefix("{{")?;
@@ -233,6 +236,36 @@ pub(crate) fn range_body_emits_sequence_item_from_source(
     false
 }
 
+pub(crate) fn range_body_renders_scalar_sequence_items_from_source(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+) -> bool {
+    let mut saw_sequence_item = false;
+    let mut body_text = String::new();
+
+    for body_node in children_with_field(node, "body") {
+        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
+            continue;
+        };
+        body_text.push_str(text);
+    }
+
+    for line in body_text.lines() {
+        let trimmed = line.trim_start();
+        let Some(rest) = trimmed.strip_prefix('-') else {
+            continue;
+        };
+        let rest = rest.trim_start();
+        saw_sequence_item = true;
+
+        if rest.is_empty() || parse_yaml_key(rest).is_some() || is_fragment_expr(rest) {
+            return false;
+        }
+    }
+
+    saw_sequence_item
+}
+
 pub(crate) fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
     let mut walker = node.walk();
     node.named_children(&mut walker)
@@ -245,14 +278,4 @@ pub(crate) fn range_has_destructured_variable_definition(node: tree_sitter::Node
                 .count()
                 >= 2
         })
-}
-
-fn children_with_field<'n>(
-    node: tree_sitter::Node<'n>,
-    field: &'static str,
-) -> impl Iterator<Item = tree_sitter::Node<'n>> {
-    let mut walker = node.walk();
-    node.children_by_field_name(field, &mut walker)
-        .collect::<Vec<_>>()
-        .into_iter()
 }

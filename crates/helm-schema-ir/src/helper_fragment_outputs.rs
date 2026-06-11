@@ -7,6 +7,7 @@ use crate::fragment_scope_eval::{
     range_body_emits_sequence_item_from_source, range_has_destructured_variable_definition,
     range_header_text_from_source, range_iterable_binding,
 };
+use crate::tree_sitter_utils::children_with_field;
 
 pub(crate) fn collect_bound_fragment_outputs_from_tree(
     node: tree_sitter::Node<'_>,
@@ -162,14 +163,4 @@ pub(crate) fn collect_bound_fragment_outputs_from_tree(
             }
         }
     }
-}
-
-fn children_with_field<'n>(
-    node: tree_sitter::Node<'n>,
-    field: &'static str,
-) -> impl Iterator<Item = tree_sitter::Node<'n>> {
-    let mut walker = node.walk();
-    node.children_by_field_name(field, &mut walker)
-        .collect::<Vec<_>>()
-        .into_iter()
 }

@@ -418,6 +418,21 @@ Current result:
   summary orchestration and helper-body transfer functions so they can be
   replaced by `eval_node` / helper summaries without further growing
   `SymbolicWalker`.
+- Output-action handling has also been split into focused compatibility
+  modules:
+  - `output_node_context.rs` owns YAML sink attribution for one template output
+    node.
+  - `output_value_analysis.rs` collects the expression/helper/local facts for
+    that output node.
+  - `output_value_emitter.rs` converts those facts into the existing
+    `ValueUse` sink.
+  This is intentionally shaped like the future `eval_node(..., sink)` boundary:
+  the walker determines traversal order, while output-node interpretation and
+  effect emission are no longer embedded in the traversal code.
+- Shared tree-sitter utilities and scope snapshots now remove more duplicated
+  walker mechanics. The current snapshot object is transitional, but it makes
+  the remaining control-flow state explicit enough to fold into `EvalEnv`
+  incrementally.
 - Full `FragmentBinding` migration is intentionally not complete yet because
   fragments still carry string literal sets and rendered-output semantics that
   should become first-class `AbstractValue` / `Effects` concepts before the old
