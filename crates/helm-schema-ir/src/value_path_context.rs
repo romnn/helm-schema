@@ -200,6 +200,25 @@ impl ValuePathContext<'_> {
             .collect()
     }
 
+    pub(crate) fn with_body_fragment_binding(&self, header: &str) -> Option<FragmentBinding> {
+        let mut locals = self.template_bindings.clone();
+        for (key, value) in self.root_bindings {
+            locals.insert(key.clone(), value.to_fragment_binding());
+        }
+
+        let exprs = parse_expr_text(header);
+        let [expr] = exprs.as_slice() else {
+            return None;
+        };
+        fragment_binding_from_outer_expr(
+            expr,
+            Some(&locals),
+            Some(self.root_bindings),
+            self.current_dot_binding.as_ref(),
+        )
+        .or_else(|| self.fragment_binding_from_expr(expr, self.current_dot_fragment.as_ref()))
+    }
+
     pub(crate) fn single_resolved_values_path(&self, text: &str) -> Option<String> {
         let mut paths = self.resolved_values_paths(text);
         if paths.len() == 1 { paths.pop() } else { None }

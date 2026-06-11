@@ -1,8 +1,10 @@
 mod abstract_eval;
 mod abstract_value;
+mod assignment_action_plan;
 mod binding;
 mod bound_helper_call_analysis;
 mod bound_value_analysis;
+mod condition_action_plan;
 mod define_body_cache;
 mod eval_effect;
 mod eval_env;
@@ -23,6 +25,7 @@ mod output_node_context;
 mod output_path;
 mod output_value_analysis;
 mod output_value_emitter;
+mod range_action_plan;
 mod rendered_yaml_context;
 pub mod required_inference;
 mod resource_detector;

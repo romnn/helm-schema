@@ -440,7 +440,7 @@ Current result:
 
 ### Phase 4 — move node/control-flow evaluation onto `eval_node`
 
-Status: **pending**
+Status: **in progress**
 
 Goal:
 
@@ -448,6 +448,30 @@ Goal:
   node evaluator
 - preserve source-order mutation visibility
 - produce current `ValueUse` / `ChartFacts` through compatibility sinks
+
+Current result:
+
+- `range_action_plan.rs` computes the static interpretation facts for a
+  tree-sitter `range_action`: header text, literal key-domain ranges, scalar
+  sequence-item projection, map-fragment projection, and body dot binding.
+  `SymbolicWalker` still applies the plan in source order, which preserves the
+  current mutation and emission semantics while moving range analysis toward
+  the future `eval_node` transfer function.
+- `condition_action_plan.rs` computes the static facts for `if` and `with`
+  headers: guard facts, bound-value reads, and the `with` body dot binding.
+  `SymbolicWalker` only applies those facts to the active guard stack and
+  output sink in the order Helm would evaluate them.
+- `assignment_action_plan.rs` computes the static facts for local assignments:
+  `get` bindings, fragment aliases, and the assigned expression. The walker
+  still applies the resulting local state changes in source order before
+  refreshing default-fallback and helper-output aliases, preserving mutation
+  visibility while moving assignment interpretation out of traversal.
+- `ValuePathContext` now resolves `with` body fragment bindings. The walker no
+  longer reinterprets the `with` header expression itself; it consumes the same
+  value-path context used by expression and guard analysis.
+- `if` and `with` now share one scoped branch walker, making branch scope
+  setup/restore explicit and reducing duplicated control-flow traversal before
+  it is replaced by `EvalEnv`-backed node evaluation.
 
 ### Phase 5 — helper summaries
 
