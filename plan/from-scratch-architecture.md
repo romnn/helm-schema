@@ -61,6 +61,35 @@ remaining local maxima:
    had inherited today's flatten-by-default, which inflates output on the
    hot path and then re-deduplicates it in the minifier.
 
+A fourth review round closed the remaining seam-cleanliness gaps:
+kind-qualified capability probes are restored via a typed
+`ApiPresenceQuery` (the three-part `group/version/Kind` form is *more*
+structural than the two-part form — it needs no probe table, per the
+documented architectural-debt note); `ChartCrdIndex` is promoted to a core
+boundary type so "knowledge depends on core only" is airtight while
+chart-local CRDs stay a source *inside* the lookup plan (one `LookupTrace`
+spans every source); `ContractIR` gains a scope-constraint channel for facts
+with no single subject path (multi-path `fail` conditions) — while
+exclusivity/co-occurrence remain resolution-time lowerings of the predicate
+algebra, not bespoke node types; and the API story is split into explicit
+stability rings (semver-stable facade surface; versioned contract DTO;
+experimental in-memory `ContractIR`).
+
+A fifth round pushed the last structural distance: the facade front becomes
+an **`AnalysisSession`** with memoized lazy queries (`contract()`,
+`local_schema_universe()`, `resolved_contract(policy)`, `emit(mode)`,
+`explain(path)`) over the pure stage functions — whole-session invalidation
+for now, with fine-grained incrementality an explicitly deferred upgrade
+that the purity discipline keeps cheap; `analyze` now returns one compound
+artifact `Analysis { contract, local_schemas }`, dissolving v3's muddy
+chart-local-knowledge split (whose extractor, as specified, could not even
+have worked — it needed the engine-internal documents that `ContractIR`
+deliberately does not contain); `ScopeConstraint` is marked
+`#[non_exhaustive]` as the designated extension point for object-scope
+facts, with the admission bar written down; and override loading plus
+external-`$ref` resolution move into input assembly (`PolicyInputs`), so
+that after `load` the run is IO-free except knowledge fetches.
+
 Relationship to other plan documents: `single-abstract-interpreter.md`
 remains the right *seed* for the interpreter and is generalized here;
 `next-priorities.md` keeps ownership of sequencing — §15 records the route.
@@ -269,10 +298,13 @@ backlog.
    projection, chart-local knowledge extraction, resolution, lowering —
    lives in the same pure crate. Helper outputs, resource identity, guard
    extraction, defaults, fragments: all projections of one interpretation.
-2. **The contract graph is the stable artifact.** The engine's public output
-   is a guarded, provenance-carrying per-path constraint structure
-   (`ContractIR`), not the manifest-shaped internals that produce it. The
-   abstract document model is an internal mechanism.
+2. **The contract graph is the architecturally stable artifact.** The
+   engine's output is a guarded, provenance-carrying constraint structure
+   (`ContractIR`), not the manifest-shaped internals that produce it; its
+   *semantics* do not churn with parser/mechanism evolution. API stability
+   is a separate, narrower promise — see §6.4's stability rings: the
+   semver-stable public surface is the facade's generate/stage level, not
+   the in-memory IR.
 3. **Typed and spanned everywhere.** Paths, predicates, coordinates, schemas
    are domain types; every node and fact carries provenance. Stringly forms
    exist only at serialization edges, as `Display`/DTO projections.
@@ -303,7 +335,8 @@ helm-schema-template-grammar   tree-sitter C grammars + build.rs only
 helm-schema-core               MINIMAL shared boundary types — only what both
                                sides of the engine↔knowledge seam must name:
                                ResourceCoordinate/GroupVersion/KubeVersion,
-                               Lookup<T>, SchemaDoc (foreign JSON, lazy refs),
+                               ApiPresenceQuery, Lookup<T>, SchemaDoc
+                               (foreign JSON, lazy refs), ChartCrdIndex,
                                trait ResourceSchemaOracle, trait
                                CapabilityOracle, Diagnostic envelope DTOs,
                                RelPath, FetchPolicy/LoadBudget.
@@ -335,10 +368,12 @@ helm-schema-knowledge          IO: exact external resolver only. Catalog
 helm-schema (facade)           the stable product surface + IO shell: chart
                                loading (vfs dir/tgz/mem + budgets, FileRole,
                                Chart.yaml model), values composition,
-                               ChartProgram assembly, pipeline wiring +
-                               parallel fan-out, override merge, optional
-                               flatten export, minify, diagnostics
-                               projection, postcondition checks, lockfile.
+                               ChartProgram + PolicyInputs assembly (ALL
+                               input IO, incl. override loading and
+                               external-$ref resolution), AnalysisSession
+                               (memoized stage queries) + parallel fan-out,
+                               pure output passes, diagnostics projection,
+                               postcondition checks, lockfile.
 
 helm-schema-cli                thin binary: clap → Config (env vars
                                interpreted HERE) → facade → output/exit codes.
@@ -374,39 +409,58 @@ named types between them); they just stop being semver surfaces.
 ### 5.2 The pipeline
 
 ```
-1. load_chart      (facade, IO)      dir/tgz/mem ──► ChartProgram
-                                     {files+roles, Chart.yaml model, values
-                                      docs, crds/, shipped schemas — all
-                                      bytes loaded, zero IO beyond here}
+1. load            (facade — the ONLY ambient IO besides knowledge fetches)
+   dir/tgz/mem ──► ChartProgram   {files+roles, Chart.yaml model, values
+                                   docs, crds/, shipped schemas}
+              ──► PolicyInputs    {override documents loaded AND their
+                                   external $refs resolved HERE, under
+                                   FetchPolicy — never on the output path}
 
-2. analyze         (engine, pure)    ChartProgram ──► ContractIR
-                                     parse* ∥ → interpret* (shared summary
-                                     memo) → project anchors/identities/
-                                     constraints; AbsDoc never escapes
+2. analyze         (engine, pure)
+   ChartProgram ──► Analysis { contract: ContractIR,
+                               local_schemas: ChartCrdIndex }
+   parse* ∥ → interpret* (shared summary memo) → project anchors/
+   identities/constraints + the chart-local schema universe (static crds/
+   + fully-literal template-rendered CRDs); AbsDoc never escapes
 
-3. knowledge       (engine + knowledge)
-   extract_chart_local_knowledge(&ContractIR) ──► ChartCrdIndex
-   resolve(&ContractIR, &dyn ResourceSchemaOracle, &dyn CapabilityOracle,
-           &ResolvePolicy) ──► ResolvedContract
-                                     branch liveness, anchor co-walk,
-                                     shipped-schema intersection, decisions
+3. resolve         (engine, pure given oracle answers)
+   resolve(&Analysis, shipped schemas from ChartProgram,
+           &dyn ResourceSchemaOracle, &dyn CapabilityOracle, &ResolvePolicy)
+        ──► ResolvedContract        branch liveness, anchor co-walk,
+                                    shipped-schema intersection, decisions
+   (facade registers Analysis.local_schemas ahead of remote catalogs in
+    the oracle stack before this step runs)
 
-4. emit            (engine lower/ + facade passes)
+4. emit            (pure)
    lower(&ResolvedContract, EmitMode::Bundled | EmitMode::FlattenedExport)
         ──► draft-07 Value (self-contained, internal $defs by default)
-   facade: override merge → optional flatten export → minify →
-           postcondition-validate(defaults) → bytes + diagnostics
+   then pure passes over (Value × PolicyInputs): override merge →
+   optional flatten export → strip → minify →
+   postcondition-validate(defaults) ──► bytes + diagnostics
 ```
 
-Every arrow is a named public type; the facade exposes the stage functions
-individually — that, not a "pipeline object", is what lets tests, tools and
-a future LSP run any prefix. The chart-local knowledge step is a **single
-forward edge, not a fixed point**: knowledge never influences
-interpretation (only resolution consumes oracles, by design), so
-analyze → extract → resolve terminates in one pass. The only would-be loop —
-CRDs *emitted under capability guards* whose liveness depends on the oracle —
-is handled by registering unconditional CRD documents and abstaining on
-guarded ones (§14).
+Every arrow is a named public type and the stage functions are public — but
+the ergonomic front is an **`AnalysisSession`**: one object owning the
+loaded inputs and the memo tables (parse results, helper summaries, oracle
+responses), exposing the stages as memoized lazy queries — `contract()`,
+`local_schema_universe()`, `resolved_contract(policy)`, `emit(mode)`,
+`explain(path)`. CLI, tests, `--explain` and a future LSP all ask the same
+session instead of adapting a batch pipeline. Invalidation in v1 is
+whole-session (drop and rebuild — the worst corpus chart analyzes in
+seconds); *fine-grained* incrementality is an explicitly deferred upgrade
+to the session's memo policy, not a re-architecture — and that stays true
+exactly as long as every stage remains a pure function of explicit inputs
+(the discipline §5.1 enforces and step 1's `PolicyInputs` completes).
+Building a dependency-tracking query framework now would be machinery
+without a consumer — the product is batch; the session keeps the shape
+query-ready without paying for invalidation nothing yet uses.
+
+Chart-local knowledge is a **single forward edge, not a fixed point**:
+knowledge never influences interpretation (only resolution consumes
+oracles, by design), so analyze → resolve terminates in one pass. The only
+would-be loop — CRDs *emitted under capability guards* whose liveness
+depends on the oracle — is handled by registering unconditional CRD
+documents and abstaining on guarded ones (§14).
 
 ## 6. The layers in detail
 
@@ -433,10 +487,26 @@ pub struct SchemaDoc { /* root, defs, version metadata */ }
 pub trait ResourceSchemaOracle: Send + Sync {
     fn resolve(&self, c: &ResourceCoordinate) -> Lookup<Arc<SchemaDoc>>;
 }
+/// Typed capability query — preserves the exact structural guard space.
+/// Helm's `.Capabilities.APIVersions.Has` takes either form; the three-part
+/// `group/version/Kind` form probes the kind directly and is *more*
+/// structural than the two-part form (no canonical-kind table needed).
+/// Flattening both into GroupVersion would regress real branch selection.
+pub enum ApiPresenceQuery {
+    GroupVersion(GroupVersion),       // two-part probe — needs the probe table
+    Resource(ResourceCoordinate),     // three-part probe — fully structural
+}
+
 pub trait CapabilityOracle: Send + Sync {
-    fn has_api(&self, gv: &GroupVersion) -> Lookup<bool>;
+    fn has_api(&self, q: &ApiPresenceQuery) -> Lookup<bool>;
     fn kube_version(&self) -> Lookup<KubeVersion>;  // from --k8s-version / Chart.yaml
 }
+
+/// Chart-local CRD schemas keyed by coordinate — a true boundary type:
+/// produced by engine extraction, handed by the facade into the knowledge
+/// plan as a source. Built entirely from core types, so "knowledge depends
+/// on core only" stays airtight.
+pub struct ChartCrdIndex(BTreeMap<ResourceCoordinate, Arc<SchemaDoc>>);
 
 /// Validated at construction: no '..', no absolute, segments ⊆ [a-z0-9._-].
 /// The ONLY type the cache/url layer accepts — coordinates are
@@ -516,7 +586,8 @@ pub enum Atom {
     TypeIs(Place, HelmType),
     Contains(Place, ScalarConst),  // membership (sprig `has` / `hasKey`)
     NonEmpty(Place),               // range body executes ≥ 1 time
-    ApiVersionsHas(GroupVersion),  // leaf fact: .Capabilities.APIVersions.Has
+    ApiVersionsHas(ApiPresenceQuery), // leaf fact: .Capabilities.APIVersions.Has —
+                                      // kind-qualified three-part form preserved
     KubeVersionCmp(CmpOp, SemverReq), // leaf fact: semverCompare over KubeVersion
     Opaque(SpanId),                // unmodeled condition; valuation Unknown
 }
@@ -675,15 +746,27 @@ engine's primary public type. It is a guarded constraint graph over the
 values space, plus the chart's resource claims; *not* a manifest model:
 
 ```rust
+/// What `analyze` returns: the semantic claims AND the chart-local schema
+/// universe, as one compound artifact. (Extracting local schemas *from*
+/// `ContractIR` — a v3 sketch — could not have worked: template-rendered
+/// CRD extraction needs the engine-internal document subtrees that the
+/// contract deliberately does not contain. Local knowledge is a sibling
+/// projection of the same interpretation, not a derivative of the
+/// contract.)
+pub struct Analysis {
+    pub contract: ContractIR,
+    pub local_schemas: ChartCrdIndex,  // static crds/ + literal template-rendered CRDs
+}
+
 pub struct ContractIR {
     /// Per-path guarded constraints, each with provenance.
     pub paths: BTreeMap<ValuePath, PathContract>,
+    /// Facts with no single subject path — the predicate carries all the
+    /// structure (e.g. a `fail` guarded by ¬Truthy(a) ∧ ¬Truthy(b)).
+    pub scopes: Vec<Guarded<ScopeConstraint>>,
     /// Resource claims: identity decision lists + anchor patterns projected
     /// from the (internal) abstract documents.
     pub resources: Vec<ResourceClaim>,
-    /// Chart-local knowledge handles: extracted CRD documents (fully
-    /// literal), shipped-schema references per chart prefix.
-    pub chart_knowledge: ChartLocalKnowledge,
     pub gaps: Vec<Gap>,
     pub preds: PredTable, pub sources: SourceMap, pub helpers: HelperTable,
 }
@@ -707,6 +790,19 @@ pub struct ResourceClaim {
     pub doc: DocId,
     pub identity: Vec<(PredRef, Ident)>,              // guarded decision list
 }
+
+/// Scope-level constraints: facts whose subject is the predicate itself
+/// rather than one path. `#[non_exhaustive]` — the DESIGNATED extension
+/// point for object-scope/group facts (co-occurrence with a direct
+/// structural witness, grouped exclusivity, …). Admission bar: a variant
+/// is added only when a structural fact cannot be expressed as a predicate
+/// over aborts/admissions, or when deriving it at resolve time is
+/// demonstrably costlier than storing it. Until that bar is met, the rule
+/// below stands: derive, don't denormalize.
+#[non_exhaustive]
+pub enum ScopeConstraint {
+    Abort { kind: AbortKind, message: Option<Name> },
+}
 ```
 
 Design points:
@@ -721,15 +817,35 @@ Design points:
   one conditional") survives.
 - **Provenance is intrinsic** — spans + helper chains on every constraint;
   `--explain` and positioned diagnostics are projections.
+- **Lowering needs no reconstruction.** P1's conditional lowering groups
+  constraints by `PredRef` and places `if/then` at the nearest common
+  ancestor of the involved paths — a lossless O(n) projection over
+  hash-consed predicates. The `ValueUse` sin was information *loss*, not
+  derivation; nothing here is discarded. Facts with no single subject path
+  live in `scopes` and lower the same way (the `¬Truthy(a) ∧ ¬Truthy(b)`
+  abort becomes `anyOf: [required: [a], required: [b]]` at the ancestor).
+  Exclusivity, co-occurrence and guarded requiredness are deliberately
+  **not** bespoke node types: they are resolution-time lowerings of
+  predicates over aborts and admissions, and storing them would denormalize
+  what the algebra already expresses.
+- **Stability rings.** Ring 1 (semver-stable): the facade's generate/stage
+  surface — `Config`, `GenerateOutput`, the diagnostics envelope, the
+  emitted schema contract. Ring 2 (independently versioned): the contract
+  *DTO* projection, for fixtures and external tooling that wants inspection
+  without linking engine internals. Ring 3 (explicitly experimental): the
+  in-memory `ContractIR` API — the engine's *architectural* seam,
+  semantically stable by design but not semver-frozen (rich IRs ossify when
+  frozen early); exposed behind an `unstable` marker for in-repo tooling
+  such as `--explain`.
 - **Serialization rule:** internal graphs never derive `Serialize`; the only
-  serialized form is a flat DTO projection (which doubles as the
+  serialized form is the Ring-2 DTO projection (which doubles as the
   migration-era `ValueUse` fixture format, never a production consumer).
 - Determinism: a 100-run byte-identical property test on the DTO projection
   is part of the engine's acceptance criteria.
 
 ### 6.5 `engine::resolve` + `engine::lower` — from contract to schema
 
-**Resolution** (`resolve(&ContractIR, oracles, &ResolvePolicy) ->
+**Resolution** (`resolve(&Analysis, shipped, oracles, &ResolvePolicy) ->
 ResolvedContract`) — pure given oracle answers:
 
 - Evaluate `Env` atoms against the oracles (three-valued); compute branch
@@ -744,9 +860,10 @@ ResolvedContract`) — pure given oracle answers:
   contribute under the §6.3 uniformity rule; `Overlay` anchors yield
   **deep-partial** constraints (the `partialize` operator — recursively
   strip `required`) for the values-rooted overlay. Chart-local CRDs
-  (extracted by `engine::extract` from `crds/` files and from fully-literal
-  template-rendered CRD documents) are registered in the oracle composition
-  ahead of remote catalogs before this step runs.
+  (`Analysis.local_schemas` — static `crds/` plus fully-literal
+  template-rendered CRD documents, produced by the same `analyze` call) are
+  registered in the oracle composition ahead of remote catalogs before this
+  step runs.
 - **Shipped `values.schema.json` files are enforced constraints, not
   evidence.** Helm validates each chart's coalesced values against its own
   shipped schema at lint/install time, so shipped schemas are part of `Acc`
@@ -821,7 +938,7 @@ pub enum SourceKind {
     K8sBundle  { versions: VersionChain },     // explicit + auto-fallback window
     CrdCatalog { loose: bool },                // loose ⇒ cross-version scan + hint
     LocalDir,                                  // override layer; never wiped
-    ChartCrds(Arc<ChartCrdIndex>),             // chart-local, in-memory, version-exact
+    ChartCrds(Arc<ChartCrdIndex>),             // chart-local, version-exact (core type, §6.1)
 }
 
 pub struct Probe { pub source: SourceId, pub rel: RelPath,
@@ -861,10 +978,19 @@ pub fn execute(plan: &[Probe], store: &CacheDir, fetch: &dyn Fetch,
   the authoritative definition of an *exactly named* coordinate. Guardrails:
   `ResolvedFromFallbackVersion` diagnostics, `--strict-k8s-version` opt-out,
   and fallback bundles are never inputs to apiVersion inference.
+- **Chart-local CRDs are a source *inside the plan***, not a separately
+  stacked oracle in the facade: one `LookupTrace` must span every source so
+  `MissingSchema` can say "not in your chart's `crds/`, not in the override
+  dir, not upstream" from a single executed plan with a single priority
+  order. `ChartCrdIndex` being a core type is what makes this possible
+  without knowledge seeing engine internals.
 - **Capability oracle** = a thin adapter over the same planner/executor
-  probe plus the declarative `ProbeTable` (the documented well-known-kind
-  debt, now diffable data) and `kube_version()` from configuration —
-  tri-state offline contract preserved verbatim.
+  probe, answering `ApiPresenceQuery` per arm: `Resource` (the three-part
+  `group/version/Kind` form) probes the kind directly — fully structural;
+  `GroupVersion` (the two-part form) is the *only* arm that consults the
+  declarative `ProbeTable` (the documented well-known-kind debt, now
+  diffable data and visibly scoped to this one arm). `kube_version()` comes
+  from configuration. Tri-state offline contract preserved verbatim.
 
 **The authority model — strict core / assistance / overrides** (three layers
 with different epistemic standing, never blended silently):
@@ -903,7 +1029,14 @@ The facade is the stable product surface and the IO shell. It owns:
   spans + descriptions; invariant stated precisely: values files contribute
   defaults, descriptions, and **top-level key existence** as an explicit
   named policy — never types, shapes, nullability or requiredness for
-  nested paths). `ChartProgram` is the engine's complete, IO-free input.
+  nested paths). `ChartProgram` is the engine's complete, IO-free input;
+  its sibling `PolicyInputs` carries the pre-loaded, pre-resolved override
+  documents for the output passes — input assembly is where *all* input IO
+  ends.
+- **`AnalysisSession`** (§5.2): the ergonomic front — one object owning the
+  loaded inputs and memo tables, exposing the stages as memoized lazy
+  queries; the bare stage functions remain public as the pure substrate
+  (session result ≡ stage-function result, by construction).
 - **Pipeline wiring** (§5.2) with honest parallelism: parse+interpret fan
   out per template (order-preserving collect; shared helper-summary memo in
   a concurrent map — racy recomputation is benign because summaries are
@@ -911,19 +1044,24 @@ The facade is the stable product surface and the IO shell. It owns:
   parallelizes IO discovered from `ContractIR`'s claims; resolution,
   lowering and minify remain serial. Expected win ~1.5–2× on large charts —
   the bigger levers are lazy schema docs and allocation discipline.
-- **Output passes as sequential typed functions**: override merge
-  (replace-on-`$ref` markers, override-file-relative base URI, `--keep-refs`
-  honored; external `$ref`s in overrides resolved under `FetchPolicy` — the
-  only retrieval on the output path), optional `FlattenedExport`,
-  description strip, minify, **global-schema mirroring into subcharts** (a
-  named pass), and the **postcondition**: composed defaults validate against
-  the emitted schema (hard diagnostic on failure).
+- **Output passes as sequential PURE functions** over
+  `(Value × PolicyInputs)`: override merge (replace-on-`$ref` markers,
+  override-file-relative base URI, `--keep-refs` honored), optional
+  `FlattenedExport`, description strip, minify, **global-schema mirroring
+  into subcharts** (a named pass), and the **postcondition**: composed
+  defaults validate against the emitted schema (hard diagnostic on
+  failure). Override documents and their external `$ref`s are loaded and
+  resolved during input assembly (`PolicyInputs`, under `FetchPolicy`) —
+  there is **no retrieval on the output path at all**: after `load`, the
+  run is IO-free except knowledge fetches.
 - **The lockfile** (`--locked`): coordinate → content digest + source URL +
   version; re-fetches that would change a pinned digest fail.
 - Diagnostics projection (engine gaps + knowledge traces + facade conflicts
-  → the versioned envelope), and the facade exposes every stage function
-  publicly; `ContractIR` is available to tooling but explicitly
-  semver-unstable.
+  → the versioned envelope). The facade's session + generate/stage surface
+  is the Ring-1 semver-stable API; the contract DTO is the Ring-2 versioned
+  inspection format; the in-memory `ContractIR` is Ring-3 experimental
+  (§6.4) — available to tooling behind an `unstable` marker, never a
+  compatibility promise.
 
 The CLI maps ~30 flags onto the policy/config objects (§13 is the checked
 table), interprets env vars (`HELM_SCHEMA_*`, XDG) — libraries never read
@@ -999,8 +1137,10 @@ provably suffices; the only residue is guard-conditional CRD emission, §14).
    or randomness in libraries; byte-identical output given identical oracle
    answers; cache state moves output only toward widening; lockfile for
    cross-time reproducibility.
-4. **Security:** `FetchPolicy` on every network/file edge (override-`$ref`
-   retrieval included); `LoadBudget` on archives/parsing/interpretation;
+4. **Security:** `FetchPolicy` on every network/file edge — and those edges
+   are now enumerable: input assembly (override `$ref` resolution) and
+   knowledge fetches; nothing else touches network or ambient files.
+   `LoadBudget` on archives/parsing/interpretation;
    `RelPath` validated newtype at the coordinate→path boundary; archive
    extraction stays memory-backed.
 5. **Serde boundary:** internal graphs never derive `Serialize`; canonical
@@ -1061,10 +1201,13 @@ provably suffices; the only residue is guard-conditional CRD emission, §14).
   bounded by policy and covered by guard-flipping differentials.
 - **knowledge:** contract suite green; probe-order unit tests; trace→
   diagnostics projection parity with today's `MissingSchema` richness;
-  advisor off by default and cache-independent.
+  kind-qualified (`group/version/Kind`) capability probes covered alongside
+  the two-part form; advisor off by default and cache-independent.
 - **facade/cli:** golden corpus equality (bundled default + flattened
   export); postcondition active; parity checklist (§13) checked off;
-  exit-code table tested; corpus discovery parity (incl.
+  exit-code table tested; session queries memoized and
+  substrate-equivalent (session result ≡ stage-function result);
+  no-IO-after-load verified (output passes are pure functions); corpus discovery parity (incl.
   `Chart.template.yaml`, tgz, aliases); compose_values fixtures;
   conditions/tags/crds/shipped-schema extraction tested; budgets enforced.
 
@@ -1259,8 +1402,9 @@ fallback. A5 changes the product's output shape — flag it, regenerate
 goldens once, keep the export mode pinned against old fixtures. B is the
 best use of parallel capacity. Explicitly deferred to post-parity:
 `--explain`, the lockfile, a 2020-12 emitter, `import-values` modeling,
-per-arm registration of guard-conditional CRD schemas, and P1 lowering
-beyond the discriminator tier (§14).
+per-arm registration of guard-conditional CRD schemas, P1 lowering beyond
+the discriminator tier (§14), and fine-grained incremental invalidation
+(the session's memo policy is the designated upgrade point).
 
 ### 15.8 Plan-document bookkeeping
 
