@@ -10,39 +10,33 @@ use crate::expr_eval::{eval_expr, literal_printf_format, render_printf_string_se
 use crate::fragment_binding_eval::{
     fragment_binding_from_helper_analysis, helper_binding_from_helper_analysis,
 };
-use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding_eval::binding_from_expr;
+use crate::helper_call_analyzer::HelperCallAnalyzer;
 use crate::template_expr_analysis::{expr_contains_helper_call, is_merge_function};
 use crate::template_expr_cache::parse_expr_text;
-
-pub(crate) type AnalyzeBoundHelperCall<'a> = fn(
-    &str,
-    Option<&TemplateExpr>,
-    Option<&HashMap<String, HelperBinding>>,
-    Option<&HelperBinding>,
-    &HashMap<String, FragmentBinding>,
-    FragmentEvalContext<'a>,
-    &mut HashSet<String>,
-) -> BoundHelperAnalysis;
 
 #[derive(Clone, Copy)]
 pub(crate) struct FragmentEvalContext<'a> {
     pub(crate) defines: &'a DefineIndex,
     pub(crate) define_bodies: &'a DefineBodyCache,
-    analyze_bound_helper_call: AnalyzeBoundHelperCall<'a>,
+    helper_call_analyzer: &'a dyn HelperCallAnalyzer,
 }
 
 impl<'a> FragmentEvalContext<'a> {
     pub(crate) fn new(
         defines: &'a DefineIndex,
         define_bodies: &'a DefineBodyCache,
-        analyze_bound_helper_call: AnalyzeBoundHelperCall<'a>,
+        helper_call_analyzer: &'a dyn HelperCallAnalyzer,
     ) -> Self {
         Self {
             defines,
             define_bodies,
-            analyze_bound_helper_call,
+            helper_call_analyzer,
         }
+    }
+
+    pub(crate) fn helper_call_analyzer(&self) -> &'a dyn HelperCallAnalyzer {
+        self.helper_call_analyzer
     }
 
     pub(crate) fn fragment_binding_from_expr(
@@ -93,7 +87,7 @@ pub(crate) fn helper_binding_from_expr_with_fragment_locals(
             let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
                 return None;
             };
-            let analysis = (context.analyze_bound_helper_call)(
+            let analysis = context.helper_call_analyzer().analyze_bound_helper_call(
                 name,
                 args.get(1),
                 outer,
@@ -505,7 +499,7 @@ pub(crate) fn fragment_binding_from_expr(
                 return None;
             };
             let current_dot_helper = current_dot.and_then(FragmentBinding::to_helper_binding);
-            let analysis = (context.analyze_bound_helper_call)(
+            let analysis = context.helper_call_analyzer().analyze_bound_helper_call(
                 name,
                 args.get(1),
                 None,

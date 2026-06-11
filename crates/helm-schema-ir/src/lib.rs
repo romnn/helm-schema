@@ -15,6 +15,7 @@ mod fragment_expr_eval;
 mod fragment_scope_eval;
 mod helper_analysis;
 mod helper_binding_eval;
+mod helper_call_analyzer;
 pub mod helper_eval;
 mod helper_fragment_output_uses;
 mod helper_fragment_outputs;

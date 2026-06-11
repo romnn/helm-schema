@@ -29,21 +29,11 @@ use crate::value_path_context::computed_with_body_dot;
 use crate::walker::is_fragment_expr;
 use crate::{ValueKind, YamlPath};
 
-pub(crate) type AnalyzeBoundHelperCalls<'context> = fn(
-    &str,
-    Option<&HashMap<String, HelperBinding>>,
-    Option<&HelperBinding>,
-    &HashMap<String, FragmentBinding>,
-    FragmentEvalContext<'context>,
-    &mut HashSet<String>,
-) -> BoundHelperAnalysis;
-
 pub(crate) struct HelperValuesWalkState<'context, 'state> {
     pub(crate) local_bindings: &'state mut HashMap<String, FragmentBinding>,
     pub(crate) local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
     pub(crate) local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     pub(crate) context: FragmentEvalContext<'context>,
-    pub(crate) analyze_bound_helper_calls: AnalyzeBoundHelperCalls<'context>,
     pub(crate) seen: &'state mut HashSet<String>,
     pub(crate) analysis: &'state mut BoundHelperAnalysis,
 }
@@ -212,14 +202,17 @@ fn collect_bound_helper_values_from_expr(
             state.analysis.add_output_meta(output, meta);
         }
     }
-    let mut nested = (state.analyze_bound_helper_calls)(
-        text,
-        Some(bindings),
-        current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let mut nested = state
+        .context
+        .helper_call_analyzer()
+        .analyze_bound_helper_calls(
+            text,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     if expression_kind == ValueKind::Fragment {
         for (output, mut meta) in nested.output {
             meta.guards.extend(active_output_guards.iter().cloned());
@@ -312,14 +305,17 @@ fn collect_assignment_bound_helper_values(
         .analysis
         .dependency_paths
         .extend(local_outputs.iter().cloned());
-    let nested = (state.analyze_bound_helper_calls)(
-        rhs,
-        Some(bindings),
-        current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let nested = state
+        .context
+        .helper_call_analyzer()
+        .analyze_bound_helper_calls(
+            rhs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     state
         .analysis
         .chart_defaults
@@ -429,14 +425,17 @@ fn collect_if_bound_helper_values(
     let mut branch_guard_paths =
         direct_bound_paths_from_text_in_context(cond, bindings, current_dot);
     branch_guard_paths.extend(local_bound_paths_from_text(cond, state.local_bindings));
-    let nested = (state.analyze_bound_helper_calls)(
-        cond,
-        Some(bindings),
-        current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let nested = state
+        .context
+        .helper_call_analyzer()
+        .analyze_bound_helper_calls(
+            cond,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     branch_guard_paths.extend(bound_helper_condition_paths(&nested));
     state
         .analysis
@@ -452,7 +451,6 @@ fn collect_if_bound_helper_values(
         local_default_paths: &mut then_default_paths,
         local_output_meta: &mut then_output_meta,
         context: state.context,
-        analyze_bound_helper_calls: state.analyze_bound_helper_calls,
         seen: state.seen,
         analysis: state.analysis,
     };
@@ -473,7 +471,6 @@ fn collect_if_bound_helper_values(
         local_default_paths: &mut else_default_paths,
         local_output_meta: &mut else_output_meta,
         context: state.context,
-        analyze_bound_helper_calls: state.analyze_bound_helper_calls,
         seen: state.seen,
         analysis: state.analysis,
     };
@@ -503,14 +500,17 @@ fn collect_loop_or_with_bound_helper_values(
     let mut branch_guard_paths =
         direct_bound_paths_from_text_in_context(header, scope.bindings, scope.current_dot);
     branch_guard_paths.extend(local_bound_paths_from_text(header, state.local_bindings));
-    let nested = (state.analyze_bound_helper_calls)(
-        header,
-        Some(scope.bindings),
-        scope.current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let nested = state
+        .context
+        .helper_call_analyzer()
+        .analyze_bound_helper_calls(
+            header,
+            Some(scope.bindings),
+            scope.current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     branch_guard_paths.extend(bound_helper_condition_paths(&nested));
     state
         .analysis
@@ -569,7 +569,6 @@ fn collect_loop_or_with_bound_helper_values(
                 local_default_paths: &mut body_default_paths,
                 local_output_meta: &mut body_output_meta,
                 context: state.context,
-                analyze_bound_helper_calls: state.analyze_bound_helper_calls,
                 seen: &mut item_seen,
                 analysis: state.analysis,
             };
@@ -589,7 +588,6 @@ fn collect_loop_or_with_bound_helper_values(
             local_default_paths: &mut body_default_paths,
             local_output_meta: &mut body_output_meta,
             context: state.context,
-            analyze_bound_helper_calls: state.analyze_bound_helper_calls,
             seen: state.seen,
             analysis: state.analysis,
         };
@@ -620,7 +618,6 @@ fn collect_loop_or_with_bound_helper_values(
             local_default_paths: &mut else_default_paths,
             local_output_meta: &mut else_output_meta,
             context: state.context,
-            analyze_bound_helper_calls: state.analyze_bound_helper_calls,
             seen: state.seen,
             analysis: state.analysis,
         };

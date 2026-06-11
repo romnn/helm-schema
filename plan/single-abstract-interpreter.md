@@ -1,19 +1,24 @@
 # helm-schema single abstract interpreter
 
-This plan is the active architecture track for replacing the current family of
-parallel symbolic evaluators with one typed abstract interpreter.
+This plan is the active semantic-core implementation track for the
+`from-scratch-architecture.md` roadmap. That document is the architectural
+source of truth; this file is workstream A's execution slice for replacing the
+current family of parallel symbolic evaluators with one typed abstract
+interpreter.
 
 The target shape is:
 
 ```rust
 fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult;
-fn eval_node(node: &HelmAst, env: &mut EvalEnv, sink: &mut dyn EffectSink);
+fn eval_node(node: &HelmAst, env: EvalEnv, cx: &mut Cx) -> EvalEnv;
 ```
 
 `eval_expr` answers "what abstract Helm value does this expression represent?"
 and "what semantic effects did evaluating it prove?". `eval_node` adds control
 flow, YAML sink attribution, local assignment, mutation ordering, and helper
-summary propagation.
+summary propagation, then returns the joined output environment. The current
+`ValueUseSink` and flat `Guard` APIs are compatibility projections at the
+boundary, not the final interpreter shape.
 
 This is not a Helm renderer. It is a structural static analyzer. It should
 preserve exact alternatives and abstain when the chart does not provide enough
@@ -40,6 +45,11 @@ that split.
 The cleaner design is a single abstract value/effects lattice that every
 expression transfer function uses.
 
+This plan follows the from-scratch roadmap's "shape first, move last" rule:
+improve the semantic core in place behind the existing seams, delete old
+predecessors as each boundary lands, and defer crate consolidation until the
+module shapes already match the target architecture.
+
 ## End-state modules
 
 Suggested final IR module ownership:
@@ -56,6 +66,8 @@ Suggested final IR module ownership:
   - `EvalEnv`
   - root `$`, current dot `.`, locals, helper scope, active controls
   - mutation visibility and ordered local scope updates
+  - state-passing scope operations: child, declare (`:=`), assign (`=` in the
+    defining scope), and explicit out-state join
 
 - `eval_effect.rs`
   - `EvalResult`
@@ -68,14 +80,16 @@ Suggested final IR module ownership:
   - transfer functions for Helm expressions and functions
 
 - `node_eval.rs`
-  - `eval_node(node, env, sink)`
+  - `eval_node(node, env, cx) -> env`
   - transfer functions for `if`, `with`, `range`, assignment, output actions,
     YAML sink attribution
+  - branch path conditions and out-state joins
 
 - `helper_eval.rs`
   - helper summaries keyed by helper name + abstract argument + root bindings
   - recursion guards
   - include/template argument rebinding
+  - empty-path-condition summaries re-guarded at call sites
 
 - `symbolic.rs`
   - orchestration and compatibility only while migration is in progress
@@ -90,7 +104,7 @@ The exact file names can change, but the concern split should not.
 
 ```rust
 pub(crate) enum AbstractValue {
-    Unknown,
+    Top,
     RootContext,
     ValuesPath(String),
     PathSet(BTreeSet<String>),
@@ -111,8 +125,9 @@ Notes:
 
 - `ValuesPath("")` means the `.Values` root.
 - `RootContext` means the Helm root `$` / bare template root.
-- `Unknown` must preserve uncertainty; it must not collapse into a convenient
-  but wrong path.
+- `Top` means any Helm value and must absorb joins. Unknown input is not a
+  value to drop from unions; if an alternative can be unknown, the joined value
+  is `Top` unless a narrower sound transfer function proves otherwise.
 - `OutputSet` can be transitional. The end state may model helper outputs as
   `Effects` rather than values.
 - `Overlay` is important for `merge` and `set`: known entries plus fallback
@@ -147,6 +162,24 @@ pub(crate) struct FalseySet {
 This matters because `default`, `with`, `if`, and `range` are all about Helm
 truthiness, not just path access.
 
+`Pred` should become the internal control-flow vocabulary:
+
+```rust
+pub(crate) enum Pred {
+    True,
+    False,
+    Atom(Atom),
+    Not(PredRef),
+    And(Vec<PredRef>),
+    Or(Vec<PredRef>),
+}
+```
+
+The initial implementation can still project predicates to today's flat
+`Guard` values, but branch analysis should be structured as predicates. Else
+branches are not unguarded: an `if` / `else if` / `else` chain carries `P1`,
+`not(P1) and P2`, and `not(P1) and not(P2)`.
+
 ## Eval result
 
 `eval_expr` should not return just an `AbstractValue`.
@@ -171,7 +204,7 @@ pub(crate) struct Effects {
     pub mutations: Vec<Mutation>,
     pub type_hints: BTreeMap<String, BTreeSet<SchemaTypeHint>>,
     pub open_objects: BTreeMap<String, OpenObjectFact>,
-    pub guards: Vec<Guard>,
+    pub predicates: Vec<PredRef>,
 }
 ```
 
@@ -222,7 +255,8 @@ turning it into a text heuristic.
 `with X`:
 
 - evaluates `X`
-- records truthiness/falsey branch effects for paths inside `X`
+- records a truthiness predicate for `X` and falsey admissions where the
+  transfer function proves them
 - evaluates the body with `dot = X`
 - evaluates the else branch with unchanged dot
 
@@ -246,9 +280,12 @@ template provides evidence that the accepted key set is closed.
 `include` / `template` should evaluate by summary:
 
 - bind helper argument structurally
-- evaluate helper body with root/dot/locals derived from the call
-- memoize by helper name + abstract argument + root bindings
-- return helper value plus effects
+- compute the helper summary under an empty path condition
+- memoize by helper id and env-closed canonical argument fingerprint
+- re-guard summary evidence at the call site
+- compose helper `env_delta` back into the caller under the call-site
+  predicate
+- return helper value, document fragments, evidence, and env delta
 
 The summary must preserve:
 
@@ -257,6 +294,10 @@ The summary must preserve:
 - rendered fragment provenance
 - output string/path provenance
 - guards/type hints/defaults
+- recursion gaps
+
+Recursive helper calls widen to `Top`, poison the in-flight memo entry, and
+emit a gap; they must not silently reuse partial facts from the cycle.
 
 ### Render wrappers
 
@@ -281,7 +322,9 @@ The current public outputs stay available while the new interpreter is built:
 - `PathFact`
 
 New interpreter effects should first be converted into those existing outputs.
-Only after parity is proven should old collectors be deleted.
+Only after parity is proven should old collectors be deleted. In the target
+architecture the stable semantic artifact is `ContractIR`; `ValueUse` becomes a
+DTO/fixture projection, not a production consumer.
 
 The test bar for each phase:
 
@@ -447,7 +490,13 @@ Goal:
 - model assignment, `set`, `if`, `with`, `range`, and local scopes in one
   node evaluator
 - preserve source-order mutation visibility
-- produce current `ValueUse` / `ChartFacts` through compatibility sinks
+- make the target transfer function state-passing:
+  `eval_node(node, env, cx) -> env`
+- join branch out-states explicitly
+- model control flow with an internal predicate core and project to flat
+  `Guard` only at the current compatibility boundary
+- produce current `ValueUse` / `ChartFacts` through compatibility sinks while
+  the old consumers remain
 
 Current result:
 
@@ -489,6 +538,17 @@ Current result:
   as compatibility state plus planning hooks rather than a second node
   evaluator.
 
+Remaining A1 work:
+
+- Replace manual scope snapshot/restore with an `EvalEnv`-shaped state object
+  and explicit branch joins.
+- Distinguish Go-template `:=` declaration from `=` assignment in the defining
+  scope.
+- Introduce the minimal predicate core (`Atom`, `Not`, `And`, `Or`) and project
+  it to today's `Guard` only where compatibility output requires it.
+- Make `AbstractValue` joins Top-absorbing and add law tests for
+  associativity, commutativity, idempotence, and Top absorption.
+
 ### Phase 5 — helper summaries
 
 Status: **in progress**
@@ -496,7 +556,11 @@ Status: **in progress**
 Goal:
 
 - summarize helpers through the same node/expression evaluator
-- memoize by helper name + abstract argument + root bindings
+- memoize by helper id plus env-closed canonical argument fingerprint
+- compute summaries under an empty path condition and re-guard them at call
+  sites
+- compose helper env deltas into callers
+- widen recursive helper calls to `Top` with a poisoned memo and gap
 - remove ad hoc helper-bound/default/fragment propagation paths once covered
 
 Current result:
@@ -505,6 +569,11 @@ Current result:
   cache key construction. `SymbolicWalker` no longer builds helper-summary
   cache keys or calls the recursive helper analyzer directly; it requests a
   summary for the current root bindings, dot binding, and fragment locals.
+- `helper_call_analyzer.rs` is the provider boundary for helper summaries.
+  Fragment/value compatibility walkers now ask the context for helper-call
+  analysis instead of carrying recursive function pointers through their
+  state. Recursion-sensitive nested calls intentionally bypass the cache until
+  the full poisoned-memo semantics land.
 - `helper_inline.rs` owns exact `include`/`template` helper-call recognition
   and resource-body eligibility checks for manifest-helper inlining. The
   walker still executes the nested compatibility walk because that depends on
@@ -513,16 +582,54 @@ Current result:
   request discovery. Static-file request extraction is helper analysis, not
   walker traversal state.
 
-### Phase 6 — generator simplification
+Remaining A2 work:
+
+- Run helper body interpretation through `eval_node` instead of the twin
+  helper-value and helper-fragment walkers.
+- Delete the fragment/helper binding evaluators once summaries cover their
+  facts.
+
+### Phase 6 — internal documents and contract projection
 
 Status: **pending**
 
 Goal:
 
-- let `helm-schema-gen` consume IR effects directly for nullability, falsey
-  states, open objects, scalar hints, and fragment provenance
-- delete generator-side reconstruction that reinterprets Helm semantics from
-  raw `ValueUse`s
+- Build internal abstract documents during interpretation and project their
+  anchors, resource identities, and constraints into the current `ValueUse`
+  compatibility sink first.
+- Keep abstract documents private to the engine; they must not become the
+  stable public seam.
+- Gate the migration with the abstained-enrichment budget: no corpus chart
+  loses provider type enrichment versus the current tool.
+- Keep `yaml_shape` as an upgrader until parity passes, then delete it.
+
+### Phase 7 — ContractIR and resolution/lowering
+
+Status: **pending**
+
+Goal:
+
+- Introduce the guarded witness graph (`ContractIR`) as the semantic seam.
+- Let `helm-schema-gen` consume resolved witnesses for nullability, falsey
+  states, open objects, scalar hints, fragment provenance, shipped-schema
+  intersections, and resource anchors.
+- Extract the polarity-table policy from generator reconstruction into named
+  resolution/lowering policy functions.
+- Replace flat `Guard` at the IR boundary with the predicate algebra; keep
+  `ValueUse` only as a DTO/fixture projection until deleted from production
+  consumers.
+
+### Phase 8 — bundled emission
+
+Status: **pending**
+
+Goal:
+
+- Emit bundled, self-contained draft-07 schemas with internal `$defs` by
+  default.
+- Keep full flattening as an explicit export mode.
+- Regenerate output goldens once as a deliberate output-shape change.
 
 ## Completion criteria
 
@@ -532,7 +639,12 @@ The redesign is complete when:
   not as a generator heuristic
 - helper-bound defaults, `with` fallback objects, map ranges, fragment wrappers,
   and string wrappers all flow through one `eval_expr` / `eval_node` model
-- `symbolic.rs` becomes orchestration plus compatibility conversion
+- helper summaries, abstract documents, and schema witnesses flow through the
+  same interpreter artifact instead of parallel helper/resource collectors
+- `ContractIR` is the production semantic seam; `ValueUse` is only a
+  compatibility DTO or fixture format
+- `symbolic.rs` becomes orchestration plus compatibility conversion while the
+  migration is in progress, then disappears into the semantic-core engine
 - luup3 remains green without structural override workarounds
 - real chart fixtures and focused regression tests cover the migrated transfer
   functions

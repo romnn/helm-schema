@@ -39,7 +39,7 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals(
             let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
                 return;
             };
-            let nested = analyze_bound_helper_call_with_fragment_locals(
+            let nested = context.helper_call_analyzer().analyze_bound_helper_call(
                 name,
                 args.get(1),
                 bindings,
@@ -104,7 +104,6 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
             local_default_paths: &mut local_default_paths,
             local_output_meta: &mut local_output_meta,
             context,
-            analyze_bound_helper_calls: analyze_bound_helper_calls_with_fragment_locals,
             seen,
             analysis: &mut analysis,
         };
@@ -145,7 +144,6 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
             local_bindings: &mut local_bindings,
             local_default_paths: &mut local_default_paths,
             context,
-            analyze_bound_helper_calls: analyze_bound_helper_calls_with_fragment_locals,
             seen,
             outputs: &mut fragment_output_uses,
         };

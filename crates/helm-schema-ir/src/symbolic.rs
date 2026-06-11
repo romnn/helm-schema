@@ -5,7 +5,6 @@ use helm_schema_ast::{DefineIndex, HelmAst};
 
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::binding::{FragmentBinding, HelperBinding};
-use crate::bound_helper_call_analysis::analyze_bound_helper_call_with_fragment_locals;
 use crate::bound_value_analysis::GetBinding;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
@@ -196,7 +195,7 @@ impl<'a> SymbolicWalker<'a> {
         FragmentEvalContext::new(
             self.defines,
             &self.ir_context.inner.define_bodies,
-            analyze_bound_helper_call_with_fragment_locals,
+            &self.ir_context.inner.helper_summaries,
         )
     }
 
