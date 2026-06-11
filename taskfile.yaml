@@ -198,3 +198,28 @@ tasks:
     desc: "lint github actions"
     cmds:
       - actionlint
+
+  tokei:
+    desc: "count lines of code, excluding vendored and generated files"
+    cmds:
+      # excludes vendored tree-sitter grammars (incl. generated parser.c),
+      # vendored third-party charts, and generated schema/IR JSON fixtures
+      - >-
+        tokei
+        --exclude grammars
+        --exclude testdata
+        --exclude 'crates/*/tests/fixtures'
+        {{.CLI_ARGS}}
+
+  tokei:core:
+    desc: "count lines of non-test code in the crates"
+    cmds:
+      # excludes integration tests (crates/*/tests), unit test modules
+      # (src/tests.rs), and the test-util crate; inline #[cfg(test)] modules
+      # in other src files cannot be excluded file-wise and remain counted
+      - >-
+        tokei crates
+        --exclude tests
+        --exclude tests.rs
+        --exclude test-util
+        {{.CLI_ARGS}}
