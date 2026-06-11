@@ -5,6 +5,7 @@ use crate::bound_value_analysis::{GetBinding, extract_bound_values};
 use crate::predicate::Predicate;
 use crate::value_path_context::ValuePathContext;
 
+#[derive(Clone)]
 pub(crate) struct ConditionActionPlan {
     pub(crate) predicate: Predicate,
     pub(crate) bound_values: Vec<String>,
@@ -14,6 +15,10 @@ pub(crate) struct ConditionActionPlan {
 impl ConditionActionPlan {
     pub(crate) fn compatibility_guards(&self) -> Vec<crate::Guard> {
         self.predicate.compatibility_guards()
+    }
+
+    pub(crate) fn negated_compatibility_guards(&self) -> Vec<crate::Guard> {
+        self.predicate.negated().compatibility_guards()
     }
 }
 

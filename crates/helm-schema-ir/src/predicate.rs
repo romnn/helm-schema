@@ -3,6 +3,7 @@ use crate::Guard;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Predicate {
     True,
+    False,
     Atom(PredicateAtom),
     Not(Box<Predicate>),
     And(Vec<Predicate>),
@@ -50,9 +51,18 @@ impl Predicate {
         }
     }
 
+    pub(crate) fn negated(&self) -> Self {
+        match self {
+            Self::True => Self::False,
+            Self::False => Self::True,
+            Self::Not(inner) => inner.as_ref().clone(),
+            other => Self::Not(Box::new(other.clone())),
+        }
+    }
+
     pub(crate) fn compatibility_guards(&self) -> Vec<Guard> {
         match self {
-            Self::True => Vec::new(),
+            Self::True | Self::False => Vec::new(),
             Self::Atom(atom) => atom.compatibility_guards(),
             Self::Not(inner) => match inner.as_ref() {
                 Self::Atom(PredicateAtom::Truthy { path }) => {
@@ -121,13 +131,30 @@ mod tests {
 
     #[test]
     fn negated_truthy_predicate_projects_to_not_guard() {
-        let predicate = Predicate::from(Guard::Not {
+        let predicate = Predicate::from(Guard::Truthy {
             path: "enabled".to_string(),
-        });
+        })
+        .negated();
 
         assert_eq!(
             predicate.compatibility_guards(),
             vec![Guard::Not {
+                path: "enabled".to_string()
+            }]
+        );
+    }
+
+    #[test]
+    fn double_negated_truthy_predicate_projects_to_truthy_guard() {
+        let predicate = Predicate::from(Guard::Truthy {
+            path: "enabled".to_string(),
+        })
+        .negated()
+        .negated();
+
+        assert_eq!(
+            predicate.compatibility_guards(),
+            vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]
         );

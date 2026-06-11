@@ -547,16 +547,28 @@ Current result:
   only at `node_action_effect.rs`, the current compatibility boundary.
   Unsupported predicate shapes abstain from flat projection instead of being
   approximated as stronger positive facts.
+- `EvalEnv` now has explicit local-scope frames, separate declaration and
+  assignment semantics, and branch out-state joins. The chart-facts
+  interpreter uses this state-passing shape for `if`, `with`, and `range`, so
+  locals declared only inside a branch do not leak while assignments to an
+  outer binding are preserved through joins.
+- The predicate core now models negation explicitly. The tree-sitter
+  compatibility evaluator applies representable negated predicates to
+  `else`/alternative branches and restores the guard scope afterward, so false
+  branch uses become more precise without leaking branch guards to following
+  nodes.
 
 Remaining A1 work:
 
-- Replace manual scope snapshot/restore with an `EvalEnv`-shaped state object
-  and explicit branch joins.
-- Make `=` assignment update the defining scope once branch out-state joins are
-  represented in `EvalEnv`.
-- Use the predicate core for else-branch path conditions and then replace the
-  remaining guard-stack internals with predicates.
-- Make `AbstractValue` joins Top-absorbing and add law tests for
+- Move the tree-sitter `SymbolicWalker` compatibility state from manual
+  snapshot/restore maps to an `EvalEnv`-shaped state object with explicit branch
+  joins.
+- Make `=` assignment update the defining compatibility scope once the walker
+  uses `EvalEnv` for locals instead of direct `template_bindings` map writes.
+- Replace the remaining flat guard-stack internals with predicates and keep
+  flat `Guard` projection only at the current `ValueUse` compatibility output.
+- Introduce a deliberate `Top` value distinct from today's compatibility
+  `Unknown`, then make abstract joins Top-absorbing and add law tests for
   associativity, commutativity, idempotence, and Top absorption.
 
 ### Phase 5 — helper summaries

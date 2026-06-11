@@ -164,30 +164,22 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                         Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => {}
                     }
                 }
-                {
-                    let mut branch_env = env.clone();
-                    for item in then_branch {
-                        walk(
-                            item,
-                            &mut branch_env,
-                            &then_controls,
-                            facts,
-                            descendant_paths,
-                        );
-                    }
-                }
-                {
-                    let mut branch_env = env.clone();
-                    for item in else_branch {
-                        walk(
-                            item,
-                            &mut branch_env,
-                            active_controls,
-                            facts,
-                            descendant_paths,
-                        );
-                    }
-                }
+                let entry_env = env.clone();
+                let then_env = walk_scoped_branch(
+                    &entry_env,
+                    then_branch,
+                    &then_controls,
+                    facts,
+                    descendant_paths,
+                );
+                let else_env = walk_scoped_branch(
+                    &entry_env,
+                    else_branch,
+                    active_controls,
+                    facts,
+                    descendant_paths,
+                );
+                *env = EvalEnv::join_branch_outcomes(&entry_env, vec![then_env, else_env]);
             }
             HelmAst::With {
                 header,
@@ -195,7 +187,8 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                 else_branch,
             } => {
                 let exprs = parse_action_expressions(&format!("{{{{ {header} }}}}"));
-                let mut body_env = env.clone();
+                let entry_env = env.clone();
+                let mut body_env = entry_env.clone();
                 let mut body_controls = active_controls.to_vec();
                 if let Some(binding) = exprs.first().and_then(|expr| eval_expr_value(expr, env)) {
                     let paths = binding.paths();
@@ -211,21 +204,19 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                     }
                     body_env.dot = Some(binding);
                 }
+                body_env.enter_local_scope();
                 for item in body {
                     walk(item, &mut body_env, &body_controls, facts, descendant_paths);
                 }
-                {
-                    let mut branch_env = env.clone();
-                    for item in else_branch {
-                        walk(
-                            item,
-                            &mut branch_env,
-                            active_controls,
-                            facts,
-                            descendant_paths,
-                        );
-                    }
-                }
+                body_env.exit_local_scope();
+                let else_env = walk_scoped_branch(
+                    &entry_env,
+                    else_branch,
+                    active_controls,
+                    facts,
+                    descendant_paths,
+                );
+                *env = EvalEnv::join_branch_outcomes(&entry_env, vec![body_env, else_env]);
             }
             HelmAst::Range {
                 header,
@@ -233,7 +224,8 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                 else_branch,
             } => {
                 let exprs = parse_action_expressions(&format!("{{{{ {header} }}}}"));
-                let mut body_env = env.clone();
+                let entry_env = env.clone();
+                let mut body_env = entry_env.clone();
                 let mut body_controls = active_controls.to_vec();
                 if let Some(binding) = exprs.first().and_then(|expr| eval_expr_value(expr, env)) {
                     let paths = binding.paths();
@@ -249,27 +241,47 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                     }
                     body_env.dot = binding.item();
                 }
+                body_env.enter_local_scope();
                 for item in body {
                     walk(item, &mut body_env, &body_controls, facts, descendant_paths);
                 }
-                {
-                    let mut branch_env = env.clone();
-                    for item in else_branch {
-                        walk(
-                            item,
-                            &mut branch_env,
-                            active_controls,
-                            facts,
-                            descendant_paths,
-                        );
-                    }
-                }
+                body_env.exit_local_scope();
+                let else_env = walk_scoped_branch(
+                    &entry_env,
+                    else_branch,
+                    active_controls,
+                    facts,
+                    descendant_paths,
+                );
+                *env = EvalEnv::join_branch_outcomes(&entry_env, vec![body_env, else_env]);
             }
             HelmAst::Define { .. }
             | HelmAst::Block { .. }
             | HelmAst::Scalar { .. }
             | HelmAst::HelmComment { .. } => {}
         }
+    }
+
+    fn walk_scoped_branch(
+        entry_env: &EvalEnv,
+        items: &[HelmAst],
+        active_controls: &[ControlFrame],
+        facts: &mut BTreeMap<String, Acc>,
+        descendant_paths: &mut BTreeSet<String>,
+    ) -> EvalEnv {
+        let mut branch_env = entry_env.clone();
+        branch_env.enter_local_scope();
+        for item in items {
+            walk(
+                item,
+                &mut branch_env,
+                active_controls,
+                facts,
+                descendant_paths,
+            );
+        }
+        branch_env.exit_local_scope();
+        branch_env
     }
 
     let mut facts = BTreeMap::new();
@@ -460,6 +472,76 @@ image: {{ $root.image.repository }}
         assert!(
             !facts.path_facts.keys().any(|path| path.starts_with('.')),
             "values paths should never start with a dot, got {facts:?}"
+        );
+    }
+
+    #[test]
+    fn chart_facts_join_assignment_outcomes_after_if_else() {
+        let src = r#"
+{{- $image := .Values.primaryImage }}
+{{- if .Values.useCanary }}
+{{- $image = .Values.canaryImage }}
+{{- else }}
+{{- $image = .Values.stableImage }}
+{{- end }}
+repository: {{ $image.repository }}
+"#;
+        let ast = TreeSitterParser.parse(src).expect("parse template");
+
+        let facts = derive_chart_facts_from_ast(&ast);
+
+        assert!(
+            facts.path_facts.contains_key("canaryImage.repository"),
+            "then-branch assignment should remain visible after branch join, got {facts:?}"
+        );
+        assert!(
+            facts.path_facts.contains_key("stableImage.repository"),
+            "else-branch assignment should remain visible after branch join, got {facts:?}"
+        );
+        assert!(
+            !facts.path_facts.contains_key("primaryImage.repository"),
+            "fully assigned branches should not keep the pre-branch local value, got {facts:?}"
+        );
+    }
+
+    #[test]
+    fn chart_facts_do_not_leak_branch_local_declarations() {
+        let src = r#"
+{{- if .Values.enabled }}
+{{- $image := .Values.branchImage }}
+{{- end }}
+repository: {{ $image.repository }}
+"#;
+        let ast = TreeSitterParser.parse(src).expect("parse template");
+
+        let facts = derive_chart_facts_from_ast(&ast);
+
+        assert!(
+            !facts.path_facts.contains_key("branchImage.repository"),
+            "block-local declaration should not be visible after the branch, got {facts:?}"
+        );
+    }
+
+    #[test]
+    fn chart_facts_join_assignment_with_untaken_branch_entry_state() {
+        let src = r#"
+{{- $image := .Values.primaryImage }}
+{{- if .Values.useCanary }}
+{{- $image = .Values.canaryImage }}
+{{- end }}
+repository: {{ $image.repository }}
+"#;
+        let ast = TreeSitterParser.parse(src).expect("parse template");
+
+        let facts = derive_chart_facts_from_ast(&ast);
+
+        assert!(
+            facts.path_facts.contains_key("canaryImage.repository"),
+            "then-branch assignment should be preserved, got {facts:?}"
+        );
+        assert!(
+            facts.path_facts.contains_key("primaryImage.repository"),
+            "implicit else branch should preserve the entry local value, got {facts:?}"
         );
     }
 

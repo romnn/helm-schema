@@ -49,6 +49,12 @@ fn eq(p: &str, value: &str) -> Guard {
     }
 }
 
+fn not(p: &str) -> Guard {
+    Guard::Not {
+        path: p.to_string(),
+    }
+}
+
 #[test]
 fn destructuring_range_header_emits_value_use_for_range_expression() {
     // `{{ range $k, $v := .Values.map }}` — the destructured `$k`/`$v`
@@ -220,6 +226,71 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
             .all(|u| !u.guards.contains(&truthy("themap"))),
         "`fallback` use outside the range body must NOT inherit the \
          range's Truthy guard; got: {fallback_uses:#?}",
+    );
+}
+
+#[test]
+fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+        {{- if .Values.enabled }}
+          primary: "{{ .Values.primary }}"
+        {{- else }}
+          fallback: "{{ .Values.fallback }}"
+        {{- end }}
+          after: "{{ .Values.after }}"
+    "#};
+
+    let ir = generate(template, "");
+
+    let primary_uses: Vec<&ValueUse> = ir
+        .iter()
+        .filter(|use_| use_.source_expr == "primary")
+        .collect();
+    assert_eq!(
+        primary_uses.len(),
+        1,
+        "expected exactly one then-branch use; got {ir:#?}",
+    );
+    assert!(
+        primary_uses[0].guards.contains(&truthy("enabled")),
+        "then-branch use should inherit Truthy(enabled); got {:?}",
+        primary_uses[0].guards,
+    );
+
+    let fallback_uses: Vec<&ValueUse> = ir
+        .iter()
+        .filter(|use_| use_.source_expr == "fallback")
+        .collect();
+    assert_eq!(
+        fallback_uses.len(),
+        1,
+        "expected exactly one else-branch use; got {ir:#?}",
+    );
+    assert!(
+        fallback_uses[0].guards.contains(&not("enabled")),
+        "else-branch use should inherit Not(enabled); got {:?}",
+        fallback_uses[0].guards,
+    );
+
+    let after_uses: Vec<&ValueUse> = ir
+        .iter()
+        .filter(|use_| use_.source_expr == "after")
+        .collect();
+    assert_eq!(
+        after_uses.len(),
+        1,
+        "expected exactly one post-branch use; got {ir:#?}",
+    );
+    assert!(
+        !after_uses[0].guards.contains(&truthy("enabled"))
+            && !after_uses[0].guards.contains(&not("enabled")),
+        "branch guards must not leak to following nodes; got {:?}",
+        after_uses[0].guards,
     );
 }
 

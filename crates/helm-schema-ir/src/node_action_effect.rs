@@ -100,6 +100,15 @@ pub(crate) fn apply_with_condition_plan(
     sink.push_dot_binding(plan.dot_binding);
 }
 
+pub(crate) fn apply_condition_alternative_guards(
+    sink: &mut dyn NodeActionEffectSink,
+    plan: &ConditionActionPlan,
+) {
+    for guard in plan.negated_compatibility_guards() {
+        sink.push_guard_if_absent(guard);
+    }
+}
+
 pub(crate) fn apply_range_action_plan(
     sink: &mut dyn NodeActionEffectSink,
     plan: &RangeActionPlan,

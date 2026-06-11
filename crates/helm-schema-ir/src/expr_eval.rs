@@ -642,14 +642,10 @@ mod tests {
     #[test]
     fn helper_argument_fields_resolve_from_dot_root() {
         let expr = single_expr(r#"default "generated" .config.name"#);
-        let env = EvalEnv {
-            root_fields: HashMap::from([(
-                "config".to_string(),
-                AbstractValue::ValuesPath("serviceAccount".to_string()),
-            )]),
-            allow_field_root_lookup: true,
-            ..EvalEnv::default()
-        };
+        let env = EvalEnv::from_root_fields(HashMap::from([(
+            "config".to_string(),
+            AbstractValue::ValuesPath("serviceAccount".to_string()),
+        )]));
 
         let result = eval_expr(&expr, &env);
 

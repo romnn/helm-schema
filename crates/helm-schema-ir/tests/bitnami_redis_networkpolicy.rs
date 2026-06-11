@@ -41,6 +41,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -196,6 +200,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -235,6 +243,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "architecture",
@@ -304,6 +316,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -332,6 +348,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "architecture",
@@ -574,6 +594,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "architecture",
@@ -748,6 +772,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -816,6 +844,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -848,6 +880,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "architecture",
@@ -883,6 +919,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "architecture",
@@ -1187,6 +1227,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "networkPolicy.extraEgress",
         "type": "truthy"
       }
@@ -1204,6 +1248,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "networkPolicy.extraEgress",
@@ -1230,6 +1278,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "networkPolicy.extraEgress",
         "type": "truthy"
       }
@@ -1251,6 +1303,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "networkPolicy.extraEgress",
@@ -1940,6 +1996,10 @@ fn symbolic_ir_from_tree_sitter() {
         "type": "truthy"
       },
       {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
+      },
+      {
         "path": "architecture",
         "type": "eq",
         "value": "replication"
@@ -2010,6 +2070,10 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "networkPolicy.enabled",
         "type": "truthy"
+      },
+      {
+        "path": "networkPolicy.allowExternalEgress",
+        "type": "not"
       },
       {
         "path": "architecture",

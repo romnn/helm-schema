@@ -2,8 +2,8 @@ use crate::YamlPath;
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::node_action_effect::{
-    NodeActionEffectSink, apply_assignment_action_plan, apply_if_condition_plan,
-    apply_range_action_plan, apply_with_condition_plan,
+    NodeActionEffectSink, apply_assignment_action_plan, apply_condition_alternative_guards,
+    apply_if_condition_plan, apply_range_action_plan, apply_with_condition_plan,
 };
 use crate::node_action_kind::{NodeActionKind, classify_node_action};
 use crate::range_action_plan::RangeActionPlan;
@@ -60,13 +60,15 @@ where
         NodeActionKind::If => {
             eval_condition_node(runtime, node, false, |runtime, header| {
                 let plan = runtime.plan_if_condition(header);
-                apply_if_condition_plan(runtime, plan);
+                apply_if_condition_plan(runtime, plan.clone());
+                plan
             });
         }
         NodeActionKind::With => {
             eval_condition_node(runtime, node, true, |runtime, header| {
                 let plan = runtime.plan_with_condition(header);
-                apply_with_condition_plan(runtime, plan);
+                apply_with_condition_plan(runtime, plan.clone());
+                plan
             });
         }
         NodeActionKind::Range => {
@@ -112,28 +114,36 @@ fn eval_condition_node<R, F>(
     mut enter_consequence: F,
 ) where
     R: NodeEvalRuntime,
-    F: FnMut(&mut R, &str),
+    F: FnMut(&mut R, &str) -> ConditionActionPlan,
 {
     let saved = runtime.scope_snapshot(include_dot_stack);
 
-    if let Some(condition) = node.child_by_field_name("condition")
+    let condition_plan = if let Some(condition) = node.child_by_field_name("condition")
         && let Ok(text) = condition.utf8_text(runtime.source().as_bytes())
     {
         let text = text.to_string();
-        enter_consequence(runtime, &text);
-    }
+        Some(enter_consequence(runtime, &text))
+    } else {
+        None
+    };
 
     for child in children_with_field(node, "consequence") {
         eval_node(runtime, child);
     }
 
     runtime.restore_scope(saved);
+    let alternative_saved = runtime.scope_snapshot(include_dot_stack);
+    if let Some(plan) = &condition_plan {
+        apply_condition_alternative_guards(runtime, plan);
+    }
 
-    // Else-if chains are represented as repeated condition/option fields; this
-    // compatibility evaluator preserves the previous plain-else traversal.
+    // Else-if chains are represented as repeated condition/option fields; the
+    // outer alternative first inherits the negated current predicate, then any
+    // nested else-if contributes its own condition when it is evaluated.
     for child in children_with_field(node, "alternative") {
         eval_node(runtime, child);
     }
+    runtime.restore_scope(alternative_saved);
 }
 
 fn eval_range_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
