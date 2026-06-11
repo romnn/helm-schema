@@ -24,11 +24,15 @@ pub(crate) fn collect_bound_fragment_outputs_from_tree(
                 if apply_local_set_mutations(text, locals, current_dot, context, seen) {
                     return;
                 }
-                if let Some((var, _declares, rhs)) = parse_helper_assignment(text) {
-                    let binding =
-                        fragment_binding_from_text(&rhs, locals, current_dot, context, seen);
+                if let Some(assignment) = parse_helper_assignment(text) {
+                    let binding = context.fragment_binding_from_expr(
+                        &assignment.rhs_expr,
+                        locals,
+                        current_dot,
+                        seen,
+                    );
                     if let Some(binding) = binding {
-                        locals.insert(var, binding);
+                        locals.insert(assignment.variable, binding);
                     }
                 }
             }

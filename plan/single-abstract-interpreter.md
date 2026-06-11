@@ -537,15 +537,25 @@ Current result:
   their effects through the existing sink boundary, leaving `SymbolicWalker`
   as compatibility state plus planning hooks rather than a second node
   evaluator.
+- Local assignment parsing now uses the typed template AST to distinguish
+  `:=` declarations from `=` assignments. The node compatibility sink carries
+  that assignment kind through separate declaration/assignment methods, and
+  `EvalEnv` has explicit declaration/assignment entry points for the later
+  scoped-state implementation.
+- `condition_action_plan.rs` now carries an internal predicate algebra for
+  `if` / `with` conditions and projects back to today's flat `Guard` values
+  only at `node_action_effect.rs`, the current compatibility boundary.
+  Unsupported predicate shapes abstain from flat projection instead of being
+  approximated as stronger positive facts.
 
 Remaining A1 work:
 
 - Replace manual scope snapshot/restore with an `EvalEnv`-shaped state object
   and explicit branch joins.
-- Distinguish Go-template `:=` declaration from `=` assignment in the defining
-  scope.
-- Introduce the minimal predicate core (`Atom`, `Not`, `And`, `Or`) and project
-  it to today's `Guard` only where compatibility output requires it.
+- Make `=` assignment update the defining scope once branch out-state joins are
+  represented in `EvalEnv`.
+- Use the predicate core for else-branch path conditions and then replace the
+  remaining guard-stack internals with predicates.
 - Make `AbstractValue` joins Top-absorbing and add law tests for
   associativity, commutativity, idempotence, and Top absorption.
 

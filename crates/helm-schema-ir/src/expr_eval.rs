@@ -97,14 +97,16 @@ pub(crate) fn eval_expr_value(expr: &TemplateExpr, env: &EvalEnv) -> Option<Abst
 
 pub(crate) fn apply_assignment_expr(expr: &TemplateExpr, env: &mut EvalEnv) -> bool {
     match expr {
-        TemplateExpr::VariableDefinition { name, value }
-        | TemplateExpr::Assignment { name, value } => {
+        TemplateExpr::VariableDefinition { name, value } => {
             let name = name.trim_start_matches('$');
-            if let Some(value) = eval_expr_value(value, env) {
-                env.locals.insert(name.to_string(), value);
-            } else {
-                env.locals.remove(name);
-            }
+            let value = eval_expr_value(value, env);
+            env.declare_local(name, value);
+            true
+        }
+        TemplateExpr::Assignment { name, value } => {
+            let name = name.trim_start_matches('$');
+            let value = eval_expr_value(value, env);
+            env.assign_local(name, value);
             true
         }
         _ => false,

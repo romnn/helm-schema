@@ -2,6 +2,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::GetBinding;
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::fragment_scope_eval::AssignmentKind;
 use crate::output_value_emitter::ValueUseSink;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
@@ -9,7 +10,9 @@ use crate::{Guard, ValueKind, YamlPath};
 pub(crate) trait NodeActionEffectSink: ValueUseSink {
     fn insert_get_binding(&mut self, variable: String, binding: GetBinding);
 
-    fn insert_fragment_binding(&mut self, variable: String, binding: FragmentBinding);
+    fn declare_fragment_binding(&mut self, variable: String, binding: FragmentBinding);
+
+    fn assign_fragment_binding(&mut self, variable: String, binding: FragmentBinding);
 
     fn refresh_default_paths(&mut self, variable: &str, rhs: &str);
 
@@ -37,7 +40,14 @@ pub(crate) fn apply_assignment_action_plan(
 
 fn apply_local_assignment_plan(sink: &mut dyn NodeActionEffectSink, plan: LocalAssignmentPlan) {
     if let Some(binding) = plan.fragment_binding {
-        sink.insert_fragment_binding(plan.variable.clone(), binding);
+        match plan.kind {
+            AssignmentKind::Declaration => {
+                sink.declare_fragment_binding(plan.variable.clone(), binding);
+            }
+            AssignmentKind::Assignment => {
+                sink.assign_fragment_binding(plan.variable.clone(), binding);
+            }
+        }
     }
     sink.refresh_default_paths(&plan.variable, &plan.rhs);
     sink.refresh_helper_output_meta(plan.variable, &plan.rhs);
@@ -47,11 +57,12 @@ pub(crate) fn apply_if_condition_plan(
     sink: &mut dyn NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
+    let guards = plan.compatibility_guards();
     for value in plan.bound_values {
         sink.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
-    for guard in &plan.guards {
+    for guard in &guards {
         for path in guard.value_paths() {
             sink.emit_use_with_extra_guards(
                 path.to_string(),
@@ -68,11 +79,12 @@ pub(crate) fn apply_with_condition_plan(
     sink: &mut dyn NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
+    let guards = plan.compatibility_guards();
     // Push the With guards before emitting header scalar uses so the emitted
     // uses themselves carry the With guard. This lets the schema generator
     // identify with-header uses by the presence of a matching
     // `Guard::With { path: source_expr }` in the use's guard list.
-    for guard in &plan.guards {
+    for guard in &guards {
         sink.push_guard_if_absent(guard.clone());
     }
 
@@ -80,7 +92,7 @@ pub(crate) fn apply_with_condition_plan(
         sink.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
-    for guard in &plan.guards {
+    for guard in &guards {
         for path in guard.value_paths() {
             sink.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
         }

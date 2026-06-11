@@ -245,10 +245,10 @@ fn collect_bound_fragment_output_uses_from_expr(
         return;
     }
 
-    if let Some((var, _declares, rhs)) = parse_helper_assignment(text) {
+    if let Some(assignment) = parse_helper_assignment(text) {
         collect_bound_fragment_output_assignment_uses(
-            &var,
-            &rhs,
+            &assignment.variable,
+            &assignment.rhs,
             bindings,
             current_dot,
             current_dot_fragment,

@@ -139,10 +139,10 @@ fn collect_bound_helper_values_from_expr(
     active_output_guards: &BTreeSet<String>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
-    if let Some((var, _declares, rhs)) = crate::fragment_scope_eval::parse_helper_assignment(text) {
+    if let Some(assignment) = crate::fragment_scope_eval::parse_helper_assignment(text) {
         collect_assignment_bound_helper_values(
-            &var,
-            &rhs,
+            &assignment.variable,
+            &assignment.rhs,
             text,
             bindings,
             current_dot,

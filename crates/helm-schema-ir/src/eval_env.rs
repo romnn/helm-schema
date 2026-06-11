@@ -49,4 +49,20 @@ impl EvalEnv {
             allow_field_root_lookup: false,
         }
     }
+
+    pub(crate) fn declare_local(&mut self, name: &str, value: Option<AbstractValue>) {
+        self.set_local(name, value);
+    }
+
+    pub(crate) fn assign_local(&mut self, name: &str, value: Option<AbstractValue>) {
+        self.set_local(name, value);
+    }
+
+    fn set_local(&mut self, name: &str, value: Option<AbstractValue>) {
+        if let Some(value) = value {
+            self.locals.insert(name.to_string(), value);
+        } else {
+            self.locals.remove(name);
+        }
+    }
 }

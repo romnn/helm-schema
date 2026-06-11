@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::{GetBinding, parse_get_binding};
-use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_text};
-use crate::fragment_scope_eval::parse_helper_assignment;
+use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_expr};
+use crate::fragment_scope_eval::{AssignmentKind, parse_helper_assignment};
 
 pub(crate) struct AssignmentActionPlan {
     pub(crate) get_binding: Option<(String, GetBinding)>,
@@ -12,6 +12,7 @@ pub(crate) struct AssignmentActionPlan {
 
 pub(crate) struct LocalAssignmentPlan {
     pub(crate) variable: String,
+    pub(crate) kind: AssignmentKind,
     pub(crate) fragment_binding: Option<FragmentBinding>,
     pub(crate) rhs: String,
 }
@@ -23,15 +24,15 @@ pub(crate) fn plan_assignment_action(
     root_bindings: &HashMap<String, HelperBinding>,
     current_dot_binding: Option<&HelperBinding>,
 ) -> AssignmentActionPlan {
-    let local_assignment = parse_helper_assignment(text).map(|(variable, _declares, rhs)| {
+    let local_assignment = parse_helper_assignment(text).map(|assignment| {
         let mut locals = template_bindings.clone();
         for (key, value) in root_bindings {
             locals.insert(key.clone(), value.to_fragment_binding());
         }
         let current_dot = current_dot_binding.map(HelperBinding::to_fragment_binding);
         let mut seen = HashSet::new();
-        let fragment_binding = fragment_binding_from_text(
-            &rhs,
+        let fragment_binding = fragment_binding_from_expr(
+            &assignment.rhs_expr,
             &locals,
             current_dot.as_ref(),
             fragment_context,
@@ -39,9 +40,10 @@ pub(crate) fn plan_assignment_action(
         );
 
         LocalAssignmentPlan {
-            variable,
+            variable: assignment.variable,
+            kind: assignment.kind,
             fragment_binding,
-            rhs,
+            rhs: assignment.rhs,
         }
     });
 

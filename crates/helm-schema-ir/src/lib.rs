@@ -31,6 +31,7 @@ mod output_node_context;
 mod output_path;
 mod output_value_analysis;
 mod output_value_emitter;
+mod predicate;
 mod range_action_plan;
 mod rendered_yaml_context;
 pub mod required_inference;

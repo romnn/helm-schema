@@ -628,7 +628,11 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         self.get_bindings.insert(variable, binding);
     }
 
-    fn insert_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
+    fn declare_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
+        self.template_bindings.insert(variable, binding);
+    }
+
+    fn assign_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
         self.template_bindings.insert(variable, binding);
     }
 

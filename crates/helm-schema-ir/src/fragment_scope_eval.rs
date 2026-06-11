@@ -18,7 +18,51 @@ fn strip_template_action_wrapping(line: &str) -> Option<String> {
     Some(body.trim().to_string())
 }
 
-pub(crate) fn parse_helper_assignment(text: &str) -> Option<(String, bool, String)> {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum AssignmentKind {
+    Declaration,
+    Assignment,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ParsedHelperAssignment {
+    pub(crate) variable: String,
+    pub(crate) kind: AssignmentKind,
+    pub(crate) rhs: String,
+    pub(crate) rhs_expr: TemplateExpr,
+}
+
+pub(crate) fn parse_helper_assignment(text: &str) -> Option<ParsedHelperAssignment> {
+    let exprs = parse_expr_text(text);
+    let [expr] = exprs.as_slice() else {
+        return None;
+    };
+    match expr {
+        TemplateExpr::VariableDefinition { name, value } => {
+            parsed_assignment_from_expr(text, name, AssignmentKind::Declaration, value)
+        }
+        TemplateExpr::Assignment { name, value } => {
+            parsed_assignment_from_expr(text, name, AssignmentKind::Assignment, value)
+        }
+        _ => None,
+    }
+}
+
+fn parsed_assignment_from_expr(
+    text: &str,
+    name: &str,
+    kind: AssignmentKind,
+    value: &TemplateExpr,
+) -> Option<ParsedHelperAssignment> {
+    Some(ParsedHelperAssignment {
+        variable: name.trim_start_matches('$').to_string(),
+        kind,
+        rhs: assignment_rhs_text(text, kind)?,
+        rhs_expr: value.clone(),
+    })
+}
+
+fn assignment_rhs_text(text: &str, kind: AssignmentKind) -> Option<String> {
     let owned;
     let trimmed = if text.trim_start().starts_with("{{") {
         owned = strip_template_action_wrapping(text)?;
@@ -26,15 +70,12 @@ pub(crate) fn parse_helper_assignment(text: &str) -> Option<(String, bool, Strin
     } else {
         text.trim()
     };
-    if let Some(index) = trimmed.find(":=") {
-        let var = trimmed[..index].trim().strip_prefix('$')?.to_string();
-        return Some((var, true, trimmed[index + 2..].trim().to_string()));
-    }
-    if let Some(index) = trimmed.find(" = ") {
-        let var = trimmed[..index].trim().strip_prefix('$')?.to_string();
-        return Some((var, false, trimmed[index + 3..].trim().to_string()));
-    }
-    None
+    let (operator, operator_len) = match kind {
+        AssignmentKind::Declaration => (":=", 2usize),
+        AssignmentKind::Assignment => ("=", 1usize),
+    };
+    let index = trimmed.find(operator)?;
+    Some(trimmed[index + operator_len..].trim().to_string())
 }
 
 pub(crate) fn merge_fragment_locals(
@@ -278,4 +319,52 @@ pub(crate) fn range_has_destructured_variable_definition(node: tree_sitter::Node
                 .count()
                 >= 2
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use helm_schema_ast::TemplateExpr;
+
+    use super::{AssignmentKind, parse_helper_assignment};
+
+    #[test]
+    fn parse_helper_assignment_detects_declaration_from_ast() {
+        let Some(assignment) =
+            parse_helper_assignment(r#"{{- $image := .Values.image.repository -}}"#)
+        else {
+            panic!("parse helper assignment");
+        };
+
+        assert_eq!(assignment.variable, "image");
+        assert_eq!(assignment.kind, AssignmentKind::Declaration);
+        assert_eq!(assignment.rhs, ".Values.image.repository");
+        assert_eq!(
+            assignment.rhs_expr,
+            TemplateExpr::Field(vec![
+                "Values".to_string(),
+                "image".to_string(),
+                "repository".to_string()
+            ])
+        );
+    }
+
+    #[test]
+    fn parse_helper_assignment_detects_assignment_from_ast() {
+        let Some(assignment) = parse_helper_assignment(r#"{{- $image = .Values.global.image -}}"#)
+        else {
+            panic!("parse helper assignment");
+        };
+
+        assert_eq!(assignment.variable, "image");
+        assert_eq!(assignment.kind, AssignmentKind::Assignment);
+        assert_eq!(assignment.rhs, ".Values.global.image");
+        assert_eq!(
+            assignment.rhs_expr,
+            TemplateExpr::Field(vec![
+                "Values".to_string(),
+                "global".to_string(),
+                "image".to_string()
+            ])
+        );
+    }
 }
