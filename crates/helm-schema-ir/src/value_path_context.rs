@@ -8,7 +8,7 @@ use crate::expression_analysis::{resolved_default_fallback_paths_for_text, type_
 use crate::fragment_binding_eval::fragment_binding_from_outer_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::HelperOutputMeta;
-use crate::helper_binding_eval::resolve_bound_path_expr;
+use crate::helper_binding_eval::{binding_from_expr, resolve_bound_path_expr};
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
@@ -23,6 +23,25 @@ pub(crate) struct ValuePathContext<'a> {
     pub(crate) fragment_context: FragmentEvalContext<'a>,
     pub(crate) current_dot_fragment: Option<FragmentBinding>,
     pub(crate) current_dot_binding: Option<HelperBinding>,
+}
+
+/// Resolves a `with` header's value to the helper binding callers should use as
+/// `current_dot` while walking the body.
+pub(crate) fn computed_with_body_dot(
+    header: &str,
+    bindings: &HashMap<String, HelperBinding>,
+    current_dot: Option<&HelperBinding>,
+) -> Option<HelperBinding> {
+    let exprs = parse_expr_text(header);
+    let [expr] = exprs.as_slice() else {
+        return None;
+    };
+
+    if is_bare_values_root_expr(expr) {
+        return Some(HelperBinding::ValuesPath(String::new()));
+    }
+
+    binding_from_expr(expr, Some(bindings), current_dot)
 }
 
 impl ValuePathContext<'_> {
@@ -414,6 +433,16 @@ impl ValuePathContext<'_> {
         }
         paths
     }
+}
+
+fn is_bare_values_root_expr(expr: &TemplateExpr) -> bool {
+    matches!(expr, TemplateExpr::Field(path) if matches!(path.as_slice(), [head] if head == "Values"))
+        || matches!(
+            expr,
+            TemplateExpr::Selector { operand, path }
+                if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
+                    && matches!(path.as_slice(), [head] if head == "Values"),
+        )
 }
 
 fn direct_values_paths_from_exprs(exprs: &[TemplateExpr]) -> BTreeSet<String> {

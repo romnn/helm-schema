@@ -1,6 +1,7 @@
 mod abstract_eval;
 mod abstract_value;
 mod binding;
+mod bound_helper_call_analysis;
 mod bound_value_analysis;
 mod define_body_cache;
 mod eval_effect;
@@ -13,7 +14,10 @@ mod fragment_scope_eval;
 mod helper_analysis;
 mod helper_binding_eval;
 pub mod helper_eval;
+mod helper_fragment_output_uses;
+mod helper_fragment_outputs;
 mod helper_output_projection;
+mod helper_value_analysis;
 mod local_projection;
 mod output_path;
 mod rendered_yaml_context;

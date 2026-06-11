@@ -408,6 +408,16 @@ Current result:
   - `value_path_context.rs`
   This keeps `SymbolicWalker` closer to traversal/orchestration while the
   shared interpreter absorbs expression semantics.
+- Helper-body fragment and value analysis have been split out of
+  `symbolic.rs`:
+  - `bound_helper_call_analysis.rs`
+  - `helper_fragment_outputs.rs`
+  - `helper_fragment_output_uses.rs`
+  - `helper_value_analysis.rs`
+  These modules still expose compatibility walkers, but they isolate helper
+  summary orchestration and helper-body transfer functions so they can be
+  replaced by `eval_node` / helper summaries without further growing
+  `SymbolicWalker`.
 - Full `FragmentBinding` migration is intentionally not complete yet because
   fragments still carry string literal sets and rendered-output semantics that
   should become first-class `AbstractValue` / `Effects` concepts before the old
