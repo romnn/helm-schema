@@ -472,6 +472,22 @@ Current result:
 - `if` and `with` now share one scoped branch walker, making branch scope
   setup/restore explicit and reducing duplicated control-flow traversal before
   it is replaced by `EvalEnv`-backed node evaluation.
+- `node_action_effect.rs` is the first compatibility sink for node evaluation:
+  assignment, condition, and range transfer functions now apply their emitted
+  reads, guards, range-domain updates, local alias updates, and body-dot
+  bindings through a small sink trait. This mirrors the target
+  `eval_node(..., sink)` boundary while keeping `SymbolicWalker` in charge of
+  source-order traversal during migration.
+- `node_action_kind.rs` centralizes tree-sitter node classification into a
+  typed dispatch table. `SymbolicWalker::walk` now switches on
+  `NodeActionKind`, which is the transitional shape of a future `eval_node`
+  transfer-function dispatcher.
+- `node_eval.rs` now owns source-order node traversal for text, suppressed
+  blocks, assignments, `if`, `with`, `range`, output nodes, and descent. It
+  drives the action planners through a `NodeEvalRuntime` trait and applies
+  their effects through the existing sink boundary, leaving `SymbolicWalker`
+  as compatibility state plus planning hooks rather than a second node
+  evaluator.
 
 ### Phase 5 — helper summaries
 

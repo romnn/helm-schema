@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
-use crate::assignment_action_plan::{LocalAssignmentPlan, plan_assignment_action};
+use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::binding::{BoundHelperCallsCacheKey, FragmentBinding, HelperBinding};
 use crate::bound_helper_call_analysis::{
     analyze_bound_helper_call_with_fragment_locals, analyze_bound_helper_calls_with_fragment_locals,
@@ -15,10 +15,12 @@ use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
 use crate::helper_binding_eval::bindings_for_helper_arg;
+use crate::node_action_effect::NodeActionEffectSink;
+use crate::node_eval::{NodeEvalRuntime, eval_node};
 use crate::output_node_context::output_node_context;
 use crate::output_value_analysis::collect_output_value_analysis;
 use crate::output_value_emitter::{ValueUseSink, emit_output_value_analysis};
-use crate::range_action_plan::plan_range_action;
+use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::resource_detector::AstResourceDetector;
 use crate::static_file_template::{
@@ -27,7 +29,6 @@ use crate::static_file_template::{
 use crate::template_expr_cache::{
     clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
 };
-use crate::tree_sitter_utils::children_with_field;
 use crate::value_path_context::ValuePathContext;
 use crate::value_use_postprocess::postprocess_value_uses;
 use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
@@ -329,7 +330,7 @@ impl<'a> SymbolicWalker<'a> {
             self.dot_stack.push(Some(dot));
         }
         self.no_output_depth = 0;
-        self.walk(tree.root_node());
+        eval_node(self, tree.root_node());
         postprocess_value_uses(&mut self.uses);
         std::mem::take(&mut self.uses)
     }
@@ -600,287 +601,6 @@ impl<'a> SymbolicWalker<'a> {
             .insert(key, analysis.clone());
         analysis
     }
-
-    fn apply_if_condition_plan(&mut self, plan: ConditionActionPlan) {
-        for value in plan.bound_values {
-            self.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
-        }
-
-        for guard in &plan.guards {
-            for path in guard.value_paths() {
-                self.emit_use_with_extra_guards(
-                    path.to_string(),
-                    YamlPath(Vec::new()),
-                    ValueKind::Scalar,
-                    std::slice::from_ref(guard),
-                );
-            }
-            if !self.guards.contains(guard) {
-                self.guards.push(guard.clone());
-            }
-        }
-    }
-
-    fn apply_with_condition_plan(&mut self, plan: ConditionActionPlan) {
-        // Push the With guards before emitting header scalar uses so the
-        // emitted uses themselves carry the With guard. This lets the schema
-        // generator identify with-header uses by the presence of a matching
-        // `Guard::With { path: source_expr }` in the use's guard list.
-        for guard in &plan.guards {
-            if !self.guards.contains(guard) {
-                self.guards.push(guard.clone());
-            }
-        }
-
-        for value in plan.bound_values {
-            self.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
-        }
-
-        for guard in &plan.guards {
-            for path in guard.value_paths() {
-                self.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
-            }
-        }
-        self.dot_stack.push(plan.dot_binding);
-    }
-
-    fn collect_range_guards(&mut self, source_paths: &[String], path: &YamlPath, emit_use: bool) {
-        for source_path in source_paths {
-            let guard = Guard::Range {
-                path: source_path.clone(),
-            };
-            if emit_use {
-                self.emit_use_with_extra_guards(
-                    source_path.clone(),
-                    path.clone(),
-                    ValueKind::Scalar,
-                    std::slice::from_ref(&guard),
-                );
-            }
-            if !self.guards.contains(&guard) {
-                self.guards.push(guard);
-            }
-        }
-    }
-
-    fn walk(&mut self, node: tree_sitter::Node<'_>) {
-        self.rendered_yaml.enter_node(node);
-
-        if self.walk_control_node(node) {
-            return;
-        }
-        if self.walk_action_node(node) {
-            return;
-        }
-
-        let mut c = node.walk();
-        for ch in node.children(&mut c) {
-            self.walk(ch);
-        }
-    }
-
-    fn walk_control_node(&mut self, node: tree_sitter::Node<'_>) -> bool {
-        match node.kind() {
-            "text" | "yaml_no_injection_text" => {
-                self.rendered_yaml.ingest_text_up_to(node.end_byte());
-                true
-            }
-            "define_action" | "block_action" => true,
-            _ => false,
-        }
-    }
-
-    fn walk_action_node(&mut self, node: tree_sitter::Node<'_>) -> bool {
-        match node.kind() {
-            "variable_definition" | "assignment" => {
-                self.handle_variable_definition_or_assignment(node);
-                true
-            }
-            "if_action" => {
-                self.handle_if_action(node);
-                true
-            }
-            "with_action" => {
-                self.handle_with_action(node);
-                true
-            }
-            "range_action" => {
-                self.handle_range_action(node);
-                true
-            }
-            "template_action"
-            | "dot"
-            | "variable"
-            | "field"
-            | "chained_pipeline"
-            | "parenthesized_pipeline"
-            | "selector_expression"
-            | "function_call"
-            | "method_call" => {
-                self.handle_output_node(node);
-                true
-            }
-            _ => false,
-        }
-    }
-
-    fn handle_variable_definition_or_assignment(&mut self, node: tree_sitter::Node<'_>) {
-        if let Ok(txt) = node.utf8_text(self.source.as_bytes()) {
-            let plan = {
-                let fragment_context = self.fragment_eval_context();
-                let current_dot = self.current_dot_binding();
-                plan_assignment_action(
-                    txt,
-                    fragment_context,
-                    &self.template_bindings,
-                    &self.root_bindings,
-                    current_dot.as_ref(),
-                )
-            };
-
-            if let Some((var, binding)) = plan.get_binding {
-                self.get_bindings.insert(var, binding);
-            }
-
-            if let Some(local_assignment) = plan.local_assignment {
-                self.apply_local_assignment_plan(local_assignment);
-            }
-        }
-
-        self.no_output_depth += 1;
-        let mut c = node.walk();
-        for ch in node.children(&mut c) {
-            self.walk(ch);
-        }
-        self.no_output_depth = self.no_output_depth.saturating_sub(1);
-    }
-
-    fn apply_local_assignment_plan(&mut self, plan: LocalAssignmentPlan) {
-        if let Some(binding) = plan.fragment_binding {
-            self.template_bindings
-                .insert(plan.variable.clone(), binding);
-        }
-        let default_paths = self
-            .value_path_context()
-            .resolved_default_fallback_paths(&plan.rhs);
-        if default_paths.is_empty() {
-            self.template_default_paths.remove(&plan.variable);
-        } else {
-            self.template_default_paths
-                .insert(plan.variable.clone(), default_paths);
-        }
-
-        let helper_meta = self.helper_output_meta_for_text(&plan.rhs);
-        if helper_meta.is_empty() {
-            self.template_output_meta.remove(&plan.variable);
-        } else {
-            self.template_output_meta.insert(plan.variable, helper_meta);
-        }
-    }
-
-    fn handle_if_action(&mut self, node: tree_sitter::Node<'_>) {
-        self.walk_condition_action(node, false, |walker, header| {
-            let plan = {
-                let value_path_context = walker.value_path_context();
-                plan_if_condition(
-                    header,
-                    &value_path_context,
-                    &walker.range_domains,
-                    &walker.get_bindings,
-                )
-            };
-            walker.apply_if_condition_plan(plan);
-        });
-    }
-
-    fn handle_with_action(&mut self, node: tree_sitter::Node<'_>) {
-        self.walk_condition_action(node, true, |walker, header| {
-            let plan = {
-                let value_path_context = walker.value_path_context();
-                plan_with_condition(
-                    header,
-                    &value_path_context,
-                    &walker.range_domains,
-                    &walker.get_bindings,
-                )
-            };
-            walker.apply_with_condition_plan(plan);
-        });
-    }
-
-    fn walk_condition_action(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        include_dot_stack: bool,
-        mut enter_consequence: impl FnMut(&mut Self, &str),
-    ) {
-        let saved = self.scope_snapshot(include_dot_stack);
-
-        if let Some(cond) = node.child_by_field_name("condition")
-            && let Ok(txt) = cond.utf8_text(self.source.as_bytes())
-        {
-            enter_consequence(self, txt);
-        }
-
-        let consequence = children_with_field(node, "consequence");
-        for ch in consequence {
-            self.walk(ch);
-        }
-
-        self.restore_scope(saved);
-
-        // Note: else-if chains are represented as repeated condition/option fields.
-        // For now, we only handle the plain else branch.
-        let alternative = children_with_field(node, "alternative");
-        for ch in alternative {
-            self.walk(ch);
-        }
-    }
-
-    fn handle_range_action(&mut self, node: tree_sitter::Node<'_>) {
-        let saved = self.scope_snapshot(true);
-
-        let current_path = self.rendered_yaml.current_path();
-        let value_path_context = self.value_path_context();
-        let plan = plan_range_action(node, self.source, &value_path_context, &current_path);
-        if let Some((var, literals)) = &plan.literal_range {
-            self.range_domains.insert(var.clone(), literals.clone());
-        }
-        if plan.header_text.is_some() {
-            self.collect_range_guards(&plan.source_paths, &plan.guard_path, plan.emit_header_use);
-
-            if plan.renders_mapping_entries {
-                // A destructured map range under a concrete object field
-                // (`annotations:`, `matchLabels:`, ...) is effectively
-                // rendering a YAML fragment for the whole source map.
-                // Keep the header's scalar use pathless to avoid projecting
-                // array output shapes like `env:` back onto map inputs, and
-                // emit this separate fragment use so provider object schemas
-                // can still type the destination field precisely.
-                for source_path in &plan.source_paths {
-                    self.emit_use(
-                        source_path.clone(),
-                        current_path.clone(),
-                        ValueKind::Fragment,
-                    );
-                }
-            }
-        }
-
-        self.dot_stack.push(plan.dot_binding);
-
-        let body = children_with_field(node, "body");
-        for ch in body {
-            self.walk(ch);
-        }
-
-        self.restore_scope(saved);
-
-        let alternative = children_with_field(node, "alternative");
-        for ch in alternative {
-            self.walk(ch);
-        }
-    }
 }
 
 impl ValueUseSink for SymbolicWalker<'_> {
@@ -918,5 +638,131 @@ impl ValueUseSink for SymbolicWalker<'_> {
             kind,
             extra_guards,
         );
+    }
+}
+
+impl NodeEvalRuntime for SymbolicWalker<'_> {
+    type ScopeSnapshot = WalkerScopeSnapshot;
+
+    fn source(&self) -> &str {
+        self.source
+    }
+
+    fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
+        self.rendered_yaml.enter_node(node);
+    }
+
+    fn ingest_text_up_to(&mut self, end_byte: usize) {
+        self.rendered_yaml.ingest_text_up_to(end_byte);
+    }
+
+    fn current_rendered_path(&self) -> YamlPath {
+        self.rendered_yaml.current_path()
+    }
+
+    fn scope_snapshot(&self, include_dot_stack: bool) -> Self::ScopeSnapshot {
+        SymbolicWalker::scope_snapshot(self, include_dot_stack)
+    }
+
+    fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
+        SymbolicWalker::restore_scope(self, snapshot);
+    }
+
+    fn enter_no_output(&mut self) {
+        self.no_output_depth += 1;
+    }
+
+    fn exit_no_output(&mut self) {
+        self.no_output_depth = self.no_output_depth.saturating_sub(1);
+    }
+
+    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
+        SymbolicWalker::handle_output_node(self, node);
+    }
+
+    fn plan_assignment_action(&self, text: &str) -> AssignmentActionPlan {
+        let fragment_context = self.fragment_eval_context();
+        let current_dot = self.current_dot_binding();
+        plan_assignment_action(
+            text,
+            fragment_context,
+            &self.template_bindings,
+            &self.root_bindings,
+            current_dot.as_ref(),
+        )
+    }
+
+    fn plan_if_condition(&self, header: &str) -> ConditionActionPlan {
+        let value_path_context = self.value_path_context();
+        plan_if_condition(
+            header,
+            &value_path_context,
+            &self.range_domains,
+            &self.get_bindings,
+        )
+    }
+
+    fn plan_with_condition(&self, header: &str) -> ConditionActionPlan {
+        let value_path_context = self.value_path_context();
+        plan_with_condition(
+            header,
+            &value_path_context,
+            &self.range_domains,
+            &self.get_bindings,
+        )
+    }
+
+    fn plan_range_action(
+        &self,
+        node: tree_sitter::Node<'_>,
+        current_path: &YamlPath,
+    ) -> RangeActionPlan {
+        let value_path_context = self.value_path_context();
+        plan_range_action(node, self.source, &value_path_context, current_path)
+    }
+}
+
+impl NodeActionEffectSink for SymbolicWalker<'_> {
+    fn insert_get_binding(&mut self, variable: String, binding: GetBinding) {
+        self.get_bindings.insert(variable, binding);
+    }
+
+    fn insert_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
+        self.template_bindings.insert(variable, binding);
+    }
+
+    fn refresh_default_paths(&mut self, variable: &str, rhs: &str) {
+        let default_paths = self
+            .value_path_context()
+            .resolved_default_fallback_paths(rhs);
+        if default_paths.is_empty() {
+            self.template_default_paths.remove(variable);
+        } else {
+            self.template_default_paths
+                .insert(variable.to_string(), default_paths);
+        }
+    }
+
+    fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str) {
+        let helper_meta = self.helper_output_meta_for_text(rhs);
+        if helper_meta.is_empty() {
+            self.template_output_meta.remove(&variable);
+        } else {
+            self.template_output_meta.insert(variable, helper_meta);
+        }
+    }
+
+    fn push_guard_if_absent(&mut self, guard: Guard) {
+        if !self.guards.contains(&guard) {
+            self.guards.push(guard);
+        }
+    }
+
+    fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
+        self.dot_stack.push(binding);
+    }
+
+    fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
+        self.range_domains.insert(variable, literals);
     }
 }
