@@ -1,72 +1,69 @@
-# helm-schema — from-scratch target architecture (v2)
+# helm-schema — from-scratch target architecture (v3)
 
 Status: design document. No code change is implied by this file by itself.
 
-This is the architecture I would build if helm-schema were rewritten today from
-first principles. It is a *clean-room* design: the current implementation and
-the other plan documents are treated as **evidence** (what worked, what bit
-us, what real charts do), never as constraints.
+This is the architecture I would build if helm-schema were rewritten today
+from first principles. It is a *clean-room* design: the current
+implementation and the other plan documents are treated as **evidence** (what
+worked, what bit us, what real charts do), never as constraints.
 
-**Revision note.** v2 is the result of an adversarial review of v1 by five
-independent critics (minimalist architecture, program-analysis soundness,
-Helm/K8s domain realism, Rust API/performance, security/evolution pre-mortem)
-plus a first-principles re-derivation. The load-bearing changes from v1:
+**Revision history.**
 
-1. A **formal correctness contract** now anchors the whole design (§2); every
-   widening/abstention rule is derived from it via a polarity table instead of
-   being re-litigated per call site.
-2. The central analysis artifact is an **abstract document model** (the
-   interpreter builds an abstract rendered manifest per template), not a flat
-   fact stream. Sink attribution, resource identity, `kind: List` descent and
-   K8s anchoring become structural projections instead of side channels.
-3. Guards are a **compositional predicate algebra** over typed places (with
-   `And`/`Or`/`Not`, environment atoms like `semverCompare`, three-valued
-   evaluation) — the flat v1 `Guard` vocabulary could not even represent an
-   `else` branch.
-4. The trait census shrank from ~12 ports to **3** (`Fetch`,
-   `ResourceSchemaOracle`, `CapabilityOracle`); the knowledge layer became a
-   **pure lookup planner + one executor** instead of trait combinators, which
-   also makes "what was tried" diagnostics fall out of the executed plan.
-5. The schema model is **two-tier**: upstream K8s/CRD schemas stay verbatim
-   JSON behind lazy `$ref` documents (no round-trip risk, no materialized
-   expansion — the real RSS lever); the typed, law-bearing algebra covers only
-   what we synthesize from chart evidence.
-6. The input universe widened to what real charts actually are: `files/`
-   manifests reached via `tpl`/`fromYaml`/`mergeOverwrite`, chart-shipped
-   `crds/`, `Chart.yaml` dependency `condition:`/`tags:`, shipped subchart
-   `values.schema.json`, NOTES.txt/tests as text-mode contract sources.
-7. Security became first-class: `FetchPolicy` and `LoadBudget` objects at
-   every network/file/archive edge, and a validated path newtype at the
-   coordinate→path boundary (the review found a live path-traversal shape and
-   an SSRF surface in today's code that v1 would have reproduced).
-8. Assorted Rust corrections: no interner (content-stable `Name`),
-   state-passing environments with explicit join (Go-template `=` vs `:=`),
-   fingerprinted Arc-shared lattice nodes, honest parallelism accounting.
+*v2* was the result of an adversarial review of v1 by five independent
+critics (minimalist architecture, program-analysis soundness, Helm/K8s domain
+realism, Rust API/performance, security/evolution pre-mortem). Its
+load-bearing changes: a formal correctness contract with a polarity table; an
+abstract document model in the interpreter; a compositional predicate algebra
+replacing the flat guard vocabulary; the trait census cut to three; a pure
+lookup planner/executor for the knowledge layer; a two-tier schema model
+(foreign JSON verbatim, typed algebra for synthesized content); the input
+universe widened to real charts (`files/` manifests, `crds/`, Chart.yaml
+conditions, shipped schemas); first-class security budgets; and corrected
+Rust shapes (no interner, state-passing environments, fingerprinted
+Arc-shared lattice nodes).
 
-A later external review (of the legacy multi-version / apiVersion-guessing
-design notes) prompted one further tightening, folded into §6.4: an explicit
-strict-core / assistance / overrides authority model with typed
-`Resolved | Ambiguous | Unresolved` outcomes, a **cache-independent** advisor
-(the local-cache cross-scan demoted to hint diagnostics — required by §2's
-widening invariant), and the archive-search framing of version fallback.
+Two further external review rounds tightened v2 in place: an explicit
+strict-core / assistance / overrides authority model with a cache-independent
+advisor; values-overridable capability shims lowering to mixed `Values`/`Env`
+predicates instead of oracle atoms; shipped `values.schema.json` reclassified
+from evidence to **enforced constraints**; template-rendered CRD extraction
+promoted to a pipeline edge; and the AbsDoc escape hatches absorbed into the
+model (`Merged` lattice node, wildcard-anchored attribution).
 
-A second review round (of this document itself) tightened four more points:
-values-overridable capability shims now lower to mixed `Values`/`Env`
-predicates instead of collapsing into oracle atoms (§6.1/§6.2 — an oracle
-refutation must never prune a branch a user can re-enable through
-`.Values`); shipped `values.schema.json` files are reclassified from
-rank-bearing evidence to **enforced constraints** that intersect (§2/§6.5 —
-Helm itself validates against them, so they are part of `Acc`);
-template-rendered CRD extraction is promoted from open question to a
-first-class analysis→knowledge pipeline edge (§6.3); and the AbsDoc escape
-hatches are absorbed into the model — a `Merged` lattice node for overlays
-and wildcard-anchored attribution over uniform schemas — rather than
-spawning a separate layer (§6.2).
+*v3* (this revision) responds to a third review round that found the
+remaining local maxima:
 
-Relationship to other plan documents: `single-abstract-interpreter.md` remains
-the right *seed* for the interpreter and is generalized here (its lattice and
-`Effects` carry over with laws added); `next-priorities.md` keeps ownership of
-sequencing — §12 only records where things land and adds one migration rule.
+1. **The public seam moves from `ChartAnalysis` to a guarded `ContractIR`.**
+   v2 exposed the abstract-document forest across the analysis→synthesis
+   crate boundary, freezing a manifest-centric intermediate the next stage
+   had to semantically reinterpret. v3 makes the abstract document **private
+   to the engine**: everything resolution needs — anchored spines with path
+   conditions, identity decision lists, overlay modes — is projected into a
+   per-path constraint graph, which becomes the stable public artifact.
+2. **One pure engine instead of two pure crates.** Parse, interpretation,
+   contract projection, chart-local knowledge extraction, resolution and
+   schema lowering co-evolve (every corpus feature touches several of them),
+   so they are one crate; the only hard product boundaries left are the
+   external knowledge resolver and the IO shell. Today's plumbing-heavy
+   `generate_values_schema_full_with_*` arity ladder is what a premature
+   public boundary on this seam looks like.
+3. **Guarded typing is a precision ladder, not a blanket weakening.** v2's
+   P1 overstated JSON Schema's limits: predicates decidable over the values
+   document alone (`Values` atoms) can be *lowered* to draft-07
+   `if`/`then`/`dependencies` at the nearest common ancestor under policy
+   bounds; only environment-dependent and opaque predicates must widen.
+4. **Chart-authored contracts purged of "evidence" framing everywhere**
+   (shipped schemas are constraints, full stop), and the chart-local
+   knowledge pass is specified as a single forward edge — with the argument
+   for why no fixed-point iteration is needed.
+5. **The output contract defaults to a bundled, self-contained document with
+   internal `$defs`**; full flattening becomes an explicit export mode. v2
+   had inherited today's flatten-by-default, which inflates output on the
+   hot path and then re-deduplicates it in the minifier.
+
+Relationship to other plan documents: `single-abstract-interpreter.md`
+remains the right *seed* for the interpreter and is generalized here;
+`next-priorities.md` keeps ownership of sequencing — §15 records the route.
 
 ---
 
@@ -77,29 +74,29 @@ helm-schema answers one question:
 > Given a Helm chart, what is the most precise, structurally justified
 > JSON Schema for its values contract?
 
-Decomposing the question yields the system's natural domains. Boundaries are
-drawn where the *kind of knowledge* and the *rate of change* differ:
+Decomposing the question yields the system's natural domains. Note that
+domains are *conceptual* — they map to modules; only domains with genuinely
+independent consumers, dependencies, or rates of change become crates (§5):
 
-| Domain | Question | Knowledge kind | Changes when… |
-|---|---|---|---|
-| **Chart model** | What is this chart made of? | Helm packaging conventions | Helm packaging evolves (OCI, deps, crds/) |
-| **Syntax** | What does this text say? | Grammars | Go-template/YAML syntax evolves (rarely) |
-| **Semantics** | What does this template mean? | Helm/Sprig evaluation semantics | Helm function semantics evolve |
-| **Knowledge** | What does Kubernetes expect here? | External + chart-local schema corpora | K8s releases, CRD catalogs, mirrors |
-| **Synthesis** | Given all evidence, what is the contract? | Decision policy + schema algebra | Our inference policy improves |
-| **Emission** | How is it written down? | JSON Schema dialects, consumers | Helm 3/4 validators, editors |
+| Domain | Question | Knowledge kind |
+|---|---|---|
+| **Chart model** | What is this chart made of? | Helm packaging conventions |
+| **Syntax** | What does this text say? | Grammars |
+| **Semantics** | What does this template mean? | Helm/Sprig evaluation semantics |
+| **Knowledge** | What does Kubernetes expect here? | External + chart-local schema corpora |
+| **Synthesis** | Given all constraints, what is the contract? | Decision policy + schema algebra |
+| **Emission** | How is it written down? | JSON Schema dialects, consumers |
 
 Two concerns cut across everything: **provenance** (every fact traceable to a
 span and helper chain) and **ambiguity** (unknown and "several alternatives"
-are first-class values at every layer). What was missing until now is the rule
-that tells every layer *which way to lean* when it doesn't know. That rule is
-the correctness contract.
+are first-class values at every layer). The rule that tells every layer
+*which way to lean* when it doesn't know is the correctness contract.
 
 ## 2. The correctness contract (the spine of the design)
 
-Fix an environment `E` (Capabilities, KubeVersion, Release, …) and a knowledge
-corpus `K`. For a chart `C` with defaults `D` and user input `U`, Helm
-validates the **coalesced** values `V = coalesce(D, U)` — and Helm's
+Fix an environment `E` (Capabilities, KubeVersion, Release, …) and a
+knowledge corpus `K`. For a chart `C` with defaults `D` and user input `U`,
+Helm validates the **coalesced** values `V = coalesce(D, U)` — and Helm's
 coalescing deletes keys the user sets to `null`. The schema's domain is
 coalesced documents. Define:
 
@@ -108,8 +105,8 @@ coalesced documents. Define:
   it explicitly; and Helm validates each chart's coalesced values against
   that chart's **shipped `values.schema.json`** before rendering — shipped
   schemas are part of the accepted-set *definition*, not inference evidence
-  (§6.5's intersection rule follows from the contract, not from a precedence
-  choice).
+  (the §6.5 intersection rule follows from the contract, not from a
+  precedence choice).
 - `AccK8s(C, E, K)` — the subset whose emitted manifests (where identity is
   resolvable) validate against their resource schemas.
 
@@ -117,26 +114,39 @@ coalesced documents. Define:
 `AccK8s(C, E, K) ⊆ L(S)` — the generated schema never rejects a working
 configuration.
 
-**Precision objective (soft).** Minimize `L(S) \ AccK8s`; every narrowing must
-be justified by a provenance-carrying piece of evidence.
+**Precision objective (soft).** Minimize `L(S) \ AccK8s`; every narrowing
+must be justified by a provenance-carrying piece of evidence.
 
-Two deliberate, *named* weakenings (policies, not silent behavior):
+Two deliberate, *named* policies (not silent behavior):
 
-- **P1 — as-if-used typing.** Plain JSON Schema cannot say "p must be an
-  integer only when guard g holds." Per-path constraints are therefore
-  guard-insensitive projections over the values that flow into reads. The
-  differential harness's guard-flipping samples (§10) are the acceptance gate
-  for this gap.
+- **P1 — guarded typing as a precision ladder.** A constraint that holds
+  only under a path condition `g` is emitted at one of three precision
+  levels, chosen per predicate class:
+  1. **Lowered** — if `g` is decidable over the concrete values document
+     alone (all atoms over `PlaceBase::Values`: `Eq`, `Contains`, `TypeIs`,
+     scalar truthiness), it can be expressed in draft-07 as
+     `if`/`then`(/`else`) or `dependencies` at the nearest common ancestor
+     of the involved paths. This is *strictly more precise* and still sound:
+     the guard partitions concrete values documents. Lowering is policy-
+     bounded (discriminator-style `Eq`/`TypeIs` first; caps on count and
+     nesting; opt-out), because conditional subschemas cost output size and
+     degrade editor completion even where validation is correct.
+  2. **Projected** (the default floor) — guard-insensitive per-path
+     constraints: the constraint at `p` must accept every value that flows
+     into any read of `p` in some accepted configuration. The differential
+     harness's guard-flipping samples (§9) are the acceptance gate for this
+     level, and they directly exercise lowered conditionals too.
+  3. **Widened** — predicates containing `Env` atoms (oracle-dependent) or
+     `Opaque` atoms are never lowered: their branches *join* (§6.5).
 - **P2 — typo strictness.** Closing structurally enumerated objects
   (`additionalProperties: false`) rejects unread keys that `AccRender`
-  technically accepts. Deliberate, diagnosable, and off-switchable.
+  technically accepts. Deliberate, diagnosable, off-switchable.
 
 Two mechanical self-obligations: the chart's own composed defaults `D` must
-validate against `S` (checked as a pipeline postcondition, §8.4 — `helm lint`
-enforces exactly this at install time), and shipped subchart schemas must not
-contradict `S` on their prefix (§6.3).
+validate against `S` (a pipeline postcondition — `helm lint` enforces exactly
+this), and shipped subchart schemas must not contradict `S` on their prefix.
 
-**The polarity table.** Every evidence kind is allowed to err in exactly one
+**The polarity table.** Every evidence kind may err in exactly one
 direction; uncertainty always moves `L(S)` *up* (wider):
 
 | Evidence | May err toward | Because |
@@ -146,18 +156,18 @@ direction; uncertainty always moves `L(S)` *up* (wider):
 | falsey admission (`default`, `with`, guarded reads) | over-approx — admit when unsure | failing to admit a handled `null` rejects |
 | object openness | over-approx openness; close only on proof + P2 | closing is the narrowing move |
 | sink attribution | exact, or wildcard-anchored where the target schema is uniform; else abstain ⇒ no resource evidence | a wrong anchor imports wrong constraints |
-| requiredness | drastic under-approx | see §6.2; today's heuristic is provably unsound |
+| requiredness | drastic under-approx | §6.5; today's heuristic is provably unsound |
 | branch liveness | unknown ⇒ live | pruning a live branch drops its admissions |
+| conditional lowering (P1.1) | only on fully `Values`-decidable predicates | a lowered `Env` predicate would bake one cluster's truth into the schema |
 
-Derived consequences used throughout: `Lookup::Unknown` never prunes and never
-narrows; evidence-source precedence may never *override* (an override can
-violate `D ∈ L(S)`) — disagreement reconciles by widening plus a conflict
-diagnostic (this rule governs *inference evidence*; constraints Helm itself
-enforces, i.e. shipped schemas, are part of `Acc` and compose by
+Derived consequences used throughout: `Lookup::Unknown` never prunes and
+never narrows; evidence-source precedence may never *override* (an override
+can violate `D ∈ L(S)`) — disagreement reconciles by widening plus a
+conflict diagnostic (this rule governs *inference evidence*; constraints
+Helm itself enforces, i.e. shipped schemas, are part of `Acc` and compose by
 intersection — §6.5); determinism is claimed **given identical oracle
-answers**, and
-cache state may move output only in the widening direction (reproducibility
-over time is the lockfile's job, §8.5).
+answers**, and cache state may move output only in the widening direction
+(reproducibility over time is the lockfile's job).
 
 ## 3. What the evidence teaches
 
@@ -186,6 +196,12 @@ over time is the lockfile's job, §8.5).
   interleaved special cases, precedence rules scattered as inline
   conditionals, three competing definitions of "scalar", and a
   triple-meaning `{}`.
+- **A premature public seam, demonstrated.** The IR→gen boundary is public,
+  and the data it must carry kept growing — producing the
+  `generate_values_schema_full_with_facts_and_descriptions(uses, provider,
+  values_yaml, type_hints, chart_facts, values_descriptions)` arity ladder.
+  This is direct evidence that the analysis→synthesis seam wants to be
+  *inside* one engine, not between products.
 - **Today's guard model cannot represent an `else` branch.** The walker
   restores scope and walks alternatives with *no* guard pushed; `not (eq …)`
   and `or (eq …) .b` are unrepresentable; `with (or A B)` is encoded by a
@@ -193,7 +209,9 @@ over time is the lockfile's job, §8.5).
 - **The knowledge crate is the best part** (real ports, a hard-won tri-state
   capability oracle) but providers are 400–900-line monoliths with duplicated
   cache/fetch/layout code, and the per-resource **materialized `$ref`
-  expansion is a dominant RSS term** (temporal: 2s / 177MB).
+  expansion is a dominant RSS term** (temporal: 2s / 177MB) — compounded by
+  an output pipeline that *flattens* refs by default and then re-deduplicates
+  the blow-up in the minifier.
 - **Library logic is trapped in the CLI.** Chart discovery, vendored-archive
   extraction, values composition (the two-pass global hoist/mirror), schema
   overrides, `$ref` flattening and the required-inference glue all live in
@@ -220,8 +238,9 @@ values.yaml":
   `mergeOverwrite`d with `.Values.statefulSet` and JSON-patched. The template
   file itself contains *no* YAML node.
 - **zalando-postgres-operator / clickhouse / nack** ship the CRDs their own
-  templates instantiate in `crds/` — an authoritative, version-exact schema
-  source the external catalogs often lack.
+  templates instantiate in `crds/`; **cert-manager** renders CRDs *from
+  templates* with literal `openAPIV3Schema` payloads — authoritative,
+  version-exact schema sources the external catalogs often lack.
 - **signoz / bitnami common** decide apiVersions with
   `and (.Capabilities.APIVersions.Has …) (semverCompare ">=1.19-0"
   .Capabilities.KubeVersion.Version)` and with **values-overridable**
@@ -245,152 +264,247 @@ backlog.
 
 ## 4. Design commitments
 
-1. **One semantic model.** Helm meaning lives in exactly one abstract
-   interpreter. Helper outputs, resource identity, guard extraction, defaults,
-   fragments — all projections of one interpretation.
-2. **Typed and spanned everywhere.** Paths, predicates, coordinates, schemas
+1. **One semantic engine.** Helm meaning lives in exactly one abstract
+   interpreter, and everything that co-evolves with it — parsing, contract
+   projection, chart-local knowledge extraction, resolution, lowering —
+   lives in the same pure crate. Helper outputs, resource identity, guard
+   extraction, defaults, fragments: all projections of one interpretation.
+2. **The contract graph is the stable artifact.** The engine's public output
+   is a guarded, provenance-carrying per-path constraint structure
+   (`ContractIR`), not the manifest-shaped internals that produce it. The
+   abstract document model is an internal mechanism.
+3. **Typed and spanned everywhere.** Paths, predicates, coordinates, schemas
    are domain types; every node and fact carries provenance. Stringly forms
    exist only at serialization edges, as `Display`/DTO projections.
-3. **Abstention is a value with a direction.** `Found/Absent/Unknown`
+4. **Abstention is a value with a direction.** `Found/Absent/Unknown`
    lookups, `Top`/`Union` values, `Opaque` document regions — and the §2
    polarity table dictates what each consumer does with them.
-4. **Ports at proven variation points; functions and data everywhere else.**
+5. **Ports at proven variation points; functions and data everywhere else.**
    Three traits total (§5). Catalog policy, synthesis policy, widening
-   bounds, probe tables, builtin coverage are *data* interpreted by small
-   engines.
-5. **Untrusted input is budgeted.** Charts, archives, upstream schemas and
+   bounds, probe tables, builtin coverage, lowering bounds are *data*
+   interpreted by small engines.
+6. **Untrusted input is budgeted.** Charts, archives, upstream schemas and
    override files are attacker-controlled inputs; every edge that touches
    them takes an explicit `FetchPolicy`/`LoadBudget`.
-6. **Parity is part of correctness.** The existing CLI surface and output
-   behaviors are an explicit checklist (§13), not folklore.
+7. **Parity is part of correctness.** The existing CLI surface and output
+   behaviors are an explicit checklist (§13) with deliberate divergences
+   named — not folklore.
 
 ## 5. System overview
 
 ### 5.1 Crates
 
-Eight product crates (plus `json-schema-minify` and `test-util`, unchanged):
+Six crates (plus `json-schema-minify` and `test-util`, unchanged):
 
 ```
-helm-schema-grammar     tree-sitter C grammars + build.rs only (lint-exempt build isolation)
+helm-schema-template-grammar   tree-sitter C grammars + build.rs only
+                               (build isolation; exempt from workspace lints)
 
-helm-schema-core        vocabulary: Name, ValuePath/DocPath, Span/Provenance/SourceMap,
-                        Lookup<T>, FalseySet, Pred/Place algebra, ResourceCoordinate,
-                        SchemaDoc (foreign JSON, lazy refs), Diagnostics (concrete),
-                        FetchPolicy/LoadBudget, the two oracle traits
-                        [deps: serde, serde_json (opaque payloads only), smol_str]
+helm-schema-core               MINIMAL shared boundary types — only what both
+                               sides of the engine↔knowledge seam must name:
+                               ResourceCoordinate/GroupVersion/KubeVersion,
+                               Lookup<T>, SchemaDoc (foreign JSON, lazy refs),
+                               trait ResourceSchemaOracle, trait
+                               CapabilityOracle, Diagnostic envelope DTOs,
+                               RelPath, FetchPolicy/LoadBudget.
+                               NOT a giant vocabulary crate: paths, predicate
+                               algebra, lattice, contract types are
+                               engine-owned.
 
-helm-schema-analysis    PURE. parse/ (spanned typed TemplateTree; thread-local parser fn)
-                        + interp/ (AbsVal lattice, eval_expr/eval_node, helper summaries,
-                        abstract documents, identity projection)
-                        → ChartAnalysis
-                        [deps: core, grammar, tree-sitter. NO IO, no oracle types]
+helm-schema-engine             THE pure semantic engine. Modules, not crates:
+                                 parse/     spanned typed TemplateTree
+                                 interp/    lattice, env, summaries, abstract
+                                            documents (PRIVATE), attribution
+                                 contract/  ContractIR — the public artifact
+                                 extract/   chart-local knowledge projection
+                                            (CRD docs from analysis + crds/)
+                                 resolve/   anchor co-walk against oracles,
+                                            branch liveness, decision policy
+                                 lower/     typed SchemaNode algebra, foreign
+                                            composition, bundled draft-07
+                               [deps: core, grammar, tree-sitter, serde,
+                                serde_json. NO IO crates, no dyn fields —
+                                THE purity boundary, CI-enforced]
 
-helm-schema-chart       IO: discovery (dir/tgz/memory via vfs + LoadBudget), FileRole
-                        assignment, Chart.yaml model (deps/conditions/tags/kubeVersion),
-                        compose_values, ValuesModel (spans via a maintained YAML parser),
-                        crds/ extraction, shipped values.schema.json collection
-                        [deps: core, vfs, tar/flate2, saphyr-or-equivalent]
+helm-schema-knowledge          IO: exact external resolver only. Catalog
+                               config as data, pure plan() + execute() +
+                               LookupTrace, CacheDir, trait Fetch {Ureq,Mock},
+                               capability oracle, quarantined advisor.
+                               [deps: core, ureq. Never sees engine types]
 
-helm-schema-knowledge   IO: catalog config as data, pure lookup planner + one executor,
-                        CacheDir (concrete), trait Fetch {Ureq, Mock}, capability oracle,
-                        quarantined apiVersion advisor; implements core's oracle traits
-                        [deps: core, ureq (pinned TLS feature)]
+helm-schema (facade)           the stable product surface + IO shell: chart
+                               loading (vfs dir/tgz/mem + budgets, FileRole,
+                               Chart.yaml model), values composition,
+                               ChartProgram assembly, pipeline wiring +
+                               parallel fan-out, override merge, optional
+                               flatten export, minify, diagnostics
+                               projection, postcondition checks, lockfile.
 
-helm-schema-synthesis   PURE. evidence derivation (AbsDoc × oracle co-walk), branch
-                        liveness, decision policy, typed SchemaNode algebra + lowering,
-                        foreign-tier JSON composition rules, emit_draft07
-                        [deps: core, serde_json]
-
-helm-schema (facade)    wiring + Config, parallel fan-out, output passes (override merge,
-                        ref flatten, strip, minify), postcondition validation, lockfile
-                        [thin; golden integration tests live here]
-
-helm-schema-cli         clap → Config (env vars interpreted HERE, not in libraries) →
-                        facade → output/diagnostics/exit codes
+helm-schema-cli                thin binary: clap → Config (env vars
+                               interpreted HERE) → facade → output/exit codes.
+                               Kept as its own tiny crate so the facade
+                               library stays clap-free without feature
+                               gymnastics.
 ```
 
-Dependency rules with bite (CI-checked via `cargo deny`/metadata):
-`analysis` and `synthesis` have no IO crates and no `dyn` dependencies —
-*that* is the purity boundary; `core` is the only shared parent, so
-`knowledge` builds in parallel with `analysis` and never sees tree-sitter.
-Every crate sets `[lints] workspace = true` (the current workspace forgets
-this, which is how denied lints ship today).
+Dependency rules with bite (CI-checked): the engine has no IO crates and no
+`dyn` dependencies; `core` is the only shared parent, so `knowledge` builds
+in parallel with the engine and never sees tree-sitter *or engine types* —
+the v2 sketch where the oracle returned analysis-flavored types is gone.
+Every crate sets `[lints] workspace = true`.
 
 **Trait census (complete).** `Fetch` (network edge; Ureq/Mock exist),
-`ResourceSchemaOracle` and `CapabilityOracle` (the pure↔IO seam; real second
-implementations: in-memory fakes and the `--no-k8s-schemas` null oracle).
-Both oracle traits live in `core` so the dependency arrow points inward from
-both sides — v1 placed them in `synthesis`, which would have made the IO crate
-transitively depend on the entire pure stack. Everything that was a port in
-v1 — parser, chart source, emitter, transforms, diagnostics sink, retriever,
-catalogs, layouts, stores — is now a function, a concrete type, or data,
-because no second implementation exists or the variation is data-shaped.
+`ResourceSchemaOracle` and `CapabilityOracle` (the pure↔IO seam in `core`;
+real second implementations: in-memory fakes and the `--no-k8s-schemas` null
+oracle). Everything else — parser, chart source, emitter, transforms,
+diagnostics sink, retriever, catalogs, layouts, stores — is a function, a
+concrete type, or data.
 
-### 5.2 Data flow
+**Why this graph and not v2's eight.** Two review rounds converged on the
+same audit: the only *product* boundaries are (a) the pure engine vs the IO
+world, (b) the external knowledge resolver, (c) the grammar's build
+isolation. Parse/interpret/contract/resolve/lower co-evolve — the corpus
+shows every feature touching several at once (tpl-admits-string: interpreter
+marker + lowering rule; overlays: lattice node + co-walk + `partialize`;
+shipped schemas: chart model + resolution) — and the current code's
+`generate_values_schema_full_with_*` arity ladder is the fossil record of
+publishing that seam too early. Internal phase boundaries stay (modules with
+named types between them); they just stop being semver surfaces.
+
+### 5.2 The pipeline
 
 ```
-chart dir/tgz ──chart──► ChartSet {charts, roles, crds, shipped schemas, conditions}
-                              │
-            ┌─────────────────┼──────────────────────────┐
-            ▼                 ▼                          ▼
-      ValuesModel      per template: parse ──► TemplateTree (spanned, typed)
-   (defaults+docs,            │
-    anchors resolved)         ▼  interpret (shared helper-summary memo)
-                        TemplateAnalysis { docs: AbsDoc forest, evidence, gaps }
-                              │ fold (deterministic order)
-                              ▼
-                        ChartAnalysis ──synthesis──► per-path EvidenceSet
-                                          ▲                │ decide(policy)
-        knowledge: plan() → execute() ────┘                ▼
-        (oracles: schemas, capabilities)            SchemaExpr (typed ∪ foreign)
-                                                           │ lower + compose
-                                                           ▼
-                              draft-07 Value ──facade──► override → flatten →
-                              strip → minify → postcondition-validate → bytes
+1. load_chart      (facade, IO)      dir/tgz/mem ──► ChartProgram
+                                     {files+roles, Chart.yaml model, values
+                                      docs, crds/, shipped schemas — all
+                                      bytes loaded, zero IO beyond here}
+
+2. analyze         (engine, pure)    ChartProgram ──► ContractIR
+                                     parse* ∥ → interpret* (shared summary
+                                     memo) → project anchors/identities/
+                                     constraints; AbsDoc never escapes
+
+3. knowledge       (engine + knowledge)
+   extract_chart_local_knowledge(&ContractIR) ──► ChartCrdIndex
+   resolve(&ContractIR, &dyn ResourceSchemaOracle, &dyn CapabilityOracle,
+           &ResolvePolicy) ──► ResolvedContract
+                                     branch liveness, anchor co-walk,
+                                     shipped-schema intersection, decisions
+
+4. emit            (engine lower/ + facade passes)
+   lower(&ResolvedContract, EmitMode::Bundled | EmitMode::FlattenedExport)
+        ──► draft-07 Value (self-contained, internal $defs by default)
+   facade: override merge → optional flatten export → minify →
+           postcondition-validate(defaults) → bytes + diagnostics
 ```
 
 Every arrow is a named public type; the facade exposes the stage functions
-individually (that — not a "pipeline object" — is what lets tests, tools and
-a future LSP run any prefix).
+individually — that, not a "pipeline object", is what lets tests, tools and
+a future LSP run any prefix. The chart-local knowledge step is a **single
+forward edge, not a fixed point**: knowledge never influences
+interpretation (only resolution consumes oracles, by design), so
+analyze → extract → resolve terminates in one pass. The only would-be loop —
+CRDs *emitted under capability guards* whose liveness depends on the oracle —
+is handled by registering unconditional CRD documents and abstaining on
+guarded ones (§14).
 
 ## 6. The layers in detail
 
-### 6.1 `core` — vocabulary with the contract baked in
+### 6.1 `core` — the minimal boundary vocabulary
+
+Only what crosses the engine↔knowledge↔facade seams:
 
 ```rust
-/// Content-stable small string (≤23 bytes inline, O(1) clone).
-/// No interner exists: Ord/Hash/Serialize derive naturally, ChartAnalysis is
-/// Send + 'static, and golden fixtures serialize by content. (v1's
-/// per-session interner was incoherent: symbol Ord breaks determinism, serde
-/// has no context parameter, and embedders lose 'static.)
-pub type Name = SmolStr;
-
-pub struct ValuePath(SmallVec<[ValueSeg; 4]>);
-pub enum ValueSeg { Key(Name), AnyItem, AnyKey }
-// Display/FromStr define the canonical text form; serde goes through it.
-// Numeric ids (FileId, DocId, HelperId, BindId) exist only for closed
-// per-chart namespaces whose tables travel inside the owning artifact.
+/// Typed coordinate; parsed once at the boundary, never re-split.
+pub struct ResourceCoordinate { pub group: Option<Name>, pub version: Name, pub kind: Name }
 
 #[must_use]
 pub enum Lookup<T> { Found(T), Absent /* authoritative */, Unknown /* abstain */ }
-// Combinators (map, and_then, or_unknown) so adapters never hand-roll
-// collapsing matches. Adapter rule: IO errors map to Unknown + diagnostic —
-// never Absent, never panic.
+// Combinators (map, and_then, or_unknown). Adapter rule: IO errors map to
+// Unknown + diagnostic — never Absent, never panic.
 
-/// Helm truthiness states a path may take while the chart still behaves.
-/// u8 bitset newtype: joined constantly during widening.
-pub struct FalseySet(u8);
+/// Foreign JSON schema document with lazy refs — never materialized, never
+/// lifted into a closed enum. Root + local definitions over
+/// Arc<serde_json::Value>; cross-document refs are RefTarget::External
+/// (coordinate) resolved through further oracle calls. Query functions over
+/// it live in the engine; JSON here is an opaque payload.
+pub struct SchemaDoc { /* root, defs, version metadata */ }
+
+pub trait ResourceSchemaOracle: Send + Sync {
+    fn resolve(&self, c: &ResourceCoordinate) -> Lookup<Arc<SchemaDoc>>;
+}
+pub trait CapabilityOracle: Send + Sync {
+    fn has_api(&self, gv: &GroupVersion) -> Lookup<bool>;
+    fn kube_version(&self) -> Lookup<KubeVersion>;  // from --k8s-version / Chart.yaml
+}
+
+/// Validated at construction: no '..', no absolute, segments ⊆ [a-z0-9._-].
+/// The ONLY type the cache/url layer accepts — coordinates are
+/// attacker-controlled chart text.
+pub struct RelPath(String);
+
+pub struct FetchPolicy { /* scheme/host allowlist, deny link-local/loopback,
+                            size+time budgets, ref depth & doc caps */ }
+pub struct LoadBudget { /* archive entries/bytes, parse file size,
+                           interpreter step budget */ }
+
+/// Concrete deduplicating handle (today's k8s sink generalized + spans).
+/// Ordered by key ⇒ deterministic under parallelism; JSON output is a
+/// versioned envelope (a stable machine interface).
+pub struct Diagnostics(/* Arc<Mutex<BTreeMap<DiagKey, Diagnostic>>> */);
 ```
 
+`Name` (a `SmolStr`-class content-stable small string — no interner exists,
+so `Ord`/`Hash`/`Serialize` derive naturally and everything stays
+`Send + 'static`), `ValuePath`/`DocPath`, the predicate algebra, the value
+lattice, and `ContractIR` are **engine-owned**: knowledge never needs them,
+so they do not belong in the shared boundary. (`Name` sits in core only
+because `ResourceCoordinate` uses it.)
+
+### 6.2 `engine::parse` — parse once, keep everything
+
+`pub fn parse(file: FileId, src: &str, mode: ParseMode) ->
+Result<TemplateTree, ParseError>` — a function, not a trait (tree-sitter's
+`Parser` is `!Sync`; a `&self` port could not be implemented honestly). One
+parse per file. The tree is fully typed and spanned; control-flow headers
+arrive as parsed expressions; `Unknown` nodes (with spans) are the explicit
+degradation for unparseable regions. A failed parse of one file is
+**per-file recoverable**: the file contributes an opaque analysis plus a gap
+record; the chart fails only if nothing parses (`--strict` upgrades gaps to
+failures).
+
+```rust
+pub enum TemplateNode {
+    Document { items: Vec<NodeId> },
+    Mapping  { entries: Vec<(KeyNode, NodeId)> },
+    Sequence { items: Vec<NodeId> },
+    Scalar   { text: Name, style: ScalarStyle },
+    Action   { expr: Expr, trim: TrimMode },
+    If       { arms: Vec<(Expr, Block)>, else_arm: Option<Block> },
+    With     { header: Expr, body: Block, else_arm: Option<Block> },
+    Range    { binding: RangeBinding, header: Expr, body: Block, else_arm: Option<Block> },
+    Define   { name: Name, body: Block },
+    Unknown  { reason: ParseGap },
+}
+// spans + file ids in a side table keyed by NodeId; YAML anchors/aliases are
+// resolved by the builder or degrade to Unknown — never silently dropped.
+```
+
+`ParseMode` comes from the facade's `FileRole` (§6.6): **manifest mode**
+(fused YAML+template) vs **text mode** (template-only: NOTES.txt, config
+file fragments) — text mode yields reads/predicates/aborts but no document
+and no sinks.
+
+### 6.3 `engine::interp` — the one interpreter (abstract documents internal)
+
 **The predicate algebra** — one representation for path conditions, branch
-guards, and capability decisions (replacing v1's three: `Guard`,
-`Alternatives`, `GuardExpr`):
+guards, and capability decisions:
 
 ```rust
 pub struct Place { pub base: PlaceBase, pub path: ValuePath }
 pub enum PlaceBase {
     Values,           // schema-relevant
-    Env(EnvRoot),     // Capabilities/KubeVersion/Release/Chart/Files — evaluated late
+    Env(EnvRoot),     // Capabilities/KubeVersion/Release/Chart/Files — late
     Local(BindId),    // SSA-numbered local or rebound-dot snapshot
     Synth(ValueId),   // result of an expression (default-wrapped, merged, …)
 }
@@ -412,9 +526,10 @@ pub enum Atom {
 predicates are cheap to share per control-flow frame and stable to
 fingerprint. Evaluation is three-valued (Kleene) under partial assumptions:
 abstract values for value atoms, the environment oracle for `Env` atoms
-(evaluated *late*, in synthesis), and probe assignments like `p := absent`.
-This makes the previously impossible representable and the previously
-heuristic definable:
+(evaluated *late*, in resolution), and probe assignments like `p := absent`.
+Predicates carry a derived classification used by P1's ladder:
+`ValuesDecidable` (all atoms over `PlaceBase::Values`, lowerable),
+`EnvDependent`, or `Mixed/Opaque` (widen).
 
 - `if`/`else if`/`else` arms carry `P₁`, `¬P₁∧P₂`, `¬P₁∧¬P₂` — else branches
   finally have conditions (today they have none).
@@ -431,97 +546,9 @@ answer, nothing more. Values-overridable capability shims (the bitnami
 atoms: they lower through ordinary interpretation into mixed predicates —
 `(Truthy(V) ∧ Contains(V, gv)) ∨ (¬Truthy(V) ∧ ApiVersionsHas(gv))` for
 `V = Values.apiVersions / Values.global.apiVersions` — so the `.Values.*`
-dependence stays schema-relevant (those paths appear in the generated schema
-as inputs) and an oracle refutation alone can never prune a branch a user
-can re-enable through values: a predicate containing `Values` atoms
-evaluates to `Unknown`, which §2 keeps live.
-
-**Provenance and diagnostics.**
-
-```rust
-pub struct Provenance { pub span: Span, pub via: SmallVec<[HelperFrame; 2]> }
-pub struct SourceMap { files: Vec<SourceFile> }   // owned by ChartAnalysis
-
-/// Concrete deduplicating handle (today's k8s sink generalized + spans).
-/// Not a trait: one implementation, ordered by key => deterministic under
-/// parallelism. JSON output is a versioned envelope (machine interface).
-pub struct Diagnostics(Arc<Mutex<BTreeMap<DiagKey, Diagnostic>>>);
-```
-
-The pure crates never push diagnostics; they record gaps/conflicts **as
-data** in their outputs, and the facade projects diagnostics from them. (This
-resolves v1's contradiction between "semantics emits a diagnostic" and
-"semantics holds no `dyn`".)
-
-**Security objects** (threaded to every untrusted edge):
-
-```rust
-pub struct FetchPolicy {  // schemes/hosts allowlist, deny link-local & loopback,
-                          // per-fetch size & time budget, max $ref depth & doc count
-}
-pub struct LoadBudget {   // archive: max entries, max decompressed bytes;
-                          // parse: max file size; interp: node/step budget
-}
-/// Validated at construction: no '..', no absolute, segments ⊆ [a-z0-9._-].
-/// The ONLY type the cache/url layer accepts — coordinates are
-/// attacker-controlled chart text.
-pub struct RelPath(String);
-```
-
-**Oracle ports** (the pure↔IO seam; both implemented by `knowledge`, both
-trivially fakeable):
-
-```rust
-pub trait ResourceSchemaOracle: Send + Sync {
-    /// Foreign JSON document with lazy refs — NOT a typed schema. The lift
-    /// into anything typed is synthesis's job (it owns the conservative
-    /// fallback). Carries the resolved version for diagnostics.
-    fn resolve(&self, c: &ResourceCoordinate) -> Lookup<Arc<SchemaDoc>>;
-}
-pub trait CapabilityOracle: Send + Sync {
-    fn has_api(&self, gv: &GroupVersion) -> Lookup<bool>;
-    fn kube_version(&self) -> Lookup<KubeVersion>;   // from --k8s-version / Chart.yaml
-}
-```
-
-`SchemaDoc` lives in core (both sides name it): root + local definitions over
-`Arc<serde_json::Value>` subtrees, refs resolved lazily during descent with a
-cycle set — never materialized. Discipline rule: JSON in core is an opaque
-payload; all query functions over it live in synthesis.
-
-### 6.2 `analysis` — parse once, interpret once
-
-**Parsing.** `pub fn parse(file: FileId, src: &str, mode: ParseMode) ->
-Result<TemplateTree, ParseError>` — a function, not a trait (tree-sitter's
-`Parser` is `!Sync`; a `&self` port could not even be implemented honestly).
-One parse per file. The tree is fully typed and spanned; control-flow headers
-arrive as parsed expressions; `Unknown` nodes (with spans) are the explicit
-degradation for unparseable regions. A failed parse of one file is **per-file
-recoverable**: the file contributes an `Opaque` analysis plus a gap record;
-the chart fails only if nothing parses (CLI `--strict` upgrades gaps to
-failures).
-
-```rust
-pub enum TemplateNode {
-    Document { items: Vec<NodeId> },
-    Mapping  { entries: Vec<(KeyNode, NodeId)> },
-    Sequence { items: Vec<NodeId> },
-    Scalar   { text: Name, style: ScalarStyle },
-    Action   { expr: Expr, trim: TrimMode },
-    If       { arms: Vec<(Expr, Block)>, else_arm: Option<Block> },
-    With     { header: Expr, body: Block, else_arm: Option<Block> },
-    Range    { binding: RangeBinding, header: Expr, body: Block, else_arm: Option<Block> },
-    Define   { name: Name, body: Block },
-    Unknown  { reason: ParseGap },
-}
-// spans + file ids in a side table keyed by NodeId; YAML anchors/aliases are
-// resolved by the builder or degrade to Unknown — never silently dropped.
-```
-
-`ParseMode` comes from the chart layer's `FileRole` (§6.3): **manifest mode**
-(fused YAML+template) vs **text mode** (template-only: NOTES.txt, config file
-fragments) — text mode yields reads/predicates/aborts but no document and no
-sinks.
+dependence stays schema-relevant and an oracle refutation alone can never
+prune a branch a user can re-enable through values: a predicate containing
+`Values` atoms evaluates to `Unknown`, which §2 keeps live.
 
 **The value lattice** — one type, with laws:
 
@@ -542,32 +569,26 @@ enum VKind {
 }
 ```
 
-- `Object{rest}` **subsumes** v1's separate `Overlay` (open rest = fallback),
-  deleting a normalization class.
+- `Object{rest}` subsumes a separate `Overlay` (open rest = fallback).
 - `Merged` keeps `merge`/`mergeOverwrite`/JSON-patch relationships **in the
-  lattice** instead of eagerly flattening them (normalization is lazy, on
-  demand). When the base carries a resource identity (a file-fragment
-  document) and the overlay is values-rooted, the §6.5 co-walk derives
-  deep-partial anchoring *from this structure* — `OverlayOnto` is merely the
-  name of the derived evidence record, not a side channel recovered outside
-  the model.
+  lattice** instead of eagerly flattening them (normalization is lazy). When
+  the base carries a resource identity (a file-fragment document) and the
+  overlay is values-rooted, the anchor projection derives deep-partial
+  anchoring *from this structure*.
 - Join is defined on canonical forms (associative/commutative/idempotent —
-  property-tested), and **`Top` absorbs**. Today's evaluators *drop* Unknown
-  from choices, which silently converts "x or something unknown" into "x" —
-  the wrong direction whenever a consumer derives exclusivity (e.g. treating
-  a key set as exhaustive). Positive evidence (reads) is harvested into the
-  evidence channel when the operand was evaluated; nothing is lost by
-  absorbing.
-- **Widening is specified, not vibes**: recursive `include` ⇒ `Top` + gap
-  record + memo poisoning for the cycle; `range` bodies with mutation ⇒
-  re-execute the body transfer to env-fixpoint, widening changed entries
-  after k iterations; const-set and union-width caps. All bounds are policy
-  data.
+  property-tested), and **`Top` absorbs**: today's evaluators *drop* Unknown
+  from choices, silently converting "x or something unknown" into "x" — the
+  wrong direction whenever a consumer derives exclusivity. Positive evidence
+  (reads) is harvested into the evidence channel when the operand was
+  evaluated; nothing is lost by absorbing.
+- **Widening is specified**: recursive `include` ⇒ `Top` + gap + memo
+  poisoning for the cycle; `range` bodies with mutation ⇒ body transfer to
+  env-fixpoint, widening changed entries after k iterations; const-set and
+  union-width caps. All bounds are policy data.
 
-**The environment** — a value with state-passing and explicit join (v1's
-`&EvalEnv` signature could not express Go-template semantics: `=` assigns in
-the *defining* scope and persists past `end`; branches require joining
-out-states):
+**The environment** — a value with state-passing and explicit join
+(Go-template `=` assigns in the *defining* scope and persists past `end`;
+branches require joining out-states):
 
 ```rust
 pub fn eval_expr(expr: &Expr, env: &EvalEnv, cx: &mut Cx) -> AbsVal;
@@ -581,170 +602,217 @@ impl EvalEnv {  // Arc-linked tiny frames; scopes are shallow — no HAMT crates
 }
 ```
 
-Conditional mutation joins as a *guarded* entry (predicate-tagged union),
-which the polarity table licenses collapsing toward over-approximation when a
-flat answer is required; must-style facts (key definitely present) take the
-meet. Effects accumulate into `cx` (not returned per node — allocation
-discipline), with `cx.capture(|cx| …)` scoping at summary boundaries.
+Conditional mutation joins as a guarded entry (predicate-tagged union),
+which polarity licenses collapsing toward over-approximation when a flat
+answer is required; must-style facts (key definitely present) take the meet.
+Effects accumulate into `cx`, with `cx.capture(|cx| …)` scoping at summary
+boundaries.
 
-**The central artifact: abstract documents.** The interpreter does not emit
-"facts about a tree someone else tracks" — for each manifest-mode template it
-*builds the abstract rendered manifest*:
+**Abstract documents — internal.** For each manifest-mode template the
+interpreter builds the abstract rendered manifest (`Map`/`Seq`/`Lit`/`Hole`/
+`Cond`/`Iter`/`Splice`/`StrRegion`/`Opaque`/`Docs`, with `KeyForm::Lit|Dyn`
+keys). This is the mechanism that makes the formerly hardest problems
+constructors or projections — sink attribution is the spine from root to a
+`Hole` with its path condition as the conjunction of `Cond` arms; resource
+identity is the projection of top-level `apiVersion`/`kind` entries through
+`Cond`/`Splice` into guarded decision lists; `kind: List` descent and
+per-iteration documents (`DocId = (FileId, doc-index, IterCtx)`) are
+structural. **But the document forest never crosses the engine boundary**:
+everything downstream stages need is projected into `ContractIR` (§6.4).
+That keeps the document representation free to evolve with parsing-fidelity
+work without breaking any consumer.
 
-```rust
-pub enum AbsDoc {
-    Map  { entries: Vec<(KeyForm, AbsDoc)> },
-    Seq  (Vec<AbsDoc>),
-    Lit  { text: Name, style: ScalarStyle },
-    Hole { value: AbsVal, shape: RenderShape },          // {{ expr }} at a value position
-    Cond { arms: Vec<(PredRef, AbsDoc)> },               // if/with incl. else arms
-    Iter { source: AbsVal, binder: IterBinder, body: Box<AbsDoc> },
-    Splice { frag: FragId, indent: IndentContract },     // toYaml / include output
-    StrRegion(Vec<StrPart>),                             // block scalars, partial tokens
-    Opaque { gap: AttributionGap, reads: Box<[ReadId]> },
-    Docs (Vec<AbsDoc>),                                  // --- multi-document
-}
-pub enum KeyForm { Lit(Name), Dyn(AbsVal) }              // {{ $k }}: v
-```
+Attribution has three tiers, with a checkable contract:
 
-This single structure makes the formerly hardest problems *constructors or
-projections*:
-
-- **Sink attribution** = the spine from root to a `Hole`; its path condition
-  = conjunction of `Cond` arms on the spine (stored once per node, not
-  snapshotted per fact). Exactness has a checkable contract: action is a
-  complete YAML event; ancestors literal or resolved-dynamic; **splice indent
-  contracts verified against syntactic position, not trusted**; block-scalar
-  interiors are *exact string sinks* (positive `string` evidence, per
-  polarity); document membership decidable. Between exact and opaque sits
-  **anchored**: a spine whose dynamic segments are wildcards (`KeyForm::Dyn`
-  keys with unresolved value, unknown indices). Anchored sites contribute
-  resource evidence only where the foreign schema is *uniform* at the
-  wildcard (`additionalProperties` for keys, `items` for items) — sound by
-  construction, and it recovers typing for the ubiquitous
-  `{{ $k }}: {{ $v }}` map-emission pattern that exact-or-abstain would
-  discard (known finite key sets still refine to exact properties).
-  Anything else is `Opaque{gap}` — reads recorded, path exists as `Any`, no
-  resource evidence, one gap record.
-- **Resource identity** = projecting top-level `apiVersion`/`kind` entries
-  through `Cond`/`Splice` into a guarded decision list `Vec<(PredRef,
-  Ident)>` — the same predicates as everywhere (v1's separate
-  `Alternatives<T>` is deleted). Because identity is a projection over the
-  *abstract value of the document*, a template whose entire body is
-  `{{ include "nats.loadMergePatch" … }}` resolving to a file-fragment
-  StatefulSet gets a real identity — syntax-level detection cannot do this.
-- **`kind: List`** = matching `items` under the projection and rebasing
-  spines. **Multi-doc and per-iteration documents** (`range` around `---`)
-  get `DocId = (FileId, doc-index, IterCtx)` with `AnyItem` abstraction.
-- **K8s anchoring** = synthesis co-walks `AbsDoc` with the oracle's schema
-  document — no byte cursors, no line ingestion.
-
-The honest caveat survives from v1, now measurable: the fused grammar's
-fidelity on templated YAML decides the `Opaque` rate. The migration gate is
-an **abstained-type-enrichment budget** — no corpus chart may lose a single
-type enrichment relative to the current tool — and the current
-`yaml_shape` tracker may live on as an *upgrader* (`Opaque → exact` only when
-consistent with structural evidence), never as a silent primary.
+- **Exact** — action is a complete YAML event; ancestors literal or
+  resolved-dynamic; splice indent contracts *verified against syntactic
+  position, not trusted*; block-scalar interiors are exact string sinks
+  (positive `string` evidence); document membership decidable.
+- **Anchored** — a spine whose dynamic segments are wildcards
+  (`KeyForm::Dyn` keys with unresolved value, unknown indices). Anchored
+  sites contribute resource evidence only where the foreign schema is
+  *uniform* at the wildcard (`additionalProperties` for keys, `items` for
+  items) — sound by construction; recovers the ubiquitous
+  `{{ $k }}: {{ $v }}` pattern (known finite key sets still refine to exact
+  properties).
+- **Opaque** — reads recorded, path exists as `Any`, no resource evidence,
+  one gap record with an enumerated `AttributionGap` reason.
 
 **Builtins are a table, not code sprawl.** Every Helm/Sprig function gets a
-row: transfer function, evidence emitted, or principled abstention. Load-
-bearing rows: `default` (admits `FalseySet` of the *tested, pre-transform*
-place — over-approximate when the transform's falsey inverse image is
-unknown), `set/unset/merge/mergeOverwrite` (env mutation + openness facts),
-`toYaml/tpl-on-literal/include` (fragments with provenance), `tpl` on
-non-literal ⇒ `Top` + gap, `lookup` ⇒ `Top` by definition (cluster state)
-with an origin record, `.Files.Get` with statically resolvable path ⇒ parse
-that file as a fragment document (the chart set is a pure input — the nats
-pattern), `required`/`fail` ⇒ **abort evidence** `{place, pc, message}`,
-`semverCompare` over `.Capabilities.KubeVersion` ⇒ `Env` leaf atom — but
-values-overridable capability shims lower to mixed `Values`/`Env` predicates
-(§6.1), never to oracle state; string ops ⇒ string-typed with provenance.
+row: transfer function, evidence emitted, or principled abstention.
+Load-bearing rows: `default` (admits a `FalseySet` of the *tested,
+pre-transform* place — over-approximate when the transform's falsey inverse
+image is unknown), `set/unset/merge/mergeOverwrite` (env mutation + openness
+facts + `Merged` values), `toYaml`/`tpl`-on-literal/`include` (fragments
+with provenance), `tpl` on non-literal ⇒ `Top` + gap, `lookup` ⇒ `Top` by
+definition (cluster state) with an origin record, `.Files.Get` with
+statically resolvable path ⇒ parse that file as a fragment document (the
+chart program is a pure input — the nats pattern), `required`/`fail` ⇒
+abort evidence `{place, pc, message}`, `semverCompare` over
+`.Capabilities.KubeVersion` ⇒ `Env` leaf atom — but values-overridable
+capability shims lower to mixed `Values`/`Env` predicates, never to oracle
+state; string ops ⇒ string-typed with provenance.
 
-**Helper summaries** — same interpreter, memoized, with a soundness contract
-v1 lacked: computed under **empty path condition** and re-guarded at the call
-site (no guard contamination across memo hits); keyed by
-`(HelperId, Fp128)` where the fingerprint is taken over the **env-closed,
-canonicalized** argument (a `Ref` into mutable values state is closed against
-the current overlay, or the key includes a values-epoch); the summary is
-`{ value, doc_fragments, evidence, env_delta }` and `env_delta` composes into
-the caller conditionally under the call-site predicate. Recursion ⇒ `Top` +
-poisoned memo + gap. The define namespace is **global across the chart set**
-with Helm's parse-order-wins collision rule reproduced deterministically and
-a diagnostic on differing-body collisions; a helper's values-prefix view is a
-property of its *argument environment*, never of its defining chart (this is
-what keeps per-chart analysis compositional under signoz-style cross-chart
-helpers). File templates are indexed under their Helm path names so
+**Helper summaries** — same interpreter, memoized, with a soundness
+contract: computed under **empty path condition** and re-guarded at call
+sites; keyed by `(HelperId, Fp128)` over the **env-closed, canonicalized**
+argument (a `Ref` into mutable values state is closed against the current
+overlay, or the key includes a values-epoch); the summary is
+`{ value, doc_fragments, evidence, env_delta }`, with `env_delta` composed
+into the caller conditionally under the call-site predicate. Recursion ⇒
+`Top` + poisoned memo + gap. The define namespace is **global across the
+chart set** with Helm's parse-order-wins collision rule reproduced
+deterministically and a diagnostic on differing-body collisions; a helper's
+values-prefix view is a property of its *argument environment*, never of its
+defining chart. File templates are indexed under their Helm path names so
 `include (print $.Template.BasePath "/configmap.yaml")` resolves;
 `$.Template.*` are evaluable constants.
 
-**Output:**
+### 6.4 `engine::contract` — `ContractIR`, the public artifact
+
+The stable seam between interpretation and everything downstream — and the
+engine's primary public type. It is a guarded constraint graph over the
+values space, plus the chart's resource claims; *not* a manifest model:
 
 ```rust
-pub struct ChartAnalysis {
-    pub docs: Vec<(DocId, AbsDoc)>,
-    pub identities: Vec<(DocId, Vec<(PredRef, Ident)>)>,
-    pub evidence: Vec<EvidenceRecord>,   // non-document-anchored: aborts, type
-                                         // evidence from string ops, admissions,
-                                         // openness facts — each with pc + provenance
-    pub gaps: Vec<Gap>,                  // parse, attribution, recursion, budget
+pub struct ContractIR {
+    /// Per-path guarded constraints, each with provenance.
+    pub paths: BTreeMap<ValuePath, PathContract>,
+    /// Resource claims: identity decision lists + anchor patterns projected
+    /// from the (internal) abstract documents.
+    pub resources: Vec<ResourceClaim>,
+    /// Chart-local knowledge handles: extracted CRD documents (fully
+    /// literal), shipped-schema references per chart prefix.
+    pub chart_knowledge: ChartLocalKnowledge,
+    pub gaps: Vec<Gap>,
     pub preds: PredTable, pub sources: SourceMap, pub helpers: HelperTable,
+}
+
+pub struct PathContract { pub items: Vec<Guarded<Constraint>> }
+pub struct Guarded<T> { pub pc: PredRef, pub item: T, pub prov: Provenance }
+
+pub enum Constraint {
+    Read     { shape: RenderShape },                  // existence + scalar/fragment shape
+    Anchor   { claim: ResourceClaimId, at: DocPathPattern, role: SinkRole,
+               mode: AnchorMode /* Exact | Overlay(MergeMode) | Uniform */ },
+    Admits   (FalseySet),                             // default/with admissions
+    TypeEv   { hint: SchemaTypeHint, origin: HintOrigin },
+    Abort    { kind: Required | Fail, message: Option<Name> },
+    Open     { why: OpenObjectReason },
+    Iterated { item: IterShape },
+    ViaTpl,                                           // admits string (named rule)
+}
+
+pub struct ResourceClaim {
+    pub doc: DocId,
+    pub identity: Vec<(PredRef, Ident)>,              // guarded decision list
 }
 ```
 
-Purity contract (CI-enforced): no IO deps, no `dyn`, deterministic — a
-100-run byte-identical property test is part of the crate's acceptance
-criteria. Serialization rule: derived serde on internal graphs is forbidden;
-the only serialized analysis artifact is a flat DTO projection (which doubles
-as the migration-era `ValueUse` fixture format).
+Design points:
 
-### 6.3 `chart` — the chart object model (IO)
+- **Everything resolution needs is here.** Anchors carry the doc-path
+  pattern (wildcards included), the overlay mode (from `Merged` values), the
+  sink role, and a reference into the identity decision list — so the oracle
+  co-walk works entirely from `ContractIR`. The abstract documents stay
+  private.
+- **Guards are stored once** (hash-consed `PredRef` per constraint), not
+  snapshotted; cross-constraint correlation ("these twelve constraints share
+  one conditional") survives.
+- **Provenance is intrinsic** — spans + helper chains on every constraint;
+  `--explain` and positioned diagnostics are projections.
+- **Serialization rule:** internal graphs never derive `Serialize`; the only
+  serialized form is a flat DTO projection (which doubles as the
+  migration-era `ValueUse` fixture format, never a production consumer).
+- Determinism: a 100-run byte-identical property test on the DTO projection
+  is part of the engine's acceptance criteria.
 
-What a chart *is*: discovery over `vfs` (directory, `.tgz` into MemoryFS —
-which structurally prevents zip-slip onto the real filesystem; keep that
-property — under a `LoadBudget`), dependency aliasing and recursion, and:
+### 6.5 `engine::resolve` + `engine::lower` — from contract to schema
 
-- **`FileRole` assignment** — `Manifest | Notes | Test | Partial |
-  FileFragment | Crd | ShippedSchema`, by packaging rules. Roles drive parse
-  mode and policy (`--exclude-tests` becomes a role filter); `files/**` are
-  parseable fragment sources, not opaque bytes; `crds/` are plain YAML by
-  Helm's rules (never templated).
-- **Chart.yaml model** — dependencies with `alias`, **`condition:` paths and
-  `tags:`** (each condition contributes boolean type evidence *and* a
-  chart-level predicate conjoined onto every fact from that subchart; `tags`
-  and `global` are reserved root keys the schema must always admit),
-  `kubeVersion` constraints (an input to the capability oracle), and
-  `import-values`/`export-values` — modeled if trivial, otherwise the
-  affected subtree abstains with a structured gap (silence here would mean
-  silently wrong prefixes).
-- **`compose_values`** — the two-pass global hoist/mirror as a pure named
-  function over typed YAML (parsed with a maintained, span-preserving YAML
-  crate; `serde_yaml` is unmaintained and span-less). Anchors/aliases
-  resolved. JSON values files accepted.
-- **`ValuesModel`** — per-path defaults (with spans) and descriptions
-  (`@param`, helm-docs conventions). Invariant, stated precisely this time:
-  values files contribute defaults, descriptions, and **top-level key
-  existence** (an explicit, named policy — today's behavior, which v1's
-  "metadata only" wording accidentally contradicted) — never types, shapes,
-  nullability or requiredness for nested paths.
-- **Chart-local knowledge extraction** — `crds/` parsed into an in-memory CRD
-  index (every served version), shipped `values.schema.json` collected per
-  chart. **Template-rendered CRDs are first-class too**: a pure projection
-  over `ChartAnalysis` (`extract_crd_documents`) collects
-  `CustomResourceDefinition` documents whose `openAPIV3Schema` subtrees are
-  fully literal (the cert-manager pattern) and registers them in the same
-  index. Analysis→knowledge→synthesis is a straight pipeline edge — the
-  facade runs the projection between interpretation and synthesis — not a
-  feedback loop, so there is nothing to defer (v2's deferral was
-  over-cautious). Partially-templated or guard-conditional CRD schemas
-  abstain with a gap record: an incomplete CRD schema must not narrow. All
-  of it feeds §6.4/§6.5.
+**Resolution** (`resolve(&ContractIR, oracles, &ResolvePolicy) ->
+ResolvedContract`) — pure given oracle answers:
 
-### 6.4 `knowledge` — planner/executor over data-described sources
+- Evaluate `Env` atoms against the oracles (three-valued); compute branch
+  liveness. **Type evidence from guarded alternatives is the join over all
+  possibly-live branches** — first-live selection is only legal when the
+  oracle authoritatively refutes the others; falsey admissions from any
+  possibly-live branch are admitted (polarity). A predicate containing
+  `Values` atoms evaluates to `Unknown` by construction, so user-overridable
+  capability branches stay live regardless of oracle state.
+- Resolve each `Anchor` against `SchemaDoc`s fetched through the oracle:
+  exact anchors yield resource-anchored constraints; `Uniform` anchors
+  contribute under the §6.3 uniformity rule; `Overlay` anchors yield
+  **deep-partial** constraints (the `partialize` operator — recursively
+  strip `required`) for the values-rooted overlay. Chart-local CRDs
+  (extracted by `engine::extract` from `crds/` files and from fully-literal
+  template-rendered CRD documents) are registered in the oracle composition
+  ahead of remote catalogs before this step runs.
+- **Shipped `values.schema.json` files are enforced constraints, not
+  evidence.** Helm validates each chart's coalesced values against its own
+  shipped schema at lint/install time, so shipped schemas are part of `Acc`
+  (§2): they compose by **intersection** on the chart's prefix — through the
+  foreign tier, with the same coalescing and global-injection care Helm
+  applies — never by ranking against template evidence. Template evidence
+  contradicting the shipped schema means the chart is broken at install
+  time: a conflict diagnostic, not something to widen over. A policy switch
+  disables the intersection for users who knowingly diverge.
+- Fold in `ValuesModel` defaults/descriptions, Chart.yaml condition
+  evidence (each `condition:` path contributes boolean type evidence and a
+  chart-level predicate on all of that subchart's constraints), abort
+  evidence, and `ViaTpl` (admit `string`).
+- **Per-path decision under `ResolvePolicy`** — the entire rulebook as one
+  inspectable value: widening rules (FalseySet → nullable/empty variants),
+  scalar restriction, openness rules (incl. reserved keys `global`/`tags`),
+  P2 closure policy, **P1 lowering bounds** (which predicate classes lower,
+  count/nesting caps), and required rules. **Requiredness** is built on
+  abort evidence: `required(p)` only with a render-failure witness whose
+  path condition is true when `p` is absent — conservatively, an unguarded
+  `required`/`fail`/nil-deref; guarded aborts lower to `if/then` under P1 or
+  emit a diagnostic. (Today's truthy-header heuristic is unsound under §2
+  and survives only as an opt-in legacy policy.) Every `Decision` records
+  the evidence it used.
 
-v1's catalog traits + decorator combinators are gone. Policy is data; the
-mechanism is two functions. (Decorator stacks also made the most subtle
-policy — version-major vs mirror-major probing — an invisible nesting
-property, and scattered "what was tried" across layers.)
+**Lowering** (`lower(&ResolvedContract, EmitMode) -> Value`) — the two-tier
+schema model:
+
+- **Foreign tier:** upstream and shipped subtrees remain verbatim
+  `Arc<Value>` behind `SchemaDoc` pointers — never lifted into a closed enum
+  (no round-trip risk for `patternProperties`,
+  `x-kubernetes-int-or-string`, `oneOf` discriminators, vendor extensions).
+  Operations on foreign subtrees are **total named JSON functions** with
+  corpus tests: `restrict_to_scalar`, `partialize`, `ensure_metadata`,
+  `is_open`, `admits_type`, `is_uniform_at`.
+- **Typed tier:** a small closed `SchemaNode`
+  (`Any/Scalar/Object/Array/Union/Conditional` + inline `Meta`) for
+  everything synthesized from chart evidence, with a total, law-stated merge
+  (commutative/associative/idempotent on canonical forms; conflicts returned
+  **as data** — `MergeConflict{at, left, right, rule}` — positioned
+  diagnostics attached by the caller). `Conditional` carries the P1-lowered
+  `if/then/else` structures for `ValuesDecidable` predicates.
+- **Output contract (deliberate change from today):** the default
+  `EmitMode::Bundled` produces a **single self-contained draft-07 document**
+  — foreign subtrees land under deterministic, collision-free `$defs` names
+  (GVK-derived) and are referenced internally; shared K8s types appear once.
+  No external `$ref` ever remains; no network or file dependency at
+  validation time. `EmitMode::FlattenedExport` (full inlining — today's
+  default shape) remains as an explicit export for consumers that reject
+  refs. This deletes the current inline-everything-then-re-deduplicate cycle
+  between flatten and the minifier; `json-schema-minify` remains as optional
+  extra compaction. Internal-ref support is solid in both validators that
+  matter (helm 3's gojsonschema, helm 4) and in yaml-language-server.
+- The **consumer matrix** is pinned by tests: helm 3 (gojsonschema draft-07
+  semantics — including `if/then` and `dependencies`, which P1 lowering
+  relies on; per-chart validation of *coalesced* values with `global`
+  injected), helm 4's validator, yaml-language-server (descriptions/defaults
+  survive; validation of conditionals is supported, completion inside them
+  degrades gracefully — one reason lowering is policy-bounded), and Helm's
+  null-deletes-key coalescing (why `anyOf [null, T]` is the nullable
+  encoding).
+
+### 6.6 `knowledge` — the exact external resolver
+
+Planner/executor over data-described sources; policy is data, the mechanism
+is two functions. Depends on `core` only — it never sees engine types.
 
 ```rust
 pub struct SourceSpec { pub id: SourceId, pub base: Base /* Url | Dir */,
@@ -753,10 +821,10 @@ pub enum SourceKind {
     K8sBundle  { versions: VersionChain },     // explicit + auto-fallback window
     CrdCatalog { loose: bool },                // loose ⇒ cross-version scan + hint
     LocalDir,                                  // override layer; never wiped
-    ChartCrds(Arc<ChartCrdIndex>),             // §6.3 — in-memory, version-exact
+    ChartCrds(Arc<ChartCrdIndex>),             // chart-local, in-memory, version-exact
 }
 
-pub struct Probe { pub source: SourceId, pub rel: RelPath,   // RelPath: validated newtype
+pub struct Probe { pub source: SourceId, pub rel: RelPath,
                    pub url: Option<Url>, pub version: Option<K8sVersion> }
 
 /// Pure: the exact probe order is an explicit, unit-testable sort.
@@ -773,245 +841,150 @@ pub fn execute(plan: &[Probe], store: &CacheDir, fetch: &dyn Fetch,
 
 - **Diagnostics are a projection of `LookupTrace`** — `MissingSchema` with
   versions tried, mirrors consulted, stale-cache hints, fallback-resolution
-  notes falls out of the executed plan instead of being threaded through
-  wrappers.
+  notes falls out of the executed plan.
 - **Four states internally, three at the surface.** Per-source outcomes keep
-  today's distinctions (`Found / PathUnresolved / DocMissing / NotOwned`) —
-  the chain's precedence depends on "owned but path-less" vs "not mine".
-  Aggregation resolves precedence first; only the chain-final answer is
-  exposed as `Lookup` through the oracle. (Collapsing early would change
-  CRD+K8s overlap behavior and kill the deliberate silent-coverage-gap
-  contract.)
+  today's distinctions (`Found / PathUnresolved / DocMissing / NotOwned`);
+  aggregation resolves precedence first; only the chain-final answer is
+  exposed as `Lookup` through the oracle.
 - **`CacheDir` is concrete** (no store trait): tri-state
   `get → Hit | KnownAbsent | Miss` as one atomic question, fallible `put`,
-  an explicit *read-bypass-write-refresh* mode (`--no-cache` parity), layout
-  versioning, XDG resolution provided by the CLI (libraries never read env).
-- **No materialization.** `resolve()` returns lazy-ref `SchemaDoc`s;
-  cross-document refs are `RefTarget::External(coordinate)` resolved through
-  further oracle calls. Descent is O(path) with a cycle set. This deletes the
-  per-resource `$ref`-expansion cache — the dominant knowledge-side RSS term.
-- **Capability oracle** = a thin adapter over the same planner/executor probe
-  plus the declarative `ProbeTable` (the documented well-known-kind debt,
-  now diffable data) and `kube_version()` from configuration — preserving the
-  tri-state offline contract verbatim, testable against a fake store without
-  any chain.
+  an explicit read-bypass-write-refresh mode (`--no-cache` parity), layout
+  versioning; XDG/env resolution happens in the CLI, never in libraries.
+- **No materialization.** `resolve()` returns lazy-ref `SchemaDoc`s; descent
+  is O(path) with a cycle set. This deletes the per-resource
+  `$ref`-expansion cache — the dominant knowledge-side RSS term — and
+  composes with bundled emission (§6.5), which shares each foreign subtree
+  once instead of inlining it per use.
 - **Version fallback is archive search, not target inference.** The chart
-  pins its coordinate structurally — `apiVersion: policy/v1beta1` is chart
-  text — and upstream bundles merely index schemas by K8s release. Walking
-  older bundles when the target bundle no longer carries a
-  removed-but-pinned GVK locates the authoritative definition of an
-  *exactly named* coordinate; no part of the chart's identity is guessed,
-  and the chart's *values* contract does not change because a cluster would
-  reject the manifest — typing those paths is sound and strictly more useful
-  than `Any`. Fallback therefore stays in the strict resolver, with both of
-  today's guardrails: every such hit emits `ResolvedFromFallbackVersion`,
-  and `--strict-k8s-version` disables the chain. Fallback bundles are never
-  inputs to apiVersion inference.
+  pins its coordinate structurally; upstream bundles merely index schemas by
+  K8s release. Walking older bundles for a removed-but-pinned GVK locates
+  the authoritative definition of an *exactly named* coordinate. Guardrails:
+  `ResolvedFromFallbackVersion` diagnostics, `--strict-k8s-version` opt-out,
+  and fallback bundles are never inputs to apiVersion inference.
+- **Capability oracle** = a thin adapter over the same planner/executor
+  probe plus the declarative `ProbeTable` (the documented well-known-kind
+  debt, now diffable data) and `kube_version()` from configuration —
+  tri-state offline contract preserved verbatim.
 
-**The authority model — strict core / assistance / overrides.** Three layers
-with different epistemic standing, never blended silently:
+**The authority model — strict core / assistance / overrides** (three layers
+with different epistemic standing, never blended silently):
 
-1. **The strict resolver** (everything above): exact coordinates from chart
-   structure — including capability-guard branch selection — against
-   explicitly configured sources in explicit priority order. Mirror
-   semantics are *exactly* that priority order (alternate exact-version
-   sources; there is no implicit "override stale entries" rule beyond it).
-   The strict resolver never guesses: its outcome is typed —
-   `Resolved { schema, source, version } | Ambiguous { candidates } |
-   Unresolved` — and carries the executed trace; `Ambiguous`/`Unresolved`
-   flow to synthesis as widening (`Any` + diagnostic), never as a forced
-   pick. Boolean ownership probes (today's `has_resource`, whose `false`
-   conflates "authoritatively absent" with "not checked yet") are
-   unrepresentable under `Lookup`.
+1. **The strict resolver** (everything above): exact coordinates against
+   explicitly configured sources in explicit priority order; outcome typed
+   `Resolved | Ambiguous | Unresolved` with the executed trace —
+   `Ambiguous`/`Unresolved` flow to resolution as widening, never a forced
+   pick. Boolean ownership probes (today's `has_resource`) are
+   unrepresentable.
 2. **The assistance layer** — the apiVersion advisor: opt-in
-   (`--api-version-guess`), bounded, quarantined behind its `AdvisorPolicy`
-   data, and **cache-independent**. Its evidence tiers are the static
-   shortlist table and the authoritative online probe; the current
-   implementation's local-cache cross-scan tier is deliberately demoted to a
-   hint diagnostic and never participates in the pick — a warm-vs-cold cache
-   that changes a resolution in the narrowing direction would violate §2's
-   invariant that cache state may only widen output. Advisor-affected
-   resolutions always carry an `InferredApiVersion`-style diagnostic.
-3. **Explicit overrides** (`LocalDir`: top priority, never wiped):
-   user-authored schemas as first-class *inputs* to resolution, not silent
-   recovery.
+   (`--api-version-guess`), bounded, quarantined behind `AdvisorPolicy`
+   data, and **cache-independent**: its evidence tiers are the static
+   shortlist table and the authoritative online probe; the local-cache
+   cross-scan is demoted to a hint diagnostic and never participates in the
+   pick. Advisor-affected resolutions always carry an
+   `InferredApiVersion`-style diagnostic.
+3. **Explicit overrides** (`LocalDir`): user-authored schemas as first-class
+   *inputs*, not silent recovery.
 
-### 6.5 `synthesis` — evidence → schema, under one policy
+### 6.7 `helm-schema` (facade) and `helm-schema-cli`
 
-**Stage A — evidence derivation.** One projection
-`derive(per ChartAnalysis, ValuesModel, shipped schemas, oracles, policy) →
-BTreeMap<ValuePath, EvidenceSet>`:
+The facade is the stable product surface and the IO shell. It owns:
 
-- Evaluate `Env` atoms against the oracles (three-valued); compute branch
-  liveness. **Type evidence from guarded alternatives is the join over all
-  possibly-live branches** — first-live selection is only legal when the
-  oracle authoritatively refutes the others (v1 got this wrong); falsey
-  admissions from any possibly-live branch are admitted (polarity). A
-  predicate containing `Values` atoms evaluates to `Unknown` by
-  construction, so user-overridable capability branches stay live regardless
-  of oracle state (§6.1).
-- Co-walk each `AbsDoc` (live arms) against resolved `SchemaDoc`s; every
-  exact `Hole` spine yields resource-anchored evidence; anchored spines
-  contribute under §6.2's uniformity rule; a `Hole`/`Splice` whose value is
-  `Merged { base, over }` with an identity-bearing base yields
-  **deep-partial anchoring** for the values-rooted overlay
-  (`OverlayOnto{base, at, mode}` → the `partialize` operator) — derived from
-  the lattice structure (§6.2), not recovered as side evidence.
-- Fold in `ValuesModel` defaults/descriptions, Chart.yaml condition
-  evidence, abort evidence, and the tpl-route marker (paths through
-  `tpl`/`tplvalues.render` additionally admit `string` — a named widening
-  rule, structurally derived from the helper's `typeIs "string"` branch).
-- **Shipped `values.schema.json` files are enforced constraints, not
-  evidence.** Helm validates each chart's coalesced values against its own
-  shipped schema at lint/install time, so shipped schemas are part of `Acc`
-  (§2): synthesis composes them by **intersection** on the chart's prefix —
-  through the foreign tier, with the same coalescing and global-injection
-  care Helm applies — never by ranking them against template evidence. If
-  template-derived evidence contradicts the shipped schema (templates read a
-  path the shipped schema forbids), the chart itself is broken at install
-  time; that is a conflict diagnostic, not something to widen over. A policy
-  switch can disable the intersection for users who knowingly diverge.
-
-**Stage B — per-path decision.** `decide(path, EvidenceSet, &SynthesisPolicy)
-→ (SchemaExpr, Vec<Decision>)`. The policy object is the entire rulebook:
-source ranks (reconcile-by-widening, never override), widening rules
-(FalseySet → nullable/empty variants), scalar restriction, openness rules
-(incl. reserved keys `global`/`tags`), P2 closure policy, required rules.
-**Requiredness** is rebuilt on abort evidence: `required(p)` only with a
-render-failure witness whose path condition is true when `p` is absent —
-conservatively, an unguarded `required`/`fail`/nil-deref; guarded aborts may
-emit draft-07 `if/then` or a diagnostic per policy. (Today's
-truthy-header heuristic is unsound under §2 and survives only as an opt-in
-legacy policy.) Every `Decision` records the evidence it used — spans make
-diagnostics precise today and leave `--explain` as a cheap projection later
-(explicitly out of v1 scope).
-
-**Stage C — the two-tier schema model.** The honest resolution of "typed
-algebra vs upstream JSON" (v1's open question; the pre-mortem's top risk):
-
-- **Foreign tier:** upstream K8s/CRD subtrees remain verbatim
-  `Arc<Value>` behind `SchemaDoc` pointers — *never* lifted into a closed
-  enum, so nothing (`patternProperties`, `x-kubernetes-int-or-string`,
-  `oneOf` discriminators, vendor extensions) can be dropped by a lossy
-  round-trip. Operations needed on foreign subtrees are **total named JSON
-  functions** with corpus tests: `restrict_to_scalar`, `partialize`
-  (recursively strip `required` — the overlay operator), `ensure_metadata`,
-  `is_open`, `admits_type`.
-- **Typed tier:** a small closed `SchemaNode`
-  (`Any/Scalar/Object/Array/Union` + inline `Meta`) for everything we
-  *synthesize* from chart evidence, with a total, law-stated merge
-  (commutative/associative/idempotent on canonical forms; conflicts returned
-  **as data** — `MergeConflict{at, left, right, rule}` — and turned into
-  positioned diagnostics by the caller; `ScalarConst` has a lawful total
-  `Ord`, NaN rejected at construction).
-- **Composition:** `SchemaExpr = Node(SchemaNode) | Foreign(ref) |
-  Compose(rules)`; lowering emits draft-07 and applies the K8s-aware
-  foreign×typed merge rules (today's `merge.rs` semantics — required-union,
-  enum-intersection, preserve-unknown-fields — formalized as named rules with
-  property tests over generated schema-shaped JSON and corpus differential
-  tests against the current tool's output). This keeps today's clean merged
-  output shape (no `allOf` nesting regressions for editors).
-
-**Emission** is `fn emit_draft07(...) -> Value` (a function; a 2020-12
-emitter is a second function when Helm 4 demand arrives) plus an explicit
-**consumer matrix** the tests pin: helm 3 (gojsonschema draft-07 semantics,
-per-chart validation of *coalesced* values with `global` injected — hence the
-reserved-keys rule), helm 4's validator, yaml-language-server (descriptions/
-defaults survive minification; flattened refs keep editors offline-capable),
-and Helm's null-deletes-key coalescing (why `anyOf [null, T]` is the nullable
-encoding).
-
-### 6.6 Facade and CLI
-
-The facade exposes the stage functions plus one `generate(&Config) ->
-Result<GenerateOutput, PipelineError>`; `Config` is a plain struct with
-defaults (no builder ceremony), `GenerateOutput { schema, diagnostics }`
-(tools wanting `ChartAnalysis` call the stage functions; the analysis types
-are explicitly semver-unstable). It owns:
-
-- **Parallelism, honestly:** parse+interpret fan out per template (order-
-  preserving collect; shared helper-summary memo in a concurrent map — racy
-  recomputation is benign because summaries are pure; never evaluate while
-  holding a shard lock); knowledge prefetch parallelizes IO discovered by a
-  first co-walk pass; synthesis/emit/minify remain serial. Expected win is
-  ~1.5–2× on large charts — the bigger levers are lazy schema docs and
-  allocation discipline, and the doc says so instead of promising "zero
-  locks".
-- **Output passes as sequential typed functions** (not a transform trait):
-  override merge (replace-on-`$ref` markers, override-file-relative base
-  URI, `--keep-refs` honored), ref flatten (via the `jsonschema` crate's
-  retriever interface directly, wrapped in `FetchPolicy`), description strip,
-  minify (delegates to `json-schema-minify`, unchanged), **global-schema
-  mirroring into subcharts** (a named pass — v1 lost it), and the
-  **postcondition**: composed defaults validate against the emitted schema
-  (hard diagnostic on failure).
+- **Chart loading → `ChartProgram`**: discovery over `vfs` (directory,
+  `.tgz` into MemoryFS — structurally preventing zip-slip; under a
+  `LoadBudget`), dependency aliasing and recursion, **`FileRole`**
+  assignment (`Manifest | Notes | Test | Partial | FileFragment | Crd |
+  ShippedSchema`) driving parse modes and policy (`--exclude-tests` is a
+  role filter), the Chart.yaml model (deps with `alias`, `condition:` paths
+  and `tags:`, `kubeVersion` constraints; `import-values`/`export-values`
+  modeled if trivial, otherwise structured abstention), `compose_values`
+  (the two-pass global hoist/mirror as a pure named function over typed YAML
+  parsed with a maintained, span-preserving YAML crate; anchors resolved;
+  JSON values files accepted), and `ValuesModel` (per-path defaults with
+  spans + descriptions; invariant stated precisely: values files contribute
+  defaults, descriptions, and **top-level key existence** as an explicit
+  named policy — never types, shapes, nullability or requiredness for
+  nested paths). `ChartProgram` is the engine's complete, IO-free input.
+- **Pipeline wiring** (§5.2) with honest parallelism: parse+interpret fan
+  out per template (order-preserving collect; shared helper-summary memo in
+  a concurrent map — racy recomputation is benign because summaries are
+  pure; never evaluate while holding a shard lock); knowledge prefetch
+  parallelizes IO discovered from `ContractIR`'s claims; resolution,
+  lowering and minify remain serial. Expected win ~1.5–2× on large charts —
+  the bigger levers are lazy schema docs and allocation discipline.
+- **Output passes as sequential typed functions**: override merge
+  (replace-on-`$ref` markers, override-file-relative base URI, `--keep-refs`
+  honored; external `$ref`s in overrides resolved under `FetchPolicy` — the
+  only retrieval on the output path), optional `FlattenedExport`,
+  description strip, minify, **global-schema mirroring into subcharts** (a
+  named pass), and the **postcondition**: composed defaults validate against
+  the emitted schema (hard diagnostic on failure).
 - **The lockfile** (`--locked`): coordinate → content digest + source URL +
-  version; re-fetches that would change a pinned digest fail. This is what
-  "reproducible over time" means; in-run determinism is §2's
-  given-identical-oracle-answers guarantee.
-- The CLI maps ~30 flags onto the policy/config objects (the mapping is a
-  checked table, §13), interprets env vars (`HELM_SCHEMA_*`, XDG) — libraries
-  never read the environment — renders diagnostics as text or the versioned
-  JSON envelope, and implements the exit-code policy: 0 clean; distinct codes
-  for parse-failure / generation-failure; `--fail-on=gaps|conflicts` upgrades
-  recorded abstentions.
+  version; re-fetches that would change a pinned digest fail.
+- Diagnostics projection (engine gaps + knowledge traces + facade conflicts
+  → the versioned envelope), and the facade exposes every stage function
+  publicly; `ContractIR` is available to tooling but explicitly
+  semver-unstable.
+
+The CLI maps ~30 flags onto the policy/config objects (§13 is the checked
+table), interprets env vars (`HELM_SCHEMA_*`, XDG) — libraries never read
+the environment — renders diagnostics as text or the versioned JSON
+envelope, and implements the exit-code policy: 0 clean; distinct codes for
+parse-failure / generation-failure; `--fail-on=gaps|conflicts` upgrades
+recorded abstentions.
 
 ## 7. Why this is the right architecture
 
-**Because every rule now has a reason.** The correctness contract plus
-polarity table turn a dozen scattered instincts (why `eq` guards widen to
-`anyOf[enum, string]`, why unknown capability branches stay live, why
-`required` is dangerous) into derivable, checkable consequences. This is the
-difference between "preserve ambiguity" as a slogan and as a type-checked
-direction.
+**Because every rule has a reason.** The correctness contract plus polarity
+table turn scattered instincts (why `eq` guards widen, why unknown
+capability branches stay live, why `required` is dangerous, *when* a guard
+may become an `if/then`) into derivable, checkable consequences.
 
-**Because the abstract document is what a template *is*.** A Helm template
-denotes a YAML document with holes, conditions, iterations and splices. Every
-hard sub-problem the current code solves with side machinery — byte-cursor
-resource tracking, indent heuristics, List descent, branch preservation,
-helper-output projection — is a constructor or projection of that one
-structure. The system that models its true subject needs less code, and the
-review's strongest signal was two independent derivations (mine and the
-soundness critic's) converging on it.
+**Because the contract graph is what the system is actually about.** A
+values schema is a set of guarded constraints over the values space.
+`ContractIR` makes that the stable artifact; the abstract document — the
+mechanism that *finds* those constraints structurally — stays private and
+free to evolve with parsing fidelity. v2 had this backwards: it published
+the mechanism and derived the meaning downstream.
 
-**Because one interpreter is the only enforceable home for "no heuristics".**
-Six evaluators each understanding 80% of Helm is the documented root of every
-recurring bug class. One lattice + one builtin table means a new Helm
-semantic is one row, every consumer inherits it, and there is exactly one
-place a text-sniffing shortcut could creep in — the place reviewers watch.
+**Because one engine is the only enforceable home for "no heuristics".**
+Six evaluators each understanding 80% of Helm is the documented root of
+every recurring bug class — and a public seam through the middle of the
+semantics (today's `ValueUse`, v2's `ChartAnalysis`) is how re-derivation
+and arity ladders happen. One lattice, one builtin table, one crate: a new
+Helm semantic is one row, every consumer inherits it, and there is exactly
+one place a text-sniffing shortcut could creep in.
 
-**Because policy-as-data beat traits on their own turf.** v1 already
-preached restraint and still shipped 12 ports; the honest audit left 3. The
-knowledge planner/executor is the showcase: probe order becomes a unit-tested
-sort instead of a decorator-nesting accident, the tri-state contract is
-proven once in one executor instead of per-wrapper, "what was tried"
-diagnostics are the executed plan, and new sources (mirror, vendored dir,
-chart-local CRDs, airgap) are config values, not types.
+**Because policy-as-data beat traits on their own turf.** The honest audit
+left three traits. The knowledge planner/executor is the showcase: probe
+order is a unit-tested sort instead of a decorator-nesting accident, the
+tri-state contract is proven once, "what was tried" diagnostics are the
+executed plan, and new sources are config values.
 
-**Because the two-tier schema model refuses a fight it cannot win.** Upstream
-corpora are arbitrary JSON Schema; a closed algebra either drops keywords
-silently (a regression invisible until a user hits it) or grows the JSON
-escape hatch that swallows the design. Keeping foreign content verbatim with
-total, corpus-tested operations — and reserving the lawful typed algebra for
-what we synthesize — gets property-testing where it's possible and
-losslessness where it's mandatory.
+**Because the two-tier schema model refuses a fight it cannot win.**
+Upstream corpora are arbitrary JSON Schema; a closed algebra either drops
+keywords silently or grows the escape hatch that swallows the design.
+Foreign content stays verbatim with total, corpus-tested operations; the
+lawful typed algebra covers what we synthesize — including, now, the
+P1-lowered conditionals.
 
-**Because the boundaries are load-bearing, not aesthetic.** Two pure crates
-(different deps, different rates of change), two IO crates, one vocabulary
-crate whose placement of the oracle traits keeps both dependency arrows
-pointing inward, grammar isolated for build/lint reasons, facade thin for
-rebuild speed. Each crate has acceptance criteria (§11); none exists to
-decorate a diagram.
+**Because bundled output is the honest product contract.** Inline-by-default
+re-expands exactly the sharing the lazy `SchemaDoc` tier worked to preserve,
+then pays the minifier to rediscover it. Internal `$defs` with deterministic
+names keeps output small, self-contained, offline-validatable, and
+diff-friendly; full flattening remains one export call away.
 
-**Alternatives rejected** (with the reasons on record): render-then-infer
+**Alternatives rejected** (with reasons on record): render-then-infer
 (samples can't cover guard space; rendering is a *test oracle only*);
-annotation-driven schemas (already rejected by the README; enforced by type
-here); per-path profiles joined in the interpreter (destroys provenance and
-bakes policy into analysis); a closed typed model for upstream schemas (see
-above); decorator catalogs (see above); maximal trait-per-stage pipelines and
-a "pipeline object" (ceremony; stage functions deliver the substance);
-per-session interning (breaks Ord/serde/`'static` for marginal wins — typed
-segments and Arc-shared nodes remove the churn that motivated it).
+annotation-driven schemas (comments stay metadata, enforced by type);
+per-path profiles joined in the interpreter (destroys provenance and bakes
+policy into analysis); a closed typed model for upstream schemas (above);
+decorator catalogs (above); maximal trait-per-stage pipelines and a
+"pipeline object" (stage functions deliver the substance); per-session
+interning (breaks Ord/serde/`'static` for marginal wins); publishing the
+abstract-document forest as the analysis artifact (v2 — frozen mechanism,
+reinterpreting consumer); a fixed-point analysis↔knowledge loop (knowledge
+never influences interpretation, so one forward extract-then-resolve pass
+provably suffices; the only residue is guard-conditional CRD emission, §14).
 
 ## 8. Cross-cutting policies
 
@@ -1020,114 +993,118 @@ segments and Arc-shared nodes remove the churn that motivated it).
    knowledge failures are `Unknown` + diagnostics by design; eyre only in
    `main`.
 2. **Diagnostics:** one model in core with spans; deduplicating concrete
-   handle; versioned JSON envelope as a stable machine interface; pure crates
-   record gaps as data, the facade projects.
+   handle; versioned JSON envelope as a stable machine interface; the pure
+   engine records gaps as data, the facade projects.
 3. **Determinism:** ordered collections at boundaries; no env reads, clocks,
    or randomness in libraries; byte-identical output given identical oracle
    answers; cache state moves output only toward widening; lockfile for
    cross-time reproducibility.
-4. **Security:** `FetchPolicy` on every network/file edge (flatten retriever
-   included: scheme/host allowlists, link-local denial, size/time budgets,
-   ref depth/doc caps); `LoadBudget` on archives/parsing/interpretation;
+4. **Security:** `FetchPolicy` on every network/file edge (override-`$ref`
+   retrieval included); `LoadBudget` on archives/parsing/interpretation;
    `RelPath` validated newtype at the coordinate→path boundary; archive
    extraction stays memory-backed.
 5. **Serde boundary:** internal graphs never derive `Serialize`; canonical
-   `Display`/`FromStr` for paths; DTO projections for analysis dumps and
+   `Display`/`FromStr` for paths; DTO projections for contract dumps and
    fixtures.
-6. **Performance:** lazy `$ref` docs (no materialized expansion), Arc-shared
-   fingerprinted values, effects-into-context, predicate hash-consing, and
-   honest Amdahl accounting; Perfetto/`tracing` stays the profiling truth,
-   plus a `[profile.profiling]` with symbols (the release profile strips
-   them). Budgets double as DoS bounds.
+6. **Performance:** lazy `$ref` docs + bundled emission (no materialization,
+   no inline blow-up), Arc-shared fingerprinted values, effects-into-context,
+   predicate hash-consing, honest Amdahl accounting; Perfetto/`tracing`
+   stays the profiling truth, plus a `[profile.profiling]` with symbols.
+   Budgets double as DoS bounds.
 7. **Lints/deps:** `[lints] workspace = true` in every crate;
-   tree-sitter/`cc` only under grammar; `ureq` (pinned TLS feature) only in
-   knowledge; `jsonschema` only in the facade; `serde_json` absent from
-   `analysis`; the YAML parser is a maintained, span-preserving one.
+   tree-sitter/`cc` only under the grammar crate; `ureq` (pinned TLS
+   feature) only in knowledge; `jsonschema` only in the facade (override
+   resolution, postcondition validation, flatten export); the YAML parser is
+   a maintained, span-preserving one (`serde_yaml` is unmaintained and
+   span-less).
 
 ## 9. Testing architecture
 
 1. **Law tests (property-based):** value-lattice join laws on canonical
    forms; typed-merge laws + conflict totality; predicate algebra (NNF
-   round-trips, three-valued evaluation monotone in assumptions); FalseySet
+   round-trips, three-valued evaluation monotone in assumptions; the
+   `ValuesDecidable` classifier sound — a predicate classified decidable
+   evaluates to `T`/`F` on every concrete values document); FalseySet
    widening monotonicity.
-2. **Transfer-function tables:** snippet → expected `AbsDoc`/evidence, one
-   row per builtin and construct (`default`, `with…default`, `set` in
+2. **Transfer-function tables:** snippet → expected contract constraints,
+   one row per builtin and construct (`default`, `with…default`, `set` in
    helpers, map ranges, `tpl`, `.Files.Get`, `required` under else,
-   `semverCompare` chains, dynamic keys, List envelopes…). These pin each
-   semantic exactly once.
+   `semverCompare` chains, capability shims, dynamic keys, List envelopes…).
 3. **Contract suites:** the executor's tri-state honesty (cold cache ⇒
    `Unknown`; offline never fetches; `Absent` only on negative witness;
-   persist-failure ⇒ `Unknown`; error ⇒ `Unknown` + diagnostic) run against
-   real-dir and fake stores; oracle fakes for synthesis.
+   persist-failure ⇒ `Unknown`; error ⇒ `Unknown` + diagnostic) against
+   real-dir and fake stores; oracle fakes for resolution.
 4. **Golden full-schema equality** over the real-chart corpus (the project
-   standard, unchanged), hermetic via recorded catalog fixtures. No
-   acceptance gate depends on live network — the differential harness runs a
-   local `helm` binary against vendored charts; network-touching paths get
-   smoke tests only.
+   standard), hermetic via recorded catalog fixtures. No acceptance gate
+   depends on live network — the differential harness runs a local `helm`
+   binary against vendored charts; network-touching paths get smoke tests
+   only. Bundled-output goldens additionally pin the deterministic `$defs`
+   naming.
 5. **Differential validation:** render fixtures with `helm template` under
    default + guard-flipping samples; every accepted sample must validate
-   (the §2 soundness probe, and the P1 acceptance gate); run `helm lint` too
-   (consumer matrix).
+   (the §2 soundness probe, the P1 acceptance gate — it directly exercises
+   lowered `if/then` conditionals); run `helm lint` too (consumer matrix).
 6. **Gate tests** (pre-merge for the respective migration steps): the
    abstained-enrichment budget (no corpus chart loses a type enrichment vs
-   the current tool); 100-run byte-determinism of `ChartAnalysis`;
+   the current tool); 100-run byte-determinism of the contract DTO;
    security regressions (traversal coordinates, oversized archives,
    metadata-endpoint `$ref`s).
 
 ## 10. Acceptance criteria per crate (definition of done)
 
-- **core:** law tests green; zero IO deps; `Display`/`FromStr` round-trips
-  pinned.
-- **analysis:** transfer table green; determinism property; purity CI check;
-  parse-failure degrades per-file; budget enforcement observable as gaps.
-- **chart:** corpus discovery parity (incl. `Chart.template.yaml`, tgz,
-  aliases); compose_values fixtures; conditions/tags/crds/shipped-schema
-  extraction tested; budgets enforced.
+- **core:** law tests for `Lookup` combinators; zero IO deps;
+  `Display`/`FromStr` round-trips pinned; envelope versioning tested.
+- **engine:** transfer table green; lattice/predicate/merge law tests;
+  determinism property; purity CI check (no IO deps, no `dyn` fields);
+  parse-failure degrades per-file; budget enforcement observable as gaps;
+  decision records present for every narrowing; `ValuesDecidable` lowering
+  bounded by policy and covered by guard-flipping differentials.
 - **knowledge:** contract suite green; probe-order unit tests; trace→
   diagnostics projection parity with today's `MissingSchema` richness;
-  advisor off by default.
-- **synthesis:** law + corpus tests on foreign operations; decision records
-  present for every narrowing; required-rules sound under §2 (witness-based).
-- **facade/cli:** golden corpus equality; postcondition active; parity
-  checklist (§13) checked off; exit-code table tested.
+  advisor off by default and cache-independent.
+- **facade/cli:** golden corpus equality (bundled default + flattened
+  export); postcondition active; parity checklist (§13) checked off;
+  exit-code table tested; corpus discovery parity (incl.
+  `Chart.template.yaml`, tgz, aliases); compose_values fixtures;
+  conditions/tags/crds/shipped-schema extraction tested; budgets enforced.
 
 ## 11. Sizing sanity check
 
 This lands *smaller* than today's ≈29K LOC: one interpreter replaces six
 evaluators + `helper_eval` (≈5–6K of near-duplicates); the planner/executor
-replaces two provider monoliths + chain (≈2K → ≈0.6K); `AbsDoc` projections
+replaces two provider monoliths + chain (≈2K → ≈0.6K); contract projections
 replace the byte-cursor/indent machinery; the policy object replaces the
-generator's scattered conditional lattice — while adding spans, the predicate
-algebra, security budgets, and chart-local knowledge.
+generator's scattered conditional lattice; bundled emission deletes the
+flatten hot path — while adding spans, the predicate algebra, conditional
+lowering, security budgets, and chart-local knowledge.
 
 ## 12. Migration correspondence (informative)
 
-The in-flight single-abstract-interpreter phases land directly on this design
-(its `AbstractValue`/`Effects`/`eval_expr` become §6.2's lattice/evidence/
-interpreter with laws added). This table records *where* current code lands;
-§15 turns it into an ordered route (*when*). Strangler seams: `IrGenerator`,
-`K8sSchemaProvider`, `ValueUseSink`, `HttpFetcher`. **One rule from the
-pre-mortem: every migration step's completion criterion is that the module it
-replaces is deleted** — no new crate while its predecessor lives, and the
-`ValueUse` projection never gains a production consumer.
+The in-flight single-abstract-interpreter phases land directly on this
+design (its `AbstractValue`/`Effects`/`eval_expr` become §6.3's
+lattice/evidence/interpreter with laws added). This table records *where*
+current code lands; §15 turns it into an ordered route (*when*). **One rule
+from the pre-mortem: every migration step's completion criterion is that the
+module it replaces is deleted** — no new crate while its predecessor lives,
+and the `ValueUse` projection never gains a production consumer.
 
 | Today | Target |
 |---|---|
-| `helm-schema-template-grammar` | `helm-schema-grammar` (unchanged role) |
-| `helm-schema-ast` (parser, `TemplateExpr`, fuse) | `analysis::parse` (spans, typed headers, one parse) |
-| `helm-schema-ast::values_comments` | `chart::ValuesModel` |
-| IR evaluators (`expr_eval`, `binding`, `fragment_*`, `helper_*`, `bound_*`, walkers) | `analysis::interp` (lattice + builtin table + summaries) |
-| `helper_eval.rs`, `resource_detector/locator` | identity projection over `AbsDoc` |
-| `yaml_shape`, `rendered_yaml_context` | `AbsDoc` construction + exact-or-abstain contract (tracker survives only as upgrader until the budget gate passes) |
-| `ValueUse` + postprocess | DTO projection of `ChartAnalysis` (fixtures only) |
+| `helm-schema-template-grammar` | unchanged role |
+| `helm-schema-ast` (parser, `TemplateExpr`, fuse) | `engine::parse` (spans, typed headers, one parse) |
+| `helm-schema-ast::values_comments` | facade `ValuesModel` |
+| IR evaluators (`expr_eval`, `binding`, `fragment_*`, `helper_*`, `bound_*`, walkers) | `engine::interp` (lattice + builtin table + summaries) |
+| `helper_eval.rs`, `resource_detector/locator` | identity projection over internal documents |
+| `yaml_shape.rs`, `rendered_yaml_context.rs` | structural attribution + exact/anchored/opaque contract (tracker survives only as upgrader until the budget gate passes) |
+| `ValueUse` + postprocess | DTO projection of `ContractIR` (fixtures only) |
 | `helm-schema-k8s` providers/chain | `knowledge` planner/executor + sources-as-data |
-| `capability_eval` + chain oracle | `CapabilityOracle` adapter + synthesis-side liveness |
+| `capability_eval.rs` + chain oracle impl | `CapabilityOracle` adapter + engine-side liveness |
 | `inference/*` | quarantined advisor module |
-| `helm-schema-gen` (lib/merge/required) | `synthesis` stages A–C + policy + two-tier model |
-| CLI `chart.rs` | `helm-schema-chart` |
-| CLI `schema_override.rs`, `flatten.rs`, mirroring pass | facade output passes (+ `FetchPolicy`) |
+| `helm-schema-gen` (lib/merge/required_inference) | `engine::resolve` + `engine::lower` + policy |
+| CLI `chart.rs` | facade chart loading (`ChartProgram`) |
+| CLI `schema_override.rs`, `flatten.rs`, mirroring pass | facade output passes (+ `FetchPolicy`); flatten becomes `EmitMode::FlattenedExport` |
 | CLI `lib.rs` pipeline | facade stage functions |
-| `json-schema-minify` | unchanged |
+| `json-schema-minify` | unchanged (optional pass; bundling removes its hottest input) |
 
 ## 13. Parity checklist (current behavior the design must reproduce)
 
@@ -1141,15 +1118,21 @@ mirrors with per-source cache namespacing; cache dirs + XDG/env resolution
 CRD mirrors/cache/`--crd-override-dir` (never wiped) /
 `--crd-cache-record-source` sidecars; removed-flag courtesy errors
 (`--crd-catalog-dir`); `--api-version-guess` (deliberate change: the
-advisor's local-cache-scan tier becomes hint-only, per §6.4's authority
-model); `--override-schema` semantics
-(replace-on-`$ref`, override-dir-relative resolution, keep-refs, required
-union); top-level values-key seeding (named policy); global-schema mirroring
-into subcharts; subchart values composition + library-chart scoping +
-`Chart.template.yaml`; `--exclude-tests` (as role filter); extra values
-files; `--infer-required` (legacy policy + new witness-based rules);
-diag text/JSON formats (now versioned); `--trace-output`; defaults-validate
-postcondition (new, but required for §2).
+advisor's local-cache-scan tier becomes hint-only, per §6.6's authority
+model); `--override-schema` semantics (replace-on-`$ref`,
+override-dir-relative resolution, keep-refs, required union); top-level
+values-key seeding (named policy); global-schema mirroring into subcharts;
+subchart values composition + library-chart scoping + `Chart.template.yaml`;
+`--exclude-tests` (as role filter); extra values files; `--infer-required`
+(legacy policy + new witness-based rules); diag text/JSON formats (now
+versioned); `--trace-output`; defaults-validate postcondition (new, but
+required for §2).
+
+**Deliberate output-contract change:** the default emission becomes a
+bundled, self-contained document with internal `$defs` (§6.5); today's
+fully-inlined shape remains available as the flatten export mode. Golden
+fixtures regenerate once for the new default, with the export mode pinned
+against the old fixtures.
 
 ## 14. Open questions (the honest residue)
 
@@ -1161,102 +1144,96 @@ postcondition (new, but required for §2).
    needs a corpus survey of real usage.
 4. **Lockfile format and scope** — per-chart vs per-workspace; interaction
    with mirrors and the negative cache.
-5. **Conditionally-emitted CRD schemas** — template-rendered CRD extraction
-   (§6.3) registers only fully-literal, unconditional `openAPIV3Schema`
-   subtrees; whether per-arm registration under guard predicates is worth
-   the complexity needs corpus data.
+5. **Conditionally-emitted CRD schemas** — extraction registers only
+   fully-literal, unconditional `openAPIV3Schema` subtrees; whether per-arm
+   registration under guard predicates is worth the complexity needs corpus
+   data.
+6. **P1 lowering ergonomics** — how far down the discriminator ladder
+   (`Eq`/`TypeIs` → `Contains` → scalar truthiness) lowering stays
+   readable for schema consumers before the size/UX cost outweighs
+   precision; needs corpus measurement with the differential harness.
 
 ## 15. Implementation roadmap (from the current tree to this architecture)
 
-This section is the concrete route. It is written from the state of the tree
-at the time of writing: single-abstract-interpreter phases 0–2 complete,
-phase 3 in progress, golden corpus green. It is consistent with
-`next-priorities.md`'s ordering philosophy (targeted cleanup on stable
-boundaries first, broad reorganization last) — it just makes the route
-explicit so every incremental step lands on a boundary this document keeps.
+Written from the state of the tree at the time of writing:
+single-abstract-interpreter phases 0–2 complete, phase 3 in progress, golden
+corpus green. Consistent with `next-priorities.md`'s ordering philosophy
+(targeted cleanup on stable boundaries first, broad reorganization last).
 
 ### 15.1 Ordering principles
 
 1. **Shape first, move last.** Do *not* create the target crates and migrate
-   code into them up front — that freezes public APIs around module shapes
-   that are about to change and merely renames the mud. Fix semantics in
-   place behind the existing seams (`IrGenerator`, `K8sSchemaProvider`,
-   `ValuesSchemaGenerator`, `ValueUseSink`, `HttpFetcher`); let target module
-   boundaries emerge; the crate split is then a cheap mechanical final step.
+   code into them up front. Fix semantics in place behind the existing seams
+   (`IrGenerator`, `K8sSchemaProvider`, `ValuesSchemaGenerator`,
+   `ValueUseSink`, `HttpFetcher`); let target module boundaries emerge; the
+   crate consolidation is then a cheap mechanical final step — and v3's
+   target (one engine crate) makes that step *smaller* than v2's.
 2. **Every step deletes its predecessor in the same PR series.** No parallel
-   engines, ever. A step is done when the module it replaces is gone and the
-   golden corpus is green (§12's rule, restated because it governs the whole
-   route).
-3. **Gates before risk.** The measurement/test infrastructure (differential
-   harness, abstained-enrichment budget) lands *before* the steps it gates.
-4. **Parallelize only across seams.** The knowledge layer and the CLI/chart
-   edges are independent of the interpreter and can proceed concurrently;
-   the semantic core is strictly sequential.
+   engines, ever.
+3. **Gates before risk.** The measurement/test infrastructure lands *before*
+   the steps it gates.
+4. **Parallelize only across seams.** Knowledge and the CLI/chart edges are
+   independent of the interpreter; the semantic core is strictly sequential.
 
 ### 15.2 Step 0 — lock in the ratchet (first, independent of everything)
 
 - **Differential harness** (§9.5): `helm template` + `helm lint` over the
   fixture corpus with default and guard-flipping values samples, plus the
-  composed-defaults-must-validate postcondition as a test. This is the §2
-  soundness instrument; every later step proves "strictly more correct" with
-  it instead of arguing.
-- **Security closures** (§3.1's latent issues; small and live): validated
-  `RelPath` newtype at the coordinate→cache-path boundary; gate `file://`
-  and add size/time budgets in `$ref` flattening (`FetchPolicy` seed);
-  `LoadBudget` on tgz extraction.
-- **`[lints] workspace = true`** in every production crate (currently only
-  `clippy-wrapper` inherits the deny set).
+  composed-defaults-must-validate postcondition as a test.
+- **Security closures**: validated `RelPath` at the coordinate→cache-path
+  boundary; gate `file://` and add size/time budgets in `$ref` resolution
+  (`FetchPolicy` seed); `LoadBudget` on tgz extraction.
+- **`[lints] workspace = true`** in every production crate.
 
 ### 15.3 Workstream A — semantic core (the critical path, sequential)
 
-- **A1 — finish interpreter phases 3–4, with the v2 corrections baked in**
-  so no phase is redone: `eval_node` is state-passing with explicit join
-  (`eval_node(node, env, cx) -> EvalEnv`; Go-template `=` vs `:=`, branch
-  out-state joins — §6.2); the value join becomes **Top-absorbing** (today's
-  `choice()`/`merge_all()` drop Unknown — wrong polarity); control flow is
-  modeled on a **minimal internal predicate core** (atoms + `And`/`Not`,
-  else-branches carry `¬P`) projected to flat `Guard`s at the `ValueUse`
-  boundary for compatibility. Deletes: walker control-flow handling, manual
-  scope snapshot/restore.
-- **A2 — helper summaries under the §6.2 contract**: computed under empty
-  path condition and re-guarded at call sites; fingerprints over the
-  env-closed canonical argument; recursion ⇒ Top + poisoned memo + gap.
-  Deletes: the twin helper-body walks, the fragment/helper binding
-  evaluators, and — once resource identity consumes interpreter summaries
-  instead of `helper_evaluate` — the 1,480-line `helper_eval.rs`.
-- **A3 — AbsDoc** (the riskiest single step; gated): `eval_node` builds
-  abstract documents; evidence is derived by projection **feeding the
-  existing `ValueUseSink`**, so downstream is untouched while the artifact
-  changes underneath. Resource identity and `kind: List` descent become
-  projections. Gate: the abstained-enrichment budget (§9.6) — no corpus
-  chart loses a type enrichment vs the current tool; `yaml_shape` survives
-  as an upgrader until the gate passes, then is deleted.
-- **A4 — synthesis (phase 6 fulfilled)**: per-path evidence sets, the
-  polarity-table policy extracted from gen's god-loop into
-  `SynthesisPolicy`, two-tier schema operations (`partialize`,
-  `restrict_to_scalar` as named corpus-tested functions), the predicate
-  algebra replacing flat `Guard` at the IR boundary, `ValueUse` demoted to a
-  DTO/fixture format with no production consumer. Note: the
-  policy-extraction half of A4 does **not** depend on A3 and can start
-  earlier against today's `ValueUse`.
+- **A1 — finish interpreter phases 3–4 with the corrected shapes**:
+  state-passing `eval_node` with explicit join (Go-template `=` vs `:=`,
+  branch out-states); **Top-absorbing** value join; control flow on a
+  minimal internal predicate core (atoms + `And`/`Not`, else-branches carry
+  `¬P`) projected to flat `Guard`s at the `ValueUse` boundary. Deletes:
+  walker control-flow handling, manual scope snapshot/restore.
+- **A2 — helper summaries under the §6.3 contract**: empty-pc summaries
+  re-guarded at call sites; env-closed fingerprints; recursion ⇒ Top +
+  poisoned memo. Deletes: the twin helper-body walks, the fragment/helper
+  binding evaluators, and — once resource identity consumes interpreter
+  summaries — the 1,480-line `helper_eval.rs`.
+- **A3 — internal documents + contract projection** (the riskiest step;
+  gated): `eval_node` builds abstract documents; anchors/identities/
+  constraints are projected **feeding the existing `ValueUseSink`**, so
+  downstream is untouched while the artifact changes underneath. Gate: the
+  abstained-enrichment budget — no corpus chart loses a type enrichment vs
+  the current tool; `yaml_shape` survives as an upgrader until the gate
+  passes, then is deleted.
+- **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
+  guarded constraint graph becomes the seam; polarity-table policy extracted
+  from gen's god-loop into `ResolvePolicy`; two-tier operations
+  (`partialize`, `restrict_to_scalar`) as named corpus-tested functions; the
+  predicate algebra replaces flat `Guard`; P1 conditional lowering lands
+  behind policy with the guard-flipping differentials as its gate;
+  `ValueUse` demoted to a DTO/fixture format with no production consumer.
+  The policy-extraction half does **not** depend on A3 and can start earlier
+  against today's `ValueUse`.
+- **A5 — bundled emission**: switch the default output to the
+  self-contained `$defs` document; keep flatten as export mode; regenerate
+  goldens once (deliberate, documented change).
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
-Independent of the interpreter, separately tested, small enough that
-rewrite-behind-the-seam is safe (each step deletes its predecessor):
-
-- **B1 — planner/executor** (§6.4): pure `plan()` + one `execute()` +
-  `LookupTrace`; collapse both provider monoliths and the chain; prove
-  diagnostics parity by projecting today's `MissingSchema` richness from the
+- **B1 — planner/executor**: pure `plan()` + one `execute()` +
+  `LookupTrace`; collapse both provider monoliths and the chain; diagnostics
+  parity proven by projecting today's `MissingSchema` richness from the
   trace.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
-  expansion (the dominant RSS lever) — do this *before* profiling the new
-  interpreter, so memory blame lands on the right layer.
+  expansion (the dominant RSS lever) — before profiling the new
+  interpreter, so memory blame lands on the right layer. Also the
+  prerequisite for A5's bundling.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data.
-- **B4 — chart-local CRDs and shipped `values.schema.json` as sources**
-  (needs C2's chart-model extraction; the template-rendered CRD projection
-  additionally needs A3's documents).
+- **B4 — chart-local CRDs as a source** (static `crds/`; the
+  template-rendered projection additionally needs A3's documents). Shipped
+  `values.schema.json` is *not* a knowledge source — it lands in A4's
+  resolution as the enforced-constraint intersection.
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 
@@ -1265,29 +1242,31 @@ rewrite-behind-the-seam is safe (each step deletes its predecessor):
   in-process integration tests.
 - **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
   (feeds A4 policy; unlocks B4).
-- **C3 — the crate reorganization to §5.1's layout: last**, once module
-  shapes match their target homes; at that point it is mechanical.
+- **C3 — the crate consolidation to §5.1's layout: last**, once module
+  shapes match their target homes. Under v3 this is mostly *merging*
+  (ast+ir+gen → engine) rather than splitting — strictly easier.
 
 ### 15.6 Dependencies and sync points
 
-A2 → A3 → A4(doc-anchored half); A4(policy half) anytime after Step 0;
-C2 → B4; C3 strictly last. B and C run concurrently with A throughout.
+A2 → A3 → A4(anchor half) → A5; A4(policy half) anytime after Step 0;
+B2 → A5; C2 → B4; C3 strictly last. B and C run concurrently with A.
 
 ### 15.7 Risk register
 
-A1–A2 is the grind and the critical path — everything semantic waits on it.
-A3 is where surprises live (fused-parse fidelity on gnarly corpus charts),
-which is why it is the one step with a hard quantitative gate and a fallback
-(the upgrader). B is the best use of parallel capacity. Explicitly deferred
-to post-parity: `--explain`, the lockfile, a 2020-12 emitter,
-`import-values` modeling, and per-arm registration of guard-conditional CRD
-schemas (§14).
+A1–A2 is the grind and the critical path. A3 is where surprises live
+(fused-parse fidelity), hence the hard quantitative gate and the upgrader
+fallback. A5 changes the product's output shape — flag it, regenerate
+goldens once, keep the export mode pinned against old fixtures. B is the
+best use of parallel capacity. Explicitly deferred to post-parity:
+`--explain`, the lockfile, a 2020-12 emitter, `import-values` modeling,
+per-arm registration of guard-conditional CRD schemas, and P1 lowering
+beyond the discriminator tier (§14).
 
 ### 15.8 Plan-document bookkeeping
 
 `single-abstract-interpreter.md`'s phase 4–6 descriptions encode v1-era
 shapes (sink-only `eval_node`, flat guards, unspecified summary context).
-Amend them to reference the §6.2 corrections — the state-passing signature
+Amend them to reference the §6.3 corrections — the state-passing signature
 with join, Top-absorbing join direction, the minimal predicate core, and the
 summary contract — so the in-flight plan and this document cannot drift
 apart. When a workstream step completes, strike the corresponding row from
