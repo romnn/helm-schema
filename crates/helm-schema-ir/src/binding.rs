@@ -711,11 +711,3 @@ impl FragmentBinding {
         }
     }
 }
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct BoundHelperCallsCacheKey {
-    pub(crate) text: String,
-    pub(crate) current_dot: Option<HelperBinding>,
-    pub(crate) root_bindings: BTreeMap<String, HelperBinding>,
-    pub(crate) fragment_locals: BTreeMap<String, FragmentBinding>,
-}

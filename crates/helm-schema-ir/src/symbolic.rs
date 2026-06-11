@@ -1,20 +1,19 @@
-use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
+use helm_schema_ast::{DefineIndex, HelmAst};
 
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
-use crate::binding::{BoundHelperCallsCacheKey, FragmentBinding, HelperBinding};
-use crate::bound_helper_call_analysis::{
-    analyze_bound_helper_call_with_fragment_locals, analyze_bound_helper_calls_with_fragment_locals,
-};
+use crate::binding::{FragmentBinding, HelperBinding};
+use crate::bound_helper_call_analysis::analyze_bound_helper_call_with_fragment_locals;
 use crate::bound_value_analysis::GetBinding;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
 use crate::helper_binding_eval::bindings_for_helper_arg;
+use crate::helper_inline::plan_exact_helper_inline;
+use crate::helper_summary::HelperSummaryCache;
 use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_node};
 use crate::output_node_context::output_node_context;
@@ -22,16 +21,13 @@ use crate::output_value_analysis::collect_output_value_analysis;
 use crate::output_value_emitter::{ValueUseSink, emit_output_value_analysis};
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::rendered_yaml_context::RenderedYamlContext;
-use crate::resource_detector::AstResourceDetector;
 use crate::static_file_template::{
-    StaticFileTemplate, collect_template_requests, literal_helper_calls,
+    StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls,
 };
-use crate::template_expr_cache::{
-    clear_template_expr_cache, parse_expr_text as parse_cached_expr_text,
-};
+use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 use crate::value_use_postprocess::postprocess_value_uses;
-use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
+use crate::{Guard, IrGenerator, ValueKind, ValueUse, YamlPath};
 
 pub struct SymbolicIrGenerator;
 
@@ -55,7 +51,7 @@ pub struct SymbolicIrContext {
 
 struct SymbolicIrContextInner {
     define_bodies: DefineBodyCache,
-    bound_helper_calls_cache: RefCell<BTreeMap<BoundHelperCallsCacheKey, BoundHelperAnalysis>>,
+    helper_summaries: HelperSummaryCache,
 }
 
 impl SymbolicIrContext {
@@ -65,7 +61,7 @@ impl SymbolicIrContext {
         Self {
             inner: Rc::new(SymbolicIrContextInner {
                 define_bodies: DefineBodyCache::new(defines),
-                bound_helper_calls_cache: RefCell::new(BTreeMap::new()),
+                helper_summaries: HelperSummaryCache::new(),
             }),
         }
     }
@@ -264,36 +260,16 @@ impl<'a> SymbolicWalker<'a> {
                         &mut seen,
                     )
                 });
-                self.static_file_templates_from_helper(&helper_call.name, helper_dot.as_ref())
+                collect_template_requests_from_helper(
+                    &helper_call.name,
+                    helper_dot.as_ref(),
+                    context,
+                )
             };
             for request in requests {
                 self.inline_static_file_template(request);
             }
         }
-    }
-
-    fn static_file_templates_from_helper(
-        &self,
-        name: &str,
-        helper_dot: Option<&FragmentBinding>,
-    ) -> BTreeSet<StaticFileTemplate> {
-        let Some(src) = self.define_body_source(name) else {
-            return BTreeSet::new();
-        };
-        let locals = HashMap::new();
-        let context = self.fragment_eval_context();
-        let mut requests = BTreeSet::new();
-        for expr in parse_action_expressions(src) {
-            let mut seen = HashSet::new();
-            collect_template_requests(
-                &expr,
-                &mut |expr| {
-                    context.fragment_binding_from_expr(expr, &locals, helper_dot, &mut seen)
-                },
-                &mut requests,
-            );
-        }
-        requests
     }
 
     fn inline_static_file_template(&mut self, request: StaticFileTemplate) {
@@ -446,61 +422,32 @@ impl<'a> SymbolicWalker<'a> {
         out
     }
 
-    fn define_body_source(&self, name: &str) -> Option<&str> {
-        self.ir_context.inner.define_bodies.source(name)
-    }
-
-    fn define_body_resource(&self, name: &str) -> Option<ResourceRef> {
-        let body = self.defines.get(name)?;
-        let ast = HelmAst::Document {
-            items: body.to_vec(),
-        };
-        AstResourceDetector::new(self.defines).detect(&ast)
-    }
-
     fn inline_exact_helper_call(&mut self, text: &str) -> bool {
-        let exprs = Self::parse_expr_text(text);
-        if exprs.len() != 1 {
-            return false;
-        }
-
-        let TemplateExpr::Call { function, args } = &exprs[0] else {
-            return false;
-        };
-        if !matches!(function.as_str(), "include" | "template") {
-            return false;
-        }
-        let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
-            return false;
-        };
-        if self.define_body_resource(name).is_none() {
-            return false;
-        }
-
-        let Some(src) = self.define_body_source(name) else {
-            return false;
-        };
-        let token = format!("define:{name}");
-        if self.inline_stack.iter().any(|entry| entry == &token) {
-            return false;
-        }
-        let Some(tree) = self.ir_context.inner.define_bodies.tree(name) else {
+        let Some(plan) = plan_exact_helper_inline(
+            text,
+            self.defines,
+            &self.ir_context.inner.define_bodies,
+            &self.inline_stack,
+        ) else {
             return false;
         };
 
         let current_dot = self.current_dot_binding();
-        let bindings =
-            bindings_for_helper_arg(args.get(1), Some(&self.root_bindings), current_dot.as_ref());
+        let bindings = bindings_for_helper_arg(
+            plan.arg.as_ref(),
+            Some(&self.root_bindings),
+            current_dot.as_ref(),
+        );
         let mut stack = self.inline_stack.clone();
-        stack.push(token);
+        stack.push(plan.token);
         let mut nested =
-            SymbolicWalker::new_with_context(src, self.defines, self.ir_context.clone())
+            SymbolicWalker::new_with_context(plan.source, self.defines, self.ir_context.clone())
                 .with_initial_guards(self.guards.clone())
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
                 .with_helper_bindings(bindings)
                 .with_chart_value_defaults(self.chart_value_defaults.clone());
-        let uses = nested.run(&tree);
+        let uses = nested.run(&plan.tree);
         self.uses.extend(uses);
         true
     }
@@ -547,59 +494,14 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
-        parse_cached_expr_text(text)
-    }
-
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
     fn analyze_bound_helper_calls(&self, text: &str) -> BoundHelperAnalysis {
-        let current_dot = self.current_dot_binding();
-        let root_bindings: BTreeMap<String, HelperBinding> = self
-            .root_bindings
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-        let fragment_locals: BTreeMap<String, FragmentBinding> = self
-            .template_bindings
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-        let key = BoundHelperCallsCacheKey {
-            text: text.to_string(),
-            current_dot: current_dot.clone(),
-            root_bindings: root_bindings.clone(),
-            fragment_locals: fragment_locals.clone(),
-        };
-        if let Some(cached) = self
-            .ir_context
-            .inner
-            .bound_helper_calls_cache
-            .borrow()
-            .get(&key)
-        {
-            return cached.clone();
-        }
-
-        let mut seen = HashSet::new();
-        let context = self.fragment_eval_context();
-        let analysis = analyze_bound_helper_calls_with_fragment_locals(
+        self.ir_context.inner.helper_summaries.analyze_bound_calls(
             text,
-            if self.root_bindings.is_empty() {
-                None
-            } else {
-                Some(&self.root_bindings)
-            },
-            current_dot.as_ref(),
+            &self.root_bindings,
+            self.current_dot_binding(),
             &self.template_bindings,
-            context,
-            &mut seen,
-        );
-        self.ir_context
-            .inner
-            .bound_helper_calls_cache
-            .borrow_mut()
-            .insert(key, analysis.clone());
-        analysis
+            self.fragment_eval_context(),
+        )
     }
 }
 

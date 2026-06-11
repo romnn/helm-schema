@@ -491,13 +491,27 @@ Current result:
 
 ### Phase 5 — helper summaries
 
-Status: **pending**
+Status: **in progress**
 
 Goal:
 
 - summarize helpers through the same node/expression evaluator
 - memoize by helper name + abstract argument + root bindings
 - remove ad hoc helper-bound/default/fragment propagation paths once covered
+
+Current result:
+
+- `helper_summary.rs` owns the bound-helper summary cache and deterministic
+  cache key construction. `SymbolicWalker` no longer builds helper-summary
+  cache keys or calls the recursive helper analyzer directly; it requests a
+  summary for the current root bindings, dot binding, and fragment locals.
+- `helper_inline.rs` owns exact `include`/`template` helper-call recognition
+  and resource-body eligibility checks for manifest-helper inlining. The
+  walker still executes the nested compatibility walk because that depends on
+  current guards, root bindings, and chart-default state.
+- `static_file_template.rs` now owns helper-body `tpl` / `.Files.Get`
+  request discovery. Static-file request extraction is helper analysis, not
+  walker traversal state.
 
 ### Phase 6 — generator simplification
 

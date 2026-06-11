@@ -1,8 +1,9 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::{Literal, TemplateExpr, parse_action_expressions};
 
 use crate::binding::FragmentBinding;
+use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -90,6 +91,28 @@ pub(crate) fn collect_template_requests<F>(
         | TemplateExpr::Variable(_)
         | TemplateExpr::Unknown(_) => {}
     }
+}
+
+pub(crate) fn collect_template_requests_from_helper(
+    name: &str,
+    helper_dot: Option<&FragmentBinding>,
+    context: FragmentEvalContext<'_>,
+) -> BTreeSet<StaticFileTemplate> {
+    let Some(source) = context.define_bodies.source(name) else {
+        return BTreeSet::new();
+    };
+
+    let locals = HashMap::new();
+    let mut requests = BTreeSet::new();
+    for expr in parse_action_expressions(source) {
+        let mut seen = HashSet::new();
+        collect_template_requests(
+            &expr,
+            &mut |expr| context.fragment_binding_from_expr(expr, &locals, helper_dot, &mut seen),
+            &mut requests,
+        );
+    }
+    requests
 }
 
 fn collect_files_get_paths<F>(
