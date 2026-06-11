@@ -1,996 +1,1044 @@
-# helm-schema — from-scratch target architecture
+# helm-schema — from-scratch target architecture (v2)
 
 Status: design document. No code change is implied by this file by itself.
 
 This is the architecture I would build if helm-schema were rewritten today from
-first principles, knowing everything the current implementation has learned the
-hard way. It is deliberately written as a *clean-room* design: it describes the
-ideal decomposition, the domain model, the trait (port) boundaries, and the
-reasoning behind each decision — not a refactoring schedule.
+first principles. It is a *clean-room* design: the current implementation and
+the other plan documents are treated as **evidence** (what worked, what bit
+us, what real charts do), never as constraints.
 
-Relationship to the other plan documents:
+**Revision note.** v2 is the result of an adversarial review of v1 by five
+independent critics (minimalist architecture, program-analysis soundness,
+Helm/K8s domain realism, Rust API/performance, security/evolution pre-mortem)
+plus a first-principles re-derivation. The load-bearing changes from v1:
 
-- `single-abstract-interpreter.md` is the active migration track for the
-  analysis core. This document **absorbs that design unchanged** as the heart
-  of the semantics layer and extends the same thinking to the whole system:
-  chart acquisition, parsing, knowledge lookup, schema synthesis, emission,
-  diagnostics, and testing.
-- `next-priorities.md` correctly warns against broad trait-heavy redesign
-  before stable boundaries are proven. This document does not contradict that:
-  it is the *north star* the targeted cleanups should converge on, so that each
-  incremental step lands on a boundary that survives. A migration
-  correspondence table is included at the end, but sequencing remains owned by
-  `next-priorities.md`.
+1. A **formal correctness contract** now anchors the whole design (§2); every
+   widening/abstention rule is derived from it via a polarity table instead of
+   being re-litigated per call site.
+2. The central analysis artifact is an **abstract document model** (the
+   interpreter builds an abstract rendered manifest per template), not a flat
+   fact stream. Sink attribution, resource identity, `kind: List` descent and
+   K8s anchoring become structural projections instead of side channels.
+3. Guards are a **compositional predicate algebra** over typed places (with
+   `And`/`Or`/`Not`, environment atoms like `semverCompare`, three-valued
+   evaluation) — the flat v1 `Guard` vocabulary could not even represent an
+   `else` branch.
+4. The trait census shrank from ~12 ports to **3** (`Fetch`,
+   `ResourceSchemaOracle`, `CapabilityOracle`); the knowledge layer became a
+   **pure lookup planner + one executor** instead of trait combinators, which
+   also makes "what was tried" diagnostics fall out of the executed plan.
+5. The schema model is **two-tier**: upstream K8s/CRD schemas stay verbatim
+   JSON behind lazy `$ref` documents (no round-trip risk, no materialized
+   expansion — the real RSS lever); the typed, law-bearing algebra covers only
+   what we synthesize from chart evidence.
+6. The input universe widened to what real charts actually are: `files/`
+   manifests reached via `tpl`/`fromYaml`/`mergeOverwrite`, chart-shipped
+   `crds/`, `Chart.yaml` dependency `condition:`/`tags:`, shipped subchart
+   `values.schema.json`, NOTES.txt/tests as text-mode contract sources.
+7. Security became first-class: `FetchPolicy` and `LoadBudget` objects at
+   every network/file/archive edge, and a validated path newtype at the
+   coordinate→path boundary (the review found a live path-traversal shape and
+   an SSRF surface in today's code that v1 would have reproduced).
+8. Assorted Rust corrections: no interner (content-stable `Name`),
+   state-passing environments with explicit join (Go-template `=` vs `:=`),
+   fingerprinted Arc-shared lattice nodes, honest parallelism accounting.
+
+Relationship to other plan documents: `single-abstract-interpreter.md` remains
+the right *seed* for the interpreter and is generalized here (its lattice and
+`Effects` carry over with laws added); `next-priorities.md` keeps ownership of
+sequencing — §12 only records where things land and adds one migration rule.
 
 ---
 
-## 1. The problem, stated from first principles
+## 1. The problem, from first principles
 
 helm-schema answers one question:
 
 > Given a Helm chart, what is the most precise, structurally justified
-> JSON Schema for its `values.yaml` contract?
+> JSON Schema for its values contract?
 
-Decomposing that question reveals the natural domains of the system. Each
-domain has a distinct *kind* of knowledge, a distinct failure mode, and a
-distinct rate of change — which is exactly the criterion for drawing module
-boundaries:
+Decomposing the question yields the system's natural domains. Boundaries are
+drawn where the *kind of knowledge* and the *rate of change* differ:
 
-| Domain | Question it answers | Kind of knowledge | Changes when… |
+| Domain | Question | Knowledge kind | Changes when… |
 |---|---|---|---|
-| **Chart model** | What is this chart made of? | Filesystem / packaging conventions | Helm packaging evolves (OCI, tgz, deps) |
-| **Syntax** | What does this template text *say*? | Grammar | Go-template / YAML syntax evolves (rarely) |
-| **Semantics** | What does this template *mean*? | Helm evaluation semantics | Sprig/Helm function semantics evolve |
-| **Knowledge** | What does Kubernetes expect at this field? | External schema corpora | K8s releases, CRD catalogs, mirrors |
-| **Synthesis** | Given all evidence, what is the contract? | Decision policy / schema algebra | Our inference policy improves |
-| **Emission** | How do we write it down? | JSON Schema dialects, output transforms | Schema drafts, consumer needs |
+| **Chart model** | What is this chart made of? | Helm packaging conventions | Helm packaging evolves (OCI, deps, crds/) |
+| **Syntax** | What does this text say? | Grammars | Go-template/YAML syntax evolves (rarely) |
+| **Semantics** | What does this template mean? | Helm/Sprig evaluation semantics | Helm function semantics evolve |
+| **Knowledge** | What does Kubernetes expect here? | External + chart-local schema corpora | K8s releases, CRD catalogs, mirrors |
+| **Synthesis** | Given all evidence, what is the contract? | Decision policy + schema algebra | Our inference policy improves |
+| **Emission** | How is it written down? | JSON Schema dialects, consumers | Helm 3/4 validators, editors |
 
-Two cross-cutting concerns thread through all of them:
+Two concerns cut across everything: **provenance** (every fact traceable to a
+span and helper chain) and **ambiguity** (unknown and "several alternatives"
+are first-class values at every layer). What was missing until now is the rule
+that tells every layer *which way to lean* when it doesn't know. That rule is
+the correctness contract.
 
-- **Provenance** — every fact must be traceable to the source span and helper
-  chain that produced it, because the project's bar is "diagnosable, never a
-  silent guess".
-- **Ambiguity** — "unknown" and "several alternatives" are first-class values
-  at every layer, never collapsed early. Precision-first means abstention must
-  be representable everywhere, from a tri-state cache lookup to a `Union`
-  abstract value to an `anyOf` schema node.
+## 2. The correctness contract (the spine of the design)
 
-The current implementation contains all six domains, but their boundaries are
-smeared: semantics is split across ~10 parallel evaluators, synthesis re-derives
-semantics from a lossy IR, syntax is parsed three times and loses spans, and
-library logic lives in the CLI crate. The architecture below gives each domain
-one home, one vocabulary, and one owner.
+Fix an environment `E` (Capabilities, KubeVersion, Release, …) and a knowledge
+corpus `K`. For a chart `C` with defaults `D` and user input `U`, Helm
+validates the **coalesced** values `V = coalesce(D, U)` — and Helm's
+coalescing deletes keys the user sets to `null`. The schema's domain is
+coalesced documents. Define:
 
-## 2. What the current implementation teaches us
+- `AccRender(C, E)` — values for which `helm template` succeeds. Non-trivial:
+  deep access through a `null` parent fails rendering; `required`/`fail` fail
+  it explicitly.
+- `AccK8s(C, E, K)` — the subset whose emitted manifests (where identity is
+  resolvable) validate against their resource schemas.
 
-A detailed review of the codebase (≈29K LOC core) surfaces recurring structural
-problems. They are listed here not as criticism — the system is *correct* and
-well-tested — but because each one is an input to the design. A from-scratch
-architecture is only "best" relative to the failure modes it provably removes.
+**Soundness obligation (hard).** For every `E` not refuted by the oracle:
+`AccK8s(C, E, K) ⊆ L(S)` — the generated schema never rejects a working
+configuration.
 
-### 2.1 Semantics is implemented N times
+**Precision objective (soft).** Minimize `L(S) \ AccK8s`; every narrowing must
+be justified by a provenance-carrying piece of evidence.
 
-The IR crate contains at least six overlapping evaluators over the same
-semantic domain ("what value does this expression denote, under these
-bindings?"):
+Two deliberate, *named* weakenings (policies, not silent behavior):
 
-- `expr_eval::eval_expr` → `AbstractValue`
-- `helper_binding_eval::binding_from_expr` → `HelperBinding`
-- `fragment_expr_eval::fragment_binding_from_expr` → `FragmentBinding`
-- `fragment_binding_eval::fragment_binding_from_outer_expr` → `FragmentBinding`
-- `helper_eval::helper_evaluate` → a fourth, literal-only evaluator used solely
-  for apiVersion helpers (1 480 lines)
-- the chart-facts walker in `abstract_eval.rs`
+- **P1 — as-if-used typing.** Plain JSON Schema cannot say "p must be an
+  integer only when guard g holds." Per-path constraints are therefore
+  guard-insensitive projections over the values that flow into reads. The
+  differential harness's guard-flipping samples (§10) are the acceptance gate
+  for this gap.
+- **P2 — typo strictness.** Closing structurally enumerated objects
+  (`additionalProperties: false`) rejects unread keys that `AccRender`
+  technically accepts. Deliberate, diagnosable, and off-switchable.
 
-with **three parallel value lattices** (`AbstractValue`, `HelperBinding`,
-`FragmentBinding`) that each define `paths()`, `choice()`, `apply_to_path()`,
-and lossy conversions between them (`HelperBinding::OutputSet` carries
-metadata; `FragmentBinding::OutputSet` drops it). Helper bodies are walked
-**twice** by near-identical traversals (`helper_value_analysis` vs
-`helper_fragment_output_uses`). Every new Helm semantic (a `with … | default`
-pattern, a `set` mutation, a `toYaml` fragment) must be taught to several of
-these at once; forgetting one is the documented source of repeated bug classes.
+Two mechanical self-obligations: the chart's own composed defaults `D` must
+validate against `S` (checked as a pipeline postcondition, §8.4 — `helm lint`
+enforces exactly this at install time), and shipped subchart schemas must not
+contradict `S` on their prefix (§6.3).
 
-### 2.2 Syntax is lossy, stringly, and parsed three times
+**The polarity table.** Every evidence kind is allowed to err in exactly one
+direction; uncertainty always moves `L(S)` *up* (wider):
 
-`HelmAst` stores control-flow conditions and range headers as **raw strings**
-(`If { cond: String }`), and template actions as opaque text
-(`HelmExpr { text }`), forcing every downstream consumer to re-parse via
-`parse_action_expressions` (mitigated by a thread-local cache). One file is
-parsed by the go-template grammar, its YAML fragments re-parsed by the fused
-grammar, and each action re-parsed again for expressions. **No source spans
-survive** into `HelmAst`, so no diagnostic can point at a file/line, and the
-walker must re-derive positions through a separate, indentation-heuristic YAML
-shape tracker (`yaml_shape.rs`) — a line-shape heuristic at the heart of a
-system whose charter says "parsers over string heuristics".
+| Evidence | May err toward | Because |
+|---|---|---|
+| path existence (a read) | over-approx, but typed `Any` | a spurious path with a narrow type would reject |
+| type evidence (sink schema, `typeIs`, string ops) | under-approx — omit when unsure | omitted type = `Any` = wide |
+| falsey admission (`default`, `with`, guarded reads) | over-approx — admit when unsure | failing to admit a handled `null` rejects |
+| object openness | over-approx openness; close only on proof + P2 | closing is the narrowing move |
+| sink attribution | exact or abstain; abstain ⇒ no resource evidence | a wrong anchor imports wrong constraints |
+| requiredness | drastic under-approx | see §6.2; today's heuristic is provably unsound |
+| branch liveness | unknown ⇒ live | pruning a live branch drops its admissions |
 
-### 2.3 The IR is lossy, so the generator re-derives semantics
+Derived consequences used throughout: `Lookup::Unknown` never prunes and never
+narrows; evidence-source precedence may never *override* (an override can
+violate `D ∈ L(S)`) — disagreement reconciles by widening plus a conflict
+diagnostic; determinism is claimed **given identical oracle answers**, and
+cache state may move output only in the widening direction (reproducibility
+over time is the lockfile's job, §8.5).
 
-`ValueUse { source_expr: String, path, kind, guards, resource }` is the entire
-hand-off between analysis and synthesis. Falsey-state admission, open-object
-facts, fragment provenance, and mutation effects do not survive the hand-off,
-so `helm-schema-gen` reconstructs Helm semantics from the outside:
-`build_root_schema` is a 134-line decision loop juggling six signal sources
-with 15+ interleaved special cases, and precedence rules live as inline `if`
-chains in `resolve_schema_for_value_path` rather than as a policy. The active
-`single-abstract-interpreter.md` plan (Phase 6) already identifies this.
+## 3. What the evidence teaches
 
-### 2.4 Schema synthesis is stringly typed
+### 3.1 From the current implementation (≈29K LOC, reviewed in depth)
 
-Every schema in `helm-schema-gen` and `merge.rs` is a raw `serde_json::Value`:
-construction is `Map::insert("type", …)`, inspection is
-`obj.get("additionalProperties").and_then(Value::as_object)`. There are three
-different definitions of "is this schema scalar?", and the empty object `{}`
-means three different things depending on context (identity, "unknown object",
-exact-empty marker). The merge semantics (union `required`, intersect `enum`,
-structured-beats-map-like) are correct but exist only as code paths — there is
-no algebra that can be property-tested.
+- **Semantics implemented ~6×.** `expr_eval`, `helper_binding_eval`,
+  `fragment_expr_eval`, `fragment_binding_eval`, the 1,480-line literal-only
+  `helper_eval`, and the chart-facts walker — over three near-identical value
+  lattices (`AbstractValue` / `HelperBinding` / `FragmentBinding`) with lossy
+  conversions between them, twin near-duplicate helper-body walks, and manual
+  scope snapshot/restore. Every documented recurring bug class (`with …
+  default` rebinding, helper-bound `set`, `toYaml` fragments, map ranges,
+  empty placeholders) traces to this split: fixing one shape means
+  remembering to update several collectors.
+- **Syntax is lossy and parsed three times**; `HelmAst` stores control-flow
+  headers as raw strings (`If { cond: String }`) and drops all spans, so
+  position-aware diagnostics are impossible, every consumer re-parses action
+  text (mitigated by thread-local caches), and a 900-line
+  indentation-heuristic shape tracker (`yaml_shape.rs`) reconstructs what the
+  parse threw away — a line-shape heuristic at the core of a project whose
+  charter says "parsers over string heuristics".
+- **The IR is lossy, so the generator re-derives semantics**: `ValueUse`
+  drops falsey admissions, openness, fragment provenance and mutations;
+  `helm-schema-gen` rebuilds them in a 134-line god-loop
+  (`build_root_schema`) over stringly `serde_json::Value`, with ~15
+  interleaved special cases, precedence rules scattered as inline
+  conditionals, three competing definitions of "scalar", and a
+  triple-meaning `{}`.
+- **Today's guard model cannot represent an `else` branch.** The walker
+  restores scope and walks alternatives with *no* guard pushed; `not (eq …)`
+  and `or (eq …) .b` are unrepresentable; `with (or A B)` is encoded by a
+  convention downstream consumers must just know.
+- **The knowledge crate is the best part** (real ports, a hard-won tri-state
+  capability oracle) but providers are 400–900-line monoliths with duplicated
+  cache/fetch/layout code, and the per-resource **materialized `$ref`
+  expansion is a dominant RSS term** (temporal: 2s / 177MB).
+- **Library logic is trapped in the CLI.** Chart discovery, vendored-archive
+  extraction, values composition (the two-pass global hoist/mirror), schema
+  overrides, `$ref` flattening and the required-inference glue all live in
+  `helm-schema-cli`, and the nine-stage pipeline exists only implicitly as
+  the body of `run_inner()` — so nothing (tests, tooling, a future LSP) can
+  reuse any of it without depending on the CLI crate.
+- **Two latent security issues** the new design must close by construction:
+  chart-controlled `apiVersion` text flows into cache paths and fetch URLs
+  unvalidated (path-traversal shape), and `$ref` flattening fetches arbitrary
+  `http(s)://` and reads arbitrary `file://` targets from override files with
+  no policy (SSRF / local-file exfiltration into the emitted schema).
+- **Worth preserving:** the tri-state oracle and its offline-safety contract,
+  typed capability-branch preservation, `json-schema-minify` as a standalone
+  Helm-free crate, full-schema-equality golden tests over real charts, and
+  the in-flight `AbstractValue`/`Effects` unification.
 
-### 2.5 The knowledge layer is the best part — and still monolithic
+### 3.2 From the chart corpus (what "a chart" actually is)
 
-`helm-schema-k8s` already has real ports: `K8sSchemaProvider`, `HttpFetcher`,
-`DiagnosticSink`, a tri-state capability oracle with a hard-won
-cache-is-not-an-oracle contract. But each provider is a 400–900 line monolith
-mixing configuration, fetching, two cache layers, `$ref` resolution,
-capability probing, and inference; `write_atomic` and layout checks are
-duplicated across providers; and the `Chain` both composes providers *and*
-implements the capability oracle, so branch selection can't be tested without
-a full chain.
+The fixture corpus falsifies the naive model "a chart = templates/ +
+values.yaml":
 
-### 2.6 Orchestration and library logic are fused
+- **nats** ships its StatefulSet in `files/stateful-set/*.yaml`, reached via
+  `tpl (.Files.Get (printf "files/%s" .file)) | fromYaml`, then
+  `mergeOverwrite`d with `.Values.statefulSet` and JSON-patched. The template
+  file itself contains *no* YAML node.
+- **zalando-postgres-operator / clickhouse / nack** ship the CRDs their own
+  templates instantiate in `crds/` — an authoritative, version-exact schema
+  source the external catalogs often lack.
+- **signoz / bitnami common** decide apiVersions with
+  `and (.Capabilities.APIVersions.Has …) (semverCompare ">=1.19-0"
+  .Capabilities.KubeVersion.Version)` and with **values-overridable**
+  capability shims (`default .context.Values.apiVersions (...)`), returning
+  truthiness as `"true"`/`""` strings through `include`.
+- **Umbrella charts** declare `condition: clickhouse.enabled` / `tags:` in
+  Chart.yaml — declarative boolean evidence and chart-level guards, for free.
+- **bitnami-redis** ships its own `values.schema.json` (Helm validates each
+  chart's coalesced values against its own shipped schema independently),
+  routes ~40 paths through `common.tplvalues.render` (every such path must
+  also admit `string`), and uses `lookup` (cluster state — statically
+  `Unknown` by definition).
+- **values.yaml uses YAML anchors/aliases** (signoz) — the values parser must
+  resolve them or every aliased default is wrong.
+- `required`/`fail` appear as *conditional contract statements*
+  ("externalClickhouse.host is required if not clickhouse.enabled").
 
-Chart discovery, values composition (the two-pass global hoist/mirror),
-schema overrides, `$ref` flattening, and required-inference glue all live in
-`helm-schema-cli`, so nothing can consume them without the CLI crate. The
-9-stage pipeline exists only implicitly as the body of `run_inner()`.
+Each of these is structural — parseable, span-carrying, no text heuristics
+needed — so by the project's charter they belong in the architecture, not a
+backlog.
 
-### 2.7 What is already right (and must be preserved)
+## 4. Design commitments
 
-- The **tri-state capability oracle** and its offline-safety contract.
-- **Typed branch preservation** for `Capabilities.APIVersions.Has` chains
-  (`ResourceRef::api_version_branches`) — exactly the "preserve ambiguity"
-  principle in action.
-- The `json-schema-minify` crate: self-contained, Helm-free, single concern.
-- Full-schema-equality integration tests over real charts.
-- The in-flight `AbstractValue`/`Effects`/`eval_expr` unification.
+1. **One semantic model.** Helm meaning lives in exactly one abstract
+   interpreter. Helper outputs, resource identity, guard extraction, defaults,
+   fragments — all projections of one interpretation.
+2. **Typed and spanned everywhere.** Paths, predicates, coordinates, schemas
+   are domain types; every node and fact carries provenance. Stringly forms
+   exist only at serialization edges, as `Display`/DTO projections.
+3. **Abstention is a value with a direction.** `Found/Absent/Unknown`
+   lookups, `Top`/`Union` values, `Opaque` document regions — and the §2
+   polarity table dictates what each consumer does with them.
+4. **Ports at proven variation points; functions and data everywhere else.**
+   Three traits total (§5). Catalog policy, synthesis policy, widening
+   bounds, probe tables, builtin coverage are *data* interpreted by small
+   engines.
+5. **Untrusted input is budgeted.** Charts, archives, upstream schemas and
+   override files are attacker-controlled inputs; every edge that touches
+   them takes an explicit `FetchPolicy`/`LoadBudget`.
+6. **Parity is part of correctness.** The existing CLI surface and output
+   behaviors are an explicit checklist (§13), not folklore.
 
----
+## 5. System overview
 
-## 3. Design principles → architectural commitments
+### 5.1 Crates
 
-The project charter (structural analysis first; preserve ambiguity; cache is
-never an oracle; everything diagnosable) translates into five concrete
-commitments that shape everything below:
-
-1. **One semantic model.** Helm evaluation semantics exist in exactly one
-   place: a single abstract interpreter (`eval_expr` / `eval_node`) over one
-   value lattice. Resource identity, helper outputs, guard extraction, default
-   tracking, fragment analysis — all are *projections of the same
-   interpretation*, never separate walkers.
-
-2. **Typed and spanned everywhere.** Paths, coordinates, guards, schemas are
-   domain types, not strings or raw JSON. Every syntax node and every derived
-   fact carries a `Provenance`. Stringly representations may exist only at
-   serialization edges.
-
-3. **Abstention is a value.** Lookups return `Found / Absent / Unknown`,
-   abstract values include `Unknown` and `Union`, sink attribution includes
-   `Abstained`. No layer is allowed to turn "I don't know" into a guess; only
-   the synthesis policy layer may *widen*, and it must emit a diagnostic when
-   it does.
-
-4. **Ports at variation points, functions everywhere else.** Traits exist
-   exactly where the system meets something genuinely replaceable: the
-   filesystem/packaging, the parser backend, remote schema corpora, caches,
-   the network, output dialects, and the diagnostics channel. The pure
-   middle — interpretation, synthesis, merging — is plain data and functions.
-   This is "ports and adapters", applied with restraint: a hexagon, not trait
-   soup. (Pure logic behind a trait would add indirection without a second
-   implementation ever existing.)
-
-5. **Policy is data, mechanics are code.** Anything that encodes a *choice*
-   (evidence precedence, widening rules, well-known-kind probe table, version
-   fallback windows) is an explicit, inspectable value handed to a generic
-   mechanism — so choices can be seen, tested, and explained in one place.
-
----
-
-## 4. System overview
-
-### 4.1 Crate graph
-
-```
-                       ┌────────────────────┐
-                       │  helm-schema-core   │  paths, spans, provenance,
-                       │  (pure vocabulary)  │  diagnostics, tri-state Lookup
-                       └─────────┬──────────┘
-          ┌──────────────┬───────┴────────┬─────────────────┐
-          ▼              ▼                ▼                 ▼
- ┌────────────────┐ ┌──────────────┐ ┌──────────────┐ ┌───────────────┐
- │ helm-schema-    │ │ helm-schema- │ │ helm-schema- │ │ helm-schema-  │
- │ syntax          │ │ chart        │ │ knowledge    │ │ values        │
- │ grammar+parser  │ │ chart model  │ │ K8s/CRD      │ │ values.yaml   │
- │ → spanned tree  │ │ + sources    │ │ catalogs     │ │ model + docs  │
- └───────┬────────┘ └──────┬───────┘ └──────┬───────┘ └──────┬────────┘
-         ▼                 │                │                │
- ┌────────────────┐        │                │                │
- │ helm-schema-    │        │                │                │
- │ semantics       │◄───────┘ (templates)    │                │
- │ abstract        │                         │                │
- │ interpreter     │                         │                │
- └───────┬────────┘                          │                │
-         ▼  ChartAnalysis (facts)            │                │
- ┌─────────────────────────────────────────┐ │                │
- │ helm-schema-synthesis                    │◄┘ (impl of its   │
- │ evidence → typed Schema                  │◄── lookup port) ─┘
- └───────┬─────────────────────────────────┘
-         ▼  Schema (typed)
- ┌────────────────┐     ┌─────────────────────┐
- │ helm-schema-    │     │ json-schema-minify   │ (unchanged, Helm-free)
- │ emit            │────►│                      │
- │ draft-07 +      │     └─────────────────────┘
- │ transforms      │
- └───────┬────────┘
-         ▼
- ┌────────────────┐      ┌──────────────────┐
- │ helm-schema     │      │ helm-schema-cli   │ thin: clap → config →
- │ (facade lib)    │◄─────│                  │ facade → stdout/file
- └────────────────┘      └──────────────────┘
-```
-
-Dependency rules (enforced by `Cargo.toml`, checkable in CI):
-
-- `core` depends on nothing in the workspace.
-- `semantics` depends only on `core` + `syntax`. **It performs no I/O and
-  holds no `dyn` dependency** — it is a pure function from parsed chart to
-  facts. This is what makes the heart of the system trivially testable and
-  parallelizable.
-- `synthesis` depends on `core` (+ fact types from `semantics`) and *defines*
-  the lookup port it needs; `knowledge` implements that port. Dependency
-  points inward (hexagonal): the domain owns the interface, the adapter crate
-  satisfies it.
-- `emit` and `chart` are leaf adapters around the pure middle.
-- The facade is the only crate that knows every concrete adapter; the CLI is
-  the only crate that knows `clap`.
-
-### 4.2 Data flow (one pipeline, explicit types between stages)
+Eight product crates (plus `json-schema-minify` and `test-util`, unchanged):
 
 ```
-ChartSource ──► ChartSet ──┬─► per template: parse ──► TemplateTree (spanned, typed)
-                           │
-                           └─► ValuesModel (composed defaults + descriptions)
+helm-schema-grammar     tree-sitter C grammars + build.rs only (lint-exempt build isolation)
 
-TemplateTree* + DefineIndex ──► interpret (eval_node/eval_expr)
-                              ──► ChartAnalysis {
-                                     facts: Vec<Fact>,          // provenance-carrying
-                                     resources: Vec<ResourceIdentity>,
-                                     helper_summaries,           // memoized
-                                  }
+helm-schema-core        vocabulary: Name, ValuePath/DocPath, Span/Provenance/SourceMap,
+                        Lookup<T>, FalseySet, Pred/Place algebra, ResourceCoordinate,
+                        SchemaDoc (foreign JSON, lazy refs), Diagnostics (concrete),
+                        FetchPolicy/LoadBudget, the two oracle traits
+                        [deps: serde, serde_json (opaque payloads only), smol_str]
 
-ChartAnalysis + ValuesModel + dyn ResourceSchemaOracle
-        ──► synthesize ──► Schema (typed) + Vec<Diagnostic>
+helm-schema-analysis    PURE. parse/ (spanned typed TemplateTree; thread-local parser fn)
+                        + interp/ (AbsVal lattice, eval_expr/eval_node, helper summaries,
+                        abstract documents, identity projection)
+                        → ChartAnalysis
+                        [deps: core, grammar, tree-sitter. NO IO, no oracle types]
 
-Schema ──► emit draft-07 ──► SchemaTransform pipeline
-            (override merge → ref flatten → required pass → strip → minify)
-        ──► bytes
+helm-schema-chart       IO: discovery (dir/tgz/memory via vfs + LoadBudget), FileRole
+                        assignment, Chart.yaml model (deps/conditions/tags/kubeVersion),
+                        compose_values, ValuesModel (spans via a maintained YAML parser),
+                        crds/ extraction, shipped values.schema.json collection
+                        [deps: core, vfs, tar/flate2, saphyr-or-equivalent]
+
+helm-schema-knowledge   IO: catalog config as data, pure lookup planner + one executor,
+                        CacheDir (concrete), trait Fetch {Ureq, Mock}, capability oracle,
+                        quarantined apiVersion advisor; implements core's oracle traits
+                        [deps: core, ureq (pinned TLS feature)]
+
+helm-schema-synthesis   PURE. evidence derivation (AbsDoc × oracle co-walk), branch
+                        liveness, decision policy, typed SchemaNode algebra + lowering,
+                        foreign-tier JSON composition rules, emit_draft07
+                        [deps: core, serde_json]
+
+helm-schema (facade)    wiring + Config, parallel fan-out, output passes (override merge,
+                        ref flatten, strip, minify), postcondition validation, lockfile
+                        [thin; golden integration tests live here]
+
+helm-schema-cli         clap → Config (env vars interpreted HERE, not in libraries) →
+                        facade → output/diagnostics/exit codes
 ```
 
-Every arrow is a named type. The pipeline is a value (a struct of stages), not
-a function body — so tests, benchmarks, and future tools (LSP, `--explain`)
-can run any prefix of it.
+Dependency rules with bite (CI-checked via `cargo deny`/metadata):
+`analysis` and `synthesis` have no IO crates and no `dyn` dependencies —
+*that* is the purity boundary; `core` is the only shared parent, so
+`knowledge` builds in parallel with `analysis` and never sees tree-sitter.
+Every crate sets `[lints] workspace = true` (the current workspace forgets
+this, which is how denied lints ship today).
 
----
+**Trait census (complete).** `Fetch` (network edge; Ureq/Mock exist),
+`ResourceSchemaOracle` and `CapabilityOracle` (the pure↔IO seam; real second
+implementations: in-memory fakes and the `--no-k8s-schemas` null oracle).
+Both oracle traits live in `core` so the dependency arrow points inward from
+both sides — v1 placed them in `synthesis`, which would have made the IO crate
+transitively depend on the entire pure stack. Everything that was a port in
+v1 — parser, chart source, emitter, transforms, diagnostics sink, retriever,
+catalogs, layouts, stores — is now a function, a concrete type, or data,
+because no second implementation exists or the variation is data-shaped.
 
-## 5. The crates in detail
+### 5.2 Data flow
 
-### 5.1 `helm-schema-core` — the shared vocabulary
+```
+chart dir/tgz ──chart──► ChartSet {charts, roles, crds, shipped schemas, conditions}
+                              │
+            ┌─────────────────┼──────────────────────────┐
+            ▼                 ▼                          ▼
+      ValuesModel      per template: parse ──► TemplateTree (spanned, typed)
+   (defaults+docs,            │
+    anchors resolved)         ▼  interpret (shared helper-summary memo)
+                        TemplateAnalysis { docs: AbsDoc forest, evidence, gaps }
+                              │ fold (deterministic order)
+                              ▼
+                        ChartAnalysis ──synthesis──► per-path EvidenceSet
+                                          ▲                │ decide(policy)
+        knowledge: plan() → execute() ────┘                ▼
+        (oracles: schemas, capabilities)            SchemaExpr (typed ∪ foreign)
+                                                           │ lower + compose
+                                                           ▼
+                              draft-07 Value ──facade──► override → flatten →
+                              strip → minify → postcondition-validate → bytes
+```
 
-Zero-I/O domain types used by everyone. Small on purpose; nothing here should
-ever need a second implementation, so there are no traits except the
-diagnostics sink.
+Every arrow is a named public type; the facade exposes the stage functions
+individually (that — not a "pipeline object" — is what lets tests, tools and
+a future LSP run any prefix).
+
+## 6. The layers in detail
+
+### 6.1 `core` — vocabulary with the contract baked in
 
 ```rust
-/// A path into the chart's values space (`.Values.…`).
-/// Typed segments end the dotted-string/Vec<String> duality and make
-/// wildcards impossible to confuse with literal keys.
+/// Content-stable small string (≤23 bytes inline, O(1) clone).
+/// No interner exists: Ord/Hash/Serialize derive naturally, ChartAnalysis is
+/// Send + 'static, and golden fixtures serialize by content. (v1's
+/// per-session interner was incoherent: symbol Ord breaks determinism, serde
+/// has no context parameter, and embedders lose 'static.)
+pub type Name = SmolStr;
+
 pub struct ValuePath(SmallVec<[ValueSeg; 4]>);
+pub enum ValueSeg { Key(Name), AnyItem, AnyKey }
+// Display/FromStr define the canonical text form; serde goes through it.
+// Numeric ids (FileId, DocId, HelperId, BindId) exist only for closed
+// per-chart namespaces whose tables travel inside the owning artifact.
 
-pub enum ValueSeg {
-    Key(Interned<str>),
-    AnyItem,        // an element of a ranged sequence
-    AnyKey,         // a key of an open map range
+#[must_use]
+pub enum Lookup<T> { Found(T), Absent /* authoritative */, Unknown /* abstain */ }
+// Combinators (map, and_then, or_unknown) so adapters never hand-roll
+// collapsing matches. Adapter rule: IO errors map to Unknown + diagnostic —
+// never Absent, never panic.
+
+/// Helm truthiness states a path may take while the chart still behaves.
+/// u8 bitset newtype: joined constantly during widening.
+pub struct FalseySet(u8);
+```
+
+**The predicate algebra** — one representation for path conditions, branch
+guards, and capability decisions (replacing v1's three: `Guard`,
+`Alternatives`, `GuardExpr`):
+
+```rust
+pub struct Place { pub base: PlaceBase, pub path: ValuePath }
+pub enum PlaceBase {
+    Values,           // schema-relevant
+    Env(EnvRoot),     // Capabilities/KubeVersion/Release/Chart/Files — evaluated late
+    Local(BindId),    // SSA-numbered local or rebound-dot snapshot
+    Synth(ValueId),   // result of an expression (default-wrapped, merged, …)
 }
 
-/// A path into a rendered manifest document (today's `YamlPath`).
-pub struct DocPath(SmallVec<[DocSeg; 6]>);
-
-pub enum DocSeg { Key(Interned<str>), Item(usize), AnyItem }
-
-/// Where a fact came from: file, byte span, and the include chain that
-/// was active. This is what makes every inference explainable.
-pub struct Provenance {
-    pub span: Span,                       // FileId + byte range
-    pub via: SmallVec<[HelperFrame; 2]>,  // include/template call chain
-}
-
-/// Tri-state result for any lookup against an external corpus.
-/// `Absent` is *authoritative* absence (e.g. confirmed upstream 404);
-/// `Unknown` is abstention (offline miss, no negative record).
-/// Encoding the cache-is-not-an-oracle contract in the type system
-/// makes the round-7/8/10 bug class unrepresentable.
-pub enum Lookup<T> { Found(T), Absent, Unknown }
-
-/// Helm truthiness: which "empty" states a value may take while the
-/// chart still behaves (because `default`/`with`/`if` handle them).
-pub struct FalseySet {
-    pub null: bool,
-    pub empty_string: bool,
-    pub empty_object: bool,
-    pub empty_array: bool,
-    pub boolean_false: bool,
-    pub numeric_zero: bool,
-}
-
-/// Structured, deduplicating diagnostics channel (grown from the
-/// existing helm-schema-k8s sink, with span support added).
-pub trait DiagnosticSink: Send + Sync {
-    fn emit(&self, d: Diagnostic);
+pub enum Pred { True, False, Atom(Atom), Not(PredRef), And(Box<[PredRef]>), Or(Box<[PredRef]>) }
+pub enum Atom {
+    Truthy(Place),                 // Helm emptiness test
+    Eq(Place, ScalarConst),
+    TypeIs(Place, HelmType),
+    NonEmpty(Place),               // range body executes ≥ 1 time
+    ApiVersionsHas(GroupVersion),  // .Capabilities.APIVersions.Has
+    KubeVersionCmp(CmpOp, SemverReq), // semverCompare over .Capabilities.KubeVersion
+    Opaque(SpanId),                // unmodeled condition; valuation Unknown
 }
 ```
 
-Interning: `Interned<str>` is backed by a per-session interner owned by the
-pipeline (no global state), because path segments dominate allocations in the
-current profile and `BTreeSet<String>` churn is the main RSS driver after
-minification.
+`PredRef` is hash-consed (flattened, sorted, deduped at construction), so
+predicates are cheap to share per control-flow frame and stable to
+fingerprint. Evaluation is three-valued (Kleene) under partial assumptions:
+abstract values for value atoms, the environment oracle for `Env` atoms
+(evaluated *late*, in synthesis), and probe assignments like `p := absent`.
+This makes the previously impossible representable and the previously
+heuristic definable:
 
-**What this eliminates:** the stringly `path: String` / `Vec<String>` duality
-(§2.1), guards matched by string equality, the `"*"` / `"__any__"` sentinel
-segments in gen, and positionless diagnostics.
+- `if`/`else if`/`else` arms carry `P₁`, `¬P₁∧P₂`, `¬P₁∧¬P₂` — else branches
+  finally have conditions (today they have none).
+- `with X` pushes `Truthy(place(X))` *and* binds dot to the same `Place`;
+  null-tolerance of `a.b` read under `with .Values.a` is the entailment
+  "`pc` is false when `a := null`" — by construction, not string matching.
+- `null_tolerant(hole)`, `required(p)`, `live(branch)` are defined queries
+  with a small sound entailment table (default answer `Unknown`, resolved by
+  polarity).
 
-### 5.2 `helm-schema-syntax` — parse once, keep everything
-
-Owns the tree-sitter grammars (the existing `helm-schema-template-grammar`
-crate folds in here) and produces the **single** syntax artifact everything
-else consumes:
+**Provenance and diagnostics.**
 
 ```rust
-/// Port: the only place a parser backend is pluggable.
-pub trait TemplateParser {
-    fn parse(&self, file: FileId, src: &str) -> Result<TemplateTree, ParseError>;
-}
+pub struct Provenance { pub span: Span, pub via: SmallVec<[HelperFrame; 2]> }
+pub struct SourceMap { files: Vec<SourceFile> }   // owned by ChartAnalysis
 
-/// Fully-typed, spanned, lossless-enough tree fusing YAML structure
-/// and template structure. Conditions and headers are parsed
-/// expressions, not strings. Every node has a span.
+/// Concrete deduplicating handle (today's k8s sink generalized + spans).
+/// Not a trait: one implementation, ordered by key => deterministic under
+/// parallelism. JSON output is a versioned envelope (machine interface).
+pub struct Diagnostics(Arc<Mutex<BTreeMap<DiagKey, Diagnostic>>>);
+```
+
+The pure crates never push diagnostics; they record gaps/conflicts **as
+data** in their outputs, and the facade projects diagnostics from them. (This
+resolves v1's contradiction between "semantics emits a diagnostic" and
+"semantics holds no `dyn`".)
+
+**Security objects** (threaded to every untrusted edge):
+
+```rust
+pub struct FetchPolicy {  // schemes/hosts allowlist, deny link-local & loopback,
+                          // per-fetch size & time budget, max $ref depth & doc count
+}
+pub struct LoadBudget {   // archive: max entries, max decompressed bytes;
+                          // parse: max file size; interp: node/step budget
+}
+/// Validated at construction: no '..', no absolute, segments ⊆ [a-z0-9._-].
+/// The ONLY type the cache/url layer accepts — coordinates are
+/// attacker-controlled chart text.
+pub struct RelPath(String);
+```
+
+**Oracle ports** (the pure↔IO seam; both implemented by `knowledge`, both
+trivially fakeable):
+
+```rust
+pub trait ResourceSchemaOracle: Send + Sync {
+    /// Foreign JSON document with lazy refs — NOT a typed schema. The lift
+    /// into anything typed is synthesis's job (it owns the conservative
+    /// fallback). Carries the resolved version for diagnostics.
+    fn resolve(&self, c: &ResourceCoordinate) -> Lookup<Arc<SchemaDoc>>;
+}
+pub trait CapabilityOracle: Send + Sync {
+    fn has_api(&self, gv: &GroupVersion) -> Lookup<bool>;
+    fn kube_version(&self) -> Lookup<KubeVersion>;   // from --k8s-version / Chart.yaml
+}
+```
+
+`SchemaDoc` lives in core (both sides name it): root + local definitions over
+`Arc<serde_json::Value>` subtrees, refs resolved lazily during descent with a
+cycle set — never materialized. Discipline rule: JSON in core is an opaque
+payload; all query functions over it live in synthesis.
+
+### 6.2 `analysis` — parse once, interpret once
+
+**Parsing.** `pub fn parse(file: FileId, src: &str, mode: ParseMode) ->
+Result<TemplateTree, ParseError>` — a function, not a trait (tree-sitter's
+`Parser` is `!Sync`; a `&self` port could not even be implemented honestly).
+One parse per file. The tree is fully typed and spanned; control-flow headers
+arrive as parsed expressions; `Unknown` nodes (with spans) are the explicit
+degradation for unparseable regions. A failed parse of one file is **per-file
+recoverable**: the file contributes an `Opaque` analysis plus a gap record;
+the chart fails only if nothing parses (CLI `--strict` upgrades gaps to
+failures).
+
+```rust
 pub enum TemplateNode {
-    Document { items: Vec<TemplateNode>, span: Span },
-    Mapping  { entries: Vec<MappingEntry>, span: Span },
-    Sequence { items: Vec<TemplateNode>, span: Span },
-    Scalar   { text: Interned<str>, style: ScalarStyle, span: Span },
-    Action   { expr: Expr, trim: TrimMode, span: Span },          // {{ … }}
-    If       { arms: Vec<(Expr, Vec<TemplateNode>)>,
-               else_arm: Option<Vec<TemplateNode>>, span: Span },
-    With     { header: Expr, body: Vec<TemplateNode>,
-               else_arm: Option<Vec<TemplateNode>>, span: Span },
-    Range    { binding: RangeBinding, header: Expr,
-               body: Vec<TemplateNode>,
-               else_arm: Option<Vec<TemplateNode>>, span: Span },
-    Define   { name: Interned<str>, body: Vec<TemplateNode>, span: Span },
-    Comment  { text: String, span: Span },
+    Document { items: Vec<NodeId> },
+    Mapping  { entries: Vec<(KeyNode, NodeId)> },
+    Sequence { items: Vec<NodeId> },
+    Scalar   { text: Name, style: ScalarStyle },
+    Action   { expr: Expr, trim: TrimMode },
+    If       { arms: Vec<(Expr, Block)>, else_arm: Option<Block> },
+    With     { header: Expr, body: Block, else_arm: Option<Block> },
+    Range    { binding: RangeBinding, header: Expr, body: Block, else_arm: Option<Block> },
+    Define   { name: Name, body: Block },
+    Unknown  { reason: ParseGap },
 }
-
-pub struct RangeBinding { pub key: Option<Name>, pub value: Option<Name> }
+// spans + file ids in a side table keyed by NodeId; YAML anchors/aliases are
+// resolved by the builder or degrade to Unknown — never silently dropped.
 ```
 
-`Expr` is today's `TemplateExpr` (which is already good), with spans attached
-and `Unknown(String)` retained as the explicit "syntax we don't model" escape
-hatch.
+`ParseMode` comes from the chart layer's `FileRole` (§6.3): **manifest mode**
+(fused YAML+template) vs **text mode** (template-only: NOTES.txt, config file
+fragments) — text mode yields reads/predicates/aborts but no document and no
+sinks.
 
-Construction detail (an adapter concern, invisible behind the port): the
-go-template grammar parses the action/control skeleton and the fused grammar
-parses YAML-with-actions; the builder fuses them **once per file** into
-`TemplateTree`. The contract upward is what matters:
-
-- one parse per file, ever — no downstream re-parsing, no expression caches;
-- control-flow headers arrive parsed (`Expr`), killing the §2.2 re-parse class;
-- spans survive, enabling provenance and real error messages;
-- where the source is genuinely unparseable, nodes degrade to explicit
-  `Unknown`/error nodes with spans — never silently dropped.
-
-`values_comments` (the values.yaml description extractor) moves to
-`helm-schema-values` (§5.4) since it parses values files, not templates.
-
-**What this eliminates:** triple parsing, `template_expr_cache`,
-stringly `cond`/`header`, spanless diagnostics — and, most importantly, it
-removes the *need* for `yaml_shape.rs`'s indent-heuristic shape tracking,
-because YAML structure around each action is now in the tree (see §5.5 on
-sink attribution for the honest caveats).
-
-### 5.3 `helm-schema-chart` — the chart object model
-
-What a chart *is*, divorced from where it came from:
+**The value lattice** — one type, with laws:
 
 ```rust
-/// Port: chart acquisition. Adapters: directory, .tgz archive,
-/// in-memory (tests); future: OCI registry, URL.
-pub trait ChartSource {
-    fn load(&self) -> Result<RawChart, ChartError>;
-}
-
-pub struct ChartSet {
-    /// Root + recursively discovered dependencies, each carrying its
-    /// values prefix (alias-aware), library flag, templates, helpers,
-    /// extra file sources (`.Files.Get`), and Chart.yaml metadata.
-    pub charts: Vec<ChartContext>,
+#[derive(Clone)]                       // O(1): Arc + 128-bit structural fingerprint
+pub struct AbsVal(Arc<VNode>);
+struct VNode { fp: Fp128, kind: VKind }
+enum VKind {
+    Top,                               // any Helm value; join-absorbing
+    Root,                              // the chart root object $
+    Ref(Place),                        // symbolic contents of a place
+    Scalar(ScalarAbs),                 // type flags + known consts (capped, then ConstTop)
+    Object { entries: BTreeMap<Name, AbsVal>, rest: Rest }, // Rest::Closed | Open(AbsVal)
+    Array  { item: AbsVal, prefix: Box<[AbsVal]> },
+    Fragment(FragId),                  // a rendered abstract-document fragment
+    Union(Box<[AbsVal]>),              // canonical: fp-sorted, deduped, flat, no Top, len ≥ 2
 }
 ```
 
-The existing VFS approach (physical FS + in-memory FS for extracted archives)
-is kept — it is already the right abstraction — but moves out of the CLI so
-any consumer (tests, a future LSP, a CI bot) can load charts without clap.
+- `Object{rest}` **subsumes** v1's separate `Overlay` (open rest = fallback),
+  deleting a normalization class.
+- Join is defined on canonical forms (associative/commutative/idempotent —
+  property-tested), and **`Top` absorbs**. Today's evaluators *drop* Unknown
+  from choices, which silently converts "x or something unknown" into "x" —
+  the wrong direction whenever a consumer derives exclusivity (e.g. treating
+  a key set as exhaustive). Positive evidence (reads) is harvested into the
+  evidence channel when the operand was evaluated; nothing is lost by
+  absorbing.
+- **Widening is specified, not vibes**: recursive `include` ⇒ `Top` + gap
+  record + memo poisoning for the cycle; `range` bodies with mutation ⇒
+  re-execute the body transfer to env-fixpoint, widening changed entries
+  after k iterations; const-set and union-width caps. All bounds are policy
+  data.
 
-Values *composition* (the two-pass global hoist/mirror that encodes Helm's
-runtime behavior) becomes a pure, named, unit-tested function here:
+**The environment** — a value with state-passing and explicit join (v1's
+`&EvalEnv` signature could not express Go-template semantics: `=` assigns in
+the *defining* scope and persists past `end`; branches require joining
+out-states):
 
 ```rust
-pub fn compose_values(set: &ChartSet, opts: &ValuesCompositionOptions)
-    -> ComposedValues;   // typed YAML tree + per-chart prefixes
-```
+pub fn eval_expr(expr: &Expr, env: &EvalEnv, cx: &mut Cx) -> AbsVal;
+pub fn eval_node(node: NodeId, env: EvalEnv, cx: &mut Cx) -> EvalEnv;
 
-**What this eliminates:** library-tier chart logic trapped in the CLI (§2.6),
-and the implicit coupling between discovery, composition, and the global
-mirroring step buried in `run_inner`.
-
-### 5.4 `helm-schema-values` — the values model
-
-Small crate for the *documentation and defaults* side of the contract:
-
-- parse composed `values.yaml` (+ extra values files) into a typed
-  `ValuesModel`: per-`ValuePath` default values (with YAML provenance) and
-  descriptions (the existing comment extractor, including `@param` and
-  helm-docs conventions);
-- enforce the existing invariant *in the type system*: a `ValuesModel` entry
-  can contribute **defaults and metadata only** — it is not a `Fact` and
-  cannot create paths or types on its own. Synthesis consumes it through a
-  separate parameter, so the invariant "comments never influence inference"
-  is structural, not disciplinary.
-
-### 5.5 `helm-schema-semantics` — the one interpreter
-
-This is `single-abstract-interpreter.md`, promoted to its own crate and to the
-*only* implementation of Helm meaning. The core shape is exactly the one that
-plan specifies:
-
-```rust
-pub fn eval_expr(expr: &Expr, env: &EvalEnv) -> EvalOutcome;
-pub fn eval_node(node: &TemplateNode, env: &EvalEnv, cx: &mut InterpretCx);
-
-pub struct EvalOutcome { pub value: AbstractValue, pub effects: Effects }
-```
-
-with the single lattice (variants per the active plan: `Unknown`, `Root`,
-`Values(ValuePath)`, `Scalar(AbstractScalar)`, `Object`, `Array`,
-`Fragment`, `Overlay`, `Union`) and `Effects` as the only fact carrier.
-Architectural refinements on top of that plan:
-
-**(a) The environment is a value, not mutable walker state.**
-
-```rust
-/// Immutable; control flow produces child environments. `set` and
-/// `$x = …` mutations produce a *new* env threaded forward in source
-/// order. This deletes the manual snapshot/restore protocol in
-/// walker.rs (the "add a field, forget to restore it" hazard) by
-/// construction.
-pub struct EvalEnv {
-    dot: AbstractValue,
-    root: AbstractValue,
-    locals: ScopeChain,            // persistent map, O(1) child scopes
-    guards: GuardStack,            // active control-flow predicates
+impl EvalEnv {  // Arc-linked tiny frames; scopes are shallow — no HAMT crates
+    pub fn child(&self) -> EvalEnv;
+    pub fn declare(&self, n: Name, v: AbsVal) -> EvalEnv;     // :=
+    pub fn assign(&self, n: &Name, v: AbsVal) -> EvalEnv;     // =  (defining scope)
+    pub fn join(&self, other: &EvalEnv) -> EvalEnv;           // ptr_eq fast paths
 }
 ```
 
-**(b) Sink attribution is a structural query, with explicit abstention.**
-Where a render-use lands in the manifest is computed from the spanned
-`TemplateTree`'s YAML ancestry plus a small set of *typed* fragment rules
-(`nindent`-under-a-key ⇒ child fragment; block scalar ⇒ opaque string sink;
-key position ⇒ dynamic-key fact, not a path). This replaces incremental
-line-ingestion shape tracking. Honesty clause: templated YAML can defeat
-structural attribution (an action emitting half a key, adjacent scalar
-splicing). Those cases produce
+Conditional mutation joins as a *guarded* entry (predicate-tagged union),
+which the polarity table licenses collapsing toward over-approximation when a
+flat answer is required; must-style facts (key definitely present) take the
+meet. Effects accumulate into `cx` (not returned per node — allocation
+discipline), with `cx.capture(|cx| …)` scoping at summary boundaries.
+
+**The central artifact: abstract documents.** The interpreter does not emit
+"facts about a tree someone else tracks" — for each manifest-mode template it
+*builds the abstract rendered manifest*:
 
 ```rust
-pub enum SinkSite {
-    Exact { doc: DocId, path: DocPath, role: SinkRole },
-    Abstained { doc: DocId, reason: AttributionGap, span: Span },
+pub enum AbsDoc {
+    Map  { entries: Vec<(KeyForm, AbsDoc)> },
+    Seq  (Vec<AbsDoc>),
+    Lit  { text: Name, style: ScalarStyle },
+    Hole { value: AbsVal, shape: RenderShape },          // {{ expr }} at a value position
+    Cond { arms: Vec<(PredRef, AbsDoc)> },               // if/with incl. else arms
+    Iter { source: AbsVal, binder: IterBinder, body: Box<AbsDoc> },
+    Splice { frag: FragId, indent: IndentContract },     // toYaml / include output
+    StrRegion(Vec<StrPart>),                             // block scalars, partial tokens
+    Opaque { gap: AttributionGap, reads: Box<[ReadId]> },
+    Docs (Vec<AbsDoc>),                                  // --- multi-document
 }
+pub enum KeyForm { Lit(Name), Dyn(AbsVal) }              // {{ $k }}: v
 ```
 
-— an abstained site still records the read (so the path exists in the schema)
-but contributes no resource-schema evidence, and emits a diagnostic. This is
-the project's "prefer ambiguous over wrong" principle applied to the one place
-the current code is still heuristic.
+This single structure makes the formerly hardest problems *constructors or
+projections*:
 
-**(c) Helpers are summaries from the same interpreter.**
-`include`/`template` evaluates the helper body with `eval_node` under an env
-derived from the (abstract) argument, memoized by
-`(HelperId, fingerprint(arg_value))`, with a recursion guard. The summary is
-`EvalOutcome` — value *and* effects — so reads, mutations, defaults, fragment
-provenance, and guards all propagate through one mechanism. The 1 480-line
-literal-only `helper_eval.rs` disappears: an apiVersion helper is just a
-summary whose value is `Scalar { known_strings }` or a `Union` with
-capability-guard effects.
+- **Sink attribution** = the spine from root to a `Hole`; its path condition
+  = conjunction of `Cond` arms on the spine (stored once per node, not
+  snapshotted per fact). Exactness has a checkable contract: action is a
+  complete YAML event; ancestors literal or resolved-dynamic; **splice indent
+  contracts verified against syntactic position, not trusted**; block-scalar
+  interiors are *exact string sinks* (positive `string` evidence, per
+  polarity); document membership decidable. Anything else is `Opaque{gap}` —
+  reads recorded, path exists as `Any`, no resource evidence, one gap record.
+- **Resource identity** = projecting top-level `apiVersion`/`kind` entries
+  through `Cond`/`Splice` into a guarded decision list `Vec<(PredRef,
+  Ident)>` — the same predicates as everywhere (v1's separate
+  `Alternatives<T>` is deleted). Because identity is a projection over the
+  *abstract value of the document*, a template whose entire body is
+  `{{ include "nats.loadMergePatch" … }}` resolving to a file-fragment
+  StatefulSet gets a real identity — syntax-level detection cannot do this.
+- **`kind: List`** = matching `items` under the projection and rebasing
+  spines. **Multi-doc and per-iteration documents** (`range` around `---`)
+  get `DocId = (FileId, doc-index, IterCtx)` with `AnyItem` abstraction.
+- **K8s anchoring** = synthesis co-walks `AbsDoc` with the oracle's schema
+  document — no byte cursors, no line ingestion.
 
-**(d) Resource identity is a projection, not a detector.**
-Per document: evaluate the top-level `apiVersion:` / `kind:` entries with the
-same interpreter, then *project* the result:
+The honest caveat survives from v1, now measurable: the fused grammar's
+fidelity on templated YAML decides the `Opaque` rate. The migration gate is
+an **abstained-type-enrichment budget** — no corpus chart may lose a single
+type enrichment relative to the current tool — and the current
+`yaml_shape` tracker may live on as an *upgrader* (`Opaque → exact` only when
+consistent with structural evidence), never as a silent primary.
 
-```rust
-pub struct ResourceIdentity {
-    pub kind: Alternatives<Interned<str>>,
-    pub api_version: Alternatives<Interned<str>>,
-    pub span: Span,
-}
+**Builtins are a table, not code sprawl.** Every Helm/Sprig function gets a
+row: transfer function, evidence emitted, or principled abstention. Load-
+bearing rows: `default` (admits `FalseySet` of the *tested, pre-transform*
+place — over-approximate when the transform's falsey inverse image is
+unknown), `set/unset/merge/mergeOverwrite` (env mutation + openness facts),
+`toYaml/tpl-on-literal/include` (fragments with provenance), `tpl` on
+non-literal ⇒ `Top` + gap, `lookup` ⇒ `Top` by definition (cluster state)
+with an origin record, `.Files.Get` with statically resolvable path ⇒ parse
+that file as a fragment document (the chart set is a pure input — the nats
+pattern), `required`/`fail` ⇒ **abort evidence** `{place, pc, message}`,
+`semverCompare`/capability shims ⇒ `Env` atoms, string ops ⇒ string-typed
+with provenance.
 
-/// A guarded alternative tree — the generalization of today's
-/// `api_version_branches`. Preserves `Capabilities.APIVersions.Has`
-/// chains (and any future structurally-decoded guard) without
-/// flattening mutually-exclusive branches into peer candidates.
-pub enum Alternatives<T> {
-    One(T),
-    Branched(Vec<(GuardExpr, Alternatives<T>)>),
-    AnyOf(BTreeSet<T>),
-    Unknown,
-}
-```
+**Helper summaries** — same interpreter, memoized, with a soundness contract
+v1 lacked: computed under **empty path condition** and re-guarded at the call
+site (no guard contamination across memo hits); keyed by
+`(HelperId, Fp128)` where the fingerprint is taken over the **env-closed,
+canonicalized** argument (a `Ref` into mutable values state is closed against
+the current overlay, or the key includes a values-epoch); the summary is
+`{ value, doc_fragments, evidence, env_delta }` and `env_delta` composes into
+the caller conditionally under the call-site predicate. Recursion ⇒ `Top` +
+poisoned memo + gap. The define namespace is **global across the chart set**
+with Helm's parse-order-wins collision rule reproduced deterministically and
+a diagnostic on differing-body collisions; a helper's values-prefix view is a
+property of its *argument environment*, never of its defining chart (this is
+what keeps per-chart analysis compositional under signoz-style cross-chart
+helpers). File templates are indexed under their Helm path names so
+`include (print $.Template.BasePath "/configmap.yaml")` resolves;
+`$.Template.*` are evaluable constants.
 
-`kind: List` envelopes are handled here too: identity projection descends
-`items[*]`, yielding per-item identities with rebased `DocPath`s — the
-already-landed behavior, expressed as part of one analysis instead of a
-byte-cursor side channel.
-
-**(e) The output is facts, not `ValueUse`.**
+**Output:**
 
 ```rust
 pub struct ChartAnalysis {
-    pub facts: Vec<Fact>,
-    pub resources: Vec<(DocId, ResourceIdentity)>,
-    pub helper_call_graph: HelperCallGraph,
-}
-
-pub enum Fact {
-    RenderUse   { path: ValuePath, sink: SinkSite, shape: RenderShape,
-                  guards: Vec<Guard>, prov: Provenance },
-    FragmentUse { path: ValuePath, sink: SinkSite, prov: Provenance },
-    Default     { path: ValuePath, admits: FalseySet, prov: Provenance },
-    TypeEvidence{ path: ValuePath, hint: SchemaTypeHint, origin: HintOrigin,
-                  prov: Provenance },
-    Guarded     { path: ValuePath, predicate: Predicate, prov: Provenance },
-    Mutation    { target: ValuePath, key: Interned<str>, prov: Provenance },
-    OpenObject  { path: ValuePath, why: OpenObjectReason, prov: Provenance },
-    Iterated    { path: ValuePath, item_shape: IterShape, prov: Provenance },
+    pub docs: Vec<(DocId, AbsDoc)>,
+    pub identities: Vec<(DocId, Vec<(PredRef, Ident)>)>,
+    pub evidence: Vec<EvidenceRecord>,   // non-document-anchored: aborts, type
+                                         // evidence from string ops, admissions,
+                                         // openness facts — each with pc + provenance
+    pub gaps: Vec<Gap>,                  // parse, attribution, recursion, budget
+    pub preds: PredTable, pub sources: SourceMap, pub helpers: HelperTable,
 }
 ```
 
-`Guard` keeps today's well-designed predicate vocabulary (`Truthy`, `Not`,
-`Eq`, `Or`, `Range`, `With`, `Default`, `TypeIs`) over `ValuePath` instead of
-`String`. Facts carry everything synthesis needs **so synthesis never
-re-derives Helm semantics** — this is Phase 6 of the active plan, made the
-permanent contract. A `ValueUse` compatibility projection
-(`fn value_uses(&ChartAnalysis) -> Vec<ValueUse>`) exists during migration
-and for the serialized debug output, then becomes a test fixture format only.
+Purity contract (CI-enforced): no IO deps, no `dyn`, deterministic — a
+100-run byte-identical property test is part of the crate's acceptance
+criteria. Serialization rule: derived serde on internal graphs is forbidden;
+the only serialized analysis artifact is a flat DTO projection (which doubles
+as the migration-era `ValueUse` fixture format).
 
-**Purity contract:** this crate does no I/O, takes no `dyn` dependencies, and
-is deterministic. Capability guards are *preserved*, never *evaluated* here —
-evaluation needs the knowledge layer and happens downstream. That keeps the
-interpreter runnable offline and per-template parallel (it is a pure fold).
+### 6.3 `chart` — the chart object model (IO)
 
-**What this eliminates:** all of §2.1 — the six evaluators, three lattices,
-twin helper walks, callback indirection, `is_fragment_expr` text sniffing
-(fragmentness comes from the typed `RenderShape` of the evaluated value),
-manual scope snapshots, and the source-order-fragile `chart_value_defaults`
-side channel (mutation facts are ordered effects).
+What a chart *is*: discovery over `vfs` (directory, `.tgz` into MemoryFS —
+which structurally prevents zip-slip onto the real filesystem; keep that
+property — under a `LoadBudget`), dependency aliasing and recursion, and:
 
-### 5.6 `helm-schema-knowledge` — corpora behind tri-state ports
+- **`FileRole` assignment** — `Manifest | Notes | Test | Partial |
+  FileFragment | Crd | ShippedSchema`, by packaging rules. Roles drive parse
+  mode and policy (`--exclude-tests` becomes a role filter); `files/**` are
+  parseable fragment sources, not opaque bytes; `crds/` are plain YAML by
+  Helm's rules (never templated).
+- **Chart.yaml model** — dependencies with `alias`, **`condition:` paths and
+  `tags:`** (each condition contributes boolean type evidence *and* a
+  chart-level predicate conjoined onto every fact from that subchart; `tags`
+  and `global` are reserved root keys the schema must always admit),
+  `kubeVersion` constraints (an input to the capability oracle), and
+  `import-values`/`export-values` — modeled if trivial, otherwise the
+  affected subtree abstains with a structured gap (silence here would mean
+  silently wrong prefixes).
+- **`compose_values`** — the two-pass global hoist/mirror as a pure named
+  function over typed YAML (parsed with a maintained, span-preserving YAML
+  crate; `serde_yaml` is unmaintained and span-less). Anchors/aliases
+  resolved. JSON values files accepted.
+- **`ValuesModel`** — per-path defaults (with spans) and descriptions
+  (`@param`, helm-docs conventions). Invariant, stated precisely this time:
+  values files contribute defaults, descriptions, and **top-level key
+  existence** (an explicit, named policy — today's behavior, which v1's
+  "metadata only" wording accidentally contradicted) — never types, shapes,
+  nullability or requiredness for nested paths.
+- **Chart-local knowledge extraction** — `crds/` parsed into an in-memory CRD
+  index (every served version), shipped `values.schema.json` collected per
+  chart. Both feed §6.4/§6.5.
 
-The current crate's trait-based bones are kept and the monoliths are decomposed
-into a small set of orthogonal pieces. Key insight from the review: the K8s
-provider and the CRD provider differ only in **catalog layout** (how a
-coordinate maps to a file/URL) and **version policy**; everything else
-(fetch-on-miss, atomic write, mem/disk caching, negative cache, layout check)
-is duplicated. So:
+### 6.4 `knowledge` — planner/executor over data-described sources
+
+v1's catalog traits + decorator combinators are gone. Policy is data; the
+mechanism is two functions. (Decorator stacks also made the most subtle
+policy — version-major vs mirror-major probing — an invisible nesting
+property, and scattered "what was tried" across layers.)
 
 ```rust
-/// Typed coordinate; parsed once at the boundary, never re-split.
-pub struct ResourceCoordinate {
-    pub group: Option<Interned<str>>,
-    pub version: Interned<str>,
-    pub kind: Interned<str>,
+pub struct SourceSpec { pub id: SourceId, pub base: Base /* Url | Dir */,
+                        pub kind: SourceKind, pub priority: u8 }
+pub enum SourceKind {
+    K8sBundle  { versions: VersionChain },     // explicit + auto-fallback window
+    CrdCatalog { loose: bool },                // loose ⇒ cross-version scan + hint
+    LocalDir,                                  // override layer; never wiped
+    ChartCrds(Arc<ChartCrdIndex>),             // §6.3 — in-memory, version-exact
 }
 
-/// Port the synthesis layer consumes (defined in synthesis, see §5.7;
-/// implemented here). Tri-state by construction.
-impl ResourceSchemaOracle for CatalogChain { … }
+pub struct Probe { pub source: SourceId, pub rel: RelPath,   // RelPath: validated newtype
+                   pub url: Option<Url>, pub version: Option<K8sVersion> }
 
-/// Internal ports of this crate:
-pub trait ArtifactFetcher: Send + Sync {           // network edge
-    fn fetch(&self, url: &Url) -> Result<FetchOutcome, FetchError>;
-}
-pub enum FetchOutcome { Ok(Vec<u8>), NotFound /* authoritative 404 */ }
+/// Pure: the exact probe order is an explicit, unit-testable sort.
+pub fn plan(c: &ResourceCoordinate, cfg: &CatalogConfig, inv: &StoreInventory) -> Vec<Probe>;
 
-pub trait ArtifactStore: Send + Sync {             // disk/mem cache edge
-    fn get(&self, key: &ArtifactKey) -> Option<Arc<[u8]>>;
-    fn put(&self, key: &ArtifactKey, bytes: &[u8]);
-    fn negative(&self, key: &ArtifactKey) -> bool;     // recorded 404s only
-    fn record_negative(&self, key: &ArtifactKey);
-}
-
-/// One generic catalog engine instead of two provider monoliths.
-/// K8s vs CRD vs local-override differ only in their `CatalogLayout`.
-pub struct RemoteCatalog<L: CatalogLayout> {
-    layout: L,                       // coordinate → relative path/URL
-    sources: Vec<SourceId>,          // default + mirrors, in priority order
-    fetcher: Arc<dyn ArtifactFetcher>,
-    store: Arc<dyn ArtifactStore>,
-    diags: Arc<dyn DiagnosticSink>,
-}
-
-pub trait CatalogLayout {
-    fn locate(&self, c: &ResourceCoordinate) -> Vec<RelativePath>; // candidates
-    fn layout_marker(&self) -> LayoutVersion;                      // cache contract
-}
+/// The ONLY place the cache-is-not-an-oracle rule lives:
+/// mem → disk → negative-marker → fetch (NetMode permitting); a negative
+/// record is only constructible from a NotFound404 witness; persist failure
+/// degrades to Unknown (never Found); Absent only when every relevant probe
+/// answered authoritatively. Returns the executed trace.
+pub fn execute(plan: &[Probe], store: &CacheDir, fetch: &dyn Fetch,
+               mode: NetMode, policy: &FetchPolicy) -> (Outcome, LookupTrace);
 ```
 
-Composition replaces inheritance-by-bloat — each policy is a ~100-line
-combinator over the same `SchemaCatalog` interface:
+- **Diagnostics are a projection of `LookupTrace`** — `MissingSchema` with
+  versions tried, mirrors consulted, stale-cache hints, fallback-resolution
+  notes falls out of the executed plan instead of being threaded through
+  wrappers.
+- **Four states internally, three at the surface.** Per-source outcomes keep
+  today's distinctions (`Found / PathUnresolved / DocMissing / NotOwned`) —
+  the chain's precedence depends on "owned but path-less" vs "not mine".
+  Aggregation resolves precedence first; only the chain-final answer is
+  exposed as `Lookup` through the oracle. (Collapsing early would change
+  CRD+K8s overlap behavior and kill the deliberate silent-coverage-gap
+  contract.)
+- **`CacheDir` is concrete** (no store trait): tri-state
+  `get → Hit | KnownAbsent | Miss` as one atomic question, fallible `put`,
+  an explicit *read-bypass-write-refresh* mode (`--no-cache` parity), layout
+  versioning, XDG resolution provided by the CLI (libraries never read env).
+- **No materialization.** `resolve()` returns lazy-ref `SchemaDoc`s;
+  cross-document refs are `RefTarget::External(coordinate)` resolved through
+  further oracle calls. Descent is O(path) with a cycle set. This deletes the
+  per-resource `$ref`-expansion cache — the dominant knowledge-side RSS term.
+- **Capability oracle** = a thin adapter over the same planner/executor probe
+  plus the declarative `ProbeTable` (the documented well-known-kind debt,
+  now diffable data) and `kube_version()` from configuration — preserving the
+  tri-state offline contract verbatim, testable against a fake store without
+  any chain.
+- **apiVersion advisor** (cache scan / shortlist / online probe aggregation)
+  stays a quarantined module behind its `AdvisorPolicy` data, off by default.
 
-```
-LocalOverrideCatalog                       // never wiped, top priority
-  ▸ then CrdCatalog = RemoteCatalog<CrdLayout>
-  ▸ then K8sCatalog = VersionFallback(RemoteCatalog<K8sLayout>, version_chain)
-  = PriorityChain([...])                   // first Found or authoritative Absent wins,
-                                           // Unknown falls through, diagnostics at the end
-```
+### 6.5 `synthesis` — evidence → schema, under one policy
 
-The **capability oracle** becomes its own small adapter over a catalog probe,
-no longer welded to the chain:
+**Stage A — evidence derivation.** One projection
+`derive(per ChartAnalysis, ValuesModel, shipped schemas, oracles, policy) →
+BTreeMap<ValuePath, EvidenceSet>`:
 
-```rust
-pub struct CatalogCapabilityOracle<C> { catalog: C, probe_table: ProbeTable }
+- Evaluate `Env` atoms against the oracles (three-valued); compute branch
+  liveness. **Type evidence from guarded alternatives is the join over all
+  possibly-live branches** — first-live selection is only legal when the
+  oracle authoritatively refutes the others (v1 got this wrong); falsey
+  admissions from any possibly-live branch are admitted (polarity).
+- Co-walk each `AbsDoc` (live arms) against resolved `SchemaDoc`s; every
+  exact `Hole` spine yields resource-anchored evidence; `Splice` of a values
+  object onto a known base document yields **overlay evidence**
+  (`OverlayOnto{base, at, mode}`) rather than verbatim anchoring — the
+  deep-partial reality of `mergeOverwrite` charts.
+- Fold in `ValuesModel` defaults/descriptions, shipped subchart schemas
+  (rank-bearing evidence on their prefix), Chart.yaml condition evidence,
+  abort evidence, and the tpl-route marker (paths through
+  `tpl`/`tplvalues.render` additionally admit `string` — a named widening
+  rule, structurally derived from the helper's `typeIs "string"` branch).
 
-impl<C: SchemaCatalog> CapabilityOracle for CatalogCapabilityOracle<C> {
-    /// Some(true)/Some(false) only on authoritative signals;
-    /// None on any uncertainty — preserving the documented contract,
-    /// now testable against a fake catalog without a full chain.
-    fn has(&self, gv: &GroupVersion) -> Lookup<bool>;
-}
-```
+**Stage B — per-path decision.** `decide(path, EvidenceSet, &SynthesisPolicy)
+→ (SchemaExpr, Vec<Decision>)`. The policy object is the entire rulebook:
+source ranks (reconcile-by-widening, never override), widening rules
+(FalseySet → nullable/empty variants), scalar restriction, openness rules
+(incl. reserved keys `global`/`tags`), P2 closure policy, required rules.
+**Requiredness** is rebuilt on abort evidence: `required(p)` only with a
+render-failure witness whose path condition is true when `p` is absent —
+conservatively, an unguarded `required`/`fail`/nil-deref; guarded aborts may
+emit draft-07 `if/then` or a diagnostic per policy. (Today's
+truthy-header heuristic is unsound under §2 and survives only as an opt-in
+legacy policy.) Every `Decision` records the evidence it used — spans make
+diagnostics precise today and leave `--explain` as a cheap projection later
+(explicitly out of v1 scope).
 
-`ProbeTable` is the existing `well_known_kind_at()` map, kept (it remains the
-documented, bounded structural debt) but promoted to *data* — a declarative
-table shipped with the crate, diffable and unit-checked against the shortlist.
+**Stage C — the two-tier schema model.** The honest resolution of "typed
+algebra vs upstream JSON" (v1's open question; the pre-mortem's top risk):
 
-The **apiVersion advisor** (today's `inference/` module — cache scan,
-shortlist, online probe, aggregation) survives as one clearly-quarantined
-adapter implementing an explicit *heuristic* port, off by default, exactly as
-now. Its tier ordering (`Shortlist > LocalCacheScan > OnlineProbe`) becomes a
-declared `AdvisorPolicy` value.
+- **Foreign tier:** upstream K8s/CRD subtrees remain verbatim
+  `Arc<Value>` behind `SchemaDoc` pointers — *never* lifted into a closed
+  enum, so nothing (`patternProperties`, `x-kubernetes-int-or-string`,
+  `oneOf` discriminators, vendor extensions) can be dropped by a lossy
+  round-trip. Operations needed on foreign subtrees are **total named JSON
+  functions** with corpus tests: `restrict_to_scalar`, `partialize`
+  (recursively strip `required` — the overlay operator), `ensure_metadata`,
+  `is_open`, `admits_type`.
+- **Typed tier:** a small closed `SchemaNode`
+  (`Any/Scalar/Object/Array/Union` + inline `Meta`) for everything we
+  *synthesize* from chart evidence, with a total, law-stated merge
+  (commutative/associative/idempotent on canonical forms; conflicts returned
+  **as data** — `MergeConflict{at, left, right, rule}` — and turned into
+  positioned diagnostics by the caller; `ScalarConst` has a lawful total
+  `Ord`, NaN rejected at construction).
+- **Composition:** `SchemaExpr = Node(SchemaNode) | Foreign(ref) |
+  Compose(rules)`; lowering emits draft-07 and applies the K8s-aware
+  foreign×typed merge rules (today's `merge.rs` semantics — required-union,
+  enum-intersection, preserve-unknown-fields — formalized as named rules with
+  property tests over generated schema-shaped JSON and corpus differential
+  tests against the current tool's output). This keeps today's clean merged
+  output shape (no `allOf` nesting regressions for editors).
 
-`$ref` resolution (`ResolveCtx`) stays as a pure function over a
-`DocumentLoader` closure — it is already well-shaped; it just moves out of the
-916-line provider file.
+**Emission** is `fn emit_draft07(...) -> Value` (a function; a 2020-12
+emitter is a second function when Helm 4 demand arrives) plus an explicit
+**consumer matrix** the tests pin: helm 3 (gojsonschema draft-07 semantics,
+per-chart validation of *coalesced* values with `global` injected — hence the
+reserved-keys rule), helm 4's validator, yaml-language-server (descriptions/
+defaults survive minification; flattened refs keep editors offline-capable),
+and Helm's null-deletes-key coalescing (why `anyOf [null, T]` is the nullable
+encoding).
 
-**What this eliminates:** §2.5 — provider monoliths, duplicated atomic-write /
-layout / scan code, chain↔oracle coupling, and the builder that must know 7
-concrete types (the facade now assembles combinators).
+### 6.6 Facade and CLI
 
-### 5.7 `helm-schema-synthesis` — evidence in, typed schema out
+The facade exposes the stage functions plus one `generate(&Config) ->
+Result<GenerateOutput, PipelineError>`; `Config` is a plain struct with
+defaults (no builder ceremony), `GenerateOutput { schema, diagnostics }`
+(tools wanting `ChartAnalysis` call the stage functions; the analysis types
+are explicitly semver-unstable). It owns:
 
-The decision layer. It owns the port it needs (hexagonal: consumer defines
-the interface):
+- **Parallelism, honestly:** parse+interpret fan out per template (order-
+  preserving collect; shared helper-summary memo in a concurrent map — racy
+  recomputation is benign because summaries are pure; never evaluate while
+  holding a shard lock); knowledge prefetch parallelizes IO discovered by a
+  first co-walk pass; synthesis/emit/minify remain serial. Expected win is
+  ~1.5–2× on large charts — the bigger levers are lazy schema docs and
+  allocation discipline, and the doc says so instead of promising "zero
+  locks".
+- **Output passes as sequential typed functions** (not a transform trait):
+  override merge (replace-on-`$ref` markers, override-file-relative base
+  URI, `--keep-refs` honored), ref flatten (via the `jsonschema` crate's
+  retriever interface directly, wrapped in `FetchPolicy`), description strip,
+  minify (delegates to `json-schema-minify`, unchanged), **global-schema
+  mirroring into subcharts** (a named pass — v1 lost it), and the
+  **postcondition**: composed defaults validate against the emitted schema
+  (hard diagnostic on failure).
+- **The lockfile** (`--locked`): coordinate → content digest + source URL +
+  version; re-fetches that would change a pinned digest fail. This is what
+  "reproducible over time" means; in-run determinism is §2's
+  given-identical-oracle-answers guarantee.
+- The CLI maps ~30 flags onto the policy/config objects (the mapping is a
+  checked table, §13), interprets env vars (`HELM_SCHEMA_*`, XDG) — libraries
+  never read the environment — renders diagnostics as text or the versioned
+  JSON envelope, and implements the exit-code policy: 0 clean; distinct codes
+  for parse-failure / generation-failure; `--fail-on=gaps|conflicts` upgrades
+  recorded abstentions.
 
-```rust
-/// Defined here; implemented by helm-schema-knowledge.
-pub trait ResourceSchemaOracle: Send + Sync {
-    fn schema_at(&self, id: &ResourceIdentity, path: &DocPath)
-        -> Lookup<Arc<SchemaNode>>;
-    fn capabilities(&self) -> &dyn CapabilityOracle;
-}
-```
+## 7. Why this is the right architecture
 
-(A `NoKnowledge` null adapter gives `--no-k8s-schemas` for free, and tests get
-in-memory oracles without touching disk or network.)
+**Because every rule now has a reason.** The correctness contract plus
+polarity table turn a dozen scattered instincts (why `eq` guards widen to
+`anyOf[enum, string]`, why unknown capability branches stay live, why
+`required` is dangerous) into derivable, checkable consequences. This is the
+difference between "preserve ambiguity" as a slogan and as a type-checked
+direction.
 
-Synthesis is three explicit, separately-testable stages:
+**Because the abstract document is what a template *is*.** A Helm template
+denotes a YAML document with holes, conditions, iterations and splices. Every
+hard sub-problem the current code solves with side machinery — byte-cursor
+resource tracking, indent heuristics, List descent, branch preservation,
+helper-output projection — is a constructor or projection of that one
+structure. The system that models its true subject needs less code, and the
+review's strongest signal was two independent derivations (mine and the
+soundness critic's) converging on it.
 
-**Stage A — evidence collection.** Group `Fact`s by `ValuePath`; resolve each
-exact `SinkSite` against the oracle (evaluating preserved capability-guard
-`Alternatives` here, where the oracle lives — selecting the first live branch,
-exactly today's semantics); fold in `ValuesModel` defaults/descriptions. The
-result is a flat, inspectable `BTreeMap<ValuePath, EvidenceSet>` — the
-debuggable midpoint the current god-loop lacks.
+**Because one interpreter is the only enforceable home for "no heuristics".**
+Six evaluators each understanding 80% of Helm is the documented root of every
+recurring bug class. One lattice + one builtin table means a new Helm
+semantic is one row, every consumer inherits it, and there is exactly one
+place a text-sniffing shortcut could creep in — the place reviewers watch.
 
-**Stage B — per-path decision under an explicit policy.**
+**Because policy-as-data beat traits on their own turf.** v1 already
+preached restraint and still shipped 12 ports; the honest audit left 3. The
+knowledge planner/executor is the showcase: probe order becomes a unit-tested
+sort instead of a decorator-nesting accident, the tri-state contract is
+proven once in one executor instead of per-wrapper, "what was tried"
+diagnostics are the executed plan, and new sources (mirror, vendored dir,
+chart-local CRDs, airgap) are config values, not types.
 
-```rust
-/// The entire precedence/widening rulebook as one inspectable value.
-/// Today these rules exist as ~15 interleaved conditionals across
-/// build_root_schema and resolve_schema_for_value_path.
-pub struct SynthesisPolicy {
-    pub source_rank: SourceRank,      // ChartStructure > Knowledge > Defaults > Hints
-    pub widening: WideningRules,      // FalseySet admission → nullable/empty variants
-    pub scalar_restriction: ScalarRestrictionRules,
-    pub open_object: OpenObjectRules,
-    pub required: Option<RequiredRules>,   // the optional required-inference pass
-}
+**Because the two-tier schema model refuses a fight it cannot win.** Upstream
+corpora are arbitrary JSON Schema; a closed algebra either drops keywords
+silently (a regression invisible until a user hits it) or grows the JSON
+escape hatch that swallows the design. Keeping foreign content verbatim with
+total, corpus-tested operations — and reserving the lawful typed algebra for
+what we synthesize — gets property-testing where it's possible and
+losslessness where it's mandatory.
 
-pub fn decide(path: &ValuePath, ev: &EvidenceSet, policy: &SynthesisPolicy)
-    -> (SchemaNode, Vec<Decision>);   // Decision = what was chosen and why
-```
+**Because the boundaries are load-bearing, not aesthetic.** Two pure crates
+(different deps, different rates of change), two IO crates, one vocabulary
+crate whose placement of the oracle traits keeps both dependency arrows
+pointing inward, grammar isolated for build/lint reasons, facade thin for
+rebuild speed. Each crate has acceptance criteria (§11); none exists to
+decorate a diagram.
 
-Every `Decision` carries the evidence IDs it used — that record is what makes
-a future `helm-schema --explain .Values.foo.bar` a projection instead of a
-project.
+**Alternatives rejected** (with the reasons on record): render-then-infer
+(samples can't cover guard space; rendering is a *test oracle only*);
+annotation-driven schemas (already rejected by the README; enforced by type
+here); per-path profiles joined in the interpreter (destroys provenance and
+bakes policy into analysis); a closed typed model for upstream schemas (see
+above); decorator catalogs (see above); maximal trait-per-stage pipelines and
+a "pipeline object" (ceremony; stage functions deliver the substance);
+per-session interning (breaks Ord/serde/`'static` for marginal wins — typed
+segments and Arc-shared nodes remove the churn that motivated it).
 
-**Stage C — assembly and merging over a typed schema algebra.**
+## 8. Cross-cutting policies
 
-```rust
-/// Typed model. JSON appears only in helm-schema-emit.
-pub enum SchemaNode {
-    Any,
-    Scalar  { types: TypeSet, enum_: Option<BTreeSet<ScalarValue>>,
-              constraints: ScalarConstraints },
-    Object  { properties: BTreeMap<Interned<str>, SchemaNode>,
-              additional: Additional, required: BTreeSet<Interned<str>> },
-    Array   { items: Box<SchemaNode> },
-    Union   (Vec<SchemaNode>),
-    Annotated{ inner: Box<SchemaNode>, meta: Meta },   // description, provenance
-}
+1. **Errors:** typed `thiserror` enums per crate; `PipelineError` is
+   stage-tagged; **abstaining subsystems contribute no error variants** —
+   knowledge failures are `Unknown` + diagnostics by design; eyre only in
+   `main`.
+2. **Diagnostics:** one model in core with spans; deduplicating concrete
+   handle; versioned JSON envelope as a stable machine interface; pure crates
+   record gaps as data, the facade projects.
+3. **Determinism:** ordered collections at boundaries; no env reads, clocks,
+   or randomness in libraries; byte-identical output given identical oracle
+   answers; cache state moves output only toward widening; lockfile for
+   cross-time reproducibility.
+4. **Security:** `FetchPolicy` on every network/file edge (flatten retriever
+   included: scheme/host allowlists, link-local denial, size/time budgets,
+   ref depth/doc caps); `LoadBudget` on archives/parsing/interpretation;
+   `RelPath` validated newtype at the coordinate→path boundary; archive
+   extraction stays memory-backed.
+5. **Serde boundary:** internal graphs never derive `Serialize`; canonical
+   `Display`/`FromStr` for paths; DTO projections for analysis dumps and
+   fixtures.
+6. **Performance:** lazy `$ref` docs (no materialized expansion), Arc-shared
+   fingerprinted values, effects-into-context, predicate hash-consing, and
+   honest Amdahl accounting; Perfetto/`tracing` stays the profiling truth,
+   plus a `[profile.profiling]` with symbols (the release profile strips
+   them). Budgets double as DoS bounds.
+7. **Lints/deps:** `[lints] workspace = true` in every crate;
+   tree-sitter/`cc` only under grammar; `ureq` (pinned TLS feature) only in
+   knowledge; `jsonschema` only in the facade; `serde_json` absent from
+   `analysis`; the YAML parser is a maintained, span-preserving one.
 
-/// THE merge, with stated algebraic laws (commutative, associative,
-/// idempotent; `Any` absorbing) — property-tested, replacing today's
-/// three string-matching definitions of "scalar" and the triple
-/// meaning of `{}`.
-pub fn merge(a: &SchemaNode, b: &SchemaNode) -> MergeOutcome;
+## 9. Testing architecture
 
-pub enum MergeOutcome {
-    Merged(SchemaNode),
-    Union(SchemaNode),                       // principled anyOf
-    Conflict { merged: SchemaNode, diag: Diagnostic },  // never silent
-}
-```
+1. **Law tests (property-based):** value-lattice join laws on canonical
+   forms; typed-merge laws + conflict totality; predicate algebra (NNF
+   round-trips, three-valued evaluation monotone in assumptions); FalseySet
+   widening monotonicity.
+2. **Transfer-function tables:** snippet → expected `AbsDoc`/evidence, one
+   row per builtin and construct (`default`, `with…default`, `set` in
+   helpers, map ranges, `tpl`, `.Files.Get`, `required` under else,
+   `semverCompare` chains, dynamic keys, List envelopes…). These pin each
+   semantic exactly once.
+3. **Contract suites:** the executor's tri-state honesty (cold cache ⇒
+   `Unknown`; offline never fetches; `Absent` only on negative witness;
+   persist-failure ⇒ `Unknown`; error ⇒ `Unknown` + diagnostic) run against
+   real-dir and fake stores; oracle fakes for synthesis.
+4. **Golden full-schema equality** over the real-chart corpus (the project
+   standard, unchanged), hermetic via recorded catalog fixtures.
+5. **Differential validation:** render fixtures with `helm template` under
+   default + guard-flipping samples; every accepted sample must validate
+   (the §2 soundness probe, and the P1 acceptance gate); run `helm lint` too
+   (consumer matrix).
+6. **Gate tests** (pre-merge for the respective migration steps): the
+   abstained-enrichment budget (no corpus chart loses a type enrichment vs
+   the current tool); 100-run byte-determinism of `ChartAnalysis`;
+   security regressions (traversal coordinates, oversized archives,
+   metadata-endpoint `$ref`s).
 
-Kubernetes-specific keyword behaviors (`x-kubernetes-preserve-unknown-fields`,
-structured-beats-map-like, `required` union, `enum` intersection) become named
-rules in the merge module with direct unit tests, instead of branches in a
-787-line file.
+## 10. Acceptance criteria per crate (definition of done)
 
-**What this eliminates:** §2.3 and §2.4 in full — the god loop, scattered
-precedence, stringly schemas, silent unions, and the generator re-deriving
-Helm semantics (nullability now comes from `Fact::Default { admits }`, open
-objects from `Fact::OpenObject`, fragmentness from `RenderShape`).
+- **core:** law tests green; zero IO deps; `Display`/`FromStr` round-trips
+  pinned.
+- **analysis:** transfer table green; determinism property; purity CI check;
+  parse-failure degrades per-file; budget enforcement observable as gaps.
+- **chart:** corpus discovery parity (incl. `Chart.template.yaml`, tgz,
+  aliases); compose_values fixtures; conditions/tags/crds/shipped-schema
+  extraction tested; budgets enforced.
+- **knowledge:** contract suite green; probe-order unit tests; trace→
+  diagnostics projection parity with today's `MissingSchema` richness;
+  advisor off by default.
+- **synthesis:** law + corpus tests on foreign operations; decision records
+  present for every narrowing; required-rules sound under §2 (witness-based).
+- **facade/cli:** golden corpus equality; postcondition active; parity
+  checklist (§13) checked off; exit-code table tested.
 
-### 5.8 `helm-schema-emit` — dialects and output transforms
+## 11. Sizing sanity check
 
-- `SchemaEmitter` port: typed `SchemaNode` → `serde_json::Value` for a
-  dialect. Day one: `Draft07Emitter` (byte-compatible with current output);
-  a 2020-12 emitter becomes an adapter, not a rewrite.
-- The post-processing chain becomes a uniform pass pipeline over emitted JSON
-  (JSON is correct here — these passes interoperate with *external* schemas):
+This lands *smaller* than today's ≈29K LOC: one interpreter replaces six
+evaluators + `helper_eval` (≈5–6K of near-duplicates); the planner/executor
+replaces two provider monoliths + chain (≈2K → ≈0.6K); `AbsDoc` projections
+replace the byte-cursor/indent machinery; the policy object replaces the
+generator's scattered conditional lattice — while adding spans, the predicate
+algebra, security budgets, and chart-local knowledge.
 
-```rust
-pub trait SchemaTransform {
-    fn name(&self) -> &'static str;
-    fn apply(&self, schema: Value, cx: &TransformCx) -> Result<Value, TransformError>;
-}
-// OverrideMerge { replace-on-$ref semantics }, FlattenRefs { dyn DocumentRetriever },
-// StripDescriptions, Minify (delegates to json-schema-minify), …
-```
+## 12. Migration correspondence (informative)
 
-- `DocumentRetriever` port (file/http retrieval for `$ref` flattening) keeps
-  the current `jsonschema::Retrieve`-backed implementation as its adapter.
-- `json-schema-minify` remains exactly the standalone crate it is — it already
-  matches this architecture.
+Sequencing remains owned by `next-priorities.md`; the in-flight
+single-abstract-interpreter phases land directly on this design (its
+`AbstractValue`/`Effects`/`eval_expr` become §6.2's lattice/evidence/
+interpreter with laws added). Strangler seams: `IrGenerator`,
+`K8sSchemaProvider`, `ValueUseSink`, `HttpFetcher`. **One rule from the
+pre-mortem: every migration step's completion criterion is that the module it
+replaces is deleted** — no new crate while its predecessor lives, and the
+`ValueUse` projection never gains a production consumer.
 
-### 5.9 `helm-schema` (facade) and `helm-schema-cli`
-
-The facade is the only place wiring happens, and the *entire* public story for
-embedding:
-
-```rust
-pub struct Pipeline { /* stages + adapters + policy + diagnostics */ }
-
-impl Pipeline {
-    pub fn builder() -> PipelineBuilder;          // defaults = today's behavior
-    pub fn generate(&self, source: &dyn ChartSource)
-        -> Result<GenerateOutput, PipelineError>;
-}
-
-pub struct GenerateOutput {
-    pub schema: Value,
-    pub diagnostics: Vec<Diagnostic>,
-    pub analysis: Option<ChartAnalysis>,   // opt-in, for tooling/--explain
-}
-```
-
-`helm-schema-cli` shrinks to: clap arg structs → `PipelineBuilder` calls →
-write output / emit diagnostics in text or JSON. Typed errors per crate,
-converted to `color_eyre::Report` in `main` only (current workspace standard,
-kept). Every behavior reachable from the CLI is reachable from the facade —
-which is what makes the full integration suite runnable in-process with
-in-memory adapters.
-
----
-
-## 6. Why this is the right architecture (decision rationale)
-
-**One interpreter, because semantics duplication is the proven failure mode.**
-Every recurring bug class in the project's own history (`with … default`
-rebinding, helper-bound `set`, `toYaml` fragments, map ranges, empty
-placeholders) traces to the same root: N evaluators that each understand 80%
-of Helm. A single lattice + transfer functions means a new Helm semantic is
-*one* function arm, and every consumer — value uses, helper outputs, resource
-identity, chart facts — inherits it simultaneously. This is also the only
-design under which "no heuristic where structure suffices" is enforceable:
-there is exactly one place a text-sniffing shortcut could creep in, and it is
-the one place reviewers watch.
-
-**Facts with provenance as the IR, because the alternative is re-derivation.**
-The current `ValueUse` hand-off forces the generator to reverse-engineer
-meaning the analyzer already had and threw away (§2.3). Passing typed facts
-forward is strictly more information at zero ongoing cost, collapses the
-generator's special-case lattice into policy + algebra, and buys
-explainability (every schema node traceable to spans) — the project's
-"diagnosable" bar, structurally guaranteed.
-
-**Typed schema algebra, because merging is the system's real arithmetic.**
-Schema merge/union decisions are where correctness lives in the synthesis
-half, and today they are unfalsifiable — scattered over string-keyed JSON
-edits. A closed `SchemaNode` algebra with stated laws is property-testable
-(`merge(a,b) == merge(b,a)`, idempotence, absorption), makes illegal schemas
-unrepresentable, and quarantines JSON to the emit edge where dialect choices
-belong. The cost (conversion at the edge) is paid once; the current cost
-(every rule change risks an untestable regression) is paid forever.
-
-**Tri-state ports for knowledge, because the type system should carry the
-contract.** The cache-as-oracle bug needed three rounds to fix and a 60-line
-CLAUDE.md section to defend. `Lookup<T>` with authoritative-`Absent` vs
-abstaining-`Unknown` makes the contract a compile-time property of every
-adapter, and decorator composition (`VersionFallback(Mirrored(Cached(...)))`)
-turns each policy into an independently testable ~100-line unit instead of a
-916-line monolith. The knowledge layer is also where the project will grow
-(new mirrors, OCI catalogs, vendored bundles, airgapped stores) — exactly the
-axis ports are for.
-
-**Hexagonal direction — consumers own their ports — because it keeps the core
-pure.** `semantics` depends on nothing impure; `synthesis` names what it needs
-(`ResourceSchemaOracle`) and `knowledge` supplies it. The pure middle is
-therefore: deterministic (BTree everywhere, no clock, no global state),
-trivially parallel (per-template interpretation is a pure fold — rayon across
-templates with zero locks, replacing today's shared `Mutex` cache contention),
-and testable without fixtures touching disk or network.
-
-**Restraint on traits, because flexibility has a price.** Ports exist at
-the named variation points only (parser backend, chart source, fetcher,
-artifact store, schema catalogs, capability oracle, emitter, transforms,
-diagnostics, retriever). Everything else — interpretation, projection, composition,
-merging, policy application — is plain functions over plain data. This is the
-explicit answer to `next-priorities.md`'s correct worry: abstraction only
-where a second implementation demonstrably exists (mock vs real, k8s vs CRD
-vs local, draft-07 vs 2020-12, dir vs tgz vs memory) or where the I/O edge
-demands a seam.
-
-**Alternatives considered and rejected:**
-
-- *Render-then-infer* (execute `helm template` over sampled values and infer
-  from outputs): abandons static precision, samples can't cover guard space,
-  and contradicts the charter. Rendering is useful only as a *test oracle*
-  (§8).
-- *Annotation-driven* (`values.yaml` comments as the source of truth): already
-  rejected by the README; comments stay metadata-only, now enforced by type.
-- *One big crate with modules*: compile-time boundary enforcement is the only
-  thing that has historically kept layers honest here (the k8s crate stayed
-  clean; the IR crate, without internal boundaries, grew six evaluators).
-- *Maximal trait-per-stage pipelines* (`trait Stage<In, Out>` chains):
-  generic plumbing without a second implementation per stage; rejected for
-  the same reason trait soup is.
-
-**Sizing sanity check.** This design should land *smaller* than today's 29K:
-one interpreter replaces ~6 evaluators plus `helper_eval` (≈5–6K LOC of
-near-duplicates), one catalog engine replaces two provider monoliths (≈1K of
-duplication), and the synthesis policy/algebra replaces the special-case
-lattice in `gen` — while adding spans, explainability, and dialect freedom.
-
----
-
-## 7. Cross-cutting policies
-
-- **Errors:** typed `thiserror` enums per crate (`ParseError`, `ChartError`,
-  `FetchError`, `SynthesisError`, …); `color_eyre::Report` only in `main`.
-  No `Result` aliases (workspace standard).
-- **Diagnostics:** one `Diagnostic` model in `core` (superset of today's k8s
-  diagnostics, plus spanned analysis diagnostics like `AttributionGap` and
-  `MergeConflict`); deduplicating sink; text and JSON renderers in the CLI.
-  Rule: any abstention or widening that changes output emits one.
-- **Determinism:** ordered collections at every boundary; interner IDs never
-  serialized; no wall-clock or randomness anywhere in the pure middle.
-  Identical inputs ⇒ byte-identical output, regardless of cache state
-  (the cache contract, extended system-wide).
-- **Concurrency:** parallelism only in the facade (per-template interpret,
-  per-coordinate prefetch); the pure crates stay single-threaded-but-Send.
-  Caches are the only shared state and live behind `ArtifactStore`.
-- **Observability:** keep `tracing::instrument` + Perfetto as the profiling
-  source of truth; stage boundaries in the facade are natural span roots.
-- **Serialization stability:** `ChartAnalysis`→`ValueUse` projection and the
-  emitted draft-07 output are the two compatibility surfaces; both are pinned
-  by golden tests.
-
-## 8. Testing architecture
-
-The ports make the test pyramid cheap:
-
-1. **Algebra property tests** (synthesis): merge laws, `FalseySet` widening
-   monotonicity, `Alternatives` flattening — `proptest` over generated
-   `SchemaNode`s. This class of test is *impossible* today (§2.4).
-2. **Transfer-function tables** (semantics): tiny template snippet → expected
-   `Fact`s/value, one table per Helm construct (`default`, `with`, `range`
-   destructuring, `set`, `toYaml`, `tpl`, include-with-dict-arg…). These
-   replace today's scattered walker tests and pin each semantic exactly once.
-3. **Adapter contract tests** (knowledge): every `SchemaCatalog`/`ArtifactStore`
-   adapter runs one shared behavioral suite (tri-state honesty: cold cache
-   must yield `Unknown`, never `Absent`; offline never fetches; negative
-   cache only after authoritative 404) — the regression suite that currently
-   pins the oracle, generalized to every adapter.
-4. **Golden full-schema equality** (facade): the existing real-chart corpus
-   (`testdata/charts/*`) with `similar_asserts::assert_eq!` over complete
-   schemas — unchanged, per the project standard; in-memory chart sources and
-   recorded catalog fixtures make the suite hermetic and fast.
-5. **Differential validation** (new, enabled by the architecture): for each
-   fixture chart, render with `helm template` under N values samples (default
-   values, plus guard-flipping samples derived from the chart's own
-   `Fact::Guarded` set) and assert every sample that Helm accepts validates
-   against the generated schema. This turns Helm itself into a soundness
-   oracle without ever making rendering part of inference.
-
-## 9. Migration correspondence (informative)
-
-Sequencing is owned by `next-priorities.md` and the phase plan in
-`single-abstract-interpreter.md`; this table only records where current code
-lands so incremental cleanups can aim at the right home. The existing seams
-(`IrGenerator`, `K8sSchemaProvider`, `ValuesSchemaGenerator`, `ValueUseSink`,
-`HttpFetcher`) are the natural strangler points — each can be re-implemented
-against the new crates one at a time while golden tests hold the line.
-
-| Today | Target home |
+| Today | Target |
 |---|---|
-| `helm-schema-template-grammar`, `helm-schema-ast` (parser, `TemplateExpr`) | `helm-schema-syntax` (spans added; headers typed; single parse) |
-| `helm-schema-ast::values_comments` | `helm-schema-values` |
-| `helm-schema-ir` `abstract_value/eval_env/eval_effect/expr_eval` | `helm-schema-semantics` core (already converging via phases 0–3) |
-| `walker.rs`, `symbolic.rs`, `binding.rs`, `fragment_*`, `helper_*`, `bound_*`, `local_projection`, `output_*` | absorbed by `eval_node` + helper summaries + sink attribution (phases 4–5) |
-| `helper_eval.rs`, `resource_detector.rs`, `resource_locator.rs` | resource-identity projection in `helm-schema-semantics` |
-| `rendered_yaml_context.rs`, `yaml_shape.rs` | structural sink attribution (with explicit `Abstained`) |
-| `value_use_postprocess.rs`, `ValueUse` | compatibility projection of `ChartAnalysis` |
-| `helm-schema-k8s` providers | `RemoteCatalog<L>` + combinators in `helm-schema-knowledge` |
-| `capability_eval.rs` + chain oracle impl | `CatalogCapabilityOracle` + pure guard evaluation |
-| `inference/*` | the quarantined `ApiVersionAdvisor` adapter |
-| `helm-schema-gen` lib/merge/required_inference | `helm-schema-synthesis` stages A–C + policy + algebra |
-| `json-schema-minify` | unchanged (already conformant) |
+| `helm-schema-template-grammar` | `helm-schema-grammar` (unchanged role) |
+| `helm-schema-ast` (parser, `TemplateExpr`, fuse) | `analysis::parse` (spans, typed headers, one parse) |
+| `helm-schema-ast::values_comments` | `chart::ValuesModel` |
+| IR evaluators (`expr_eval`, `binding`, `fragment_*`, `helper_*`, `bound_*`, walkers) | `analysis::interp` (lattice + builtin table + summaries) |
+| `helper_eval.rs`, `resource_detector/locator` | identity projection over `AbsDoc` |
+| `yaml_shape`, `rendered_yaml_context` | `AbsDoc` construction + exact-or-abstain contract (tracker survives only as upgrader until the budget gate passes) |
+| `ValueUse` + postprocess | DTO projection of `ChartAnalysis` (fixtures only) |
+| `helm-schema-k8s` providers/chain | `knowledge` planner/executor + sources-as-data |
+| `capability_eval` + chain oracle | `CapabilityOracle` adapter + synthesis-side liveness |
+| `inference/*` | quarantined advisor module |
+| `helm-schema-gen` (lib/merge/required) | `synthesis` stages A–C + policy + two-tier model |
 | CLI `chart.rs` | `helm-schema-chart` |
-| CLI `schema_override.rs`, `flatten.rs` | `SchemaTransform` adapters in `helm-schema-emit` |
-| CLI `lib.rs` pipeline | `helm-schema` facade |
+| CLI `schema_override.rs`, `flatten.rs`, mirroring pass | facade output passes (+ `FetchPolicy`) |
+| CLI `lib.rs` pipeline | facade stage functions |
+| `json-schema-minify` | unchanged |
 
-## 10. Open questions
+## 13. Parity checklist (current behavior the design must reproduce)
 
-- **Fused-parse fidelity:** how far the fused grammar can carry structural
-  YAML attribution before `Abstained` rates become user-visible on real
-  charts; needs measurement on the corpus before `yaml_shape`'s incremental
-  tracker is declared fully replaceable (it may survive as one *adapter*
-  behind the attribution module for the hard cases).
-- **Helper summary fingerprints:** the memo key must hash abstract argument
-  values; needs a canonical-form definition so `Union` ordering or `Overlay`
-  nesting differences don't defeat memoization.
-- **`Interned<str>` scope:** per-pipeline interner vs per-chart; affects
-  whether `ChartAnalysis` is `Send + 'static` for tooling embedders.
-- **Schema algebra completeness:** which JSON Schema keywords the typed model
-  must represent losslessly for *pass-through* of upstream K8s/CRD schemas
-  (`patternProperties`, `oneOf` discriminators, vendor `x-kubernetes-*`) vs
-  which can remain opaque `Annotated` payloads.
+Audited from the CLI arg modules and pipeline; each item has a named home
+above: output file/stdout, `--compact`, `--strip-descriptions`,
+`--keep-refs`, `--minimize`; `--k8s-version` list + `--k8s-version-fallback=
+auto|N` (window 15, single-version validation) + `--strict-k8s-version`;
+mirrors with per-source cache namespacing; cache dirs + XDG/env resolution
+(CLI-side) + `--no-cache` read-bypass/write-refresh; `--offline`;
+`--no-k8s-schemas`; CRD `strict|loose` lookup (+ cross-scan hint diagnostic),
+CRD mirrors/cache/`--crd-override-dir` (never wiped) /
+`--crd-cache-record-source` sidecars; removed-flag courtesy errors
+(`--crd-catalog-dir`); `--api-version-guess`; `--override-schema` semantics
+(replace-on-`$ref`, override-dir-relative resolution, keep-refs, required
+union); top-level values-key seeding (named policy); global-schema mirroring
+into subcharts; subchart values composition + library-chart scoping +
+`Chart.template.yaml`; `--exclude-tests` (as role filter); extra values
+files; `--infer-required` (legacy policy + new witness-based rules);
+diag text/JSON formats (now versioned); `--trace-output`; defaults-validate
+postcondition (new, but required for §2).
+
+## 14. Open questions (the honest residue)
+
+1. **Fused-parse fidelity / `Opaque` rate** on the corpus — measured before
+   the attribution tracker is deleted (the budget gate exists for this).
+2. **`env_delta` composition cost** for mutation-heavy helpers — whether the
+   conditional-overlay representation needs further bounding in practice.
+3. **`import-values`/`export-values`** — model vs structured abstention;
+   needs a corpus survey of real usage.
+4. **Lockfile format and scope** — per-chart vs per-workspace; interaction
+   with mirrors and the negative cache.
+5. **Template-rendered CRDs** (cert-manager pattern) — the
+   knowledge-from-analysis feedback stage is sketched but deliberately
+   deferred behind chart-local `crds/` support.
