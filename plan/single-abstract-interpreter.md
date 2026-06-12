@@ -613,13 +613,14 @@ Current result:
   directly. Alias-derived conditions, `with` header semantics, and condition
   action plans no longer produce flat `Guard` rows before the compatibility
   boundary.
+- `SymbolicScopeState` now owns active predicates, the current-dot stack, and
+  local bindings behind one snapshot/restore/join boundary. `node_eval` no
+  longer carries a compatibility `include_dot_stack` switch, so branch
+  evaluation treats all interpreter state as one environment boundary.
 
 Remaining A1 work:
 
-- Move the remaining compatibility scope snapshot mechanics for guard and dot
-  stacks behind the same environment boundary as local state. This is a
-  cleanup step toward the from-scratch architecture, not a reason to keep
-  adding semantics to `symbolic.rs`.
+- Complete. The next active slice is A2 helper summaries.
 
 ### Phase 5 — helper summaries
 

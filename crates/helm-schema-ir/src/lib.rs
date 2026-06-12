@@ -40,6 +40,7 @@ mod resource_locator;
 mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
+mod symbolic_scope_state;
 mod template_expr_analysis;
 mod template_expr_cache;
 mod tree_sitter_utils;

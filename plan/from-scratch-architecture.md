@@ -1356,17 +1356,18 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   state-passing `eval_node` with explicit join (Go-template `=` vs `:=`,
   branch out-states) is now in place for the compatibility walker. Condition
   planning is predicate-native, with flat `Guard` projection kept at the
-  current `ValueUse` boundary. Remaining A1 work is hiding/removing the last
-  compatibility dot snapshot plumbing. The
+  current `ValueUse` boundary. Scope snapshots now sit behind one
+  `SymbolicScopeState` boundary that owns predicates, current-dot stack, and
+  local bindings, so node evaluation no longer knows about compatibility
+  guard/dot-stack mechanics. The
   **Top-absorbing** value join is in place: `Top` is distinct from
   compatibility `Unknown`, and joins widen to `Top` instead of dropping
   unknown alternatives. The active walker guard stack is predicate-backed, so
   else-branches can carry `¬P` internally even when the current DTO cannot
   project that predicate yet. Helper output metadata is also predicate-backed,
   so helper summaries and local-alias output facts no longer carry raw guard
-  path strings. Deletes: manual
-  compatibility scope snapshot/restore once guard/dot stacks move into the
-  same environment boundary as locals.
+  path strings. A1 is complete for the compatibility walker; the next semantic
+  cleanup is A2 helper-summary ownership.
 - **A2 — helper summaries under the §6.3 contract**: empty-pc summaries
   re-guarded at call sites; env-closed fingerprints; recursion ⇒ Top +
   poisoned memo. Deletes: the twin helper-body walks, the fragment/helper

@@ -20,7 +20,7 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn current_rendered_path(&self) -> YamlPath;
 
-    fn scope_snapshot(&self, include_dot_stack: bool) -> Self::ScopeSnapshot;
+    fn scope_snapshot(&self) -> Self::ScopeSnapshot;
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot);
 
@@ -68,14 +68,14 @@ where
             eval_assignment_node(runtime, node);
         }
         NodeActionKind::If => {
-            eval_condition_node(runtime, node, false, |runtime, header| {
+            eval_condition_node(runtime, node, |runtime, header| {
                 let plan = runtime.plan_if_condition(header);
                 apply_if_condition_plan(runtime, plan.clone());
                 plan
             });
         }
         NodeActionKind::With => {
-            eval_condition_node(runtime, node, true, |runtime, header| {
+            eval_condition_node(runtime, node, |runtime, header| {
                 let plan = runtime.plan_with_condition(header);
                 apply_with_condition_plan(runtime, plan.clone());
                 plan
@@ -117,16 +117,12 @@ where
     runtime.exit_no_output();
 }
 
-fn eval_condition_node<R, F>(
-    runtime: &mut R,
-    node: tree_sitter::Node<'_>,
-    include_dot_stack: bool,
-    mut enter_consequence: F,
-) where
+fn eval_condition_node<R, F>(runtime: &mut R, node: tree_sitter::Node<'_>, mut enter_consequence: F)
+where
     R: NodeEvalRuntime,
     F: FnMut(&mut R, &str) -> ConditionActionPlan,
 {
-    let entry = runtime.scope_snapshot(include_dot_stack);
+    let entry = runtime.scope_snapshot();
 
     let condition_plan = if let Some(condition) = node.child_by_field_name("condition")
         && let Ok(text) = condition.utf8_text(runtime.source().as_bytes())
@@ -142,7 +138,7 @@ fn eval_condition_node<R, F>(
         eval_node(runtime, child);
     }
     runtime.exit_local_scope();
-    let consequence_outcome = runtime.scope_snapshot(include_dot_stack);
+    let consequence_outcome = runtime.scope_snapshot();
 
     runtime.restore_scope(entry.clone());
     if let Some(plan) = &condition_plan {
@@ -157,7 +153,7 @@ fn eval_condition_node<R, F>(
         eval_node(runtime, child);
     }
     runtime.exit_local_scope();
-    let alternative_outcome = runtime.scope_snapshot(include_dot_stack);
+    let alternative_outcome = runtime.scope_snapshot();
 
     runtime.restore_scope(entry.clone());
     runtime.join_branch_scopes(&entry, vec![consequence_outcome, alternative_outcome]);
@@ -167,7 +163,7 @@ fn eval_range_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
 where
     R: NodeEvalRuntime,
 {
-    let entry = runtime.scope_snapshot(true);
+    let entry = runtime.scope_snapshot();
 
     let current_path = runtime.current_rendered_path();
     let plan = runtime.plan_range_action(node, &current_path);
@@ -179,7 +175,7 @@ where
         eval_node(runtime, child);
     }
     runtime.exit_local_scope();
-    let body_outcome = runtime.scope_snapshot(true);
+    let body_outcome = runtime.scope_snapshot();
 
     runtime.restore_scope(entry.clone());
 
@@ -189,7 +185,7 @@ where
         eval_node(runtime, *child);
     }
     runtime.exit_local_scope();
-    let alternative_outcome = runtime.scope_snapshot(true);
+    let alternative_outcome = runtime.scope_snapshot();
 
     runtime.restore_scope(entry.clone());
     if alternatives.is_empty() {
