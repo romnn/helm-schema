@@ -729,13 +729,17 @@ Current result:
 - The plain `helper_binding_eval` adapter is gone. Helper-context binding
   projection and helper-argument projection now live in `expression_analysis`
   and are backed by the shared abstract expression evaluator.
+- Helper and fragment binding expressions that contain nested helper calls now
+  share one bound-helper expression resolver. The resolver runs the same
+  `BoundHelperAnalysis` and only varies the final projection
+  (`HelperBinding` vs `FragmentBinding`).
 
 Remaining A2 work:
 
-- Delete or reduce the fragment-local helper binding resolver once those facts
-  are native summary projections.
-- Move the remaining helper-body compatibility projections into native summary
-  effects and reduce the compatibility DTO conversion layer.
+- The semantic-core switchpoint is reached: helper/body expression evaluation is
+  shared, and compatibility bindings are projection DTOs.
+- Continue small DTO cleanup opportunistically, but the next architectural phase
+  can start with internal documents and contract projection.
 
 ### Phase 6 — internal documents and contract projection
 

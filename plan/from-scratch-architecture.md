@@ -1410,9 +1410,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   fragment-local helper calls no longer carry duplicate `dict` / merge
   walkers. The plain helper-binding evaluator has been deleted; helper-context
   binding projection now goes through `expression_analysis` and the shared
-  abstract expression evaluator. The remaining A2 boundary is reducing the
-  fragment-local helper binding resolver and moving projected facts into native
-  helper-summary effects.
+  abstract expression evaluator. The fragment-local helper binding resolver has
+  now been collapsed into the same bound-helper expression evaluator used by
+  fragment binding projection: helper and fragment callers differ only by the
+  `BoundHelperAnalysis` projection they request. This reaches the intended A2
+  switchpoint for helper/body semantics: remaining binding DTOs are projection
+  outputs rather than parallel evaluators. The next broader step is A3 internal
+  documents and contract projection, while smaller A2 DTO cleanup can continue
+  opportunistically.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

@@ -89,15 +89,78 @@ pub(crate) fn helper_binding_from_expr_with_fragment_locals(
 ) -> Option<HelperBinding> {
     let env =
         EvalEnv::from_helper_context_with_fragment_locals(outer, current_dot, fragment_locals);
-    let mut resolver = HelperBindingResolver {
-        fragment_locals,
-        outer,
-        current_dot,
-        context,
-        seen,
-    };
-    eval_expr_with_helper_calls(expr, &env, &mut resolver)
-        .and_then(|value| value.to_helper_binding())
+    eval_expr_with_bound_helpers(
+        expr,
+        &env,
+        BoundHelperValueResolverParams {
+            fragment_locals,
+            outer,
+            current_dot,
+            context,
+            seen,
+            projection: HelperAnalysisProjection::HelperBinding,
+        },
+    )
+    .and_then(|value| value.to_helper_binding())
+}
+
+fn eval_expr_with_bound_helpers(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    params: BoundHelperValueResolverParams<'_, '_, '_>,
+) -> Option<AbstractValue> {
+    let mut resolver = BoundHelperValueResolver { params };
+    eval_expr_with_helper_calls(expr, env, &mut resolver)
+}
+
+struct BoundHelperValueResolverParams<'a, 'context, 'seen> {
+    fragment_locals: &'a HashMap<String, FragmentBinding>,
+    outer: Option<&'a HashMap<String, HelperBinding>>,
+    current_dot: Option<&'a HelperBinding>,
+    context: FragmentEvalContext<'context>,
+    seen: &'seen mut HashSet<String>,
+    projection: HelperAnalysisProjection,
+}
+
+#[derive(Clone, Copy)]
+enum HelperAnalysisProjection {
+    HelperBinding,
+    FragmentBinding,
+}
+
+struct BoundHelperValueResolver<'a, 'context, 'seen> {
+    params: BoundHelperValueResolverParams<'a, 'context, 'seen>,
+}
+
+impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
+    fn resolve_helper_call(
+        &mut self,
+        name: &str,
+        arg: Option<&TemplateExpr>,
+    ) -> Option<AbstractValue> {
+        let analysis = self
+            .params
+            .context
+            .helper_call_analyzer()
+            .analyze_bound_helper_call(
+                name,
+                arg,
+                self.params.outer,
+                self.params.current_dot,
+                self.params.fragment_locals,
+                self.params.context,
+                self.params.seen,
+            );
+        match self.params.projection {
+            HelperAnalysisProjection::HelperBinding => analysis
+                .into_helper_binding()
+                .map(|binding| AbstractValue::from_helper_binding(&binding)),
+            HelperAnalysisProjection::FragmentBinding => analysis
+                .into_fragment_binding()
+                .as_ref()
+                .map(AbstractValue::from_fragment_binding),
+        }
+    }
 }
 
 pub(crate) fn bindings_for_helper_arg_with_fragment_locals(
@@ -128,81 +191,20 @@ pub(crate) fn fragment_binding_from_expr(
     seen: &mut HashSet<String>,
 ) -> Option<FragmentBinding> {
     let env = EvalEnv::from_fragment_context(locals, current_dot);
-    let mut resolver = FragmentBindingResolver {
-        locals,
-        current_dot,
-        context,
-        seen,
-    };
-    eval_expr_with_helper_calls(expr, &env, &mut resolver)
-        .and_then(|value| value.to_fragment_binding())
-}
-
-struct HelperBindingResolver<'a, 'context, 'seen> {
-    fragment_locals: &'a HashMap<String, FragmentBinding>,
-    outer: Option<&'a HashMap<String, HelperBinding>>,
-    current_dot: Option<&'a HelperBinding>,
-    context: FragmentEvalContext<'context>,
-    seen: &'seen mut HashSet<String>,
-}
-
-impl HelperCallValueResolver for HelperBindingResolver<'_, '_, '_> {
-    fn resolve_helper_call(
-        &mut self,
-        name: &str,
-        arg: Option<&TemplateExpr>,
-    ) -> Option<AbstractValue> {
-        let analysis = self
-            .context
-            .helper_call_analyzer()
-            .analyze_bound_helper_call(
-                name,
-                arg,
-                self.outer,
-                self.current_dot,
-                self.fragment_locals,
-                self.context,
-                self.seen,
-            );
-        analysis
-            .into_helper_binding()
-            .map(|binding| AbstractValue::from_helper_binding(&binding))
-    }
-}
-
-struct FragmentBindingResolver<'a, 'context, 'seen> {
-    locals: &'a HashMap<String, FragmentBinding>,
-    current_dot: Option<&'a FragmentBinding>,
-    context: FragmentEvalContext<'context>,
-    seen: &'seen mut HashSet<String>,
-}
-
-impl HelperCallValueResolver for FragmentBindingResolver<'_, '_, '_> {
-    fn resolve_helper_call(
-        &mut self,
-        name: &str,
-        arg: Option<&TemplateExpr>,
-    ) -> Option<AbstractValue> {
-        let current_dot_helper = self
-            .current_dot
-            .and_then(FragmentBinding::to_helper_binding);
-        let analysis = self
-            .context
-            .helper_call_analyzer()
-            .analyze_bound_helper_call(
-                name,
-                arg,
-                None,
-                current_dot_helper.as_ref(),
-                self.locals,
-                self.context,
-                self.seen,
-            );
-        analysis
-            .into_fragment_binding()
-            .as_ref()
-            .map(AbstractValue::from_fragment_binding)
-    }
+    let current_dot_helper = current_dot.and_then(FragmentBinding::to_helper_binding);
+    eval_expr_with_bound_helpers(
+        expr,
+        &env,
+        BoundHelperValueResolverParams {
+            fragment_locals: locals,
+            outer: None,
+            current_dot: current_dot_helper.as_ref(),
+            context,
+            seen,
+            projection: HelperAnalysisProjection::FragmentBinding,
+        },
+    )
+    .and_then(|value| value.to_fragment_binding())
 }
 
 pub(crate) fn fragment_binding_from_text(
@@ -273,7 +275,7 @@ pub(crate) fn fragment_binding_from_text_with_helper_context(
 mod tests {
     use std::collections::BTreeMap;
 
-    use helm_schema_ast::parse_action_expressions;
+    use helm_schema_ast::{TreeSitterParser, parse_action_expressions};
 
     use super::*;
     use crate::helper_summary::HelperSummaryCache;
@@ -320,6 +322,14 @@ mod tests {
                 FragmentBinding::ValuesPath("serviceAccount".to_string()),
             )])),
         )])
+    }
+
+    fn helper_context<'a>(
+        defines: &'a DefineIndex,
+        define_bodies: &'a DefineBodyCache,
+        helper_summaries: &'a HelperSummaryCache,
+    ) -> FragmentEvalContext<'a> {
+        empty_context(defines, define_bodies, helper_summaries)
     }
 
     #[test]
@@ -407,6 +417,61 @@ mod tests {
         assert_eq!(
             binding,
             Some(HelperBinding::ValuesPath("serviceAccount.name".to_string()))
+        );
+    }
+
+    #[test]
+    fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
+        let mut defines = DefineIndex::new();
+        defines
+            .add_source(
+                &TreeSitterParser,
+                r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
+            )
+            .expect("parse helper source");
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = helper_context(&defines, &define_bodies, &helper_summaries);
+        let expr = single_expr(r#"include "common.name" ."#);
+        let mut seen = HashSet::new();
+
+        assert_eq!(
+            helper_binding_from_expr_with_fragment_locals(
+                &expr,
+                &HashMap::new(),
+                None,
+                None,
+                context,
+                &mut seen,
+            ),
+            Some(HelperBinding::OutputSet(
+                [("nameOverride".to_string(), Default::default())]
+                    .into_iter()
+                    .collect()
+            )),
+        );
+    }
+
+    #[test]
+    fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
+        let mut defines = DefineIndex::new();
+        defines
+            .add_source(
+                &TreeSitterParser,
+                r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
+            )
+            .expect("parse helper source");
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = helper_context(&defines, &define_bodies, &helper_summaries);
+        let expr = single_expr(r#"include "common.name" ."#);
+        let mut seen = HashSet::new();
+
+        assert_eq!(
+            fragment_binding_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
+            Some(FragmentBinding::OutputSet(
+                ["nameOverride".to_string()].into_iter().collect()
+            )),
         );
     }
 }
