@@ -4,6 +4,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::contract::ContractUseSink;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_text};
 use crate::fragment_scope_eval::{
     apply_local_set_mutations, merge_fragment_locals, parse_helper_assignment,
@@ -14,7 +15,6 @@ use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_use_sink::ValueUseSink;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) fn collect_bound_fragment_outputs_from_tree(
@@ -84,10 +84,10 @@ impl FragmentOutputRuntime<'_, '_> {
     }
 }
 
-impl ValueUseSink for FragmentOutputRuntime<'_, '_> {
-    fn emit_use(&mut self, _source_expr: String, _path: YamlPath, _kind: ValueKind) {}
+impl ContractUseSink for FragmentOutputRuntime<'_, '_> {
+    fn emit_contract_use(&mut self, _source_expr: String, _path: YamlPath, _kind: ValueKind) {}
 
-    fn emit_use_with_extra_guards(
+    fn emit_contract_use_with_extra_guards(
         &mut self,
         _source_expr: String,
         _path: YamlPath,

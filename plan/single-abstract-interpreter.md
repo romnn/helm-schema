@@ -779,6 +779,9 @@ Current result:
   claims. The old `ValueUse` normalization has moved to contract finalization,
   and recursive helper/file interpretation stays in the contract layer until
   the public generator boundary projects to `ValueUse`.
+- `ValueUseSink` has been replaced by `ContractUseSink`, owned by the contract
+  layer. Node action effects and helper-analysis runtimes therefore emit or
+  ignore contract claims without naming the compatibility DTO boundary.
 - The artifact is intentionally private and behavior-preserving; it is the
   first A3 hook point for resource identity, anchor, and document-path facts
   before those facts are projected into the old DTO boundary.
@@ -804,6 +807,8 @@ Current result:
 - The first ContractIR migration seam is in place as `ContractUse`: it is not
   the final witness graph yet, but it gives the interpreter one internal
   contract object to emit and normalize before compatibility DTO projection.
+- Contract emission now flows through `ContractUseSink`, so node/control-flow
+  effects are no longer coupled to the `ValueUse` fixture DTO name.
 
 ### Phase 8 — bundled emission
 

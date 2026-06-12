@@ -1455,7 +1455,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   finalization owns the previous compatibility normalization before projecting
   to `ValueUse`. Recursive exact-helper and static-file walks stay in that
   internal contract layer, so `ValueUse` is no longer the object that nested
-  interpretation appends or normalizes.
+  interpretation appends or normalizes. The old `ValueUseSink` boundary has
+  also been retired; node action effects and helper-analysis runtimes now
+  target a `ContractUseSink` in the contract layer, so the interpreter no
+  longer names compatibility DTOs while emitting semantic claims.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the

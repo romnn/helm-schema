@@ -47,7 +47,6 @@ mod template_expr_analysis;
 mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
-mod value_use_sink;
 mod walker;
 mod yaml_shape;
 

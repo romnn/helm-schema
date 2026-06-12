@@ -45,6 +45,22 @@ impl ContractUse {
     }
 }
 
+/// Receives contract claims from node/action interpretation.
+///
+/// Some helper-summary passes intentionally implement this as a no-op because
+/// they collect local helper facts rather than root chart contract claims.
+pub(crate) trait ContractUseSink {
+    fn emit_contract_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind);
+
+    fn emit_contract_use_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+    );
+}
+
 pub(crate) fn finalize_contract_uses(mut uses: Vec<ContractUse>) -> Vec<ValueUse> {
     normalize_contract_uses(&mut uses);
     uses.into_iter().map(ContractUse::into_value_use).collect()

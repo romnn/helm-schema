@@ -6,6 +6,7 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::contract::ContractUseSink;
 use crate::document_hole_context::collect_document_hole_context;
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
 use crate::fragment_expr_eval::{
@@ -42,7 +43,6 @@ use crate::template_expr_analysis::{
 };
 use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_context::computed_with_body_dot;
-use crate::value_use_sink::ValueUseSink;
 use crate::walker::is_fragment_expr;
 use crate::{ValueKind, YamlPath};
 
@@ -221,10 +221,10 @@ impl FragmentOutputUseRuntime<'_, '_> {
     }
 }
 
-impl ValueUseSink for FragmentOutputUseRuntime<'_, '_> {
-    fn emit_use(&mut self, _source_expr: String, _path: YamlPath, _kind: ValueKind) {}
+impl ContractUseSink for FragmentOutputUseRuntime<'_, '_> {
+    fn emit_contract_use(&mut self, _source_expr: String, _path: YamlPath, _kind: ValueKind) {}
 
-    fn emit_use_with_extra_guards(
+    fn emit_contract_use_with_extra_guards(
         &mut self,
         _source_expr: String,
         _path: YamlPath,

@@ -8,7 +8,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract::{ContractUse, finalize_contract_uses};
+use crate::contract::{ContractUse, ContractUseSink, finalize_contract_uses};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
@@ -30,7 +30,6 @@ use crate::static_file_template::{
 use crate::symbolic_scope_state::{SymbolicScopeSnapshot, SymbolicScopeState};
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
-use crate::value_use_sink::ValueUseSink;
 use crate::{Guard, IrGenerator, ValueKind, ValueUse, YamlPath};
 
 pub struct SymbolicIrGenerator;
@@ -264,18 +263,18 @@ impl<'a> SymbolicWalker<'a> {
         self.scope.compatibility_guards()
     }
 
-    fn emit_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
-        self.emit_use_with_extra_guards(source_expr, path, kind, &[]);
+    fn emit_contract_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
+        self.emit_contract_use_with_extra_guards(source_expr, path, kind, &[]);
     }
 
-    fn emit_use_with_extra_guards(
+    fn emit_contract_use_with_extra_guards(
         &mut self,
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
         extra_guards: &[Guard],
     ) {
-        self.emit_use_with_resource(
+        self.emit_contract_use_with_resource(
             source_expr,
             path,
             kind,
@@ -284,7 +283,7 @@ impl<'a> SymbolicWalker<'a> {
         );
     }
 
-    fn emit_use_with_resource(
+    fn emit_contract_use_with_resource(
         &mut self,
         source_expr: String,
         path: YamlPath,
@@ -415,8 +414,8 @@ impl<'a> SymbolicWalker<'a> {
             helper_analysis,
         );
         // Stash chart-level `set X "K" (X.K | default V)` mutations discovered
-        // in any helper called from this text. Subsequent `emit_use` calls in
-        // this walker attach `Guard::Default { path }` for matching reads,
+        // in any helper called from this text. Subsequent contract emissions
+        // in this walker attach `Guard::Default { path }` for matching reads,
         // modeling that the helper's `set` has already run by the time those
         // reads are evaluated.
         self.scope
@@ -453,19 +452,25 @@ impl<'a> SymbolicWalker<'a> {
     }
 }
 
-impl ValueUseSink for SymbolicWalker<'_> {
-    fn emit_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
-        SymbolicWalker::emit_use(self, source_expr, path, kind);
+impl ContractUseSink for SymbolicWalker<'_> {
+    fn emit_contract_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
+        SymbolicWalker::emit_contract_use(self, source_expr, path, kind);
     }
 
-    fn emit_use_with_extra_guards(
+    fn emit_contract_use_with_extra_guards(
         &mut self,
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
         extra_guards: &[Guard],
     ) {
-        SymbolicWalker::emit_use_with_extra_guards(self, source_expr, path, kind, extra_guards);
+        SymbolicWalker::emit_contract_use_with_extra_guards(
+            self,
+            source_expr,
+            path,
+            kind,
+            extra_guards,
+        );
     }
 }
 

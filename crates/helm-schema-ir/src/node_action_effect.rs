@@ -2,13 +2,13 @@ use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::contract::ContractUseSink;
 use crate::fragment_scope_eval::AssignmentKind;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_use_sink::ValueUseSink;
 use crate::{Guard, ValueKind, YamlPath};
 
-pub(crate) trait NodeActionEffectSink: ValueUseSink {
+pub(crate) trait NodeActionEffectSink: ContractUseSink {
     fn apply_get_binding(&mut self, plan: GetBindingPlan);
 
     fn declare_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
@@ -58,12 +58,12 @@ pub(crate) fn apply_if_condition_plan(
 ) {
     let guards = plan.compatibility_guards();
     for value in plan.bound_values {
-        sink.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+        sink.emit_contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
     for guard in &guards {
         for path in guard.value_paths() {
-            sink.emit_use_with_extra_guards(
+            sink.emit_contract_use_with_extra_guards(
                 path.to_string(),
                 YamlPath(Vec::new()),
                 ValueKind::Scalar,
@@ -93,12 +93,12 @@ pub(crate) fn apply_with_condition_plan(
     }
 
     for value in plan.bound_values {
-        sink.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+        sink.emit_contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
     for guard in &guards {
         for path in guard.value_paths() {
-            sink.emit_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
+            sink.emit_contract_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
         }
     }
     sink.push_dot_binding(plan.dot_binding);
@@ -128,7 +128,7 @@ pub(crate) fn apply_range_action_plan(
                 path: source_path.clone(),
             };
             if plan.emit_header_use {
-                sink.emit_use_with_extra_guards(
+                sink.emit_contract_use_with_extra_guards(
                     source_path.clone(),
                     plan.guard_path.clone(),
                     ValueKind::Scalar,
@@ -140,7 +140,7 @@ pub(crate) fn apply_range_action_plan(
 
         if plan.renders_mapping_entries {
             for source_path in &plan.source_paths {
-                sink.emit_use(
+                sink.emit_contract_use(
                     source_path.clone(),
                     current_path.clone(),
                     ValueKind::Fragment,
