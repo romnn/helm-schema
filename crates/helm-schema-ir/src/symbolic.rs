@@ -9,7 +9,9 @@ use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+use crate::helper_analysis::{
+    BoundHelperAnalysis, HelperOutputMeta, helper_output_meta_from_analysis,
+};
 use crate::helper_binding_eval::bindings_for_helper_arg;
 use crate::helper_inline::plan_exact_helper_inline;
 use crate::helper_summary::HelperSummaryCache;
@@ -368,13 +370,8 @@ impl<'a> SymbolicWalker<'a> {
             .value_path_context()
             .local_alias_output_meta_for_text(text);
         let analysis = self.analyze_bound_helper_calls(text);
-        for (path, meta) in analysis.output {
+        for (path, meta) in helper_output_meta_from_analysis(&analysis) {
             out.entry(path).or_default().merge(meta);
-        }
-        for output in analysis.fragment_output_uses {
-            out.entry(output.source_expr)
-                .or_default()
-                .merge(output.meta);
         }
         out
     }

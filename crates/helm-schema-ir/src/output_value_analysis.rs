@@ -2,9 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values};
-use crate::helper_analysis::{
-    BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta, extend_type_hints,
-};
+use crate::helper_analysis::{BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta};
 use crate::value_path_context::ValuePathContext;
 
 pub(crate) struct OutputValueAnalysis {
@@ -63,26 +61,15 @@ pub(crate) fn collect_output_value_analysis(
     let mut chart_value_defaults = BTreeSet::new();
 
     if let Some(bound) = helper_analysis {
-        helper_output_values.extend(bound.output);
-        helper_fragment_output_uses.extend(bound.fragment_output_uses);
-        for path in bound.dependency_paths {
-            helper_dependency_values.entry(path).or_default();
-        }
-        for (path, meta) in bound.dependency_meta {
-            helper_dependency_values
-                .entry(path)
-                .or_default()
-                .merge(meta);
-        }
-        if kind == ValueKind::Fragment {
-            helper_fragment_output_values.extend(bound.fragment_output);
-        }
-        helper_guard_values.extend(bound.guard_paths);
-        extend_type_hints(&mut helper_type_hints, bound.type_hints);
-        suppress_direct_values.extend(bound.suppress_roots);
-        chart_value_defaults.extend(bound.chart_defaults);
-        helper_fragment_output_values.sort();
-        helper_fragment_output_values.dedup();
+        let projection = bound.into_output_projection(kind);
+        helper_output_values.extend(projection.output_values);
+        helper_fragment_output_values.extend(projection.fragment_output_values);
+        helper_fragment_output_uses.extend(projection.fragment_output_uses);
+        helper_dependency_values.extend(projection.dependency_values);
+        helper_guard_values.extend(projection.guard_values);
+        helper_type_hints.extend(projection.type_hints);
+        suppress_direct_values.extend(projection.suppress_roots);
+        chart_value_defaults.extend(projection.chart_defaults);
     }
 
     OutputValueAnalysis {

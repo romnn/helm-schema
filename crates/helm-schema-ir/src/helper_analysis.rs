@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::binding::HelperBinding;
+use crate::binding::{FragmentBinding, HelperBinding};
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::{Guard, ValueKind, YamlPath};
@@ -84,6 +84,17 @@ pub(crate) struct BoundHelperAnalysis {
     pub(crate) chart_defaults: BTreeSet<String>,
 }
 
+pub(crate) struct BoundHelperOutputProjection {
+    pub(crate) output_values: BTreeMap<String, HelperOutputMeta>,
+    pub(crate) fragment_output_values: Vec<String>,
+    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
+    pub(crate) dependency_values: BTreeMap<String, HelperOutputMeta>,
+    pub(crate) guard_values: BTreeSet<String>,
+    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
+    pub(crate) suppress_roots: BTreeSet<String>,
+    pub(crate) chart_defaults: BTreeSet<String>,
+}
+
 impl BoundHelperAnalysis {
     pub(crate) fn extend(&mut self, other: Self) {
         for (path, meta) in other.output {
@@ -155,6 +166,180 @@ impl BoundHelperAnalysis {
             self.dependency_paths.insert(path.clone());
             self.dependency_meta.entry(path).or_default().merge(meta);
         }
+    }
+
+    pub(crate) fn extend_nested_scalar_render(
+        &mut self,
+        mut nested: Self,
+        active_output_predicates: &BTreeSet<Predicate>,
+    ) {
+        convert_fragment_outputs_to_dependency_outputs(&mut nested);
+        for meta in nested.output.values_mut() {
+            meta.add_predicates(active_output_predicates.iter().cloned());
+        }
+        self.extend(nested);
+    }
+
+    pub(crate) fn extend_nested_fragment_render(
+        &mut self,
+        nested: Self,
+        active_output_predicates: &BTreeSet<Predicate>,
+        expression_kind: ValueKind,
+    ) {
+        for (output, mut meta) in nested.output {
+            meta.add_predicates(active_output_predicates.iter().cloned());
+            self.add_output_meta(output, meta);
+        }
+        for output in nested.fragment_output {
+            self.add_fragment_output_use(
+                output,
+                YamlPath(Vec::new()),
+                expression_kind,
+                HelperOutputMeta::with_predicates(active_output_predicates, false),
+            );
+        }
+        for mut output in nested.fragment_output_uses {
+            output
+                .meta
+                .add_predicates(active_output_predicates.iter().cloned());
+            self.fragment_output_uses.push(output);
+        }
+        self.dependency_paths.extend(
+            nested
+                .dependency_paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty()),
+        );
+        self.add_dependency_meta_map(nested.dependency_meta);
+        self.guard_paths.extend(nested.guard_paths);
+        extend_type_hints(&mut self.type_hints, nested.type_hints);
+        self.suppress_roots.extend(nested.suppress_roots);
+        self.chart_defaults.extend(nested.chart_defaults);
+    }
+
+    pub(crate) fn add_fragment_output_use(
+        &mut self,
+        source_expr: String,
+        relative_path: YamlPath,
+        kind: ValueKind,
+        meta: HelperOutputMeta,
+    ) {
+        self.fragment_output_uses.push(HelperFragmentOutputUse {
+            source_expr,
+            relative_path,
+            kind,
+            meta,
+        });
+    }
+
+    pub(crate) fn into_output_projection(
+        self,
+        output_kind: ValueKind,
+    ) -> BoundHelperOutputProjection {
+        let mut dependency_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+        for path in self.dependency_paths {
+            dependency_values.entry(path).or_default();
+        }
+        for (path, meta) in self.dependency_meta {
+            dependency_values.entry(path).or_default().merge(meta);
+        }
+
+        let mut fragment_output_values = Vec::new();
+        if output_kind == ValueKind::Fragment {
+            fragment_output_values.extend(self.fragment_output);
+            fragment_output_values.sort();
+            fragment_output_values.dedup();
+        }
+
+        BoundHelperOutputProjection {
+            output_values: self.output,
+            fragment_output_values,
+            fragment_output_uses: self.fragment_output_uses,
+            dependency_values,
+            guard_values: self.guard_paths,
+            type_hints: self.type_hints,
+            suppress_roots: self.suppress_roots,
+            chart_defaults: self.chart_defaults,
+        }
+    }
+
+    pub(crate) fn into_fragment_binding(mut self) -> Option<FragmentBinding> {
+        let structured_sources = self.structured_fragment_sources();
+        let rendered_sources = self.rendered_sources(&structured_sources);
+
+        let mut bindings = Vec::new();
+        if !self.string_output.is_empty() {
+            bindings.push(FragmentBinding::StringSet(self.string_output.clone()));
+        }
+        for output in self.fragment_output_uses.drain(..) {
+            bindings.push(FragmentBinding::for_output_path(
+                output.source_expr,
+                &output.relative_path,
+            ));
+        }
+        for source in self.fragment_output {
+            if !structured_sources.contains(&source)
+                && !output_path::values_path_has_descendant(&source, &rendered_sources)
+            {
+                bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
+            }
+        }
+        for source in self.output.into_keys() {
+            if !structured_sources.contains(&source)
+                && !output_path::values_path_has_descendant(&source, &rendered_sources)
+            {
+                bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
+            }
+        }
+        FragmentBinding::merge_all(bindings)
+    }
+
+    pub(crate) fn into_helper_binding(mut self) -> Option<HelperBinding> {
+        let structured_sources = self.structured_fragment_sources();
+        let rendered_sources = self.rendered_sources(&structured_sources);
+
+        let mut bindings = Vec::new();
+        if !self.string_output.is_empty() {
+            bindings.push(HelperBinding::StringSet(self.string_output.clone()));
+        }
+        for output in self.fragment_output_uses.drain(..) {
+            bindings.push(HelperBinding::for_output_path(
+                output.source_expr,
+                &output.relative_path,
+                output.meta,
+            ));
+        }
+        for source in self.fragment_output {
+            if !structured_sources.contains(&source)
+                && !output_path::values_path_has_descendant(&source, &rendered_sources)
+            {
+                bindings.push(HelperBinding::PathSet([source].into_iter().collect()));
+            }
+        }
+        for (source, meta) in self.output {
+            if !structured_sources.contains(&source)
+                && !output_path::values_path_has_descendant(&source, &rendered_sources)
+            {
+                bindings.push(HelperBinding::OutputSet(
+                    [(source, meta)].into_iter().collect(),
+                ));
+            }
+        }
+        HelperBinding::merge_all(bindings)
+    }
+
+    fn structured_fragment_sources(&self) -> BTreeSet<String> {
+        self.fragment_output_uses
+            .iter()
+            .map(|output| output.source_expr.clone())
+            .collect()
+    }
+
+    fn rendered_sources(&self, structured_sources: &BTreeSet<String>) -> BTreeSet<String> {
+        let mut rendered_sources = structured_sources.clone();
+        rendered_sources.extend(self.fragment_output.iter().cloned());
+        rendered_sources.extend(self.output.keys().cloned());
+        rendered_sources
     }
 }
 
@@ -324,12 +509,12 @@ pub(crate) fn merge_helper_output_meta_maps(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeSet, HashMap};
+    use std::collections::{BTreeMap, BTreeSet, HashMap};
 
     use super::{BoundHelperAnalysis, HelperOutputMeta, mark_suppressed_roots_for_bound_outputs};
-    use crate::Guard;
-    use crate::binding::HelperBinding;
+    use crate::binding::{FragmentBinding, HelperBinding};
     use crate::predicate::{Predicate, PredicateAtom};
+    use crate::{Guard, ValueKind, YamlPath};
 
     #[test]
     fn helper_output_meta_projects_predicates_at_compatibility_boundary() {
@@ -384,5 +569,107 @@ mod tests {
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
 
         assert!(analysis.suppress_roots.is_empty());
+    }
+
+    #[test]
+    fn output_projection_preserves_helper_summary_fields() {
+        let mut analysis = BoundHelperAnalysis::default();
+        let meta = HelperOutputMeta {
+            predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
+            defaulted: true,
+        };
+        analysis.add_output_meta("image.tag".to_string(), meta.clone());
+        analysis.fragment_output.insert("extraEnv".to_string());
+        analysis.dependency_paths.insert("global".to_string());
+        analysis
+            .dependency_meta
+            .insert("global.image.tag".to_string(), meta.clone());
+        analysis.guard_paths.insert("service.enabled".to_string());
+        analysis
+            .type_hints
+            .entry("image.tag".to_string())
+            .or_default()
+            .insert("string".to_string());
+        analysis.suppress_roots.insert("image".to_string());
+        analysis.chart_defaults.insert("nameOverride".to_string());
+
+        let projection = analysis.into_output_projection(ValueKind::Fragment);
+
+        assert_eq!(
+            projection.output_values,
+            BTreeMap::from([("image.tag".to_string(), meta.clone())])
+        );
+        assert_eq!(
+            projection.fragment_output_values,
+            vec!["extraEnv".to_string()]
+        );
+        assert_eq!(
+            projection.dependency_values,
+            BTreeMap::from([
+                ("global".to_string(), HelperOutputMeta::default()),
+                ("global.image.tag".to_string(), meta),
+            ])
+        );
+        assert_eq!(
+            projection.guard_values,
+            BTreeSet::from(["service.enabled".to_string()])
+        );
+        assert_eq!(
+            projection.type_hints,
+            BTreeMap::from([(
+                "image.tag".to_string(),
+                BTreeSet::from(["string".to_string()])
+            )])
+        );
+        assert_eq!(
+            projection.suppress_roots,
+            BTreeSet::from(["image".to_string()])
+        );
+        assert_eq!(
+            projection.chart_defaults,
+            BTreeSet::from(["nameOverride".to_string()])
+        );
+    }
+
+    #[test]
+    fn helper_binding_projection_preserves_structured_output_metadata() {
+        let meta = HelperOutputMeta {
+            predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
+            defaulted: true,
+        };
+        let mut analysis = BoundHelperAnalysis::default();
+        analysis.add_fragment_output_use(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            meta.clone(),
+        );
+
+        assert_eq!(
+            analysis.into_helper_binding(),
+            Some(HelperBinding::Dict(BTreeMap::from([(
+                "app".to_string(),
+                HelperBinding::OutputSet(BTreeMap::from([("podLabels".to_string(), meta)])),
+            )])))
+        );
+    }
+
+    #[test]
+    fn fragment_binding_projection_preserves_structured_output_path() {
+        let mut analysis = BoundHelperAnalysis::default();
+        analysis.add_fragment_output_use(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            HelperOutputMeta::default(),
+        );
+
+        assert_eq!(
+            analysis.into_fragment_binding(),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "app".to_string(),
+                FragmentBinding::OutputSet(BTreeSet::from(["podLabels".to_string()])),
+            )])))
+        );
     }
 }

@@ -7,7 +7,6 @@ use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
-use crate::fragment_binding_eval::fragment_binding_from_helper_analysis;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_text_with_helper_context,
     helper_binding_from_expr_with_fragment_locals,
@@ -732,7 +731,7 @@ fn collect_bound_fragment_output_assignment_uses(
                 &mut rhs_seen,
             );
         top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
-        if let Some(nested_binding) = fragment_binding_from_helper_analysis(nested) {
+        if let Some(nested_binding) = nested.into_fragment_binding() {
             binding = match binding {
                 Some(binding) => FragmentBinding::merge_all(vec![binding, nested_binding]),
                 None => Some(nested_binding),

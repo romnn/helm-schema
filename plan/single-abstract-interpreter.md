@@ -715,6 +715,10 @@ Current result:
   `helper_output_projection`, and `HelperOutputMeta` owns predicate/default
   merging. That keeps the remaining compatibility summary plumbing in one
   place while A2 moves toward native helper-summary effects.
+- `BoundHelperAnalysis` now owns nested scalar/fragment render projection,
+  output-action projection, and helper-summary-to-binding projection. The
+  remaining fragment/helper compatibility evaluators are narrower expression
+  resolvers instead of owning those summary conversion rules.
 
 Remaining A2 work:
 

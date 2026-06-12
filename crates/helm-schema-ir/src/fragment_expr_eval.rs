@@ -6,9 +6,6 @@ use crate::abstract_value::AbstractValue;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::define_body_cache::DefineBodyCache;
 use crate::eval_env::EvalEnv;
-use crate::fragment_binding_eval::{
-    fragment_binding_from_helper_analysis, helper_binding_from_helper_analysis,
-};
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::helper_call_analyzer::HelperCallAnalyzer;
 use crate::template_expr_analysis::{expr_contains_helper_call, is_merge_function};
@@ -193,7 +190,8 @@ impl HelperCallValueResolver for HelperBindingResolver<'_, '_, '_> {
                 self.context,
                 self.seen,
             );
-        helper_binding_from_helper_analysis(analysis)
+        analysis
+            .into_helper_binding()
             .map(|binding| AbstractValue::from_helper_binding(&binding))
     }
 }
@@ -226,7 +224,8 @@ impl HelperCallValueResolver for FragmentBindingResolver<'_, '_, '_> {
                 self.context,
                 self.seen,
             );
-        fragment_binding_from_helper_analysis(analysis)
+        analysis
+            .into_fragment_binding()
             .as_ref()
             .map(AbstractValue::from_fragment_binding)
     }

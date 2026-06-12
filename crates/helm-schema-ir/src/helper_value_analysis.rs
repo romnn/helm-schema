@@ -18,11 +18,10 @@ use crate::fragment_scope_eval::{
 };
 use crate::helper_analysis::{
     BoundHelperAnalysis, HelperOutputMeta, bound_helper_condition_paths,
-    bound_helper_dependency_paths, convert_fragment_outputs_to_dependency_outputs,
-    extend_type_hints, helper_dependency_meta_from_analysis, merge_helper_output_meta_maps,
-    merge_local_default_paths,
+    bound_helper_dependency_paths, extend_type_hints, helper_dependency_meta_from_analysis,
+    merge_helper_output_meta_maps, merge_local_default_paths,
 };
-use crate::helper_output_projection::{helper_binding_output_meta, push_helper_fragment_output};
+use crate::helper_output_projection::helper_binding_output_meta;
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
     local_default_paths_from_text, local_output_meta_from_text, local_rendered_paths_from_text,
@@ -551,7 +550,6 @@ fn collect_bound_helper_values_from_expr(
     } else {
         ValueKind::Scalar
     };
-    let empty_path = YamlPath(Vec::new());
     if expression_kind == ValueKind::Scalar {
         for output in direct_outputs {
             let meta = HelperOutputMeta::with_predicates(
@@ -581,7 +579,7 @@ fn collect_bound_helper_values_from_expr(
                 &mut string_seen,
             ));
     }
-    let mut nested = state
+    let nested = state
         .context
         .helper_call_analyzer()
         .analyze_bound_helper_calls(
@@ -593,44 +591,15 @@ fn collect_bound_helper_values_from_expr(
             state.seen,
         );
     if expression_kind == ValueKind::Fragment {
-        for (output, mut meta) in nested.output {
-            meta.add_predicates(active_output_predicates.iter().cloned());
-            state.analysis.add_output_meta(output, meta);
-        }
-        for output in nested.fragment_output {
-            push_helper_fragment_output(
-                &mut state.analysis.fragment_output_uses,
-                output,
-                &empty_path,
-                expression_kind,
-                HelperOutputMeta::with_predicates(active_output_predicates, false),
-            );
-        }
-        for mut output in nested.fragment_output_uses {
-            output
-                .meta
-                .add_predicates(active_output_predicates.iter().cloned());
-            state.analysis.fragment_output_uses.push(output);
-        }
-        state.analysis.dependency_paths.extend(
-            nested
-                .dependency_paths
-                .into_iter()
-                .filter(|path| !path.trim().is_empty()),
+        state.analysis.extend_nested_fragment_render(
+            nested,
+            active_output_predicates,
+            expression_kind,
         );
+    } else {
         state
             .analysis
-            .add_dependency_meta_map(nested.dependency_meta);
-        state.analysis.guard_paths.extend(nested.guard_paths);
-        extend_type_hints(&mut state.analysis.type_hints, nested.type_hints);
-        state.analysis.suppress_roots.extend(nested.suppress_roots);
-        state.analysis.chart_defaults.extend(nested.chart_defaults);
-    } else {
-        convert_fragment_outputs_to_dependency_outputs(&mut nested);
-        for meta in nested.output.values_mut() {
-            meta.add_predicates(active_output_predicates.iter().cloned());
-        }
-        state.analysis.extend(nested);
+            .extend_nested_scalar_render(nested, active_output_predicates);
     }
     let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);
