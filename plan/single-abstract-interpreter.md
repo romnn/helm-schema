@@ -591,8 +591,8 @@ Current result:
   local survive, and branches join only facts present in every live outcome.
 - `node_eval.rs` now evaluates `if`, `with`, and `range` bodies inside scoped
   local frames and joins their out-states explicitly. The walker still owns the
-  compatibility guard stack and rendered-YAML sink, but source-order control
-  flow is no longer embedded in `symbolic.rs`.
+  rendered-YAML sink, but source-order control flow is no longer embedded in
+  `symbolic.rs`.
 - Assignment actions can now clear stale fragment aliases when the right-hand
   side is structurally unknown. That models Helm's local rebinding more
   faithfully than leaving a previous precise binding in place.
@@ -601,11 +601,16 @@ Current result:
   idempotent, commutative, associative for tested finite values, and
   `Top`-absorbing; compatibility `Unknown` widens joins to `Top` instead of
   being silently dropped.
+- `SymbolicWalker` now stores active control-flow state as `Predicate` values
+  instead of `Guard` values. Flat `Guard` rows are projected only when emitting
+  the current `ValueUse` compatibility DTO, while unsupported negated
+  predicates can remain represented internally for later lowering work.
 
 Remaining A1 work:
 
-- Replace the remaining flat guard-stack internals with predicates and keep
-  flat `Guard` projection only at the current `ValueUse` compatibility output.
+- Replace the remaining compatibility guard producers in condition planning,
+  helper metadata, and output analysis with predicate-native forms. Keep flat
+  `Guard` projection only at the current `ValueUse` compatibility output.
 - Move the remaining compatibility scope snapshot mechanics for guard and dot
   stacks behind the same environment boundary as local state. This is a
   cleanup step toward the from-scratch architecture, not a reason to keep

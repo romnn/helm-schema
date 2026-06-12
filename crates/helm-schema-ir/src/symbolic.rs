@@ -18,6 +18,7 @@ use crate::node_eval::{NodeEvalRuntime, eval_node};
 use crate::output_node_context::output_node_context;
 use crate::output_value_analysis::collect_output_value_analysis;
 use crate::output_value_emitter::{ValueUseSink, emit_output_value_analysis};
+use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::static_file_template::{
@@ -82,8 +83,8 @@ struct SymbolicWalker<'a> {
     defines: &'a DefineIndex,
     ir_context: SymbolicIrContext,
     uses: Vec<ValueUse>,
-    guards: Vec<Guard>,
-    seed_guards: Vec<Guard>,
+    predicates: Vec<Predicate>,
+    seed_predicates: Vec<Predicate>,
     seed_dot: Option<FragmentBinding>,
     no_output_depth: usize,
     dot_stack: Vec<Option<FragmentBinding>>,
@@ -99,7 +100,7 @@ struct SymbolicWalker<'a> {
 
 #[derive(Clone)]
 struct WalkerScopeSnapshot {
-    guards_len: usize,
+    predicates_len: usize,
     dot_stack_len: Option<usize>,
     local_state: SymbolicLocalStateSnapshot,
 }
@@ -115,8 +116,8 @@ impl<'a> SymbolicWalker<'a> {
             defines,
             ir_context,
             uses: Vec::new(),
-            guards: Vec::new(),
-            seed_guards: Vec::new(),
+            predicates: Vec::new(),
+            seed_predicates: Vec::new(),
             seed_dot: None,
             no_output_depth: 0,
             dot_stack: Vec::new(),
@@ -131,9 +132,9 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn with_initial_guards(mut self, guards: Vec<Guard>) -> Self {
-        self.seed_guards = guards;
-        self.guards = self.seed_guards.clone();
+    fn with_initial_predicates(mut self, predicates: Vec<Predicate>) -> Self {
+        self.seed_predicates = predicates;
+        self.predicates = self.seed_predicates.clone();
         self
     }
 
@@ -189,14 +190,14 @@ impl<'a> SymbolicWalker<'a> {
 
     fn scope_snapshot(&self, include_dot_stack: bool) -> WalkerScopeSnapshot {
         WalkerScopeSnapshot {
-            guards_len: self.guards.len(),
+            predicates_len: self.predicates.len(),
             dot_stack_len: include_dot_stack.then_some(self.dot_stack.len()),
             local_state: self.local_state.snapshot(),
         }
     }
 
     fn restore_scope(&mut self, snapshot: WalkerScopeSnapshot) {
-        self.guards.truncate(snapshot.guards_len);
+        self.predicates.truncate(snapshot.predicates_len);
         if let Some(dot_stack_len) = snapshot.dot_stack_len {
             self.dot_stack.truncate(dot_stack_len);
         }
@@ -259,7 +260,7 @@ impl<'a> SymbolicWalker<'a> {
         stack.push(token);
         let mut nested =
             SymbolicWalker::new_with_context(src, self.defines, self.ir_context.clone())
-                .with_initial_guards(self.guards.clone())
+                .with_initial_predicates(self.predicates.clone())
                 .with_initial_dot_binding(request.dot)
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
@@ -271,7 +272,7 @@ impl<'a> SymbolicWalker<'a> {
     #[tracing::instrument(skip_all)]
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
         self.rendered_yaml.reset_for_tree(tree);
-        self.guards = self.seed_guards.clone();
+        self.predicates = self.seed_predicates.clone();
         self.dot_stack.clear();
         if let Some(dot) = self.seed_dot.clone() {
             self.dot_stack.push(Some(dot));
@@ -280,6 +281,10 @@ impl<'a> SymbolicWalker<'a> {
         eval_node(self, tree.root_node());
         postprocess_value_uses(&mut self.uses);
         std::mem::take(&mut self.uses)
+    }
+
+    fn compatibility_guards(&self) -> Vec<Guard> {
+        Predicate::compatibility_guard_stack(&self.predicates)
     }
 
     fn emit_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
@@ -299,7 +304,7 @@ impl<'a> SymbolicWalker<'a> {
             self.rendered_yaml.rebase_path(path)
         };
 
-        let mut guards = self.guards.clone();
+        let mut guards = self.compatibility_guards();
         for guard in extra_guards {
             if !guards.contains(guard) {
                 guards.push(guard.clone());
@@ -349,7 +354,7 @@ impl<'a> SymbolicWalker<'a> {
         if source_expr.trim().is_empty() {
             return;
         }
-        let mut guards = self.guards.clone();
+        let mut guards = self.compatibility_guards();
         for guard in extra_guards {
             if !guards.contains(guard) {
                 guards.push(guard.clone());
@@ -413,7 +418,7 @@ impl<'a> SymbolicWalker<'a> {
         stack.push(plan.token);
         let mut nested =
             SymbolicWalker::new_with_context(plan.source, self.defines, self.ir_context.clone())
-                .with_initial_guards(self.guards.clone())
+                .with_initial_predicates(self.predicates.clone())
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
                 .with_helper_bindings(bindings)
@@ -636,9 +641,9 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         self.local_state.set_output_meta(variable, helper_meta);
     }
 
-    fn push_guard_if_absent(&mut self, guard: Guard) {
-        if !self.guards.contains(&guard) {
-            self.guards.push(guard);
+    fn push_predicate_if_absent(&mut self, predicate: Predicate) {
+        if !predicate.is_trivial() && !self.predicates.contains(&predicate) {
+            self.predicates.push(predicate);
         }
     }
 

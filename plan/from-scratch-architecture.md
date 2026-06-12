@@ -1355,12 +1355,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 - **A1 — finish interpreter phases 3–4 with the corrected shapes**:
   state-passing `eval_node` with explicit join (Go-template `=` vs `:=`,
   branch out-states) is now in place for the compatibility walker. Remaining
-  A1 work is finishing the internal predicate boundary (atoms + `And`/`Not`,
-  else-branches carry `¬P`) with flat `Guard` projection only at the
-  `ValueUse` boundary, and hiding/removing the last compatibility guard/dot
-  snapshot plumbing. The **Top-absorbing** value join is in place: `Top` is
-  distinct from compatibility `Unknown`, and joins widen to `Top` instead of
-  dropping unknown alternatives. Deletes: manual
+  A1 work is finishing predicate-native condition/helper/output metadata while
+  keeping flat `Guard` projection only at the `ValueUse` boundary, and
+  hiding/removing the last compatibility dot snapshot plumbing. The
+  **Top-absorbing** value join is in place: `Top` is distinct from
+  compatibility `Unknown`, and joins widen to `Top` instead of dropping
+  unknown alternatives. The active walker guard stack is predicate-backed, so
+  else-branches can carry `¬P` internally even when the current DTO cannot
+  project that predicate yet. Deletes: manual
   compatibility scope snapshot/restore once guard/dot stacks move into the
   same environment boundary as locals.
 - **A2 — helper summaries under the §6.3 contract**: empty-pc summaries

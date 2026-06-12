@@ -4,6 +4,7 @@ use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_scope_eval::AssignmentKind;
 use crate::output_value_emitter::ValueUseSink;
+use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
 
@@ -18,7 +19,7 @@ pub(crate) trait NodeActionEffectSink: ValueUseSink {
 
     fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str);
 
-    fn push_guard_if_absent(&mut self, guard: Guard);
+    fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
     fn push_dot_binding(&mut self, binding: Option<FragmentBinding>);
 
@@ -69,7 +70,10 @@ pub(crate) fn apply_if_condition_plan(
                 std::slice::from_ref(guard),
             );
         }
-        sink.push_guard_if_absent(guard.clone());
+        sink.push_predicate_if_absent(Predicate::from(guard.clone()));
+    }
+    if guards.is_empty() {
+        sink.push_predicate_if_absent(plan.predicate);
     }
 }
 
@@ -78,12 +82,14 @@ pub(crate) fn apply_with_condition_plan(
     plan: ConditionActionPlan,
 ) {
     let guards = plan.compatibility_guards();
-    // Push the With guards before emitting header scalar uses so the emitted
-    // uses themselves carry the With guard. This lets the schema generator
-    // identify with-header uses by the presence of a matching
-    // `Guard::With { path: source_expr }` in the use's guard list.
+    // Push the With predicate before emitting header scalar uses so the
+    // projected compatibility guards on those uses include `Guard::With`.
+    // The schema generator uses that marker to identify with-header reads.
     for guard in &guards {
-        sink.push_guard_if_absent(guard.clone());
+        sink.push_predicate_if_absent(Predicate::from(guard.clone()));
+    }
+    if guards.is_empty() {
+        sink.push_predicate_if_absent(plan.predicate.clone());
     }
 
     for value in plan.bound_values {
@@ -102,9 +108,7 @@ pub(crate) fn apply_condition_alternative_guards(
     sink: &mut dyn NodeActionEffectSink,
     plan: &ConditionActionPlan,
 ) {
-    for guard in plan.negated_compatibility_guards() {
-        sink.push_guard_if_absent(guard);
-    }
+    sink.push_predicate_if_absent(plan.predicate.negated());
 }
 
 pub(crate) fn apply_range_action_plan(
@@ -128,7 +132,7 @@ pub(crate) fn apply_range_action_plan(
                     std::slice::from_ref(&guard),
                 );
             }
-            sink.push_guard_if_absent(guard);
+            sink.push_predicate_if_absent(Predicate::from(guard));
         }
 
         if plan.renders_mapping_entries {

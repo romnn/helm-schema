@@ -16,10 +16,6 @@ impl ConditionActionPlan {
     pub(crate) fn compatibility_guards(&self) -> Vec<crate::Guard> {
         self.predicate.compatibility_guards()
     }
-
-    pub(crate) fn negated_compatibility_guards(&self) -> Vec<crate::Guard> {
-        self.predicate.negated().compatibility_guards()
-    }
 }
 
 pub(crate) fn plan_if_condition(

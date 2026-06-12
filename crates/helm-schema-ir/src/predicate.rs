@@ -60,6 +60,10 @@ impl Predicate {
         }
     }
 
+    pub(crate) fn is_trivial(&self) -> bool {
+        matches!(self, Self::True | Self::False)
+    }
+
     pub(crate) fn compatibility_guards(&self) -> Vec<Guard> {
         match self {
             Self::True | Self::False => Vec::new(),
@@ -87,6 +91,18 @@ impl Predicate {
                     .unwrap_or_default()
             }
         }
+    }
+
+    pub(crate) fn compatibility_guard_stack(predicates: &[Self]) -> Vec<Guard> {
+        let mut guards = Vec::new();
+        for predicate in predicates {
+            for guard in predicate.compatibility_guards() {
+                if !guards.contains(&guard) {
+                    guards.push(guard);
+                }
+            }
+        }
+        guards
     }
 }
 
@@ -183,5 +199,19 @@ mod tests {
         ]);
 
         assert_eq!(predicate.compatibility_guards(), Vec::new());
+    }
+
+    #[test]
+    fn compatibility_guard_stack_dedupes_projected_guards() {
+        let predicate = Predicate::from(Guard::Truthy {
+            path: "enabled".to_string(),
+        });
+
+        assert_eq!(
+            Predicate::compatibility_guard_stack(&[predicate.clone(), predicate]),
+            vec![Guard::Truthy {
+                path: "enabled".to_string()
+            }]
+        );
     }
 }
