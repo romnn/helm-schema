@@ -25,13 +25,7 @@ pub(crate) fn plan_if_condition(
     get_bindings: &HashMap<String, GetBinding>,
 ) -> ConditionActionPlan {
     ConditionActionPlan {
-        predicate: Predicate::all(
-            value_path_context
-                .condition_guards(text)
-                .into_iter()
-                .map(Predicate::from)
-                .collect(),
-        ),
+        predicate: value_path_context.condition_predicate(text),
         bound_values: extract_bound_values(text, range_domains, get_bindings),
         dot_binding: None,
     }
@@ -44,13 +38,7 @@ pub(crate) fn plan_with_condition(
     get_bindings: &HashMap<String, GetBinding>,
 ) -> ConditionActionPlan {
     ConditionActionPlan {
-        predicate: Predicate::all(
-            value_path_context
-                .with_condition_guards(text)
-                .into_iter()
-                .map(Predicate::from)
-                .collect(),
-        ),
+        predicate: value_path_context.with_condition_predicate(text),
         bound_values: extract_bound_values(text, range_domains, get_bindings),
         dot_binding: value_path_context.with_body_fragment_binding(text),
     }

@@ -609,12 +609,13 @@ Current result:
   projection, local-alias output metadata, and output emission now pass
   `Predicate` values internally and project them to flat `Guard` rows only at
   the `ValueUse` compatibility boundary.
+- Condition planning now returns `Predicate` values from `ValuePathContext`
+  directly. Alias-derived conditions, `with` header semantics, and condition
+  action plans no longer produce flat `Guard` rows before the compatibility
+  boundary.
 
 Remaining A1 work:
 
-- Replace the remaining compatibility guard producers in condition planning
-  with predicate-native forms. Keep flat `Guard` projection only at the current
-  `ValueUse` compatibility output.
 - Move the remaining compatibility scope snapshot mechanics for guard and dot
   stacks behind the same environment boundary as local state. This is a
   cleanup step toward the from-scratch architecture, not a reason to keep

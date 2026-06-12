@@ -1354,10 +1354,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 
 - **A1 — finish interpreter phases 3–4 with the corrected shapes**:
   state-passing `eval_node` with explicit join (Go-template `=` vs `:=`,
-  branch out-states) is now in place for the compatibility walker. Remaining
-  A1 work is finishing predicate-native condition planning while keeping flat
-  `Guard` projection only at the `ValueUse` boundary, and hiding/removing the
-  last compatibility dot snapshot plumbing. The
+  branch out-states) is now in place for the compatibility walker. Condition
+  planning is predicate-native, with flat `Guard` projection kept at the
+  current `ValueUse` boundary. Remaining A1 work is hiding/removing the last
+  compatibility dot snapshot plumbing. The
   **Top-absorbing** value join is in place: `Top` is distinct from
   compatibility `Unknown`, and joins widen to `Top` instead of dropping
   unknown alternatives. The active walker guard stack is predicate-backed, so

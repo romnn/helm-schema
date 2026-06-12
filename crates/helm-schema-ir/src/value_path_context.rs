@@ -2,13 +2,13 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::Guard;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::{resolved_default_fallback_paths_for_text, type_is_schema_type};
 use crate::fragment_binding_eval::fragment_binding_from_outer_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding_eval::{binding_from_expr, resolve_bound_path_expr};
+use crate::predicate::{Predicate, PredicateAtom};
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
@@ -172,32 +172,38 @@ impl ValuePathContext<'_> {
         out
     }
 
-    pub(crate) fn condition_guards(&self, text: &str) -> Vec<Guard> {
-        let mut cond_guards = parse_condition(text);
-        let alias_guards = self.condition_guards_from_aliases(text);
-        cond_guards.retain(|guard| !guard_is_subsumed_by_alias_or_guard(guard, &alias_guards));
-        for guard in alias_guards {
-            if !cond_guards.contains(&guard) {
-                cond_guards.push(guard);
+    pub(crate) fn condition_predicate(&self, text: &str) -> Predicate {
+        let mut predicates: Vec<Predicate> = parse_condition(text)
+            .into_iter()
+            .map(Predicate::from)
+            .collect();
+        let alias_predicates = self.condition_predicates_from_aliases(text);
+        predicates.retain(|predicate| {
+            !predicate_is_subsumed_by_alias_or_predicate(predicate, &alias_predicates)
+        });
+        for predicate in alias_predicates {
+            if !predicates.contains(&predicate) {
+                predicates.push(predicate);
             }
         }
-        if !cond_guards.is_empty() {
-            return cond_guards;
+        if !predicates.is_empty() {
+            return Predicate::all(predicates);
         }
         if self.condition_has_unrepresentable_values_comparison(text) {
-            return Vec::new();
+            return Predicate::True;
         }
-        self.resolved_values_paths_in_expr_tree(text)
-            .into_iter()
-            .map(|path| Guard::Truthy { path })
-            .collect()
+        Predicate::all(
+            self.resolved_values_paths_in_expr_tree(text)
+                .into_iter()
+                .map(Predicate::truthy_path)
+                .collect(),
+        )
     }
 
-    pub(crate) fn with_condition_guards(&self, text: &str) -> Vec<Guard> {
-        self.condition_guards(text)
-            .into_iter()
-            .flat_map(with_guards_from_condition_guard)
-            .collect()
+    pub(crate) fn with_condition_predicate(&self, text: &str) -> Predicate {
+        Predicate::all(with_predicates_from_condition_predicate(
+            self.condition_predicate(text),
+        ))
     }
 
     pub(crate) fn with_body_fragment_binding(&self, header: &str) -> Option<FragmentBinding> {
@@ -305,7 +311,7 @@ impl ValuePathContext<'_> {
                 && !self.resolve_expr_to_values_paths(expr).is_empty())
     }
 
-    fn condition_guards_from_aliases(&self, text: &str) -> Vec<Guard> {
+    fn condition_predicates_from_aliases(&self, text: &str) -> Vec<Predicate> {
         let mut out = Vec::new();
         for expr in parse_expr_text(text) {
             let TemplateExpr::Call { function, args } = expr.deparen() else {
@@ -320,7 +326,11 @@ impl ValuePathContext<'_> {
                         continue;
                     }
                     let paths = self.paths_for_expr(arg);
-                    out.extend(paths.into_iter().map(|path| Guard::Not { path }));
+                    out.extend(
+                        paths
+                            .into_iter()
+                            .map(|path| Predicate::truthy_path(path).negated()),
+                    );
                 }
                 "or" => {
                     if !args
@@ -334,9 +344,9 @@ impl ValuePathContext<'_> {
                         .flat_map(|arg| self.paths_for_expr(arg))
                         .collect();
                     if !paths.is_empty() {
-                        out.push(Guard::Or {
-                            paths: paths.into_iter().collect(),
-                        });
+                        out.push(Predicate::Or(
+                            paths.into_iter().map(Predicate::truthy_path).collect(),
+                        ));
                     }
                 }
                 "eq" => {
@@ -354,9 +364,11 @@ impl ValuePathContext<'_> {
                             (None, Some(value)) => (value, self.paths_for_expr(left)),
                             _ => continue,
                         };
-                    out.extend(paths.into_iter().map(|path| Guard::Eq {
-                        path,
-                        value: value.clone(),
+                    out.extend(paths.into_iter().map(|path| {
+                        Predicate::Atom(PredicateAtom::Eq {
+                            path,
+                            value: value.clone(),
+                        })
                     }));
                 }
                 "typeIs" => {
@@ -375,9 +387,11 @@ impl ValuePathContext<'_> {
                         .skip(1)
                         .flat_map(|arg| self.paths_for_expr(arg))
                         .collect();
-                    out.extend(paths.into_iter().map(|path| Guard::TypeIs {
-                        path,
-                        schema_type: schema_type.clone(),
+                    out.extend(paths.into_iter().map(|path| {
+                        Predicate::Atom(PredicateAtom::TypeIs {
+                            path,
+                            schema_type: schema_type.clone(),
+                        })
                     }));
                 }
                 _ => {}
@@ -483,42 +497,83 @@ fn direct_values_paths_from_exprs(exprs: &[TemplateExpr]) -> BTreeSet<String> {
     paths
 }
 
-fn guard_is_subsumed_by_alias_or_guard(guard: &Guard, alias_guards: &[Guard]) -> bool {
-    if !matches!(guard, Guard::Truthy { .. } | Guard::Or { .. }) {
+fn predicate_is_subsumed_by_alias_or_predicate(
+    predicate: &Predicate,
+    alias_predicates: &[Predicate],
+) -> bool {
+    let Some(paths) = truthy_or_predicate_paths(predicate) else {
         return false;
-    }
+    };
 
-    alias_guards.iter().any(|alias_guard| {
-        let Guard::Or { paths } = alias_guard else {
+    alias_predicates.iter().any(|alias_predicate| {
+        let Some(alias_paths) = truthy_or_predicate_paths(alias_predicate) else {
             return false;
         };
-        guard.value_paths().iter().all(|path| {
-            paths
-                .iter()
-                .any(|alias_guard_path| alias_guard_path == path)
-        })
+        paths
+            .iter()
+            .all(|path| alias_paths.iter().any(|alias_path| alias_path == path))
     })
 }
 
-fn with_guards_from_condition_guard(guard: Guard) -> Vec<Guard> {
-    match guard {
-        Guard::Truthy { path } => vec![Guard::With { path }],
-        Guard::Or { paths } => {
-            let mut out: Vec<Guard> = paths
+fn truthy_or_predicate_paths(predicate: &Predicate) -> Option<Vec<String>> {
+    match predicate {
+        Predicate::Atom(PredicateAtom::Truthy { path }) => Some(vec![path.clone()]),
+        Predicate::Or(predicates) => truthy_predicate_paths(predicates),
+        _ => None,
+    }
+}
+
+fn truthy_predicate_paths(predicates: &[Predicate]) -> Option<Vec<String>> {
+    predicates
+        .iter()
+        .map(|predicate| match predicate {
+            Predicate::Atom(PredicateAtom::Truthy { path }) => Some(path.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+fn with_predicates_from_condition_predicate(predicate: Predicate) -> Vec<Predicate> {
+    match predicate {
+        Predicate::True => Vec::new(),
+        Predicate::False => vec![Predicate::False],
+        Predicate::And(predicates) => predicates
+            .into_iter()
+            .flat_map(with_predicates_from_condition_predicate)
+            .collect(),
+        Predicate::Atom(PredicateAtom::Truthy { path }) => {
+            vec![Predicate::Atom(PredicateAtom::With { path })]
+        }
+        Predicate::Or(predicates) => {
+            let Some(paths) = truthy_predicate_paths(&predicates) else {
+                return vec![Predicate::Or(predicates)];
+            };
+            let mut out: Vec<Predicate> = paths
                 .iter()
-                .map(|path| Guard::With { path: path.clone() })
+                .map(|path| Predicate::Atom(PredicateAtom::With { path: path.clone() }))
                 .collect();
-            out.push(Guard::Or { paths });
+            out.push(Predicate::Or(
+                paths.into_iter().map(Predicate::truthy_path).collect(),
+            ));
             out
         }
-        Guard::Not { path } => vec![Guard::With { path: path.clone() }, Guard::Not { path }],
-        Guard::Eq { path, value } => vec![
-            Guard::With { path: path.clone() },
-            Guard::Eq { path, value },
+        Predicate::Not(inner) => match inner.as_ref() {
+            Predicate::Atom(PredicateAtom::Truthy { path }) => vec![
+                Predicate::Atom(PredicateAtom::With { path: path.clone() }),
+                Predicate::Not(inner),
+            ],
+            _ => vec![Predicate::Not(inner)],
+        },
+        Predicate::Atom(PredicateAtom::Eq { path, value }) => vec![
+            Predicate::Atom(PredicateAtom::With { path: path.clone() }),
+            Predicate::Atom(PredicateAtom::Eq { path, value }),
         ],
-        Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } | Guard::TypeIs { .. } => {
-            vec![guard]
-        }
+        Predicate::Atom(
+            PredicateAtom::Range { .. }
+            | PredicateAtom::With { .. }
+            | PredicateAtom::Default { .. }
+            | PredicateAtom::TypeIs { .. },
+        ) => vec![predicate],
     }
 }
 
@@ -544,5 +599,91 @@ fn borrowed_string_literal(arg: &TemplateExpr) -> Option<&str> {
     match arg.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => Some(value),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Guard;
+
+    #[test]
+    fn with_predicates_preserve_header_projection_semantics() {
+        let predicate = Predicate::all(vec![
+            Predicate::truthy_path("service.enabled"),
+            Predicate::Atom(PredicateAtom::Eq {
+                path: "service.type".to_string(),
+                value: "ClusterIP".to_string(),
+            }),
+            Predicate::Or(vec![
+                Predicate::truthy_path("service.annotations"),
+                Predicate::truthy_path("global.annotations"),
+            ]),
+            Predicate::truthy_path("service.disabled").negated(),
+        ]);
+
+        let with_predicate = Predicate::all(with_predicates_from_condition_predicate(predicate));
+
+        assert_eq!(
+            with_predicate.compatibility_guards(),
+            vec![
+                Guard::With {
+                    path: "service.enabled".to_string(),
+                },
+                Guard::With {
+                    path: "service.type".to_string(),
+                },
+                Guard::Eq {
+                    path: "service.type".to_string(),
+                    value: "ClusterIP".to_string(),
+                },
+                Guard::With {
+                    path: "service.annotations".to_string(),
+                },
+                Guard::With {
+                    path: "global.annotations".to_string(),
+                },
+                Guard::Or {
+                    paths: vec![
+                        "service.annotations".to_string(),
+                        "global.annotations".to_string(),
+                    ],
+                },
+                Guard::With {
+                    path: "service.disabled".to_string(),
+                },
+                Guard::Not {
+                    path: "service.disabled".to_string(),
+                },
+            ]
+        );
+        assert_eq!(
+            Predicate::all(with_predicates_from_condition_predicate(Predicate::False)),
+            Predicate::False,
+        );
+    }
+
+    #[test]
+    fn alias_or_predicate_subsumes_direct_truthy_predicates() {
+        let alias_predicate = Predicate::Or(vec![
+            Predicate::truthy_path("service.annotations"),
+            Predicate::truthy_path("global.annotations"),
+        ]);
+
+        assert!(predicate_is_subsumed_by_alias_or_predicate(
+            &Predicate::truthy_path("service.annotations"),
+            std::slice::from_ref(&alias_predicate),
+        ));
+        assert!(predicate_is_subsumed_by_alias_or_predicate(
+            &Predicate::Or(vec![
+                Predicate::truthy_path("service.annotations"),
+                Predicate::truthy_path("global.annotations"),
+            ]),
+            &[alias_predicate],
+        ));
+        assert!(!predicate_is_subsumed_by_alias_or_predicate(
+            &Predicate::truthy_path("service.labels"),
+            &[],
+        ));
     }
 }
