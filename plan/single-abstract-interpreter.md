@@ -668,6 +668,14 @@ Current result:
   expression evaluator for helper-free subexpressions. This moves another
   compatibility edge onto `eval_expr` while preserving the fragment path
   projection needed by helper-body output-use analysis.
+- Local `set $map "key" value` mutations are now an `eval_expr` effect that
+  updates the mutated key in `EvalEnv` with the assigned abstract value. The
+  old fragment-scope mutation helper consumes that effect first and keeps its
+  helper-aware path as a compatibility fallback until helper-body
+  interpretation is fully summary-owned.
+- Selector reads on local structured values now clear the base container's
+  broad read set and re-add only the selected child. This prevents local-map
+  siblings from being treated as rendered inputs when only one key is selected.
 
 Remaining A2 work:
 

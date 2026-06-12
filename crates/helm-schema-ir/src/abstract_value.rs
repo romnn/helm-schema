@@ -254,6 +254,25 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn with_overlay_entries(self, new_entries: BTreeMap<String, AbstractValue>) -> Self {
+        if new_entries.is_empty() {
+            return self;
+        }
+        match self {
+            Self::Overlay {
+                mut entries,
+                fallback,
+            } => {
+                entries.extend(new_entries);
+                Self::Overlay { entries, fallback }
+            }
+            other => Self::Overlay {
+                entries: new_entries,
+                fallback: Box::new(other),
+            },
+        }
+    }
+
     pub(crate) fn from_helper_binding(binding: &HelperBinding) -> Self {
         match binding {
             HelperBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),

@@ -1375,9 +1375,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   so the old twin walkers have a single replacement point. Helper-free
   helper-binding expressions with fragment locals now route through `eval_expr`
   as well, while fragment consumers keep fragment/rendered-path semantics until
-  those facts are native abstract effects. Deletes: the twin helper-body walks,
-  the fragment/helper binding evaluators, and — once resource identity consumes
-  interpreter summaries — the 1,480-line `helper_eval.rs`.
+  those facts are native abstract effects. Local `set` mutations are now
+  interpreter effects, and selector reads on local structured values only
+  report the selected child rather than the whole base map. Deletes: the twin
+  helper-body walks, the fragment/helper binding evaluators, and — once
+  resource identity consumes interpreter summaries — the 1,480-line
+  `helper_eval.rs`.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

@@ -4,7 +4,9 @@ use helm_schema_ast::{HelmAst, parse_action_expressions};
 use serde::{Deserialize, Serialize};
 
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{apply_assignment_expr, eval_expr, eval_expr_value};
+use crate::expr_eval::{
+    apply_assignment_expr, apply_local_set_mutations_expr, eval_expr, eval_expr_value,
+};
 use crate::walker::is_fragment_expr;
 use crate::{Guard, ValueKind, ValueUse};
 
@@ -124,6 +126,9 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
                 let exprs = parse_action_expressions(&format!("{{{{ {text} }}}}"));
                 let mut paths = BTreeSet::new();
                 for expr in &exprs {
+                    if apply_local_set_mutations_expr(expr, env) {
+                        continue;
+                    }
                     if apply_assignment_expr(expr, env) {
                         continue;
                     }
@@ -472,6 +477,28 @@ image: {{ $root.image.repository }}
         assert!(
             !facts.path_facts.keys().any(|path| path.starts_with('.')),
             "values paths should never start with a dot, got {facts:?}"
+        );
+    }
+
+    #[test]
+    fn chart_facts_apply_local_set_mutations_before_later_renders() {
+        let src = r#"
+{{- $config := dict "name" .Values.serviceAccount.name "annotations" .Values.serviceAccount.annotations }}
+{{- $_ := set $config (printf "%s" "name") "generated" }}
+name: {{ $config.name }}
+annotations: {{ $config.annotations }}
+"#;
+        let ast = TreeSitterParser.parse(src).expect("parse template");
+
+        let facts = derive_chart_facts_from_ast(&ast);
+
+        assert!(
+            !facts.path_facts.contains_key("serviceAccount.name"),
+            "the old value behind a mutated local key must not stay attributed, got {facts:?}"
+        );
+        assert!(
+            facts.path_facts.contains_key("serviceAccount.annotations"),
+            "unmutated sibling keys should stay attributed, got {facts:?}"
         );
     }
 

@@ -9,6 +9,7 @@ pub(crate) struct Effects {
     pub(crate) defaults: BTreeSet<String>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) string_hints: BTreeSet<String>,
+    pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
 }
 
 impl Effects {
@@ -23,6 +24,12 @@ impl Effects {
         self.reads.extend(other.reads);
         self.defaults.extend(other.defaults);
         self.string_hints.extend(other.string_hints);
+        for (name, entries) in other.local_set_mutations {
+            self.local_set_mutations
+                .entry(name)
+                .or_default()
+                .extend(entries);
+        }
         for (path, hints) in other.type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.type_hints, path.clone(), &hint);
@@ -51,6 +58,25 @@ impl Effects {
     pub(crate) fn add_string_hints(&mut self, paths: BTreeSet<String>) {
         self.string_hints
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn add_local_set_mutation(
+        &mut self,
+        name: String,
+        keys: BTreeSet<String>,
+        value: AbstractValue,
+    ) {
+        if name.trim().is_empty() || keys.is_empty() {
+            return;
+        }
+        let entries = keys
+            .into_iter()
+            .map(|key| (key, value.clone()))
+            .collect::<BTreeMap<_, _>>();
+        self.local_set_mutations
+            .entry(name)
+            .or_default()
+            .extend(entries);
     }
 }
 

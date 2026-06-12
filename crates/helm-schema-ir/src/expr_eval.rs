@@ -71,6 +71,7 @@ pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
                 .as_ref()
                 .and_then(|value| value.apply_to_path(path));
             let mut effects = base.effects;
+            effects.reads.clear();
             if let Some(value) = &value {
                 effects.reads.extend(value.paths());
             }
@@ -113,8 +114,20 @@ pub(crate) fn apply_assignment_expr(expr: &TemplateExpr, env: &mut EvalEnv) -> b
     }
 }
 
+pub(crate) fn apply_local_set_mutations_expr(expr: &TemplateExpr, env: &mut EvalEnv) -> bool {
+    let mutation_expr = match expr {
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            value.as_ref()
+        }
+        _ => expr,
+    };
+    let result = eval_expr(mutation_expr, env);
+    env.apply_local_set_mutations(&result.effects.local_set_mutations)
+}
+
 fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     match function {
+        "set" if args.len() == 3 => eval_set_call(args, env),
         "default" if args.len() == 2 => {
             let fallback = eval_expr(&args[0], env);
             let primary = eval_expr(&args[1], env);
@@ -235,6 +248,54 @@ fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult
             EvalResult::with_effects(None, effects)
         }
     }
+}
+
+fn eval_set_call(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let mut effects = Effects::default();
+    let target = match args.first().map(TemplateExpr::deparen) {
+        Some(TemplateExpr::Variable(name)) => {
+            let name = name.trim_start_matches('$');
+            if !name.is_empty() && env.locals.contains_key(name) {
+                Some(name.to_string())
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+    let mut keys = BTreeSet::new();
+    if let Some(expr) = args.get(1) {
+        let key = eval_expr(expr, env);
+        keys = key
+            .value
+            .as_ref()
+            .map(AbstractValue::strings)
+            .unwrap_or_default();
+        effects.merge(key.effects);
+    }
+    let assigned_value = if let Some(expr) = args.get(2) {
+        let result = eval_expr(expr, env);
+        let value = result.value.clone().unwrap_or(AbstractValue::Unknown);
+        effects.merge(result.effects);
+        value
+    } else {
+        AbstractValue::Unknown
+    };
+    let value = target
+        .as_ref()
+        .and_then(|target| env.locals.get(target))
+        .cloned()
+        .map(|value| {
+            let entries = keys
+                .iter()
+                .map(|key| (key.clone(), assigned_value.clone()))
+                .collect();
+            value.with_overlay_entries(entries)
+        });
+    if let Some(target) = target {
+        effects.add_local_set_mutation(target, keys, assigned_value);
+    }
+    EvalResult::with_effects(value, effects)
 }
 
 fn eval_first(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
@@ -654,6 +715,15 @@ mod tests {
         exprs.into_iter().next().expect("expression exists")
     }
 
+    fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
+        AbstractValue::Dict(
+            entries
+                .iter()
+                .map(|(key, value)| ((*key).to_string(), value.clone()))
+                .collect(),
+        )
+    }
+
     #[test]
     fn string_transform_pipeline_preserves_all_printf_argument_paths() {
         let expr = single_expr(r#"printf "%s-%s" .Values.primary.name .Values.suffix | trunc 63"#);
@@ -683,6 +753,123 @@ mod tests {
             None
         );
         assert_eq!(render_printf_string_sets("%s-%s", &values), None);
+    }
+
+    #[test]
+    fn set_call_updates_local_key_with_assigned_literal() {
+        let expr = single_expr(r#"set $config (printf "%s" "name") "generated""#);
+        let mut env = EvalEnv::default();
+        env.declare_local(
+            "config",
+            Some(dict(&[
+                (
+                    "name",
+                    AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+                ),
+                (
+                    "annotations",
+                    AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+                ),
+            ])),
+        );
+
+        assert!(apply_local_set_mutations_expr(&expr, &mut env));
+
+        assert_eq!(
+            env.locals.get("config"),
+            Some(&AbstractValue::Overlay {
+                entries: BTreeMap::from([(
+                    "name".to_string(),
+                    AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
+                )]),
+                fallback: Box::new(dict(&[
+                    (
+                        "name",
+                        AbstractValue::ValuesPath("serviceAccount.name".to_string())
+                    ),
+                    (
+                        "annotations",
+                        AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+                    ),
+                ])),
+            })
+        );
+    }
+
+    #[test]
+    fn set_call_inside_throwaway_assignment_updates_local_key() {
+        let expr = single_expr(r#"$_ := set $config (printf "%s" "name") "generated""#);
+        let mut env = EvalEnv::default();
+        env.declare_local(
+            "config",
+            Some(dict(&[(
+                "name",
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            )])),
+        );
+
+        assert!(apply_local_set_mutations_expr(&expr, &mut env));
+
+        assert_eq!(
+            env.locals.get("config"),
+            Some(&AbstractValue::Overlay {
+                entries: BTreeMap::from([(
+                    "name".to_string(),
+                    AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
+                )]),
+                fallback: Box::new(dict(&[(
+                    "name",
+                    AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+                )])),
+            })
+        );
+    }
+
+    #[test]
+    fn set_call_preserves_assigned_value_path() {
+        let expr = single_expr(r#"$_ := set $config "name" .Values.generatedName"#);
+        let mut env = EvalEnv::default();
+        env.declare_local(
+            "config",
+            Some(dict(&[(
+                "name",
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            )])),
+        );
+
+        assert!(apply_local_set_mutations_expr(&expr, &mut env));
+
+        let result = eval_expr(&single_expr(r#"$config.name"#), &env);
+        assert_eq!(
+            result.effects.reads,
+            BTreeSet::from(["generatedName".to_string()])
+        );
+    }
+
+    #[test]
+    fn selector_on_local_dict_records_only_selected_child_reads() {
+        let expr = single_expr(r#"$config.annotations"#);
+        let mut env = EvalEnv::default();
+        env.declare_local(
+            "config",
+            Some(dict(&[
+                (
+                    "name",
+                    AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+                ),
+                (
+                    "annotations",
+                    AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+                ),
+            ])),
+        );
+
+        let result = eval_expr(&expr, &env);
+
+        assert_eq!(
+            result.effects.reads,
+            BTreeSet::from(["serviceAccount.annotations".to_string()])
+        );
     }
 
     #[test]

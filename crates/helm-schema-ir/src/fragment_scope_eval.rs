@@ -3,6 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::binding::FragmentBinding;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::apply_local_set_mutations_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
@@ -130,7 +132,7 @@ fn local_set_mutation_target_and_keys(
             let TemplateExpr::Call { function, args } = node else {
                 return;
             };
-            if function != "set" || args.len() < 2 {
+            if function != "set" || args.len() != 3 {
                 return;
             }
             let TemplateExpr::Variable(var) = &args[0] else {
@@ -160,6 +162,11 @@ pub(crate) fn apply_local_set_mutations(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
+    let abstract_applied = apply_abstract_local_set_mutations(text, local_bindings, current_dot);
+    if abstract_applied {
+        return true;
+    }
+
     let mutations =
         local_set_mutation_target_and_keys(text, local_bindings, current_dot, context, seen);
     let has_mutation = !mutations.is_empty();
@@ -169,6 +176,32 @@ pub(crate) fn apply_local_set_mutations(
         }
     }
     has_mutation
+}
+
+fn apply_abstract_local_set_mutations(
+    text: &str,
+    local_bindings: &mut HashMap<String, FragmentBinding>,
+    current_dot: Option<&FragmentBinding>,
+) -> bool {
+    let mut env = EvalEnv::from_fragment_context(local_bindings, current_dot);
+    let mut applied = false;
+    for expr in parse_expr_text(text) {
+        applied |= apply_local_set_mutations_expr(&expr, &mut env);
+    }
+    if !applied {
+        return false;
+    }
+
+    let mut converted = HashMap::new();
+    for (name, value) in env.locals {
+        if let Some(binding) = value.to_fragment_binding() {
+            converted.insert(name, binding);
+        } else if let Some(binding) = local_bindings.get(&name) {
+            converted.insert(name, binding.clone());
+        }
+    }
+    *local_bindings = converted;
+    true
 }
 
 pub(crate) fn range_variable_item_binding(
@@ -323,9 +356,23 @@ pub(crate) fn range_has_destructured_variable_definition(node: tree_sitter::Node
 
 #[cfg(test)]
 mod tests {
-    use helm_schema_ast::TemplateExpr;
+    use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-    use super::{AssignmentKind, parse_helper_assignment};
+    use helm_schema_ast::{DefineIndex, TemplateExpr};
+
+    use super::{AssignmentKind, apply_local_set_mutations, parse_helper_assignment};
+    use crate::binding::FragmentBinding;
+    use crate::define_body_cache::DefineBodyCache;
+    use crate::fragment_expr_eval::FragmentEvalContext;
+    use crate::helper_summary::HelperSummaryCache;
+
+    fn empty_context<'a>(
+        defines: &'a DefineIndex,
+        define_bodies: &'a DefineBodyCache,
+        helper_summaries: &'a HelperSummaryCache,
+    ) -> FragmentEvalContext<'a> {
+        FragmentEvalContext::new(defines, define_bodies, helper_summaries)
+    }
 
     #[test]
     fn parse_helper_assignment_detects_declaration_from_ast() {
@@ -365,6 +412,56 @@ mod tests {
                 "global".to_string(),
                 "image".to_string()
             ])
+        );
+    }
+
+    #[test]
+    fn local_set_mutation_uses_abstract_eval_for_computed_key() {
+        let mut locals = HashMap::from([(
+            "config".to_string(),
+            FragmentBinding::Dict(BTreeMap::from([
+                (
+                    "name".to_string(),
+                    FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+                ),
+                (
+                    "annotations".to_string(),
+                    FragmentBinding::ValuesPath("serviceAccount.annotations".to_string()),
+                ),
+            ])),
+        )]);
+        let defines = DefineIndex::new();
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = empty_context(&defines, &define_bodies, &helper_summaries);
+        let mut seen = HashSet::new();
+
+        assert!(apply_local_set_mutations(
+            r#"{{- $_ := set $config (printf "%s" "name") "generated" -}}"#,
+            &mut locals,
+            None,
+            context,
+            &mut seen,
+        ));
+
+        assert_eq!(
+            locals.get("config"),
+            Some(&FragmentBinding::Overlay {
+                entries: BTreeMap::from([(
+                    "name".to_string(),
+                    FragmentBinding::StringSet(BTreeSet::from(["generated".to_string()])),
+                )]),
+                fallback: Box::new(FragmentBinding::Dict(BTreeMap::from([
+                    (
+                        "name".to_string(),
+                        FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+                    ),
+                    (
+                        "annotations".to_string(),
+                        FragmentBinding::ValuesPath("serviceAccount.annotations".to_string()),
+                    ),
+                ]))),
+            })
         );
     }
 }

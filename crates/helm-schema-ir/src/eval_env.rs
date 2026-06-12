@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::binding::{FragmentBinding, HelperBinding};
@@ -104,6 +104,22 @@ impl EvalEnv {
         } else {
             self.declare_local(name, value);
         }
+    }
+
+    pub(crate) fn apply_local_set_mutations(
+        &mut self,
+        mutations: &BTreeMap<String, BTreeMap<String, AbstractValue>>,
+    ) -> bool {
+        let mut applied = false;
+        for (name, entries) in mutations {
+            let Some(value) = self.locals.remove(name) else {
+                continue;
+            };
+            self.locals
+                .insert(name.clone(), value.with_overlay_entries(entries.clone()));
+            applied = true;
+        }
+        applied
     }
 
     pub(crate) fn join_branch_outcomes(entry: &Self, branch_outcomes: Vec<Self>) -> Self {
