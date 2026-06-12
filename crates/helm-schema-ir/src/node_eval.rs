@@ -40,6 +40,10 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn handle_output_node(&mut self, node: tree_sitter::Node<'_>);
 
+    fn apply_assignment_side_effects(&mut self, _text: &str) -> bool {
+        false
+    }
+
     fn plan_assignment_action(&self, text: &str) -> AssignmentActionPlan;
 
     fn plan_if_condition(&self, header: &str) -> ConditionActionPlan;
@@ -47,7 +51,7 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     fn plan_with_condition(&self, header: &str) -> ConditionActionPlan;
 
     fn plan_range_action(
-        &self,
+        &mut self,
         node: tree_sitter::Node<'_>,
         current_path: &YamlPath,
     ) -> RangeActionPlan;
@@ -108,8 +112,11 @@ where
     R: NodeEvalRuntime,
 {
     if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
-        let plan = runtime.plan_assignment_action(text);
-        apply_assignment_action_plan(runtime, plan);
+        let text = text.to_string();
+        if !runtime.apply_assignment_side_effects(&text) {
+            let plan = runtime.plan_assignment_action(&text);
+            apply_assignment_action_plan(runtime, plan);
+        }
     }
 
     runtime.enter_no_output();

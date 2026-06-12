@@ -692,13 +692,19 @@ Current result:
   input is the condition, while the first two arguments are the value branches.
   Bitnami-style `typeIs ... | ternary .value (.value | toYaml)` helpers now
   keep their fragment source paths through the shared evaluator.
+- Helper fragment-output local collection now runs through the shared
+  tree-sitter node evaluator. It still projects into the existing
+  `FragmentBinding` compatibility state, but control-flow, assignment
+  suppression, `with` dot rebinding, and range body traversal now reuse the
+  same node walk as the main symbolic interpreter.
 
 Remaining A2 work:
 
-- Run helper body interpretation through `eval_node` instead of the twin
-  helper-value and helper-fragment walkers.
-- Delete the fragment/helper binding evaluators once summaries cover their
-  facts.
+- Move helper value-fact collection and structured fragment output-use
+  collection onto shared node/interpreter runtimes instead of the remaining
+  helper-body compatibility walkers.
+- Delete or reduce the fragment/helper binding evaluators once those facts are
+  native summary projections.
 
 ### Phase 6 — internal documents and contract projection
 

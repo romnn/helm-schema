@@ -582,7 +582,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn plan_range_action(
-        &self,
+        &mut self,
         node: tree_sitter::Node<'_>,
         current_path: &YamlPath,
     ) -> RangeActionPlan {
