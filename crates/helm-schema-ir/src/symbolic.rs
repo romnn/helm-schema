@@ -274,6 +274,11 @@ impl<'a> SymbolicWalker<'a> {
         } else {
             self.rendered_yaml.rebase_path(path)
         };
+        let kind = if kind == ValueKind::PartialScalar && path.0.is_empty() {
+            ValueKind::Scalar
+        } else {
+            kind
+        };
 
         let mut guards = self.compatibility_guards();
         for guard in extra_guards {
@@ -340,7 +345,11 @@ impl<'a> SymbolicWalker<'a> {
         self.uses.push(ValueUse {
             source_expr,
             path: YamlPath(Vec::new()),
-            kind,
+            kind: if kind == ValueKind::PartialScalar {
+                ValueKind::Scalar
+            } else {
+                kind
+            },
             guards,
             resource: None,
         });
@@ -561,7 +570,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         )
     }
 
-    fn plan_if_condition(&self, header: &str) -> ConditionActionPlan {
+    fn plan_if_condition(&mut self, header: &str) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
         plan_if_condition(
             header,
@@ -571,7 +580,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         )
     }
 
-    fn plan_with_condition(&self, header: &str) -> ConditionActionPlan {
+    fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
         plan_with_condition(
             header,

@@ -273,6 +273,35 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn omit_keys(self, keys: &BTreeSet<String>) -> Self {
+        if keys.is_empty() {
+            return self;
+        }
+
+        match self {
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .filter(|(key, _value)| !keys.contains(key))
+                    .collect(),
+            ),
+            Self::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .into_iter()
+                    .filter(|(key, _value)| !keys.contains(key))
+                    .collect(),
+                fallback: Box::new(fallback.omit_keys(keys)),
+            },
+            Self::Choice(choices) => Self::Choice(
+                choices
+                    .into_iter()
+                    .map(|choice| choice.omit_keys(keys))
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
     pub(crate) fn from_helper_binding(binding: &HelperBinding) -> Self {
         match binding {
             HelperBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),
@@ -498,5 +527,27 @@ mod tests {
             Some(AbstractValue::Top)
         );
         assert_eq!(AbstractValue::Top.item(), Some(AbstractValue::Top));
+    }
+
+    #[test]
+    fn omit_keys_removes_known_map_entries_but_preserves_values_root() {
+        let value = AbstractValue::Overlay {
+            entries: BTreeMap::from([
+                ("enabled".to_string(), path("probe.enabled")),
+                ("timeoutSeconds".to_string(), path("probe.timeoutSeconds")),
+            ]),
+            fallback: Box::new(path("probe")),
+        };
+
+        assert_eq!(
+            value.omit_keys(&BTreeSet::from(["enabled".to_string()])),
+            AbstractValue::Overlay {
+                entries: BTreeMap::from([(
+                    "timeoutSeconds".to_string(),
+                    path("probe.timeoutSeconds")
+                )]),
+                fallback: Box::new(path("probe")),
+            }
+        );
     }
 }

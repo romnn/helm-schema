@@ -16,6 +16,7 @@ pub(crate) struct RangeActionPlan {
     pub(crate) emit_header_use: bool,
     pub(crate) renders_mapping_entries: bool,
     pub(crate) dot_binding: Option<FragmentBinding>,
+    pub(crate) apply_dot_binding: bool,
 }
 
 pub(crate) fn plan_range_action(
@@ -38,6 +39,7 @@ pub(crate) fn plan_range_action(
             emit_header_use: false,
             renders_mapping_entries: false,
             dot_binding: None,
+            apply_dot_binding: true,
         };
     };
 
@@ -75,6 +77,7 @@ pub(crate) fn plan_range_action(
         emit_header_use,
         renders_mapping_entries,
         dot_binding,
+        apply_dot_binding: true,
     }
 }
 

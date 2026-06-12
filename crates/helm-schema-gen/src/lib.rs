@@ -16,6 +16,7 @@ struct UseSignals {
     referenced_value_paths: BTreeSet<String>,
     ranged_value_paths: BTreeSet<String>,
     value_paths_used_as_fragment: BTreeSet<String>,
+    partial_scalar_value_paths: BTreeSet<String>,
     provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>>,
     metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>>,
     guard_constraints_by_value_path: BTreeMap<String, Vec<Value>>,
@@ -155,7 +156,10 @@ pub fn generate_values_schema_full_with_facts_and_descriptions(
     chart_facts: &ChartFacts,
     values_descriptions: &BTreeMap<String, String>,
 ) -> Value {
-    let signals = collect_use_signals(uses, provider);
+    let mut signals = collect_use_signals(uses, provider);
+    signals
+        .referenced_value_paths
+        .extend(type_hints.keys().cloned());
     let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
     let mut merged_chart_facts = derive_chart_facts(uses);
     merge_chart_facts(&mut merged_chart_facts, chart_facts);
@@ -196,6 +200,7 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
     let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut ranged_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
+    let mut partial_scalar_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>> = BTreeMap::new();
     let mut metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
@@ -210,6 +215,9 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
         referenced_value_paths.insert(u.source_expr.clone());
         if u.kind == ValueKind::Fragment {
             value_paths_used_as_fragment.insert(u.source_expr.clone());
+        }
+        if u.kind == ValueKind::PartialScalar && !u.path.0.is_empty() {
+            partial_scalar_value_paths.insert(u.source_expr.clone());
         }
         for g in &u.guards {
             for path in g.value_paths() {
@@ -230,7 +238,8 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
             }
         }
 
-        if !u.path.0.is_empty()
+        if u.kind != ValueKind::PartialScalar
+            && !u.path.0.is_empty()
             && let Some(resource) = &u.resource
         {
             let lookup_key = ProviderSchemaLookupKey {
@@ -271,6 +280,7 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
         referenced_value_paths,
         ranged_value_paths,
         value_paths_used_as_fragment,
+        partial_scalar_value_paths,
         provider_schemas_by_value_path,
         metadata_schemas_by_value_path,
         guard_constraints_by_value_path,
@@ -303,6 +313,7 @@ fn lookup_provider_schema(provider: &dyn K8sSchemaProvider, use_: &ValueUse) -> 
 fn provider_schema_for_value_use(schema: Value, use_: &ValueUse) -> Option<Value> {
     match use_.kind {
         ValueKind::Fragment => Some(schema),
+        ValueKind::PartialScalar => None,
         ValueKind::Scalar if is_self_range_collection_use(use_) => {
             restrict_schema_to_scalar_collection_domain(schema)
         }
@@ -648,6 +659,16 @@ fn build_root_schema(
             .guard_constraints_by_value_path
             .remove(&vp)
             .map_or_else(empty_schema, merge_schema_list);
+        let partial_scalar_schema = if signals.partial_scalar_value_paths.contains(&vp)
+            && is_empty_schema(&provider_schema)
+            && is_empty_schema(&type_hint_schema)
+            && is_empty_schema(&guard_constraint_schema)
+            && values_yaml_info.is_none_or(|path_info| is_empty_schema(&path_info.schema))
+        {
+            type_schema("string")
+        } else {
+            empty_schema()
+        };
 
         let has_explicit_null_scalar_default = values_yaml_info
             .is_some_and(|path_info| path_info.is_explicit_null)
@@ -701,7 +722,7 @@ fn build_root_schema(
             used_as_fragment,
             provider_schema,
             values_yaml_schema,
-            guard_constraint_schema,
+            merge_schema_list(vec![guard_constraint_schema, partial_scalar_schema]),
             type_hint_schema,
             preserve_empty_string_fallback,
         );

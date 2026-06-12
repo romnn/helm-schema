@@ -108,6 +108,9 @@ pub(crate) fn apply_condition_alternative_guards(
     sink: &mut dyn NodeActionEffectSink,
     plan: &ConditionActionPlan,
 ) {
+    if !plan.apply_alternative_predicate {
+        return;
+    }
     sink.push_predicate_if_absent(plan.predicate.negated());
 }
 
@@ -146,5 +149,7 @@ pub(crate) fn apply_range_action_plan(
         }
     }
 
-    sink.push_dot_binding(plan.dot_binding.clone());
+    if plan.apply_dot_binding {
+        sink.push_dot_binding(plan.dot_binding.clone());
+    }
 }

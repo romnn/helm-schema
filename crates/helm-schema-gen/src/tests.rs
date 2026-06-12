@@ -99,6 +99,23 @@ fn schema_contains_type(schema: &Value, schema_type: &str) -> bool {
         .any(|variant| schema_contains_type(variant, schema_type))
 }
 
+fn schema_property_contains_type(schema: &Value, property: &str, schema_type: &str) -> bool {
+    if let Some(property_schema) = schema
+        .get("properties")
+        .and_then(Value::as_object)
+        .and_then(|properties| properties.get(property))
+        && schema_contains_type(property_schema, schema_type)
+    {
+        return true;
+    }
+
+    ["anyOf", "oneOf"]
+        .into_iter()
+        .filter_map(|key| schema.get(key).and_then(Value::as_array))
+        .flatten()
+        .any(|variant| schema_property_contains_type(variant, property, schema_type))
+}
+
 fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
     assert!(
         schema_contains_open_string_map(schema),
@@ -2765,6 +2782,63 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
 }
 
 #[test]
+fn helper_defaulted_root_service_account_name_allows_null() {
+    let helpers = indoc! {r#"
+        {{- define "alertmanager.fullname" -}}
+        {{- printf "%s-%s" "release" .Values.alertmanager.name | trunc 63 | trimSuffix "-" -}}
+        {{- end -}}
+        {{- define "alertmanager.serviceAccountName" -}}
+        {{- if .Values.alertmanager.serviceAccount.create -}}
+            {{ default (include "alertmanager.fullname" .) .Values.alertmanager.serviceAccount.name }}
+        {{- else -}}
+            {{ default "default" .Values.alertmanager.serviceAccount.name }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.alertmanager.enabled }}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: {{ include "alertmanager.serviceAccountName" . }}
+        ---
+        apiVersion: apps/v1
+        kind: StatefulSet
+        spec:
+          template:
+            spec:
+              serviceAccountName: {{ include "alertmanager.serviceAccountName" . }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        alertmanager:
+          enabled: true
+          name: alertmanager
+          serviceAccount:
+            create: true
+            name:
+    "#};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+
+    let name = schema
+        .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
+        .expect("alertmanager.serviceAccount.name present");
+    assert!(
+        schema_contains_type(name, "null"),
+        "defaulted root serviceAccount.name should allow null, got {name}"
+    );
+    assert!(
+        schema_contains_type(name, "string"),
+        "defaulted root serviceAccount.name should stay string-like, got {name}"
+    );
+}
+
+#[test]
 fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
     let helpers = indoc! {r#"
         {{- define "common.ingress" -}}
@@ -3180,6 +3254,64 @@ fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map()
     assert_open_string_map_or_templated_string(
         pod_annotations,
         "empty-map podAnnotations rendered through common.tplvalues.render",
+    );
+}
+
+#[test]
+fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
+    let helpers = bitnami_tplvalues_helpers();
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          selector:
+            matchLabels:
+              app: demo
+          template:
+            metadata:
+              labels:
+                app: demo
+            spec:
+              containers:
+                - name: app
+                  image: nginx
+                  {{- if .Values.livenessProbe.enabled }}
+                  livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled" "probeCommandTimeout") "context" $) | nindent 20 }}
+                    exec:
+                      command: ['/bin/bash', '-c', 'timeout {{ .Values.livenessProbe.probeCommandTimeout }} true']
+                  {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        livenessProbe:
+          enabled: true
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
+          probeCommandTimeout: 2
+    "};
+
+    let schema = generate_values_schema_with_values_yaml(
+        &parse_ir_with_helpers(src, helpers),
+        &provider(),
+        Some(values_yaml),
+    );
+    let probe = schema
+        .pointer("/properties/livenessProbe")
+        .expect("livenessProbe present");
+
+    assert!(
+        schema_property_contains_type(probe, "initialDelaySeconds", "integer"),
+        "omitted probe fragment should retain rendered Kubernetes Probe fields, got {probe}"
+    );
+    assert!(
+        schema_property_contains_type(probe, "probeCommandTimeout", "integer"),
+        "explicit command interpolation should keep probeCommandTimeout, got {probe}"
+    );
+    assert!(
+        schema_property_contains_type(probe, "enabled", "boolean"),
+        "probe enabled guard should keep enabled as boolean, got {probe}"
     );
 }
 

@@ -697,14 +697,27 @@ Current result:
   `FragmentBinding` compatibility state, but control-flow, assignment
   suppression, `with` dot rebinding, and range body traversal now reuse the
   same node walk as the main symbolic interpreter.
+- Helper value-fact collection now also runs through the shared tree-sitter
+  node evaluator. The output remains the compatibility helper-summary shape,
+  but helper-body traversal is no longer a separate source-order interpreter.
+- Structured helper fragment output-use collection now runs through the shared
+  node evaluator as well. This keeps helper body control-flow semantics aligned
+  with the main symbolic walk while still projecting into
+  `HelperFragmentOutputUse` until helper summaries own those effects natively.
+- Scalar interpolation is now an explicit compatibility DTO shape:
+  `ValueKind::PartialScalar`. A partial scalar render records that a value was
+  interpolated inside a larger YAML scalar. Schema generation treats that as
+  weak string-render evidence only when no stronger provider, guard, type
+  hint, or values.yaml schema exists, so command-line interpolation no longer
+  widens numeric chart inputs to strings or imports Kubernetes command
+  descriptions into chart-local values.
 
 Remaining A2 work:
 
-- Move helper value-fact collection and structured fragment output-use
-  collection onto shared node/interpreter runtimes instead of the remaining
-  helper-body compatibility walkers.
 - Delete or reduce the fragment/helper binding evaluators once those facts are
   native summary projections.
+- Move the remaining helper-body compatibility projections into native summary
+  effects and reduce the compatibility DTO conversion layer.
 
 ### Phase 6 — internal documents and contract projection
 

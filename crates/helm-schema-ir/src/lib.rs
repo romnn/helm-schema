@@ -88,11 +88,12 @@ pub struct ValueUse {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct YamlPath(pub Vec<String>);
 
-/// Whether a value use produces a single scalar or a YAML fragment.
+/// Whether a value use produces a full scalar, part of a scalar, or a YAML fragment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ValueKind {
     Scalar = 0,
-    Fragment = 1,
+    PartialScalar = 1,
+    Fragment = 2,
 }
 
 /// Detected Kubernetes resource type (apiVersion + kind).

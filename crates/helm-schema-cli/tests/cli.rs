@@ -205,6 +205,84 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_ey
 }
 
 #[test]
+fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            alertmanager:
+              enabled: true
+              name: alertmanager
+              serviceAccount:
+                create: true
+                name:
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc! {r#"
+            {{- define "alertmanager.fullname" -}}
+            {{- printf "%s-%s" "release" .Values.alertmanager.name | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+            {{- define "alertmanager.serviceAccountName" -}}
+            {{- if .Values.alertmanager.serviceAccount.create -}}
+                {{ default (include "alertmanager.fullname" .) .Values.alertmanager.serviceAccount.name }}
+            {{- else -}}
+                {{ default "default" .Values.alertmanager.serviceAccount.name }}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/serviceaccount.yaml")?,
+        indoc! {r#"
+            {{- if .Values.alertmanager.enabled }}
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: {{ include "alertmanager.serviceAccountName" . }}
+            {{- end }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    };
+
+    let schema = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+    let name = schema
+        .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
+        .ok_or_else(|| eyre!("missing alertmanager.serviceAccount.name schema: {schema}"))?;
+
+    assert!(
+        schema_accepts_type(name, "null"),
+        "defaulted helper serviceAccount.name should allow null without provider schemas, got {name}"
+    );
+    assert!(
+        schema_accepts_type(name, "string"),
+        "reachable helper default should type serviceAccount.name as string without provider schemas, got {name}"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn layered_values_file_comments_override_and_add_descriptions_only() -> color_eyre::eyre::Result<()>
 {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());

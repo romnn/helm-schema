@@ -11,7 +11,7 @@ use crate::fragment_scope_eval::{
     range_header_text_from_source, range_iterable_binding,
 };
 use crate::node_action_effect::NodeActionEffectSink;
-use crate::node_eval::{NodeEvalRuntime, eval_node};
+use crate::node_eval::{NodeEvalRuntime, eval_template_body};
 use crate::output_value_emitter::ValueUseSink;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
@@ -35,7 +35,7 @@ pub(crate) fn collect_bound_fragment_outputs_from_tree(
         outputs,
         no_output_depth: 0,
     };
-    eval_node(&mut runtime, node);
+    eval_template_body(&mut runtime, node);
 }
 
 struct FragmentOutputRuntime<'context, 'state> {
@@ -237,15 +237,16 @@ impl NodeEvalRuntime for FragmentOutputRuntime<'_, '_> {
         }
     }
 
-    fn plan_if_condition(&self, _header: &str) -> ConditionActionPlan {
+    fn plan_if_condition(&mut self, _header: &str) -> ConditionActionPlan {
         ConditionActionPlan {
             predicate: Predicate::True,
             bound_values: Vec::new(),
             dot_binding: None,
+            apply_alternative_predicate: false,
         }
     }
 
-    fn plan_with_condition(&self, header: &str) -> ConditionActionPlan {
+    fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
         let mut seen = self.seen.clone();
         let dot_binding = fragment_binding_from_text(
             header,
@@ -258,6 +259,7 @@ impl NodeEvalRuntime for FragmentOutputRuntime<'_, '_> {
             predicate: Predicate::True,
             bound_values: Vec::new(),
             dot_binding,
+            apply_alternative_predicate: false,
         }
     }
 
@@ -291,6 +293,7 @@ impl NodeEvalRuntime for FragmentOutputRuntime<'_, '_> {
             emit_header_use: false,
             renders_mapping_entries: false,
             dot_binding: binding.as_ref().and_then(FragmentBinding::item_binding),
+            apply_dot_binding: true,
         }
     }
 }

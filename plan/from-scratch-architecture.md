@@ -1388,8 +1388,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `index` semantics instead of carrying parallel expression walkers. The
   helper-fragment output-local pass now runs through the shared tree-sitter
   node evaluator while projecting into the existing `FragmentBinding`
-  compatibility state. The remaining compatibility boundary is helper value
-  fact collection plus structured fragment output-use collection.
+  compatibility state. Helper value-fact collection and structured helper
+  fragment output-use collection now use the shared tree-sitter node evaluator
+  too, so helper-body traversal no longer has separate source-order
+  interpreters for those facts. Partial scalar interpolation is represented as
+  `ValueKind::PartialScalar` at the compatibility DTO boundary and lowers to
+  weak string-render evidence only when no stronger schema signal exists. The
+  remaining A2 boundary is reducing the fragment/helper binding evaluators and
+  moving their projected facts into native helper-summary effects.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

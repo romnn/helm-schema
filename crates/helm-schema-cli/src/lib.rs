@@ -1073,4 +1073,29 @@ spec:
         );
         assert!(schema.pointer("/items/0/description").is_none());
     }
+
+    #[test]
+    fn signoz_root_service_account_helper_is_reachable_for_type_hints()
+    -> color_eyre::eyre::Result<()> {
+        let chart_dir = test_util::workspace_testdata()
+            .join("charts")
+            .join("signoz-signoz");
+        let chart_dir_str = chart_dir.to_string_lossy().to_string();
+        let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+        let discovery = chart::discover_chart_contexts(&chart_dir)?;
+        let defines = chart::build_define_index(&discovery.charts, false)?;
+        let collection = collect_ir_for_charts(&discovery.charts, &defines, false)?;
+        let path = "alertmanager.serviceAccount.name";
+
+        assert!(
+            collection.type_hints.contains_key(path),
+            "expected type hint for {path}; reachable={:?}; hints={:?}",
+            collection
+                .call_graph
+                .reachable_from_chart(&Vec::<String>::new()),
+            collection.type_hints.keys().collect::<Vec<_>>()
+        );
+
+        Ok(())
+    }
 }

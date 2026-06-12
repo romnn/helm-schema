@@ -45,6 +45,58 @@
   {
     "guards": [
       {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "args",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "args"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "args",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "args"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "args"
+  },
+  {
+    "guards": [
+      {
         "path": "auth.client.enabled",
         "type": "truthy"
       }
@@ -425,7 +477,7 @@
         "type": "range"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -443,6 +495,58 @@
       "kind": "StatefulSet"
     },
     "source_expr": "clusterDomain"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "command",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "command"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "command",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "command"
   },
   {
     "guards": [
@@ -572,6 +676,45 @@
   {
     "guards": [
       {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.client"
+  },
+  {
+    "guards": [
+      {
         "path": "service.disableBaseClientPort",
         "type": "not"
       }
@@ -584,6 +727,45 @@
       "containers[*]",
       "ports[*]",
       "containerPort"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.client"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
     ],
     "resource": {
       "api_version": "",
@@ -616,7 +798,7 @@
         "type": "range"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -677,7 +859,7 @@
         "type": "range"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -746,6 +928,92 @@
   {
     "guards": [
       {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.tls"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.tls"
+  },
+  {
+    "guards": [
+      {
         "path": "tls.client.enabled",
         "type": "truthy"
       }
@@ -758,6 +1026,92 @@
       "containers[*]",
       "ports[*]",
       "containerPort"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.tls"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "containerPorts.tls"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
     ],
     "resource": {
       "api_version": "",
@@ -1216,7 +1570,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -2448,7 +2802,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -4092,6 +4446,248 @@
     "source_expr": "listenOnAllIPs"
   },
   {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "livenessProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "livenessProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "livenessProbe",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "livenessProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "livenessProbe.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "livenessProbe.probeCommandTimeout"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "livenessProbe.probeCommandTimeout"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "livenessProbe.probeCommandTimeout"
+  },
+  {
     "guards": [],
     "kind": "Scalar",
     "path": [
@@ -4246,7 +4842,7 @@
         "type": "range"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -4623,7 +5219,7 @@
         "type": "default"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -5100,7 +5696,7 @@
         "type": "truthy"
       }
     ],
-    "kind": "Scalar",
+    "kind": "PartialScalar",
     "path": [
       "spec",
       "template",
@@ -5856,6 +6452,29 @@
   {
     "guards": [
       {
+        "path": "dataLogDir",
+        "type": "truthy"
+      },
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "persistence.enabled"
+  },
+  {
+    "guards": [
+      {
         "path": "persistence.dataLogDir.existingClaim",
         "type": "truthy"
       },
@@ -5881,6 +6500,25 @@
       {
         "path": "persistence.enabled",
         "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "persistence.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "not"
       }
     ],
     "kind": "Scalar",
@@ -6638,6 +7276,68 @@
     "source_expr": "podSecurityContext.fsGroup"
   },
   {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers[*]",
+      "args[*]"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "podSecurityContext.fsGroup"
+  },
+  {
+    "guards": [
+      {
+        "path": "persistence.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "volumePermissions.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "dataLogDir",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers[*]",
+      "args[*]"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "podSecurityContext.fsGroup"
+  },
+  {
     "guards": [],
     "kind": "Scalar",
     "path": [
@@ -6700,6 +7400,248 @@
       "kind": "StatefulSet"
     },
     "source_expr": "priorityClassName"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "readinessProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "readinessProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "readinessProbe",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "readinessProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "readinessProbe.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "readinessProbe.probeCommandTimeout"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "readinessProbe.probeCommandTimeout"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "readinessProbe.probeCommandTimeout"
   },
   {
     "guards": [],
@@ -6841,6 +7783,99 @@
   {
     "guards": [
       {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.disableBaseClientPort"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.disableBaseClientPort"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customStartupProbe",
+        "type": "not"
+      },
+      {
+        "path": "startupProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.disableBaseClientPort"
+  },
+  {
+    "guards": [
+      {
         "path": "service.disableBaseClientPort",
         "type": "not"
       }
@@ -6878,6 +7913,178 @@
       "kind": "StatefulSet"
     },
     "source_expr": "service.headless.servicenameOverride"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.tls.client_cert_pem_path"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.tls.client_cert_pem_path"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "livenessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.tls.client_key_pem_path"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "PartialScalar",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "readinessProbe",
+      "exec",
+      "command"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "service.tls.client_key_pem_path"
   },
   {
     "guards": [],
@@ -6962,6 +8169,123 @@
       "kind": "StatefulSet"
     },
     "source_expr": "snapCount"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customStartupProbe",
+        "type": "not"
+      },
+      {
+        "path": "startupProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": null,
+    "source_expr": "startupProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customStartupProbe",
+        "type": "not"
+      },
+      {
+        "path": "startupProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "startupProbe"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "startupProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customStartupProbe",
+        "type": "not"
+      },
+      {
+        "path": "startupProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "startupProbe",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Fragment",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers[*]",
+      "startupProbe"
+    ],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "startupProbe"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customStartupProbe",
+        "type": "not"
+      },
+      {
+        "path": "startupProbe.enabled",
+        "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "startupProbe.enabled"
   },
   {
     "guards": [],
@@ -7090,6 +8414,76 @@
       {
         "path": "tls.client.enabled",
         "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "tls.client.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customLivenessProbe",
+        "type": "not"
+      },
+      {
+        "path": "livenessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "not"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "",
+      "api_version_candidates": [
+        "apps/v1beta1",
+        "apps/v1"
+      ],
+      "kind": "StatefulSet"
+    },
+    "source_expr": "tls.client.enabled"
+  },
+  {
+    "guards": [
+      {
+        "path": "diagnosticMode.enabled",
+        "type": "not"
+      },
+      {
+        "path": "customReadinessProbe",
+        "type": "not"
+      },
+      {
+        "path": "readinessProbe.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "truthy"
+      },
+      {
+        "path": "tls.client.enabled",
+        "type": "not"
       }
     ],
     "kind": "Scalar",

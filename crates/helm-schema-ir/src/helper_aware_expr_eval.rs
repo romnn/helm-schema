@@ -96,6 +96,7 @@ fn eval_call_with_helper_calls(
                 .collect();
             AbstractValue::choice(values)
         }
+        "omit" if !args.is_empty() => eval_omit(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
         "index" => eval_index(args, env, resolver),
         function => transform_source_arg(function, args)
@@ -144,6 +145,20 @@ fn eval_append(
         }
     }
     Some(AbstractValue::List(items))
+}
+
+fn eval_omit(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> Option<AbstractValue> {
+    let base = eval_expr_with_helper_calls(&args[0], env, resolver)?;
+    let keys = args[1..]
+        .iter()
+        .filter_map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
+        .flat_map(|value| value.strings())
+        .collect();
+    Some(base.omit_keys(&keys))
 }
 
 fn eval_printf(

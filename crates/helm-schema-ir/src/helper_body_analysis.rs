@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::YamlPath;
+use crate::ValueKind;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::fragment_binding_eval::fragment_binding_from_outer_expr;
 use crate::fragment_expr_eval::{
@@ -11,10 +11,10 @@ use crate::fragment_expr_eval::{
 };
 use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_fragment_output_uses::{
-    FragmentOutputWalkState, collect_bound_fragment_output_uses_from_items,
+    FragmentOutputWalkState, collect_bound_fragment_output_uses_from_tree,
 };
 use crate::helper_fragment_outputs::collect_bound_fragment_outputs_from_tree;
-use crate::helper_value_analysis::{HelperValuesWalkState, collect_bound_helper_values_from_ast};
+use crate::helper_value_analysis::{HelperValuesWalkState, collect_bound_helper_values_from_tree};
 
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, HelperBinding>,
@@ -106,11 +106,13 @@ fn collect_value_facts(
     seen: &mut HashSet<String>,
     analysis: &mut BoundHelperAnalysis,
 ) {
-    let Some(body) = context.defines.get(name) else {
+    let (Some(src), Some(tree)) = (
+        context.define_bodies.structured_source(name),
+        context.define_bodies.structured_tree(name),
+    ) else {
         return;
     };
 
-    let active_output_predicates = BTreeSet::new();
     let mut local_bindings = HashMap::new();
     let mut local_default_paths = HashMap::new();
     let mut local_output_meta = HashMap::new();
@@ -122,15 +124,13 @@ fn collect_value_facts(
         seen,
         analysis,
     };
-    for node in body {
-        collect_bound_helper_values_from_ast(
-            node,
-            &resolution.bindings,
-            resolution.helper_body_dot.as_ref(),
-            &active_output_predicates,
-            &mut helper_values_state,
-        );
-    }
+    collect_bound_helper_values_from_tree(
+        tree.root_node(),
+        src,
+        &resolution.bindings,
+        resolution.helper_body_dot.as_ref(),
+        &mut helper_values_state,
+    );
 }
 
 fn collect_fragment_output_locals(
@@ -141,8 +141,8 @@ fn collect_fragment_output_locals(
     analysis: &mut BoundHelperAnalysis,
 ) -> HashMap<String, FragmentBinding> {
     let mut helper_fragment_locals = HashMap::new();
-    if let Some(src) = context.define_bodies.source(name)
-        && let Some(tree) = context.define_bodies.tree(name)
+    if let Some(src) = context.define_bodies.structured_source(name)
+        && let Some(tree) = context.define_bodies.structured_tree(name)
     {
         collect_bound_fragment_outputs_from_tree(
             tree.root_node(),
@@ -165,13 +165,15 @@ fn collect_fragment_output_uses(
     helper_fragment_locals: &mut HashMap<String, FragmentBinding>,
     analysis: &mut BoundHelperAnalysis,
 ) {
-    let Some(body) = context.defines.get(name) else {
+    let (Some(src), Some(tree)) = (
+        context.define_bodies.structured_source(name),
+        context.define_bodies.structured_tree(name),
+    ) else {
         return;
     };
 
     let mut fragment_output_uses = Vec::new();
     let mut local_default_paths = HashMap::new();
-    let active_output_predicates = BTreeSet::new();
     let mut fragment_output_state = FragmentOutputWalkState {
         local_bindings: helper_fragment_locals,
         local_default_paths: &mut local_default_paths,
@@ -179,13 +181,12 @@ fn collect_fragment_output_uses(
         seen,
         outputs: &mut fragment_output_uses,
     };
-    collect_bound_fragment_output_uses_from_items(
-        body,
+    collect_bound_fragment_output_uses_from_tree(
+        &tree,
+        src,
         &resolution.bindings,
         resolution.helper_body_dot.as_ref(),
         resolution.helper_fragment_dot.as_ref(),
-        &YamlPath(Vec::new()),
-        &active_output_predicates,
         &mut fragment_output_state,
     );
     for source in analysis.output.keys() {
@@ -193,6 +194,7 @@ fn collect_fragment_output_uses(
     }
     let structured_sources: BTreeSet<String> = fragment_output_uses
         .iter()
+        .filter(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty())
         .map(|output| output.source_expr.clone())
         .collect();
     for source in &structured_sources {

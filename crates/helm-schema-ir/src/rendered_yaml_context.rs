@@ -127,6 +127,11 @@ impl<'a> RenderedYamlContext<'a> {
         let trimmed = line.trim_start();
         let key = parse_yaml_key(trimmed)?.into_key();
         let mut path = self.shape.current_path();
+        let (indent, _col) = self.line_indent_and_col(start);
+        let trailing_pending_segments = self.trailing_pending_mapping_segments_at_or_above(indent);
+        for _ in 0..trailing_pending_segments {
+            path.0.pop();
+        }
         if path.0.last().is_none_or(|segment| segment != &key) {
             path.0.push(key);
         }

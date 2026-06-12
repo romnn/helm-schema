@@ -781,6 +781,26 @@
   {
     "guards": [
       {
+        "path": "tls.client.enabled",
+        "type": "truthy"
+      },
+      {
+        "path": "service.type",
+        "type": "eq",
+        "value": "ClusterIP"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.type"
+  },
+  {
+    "guards": [
+      {
         "path": "service.disableBaseClientPort",
         "type": "not"
       },
@@ -791,6 +811,26 @@
       {
         "path": "service.type",
         "type": "truthy"
+      }
+    ],
+    "kind": "Scalar",
+    "path": [],
+    "resource": {
+      "api_version": "v1",
+      "kind": "Service"
+    },
+    "source_expr": "service.type"
+  },
+  {
+    "guards": [
+      {
+        "path": "service.disableBaseClientPort",
+        "type": "not"
+      },
+      {
+        "path": "service.type",
+        "type": "eq",
+        "value": "ClusterIP"
       }
     ],
     "kind": "Scalar",

@@ -10,6 +10,7 @@ pub(crate) struct ConditionActionPlan {
     pub(crate) predicate: Predicate,
     pub(crate) bound_values: Vec<String>,
     pub(crate) dot_binding: Option<FragmentBinding>,
+    pub(crate) apply_alternative_predicate: bool,
 }
 
 impl ConditionActionPlan {
@@ -28,6 +29,7 @@ pub(crate) fn plan_if_condition(
         predicate: value_path_context.condition_predicate(text),
         bound_values: extract_bound_values(text, range_domains, get_bindings),
         dot_binding: None,
+        apply_alternative_predicate: true,
     }
 }
 
@@ -41,5 +43,6 @@ pub(crate) fn plan_with_condition(
         predicate: value_path_context.with_condition_predicate(text),
         bound_values: extract_bound_values(text, range_domains, get_bindings),
         dot_binding: value_path_context.with_body_fragment_binding(text),
+        apply_alternative_predicate: true,
     }
 }

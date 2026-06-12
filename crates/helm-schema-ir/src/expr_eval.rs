@@ -181,6 +181,7 @@ fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult
         "reverse" if args.len() == 1 => eval_reverse(args, env),
         "splitList" if args.len() == 2 => eval_split_list(args, env),
         "append" => eval_append(args, env),
+        "omit" if !args.is_empty() => eval_omit(args, env),
         function if is_merge_function(function) => {
             let mut values = Vec::new();
             let mut effects = Effects::default();
@@ -417,6 +418,23 @@ fn eval_append(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
         }
     }
     EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
+}
+
+fn eval_omit(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let mut base = eval_expr(&args[0], env);
+    let mut keys = BTreeSet::new();
+    for arg in &args[1..] {
+        let key = eval_expr(arg, env);
+        keys.extend(
+            key.value
+                .as_ref()
+                .map(AbstractValue::strings)
+                .unwrap_or_default(),
+        );
+        base.effects.merge(key.effects);
+    }
+    let value = base.value.map(|value| value.omit_keys(&keys));
+    EvalResult::with_effects(value, base.effects)
 }
 
 fn eval_printf(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {

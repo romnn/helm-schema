@@ -33,8 +33,8 @@ pub(crate) fn output_node_context(
     } else {
         rendered_yaml.current_path()
     };
-    if kind == ValueKind::Fragment {
-        path = adjusted_fragment_output_path(rendered_yaml, node, text, path);
+    if !in_mapping_key {
+        path = adjusted_output_path(rendered_yaml, node, text, kind, path);
     }
     if rendered_yaml.output_inside_block_scalar_at(node.start_byte()) {
         path = YamlPath(Vec::new());
@@ -48,10 +48,11 @@ pub(crate) fn output_node_context(
     }
 }
 
-fn adjusted_fragment_output_path(
+fn adjusted_output_path(
     rendered_yaml: &RenderedYamlContext<'_>,
     node: tree_sitter::Node<'_>,
     text: &str,
+    kind: ValueKind,
     mut path: YamlPath,
 ) -> YamlPath {
     let (physical_indent, _physical_col) = rendered_yaml.line_indent_and_col(node.start_byte());
@@ -68,13 +69,15 @@ fn adjusted_fragment_output_path(
         }
     }
 
-    if let Some(last) = path.0.last_mut()
-        && let Some(stripped) = last.strip_suffix("[*]")
-    {
-        *last = stripped.to_string();
-    }
-    if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
-        path.0.pop();
+    if kind == ValueKind::Fragment {
+        if let Some(last) = path.0.last_mut()
+            && let Some(stripped) = last.strip_suffix("[*]")
+        {
+            *last = stripped.to_string();
+        }
+        if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
+            path.0.pop();
+        }
     }
     if let Some(inline_path) = rendered_yaml.inline_mapping_value_path(node) {
         path = inline_path;
@@ -163,6 +166,10 @@ fn output_node_is_entire_scalar_value(source: &str, node: tree_sitter::Node<'_>)
     let trimmed = line.trim_start();
     if let Some(rest) = trimmed.strip_prefix('-') {
         return normalize_value_text(rest.trim_start()) == node_text.trim();
+    }
+
+    if normalize_value_text(trimmed) == node_text.trim() {
+        return true;
     }
 
     false

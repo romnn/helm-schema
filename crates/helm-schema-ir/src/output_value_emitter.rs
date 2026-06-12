@@ -59,6 +59,14 @@ pub(crate) fn emit_output_value_analysis(
             .last()
             .map(std::string::String::as_str)
             .is_some_and(|segment| segment.ends_with("[*]"));
+        let kind = if output_context.kind == ValueKind::Scalar
+            && !output_context.entire_scalar_value
+            && !output_context.path.0.is_empty()
+        {
+            ValueKind::PartialScalar
+        } else {
+            output_context.kind
+        };
 
         let emit_path = if value.ends_with(".*") && !in_sequence_item {
             YamlPath(Vec::new())
@@ -78,9 +86,9 @@ pub(crate) fn emit_output_value_analysis(
             }
         }
         if extra_guards.is_empty() {
-            sink.emit_use(value, emit_path, output_context.kind);
+            sink.emit_use(value, emit_path, kind);
         } else {
-            sink.emit_use_with_extra_guards(value, emit_path, output_context.kind, &extra_guards);
+            sink.emit_use_with_extra_guards(value, emit_path, kind, &extra_guards);
         }
     }
 
