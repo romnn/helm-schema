@@ -10,7 +10,6 @@ mod eval_effect;
 mod eval_env;
 mod expr_eval;
 mod expression_analysis;
-mod fragment_binding_eval;
 mod fragment_expr_eval;
 mod fragment_scope_eval;
 mod helper_analysis;

@@ -4,10 +4,9 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::ValueKind;
 use crate::binding::{FragmentBinding, HelperBinding};
-use crate::fragment_binding_eval::fragment_binding_from_outer_expr;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, bindings_for_helper_arg_with_fragment_locals,
-    helper_binding_from_expr_with_fragment_locals,
+    fragment_binding_from_outer_expr, helper_binding_from_expr_with_fragment_locals,
 };
 use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_fragment_output_uses::{

@@ -6,6 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::define_body_cache::DefineBodyCache;
 use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::helper_call_analyzer::HelperCallAnalyzer;
 use crate::template_expr_analysis::{expr_contains_helper_call, is_merge_function};
@@ -44,6 +45,37 @@ impl<'a> FragmentEvalContext<'a> {
     ) -> Option<FragmentBinding> {
         fragment_binding_from_expr(expr, locals, current_dot, *self, seen)
     }
+}
+
+pub(crate) fn fragment_binding_from_outer_expr(
+    expr: &TemplateExpr,
+    outer_locals: Option<&HashMap<String, FragmentBinding>>,
+    outer: Option<&HashMap<String, HelperBinding>>,
+    current_dot: Option<&HelperBinding>,
+) -> Option<FragmentBinding> {
+    if matches!(expr, TemplateExpr::Variable(var) if var.is_empty())
+        && let Some(bindings) = outer
+    {
+        return Some(FragmentBinding::Dict(
+            bindings
+                .iter()
+                .map(|(key, binding)| {
+                    (
+                        key.clone(),
+                        AbstractValue::from_helper_binding(binding)
+                            .to_fragment_binding()
+                            .unwrap_or(FragmentBinding::Unknown),
+                    )
+                })
+                .collect(),
+        ));
+    }
+
+    let env = EvalEnv::from_outer_fragment_expr_context(outer_locals, outer, current_dot);
+    eval_expr(expr, &env)
+        .value
+        .as_ref()
+        .and_then(AbstractValue::to_fragment_binding)
 }
 
 pub(crate) fn helper_binding_from_expr_with_fragment_locals(
@@ -346,6 +378,54 @@ mod tests {
                 FragmentBinding::ValuesPath("serviceAccount".to_string()),
             )])),
         )])
+    }
+
+    #[test]
+    fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
+        let expr = single_expr(".");
+        let root_bindings = HashMap::from([(
+            "Values".to_string(),
+            HelperBinding::ValuesPath(String::new()),
+        )]);
+
+        assert_eq!(
+            fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "Values".to_string(),
+                FragmentBinding::ValuesRoot,
+            )])))
+        );
+    }
+
+    #[test]
+    fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
+        let expr = single_expr("$");
+        let root_bindings = HashMap::from([(
+            "Values".to_string(),
+            HelperBinding::ValuesPath(String::new()),
+        )]);
+
+        assert_eq!(
+            fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "Values".to_string(),
+                FragmentBinding::ValuesRoot,
+            )])))
+        );
+    }
+
+    #[test]
+    fn outer_expr_fragment_local_selector_uses_shared_abstract_eval() {
+        let expr = single_expr(r#"dict "name" $ctx.config.name"#);
+        let fragment_locals = context_local();
+
+        assert_eq!(
+            fragment_binding_from_outer_expr(&expr, Some(&fragment_locals), None, None),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "name".to_string(),
+                FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+            )])))
+        );
     }
 
     #[test]

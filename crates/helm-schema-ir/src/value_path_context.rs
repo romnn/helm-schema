@@ -4,8 +4,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::{resolved_default_fallback_paths_for_text, type_is_schema_type};
-use crate::fragment_binding_eval::fragment_binding_from_outer_expr;
-use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding_eval::{binding_from_expr, resolve_bound_path_expr};
 use crate::predicate::{Predicate, PredicateAtom};

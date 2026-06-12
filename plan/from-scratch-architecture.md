@@ -213,15 +213,16 @@ answers**, and cache state may move output only in the widening direction
 
 ### 3.1 From the current implementation (≈29K LOC, reviewed in depth)
 
-- **Semantics implemented ~6×.** `expr_eval`, `helper_binding_eval`,
-  `fragment_expr_eval`, `fragment_binding_eval`, the 1,480-line literal-only
-  `helper_eval`, and the chart-facts walker — over three near-identical value
-  lattices (`AbstractValue` / `HelperBinding` / `FragmentBinding`) with lossy
-  conversions between them, twin near-duplicate helper-body walks, and manual
-  scope snapshot/restore. Every documented recurring bug class (`with …
-  default` rebinding, helper-bound `set`, `toYaml` fragments, map ranges,
-  empty placeholders) traces to this split: fixing one shape means
-  remembering to update several collectors.
+- **Semantics implemented in too many places.** `expr_eval`,
+  `helper_binding_eval`, `fragment_expr_eval`, the 1,480-line literal-only
+  `helper_eval`, and the chart-facts walker still span three near-identical
+  value lattices (`AbstractValue` / `HelperBinding` / `FragmentBinding`) with
+  lossy conversions between them, twin near-duplicate helper-body walks, and
+  manual scope snapshot/restore. The old `fragment_binding_eval` module has
+  been folded into `fragment_expr_eval`, but every documented recurring bug
+  class (`with … default` rebinding, helper-bound `set`, `toYaml` fragments,
+  map ranges, empty placeholders) still traces to the remaining split: fixing
+  one shape means remembering to update several collectors.
 - **Syntax is lossy and parsed three times**; `HelmAst` stores control-flow
   headers as raw strings (`If { cond: String }`) and drops all spans, so
   position-aware diagnostics are impossible, every consumer re-parses action
@@ -1401,9 +1402,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   output-action projection, and helper-summary-to-binding projection. This
   leaves the remaining fragment/helper compatibility evaluators focused on
   expression resolution while more of the DTO conversion layer moves behind
-  helper-summary methods. The remaining A2 boundary is reducing those
-  evaluators further and moving their projected facts into native
-  helper-summary effects.
+  helper-summary methods. The obsolete `fragment_binding_eval` compatibility
+  module has been deleted; its final outer-expression resolver now lives next
+  to the rest of the shared fragment expression evaluator. The remaining A2
+  boundary is reducing the helper-binding evaluator and moving projected facts
+  into native helper-summary effects.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

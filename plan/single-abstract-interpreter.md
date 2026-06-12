@@ -719,11 +719,14 @@ Current result:
   output-action projection, and helper-summary-to-binding projection. The
   remaining fragment/helper compatibility evaluators are narrower expression
   resolvers instead of owning those summary conversion rules.
+- The obsolete `fragment_binding_eval` module is gone. Its final
+  outer-expression resolver is colocated with `fragment_expr_eval`, so
+  fragment binding compatibility now has one expression-evaluation home.
 
 Remaining A2 work:
 
-- Delete or reduce the fragment/helper binding evaluators once those facts are
-  native summary projections.
+- Delete or reduce the helper-binding evaluator once those facts are native
+  summary projections.
 - Move the remaining helper-body compatibility projections into native summary
   effects and reduce the compatibility DTO conversion layer.
 
