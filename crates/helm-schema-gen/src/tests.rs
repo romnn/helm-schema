@@ -4,10 +4,11 @@ use indoc::indoc;
 use serde_json::Value;
 
 use crate::{
-    DefaultValuesSchemaGenerator, ValuesSchemaGenerator, collect_nullable_value_paths,
-    generate_values_schema_full, generate_values_schema_full_with_facts,
+    DefaultValuesSchemaGenerator, ValuesSchemaGenerator, generate_values_schema_full,
+    generate_values_schema_full_with_facts,
     generate_values_schema_full_with_facts_and_descriptions,
     generate_values_schema_with_values_yaml,
+    resolve_policy::{ResolvePolicy, ValuePathSchemaInputs},
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
@@ -388,15 +389,15 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         "type": "string"
     });
 
-    let schema = crate::resolve_schema_for_value_path(
-        false,
-        false,
+    let schema = ResolvePolicy::default().resolve_schema_for_value_path(ValuePathSchemaInputs {
+        has_referenced_descendants: false,
+        used_as_fragment: false,
         provider_schema,
         values_yaml_schema,
-        serde_json::json!({}),
-        serde_json::json!({}),
-        true,
-    );
+        guard_constraint_schema: serde_json::json!({}),
+        type_hint_schema: serde_json::json!({}),
+        preserve_empty_string_fallback: true,
+    });
     let schema = crate::add_null_schema(schema);
 
     assert!(
@@ -751,7 +752,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         snapshots:
     "};
     let ir = parse_ir(src);
-    let nullable_paths = collect_nullable_value_paths(&ir);
+    let nullable_paths = ResolvePolicy::default().nullable_value_paths(&ir);
     assert!(
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
@@ -3944,11 +3945,10 @@ fn step2_default_in_string_literal_no_hint() {
     );
 }
 
-/// Step 2 real-world pattern: the `default <literal> .Values.X` site lives
-/// Strict per-use rule for `collect_nullable_value_paths`: a path is
+/// Strict per-use rule for `ResolvePolicy::nullable_value_paths`: a path is
 /// only null-tolerant when *every* render use carries a null-tolerating
-/// guard. Two uses of the same source expression — one with
-/// `Guard::Default { path }` matching, one with no guards — must not
+/// guard. Two uses of the same source expression - one with
+/// `Guard::Default { path }` matching, one with no guards - must not
 /// widen the path. Renders that hit the bare site would crash on null,
 /// so the schema must reject null too.
 ///
@@ -3960,7 +3960,7 @@ fn step2_default_in_string_literal_no_hint() {
 /// per-use rule, that path correctly widens. Mixed-guards paths stay
 /// strict.
 #[test]
-fn collect_nullable_value_paths_requires_all_render_uses_to_be_null_tolerant() {
+fn resolve_policy_nullable_paths_requires_all_render_uses_to_be_null_tolerant() {
     let path = YamlPath(vec!["data".into(), "value".into()]);
     let guarded = ValueUse {
         source_expr: "image.tag".into(),
@@ -3979,7 +3979,7 @@ fn collect_nullable_value_paths_requires_all_render_uses_to_be_null_tolerant() {
         resource: None,
     };
 
-    let null_paths = collect_nullable_value_paths(&[guarded, bare]);
+    let null_paths = ResolvePolicy::default().nullable_value_paths(&[guarded, bare]);
     assert!(
         null_paths.is_empty(),
         "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",

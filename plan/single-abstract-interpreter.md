@@ -810,9 +810,10 @@ Current result:
 - Contract emission now flows through `ContractUseSink`, so node/control-flow
   effects are no longer coupled to the `ValueUse` fixture DTO name.
 - Generator-side lowering has its first explicit policy seam:
-  `ResolvePolicy` owns provider-schema domain restriction and guard-constraint
-  lowering while `ValueUse` remains the compatibility DTO consumed at the
-  public boundary.
+  `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
+  lowering, nullability classification, and per-path schema merge lowering
+  while `ValueUse` remains the compatibility DTO consumed at the public
+  boundary.
 
 ### Phase 8 — bundled emission
 

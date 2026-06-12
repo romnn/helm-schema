@@ -12,7 +12,7 @@ use helm_schema_ir::{ChartFacts, Guard, PathFact, ValueKind, ValueUse, derive_ch
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use merge::{merge_schema_list, merge_two_schemas, union_schema_list};
-use resolve_policy::ResolvePolicy;
+use resolve_policy::{ResolvePolicy, ValuePathSchemaInputs};
 
 struct UseSignals {
     referenced_value_paths: BTreeSet<String>,
@@ -208,7 +208,7 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
     let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<Value>>> =
         HashMap::new();
-    let resolve_policy = ResolvePolicy;
+    let resolve_policy = ResolvePolicy::default();
 
     for u in uses {
         if u.source_expr.trim().is_empty() {
@@ -322,8 +322,9 @@ fn collect_path_metadata(
     uses: &[ValueUse],
     referenced_value_paths: &BTreeSet<String>,
 ) -> PathMetadata {
+    let resolve_policy = ResolvePolicy::default();
     PathMetadata {
-        nullable_paths: collect_nullable_value_paths(uses),
+        nullable_paths: resolve_policy.nullable_value_paths(uses),
         paths_with_descendants: collect_paths_with_descendants(referenced_value_paths),
     }
 }
@@ -356,7 +357,7 @@ fn build_root_schema(
     values_descriptions: &BTreeMap<String, String>,
 ) -> Value {
     let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
-    let resolve_policy = ResolvePolicy;
+    let resolve_policy = ResolvePolicy::default();
     let mut root_schema = object_schema(Map::new());
 
     for vp in signals.referenced_value_paths {
@@ -459,15 +460,18 @@ fn build_root_schema(
             provider_schema
         };
 
-        let merged = resolve_schema_for_value_path(
-            path_metadata.paths_with_descendants.contains(&vp),
+        let merged = resolve_policy.resolve_schema_for_value_path(ValuePathSchemaInputs {
+            has_referenced_descendants: path_metadata.paths_with_descendants.contains(&vp),
             used_as_fragment,
             provider_schema,
             values_yaml_schema,
-            merge_schema_list(vec![guard_constraint_schema, partial_scalar_schema]),
+            guard_constraint_schema: merge_schema_list(vec![
+                guard_constraint_schema,
+                partial_scalar_schema,
+            ]),
             type_hint_schema,
             preserve_empty_string_fallback,
-        );
+        });
         let should_preserve_empty_placeholder = preserve_explicit_empty_placeholder(
             values_yaml_info,
             &path_fact,
@@ -672,79 +676,6 @@ fn schema_allows_type(schema: &Value, expected_ty: &str) -> bool {
     }
 
     false
-}
-
-fn resolve_schema_for_value_path(
-    has_referenced_descendants: bool,
-    used_as_fragment: bool,
-    provider_schema: Value,
-    values_yaml_schema: Value,
-    guard_constraint_schema: Value,
-    type_hint_schema: Value,
-    preserve_empty_string_fallback: bool,
-) -> Value {
-    let base = if !is_empty_schema(&provider_schema) {
-        if is_empty_schema(&values_yaml_schema) {
-            provider_schema
-        } else {
-            // Some charts use scalar "preset" values that are fed into helpers which
-            // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
-            // In these cases the *input* type in values.yaml is the scalar, not the output
-            // object type, so prefer the values.yaml scalar schema.
-            if has_referenced_descendants
-                && is_fixed_object_schema(&values_yaml_schema)
-                && is_scalar_schema(&provider_schema)
-            {
-                values_yaml_schema
-            } else if used_as_fragment
-                && is_fixed_object_schema(&values_yaml_schema)
-                && is_open_string_map_schema(&provider_schema)
-            {
-                provider_schema
-            } else if used_as_fragment
-                && is_scalar_schema(&values_yaml_schema)
-                && is_object_or_array_schema(&provider_schema)
-            {
-                values_yaml_schema
-            } else if let Some(values_yaml_ty) = schema_type(&values_yaml_schema)
-                && is_scalar_schema(&values_yaml_schema)
-                && schema_allows_scalar_type(&provider_schema, values_yaml_ty)
-            {
-                if preserve_empty_string_fallback
-                    && values_yaml_ty == "string"
-                    && !schema_permits_empty_string(&provider_schema)
-                {
-                    union_schema_list(vec![provider_schema, empty_string_schema()])
-                } else {
-                    provider_schema
-                }
-            } else {
-                merge_two_schemas(provider_schema, values_yaml_schema)
-            }
-        }
-    } else if !is_empty_schema(&values_yaml_schema) {
-        values_yaml_schema
-    } else if used_as_fragment {
-        unknown_object_schema()
-    } else {
-        empty_schema()
-    };
-
-    let base = if is_empty_schema(&type_hint_schema) {
-        base
-    } else if is_empty_schema(&base) {
-        type_hint_schema
-    } else {
-        merge_two_schemas(base, type_hint_schema)
-    };
-
-    if is_empty_schema(&guard_constraint_schema) {
-        base
-    } else if is_empty_schema(&base) {
-        guard_constraint_schema
-    } else {
-        merge_two_schemas(base, guard_constraint_schema)
-    }
 }
 
 fn add_null_schema(schema: Value) -> Value {
@@ -1085,98 +1016,6 @@ fn exact_empty_object_schema() -> Value {
         .into_iter()
         .collect(),
     )
-}
-
-/// Identify value paths for which an explicit `null` default in values.yaml is
-/// contractually valid according to the template control flow.
-///
-/// A path qualifies when every observed use is null-tolerant and at least one
-/// rendered use provides non-null type evidence:
-///
-/// - header-only guard/binding uses (`if` / `with` / `range` conditions) are
-///   always null-tolerant because Helm evaluates them against `nil` without
-///   crashing;
-/// - rendered uses must sit under a self-guard that only renders the body when
-///   the same value path is non-empty (`if .Values.X`, `with .Values.X`,
-///   `range .Values.X`, `if eq .Values.X "literal"`, and similar composed
-///   conditions that retain the per-path guard).
-///
-/// Chart-level mutations on the values dict (e.g. nats's `defaultValues`
-/// helper, which does `set X "K" (X.K | default V)` on Values-rooted paths)
-/// are handled at the IR layer: see
-/// `SymbolicWalker::set_default_chart_paths_for_text`. Those mutations
-/// attach a `Guard::Default` to every read of the mutated path within
-/// templates that include the helper, so reads in the YAML body are
-/// guarded uniformly — the per-use rule below then widens the path
-/// without any special case here.
-///
-/// We intentionally do not widen pure control-flow paths on the strength of
-/// guard conditions alone. Without a rendered use, a truthy/or/not condition
-/// still does not tell us whether the underlying values type is boolean,
-/// string, list, or object.
-///
-/// This keeps generated schemas aligned with the chart's actual acceptance
-/// surface: if the template explicitly treats a value as optional and
-/// values.yaml ships `null`, the schema should preserve that `null`.
-fn collect_nullable_value_paths(uses: &[ValueUse]) -> BTreeSet<String> {
-    struct PathInfo {
-        has_render_use: bool,
-        all_uses_nullable: bool,
-    }
-
-    impl Default for PathInfo {
-        fn default() -> Self {
-            Self {
-                has_render_use: false,
-                all_uses_nullable: true,
-            }
-        }
-    }
-
-    fn use_is_null_tolerant(use_: &ValueUse) -> bool {
-        if use_.path.0.is_empty() {
-            return true;
-        }
-
-        use_.guards.iter().any(|guard| match guard {
-            Guard::Truthy { path }
-            | Guard::Eq { path, .. }
-            | Guard::Range { path }
-            | Guard::With { path }
-            | Guard::Default { path } => path == &use_.source_expr,
-            Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => false,
-        })
-    }
-
-    let mut by_path: BTreeMap<&str, PathInfo> = BTreeMap::new();
-    for u in uses {
-        if u.source_expr.trim().is_empty() {
-            continue;
-        }
-        let info = by_path.entry(u.source_expr.as_str()).or_default();
-        let has_self_range_guard = u
-            .guards
-            .iter()
-            .any(|guard| matches!(guard, Guard::Range { path } if path == &u.source_expr));
-        if !u.path.0.is_empty() || has_self_range_guard || u.kind == ValueKind::Fragment {
-            info.has_render_use = true;
-        }
-        info.all_uses_nullable &= use_is_null_tolerant(u);
-
-        for guard in &u.guards {
-            if let Guard::Range { path } = guard
-                && !path.trim().is_empty()
-            {
-                by_path.entry(path.as_str()).or_default().has_render_use = true;
-            }
-        }
-    }
-    by_path
-        .into_iter()
-        .filter_map(|(path, info)| {
-            (info.has_render_use && info.all_uses_nullable).then(|| path.to_string())
-        })
-        .collect()
 }
 
 fn lookup_values_yaml_values<'a>(
