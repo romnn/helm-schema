@@ -1380,7 +1380,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   report the selected child rather than the whole base map. Deletes: the twin
   helper-body walks, the fragment/helper binding evaluators, and — once
   resource identity consumes interpreter summaries — the 1,480-line
-  `helper_eval.rs`.
+  `helper_eval.rs`. Helper argument / dot rebinding expressions that require
+  fragment bindings now run through the shared abstract evaluator as well,
+  leaving helper-call resolution itself as the remaining compatibility
+  boundary.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

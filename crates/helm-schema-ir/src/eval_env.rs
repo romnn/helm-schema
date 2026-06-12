@@ -63,6 +63,52 @@ impl EvalEnv {
         env
     }
 
+    pub(crate) fn from_outer_fragment_expr_context(
+        fragment_locals: Option<&HashMap<String, FragmentBinding>>,
+        root_bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+    ) -> Self {
+        let root_fields = root_bindings
+            .map(|bindings| {
+                bindings
+                    .iter()
+                    .map(|(name, binding)| {
+                        (name.clone(), AbstractValue::from_helper_binding(binding))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let locals = fragment_locals
+            .map(|locals| {
+                locals
+                    .iter()
+                    .map(|(name, binding)| {
+                        (name.clone(), AbstractValue::from_fragment_binding(binding))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let dot = root_bindings
+            .map(|bindings| {
+                AbstractValue::Dict(
+                    bindings
+                        .iter()
+                        .map(|(name, binding)| {
+                            (name.clone(), AbstractValue::from_helper_binding(binding))
+                        })
+                        .collect(),
+                )
+            })
+            .or_else(|| current_dot.map(AbstractValue::from_helper_binding));
+        Self {
+            dot,
+            root_fields,
+            locals,
+            allow_field_root_lookup: true,
+            local_scopes: Vec::new(),
+        }
+    }
+
     pub(crate) fn from_fragment_context(
         locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,

@@ -676,6 +676,11 @@ Current result:
 - Selector reads on local structured values now clear the base container's
   broad read set and re-add only the selected child. This prevents local-map
   siblings from being treated as rendered inputs when only one key is selected.
+- Helper argument / dot rebinding expressions that need fragment bindings now
+  use the shared abstract expression evaluator through an explicit mixed
+  helper-root + fragment-local environment. This removes the separate
+  hand-written fragment outer-expression mirror for dict/list/coalesce/ternary
+  and keeps the root `.` / `$` context behavior as an environment contract.
 
 Remaining A2 work:
 

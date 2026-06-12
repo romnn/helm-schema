@@ -1,12 +1,13 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::binding::{FragmentBinding, HelperBinding};
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::helper_analysis::BoundHelperAnalysis;
-use crate::helper_binding_eval::binding_from_expr;
 use crate::output_path;
-use crate::walker::values_path_from_expr;
 
 pub(crate) fn fragment_binding_from_helper_analysis(
     mut analysis: BoundHelperAnalysis,
@@ -94,101 +95,97 @@ pub(crate) fn fragment_binding_from_outer_expr(
     outer: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
 ) -> Option<FragmentBinding> {
-    if let Some(path) = values_path_from_expr(expr) {
-        return Some(FragmentBinding::ValuesPath(path));
+    if matches!(expr, TemplateExpr::Variable(var) if var.is_empty())
+        && let Some(bindings) = outer
+    {
+        return Some(FragmentBinding::Dict(
+            bindings
+                .iter()
+                .map(|(key, binding)| {
+                    (
+                        key.clone(),
+                        AbstractValue::from_helper_binding(binding)
+                            .to_fragment_binding()
+                            .unwrap_or(FragmentBinding::Unknown),
+                    )
+                })
+                .collect(),
+        ));
     }
 
-    match expr {
-        TemplateExpr::Literal(Literal::String(value)) => Some(FragmentBinding::StringSet(
-            [value.clone()].into_iter().collect(),
-        )),
-        TemplateExpr::Parenthesized(inner) => {
-            fragment_binding_from_outer_expr(inner, outer_locals, outer, current_dot)
-        }
-        TemplateExpr::Field(path) if path.is_empty() => {
-            if let Some(bindings) = outer {
-                return Some(FragmentBinding::Dict(
-                    bindings
-                        .iter()
-                        .map(|(key, binding)| (key.clone(), binding.to_fragment_binding()))
-                        .collect(),
-                ));
-            }
-            current_dot
-                .map(HelperBinding::to_fragment_binding)
-                .or(Some(FragmentBinding::RootContext))
-        }
-        TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            Some(FragmentBinding::ValuesPath(path[1..].join(".")))
-        }
-        TemplateExpr::Variable(var) if var.is_empty() => {
-            if let Some(bindings) = outer {
-                return Some(FragmentBinding::Dict(
-                    bindings
-                        .iter()
-                        .map(|(key, binding)| (key.clone(), binding.to_fragment_binding()))
-                        .collect(),
-                ));
-            }
-            Some(FragmentBinding::RootContext)
-        }
-        TemplateExpr::Variable(var) if !var.is_empty() => {
-            outer_locals.and_then(|locals| locals.get(var).cloned())
-        }
-        TemplateExpr::Call { function, args } if matches!(function.as_str(), "list" | "tuple") => {
-            let mut items = Vec::new();
-            for arg in args {
-                items.push(
-                    fragment_binding_from_outer_expr(arg, outer_locals, outer, current_dot)
-                        .unwrap_or(FragmentBinding::Unknown),
-                );
-            }
-            Some(FragmentBinding::List(items))
-        }
-        TemplateExpr::Call { function, args } if function == "dict" => {
-            let mut map = BTreeMap::new();
-            let mut index = 0usize;
-            while index + 1 < args.len() {
-                let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
-                    index += 1;
-                    continue;
-                };
-                if let Some(binding) = fragment_binding_from_outer_expr(
-                    &args[index + 1],
-                    outer_locals,
-                    outer,
-                    current_dot,
-                ) {
-                    map.insert(key.clone(), binding);
-                }
-                index += 2;
-            }
-            Some(FragmentBinding::Dict(map))
-        }
-        TemplateExpr::Call { function, args } if function == "coalesce" => {
-            let mut choices = Vec::new();
-            for arg in args {
-                if let Some(binding) =
-                    fragment_binding_from_outer_expr(arg, outer_locals, outer, current_dot)
-                {
-                    choices.push(binding);
-                }
-            }
-            FragmentBinding::choice(choices)
-        }
-        TemplateExpr::Call { function, args } if function == "ternary" => {
-            let mut choices = Vec::new();
-            for arg in args.iter().take(2) {
-                if let Some(binding) =
-                    fragment_binding_from_outer_expr(arg, outer_locals, outer, current_dot)
-                {
-                    choices.push(binding);
-                }
-            }
-            FragmentBinding::choice(choices)
-        }
-        _ => {
-            binding_from_expr(expr, outer, current_dot).map(|binding| binding.to_fragment_binding())
-        }
+    let env = EvalEnv::from_outer_fragment_expr_context(outer_locals, outer, current_dot);
+    eval_expr(expr, &env)
+        .value
+        .as_ref()
+        .and_then(AbstractValue::to_fragment_binding)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{BTreeMap, HashMap};
+
+    use helm_schema_ast::parse_action_expressions;
+
+    use super::fragment_binding_from_outer_expr;
+    use crate::binding::{FragmentBinding, HelperBinding};
+
+    fn single_expr(action: &str) -> helm_schema_ast::TemplateExpr {
+        let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
+        assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        exprs.into_iter().next().expect("expression exists")
+    }
+
+    #[test]
+    fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
+        let expr = single_expr(".");
+        let root_bindings = HashMap::from([(
+            "Values".to_string(),
+            HelperBinding::ValuesPath(String::new()),
+        )]);
+
+        assert_eq!(
+            fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "Values".to_string(),
+                FragmentBinding::ValuesRoot,
+            )])))
+        );
+    }
+
+    #[test]
+    fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
+        let expr = single_expr("$");
+        let root_bindings = HashMap::from([(
+            "Values".to_string(),
+            HelperBinding::ValuesPath(String::new()),
+        )]);
+
+        assert_eq!(
+            fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "Values".to_string(),
+                FragmentBinding::ValuesRoot,
+            )])))
+        );
+    }
+
+    #[test]
+    fn outer_expr_fragment_local_selector_uses_shared_abstract_eval() {
+        let expr = single_expr(r#"dict "name" $ctx.config.name"#);
+        let fragment_locals = HashMap::from([(
+            "ctx".to_string(),
+            FragmentBinding::Dict(BTreeMap::from([(
+                "config".to_string(),
+                FragmentBinding::ValuesPath("serviceAccount".to_string()),
+            )])),
+        )]);
+
+        assert_eq!(
+            fragment_binding_from_outer_expr(&expr, Some(&fragment_locals), None, None),
+            Some(FragmentBinding::Dict(BTreeMap::from([(
+                "name".to_string(),
+                FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+            )])))
+        );
     }
 }
