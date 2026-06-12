@@ -1450,6 +1450,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   predicate algebra replaces flat `Guard`; P1 conditional lowering lands
   behind policy with the guard-flipping differentials as its gate;
   `ValueUse` demoted to a DTO/fixture format with no production consumer.
+  Current progress: symbolic interpretation now emits internal `ContractUse`
+  claims through the document and scalar/control-flow paths, and contract
+  finalization owns the previous compatibility normalization before projecting
+  to `ValueUse`. Recursive exact-helper and static-file walks stay in that
+  internal contract layer, so `ValueUse` is no longer the object that nested
+  interpretation appends or normalizes.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the

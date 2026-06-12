@@ -775,13 +775,17 @@ Current result:
 - Output-site context and value-fact collection now live under explicit
   document-hole/document-value analysis names, so the compatibility walker no
   longer exposes generic output-node plumbing at the A3 seam.
+- Document and scalar/control-flow outputs now emit internal `ContractUse`
+  claims. The old `ValueUse` normalization has moved to contract finalization,
+  and recursive helper/file interpretation stays in the contract layer until
+  the public generator boundary projects to `ValueUse`.
 - The artifact is intentionally private and behavior-preserving; it is the
   first A3 hook point for resource identity, anchor, and document-path facts
   before those facts are projected into the old DTO boundary.
 
 ### Phase 7 — ContractIR and resolution/lowering
 
-Status: **pending**
+Status: **in progress**
 
 Goal:
 
@@ -794,6 +798,12 @@ Goal:
 - Replace flat `Guard` at the IR boundary with the predicate algebra; keep
   `ValueUse` only as a DTO/fixture projection until deleted from production
   consumers.
+
+Current result:
+
+- The first ContractIR migration seam is in place as `ContractUse`: it is not
+  the final witness graph yet, but it gives the interpreter one internal
+  contract object to emit and normalize before compatibility DTO projection.
 
 ### Phase 8 — bundled emission
 

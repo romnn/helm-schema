@@ -1,17 +1,18 @@
+use crate::contract::ContractUse;
 use crate::document_hole_context::DocumentHoleContext;
 use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;
 use crate::output_path;
-use crate::{Guard, ValueKind, ValueUse, YamlPath};
+use crate::{Guard, ValueKind, YamlPath};
 use std::collections::BTreeSet;
 
 /// A rendered manifest output site discovered while interpreting a template.
 ///
 /// This is still a compatibility-era document artifact: it records the
 /// structural position of one rendered hole and lowers through a private
-/// document projection before producing the existing `ValueUse` compatibility
-/// DTO. Keeping that projection behind a document-shaped type gives the next
-/// A3 steps a single place to attach richer document facts.
+/// document projection before producing contract uses. Keeping that projection
+/// behind a document-shaped type gives the next A4 steps a single place to
+/// attach richer contract facts before final DTO projection.
 pub(crate) struct AbstractDocumentOutput {
     hole: AbstractDocumentHole,
     analysis: DocumentValueAnalysis,
@@ -32,11 +33,11 @@ impl AbstractDocumentOutput {
         }
     }
 
-    pub(crate) fn into_value_uses(self) -> Vec<ValueUse> {
+    pub(crate) fn into_contract_uses(self) -> Vec<ContractUse> {
         let projections = self.compatibility_projections();
         projections
             .into_iter()
-            .map(|projection| projection.into_value_use())
+            .map(|projection| projection.into_contract_use())
             .collect()
     }
 
@@ -267,24 +268,24 @@ impl AbstractDocumentProjection {
         self
     }
 
-    fn into_value_use(self) -> ValueUse {
+    fn into_contract_use(self) -> ContractUse {
         match self {
-            Self::DocumentUse(use_) => use_.into_value_use(),
+            Self::DocumentUse(use_) => use_.into_contract_use(),
             Self::HelperUse {
                 source_expr,
                 kind,
                 guards,
-            } => ValueUse {
+            } => ContractUse::new(
                 source_expr,
-                path: YamlPath(Vec::new()),
-                kind: if kind == ValueKind::PartialScalar {
+                YamlPath(Vec::new()),
+                if kind == ValueKind::PartialScalar {
                     ValueKind::Scalar
                 } else {
                     kind
                 },
                 guards,
-                resource: None,
-            },
+                None,
+            ),
         }
     }
 }
@@ -316,14 +317,14 @@ impl AbstractDocumentUse {
         }
     }
 
-    fn into_value_use(self) -> ValueUse {
-        ValueUse {
-            source_expr: self.source_expr,
-            path: self.path,
-            kind: self.kind,
-            guards: self.guards,
-            resource: self.resource,
-        }
+    fn into_contract_use(self) -> ContractUse {
+        ContractUse::new(
+            self.source_expr,
+            self.path,
+            self.kind,
+            self.guards,
+            self.resource,
+        )
     }
 }
 

@@ -8,6 +8,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
+use crate::contract::{ContractUse, finalize_contract_uses};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
@@ -29,7 +30,6 @@ use crate::static_file_template::{
 use crate::symbolic_scope_state::{SymbolicScopeSnapshot, SymbolicScopeState};
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
-use crate::value_use_postprocess::postprocess_value_uses;
 use crate::value_use_sink::ValueUseSink;
 use crate::{Guard, IrGenerator, ValueKind, ValueUse, YamlPath};
 
@@ -85,7 +85,7 @@ struct SymbolicWalker<'a> {
     source: &'a str,
     defines: &'a DefineIndex,
     ir_context: SymbolicIrContext,
-    uses: Vec<ValueUse>,
+    uses: Vec<ContractUse>,
     seed_predicates: Vec<Predicate>,
     seed_dot: Option<FragmentBinding>,
     no_output_depth: usize,
@@ -242,18 +242,21 @@ impl<'a> SymbolicWalker<'a> {
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
                 .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let uses = nested.run(&tree);
+        let uses = nested.run_contract(&tree);
         self.uses.extend(uses);
     }
 
     #[tracing::instrument(skip_all)]
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
+        finalize_contract_uses(self.run_contract(tree))
+    }
+
+    fn run_contract(&mut self, tree: &tree_sitter::Tree) -> Vec<ContractUse> {
         self.rendered_yaml.reset_for_tree(tree);
         self.scope
             .reset_control(&self.seed_predicates, self.seed_dot.clone());
         self.no_output_depth = 0;
         eval_node(self, tree.root_node());
-        postprocess_value_uses(&mut self.uses);
         std::mem::take(&mut self.uses)
     }
 
@@ -330,13 +333,8 @@ impl<'a> SymbolicWalker<'a> {
             }
         }
 
-        self.uses.push(ValueUse {
-            source_expr,
-            path,
-            kind,
-            guards,
-            resource,
-        });
+        self.uses
+            .push(ContractUse::new(source_expr, path, kind, guards, resource));
     }
 
     fn current_dot_binding(&self) -> Option<HelperBinding> {
@@ -383,7 +381,7 @@ impl<'a> SymbolicWalker<'a> {
                 .with_inline_helpers_in_fragments(true)
                 .with_helper_bindings(bindings)
                 .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let uses = nested.run(&plan.tree);
+        let uses = nested.run_contract(&plan.tree);
         self.uses.extend(uses);
         true
     }
@@ -439,7 +437,7 @@ impl<'a> SymbolicWalker<'a> {
             output_values,
             projection_context,
         )
-        .into_value_uses();
+        .into_contract_uses();
         self.uses.extend(uses);
     }
 
