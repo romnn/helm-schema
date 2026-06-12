@@ -16,12 +16,13 @@ pub(crate) fn fragment_binding_from_helper_analysis(
         .iter()
         .map(|output| output.source_expr.clone())
         .collect();
-    let has_fragment_outputs =
-        !analysis.fragment_output.is_empty() || !analysis.fragment_output_uses.is_empty();
     let mut rendered_sources = structured_sources.clone();
     rendered_sources.extend(analysis.fragment_output.iter().cloned());
     rendered_sources.extend(analysis.output.keys().cloned());
     let mut bindings = Vec::new();
+    if !analysis.string_output.is_empty() {
+        bindings.push(FragmentBinding::StringSet(analysis.string_output.clone()));
+    }
     for output in analysis.fragment_output_uses.drain(..) {
         bindings.push(FragmentBinding::for_output_path(
             output.source_expr,
@@ -35,13 +36,11 @@ pub(crate) fn fragment_binding_from_helper_analysis(
             bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
         }
     }
-    if !has_fragment_outputs {
-        for source in analysis.output.into_keys() {
-            if !structured_sources.contains(&source)
-                && !output_path::values_path_has_descendant(&source, &rendered_sources)
-            {
-                bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
-            }
+    for source in analysis.output.into_keys() {
+        if !structured_sources.contains(&source)
+            && !output_path::values_path_has_descendant(&source, &rendered_sources)
+        {
+            bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
         }
     }
     FragmentBinding::merge_all(bindings)
@@ -55,13 +54,14 @@ pub(crate) fn helper_binding_from_helper_analysis(
         .iter()
         .map(|output| output.source_expr.clone())
         .collect();
-    let has_fragment_outputs =
-        !analysis.fragment_output.is_empty() || !analysis.fragment_output_uses.is_empty();
     let mut rendered_sources = structured_sources.clone();
     rendered_sources.extend(analysis.fragment_output.iter().cloned());
     rendered_sources.extend(analysis.output.keys().cloned());
 
     let mut bindings = Vec::new();
+    if !analysis.string_output.is_empty() {
+        bindings.push(HelperBinding::StringSet(analysis.string_output.clone()));
+    }
     for output in analysis.fragment_output_uses.drain(..) {
         bindings.push(HelperBinding::for_output_path(
             output.source_expr,
@@ -76,15 +76,13 @@ pub(crate) fn helper_binding_from_helper_analysis(
             bindings.push(HelperBinding::PathSet([source].into_iter().collect()));
         }
     }
-    if !has_fragment_outputs {
-        for (source, meta) in analysis.output {
-            if !structured_sources.contains(&source)
-                && !output_path::values_path_has_descendant(&source, &rendered_sources)
-            {
-                bindings.push(HelperBinding::OutputSet(
-                    [(source, meta)].into_iter().collect(),
-                ));
-            }
+    for (source, meta) in analysis.output {
+        if !structured_sources.contains(&source)
+            && !output_path::values_path_has_descendant(&source, &rendered_sources)
+        {
+            bindings.push(HelperBinding::OutputSet(
+                [(source, meta)].into_iter().collect(),
+            ));
         }
     }
     HelperBinding::merge_all(bindings)

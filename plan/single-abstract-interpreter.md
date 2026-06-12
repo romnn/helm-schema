@@ -423,7 +423,7 @@ Current result:
 
 ### Phase 3 — move fragment expression evaluation onto `eval_expr`
 
-Status: **in progress**
+Status: **in progress; switch-point shape reached**
 
 Goal:
 
@@ -480,10 +480,24 @@ Current result:
   fragments still carry string literal sets and rendered-output semantics that
   should become first-class `AbstractValue` / `Effects` concepts before the old
   evaluator is removed.
+- `AbstractValue`, `HelperBinding`, and `FragmentBinding` now preserve exact
+  finite string sets. This lets helper chains such as Bitnami's
+  `getKeyFromList` / `getValueFromKey` carry literal path keys through
+  `printf`, local assignment, `splitList`, `first`, `reverse`, `range`, and
+  dynamic `index` without chart-specific logic.
+- Helper-context fragment binding evaluation now tries the shared
+  helper-aware expression evaluator before falling back to the legacy fragment
+  evaluator. This keeps helper arguments, local aliases, and current-dot
+  bindings in one structural path instead of splitting scalar and fragment
+  interpretation.
+- Helper-internal traversal prefixes are collapsed at the helper dependency
+  boundary when a deeper exact path is known. The prefixes are interpreter
+  state for walking `index $latestObj .`; they are not accepted chart inputs
+  unless the helper actually renders or guards that parent object directly.
 
 ### Phase 4 — move node/control-flow evaluation onto `eval_node`
 
-Status: **in progress**
+Status: **in progress; A1 switch point reached**
 
 Goal:
 
@@ -542,6 +556,11 @@ Current result:
   that assignment kind through separate declaration/assignment methods, and
   `EvalEnv` has explicit declaration/assignment entry points for the later
   scoped-state implementation.
+- `get`-derived local bindings now use the same typed assignment parser
+  instead of whitespace token matching, so `$x := get ...` shadows in the
+  current scope while `$x = get ...` reassigns the existing local. The
+  compatibility local-state layer treats this as the same one-binding-per-local
+  replacement invariant as fragment and range bindings.
 - `condition_action_plan.rs` now carries an internal predicate algebra for
   `if` / `with` conditions and projects back to today's flat `Guard` values
   only at `node_action_effect.rs`, the current compatibility boundary.
@@ -565,20 +584,30 @@ Current result:
   cloning separate maps, which creates a single seam for moving that state to
   explicit scoped joins. This also prevents branch-local default mutations from
   leaking onto later unconditional reads.
+- `SymbolicLocalState` now has explicit local-scope frames, separate
+  declaration and assignment semantics, and branch out-state joins. This is the
+  compatibility version of the target state-passing `eval_node` shape:
+  branch-local declarations are restored at scope exit, assignments to an outer
+  local survive, and branches join only facts present in every live outcome.
+- `node_eval.rs` now evaluates `if`, `with`, and `range` bodies inside scoped
+  local frames and joins their out-states explicitly. The walker still owns the
+  compatibility guard stack and rendered-YAML sink, but source-order control
+  flow is no longer embedded in `symbolic.rs`.
+- Assignment actions can now clear stale fragment aliases when the right-hand
+  side is structurally unknown. That models Helm's local rebinding more
+  faithfully than leaving a previous precise binding in place.
 
 Remaining A1 work:
 
-- Teach `SymbolicLocalState` explicit local scopes and branch out-state joins,
-  then make the tree-sitter `SymbolicWalker` use that instead of restoring the
-  entire local state after each branch.
-- Make `=` assignment update the defining compatibility scope once
-  `SymbolicLocalState` carries scoped declarations instead of flat fragment
-  local map writes.
 - Replace the remaining flat guard-stack internals with predicates and keep
   flat `Guard` projection only at the current `ValueUse` compatibility output.
 - Introduce a deliberate `Top` value distinct from today's compatibility
   `Unknown`, then make abstract joins Top-absorbing and add law tests for
   associativity, commutativity, idempotence, and Top absorption.
+- Move the remaining compatibility scope snapshot mechanics for guard and dot
+  stacks behind the same environment boundary as local state. This is a
+  cleanup step toward the from-scratch architecture, not a reason to keep
+  adding semantics to `symbolic.rs`.
 
 ### Phase 5 — helper summaries
 

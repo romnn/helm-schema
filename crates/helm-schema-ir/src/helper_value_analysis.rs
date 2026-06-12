@@ -7,7 +7,10 @@ use crate::expression_analysis::{
     resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
     resolved_type_is_paths_for_text, set_default_chart_paths_for_text,
 };
-use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_text};
+use crate::fragment_expr_eval::{
+    FragmentEvalContext, fragment_binding_from_expr,
+    fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
+};
 use crate::fragment_scope_eval::{
     apply_local_set_mutations, merge_fragment_locals, range_iterable_binding,
     range_variable_item_binding, range_variable_name,
@@ -25,6 +28,7 @@ use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
     local_default_paths_from_text, local_output_meta_from_text, local_rendered_paths_from_text,
 };
+use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_context::computed_with_body_dot;
 use crate::walker::is_fragment_expr;
 use crate::{ValueKind, YamlPath};
@@ -201,6 +205,18 @@ fn collect_bound_helper_values_from_expr(
             meta.defaulted |= local_fallback_paths.contains(&output);
             state.analysis.add_output_meta(output, meta);
         }
+        let mut string_seen = state.seen.clone();
+        state
+            .analysis
+            .string_output
+            .extend(string_outputs_from_text(
+                text,
+                bindings,
+                current_dot,
+                state.local_bindings,
+                state.context,
+                &mut string_seen,
+            ));
     }
     let mut nested = state
         .context
@@ -237,10 +253,12 @@ fn collect_bound_helper_values_from_expr(
                 .extend(active_output_guards.iter().cloned());
             state.analysis.fragment_output_uses.push(output);
         }
-        state
-            .analysis
-            .dependency_paths
-            .extend(nested.dependency_paths);
+        state.analysis.dependency_paths.extend(
+            nested
+                .dependency_paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty()),
+        );
         state
             .analysis
             .add_dependency_meta_map(nested.dependency_meta);
@@ -257,6 +275,41 @@ fn collect_bound_helper_values_from_expr(
     }
     let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);
+}
+
+fn string_outputs_from_text(
+    text: &str,
+    bindings: &HashMap<String, HelperBinding>,
+    current_dot: Option<&HelperBinding>,
+    local_bindings: &HashMap<String, FragmentBinding>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> BTreeSet<String> {
+    let mut strings = BTreeSet::new();
+    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
+    for expr in parse_expr_text(text) {
+        if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
+            &expr,
+            local_bindings,
+            Some(bindings),
+            current_dot,
+            context,
+            seen,
+        ) {
+            strings.extend(binding.strings());
+            continue;
+        }
+        if let Some(binding) = fragment_binding_from_expr(
+            &expr,
+            local_bindings,
+            current_dot_fragment.as_ref(),
+            context,
+            seen,
+        ) {
+            strings.extend(binding.strings());
+        }
+    }
+    strings
 }
 
 fn collect_assignment_bound_helper_values(
@@ -297,14 +350,6 @@ fn collect_assignment_bound_helper_values(
     let local_outputs = local_bound_paths_from_text(rhs, state.local_bindings);
     let local_meta_by_path =
         local_output_meta_from_text(rhs, state.local_bindings, state.local_output_meta);
-    state
-        .analysis
-        .dependency_paths
-        .extend(direct_outputs.iter().cloned());
-    state
-        .analysis
-        .dependency_paths
-        .extend(local_outputs.iter().cloned());
     let nested = state
         .context
         .helper_call_analyzer()
@@ -340,10 +385,11 @@ fn collect_assignment_bound_helper_values(
     );
 
     let mut seen_rhs = HashSet::new();
-    if let Some(binding) = fragment_binding_from_text(
+    if let Some(binding) = fragment_binding_from_text_with_helper_context(
         rhs,
         state.local_bindings,
-        current_dot_fragment.as_ref(),
+        Some(bindings),
+        current_dot,
         state.context,
         &mut seen_rhs,
     ) {

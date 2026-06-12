@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use crate::output_path;
 use crate::{ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
@@ -21,6 +22,7 @@ pub(crate) struct BoundHelperAnalysis {
     pub(crate) output: BTreeMap<String, HelperOutputMeta>,
     pub(crate) fragment_output: BTreeSet<String>,
     pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
+    pub(crate) string_output: BTreeSet<String>,
     pub(crate) dependency_paths: BTreeSet<String>,
     pub(crate) dependency_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) guard_paths: BTreeSet<String>,
@@ -40,15 +42,34 @@ pub(crate) struct BoundHelperAnalysis {
 impl BoundHelperAnalysis {
     pub(crate) fn extend(&mut self, other: Self) {
         for (path, meta) in other.output {
-            let entry = self.output.entry(path).or_default();
-            entry.guards.extend(meta.guards);
-            entry.defaulted |= meta.defaulted;
+            self.add_output_meta(path, meta);
         }
-        self.fragment_output.extend(other.fragment_output);
-        self.fragment_output_uses.extend(other.fragment_output_uses);
-        self.dependency_paths.extend(other.dependency_paths);
+        self.fragment_output.extend(
+            other
+                .fragment_output
+                .into_iter()
+                .filter(|path| !path.trim().is_empty()),
+        );
+        self.fragment_output_uses.extend(
+            other
+                .fragment_output_uses
+                .into_iter()
+                .filter(|output| !output.source_expr.trim().is_empty()),
+        );
+        self.string_output.extend(other.string_output);
+        self.dependency_paths.extend(
+            other
+                .dependency_paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty()),
+        );
         self.add_dependency_meta_map(other.dependency_meta);
-        self.guard_paths.extend(other.guard_paths);
+        self.guard_paths.extend(
+            other
+                .guard_paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty()),
+        );
         for (path, schema_types) in other.type_hints {
             self.type_hints
                 .entry(path)
@@ -60,12 +81,18 @@ impl BoundHelperAnalysis {
     }
 
     pub(crate) fn add_output(&mut self, path: String, guards: &BTreeSet<String>, defaulted: bool) {
+        if path.trim().is_empty() {
+            return;
+        }
         let entry = self.output.entry(path).or_default();
         entry.guards.extend(guards.iter().cloned());
         entry.defaulted |= defaulted;
     }
 
     pub(crate) fn add_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
+        if path.trim().is_empty() {
+            return;
+        }
         let entry = self.output.entry(path).or_default();
         entry.guards.extend(meta.guards);
         entry.defaulted |= meta.defaulted;
@@ -76,6 +103,9 @@ impl BoundHelperAnalysis {
         meta_by_path: BTreeMap<String, HelperOutputMeta>,
     ) {
         for (path, meta) in meta_by_path {
+            if path.trim().is_empty() {
+                continue;
+            }
             self.dependency_paths.insert(path.clone());
             let entry = self.dependency_meta.entry(path).or_default();
             entry.guards.extend(meta.guards);
@@ -99,9 +129,11 @@ pub(crate) fn bound_helper_dependency_paths(analysis: &BoundHelperAnalysis) -> B
         analysis
             .fragment_output_uses
             .iter()
+            .filter(|output| !output.source_expr.trim().is_empty())
             .map(|output| output.source_expr.clone()),
     );
-    out
+    out.retain(|path| !path.trim().is_empty());
+    remove_ancestor_paths(out)
 }
 
 pub(crate) fn bound_helper_condition_paths(analysis: &BoundHelperAnalysis) -> BTreeSet<String> {
@@ -118,9 +150,19 @@ pub(crate) fn bound_helper_condition_paths(analysis: &BoundHelperAnalysis) -> BT
         analysis
             .fragment_output_uses
             .iter()
+            .filter(|output| !output.source_expr.trim().is_empty())
             .map(|output| output.source_expr.clone()),
     );
-    out
+    out.retain(|path| !path.trim().is_empty());
+    remove_ancestor_paths(out)
+}
+
+fn remove_ancestor_paths(paths: BTreeSet<String>) -> BTreeSet<String> {
+    paths
+        .iter()
+        .filter(|path| !output_path::values_path_has_descendant(path, &paths))
+        .cloned()
+        .collect()
 }
 
 pub(crate) fn helper_output_meta_from_analysis(
@@ -128,11 +170,17 @@ pub(crate) fn helper_output_meta_from_analysis(
 ) -> BTreeMap<String, HelperOutputMeta> {
     let mut out = analysis.output.clone();
     for output in &analysis.fragment_output_uses {
+        if output.source_expr.trim().is_empty() {
+            continue;
+        }
         let entry = out.entry(output.source_expr.clone()).or_default();
         entry.guards.extend(output.meta.guards.iter().cloned());
         entry.defaulted |= output.meta.defaulted;
     }
     for path in &analysis.fragment_output {
+        if path.trim().is_empty() {
+            continue;
+        }
         out.entry(path.clone()).or_default();
     }
     out

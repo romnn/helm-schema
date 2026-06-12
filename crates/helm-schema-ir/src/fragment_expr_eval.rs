@@ -614,3 +614,38 @@ pub(crate) fn fragment_binding_from_text(
     }
     FragmentBinding::choice(bindings)
 }
+
+pub(crate) fn fragment_binding_from_text_with_helper_context(
+    text: &str,
+    fragment_locals: &HashMap<String, FragmentBinding>,
+    outer: Option<&HashMap<String, HelperBinding>>,
+    current_dot: Option<&HelperBinding>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> Option<FragmentBinding> {
+    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
+    let mut bindings = Vec::new();
+    for expr in parse_expr_text(text) {
+        if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
+            &expr,
+            fragment_locals,
+            outer,
+            current_dot,
+            context,
+            seen,
+        ) {
+            bindings.push(binding.to_fragment_binding());
+            continue;
+        }
+        if let Some(binding) = fragment_binding_from_expr(
+            &expr,
+            fragment_locals,
+            current_dot_fragment.as_ref(),
+            context,
+            seen,
+        ) {
+            bindings.push(binding);
+        }
+    }
+    FragmentBinding::choice(bindings)
+}

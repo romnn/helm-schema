@@ -1,6 +1,6 @@
 use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::binding::FragmentBinding;
-use crate::bound_value_analysis::GetBinding;
+use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_scope_eval::AssignmentKind;
 use crate::output_value_emitter::ValueUseSink;
@@ -8,11 +8,11 @@ use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
 
 pub(crate) trait NodeActionEffectSink: ValueUseSink {
-    fn insert_get_binding(&mut self, variable: String, binding: GetBinding);
+    fn apply_get_binding(&mut self, plan: GetBindingPlan);
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: FragmentBinding);
+    fn declare_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: FragmentBinding);
+    fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
 
     fn refresh_default_paths(&mut self, variable: &str, rhs: &str);
 
@@ -29,24 +29,22 @@ pub(crate) fn apply_assignment_action_plan(
     sink: &mut dyn NodeActionEffectSink,
     plan: AssignmentActionPlan,
 ) {
-    if let Some((variable, binding)) = plan.get_binding {
-        sink.insert_get_binding(variable, binding);
-    }
-
     if let Some(local_assignment) = plan.local_assignment {
         apply_local_assignment_plan(sink, local_assignment);
+    }
+
+    if let Some(get_binding) = plan.get_binding {
+        sink.apply_get_binding(get_binding);
     }
 }
 
 fn apply_local_assignment_plan(sink: &mut dyn NodeActionEffectSink, plan: LocalAssignmentPlan) {
-    if let Some(binding) = plan.fragment_binding {
-        match plan.kind {
-            AssignmentKind::Declaration => {
-                sink.declare_fragment_binding(plan.variable.clone(), binding);
-            }
-            AssignmentKind::Assignment => {
-                sink.assign_fragment_binding(plan.variable.clone(), binding);
-            }
+    match plan.kind {
+        AssignmentKind::Declaration => {
+            sink.declare_fragment_binding(plan.variable.clone(), plan.fragment_binding);
+        }
+        AssignmentKind::Assignment => {
+            sink.assign_fragment_binding(plan.variable.clone(), plan.fragment_binding);
         }
     }
     sink.refresh_default_paths(&plan.variable, &plan.rhs);

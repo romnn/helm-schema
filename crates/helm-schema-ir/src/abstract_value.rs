@@ -239,6 +239,7 @@ impl AbstractValue {
             HelperBinding::RootContext => Self::RootContext,
             HelperBinding::Unknown => Self::Unknown,
             HelperBinding::OutputSet(outputs) => Self::OutputSet(outputs.clone()),
+            HelperBinding::StringSet(strings) => Self::StringSet(strings.clone()),
             HelperBinding::PathSet(paths) => Self::PathSet(paths.clone()),
             HelperBinding::Dict(map) => Self::Dict(
                 map.iter()
@@ -307,7 +308,7 @@ impl AbstractValue {
             Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
             Self::RootContext => Some(HelperBinding::RootContext),
             Self::Unknown => Some(HelperBinding::Unknown),
-            Self::StringSet(_) => Some(HelperBinding::Unknown),
+            Self::StringSet(strings) => Some(HelperBinding::StringSet(strings.clone())),
             Self::OutputSet(outputs) => Some(HelperBinding::OutputSet(outputs.clone())),
             Self::PathSet(paths) => Some(HelperBinding::PathSet(paths.clone())),
             Self::Dict(map) => Some(HelperBinding::Dict(

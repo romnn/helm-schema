@@ -6,7 +6,8 @@ use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
 use crate::fragment_binding_eval::fragment_binding_from_helper_analysis;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, fragment_binding_from_text, helper_binding_from_expr_with_fragment_locals,
+    FragmentEvalContext, fragment_binding_from_text_with_helper_context,
+    helper_binding_from_expr_with_fragment_locals,
 };
 use crate::fragment_scope_eval::{
     apply_local_set_mutations, merge_fragment_locals, parse_helper_assignment,
@@ -397,10 +398,11 @@ fn collect_bound_fragment_output_assignment_uses(
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     let mut seen_rhs = HashSet::new();
-    let mut binding = fragment_binding_from_text(
+    let mut binding = fragment_binding_from_text_with_helper_context(
         rhs,
         state.local_bindings,
-        current_dot_fragment,
+        Some(bindings),
+        current_dot,
         state.context,
         &mut seen_rhs,
     );

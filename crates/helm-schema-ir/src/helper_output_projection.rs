@@ -353,6 +353,6 @@ pub(crate) fn collect_helper_binding_output_uses(
                 );
             }
         }
-        HelperBinding::RootContext | HelperBinding::Unknown => {}
+        HelperBinding::RootContext | HelperBinding::Unknown | HelperBinding::StringSet(_) => {}
     }
 }

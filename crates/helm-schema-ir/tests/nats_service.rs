@@ -196,20 +196,6 @@ fn symbolic_ir_from_tree_sitter() {
     "source_expr": "config.gateway.tls.enabled"
   },
   {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.jetstream.fileStore.pvc"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.jetstream.fileStore.pvc.name"
-  },
-  {
     "guards": [
       {
         "path": "service",
@@ -265,13 +251,6 @@ fn symbolic_ir_from_tree_sitter() {
       "kind": "Service"
     },
     "source_expr": "config.leafnodes.tls.enabled"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.merge"
   },
   {
     "guards": [
@@ -426,13 +405,6 @@ fn symbolic_ir_from_tree_sitter() {
     "source_expr": "config.nats.tls.enabled"
   },
   {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.patch"
-  },
-  {
     "guards": [
       {
         "path": "service",
@@ -490,20 +462,6 @@ fn symbolic_ir_from_tree_sitter() {
     "source_expr": "config.profiling.tls.enabled"
   },
   {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.resolver.pvc"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.resolver.pvc.name"
-  },
-  {
     "guards": [
       {
         "path": "service",
@@ -521,20 +479,6 @@ fn symbolic_ir_from_tree_sitter() {
       "kind": "Service"
     },
     "source_expr": "config.websocket.enabled"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.websocket.ingress"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "config.websocket.ingress.name"
   },
   {
     "guards": [
@@ -573,20 +517,6 @@ fn symbolic_ir_from_tree_sitter() {
       "kind": "Service"
     },
     "source_expr": "config.websocket.tls.enabled"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "configMap"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "configMap.name"
   },
   {
     "guards": [
@@ -654,20 +584,6 @@ fn symbolic_ir_from_tree_sitter() {
       "kind": "Service"
     },
     "source_expr": "global.labels"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "headlessService"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "headlessService.name"
   },
   {
     "guards": [
@@ -830,98 +746,7 @@ fn symbolic_ir_from_tree_sitter() {
     "kind": "Scalar",
     "path": [],
     "resource": null,
-    "source_expr": "natsBox.contentsSecret"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.contentsSecret.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
     "source_expr": "natsBox.contexts"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.contextsSecret"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.contextsSecret.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.deployment"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.deployment.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.serviceAccount"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "natsBox.serviceAccount.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "podDisruptionBudget"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "podDisruptionBudget.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "promExporter.podMonitor"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "promExporter.podMonitor.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "service"
   },
   {
     "guards": [
@@ -960,29 +785,6 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "service.enabled",
         "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "service.merge"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "service.name"
-  },
-  {
-    "guards": [
-      {
-        "path": "service",
-        "type": "with"
-      },
-      {
-        "path": "service.enabled",
-        "type": "truthy"
       },
       {
         "path": "service.name",
@@ -999,22 +801,6 @@ fn symbolic_ir_from_tree_sitter() {
       "kind": "Service"
     },
     "source_expr": "service.name"
-  },
-  {
-    "guards": [
-      {
-        "path": "service",
-        "type": "with"
-      },
-      {
-        "path": "service.enabled",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "service.patch"
   },
   {
     "guards": [
@@ -1186,34 +972,6 @@ fn symbolic_ir_from_tree_sitter() {
       "kind": "Service"
     },
     "source_expr": "service.ports.websocket.enabled"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "serviceAccount"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "serviceAccount.name"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "statefulSet"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "statefulSet.name"
   }
 ]
 "#,

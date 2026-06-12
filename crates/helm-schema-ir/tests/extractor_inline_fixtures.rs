@@ -230,6 +230,211 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
 }
 
 #[test]
+fn branch_assignment_to_outer_local_survives_as_choice_after_if() {
+    let template = indoc! {r#"
+        {{- $name := .Values.primary }}
+        {{- if .Values.useFallback }}
+        {{- $name = .Values.fallback }}
+        {{- else }}
+        {{- $name = .Values.secondary }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          name: "{{ $name }}"
+    "#};
+
+    let ir = generate(template, "");
+    let rendered_sources: std::collections::BTreeSet<&str> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "name".to_string()])
+        .map(|use_| use_.source_expr.as_str())
+        .collect();
+
+    assert!(
+        rendered_sources.contains("fallback"),
+        "then-branch assignment to outer local must be visible after the if: {ir:#?}"
+    );
+    assert!(
+        rendered_sources.contains("secondary"),
+        "else-branch assignment to outer local must be visible after the if: {ir:#?}"
+    );
+    assert!(
+        !rendered_sources.contains("primary"),
+        "both branches overwrite the outer local, so the pre-branch value should not remain: {ir:#?}"
+    );
+}
+
+#[test]
+fn scalar_helper_output_assigned_to_local_keeps_value_source() {
+    let helpers = indoc! {r#"
+        {{- define "test.fullname" -}}
+        {{- .Values.fullnameOverride | default "app" -}}
+        {{- end -}}
+
+        {{- define "test.password" -}}
+        {{- $password := "" -}}
+        {{- $secretData := (lookup "v1" "Secret" "default" .secret).data -}}
+        {{- if $secretData -}}
+        {{- $password = index $secretData .key -}}
+        {{- else if .defaultValue -}}
+        {{- $password = .defaultValue | toString -}}
+        {{- end -}}
+        {{- printf "%s" $password -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- $password := include "test.password" (dict "secret" (include "test.fullname" .) "key" .Values.auth.secretKey "defaultValue" .Values.auth.password "context" $) }}
+        apiVersion: v1
+        kind: Secret
+        data:
+          password: {{ $password | quote }}
+    "#};
+
+    let ir = generate(template, helpers);
+    let password_sources: std::collections::BTreeSet<&str> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
+        .map(|use_| use_.source_expr.as_str())
+        .collect();
+
+    assert!(
+        password_sources.contains("auth.password"),
+        "helper scalar output assigned to a local must preserve its rendered value source: {ir:#?}"
+    );
+    assert!(
+        !password_sources.contains("auth.secretKey")
+            && !password_sources.contains("fullnameOverride"),
+        "lookup secret/key inputs are dependencies of the helper call, not the rendered password value: {ir:#?}"
+    );
+}
+
+#[test]
+fn split_path_helper_resolves_dynamic_values_indexing() {
+    let helpers = indoc! {r#"
+        {{- define "test.getValueFromKey" -}}
+        {{- $splitKey := splitList "." .key -}}
+        {{- $value := "" -}}
+        {{- $latestObj := $.context.Values -}}
+        {{- range $splitKey -}}
+        {{- $value = (index $latestObj .) -}}
+        {{- $latestObj = $value -}}
+        {{- end -}}
+        {{- printf "%v" (default "" $value) -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- $password := include "test.getValueFromKey" (dict "key" "auth.password" "context" $) }}
+        apiVersion: v1
+        kind: Secret
+        data:
+          password: {{ $password | quote }}
+    "#};
+
+    let ir = generate(template, helpers);
+    let password_sources: std::collections::BTreeSet<&str> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
+        .map(|use_| use_.source_expr.as_str())
+        .collect();
+
+    assert!(
+        password_sources.contains("auth.password"),
+        "splitList/range/index helper should resolve string path keys into Values paths: {ir:#?}"
+    );
+}
+
+#[test]
+fn split_path_helper_resolves_multisegment_key_to_leaf_only() {
+    let helpers = indoc! {r#"
+        {{- define "test.getValueFromKey" -}}
+        {{- $splitKey := splitList "." .key -}}
+        {{- $value := "" -}}
+        {{- $latestObj := $.context.Values -}}
+        {{- range $splitKey -}}
+        {{- $value = (index $latestObj .) -}}
+        {{- $latestObj = $value -}}
+        {{- end -}}
+        {{- printf "%v" (default "" $value) -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- $password := include "test.getValueFromKey" (dict "key" "global.auth.password" "context" $) }}
+        apiVersion: v1
+        kind: Secret
+        data:
+          password: {{ $password | quote }}
+    "#};
+
+    let ir = generate(template, helpers);
+    let password_sources: std::collections::BTreeSet<&str> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
+        .map(|use_| use_.source_expr.as_str())
+        .collect();
+
+    assert!(
+        password_sources.contains("global.auth.password"),
+        "splitList/range/index helper should resolve the final leaf path: {ir:#?}"
+    );
+    assert!(
+        !password_sources.contains("global") && !password_sources.contains("global.auth"),
+        "intermediate traversal prefixes are interpreter state, not rendered values: {ir:#?}"
+    );
+}
+
+#[test]
+fn split_path_helper_resolves_key_selected_by_helper() {
+    let helpers = indoc! {r#"
+        {{- define "test.getValueFromKey" -}}
+        {{- $splitKey := splitList "." .key -}}
+        {{- $value := "" -}}
+        {{- $latestObj := $.context.Values -}}
+        {{- range $splitKey -}}
+        {{- $value = (index $latestObj .) -}}
+        {{- $latestObj = $value -}}
+        {{- end -}}
+        {{- printf "%v" (default "" $value) -}}
+        {{- end -}}
+
+        {{- define "test.getKeyFromList" -}}
+        {{- $key := first .keys -}}
+        {{- $reverseKeys := reverse .keys -}}
+        {{- range $reverseKeys -}}
+        {{- $value := include "test.getValueFromKey" (dict "key" . "context" $.context) -}}
+        {{- if $value -}}
+        {{- $key = . -}}
+        {{- end -}}
+        {{- end -}}
+        {{- printf "%s" $key -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- $key := include "test.getKeyFromList" (dict "keys" (list "global.auth.password" "auth.password") "context" $) }}
+        {{- $password := include "test.getValueFromKey" (dict "key" $key "context" $) }}
+        apiVersion: v1
+        kind: Secret
+        data:
+          password: {{ $password | quote }}
+    "#};
+
+    let ir = generate(template, helpers);
+    let password_sources: std::collections::BTreeSet<&str> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
+        .map(|use_| use_.source_expr.as_str())
+        .collect();
+
+    assert!(
+        password_sources.contains("auth.password")
+            && password_sources.contains("global.auth.password"),
+        "helper-selected string keys should resolve into Values paths: {ir:#?}"
+    );
+}
+
+#[test]
 fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
     let template = indoc! {r#"
         apiVersion: v1

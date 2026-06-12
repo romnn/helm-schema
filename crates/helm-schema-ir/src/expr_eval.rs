@@ -164,6 +164,9 @@ fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult
             }
             EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
         }
+        "first" if args.len() == 1 => eval_first(args, env),
+        "reverse" if args.len() == 1 => eval_reverse(args, env),
+        "splitList" if args.len() == 2 => eval_split_list(args, env),
         "append" => eval_append(args, env),
         function if is_merge_function(function) => {
             let mut values = Vec::new();
@@ -232,6 +235,69 @@ fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult
             EvalResult::with_effects(None, effects)
         }
     }
+}
+
+fn eval_first(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let result = eval_expr(&args[0], env);
+    let value = match result.value {
+        Some(AbstractValue::List(items)) => items.first().cloned(),
+        other => other,
+    };
+    EvalResult::with_effects(value, result.effects)
+}
+
+fn eval_reverse(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let result = eval_expr(&args[0], env);
+    let value = match result.value {
+        Some(AbstractValue::List(mut items)) => {
+            items.reverse();
+            Some(AbstractValue::List(items))
+        }
+        other => other,
+    };
+    EvalResult::with_effects(value, result.effects)
+}
+
+fn eval_split_list(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+    let separator = match args[0].deparen() {
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
+        _ => return eval_all_args(args, env),
+    };
+    let result = eval_expr(&args[1], env);
+    let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
+        return EvalResult::with_effects(None, result.effects);
+    };
+    if strings.is_empty() {
+        return EvalResult::with_effects(None, result.effects);
+    }
+
+    let split_values = split_string_set(separator, strings);
+    EvalResult::with_effects(split_values.map(AbstractValue::List), result.effects)
+}
+
+fn split_string_set(separator: &str, strings: BTreeSet<String>) -> Option<Vec<AbstractValue>> {
+    if separator.is_empty() {
+        return None;
+    }
+
+    let split: Vec<Vec<String>> = strings
+        .iter()
+        .map(|value| value.split(separator).map(str::to_string).collect())
+        .collect();
+    let first_len = split.first()?.len();
+    if split.iter().all(|parts| parts.len() == first_len) {
+        let mut items = Vec::with_capacity(first_len);
+        for index in 0..first_len {
+            let options = split
+                .iter()
+                .filter_map(|parts| parts.get(index).cloned())
+                .collect();
+            items.push(AbstractValue::StringSet(options));
+        }
+        return Some(items);
+    }
+
+    Some(vec![AbstractValue::StringSet(strings)])
 }
 
 fn eval_index(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
@@ -636,6 +702,58 @@ mod tests {
                 .unwrap_or_default()
                 .is_empty(),
             "unsupported printf formats must not synthesize exact strings"
+        );
+    }
+
+    #[test]
+    fn split_list_preserves_equal_length_segment_positions() {
+        let expr = single_expr(r#"splitList "." "auth.password""#);
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::List(vec![
+                AbstractValue::StringSet(BTreeSet::from(["auth".to_string()])),
+                AbstractValue::StringSet(BTreeSet::from(["password".to_string()])),
+            ]))
+        );
+    }
+
+    #[test]
+    fn split_list_keeps_mixed_length_path_candidates_atomic() {
+        let expr =
+            single_expr(r#"splitList "." (coalesce "auth.password" "global.auth.password")"#);
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::List(vec![AbstractValue::StringSet(
+                BTreeSet::from([
+                    "auth.password".to_string(),
+                    "global.auth.password".to_string(),
+                ])
+            )]))
+        );
+    }
+
+    #[test]
+    fn first_and_reverse_preserve_list_structure() {
+        let first = eval_expr(&single_expr(r#"first (list "a" "b")"#), &EvalEnv::default());
+        assert_eq!(
+            first.value,
+            Some(AbstractValue::StringSet(BTreeSet::from(["a".to_string()])))
+        );
+
+        let reverse = eval_expr(
+            &single_expr(r#"reverse (list "a" "b")"#),
+            &EvalEnv::default(),
+        );
+        assert_eq!(
+            reverse.value,
+            Some(AbstractValue::List(vec![
+                AbstractValue::StringSet(BTreeSet::from(["b".to_string()])),
+                AbstractValue::StringSet(BTreeSet::from(["a".to_string()])),
+            ]))
         );
     }
 

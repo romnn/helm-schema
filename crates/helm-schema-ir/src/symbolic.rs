@@ -5,7 +5,7 @@ use helm_schema_ast::{DefineIndex, HelmAst};
 
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::binding::{FragmentBinding, HelperBinding};
-use crate::bound_value_analysis::GetBinding;
+use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -97,6 +97,7 @@ struct SymbolicWalker<'a> {
     root_bindings: HashMap<String, HelperBinding>,
 }
 
+#[derive(Clone)]
 struct WalkerScopeSnapshot {
     guards_len: usize,
     dot_stack_len: Option<usize>,
@@ -200,6 +201,20 @@ impl<'a> SymbolicWalker<'a> {
             self.dot_stack.truncate(dot_stack_len);
         }
         self.local_state.restore(snapshot.local_state);
+    }
+
+    fn join_branch_scopes(
+        &mut self,
+        entry: &WalkerScopeSnapshot,
+        outcomes: Vec<WalkerScopeSnapshot>,
+    ) {
+        self.local_state.join_branch_outcomes(
+            &entry.local_state,
+            outcomes
+                .into_iter()
+                .map(|snapshot| snapshot.local_state)
+                .collect(),
+        );
     }
 
     fn inline_static_file_templates_from_helper_calls(&mut self, text: &str) {
@@ -526,6 +541,22 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         SymbolicWalker::restore_scope(self, snapshot);
     }
 
+    fn enter_local_scope(&mut self) {
+        self.local_state.enter_local_scope();
+    }
+
+    fn exit_local_scope(&mut self) {
+        self.local_state.exit_local_scope();
+    }
+
+    fn join_branch_scopes(
+        &mut self,
+        entry: &Self::ScopeSnapshot,
+        outcomes: Vec<Self::ScopeSnapshot>,
+    ) {
+        SymbolicWalker::join_branch_scopes(self, entry, outcomes);
+    }
+
     fn enter_no_output(&mut self) {
         self.no_output_depth += 1;
     }
@@ -581,15 +612,15 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
 }
 
 impl NodeActionEffectSink for SymbolicWalker<'_> {
-    fn insert_get_binding(&mut self, variable: String, binding: GetBinding) {
-        self.local_state.insert_get_binding(variable, binding);
+    fn apply_get_binding(&mut self, plan: GetBindingPlan) {
+        self.local_state.apply_get_binding(plan);
     }
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
+    fn declare_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
         self.local_state.declare_fragment_binding(variable, binding);
     }
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: FragmentBinding) {
+    fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
         self.local_state.assign_fragment_binding(variable, binding);
     }
 

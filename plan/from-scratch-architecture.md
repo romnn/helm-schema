@@ -1318,9 +1318,11 @@ against the old fixtures.
 
 ## 15. Implementation roadmap (from the current tree to this architecture)
 
-Written from the state of the tree at the time of writing:
-single-abstract-interpreter phases 0–2 complete, phase 3 in progress, golden
-corpus green. Consistent with `next-priorities.md`'s ordering philosophy
+Written from the state of the tree after the single-abstract-interpreter
+switch-point work: phases 0–2 are complete, phases 3–4 have moved semantic
+ownership for expression transfer, source-order node traversal, scoped local
+state, and branch out-state joins out of `symbolic.rs`, and the golden corpus
+is green. Consistent with `next-priorities.md`'s ordering philosophy
 (targeted cleanup on stable boundaries first, broad reorganization last).
 
 ### 15.1 Ordering principles
@@ -1352,10 +1354,13 @@ corpus green. Consistent with `next-priorities.md`'s ordering philosophy
 
 - **A1 — finish interpreter phases 3–4 with the corrected shapes**:
   state-passing `eval_node` with explicit join (Go-template `=` vs `:=`,
-  branch out-states); **Top-absorbing** value join; control flow on a
-  minimal internal predicate core (atoms + `And`/`Not`, else-branches carry
-  `¬P`) projected to flat `Guard`s at the `ValueUse` boundary. Deletes:
-  walker control-flow handling, manual scope snapshot/restore.
+  branch out-states) is now in place for the compatibility walker. Remaining
+  A1 work is the **Top-absorbing** value join, finishing the internal
+  predicate boundary (atoms + `And`/`Not`, else-branches carry `¬P`) with flat
+  `Guard` projection only at the `ValueUse` boundary, and hiding/removing the
+  last compatibility guard/dot snapshot plumbing. Deletes: manual
+  compatibility scope snapshot/restore once guard/dot stacks move into the
+  same environment boundary as locals.
 - **A2 — helper summaries under the §6.3 contract**: empty-pc summaries
   re-guarded at call sites; env-closed fingerprints; recursion ⇒ Top +
   poisoned memo. Deletes: the twin helper-body walks, the fragment/helper

@@ -10,7 +10,7 @@ use crate::range_action_plan::RangeActionPlan;
 use crate::tree_sitter_utils::children_with_field;
 
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
-    type ScopeSnapshot;
+    type ScopeSnapshot: Clone;
 
     fn source(&self) -> &str;
 
@@ -23,6 +23,16 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     fn scope_snapshot(&self, include_dot_stack: bool) -> Self::ScopeSnapshot;
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot);
+
+    fn enter_local_scope(&mut self);
+
+    fn exit_local_scope(&mut self);
+
+    fn join_branch_scopes(
+        &mut self,
+        entry: &Self::ScopeSnapshot,
+        outcomes: Vec<Self::ScopeSnapshot>,
+    );
 
     fn enter_no_output(&mut self);
 
@@ -116,7 +126,7 @@ fn eval_condition_node<R, F>(
     R: NodeEvalRuntime,
     F: FnMut(&mut R, &str) -> ConditionActionPlan,
 {
-    let saved = runtime.scope_snapshot(include_dot_stack);
+    let entry = runtime.scope_snapshot(include_dot_stack);
 
     let condition_plan = if let Some(condition) = node.child_by_field_name("condition")
         && let Ok(text) = condition.utf8_text(runtime.source().as_bytes())
@@ -127,12 +137,14 @@ fn eval_condition_node<R, F>(
         None
     };
 
+    runtime.enter_local_scope();
     for child in children_with_field(node, "consequence") {
         eval_node(runtime, child);
     }
+    runtime.exit_local_scope();
+    let consequence_outcome = runtime.scope_snapshot(include_dot_stack);
 
-    runtime.restore_scope(saved);
-    let alternative_saved = runtime.scope_snapshot(include_dot_stack);
+    runtime.restore_scope(entry.clone());
     if let Some(plan) = &condition_plan {
         apply_condition_alternative_guards(runtime, plan);
     }
@@ -140,29 +152,49 @@ fn eval_condition_node<R, F>(
     // Else-if chains are represented as repeated condition/option fields; the
     // outer alternative first inherits the negated current predicate, then any
     // nested else-if contributes its own condition when it is evaluated.
+    runtime.enter_local_scope();
     for child in children_with_field(node, "alternative") {
         eval_node(runtime, child);
     }
-    runtime.restore_scope(alternative_saved);
+    runtime.exit_local_scope();
+    let alternative_outcome = runtime.scope_snapshot(include_dot_stack);
+
+    runtime.restore_scope(entry.clone());
+    runtime.join_branch_scopes(&entry, vec![consequence_outcome, alternative_outcome]);
 }
 
 fn eval_range_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
 where
     R: NodeEvalRuntime,
 {
-    let saved = runtime.scope_snapshot(true);
+    let entry = runtime.scope_snapshot(true);
 
     let current_path = runtime.current_rendered_path();
     let plan = runtime.plan_range_action(node, &current_path);
+
+    runtime.enter_local_scope();
     apply_range_action_plan(runtime, &plan, &current_path);
 
     for child in children_with_field(node, "body") {
         eval_node(runtime, child);
     }
+    runtime.exit_local_scope();
+    let body_outcome = runtime.scope_snapshot(true);
 
-    runtime.restore_scope(saved);
+    runtime.restore_scope(entry.clone());
 
-    for child in children_with_field(node, "alternative") {
-        eval_node(runtime, child);
+    let alternatives = children_with_field(node, "alternative");
+    runtime.enter_local_scope();
+    for child in &alternatives {
+        eval_node(runtime, *child);
+    }
+    runtime.exit_local_scope();
+    let alternative_outcome = runtime.scope_snapshot(true);
+
+    runtime.restore_scope(entry.clone());
+    if alternatives.is_empty() {
+        runtime.join_branch_scopes(&entry, vec![body_outcome, entry.clone()]);
+    } else {
+        runtime.join_branch_scopes(&entry, vec![body_outcome, alternative_outcome]);
     }
 }

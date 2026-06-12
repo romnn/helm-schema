@@ -169,10 +169,6 @@ fn symbolic_ir_from_tree_sitter() {
       {
         "path": "commonLabels",
         "type": "truthy"
-      },
-      {
-        "path": "nameOverride",
-        "type": "truthy"
       }
     ],
     "kind": "Scalar",
@@ -578,10 +574,6 @@ fn symbolic_ir_from_tree_sitter() {
       },
       {
         "path": "metrics.prometheusRule.enabled",
-        "type": "truthy"
-      },
-      {
-        "path": "commonLabels",
         "type": "truthy"
       },
       {

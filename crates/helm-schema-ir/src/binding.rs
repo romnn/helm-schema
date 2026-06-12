@@ -9,6 +9,7 @@ pub(crate) enum HelperBinding {
     RootContext,
     Unknown,
     OutputSet(BTreeMap<String, HelperOutputMeta>),
+    StringSet(BTreeSet<String>),
     PathSet(BTreeSet<String>),
     Dict(BTreeMap<String, HelperBinding>),
     List(Vec<HelperBinding>),
@@ -28,6 +29,7 @@ impl HelperBinding {
             Self::OutputSet(outputs) => {
                 FragmentBinding::OutputSet(outputs.keys().cloned().collect())
             }
+            Self::StringSet(strings) => FragmentBinding::StringSet(strings.clone()),
             Self::PathSet(paths) => FragmentBinding::PathSet(paths.clone()),
             Self::Dict(map) => FragmentBinding::Dict(
                 map.iter()
@@ -75,7 +77,15 @@ impl HelperBinding {
                 .chain(fallback.paths())
                 .collect(),
             Self::Choice(choices) => choices.iter().flat_map(Self::paths).collect(),
-            Self::RootContext | Self::Unknown => BTreeSet::new(),
+            Self::RootContext | Self::Unknown | Self::StringSet(_) => BTreeSet::new(),
+        }
+    }
+
+    pub(crate) fn strings(&self) -> BTreeSet<String> {
+        match self {
+            Self::StringSet(strings) => strings.clone(),
+            Self::Choice(choices) => choices.iter().flat_map(Self::strings).collect(),
+            _ => BTreeSet::new(),
         }
     }
 
@@ -118,7 +128,7 @@ impl HelperBinding {
             Self::Choice(choices) => {
                 Self::choice(choices.iter().filter_map(Self::item_binding).collect())
             }
-            Self::RootContext | Self::Unknown => None,
+            Self::RootContext | Self::Unknown | Self::StringSet(_) => None,
         }
     }
 
@@ -214,6 +224,7 @@ impl HelperBinding {
                     .map(|(path, meta)| (path.clone(), meta.clone()))
                     .collect(),
             )),
+            Self::StringSet(_) => None,
             Self::PathSet(paths) => {
                 let appended = paths
                     .iter()
@@ -283,6 +294,7 @@ impl HelperBinding {
             | Self::RootContext
             | Self::Unknown
             | Self::OutputSet(_)
+            | Self::StringSet(_)
             | Self::PathSet(_)
             | Self::Choice(_) => ValueKind::Scalar,
         }
@@ -329,7 +341,8 @@ impl FragmentBinding {
             Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
             Self::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
             Self::RootContext => Some(HelperBinding::RootContext),
-            Self::Unknown | Self::StringSet(_) => Some(HelperBinding::Unknown),
+            Self::Unknown => Some(HelperBinding::Unknown),
+            Self::StringSet(strings) => Some(HelperBinding::StringSet(strings.clone())),
             Self::OutputSet(paths) => Some(HelperBinding::OutputSet(
                 paths
                     .iter()
