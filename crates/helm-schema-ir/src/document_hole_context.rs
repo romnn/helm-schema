@@ -3,7 +3,7 @@ use crate::walker::is_fragment_expr;
 use crate::yaml_shape::first_mapping_colon_offset;
 use crate::{ResourceRef, ValueKind, YamlPath};
 
-pub(crate) struct OutputNodeContext {
+pub(crate) struct DocumentHoleContext {
     pub(crate) kind: ValueKind,
     pub(crate) in_mapping_key: bool,
     pub(crate) entire_scalar_value: bool,
@@ -11,12 +11,12 @@ pub(crate) struct OutputNodeContext {
     pub(crate) resource: Option<ResourceRef>,
 }
 
-pub(crate) fn output_node_context(
+pub(crate) fn collect_document_hole_context(
     source: &str,
     rendered_yaml: &RenderedYamlContext<'_>,
     node: tree_sitter::Node<'_>,
     text: &str,
-) -> OutputNodeContext {
+) -> DocumentHoleContext {
     let enclosing_action_text = enclosing_action_text(source, node);
     let kind = if enclosing_action_text
         .as_deref()
@@ -28,7 +28,7 @@ pub(crate) fn output_node_context(
         ValueKind::Scalar
     };
 
-    let in_mapping_key = output_node_is_mapping_key_part(source, node);
+    let in_mapping_key = document_hole_is_mapping_key_part(source, node);
     let mut path = if in_mapping_key {
         YamlPath(Vec::new())
     } else {
@@ -43,10 +43,10 @@ pub(crate) fn output_node_context(
     let path = rendered_yaml.rebase_path(path);
     let resource = rendered_yaml.current_resource().cloned();
 
-    OutputNodeContext {
+    DocumentHoleContext {
         kind,
         in_mapping_key,
-        entire_scalar_value: output_node_is_entire_scalar_value(source, node),
+        entire_scalar_value: document_hole_is_entire_scalar_value(source, node),
         path,
         resource,
     }
@@ -89,7 +89,7 @@ fn adjusted_output_path(
     path
 }
 
-fn output_node_is_mapping_key_part(source: &str, node: tree_sitter::Node<'_>) -> bool {
+fn document_hole_is_mapping_key_part(source: &str, node: tree_sitter::Node<'_>) -> bool {
     let start = node.start_byte();
     let end = node.end_byte();
     let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
@@ -125,7 +125,7 @@ fn enclosing_action_text(source: &str, node: tree_sitter::Node<'_>) -> Option<St
     }
 }
 
-fn output_node_is_entire_scalar_value(source: &str, node: tree_sitter::Node<'_>) -> bool {
+fn document_hole_is_entire_scalar_value(source: &str, node: tree_sitter::Node<'_>) -> bool {
     fn normalize_value_text(value_text: &str) -> &str {
         let trimmed = value_text.trim();
         let unquoted = if trimmed.len() >= 2

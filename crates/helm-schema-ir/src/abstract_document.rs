@@ -1,7 +1,7 @@
+use crate::document_hole_context::DocumentHoleContext;
+use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;
-use crate::output_node_context::OutputNodeContext;
 use crate::output_path;
-use crate::output_value_analysis::OutputValueAnalysis;
 use crate::{Guard, ValueKind, ValueUse, YamlPath};
 use std::collections::BTreeSet;
 
@@ -14,19 +14,19 @@ use std::collections::BTreeSet;
 /// A3 steps a single place to attach richer document facts.
 pub(crate) struct AbstractDocumentOutput {
     hole: AbstractDocumentHole,
-    analysis: OutputValueAnalysis,
+    analysis: DocumentValueAnalysis,
     context: AbstractDocumentProjectionContext,
 }
 
 impl AbstractDocumentOutput {
     pub(crate) fn new(
-        output_context: OutputNodeContext,
+        hole_context: DocumentHoleContext,
         helper_inlined: bool,
-        analysis: OutputValueAnalysis,
+        analysis: DocumentValueAnalysis,
         context: AbstractDocumentProjectionContext,
     ) -> Self {
         Self {
-            hole: AbstractDocumentHole::new(output_context, helper_inlined),
+            hole: AbstractDocumentHole::new(hole_context, helper_inlined),
             analysis,
             context,
         }
@@ -41,7 +41,7 @@ impl AbstractDocumentOutput {
     }
 
     fn compatibility_projections(self) -> Vec<AbstractDocumentProjection> {
-        let OutputValueAnalysis {
+        let DocumentValueAnalysis {
             default_fallback_values,
             values,
             local_output_meta,
@@ -351,14 +351,14 @@ struct AbstractDocumentHole {
 }
 
 impl AbstractDocumentHole {
-    fn new(output_context: OutputNodeContext, helper_inlined: bool) -> Self {
+    fn new(hole_context: DocumentHoleContext, helper_inlined: bool) -> Self {
         Self {
-            path: output_context.path,
-            kind: output_context.kind,
-            in_mapping_key: output_context.in_mapping_key,
-            entire_scalar_value: output_context.entire_scalar_value,
+            path: hole_context.path,
+            kind: hole_context.kind,
+            in_mapping_key: hole_context.in_mapping_key,
+            entire_scalar_value: hole_context.entire_scalar_value,
             helper_inlined,
-            resource: output_context.resource,
+            resource: hole_context.resource,
         }
     }
 

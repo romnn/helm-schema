@@ -9,6 +9,8 @@ use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
+use crate::document_hole_context::collect_document_hole_context;
+use crate::document_value_analysis::collect_document_value_analysis;
 use crate::expression_analysis::helper_bindings_for_arg;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::{
@@ -18,8 +20,6 @@ use crate::helper_inline::plan_exact_helper_inline;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_node};
-use crate::output_node_context::output_node_context;
-use crate::output_value_analysis::collect_output_value_analysis;
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::rendered_yaml_context::RenderedYamlContext;
@@ -396,8 +396,9 @@ impl<'a> SymbolicWalker<'a> {
 
         self.inline_static_file_templates_from_helper_calls(text);
 
-        let output_context = output_node_context(self.source, &self.rendered_yaml, node, text);
-        let kind = output_context.kind;
+        let hole_context =
+            collect_document_hole_context(self.source, &self.rendered_yaml, node, text);
+        let kind = hole_context.kind;
 
         let helper_inlined = self.inline_exact_helper_call(text);
 
@@ -407,7 +408,7 @@ impl<'a> SymbolicWalker<'a> {
             Some(self.analyze_bound_helper_calls(text))
         };
         let value_path_context = self.value_path_context();
-        let mut output_values = collect_output_value_analysis(
+        let mut output_values = collect_document_value_analysis(
             text,
             kind,
             &value_path_context,
@@ -433,7 +434,7 @@ impl<'a> SymbolicWalker<'a> {
             self.no_output_depth > 0,
         );
         let uses = AbstractDocumentOutput::new(
-            output_context,
+            hole_context,
             helper_inlined,
             output_values,
             projection_context,

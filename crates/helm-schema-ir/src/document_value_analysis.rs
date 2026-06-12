@@ -5,7 +5,7 @@ use crate::bound_value_analysis::{GetBinding, extract_bound_values};
 use crate::helper_analysis::{BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta};
 use crate::value_path_context::ValuePathContext;
 
-pub(crate) struct OutputValueAnalysis {
+pub(crate) struct DocumentValueAnalysis {
     pub(crate) default_fallback_values: BTreeSet<String>,
     pub(crate) values: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
@@ -20,7 +20,7 @@ pub(crate) struct OutputValueAnalysis {
     pub(crate) chart_value_defaults: BTreeSet<String>,
 }
 
-impl OutputValueAnalysis {
+impl DocumentValueAnalysis {
     pub(crate) fn is_empty(&self) -> bool {
         self.values.is_empty()
             && self.bound_values.is_empty()
@@ -33,14 +33,14 @@ impl OutputValueAnalysis {
     }
 }
 
-pub(crate) fn collect_output_value_analysis(
+pub(crate) fn collect_document_value_analysis(
     text: &str,
     kind: ValueKind,
     value_path_context: &ValuePathContext<'_>,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
     helper_analysis: Option<BoundHelperAnalysis>,
-) -> OutputValueAnalysis {
+) -> DocumentValueAnalysis {
     let default_fallback_values = value_path_context.resolved_default_fallback_paths(text);
     let mut values: BTreeSet<String> = value_path_context
         .resolved_values_paths(text)
@@ -72,7 +72,7 @@ pub(crate) fn collect_output_value_analysis(
         chart_value_defaults.extend(projection.chart_defaults);
     }
 
-    OutputValueAnalysis {
+    DocumentValueAnalysis {
         default_fallback_values,
         values,
         local_output_meta,

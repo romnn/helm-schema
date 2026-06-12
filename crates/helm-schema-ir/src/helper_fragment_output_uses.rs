@@ -6,6 +6,7 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::document_hole_context::collect_document_hole_context;
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_text_with_helper_context,
@@ -31,7 +32,6 @@ use crate::local_projection::{
 };
 use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_template_body};
-use crate::output_node_context::output_node_context;
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
@@ -396,19 +396,20 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         let Ok(text) = node.utf8_text(self.source.as_bytes()) else {
             return;
         };
-        let output_context = output_node_context(self.source, &self.rendered_yaml, node, text);
-        if output_context.in_mapping_key {
+        let hole_context =
+            collect_document_hole_context(self.source, &self.rendered_yaml, node, text);
+        if hole_context.in_mapping_key {
             return;
         }
-        let kind = if output_context.kind == ValueKind::Scalar
-            && !output_context.entire_scalar_value
-            && !output_context.path.0.is_empty()
+        let kind = if hole_context.kind == ValueKind::Scalar
+            && !hole_context.entire_scalar_value
+            && !hole_context.path.0.is_empty()
         {
             ValueKind::PartialScalar
         } else {
-            output_context.kind
+            hole_context.kind
         };
-        self.collect_expression(text, &output_context.path, kind);
+        self.collect_expression(text, &hole_context.path, kind);
     }
 
     fn apply_assignment_side_effects(&mut self, text: &str) -> bool {

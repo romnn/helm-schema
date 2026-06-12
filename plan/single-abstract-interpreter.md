@@ -772,6 +772,9 @@ Current result:
 - The document projection context owns ambient compatibility guards and
   chart-default mutation state, so document projections now produce fully
   guarded `ValueUse` DTOs without a document/helper-specific sink method.
+- Output-site context and value-fact collection now live under explicit
+  document-hole/document-value analysis names, so the compatibility walker no
+  longer exposes generic output-node plumbing at the A3 seam.
 - The artifact is intentionally private and behavior-preserving; it is the
   first A3 hook point for resource identity, anchor, and document-path facts
   before those facts are projected into the old DTO boundary.
