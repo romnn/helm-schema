@@ -814,6 +814,9 @@ Current result:
   lowering, nullability classification, and per-path schema merge lowering
   while `ValueUse` remains the compatibility DTO consumed at the public
   boundary.
+- Values-file schema evidence now lives in `values_yaml`, separating
+  values.yaml traversal and YAML-to-schema evidence construction from the
+  generator root.
 
 ### Phase 8 — bundled emission
 

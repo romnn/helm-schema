@@ -1463,7 +1463,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving
   root-schema construction to orchestrate collected evidence instead of owning
-  those semantic decisions directly.
+  those semantic decisions directly. Values-file schema evidence is now also
+  isolated in `values_yaml`, so the generator root no longer owns values.yaml
+  traversal and scalar/object evidence construction.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the
