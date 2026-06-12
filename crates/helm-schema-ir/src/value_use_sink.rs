@@ -1,0 +1,24 @@
+use crate::{Guard, ValueKind, YamlPath};
+
+pub(crate) trait ValueUseSink {
+    fn emit_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind);
+
+    fn emit_use_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+    );
+
+    fn emit_helper_use(&mut self, source_expr: String);
+
+    fn emit_helper_use_with_extra_guards(&mut self, source_expr: String, extra_guards: &[Guard]);
+
+    fn emit_helper_use_kind_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+    );
+}

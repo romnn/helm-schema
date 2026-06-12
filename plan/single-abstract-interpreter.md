@@ -467,8 +467,10 @@ Current result:
     node.
   - `output_value_analysis.rs` collects the expression/helper/local facts for
     that output node.
-  - `output_value_emitter.rs` converts those facts into the existing
-    `ValueUse` sink.
+  - `abstract_document.rs` records those facts as a private document hole and
+    projects them into the compatibility `ValueUse` sink.
+  - `value_use_sink.rs` is the compatibility sink target while `ValueUse`
+    remains the downstream DTO.
   This is intentionally shaped like the future `eval_node(..., sink)` boundary:
   the walker determines traversal order, while output-node interpretation and
   effect emission are no longer embedded in the traversal code.
@@ -743,7 +745,7 @@ Remaining A2 work:
 
 ### Phase 6 — internal documents and contract projection
 
-Status: **pending**
+Status: **in progress**
 
 Goal:
 
@@ -755,6 +757,15 @@ Goal:
 - Gate the migration with the abstained-enrichment budget: no corpus chart
   loses provider type enrichment versus the current tool.
 - Keep `yaml_shape` as an upgrader until parity passes, then delete it.
+
+Current result:
+
+- Rendered output lowering now passes through an internal
+  `AbstractDocumentOutput` / `AbstractDocumentHole` artifact and only then
+  projects into the compatibility `ValueUseSink`.
+- The artifact is intentionally private and behavior-preserving; it is the
+  first A3 hook point for resource identity, anchor, and document-path facts
+  before those facts are projected into the old DTO boundary.
 
 ### Phase 7 — ContractIR and resolution/lowering
 

@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst};
 
+use crate::abstract_document::AbstractDocumentOutput;
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
@@ -19,7 +20,6 @@ use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_node};
 use crate::output_node_context::output_node_context;
 use crate::output_value_analysis::collect_output_value_analysis;
-use crate::output_value_emitter::{ValueUseSink, emit_output_value_analysis};
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::rendered_yaml_context::RenderedYamlContext;
@@ -30,6 +30,7 @@ use crate::symbolic_scope_state::{SymbolicScopeSnapshot, SymbolicScopeState};
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 use crate::value_use_postprocess::postprocess_value_uses;
+use crate::value_use_sink::ValueUseSink;
 use crate::{Guard, IrGenerator, ValueKind, ValueUse, YamlPath};
 
 pub struct SymbolicIrGenerator;
@@ -445,7 +446,8 @@ impl<'a> SymbolicWalker<'a> {
             return;
         }
 
-        emit_output_value_analysis(self, &output_context, helper_inlined, output_values);
+        AbstractDocumentOutput::new(output_context, helper_inlined, output_values)
+            .project_to_value_uses(self);
     }
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]

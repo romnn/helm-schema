@@ -28,11 +28,11 @@ use crate::local_projection::{
 };
 use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_template_body};
-use crate::output_value_emitter::ValueUseSink;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_context::computed_with_body_dot;
+use crate::value_use_sink::ValueUseSink;
 use crate::walker::is_fragment_expr;
 use crate::{ValueKind, YamlPath};
 

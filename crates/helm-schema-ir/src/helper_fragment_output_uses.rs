@@ -33,7 +33,6 @@ use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_template_body};
 use crate::output_node_context::output_node_context;
 use crate::output_path;
-use crate::output_value_emitter::ValueUseSink;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::rendered_yaml_context::RenderedYamlContext;
@@ -43,6 +42,7 @@ use crate::template_expr_analysis::{
 };
 use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_context::computed_with_body_dot;
+use crate::value_use_sink::ValueUseSink;
 use crate::walker::is_fragment_expr;
 use crate::{ValueKind, YamlPath};
 

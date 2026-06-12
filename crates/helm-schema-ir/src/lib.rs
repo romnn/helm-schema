@@ -1,3 +1,4 @@
+mod abstract_document;
 mod abstract_eval;
 mod abstract_value;
 mod assignment_action_plan;
@@ -31,7 +32,6 @@ mod node_eval;
 mod output_node_context;
 mod output_path;
 mod output_value_analysis;
-mod output_value_emitter;
 mod predicate;
 mod range_action_plan;
 mod rendered_yaml_context;
@@ -47,6 +47,7 @@ mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
 mod value_use_postprocess;
+mod value_use_sink;
 mod walker;
 mod yaml_shape;
 

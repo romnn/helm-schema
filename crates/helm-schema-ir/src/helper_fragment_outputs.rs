@@ -12,9 +12,9 @@ use crate::fragment_scope_eval::{
 };
 use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_template_body};
-use crate::output_value_emitter::ValueUseSink;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
+use crate::value_use_sink::ValueUseSink;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) fn collect_bound_fragment_outputs_from_tree(

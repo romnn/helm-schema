@@ -3,9 +3,9 @@ use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_scope_eval::AssignmentKind;
-use crate::output_value_emitter::ValueUseSink;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
+use crate::value_use_sink::ValueUseSink;
 use crate::{Guard, ValueKind, YamlPath};
 
 pub(crate) trait NodeActionEffectSink: ValueUseSink {

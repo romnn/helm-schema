@@ -1424,7 +1424,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   downstream is untouched while the artifact changes underneath. Gate: the
   abstained-enrichment budget — no corpus chart loses a type enrichment vs
   the current tool; `yaml_shape` survives as an upgrader until the gate
-  passes, then is deleted.
+  passes, then is deleted. Current progress: output lowering now flows
+  through an internal `AbstractDocumentOutput` / `AbstractDocumentHole`
+  artifact before projecting to the compatibility `ValueUseSink`. This does
+  not change inference behavior, but it establishes the A3 insertion point for
+  attaching resource identity, anchor, and document-path facts before the old
+  DTO projection.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations
