@@ -763,6 +763,9 @@ Current result:
 - Rendered output lowering now passes through an internal
   `AbstractDocumentOutput` / `AbstractDocumentHole` artifact and only then
   projects into the compatibility `ValueUseSink`.
+- The document hole owns the rebased rendered path and resource claim for
+  document-projected uses, so resource identity is no longer inferred by the
+  final `SymbolicWalker` sink at compatibility emission time.
 - The artifact is intentionally private and behavior-preserving; it is the
   first A3 hook point for resource identity, anchor, and document-path facts
   before those facts are projected into the old DTO boundary.

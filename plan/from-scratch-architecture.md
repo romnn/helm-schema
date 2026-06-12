@@ -1429,7 +1429,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   artifact before projecting to the compatibility `ValueUseSink`. This does
   not change inference behavior, but it establishes the A3 insertion point for
   attaching resource identity, anchor, and document-path facts before the old
-  DTO projection.
+  DTO projection. The document hole now also owns the rebased rendered path and
+  resource claim used for compatibility projection, rather than letting the
+  final sink infer those document facts at emission time.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations

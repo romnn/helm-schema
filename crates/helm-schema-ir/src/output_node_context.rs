@@ -1,13 +1,14 @@
 use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::walker::is_fragment_expr;
 use crate::yaml_shape::first_mapping_colon_offset;
-use crate::{ValueKind, YamlPath};
+use crate::{ResourceRef, ValueKind, YamlPath};
 
 pub(crate) struct OutputNodeContext {
     pub(crate) kind: ValueKind,
     pub(crate) in_mapping_key: bool,
     pub(crate) entire_scalar_value: bool,
     pub(crate) path: YamlPath,
+    pub(crate) resource: Option<ResourceRef>,
 }
 
 pub(crate) fn output_node_context(
@@ -39,12 +40,15 @@ pub(crate) fn output_node_context(
     if rendered_yaml.output_inside_block_scalar_at(node.start_byte()) {
         path = YamlPath(Vec::new());
     }
+    let path = rendered_yaml.rebase_path(path);
+    let resource = rendered_yaml.current_resource().cloned();
 
     OutputNodeContext {
         kind,
         in_mapping_key,
         entire_scalar_value: output_node_is_entire_scalar_value(source, node),
         path,
+        resource,
     }
 }
 

@@ -31,7 +31,7 @@ use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 use crate::value_use_postprocess::postprocess_value_uses;
 use crate::value_use_sink::ValueUseSink;
-use crate::{Guard, IrGenerator, ValueKind, ValueUse, YamlPath};
+use crate::{Guard, IrGenerator, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 pub struct SymbolicIrGenerator;
 
@@ -272,8 +272,40 @@ impl<'a> SymbolicWalker<'a> {
         kind: ValueKind,
         extra_guards: &[Guard],
     ) {
+        self.emit_use_with_resource(
+            source_expr,
+            path,
+            kind,
+            extra_guards,
+            self.rendered_yaml.current_resource().cloned(),
+            false,
+        );
+    }
+
+    fn emit_document_use_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+        resource: Option<ResourceRef>,
+    ) {
+        self.emit_use_with_resource(source_expr, path, kind, extra_guards, resource, true);
+    }
+
+    fn emit_use_with_resource(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+        resource: Option<ResourceRef>,
+        path_is_rebased: bool,
+    ) {
         let path = if self.no_output_depth > 0 {
             YamlPath(Vec::new())
+        } else if path_is_rebased {
+            path
         } else {
             self.rendered_yaml.rebase_path(path)
         };
@@ -318,7 +350,7 @@ impl<'a> SymbolicWalker<'a> {
             path,
             kind,
             guards,
-            resource: self.rendered_yaml.current_resource().cloned(),
+            resource,
         });
     }
 
@@ -475,6 +507,24 @@ impl ValueUseSink for SymbolicWalker<'_> {
         extra_guards: &[Guard],
     ) {
         SymbolicWalker::emit_use_with_extra_guards(self, source_expr, path, kind, extra_guards);
+    }
+
+    fn emit_document_use_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+        resource: Option<ResourceRef>,
+    ) {
+        SymbolicWalker::emit_document_use_with_extra_guards(
+            self,
+            source_expr,
+            path,
+            kind,
+            extra_guards,
+            resource,
+        );
     }
 
     fn emit_helper_use(&mut self, source_expr: String) {

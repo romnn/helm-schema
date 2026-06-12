@@ -46,7 +46,13 @@ impl AbstractDocumentOutput {
 
         for value in values {
             if suppress_direct_values.contains(&value) {
-                sink.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+                self.hole.emit_use_with_extra_guards(
+                    sink,
+                    value,
+                    YamlPath(Vec::new()),
+                    ValueKind::Scalar,
+                    &[],
+                );
                 continue;
             }
 
@@ -64,14 +70,27 @@ impl AbstractDocumentOutput {
             let emit_path = self.hole.direct_value_path(&value);
             let emit_kind = self.hole.direct_value_kind();
             if extra_guards.is_empty() {
-                sink.emit_use(value, emit_path, emit_kind);
+                self.hole
+                    .emit_use_with_extra_guards(sink, value, emit_path, emit_kind, &[]);
             } else {
-                sink.emit_use_with_extra_guards(value, emit_path, emit_kind, &extra_guards);
+                self.hole.emit_use_with_extra_guards(
+                    sink,
+                    value,
+                    emit_path,
+                    emit_kind,
+                    &extra_guards,
+                );
             }
         }
 
         for value in bound_values {
-            sink.emit_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+            self.hole.emit_use_with_extra_guards(
+                sink,
+                value,
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                &[],
+            );
         }
 
         let structured_fragment_sources: std::collections::BTreeSet<String> =
@@ -96,7 +115,8 @@ impl AbstractDocumentOutput {
                 && self.hole.can_project_scalar_helper_to_caller_path()
                 && !has_rendered_descendant
             {
-                sink.emit_use_with_extra_guards(
+                self.hole.emit_use_with_extra_guards(
+                    sink,
                     value.clone(),
                     self.hole.path.clone(),
                     self.hole.kind,
@@ -117,7 +137,8 @@ impl AbstractDocumentOutput {
             {
                 let emit_path =
                     output_path::append_relative_path(&self.hole.path, &output.relative_path);
-                sink.emit_use_with_extra_guards(
+                self.hole.emit_use_with_extra_guards(
+                    sink,
                     output.source_expr,
                     emit_path,
                     output.kind,
@@ -139,7 +160,13 @@ impl AbstractDocumentOutput {
             let has_rendered_descendant =
                 output_path::values_path_has_descendant(&value, &helper_rendered_sources);
             if self.hole.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
-                sink.emit_use(value, self.hole.path.clone(), self.hole.kind);
+                self.hole.emit_use_with_extra_guards(
+                    sink,
+                    value,
+                    self.hole.path.clone(),
+                    self.hole.kind,
+                    &[],
+                );
             } else {
                 sink.emit_helper_use_kind_with_extra_guards(value, self.hole.kind, &[]);
             }
@@ -156,7 +183,8 @@ impl AbstractDocumentOutput {
 
         for (path, schema_types) in helper_type_hints {
             for schema_type in schema_types {
-                sink.emit_use_with_extra_guards(
+                self.hole.emit_use_with_extra_guards(
+                    sink,
                     path.clone(),
                     YamlPath(Vec::new()),
                     ValueKind::Scalar,
@@ -176,6 +204,7 @@ struct AbstractDocumentHole {
     in_mapping_key: bool,
     entire_scalar_value: bool,
     helper_inlined: bool,
+    resource: Option<crate::ResourceRef>,
 }
 
 impl AbstractDocumentHole {
@@ -186,7 +215,25 @@ impl AbstractDocumentHole {
             in_mapping_key: output_context.in_mapping_key,
             entire_scalar_value: output_context.entire_scalar_value,
             helper_inlined,
+            resource: output_context.resource,
         }
+    }
+
+    fn emit_use_with_extra_guards(
+        &self,
+        sink: &mut dyn ValueUseSink,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+    ) {
+        sink.emit_document_use_with_extra_guards(
+            source_expr,
+            path,
+            kind,
+            extra_guards,
+            self.resource.clone(),
+        );
     }
 
     fn direct_value_kind(&self) -> ValueKind {
