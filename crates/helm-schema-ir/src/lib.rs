@@ -14,6 +14,7 @@ mod fragment_binding_eval;
 mod fragment_expr_eval;
 mod fragment_scope_eval;
 mod helper_analysis;
+mod helper_aware_expr_eval;
 mod helper_binding_eval;
 mod helper_body_analysis;
 mod helper_call_analyzer;

@@ -594,6 +594,20 @@ fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
                 }
                 EvalResult::with_effects(AbstractValue::merge_all(values), effects)
             }
+            "ternary" => {
+                let mut effects = current.effects;
+                let mut values = Vec::new();
+                for arg in args {
+                    let arg_result = eval_expr(arg, env);
+                    effects.merge(arg_result.effects);
+                }
+                for arg in args.iter().take(2) {
+                    if let Some(value) = eval_expr_value(arg, env) {
+                        values.push(value);
+                    }
+                }
+                EvalResult::with_effects(AbstractValue::choice(values), effects)
+            }
             function if is_string_transform_function(function) => {
                 let mut effects = current.effects;
                 effects.add_string_hints(value_paths(&current.value));
@@ -679,11 +693,13 @@ pub(crate) fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String>
     Some(schema_type.to_string())
 }
 
-fn is_string_transform_function(function: &str) -> bool {
+pub(crate) fn is_string_transform_function(function: &str) -> bool {
     matches!(
         function,
         "quote"
             | "squote"
+            | "b64enc"
+            | "b64dec"
             | "toString"
             | "trunc"
             | "trim"
@@ -694,11 +710,42 @@ fn is_string_transform_function(function: &str) -> bool {
     )
 }
 
-fn is_provenance_preserving_function(function: &str) -> bool {
+pub(crate) fn is_provenance_preserving_function(function: &str) -> bool {
     matches!(
         function,
-        "toYaml" | "fromYaml" | "deepCopy" | "tpl" | "indent" | "nindent" | "printf" | "int"
+        "toYaml"
+            | "fromYaml"
+            | "deepCopy"
+            | "tpl"
+            | "indent"
+            | "nindent"
+            | "printf"
+            | "int"
+            | "uniq"
     )
+}
+
+pub(crate) fn transform_source_arg<'a>(
+    function: &str,
+    args: &'a [TemplateExpr],
+) -> Option<&'a TemplateExpr> {
+    match function {
+        function if is_string_transform_function(function) => match function {
+            "indent" | "nindent" | "trim" | "trimAll" | "trimPrefix" | "trimSuffix" | "trunc"
+            | "replace" => args.last(),
+            _ => args.first(),
+        },
+        function if is_provenance_preserving_function(function) => match function {
+            "indent" | "nindent" => args.last(),
+            "printf" => None,
+            _ => args.first(),
+        },
+        _ => None,
+    }
+}
+
+pub(crate) fn pipeline_preserves_current(function: &str) -> bool {
+    is_string_transform_function(function) || is_provenance_preserving_function(function)
 }
 
 #[cfg(test)]
@@ -889,6 +936,50 @@ mod tests {
                 .unwrap_or_default()
                 .is_empty(),
             "unsupported printf formats must not synthesize exact strings"
+        );
+    }
+
+    #[test]
+    fn pipeline_ternary_returns_value_branches_not_condition() {
+        let expr = single_expr(
+            r#"typeIs "string" .Values.config | ternary .Values.config (.Values.config | toYaml)"#,
+        );
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::ValuesPath("config".to_string()))
+        );
+    }
+
+    #[test]
+    fn base64_pipeline_preserves_source_path() {
+        let expr = single_expr(r#".Values.auth.password | toString | b64enc"#);
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::ValuesPath("auth.password".to_string()))
+        );
+    }
+
+    #[test]
+    fn uniq_pipeline_preserves_local_list_items() {
+        let expr = single_expr(r#"$pullSecrets | uniq"#);
+        let mut env = EvalEnv::default();
+        env.locals.insert(
+            "pullSecrets".to_string(),
+            AbstractValue::List(vec![AbstractValue::ValuesPath(
+                "image.pullSecrets.*".to_string(),
+            )]),
+        );
+        let result = eval_expr(&expr, &env);
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::List(vec![AbstractValue::ValuesPath(
+                "image.pullSecrets.*".to_string(),
+            )]))
         );
     }
 

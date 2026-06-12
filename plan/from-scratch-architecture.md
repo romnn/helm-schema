@@ -1381,9 +1381,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   helper-body walks, the fragment/helper binding evaluators, and — once
   resource identity consumes interpreter summaries — the 1,480-line
   `helper_eval.rs`. Helper argument / dot rebinding expressions that require
-  fragment bindings now run through the shared abstract evaluator as well,
-  leaving helper-call resolution itself as the remaining compatibility
-  boundary.
+  fragment bindings now run through the shared abstract evaluator as well.
+  Nested `include` / `template` calls inside larger expressions now go through
+  a single helper-aware abstract-expression adapter, so helper-binding and
+  fragment-binding consumers share `dict` / `merge` / `default` / `printf` /
+  `index` semantics instead of carrying parallel expression walkers. The
+  remaining compatibility boundary is helper-body interpretation itself.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

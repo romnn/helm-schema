@@ -681,6 +681,17 @@ Current result:
   helper-root + fragment-local environment. This removes the separate
   hand-written fragment outer-expression mirror for dict/list/coalesce/ternary
   and keeps the root `.` / `$` context behavior as an environment contract.
+- `helper_aware_expr_eval.rs` is now the compatibility adapter for expressions
+  that contain `include` / `template` calls inside larger Helm expressions.
+  It resolves the helper call through the summary provider, then lets the same
+  abstract value lattice model `dict`, `list`, `merge`, `default`, `printf`,
+  `index`, and pipelines for both helper-binding and fragment-binding
+  consumers. This deletes the previous duplicated expression semantics from
+  `fragment_expr_eval.rs`.
+- Pipeline `ternary` is now part of the core expression evaluator: the pipeline
+  input is the condition, while the first two arguments are the value branches.
+  Bitnami-style `typeIs ... | ternary .value (.value | toYaml)` helpers now
+  keep their fragment source paths through the shared evaluator.
 
 Remaining A2 work:
 
