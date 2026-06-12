@@ -227,15 +227,6 @@ impl ValueUseSink for HelperValueRuntime<'_, '_> {
     ) {
     }
 
-    fn emit_helper_use(&mut self, _source_expr: String) {}
-
-    fn emit_helper_use_with_extra_guards(
-        &mut self,
-        _source_expr: String,
-        _extra_guards: &[crate::Guard],
-    ) {
-    }
-
     fn emit_helper_use_kind_with_extra_guards(
         &mut self,
         _source_expr: String,

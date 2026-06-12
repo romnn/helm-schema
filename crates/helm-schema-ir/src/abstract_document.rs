@@ -29,6 +29,13 @@ impl AbstractDocumentOutput {
     }
 
     pub(crate) fn project_to_value_uses(self, sink: &mut dyn ValueUseSink) {
+        let projections = self.compatibility_projections();
+        for projection in projections {
+            projection.emit(sink);
+        }
+    }
+
+    fn compatibility_projections(self) -> Vec<AbstractDocumentProjection> {
         let OutputValueAnalysis {
             default_fallback_values,
             values,
@@ -43,16 +50,16 @@ impl AbstractDocumentOutput {
             suppress_direct_values,
             chart_value_defaults: _,
         } = self.analysis;
+        let mut projections = Vec::new();
 
         for value in values {
             if suppress_direct_values.contains(&value) {
-                self.hole.emit_use_with_extra_guards(
-                    sink,
+                projections.push(self.hole.document_use(
                     value,
                     YamlPath(Vec::new()),
                     ValueKind::Scalar,
-                    &[],
-                );
+                    Vec::new(),
+                ));
                 continue;
             }
 
@@ -69,28 +76,19 @@ impl AbstractDocumentOutput {
 
             let emit_path = self.hole.direct_value_path(&value);
             let emit_kind = self.hole.direct_value_kind();
-            if extra_guards.is_empty() {
+            projections.push(
                 self.hole
-                    .emit_use_with_extra_guards(sink, value, emit_path, emit_kind, &[]);
-            } else {
-                self.hole.emit_use_with_extra_guards(
-                    sink,
-                    value,
-                    emit_path,
-                    emit_kind,
-                    &extra_guards,
-                );
-            }
+                    .document_use(value, emit_path, emit_kind, extra_guards),
+            );
         }
 
         for value in bound_values {
-            self.hole.emit_use_with_extra_guards(
-                sink,
+            projections.push(self.hole.document_use(
                 value,
                 YamlPath(Vec::new()),
                 ValueKind::Scalar,
-                &[],
-            );
+                Vec::new(),
+            ));
         }
 
         let structured_fragment_sources: std::collections::BTreeSet<String> =
@@ -115,15 +113,18 @@ impl AbstractDocumentOutput {
                 && self.hole.can_project_scalar_helper_to_caller_path()
                 && !has_rendered_descendant
             {
-                self.hole.emit_use_with_extra_guards(
-                    sink,
+                projections.push(self.hole.document_use(
                     value.clone(),
                     self.hole.path.clone(),
                     self.hole.kind,
-                    &extra_guards,
-                );
+                    extra_guards,
+                ));
             } else {
-                sink.emit_helper_use_with_extra_guards(value.clone(), &extra_guards);
+                projections.push(AbstractDocumentProjection::helper_use(
+                    value.clone(),
+                    ValueKind::Scalar,
+                    extra_guards,
+                ));
             }
         }
 
@@ -137,19 +138,18 @@ impl AbstractDocumentOutput {
             {
                 let emit_path =
                     output_path::append_relative_path(&self.hole.path, &output.relative_path);
-                self.hole.emit_use_with_extra_guards(
-                    sink,
+                projections.push(self.hole.document_use(
                     output.source_expr,
                     emit_path,
                     output.kind,
-                    &extra_guards,
-                );
+                    extra_guards,
+                ));
             } else {
-                sink.emit_helper_use_kind_with_extra_guards(
+                projections.push(AbstractDocumentProjection::helper_use(
                     output.source_expr,
                     output.kind,
-                    &extra_guards,
-                );
+                    extra_guards,
+                ));
             }
         }
 
@@ -160,41 +160,103 @@ impl AbstractDocumentOutput {
             let has_rendered_descendant =
                 output_path::values_path_has_descendant(&value, &helper_rendered_sources);
             if self.hole.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
-                self.hole.emit_use_with_extra_guards(
-                    sink,
+                projections.push(self.hole.document_use(
                     value,
                     self.hole.path.clone(),
                     self.hole.kind,
-                    &[],
-                );
+                    Vec::new(),
+                ));
             } else {
-                sink.emit_helper_use_kind_with_extra_guards(value, self.hole.kind, &[]);
+                projections.push(AbstractDocumentProjection::helper_use(
+                    value,
+                    self.hole.kind,
+                    Vec::new(),
+                ));
             }
         }
 
         for (value, meta) in helper_dependency_values {
             let extra_guards = helper_extra_guards(&value, &meta);
-            sink.emit_helper_use_with_extra_guards(value, &extra_guards);
+            projections.push(AbstractDocumentProjection::helper_use(
+                value,
+                ValueKind::Scalar,
+                extra_guards,
+            ));
         }
 
         for value in helper_guard_values {
-            sink.emit_helper_use(value);
+            projections.push(AbstractDocumentProjection::helper_use(
+                value,
+                ValueKind::Scalar,
+                Vec::new(),
+            ));
         }
 
         for (path, schema_types) in helper_type_hints {
             for schema_type in schema_types {
-                self.hole.emit_use_with_extra_guards(
-                    sink,
+                projections.push(self.hole.document_use(
                     path.clone(),
                     YamlPath(Vec::new()),
                     ValueKind::Scalar,
-                    &[Guard::TypeIs {
+                    vec![Guard::TypeIs {
                         path: path.clone(),
                         schema_type,
                     }],
-                );
+                ));
             }
         }
+
+        projections
+    }
+}
+
+enum AbstractDocumentProjection {
+    DocumentUse(AbstractDocumentUse),
+    HelperUse {
+        source_expr: String,
+        kind: ValueKind,
+        guards: Vec<Guard>,
+    },
+}
+
+impl AbstractDocumentProjection {
+    fn helper_use(source_expr: String, kind: ValueKind, guards: Vec<Guard>) -> Self {
+        Self::HelperUse {
+            source_expr,
+            kind,
+            guards,
+        }
+    }
+
+    fn emit(self, sink: &mut dyn ValueUseSink) {
+        match self {
+            Self::DocumentUse(use_) => use_.emit(sink),
+            Self::HelperUse {
+                source_expr,
+                kind,
+                guards,
+            } => sink.emit_helper_use_kind_with_extra_guards(source_expr, kind, &guards),
+        }
+    }
+}
+
+struct AbstractDocumentUse {
+    source_expr: String,
+    path: YamlPath,
+    kind: ValueKind,
+    guards: Vec<Guard>,
+    resource: Option<crate::ResourceRef>,
+}
+
+impl AbstractDocumentUse {
+    fn emit(self, sink: &mut dyn ValueUseSink) {
+        sink.emit_document_use_with_extra_guards(
+            self.source_expr,
+            self.path,
+            self.kind,
+            &self.guards,
+            self.resource,
+        );
     }
 }
 
@@ -219,21 +281,20 @@ impl AbstractDocumentHole {
         }
     }
 
-    fn emit_use_with_extra_guards(
+    fn document_use(
         &self,
-        sink: &mut dyn ValueUseSink,
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
-        extra_guards: &[Guard],
-    ) {
-        sink.emit_document_use_with_extra_guards(
+        guards: Vec<Guard>,
+    ) -> AbstractDocumentProjection {
+        AbstractDocumentProjection::DocumentUse(AbstractDocumentUse {
             source_expr,
             path,
             kind,
-            extra_guards,
-            self.resource.clone(),
-        );
+            guards,
+            resource: self.resource.clone(),
+        })
     }
 
     fn direct_value_kind(&self) -> ValueKind {

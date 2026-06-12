@@ -51,3 +51,36 @@ metadata:
     assert_eq!(resource.api_version, "v1");
     assert_eq!(resource.kind, "Service");
 }
+
+#[test]
+fn scalar_helper_document_projection_preserves_resource_claim() {
+    let helpers = r#"
+{{- define "common.serviceName" -}}
+{{ .Values.serviceName }}
+{{- end -}}
+"#;
+    let src = r#"
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.serviceName" . }}
+"#;
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let mut idx = DefineIndex::new();
+    idx.add_source(&TreeSitterParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+
+    let name_use = ir
+        .iter()
+        .find(|use_| use_.source_expr == "serviceName")
+        .expect("serviceName use");
+
+    assert_eq!(
+        name_use.path,
+        YamlPath(vec!["metadata".to_string(), "name".to_string()])
+    );
+    let resource = name_use.resource.as_ref().expect("resource claim");
+    assert_eq!(resource.api_version, "v1");
+    assert_eq!(resource.kind, "Service");
+}

@@ -354,14 +354,6 @@ impl<'a> SymbolicWalker<'a> {
         });
     }
 
-    fn emit_helper_use(&mut self, source_expr: String) {
-        self.emit_helper_use_kind_with_extra_guards(source_expr, ValueKind::Scalar, &[]);
-    }
-
-    fn emit_helper_use_with_extra_guards(&mut self, source_expr: String, extra_guards: &[Guard]) {
-        self.emit_helper_use_kind_with_extra_guards(source_expr, ValueKind::Scalar, extra_guards);
-    }
-
     fn emit_helper_use_kind_with_extra_guards(
         &mut self,
         source_expr: String,
@@ -525,14 +517,6 @@ impl ValueUseSink for SymbolicWalker<'_> {
             extra_guards,
             resource,
         );
-    }
-
-    fn emit_helper_use(&mut self, source_expr: String) {
-        SymbolicWalker::emit_helper_use(self, source_expr);
-    }
-
-    fn emit_helper_use_with_extra_guards(&mut self, source_expr: String, extra_guards: &[Guard]) {
-        SymbolicWalker::emit_helper_use_with_extra_guards(self, source_expr, extra_guards);
     }
 
     fn emit_helper_use_kind_with_extra_guards(

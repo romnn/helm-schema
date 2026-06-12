@@ -1431,7 +1431,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   attaching resource identity, anchor, and document-path facts before the old
   DTO projection. The document hole now also owns the rebased rendered path and
   resource claim used for compatibility projection, rather than letting the
-  final sink infer those document facts at emission time.
+  final sink infer those document facts at emission time. Document output now
+  first lowers into private `AbstractDocumentProjection` /
+  `AbstractDocumentUse` constraints and only then emits to `ValueUseSink`,
+  giving the next A4 `ContractIR` step a concrete internal projection seam.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations

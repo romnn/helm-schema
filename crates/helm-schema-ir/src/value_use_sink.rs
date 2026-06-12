@@ -22,10 +22,6 @@ pub(crate) trait ValueUseSink {
         self.emit_use_with_extra_guards(source_expr, path, kind, extra_guards);
     }
 
-    fn emit_helper_use(&mut self, source_expr: String);
-
-    fn emit_helper_use_with_extra_guards(&mut self, source_expr: String, extra_guards: &[Guard]);
-
     fn emit_helper_use_kind_with_extra_guards(
         &mut self,
         source_expr: String,
