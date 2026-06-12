@@ -22,12 +22,13 @@ use crate::helper_analysis::{
     merge_helper_output_meta_maps, merge_local_default_paths,
 };
 use crate::helper_output_projection::{
-    helper_output_meta_with_guards, push_helper_fragment_output,
+    helper_output_meta_with_predicates, push_helper_fragment_output,
 };
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
     local_default_paths_from_text, local_output_meta_from_text, local_rendered_paths_from_text,
 };
+use crate::predicate::Predicate;
 use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_context::computed_with_body_dot;
 use crate::walker::is_fragment_expr;
@@ -46,7 +47,7 @@ pub(crate) struct HelperValuesWalkState<'context, 'state> {
 struct HelperValueScope<'a> {
     bindings: &'a HashMap<String, HelperBinding>,
     current_dot: Option<&'a HelperBinding>,
-    active_output_guards: &'a BTreeSet<String>,
+    active_output_predicates: &'a BTreeSet<Predicate>,
 }
 
 /// Walks a helper body collecting the values and effects it contributes to
@@ -56,7 +57,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
     node: &HelmAst,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     match node {
@@ -70,7 +71,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
                     item,
                     bindings,
                     current_dot,
-                    active_output_guards,
+                    active_output_predicates,
                     state,
                 );
             }
@@ -80,7 +81,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
                 key,
                 bindings,
                 current_dot,
-                active_output_guards,
+                active_output_predicates,
                 state,
             );
             if let Some(value) = value {
@@ -88,7 +89,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
                     value,
                     bindings,
                     current_dot,
-                    active_output_guards,
+                    active_output_predicates,
                     state,
                 );
             }
@@ -98,7 +99,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
                 text,
                 bindings,
                 current_dot,
-                active_output_guards,
+                active_output_predicates,
                 state,
             );
         }
@@ -112,7 +113,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
             else_branch,
             bindings,
             current_dot,
-            active_output_guards,
+            active_output_predicates,
             state,
         ),
         HelmAst::Range {
@@ -128,7 +129,7 @@ pub(crate) fn collect_bound_helper_values_from_ast(
             let scope = HelperValueScope {
                 bindings,
                 current_dot,
-                active_output_guards,
+                active_output_predicates,
             };
             collect_loop_or_with_bound_helper_values(node, header, body, else_branch, scope, state);
         }
@@ -140,7 +141,7 @@ fn collect_bound_helper_values_from_expr(
     text: &str,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     if let Some(assignment) = crate::fragment_scope_eval::parse_helper_assignment(text) {
@@ -150,7 +151,7 @@ fn collect_bound_helper_values_from_expr(
             text,
             bindings,
             current_dot,
-            active_output_guards,
+            active_output_predicates,
             state,
         );
         return;
@@ -193,15 +194,15 @@ fn collect_bound_helper_values_from_expr(
     let empty_path = YamlPath(Vec::new());
     if expression_kind == ValueKind::Scalar {
         for output in direct_outputs {
-            let meta = HelperOutputMeta {
-                guards: active_output_guards.clone(),
-                defaulted: fallback_paths.contains(&output),
-            };
+            let meta = HelperOutputMeta::with_predicates(
+                active_output_predicates,
+                fallback_paths.contains(&output),
+            );
             state.analysis.add_output_meta(output, meta);
         }
         for output in local_outputs {
             let mut meta = local_meta_by_path.get(&output).cloned().unwrap_or_default();
-            meta.guards.extend(active_output_guards.iter().cloned());
+            meta.add_predicates(active_output_predicates.iter().cloned());
             meta.defaulted |= local_fallback_paths.contains(&output);
             state.analysis.add_output_meta(output, meta);
         }
@@ -231,7 +232,7 @@ fn collect_bound_helper_values_from_expr(
         );
     if expression_kind == ValueKind::Fragment {
         for (output, mut meta) in nested.output {
-            meta.guards.extend(active_output_guards.iter().cloned());
+            meta.add_predicates(active_output_predicates.iter().cloned());
             state.analysis.add_output_meta(output, meta);
         }
         for output in nested.fragment_output {
@@ -240,17 +241,13 @@ fn collect_bound_helper_values_from_expr(
                 output,
                 &empty_path,
                 expression_kind,
-                HelperOutputMeta {
-                    guards: active_output_guards.clone(),
-                    defaulted: false,
-                },
+                HelperOutputMeta::with_predicates(active_output_predicates, false),
             );
         }
         for mut output in nested.fragment_output_uses {
             output
                 .meta
-                .guards
-                .extend(active_output_guards.iter().cloned());
+                .add_predicates(active_output_predicates.iter().cloned());
             state.analysis.fragment_output_uses.push(output);
         }
         state.analysis.dependency_paths.extend(
@@ -269,7 +266,7 @@ fn collect_bound_helper_values_from_expr(
     } else {
         convert_fragment_outputs_to_dependency_outputs(&mut nested);
         for meta in nested.output.values_mut() {
-            meta.guards.extend(active_output_guards.iter().cloned());
+            meta.add_predicates(active_output_predicates.iter().cloned());
         }
         state.analysis.extend(nested);
     }
@@ -318,7 +315,7 @@ fn collect_assignment_bound_helper_values(
     text: &str,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
@@ -381,7 +378,7 @@ fn collect_assignment_bound_helper_values(
         &local_fallback_paths,
         &local_meta_by_path,
         &nested,
-        active_output_guards,
+        active_output_predicates,
     );
 
     let mut seen_rhs = HashSet::new();
@@ -434,26 +431,26 @@ fn rhs_output_meta(
     local_fallback_paths: &BTreeSet<String>,
     local_meta_by_path: &BTreeMap<String, HelperOutputMeta>,
     nested: &BoundHelperAnalysis,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
 ) -> BTreeMap<String, HelperOutputMeta> {
     let mut rhs_output_meta: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
     for output in direct_outputs {
         let entry = rhs_output_meta.entry(output.clone()).or_default();
-        entry.guards.extend(active_output_guards.iter().cloned());
+        entry.add_predicates(active_output_predicates.iter().cloned());
         entry.defaulted |= fallback_paths.contains(output);
     }
     for output in local_outputs {
         let mut meta = local_meta_by_path.get(output).cloned().unwrap_or_default();
-        meta.guards.extend(active_output_guards.iter().cloned());
+        meta.add_predicates(active_output_predicates.iter().cloned());
         meta.defaulted |= local_fallback_paths.contains(output);
         let entry = rhs_output_meta.entry(output.clone()).or_default();
-        entry.guards.extend(meta.guards);
+        entry.predicates.extend(meta.predicates);
         entry.defaulted |= meta.defaulted;
     }
     for (output, meta) in helper_output_meta_from_analysis(nested) {
-        let meta = helper_output_meta_with_guards(meta, active_output_guards);
+        let meta = helper_output_meta_with_predicates(meta, active_output_predicates);
         let entry = rhs_output_meta.entry(output).or_default();
-        entry.guards.extend(meta.guards);
+        entry.predicates.extend(meta.predicates);
         entry.defaulted |= meta.defaulted;
     }
     rhs_output_meta
@@ -465,7 +462,7 @@ fn collect_if_bound_helper_values(
     else_branch: &[HelmAst],
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     let mut branch_guard_paths =
@@ -487,8 +484,8 @@ fn collect_if_bound_helper_values(
         .analysis
         .guard_paths
         .extend(branch_guard_paths.iter().cloned());
-    let mut then_output_guards = active_output_guards.clone();
-    then_output_guards.extend(branch_guard_paths);
+    let mut then_output_predicates = active_output_predicates.clone();
+    then_output_predicates.extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
     let mut then_bindings = state.local_bindings.clone();
     let mut then_default_paths = state.local_default_paths.clone();
     let mut then_output_meta = state.local_output_meta.clone();
@@ -505,7 +502,7 @@ fn collect_if_bound_helper_values(
             item,
             bindings,
             current_dot,
-            &then_output_guards,
+            &then_output_predicates,
             &mut then_state,
         );
     }
@@ -525,7 +522,7 @@ fn collect_if_bound_helper_values(
             item,
             bindings,
             current_dot,
-            active_output_guards,
+            active_output_predicates,
             &mut else_state,
         );
     }
@@ -584,8 +581,8 @@ fn collect_loop_or_with_bound_helper_values(
     } else {
         range_binding.as_ref().and_then(HelperBinding::item_binding)
     };
-    let mut body_output_guards = scope.active_output_guards.clone();
-    body_output_guards.extend(branch_guard_paths);
+    let mut body_output_predicates = scope.active_output_predicates.clone();
+    body_output_predicates.extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
     let mut body_bindings = state.local_bindings.clone();
     let mut body_default_paths = state.local_default_paths.clone();
     let mut body_output_meta = state.local_output_meta.clone();
@@ -623,7 +620,7 @@ fn collect_loop_or_with_bound_helper_values(
                     item,
                     scope.bindings,
                     item_dot.as_ref(),
-                    &body_output_guards,
+                    &body_output_predicates,
                     &mut item_state,
                 );
             }
@@ -642,7 +639,7 @@ fn collect_loop_or_with_bound_helper_values(
                 item,
                 scope.bindings,
                 body_dot.as_ref(),
-                &body_output_guards,
+                &body_output_predicates,
                 &mut body_state,
             );
         }
@@ -672,7 +669,7 @@ fn collect_loop_or_with_bound_helper_values(
                 item,
                 scope.bindings,
                 scope.current_dot,
-                scope.active_output_guards,
+                scope.active_output_predicates,
                 &mut else_state,
             );
         }

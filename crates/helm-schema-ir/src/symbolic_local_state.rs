@@ -344,7 +344,7 @@ fn join_output_meta(
             };
             for (path, meta) in meta_by_path {
                 let entry: &mut HelperOutputMeta = merged.entry(path.clone()).or_default();
-                entry.guards.extend(meta.guards.iter().cloned());
+                entry.predicates.extend(meta.predicates.iter().cloned());
                 entry.defaulted |= meta.defaulted;
             }
         }

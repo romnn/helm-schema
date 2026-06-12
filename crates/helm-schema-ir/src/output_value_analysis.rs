@@ -70,7 +70,7 @@ pub(crate) fn collect_output_value_analysis(
         }
         for (path, meta) in bound.dependency_meta {
             let entry = helper_dependency_values.entry(path).or_default();
-            entry.guards.extend(meta.guards);
+            entry.predicates.extend(meta.predicates);
             entry.defaulted |= meta.defaulted;
         }
         if kind == ValueKind::Fragment {

@@ -605,12 +605,16 @@ Current result:
   instead of `Guard` values. Flat `Guard` rows are projected only when emitting
   the current `ValueUse` compatibility DTO, while unsupported negated
   predicates can remain represented internally for later lowering work.
+- Helper output metadata is predicate-backed as well. Helper summary, fragment
+  projection, local-alias output metadata, and output emission now pass
+  `Predicate` values internally and project them to flat `Guard` rows only at
+  the `ValueUse` compatibility boundary.
 
 Remaining A1 work:
 
-- Replace the remaining compatibility guard producers in condition planning,
-  helper metadata, and output analysis with predicate-native forms. Keep flat
-  `Guard` projection only at the current `ValueUse` compatibility output.
+- Replace the remaining compatibility guard producers in condition planning
+  with predicate-native forms. Keep flat `Guard` projection only at the current
+  `ValueUse` compatibility output.
 - Move the remaining compatibility scope snapshot mechanics for guard and dot
   stacks behind the same environment boundary as local state. This is a
   cleanup step toward the from-scratch architecture, not a reason to keep

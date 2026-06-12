@@ -20,7 +20,7 @@ use crate::helper_analysis::{
 use crate::helper_output_projection::{
     HelperOutputExprContext, collect_fragment_binding_output_uses,
     collect_helper_binding_output_uses, collect_helper_binding_output_uses_from_expr,
-    expression_output_use_is_keyed_map_projection, helper_output_meta_with_guards,
+    expression_output_use_is_keyed_map_projection, helper_output_meta_with_predicates,
     push_helper_fragment_output, static_yaml_fragment_output_path,
 };
 use crate::local_projection::{
@@ -28,6 +28,7 @@ use crate::local_projection::{
     local_default_paths_from_text, local_rendered_paths_from_text,
 };
 use crate::output_path;
+use crate::predicate::Predicate;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, text_pipeline_merges_into_var, text_starts_with_helper_call,
     walk_expr_excluding_helper_call_args,
@@ -51,7 +52,7 @@ struct FragmentOutputScope<'a> {
     current_dot: Option<&'a HelperBinding>,
     current_dot_fragment: Option<&'a FragmentBinding>,
     relative_path: &'a YamlPath,
-    active_output_guards: &'a BTreeSet<String>,
+    active_output_predicates: &'a BTreeSet<Predicate>,
 }
 
 struct FragmentExpressionOutputScope<'a> {
@@ -59,7 +60,7 @@ struct FragmentExpressionOutputScope<'a> {
     current_dot: Option<&'a HelperBinding>,
     output_path: &'a YamlPath,
     kind: ValueKind,
-    active_output_guards: &'a BTreeSet<String>,
+    active_output_predicates: &'a BTreeSet<Predicate>,
     fallback_paths: &'a BTreeSet<String>,
 }
 
@@ -69,7 +70,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_items(
     current_dot: Option<&HelperBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
     relative_path: &YamlPath,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     let mut pending_path: Option<YamlPath> = None;
@@ -85,7 +86,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_items(
             current_dot,
             current_dot_fragment,
             item_path,
-            active_output_guards,
+            active_output_predicates,
             state,
         );
         pending_path = output_path::trailing_pending_mapping_key_path(item, item_path);
@@ -98,7 +99,7 @@ fn collect_bound_fragment_output_uses_from_ast(
     current_dot: Option<&HelperBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
     relative_path: &YamlPath,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     match node {
@@ -112,7 +113,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                 current_dot,
                 current_dot_fragment,
                 relative_path,
-                active_output_guards,
+                active_output_predicates,
                 state,
             );
         }
@@ -125,7 +126,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                     current_dot,
                     current_dot_fragment,
                     &item_path,
-                    active_output_guards,
+                    active_output_predicates,
                     state,
                 );
             }
@@ -141,7 +142,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                         current_dot,
                         current_dot_fragment,
                         &value_path,
-                        active_output_guards,
+                        active_output_predicates,
                         state,
                     );
                 }
@@ -154,7 +155,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                 current_dot,
                 current_dot_fragment,
                 relative_path,
-                active_output_guards,
+                active_output_predicates,
                 state,
             );
             if let Some(value) = value {
@@ -164,7 +165,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                     current_dot,
                     current_dot_fragment,
                     relative_path,
-                    active_output_guards,
+                    active_output_predicates,
                     state,
                 );
             }
@@ -176,7 +177,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                 current_dot,
                 current_dot_fragment,
                 relative_path,
-                active_output_guards,
+                active_output_predicates,
                 state,
             );
         }
@@ -190,7 +191,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                 current_dot,
                 current_dot_fragment,
                 relative_path,
-                active_output_guards,
+                active_output_predicates,
             };
             collect_if_fragment_output_uses(cond, then_branch, else_branch, scope, state);
         }
@@ -204,7 +205,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                 current_dot,
                 current_dot_fragment,
                 relative_path,
-                active_output_guards,
+                active_output_predicates,
             };
             collect_with_fragment_output_uses(header, body, else_branch, scope, state);
         }
@@ -218,7 +219,7 @@ fn collect_bound_fragment_output_uses_from_ast(
                 current_dot,
                 current_dot_fragment,
                 relative_path,
-                active_output_guards,
+                active_output_predicates,
             };
             collect_range_fragment_output_uses(header, body, else_branch, scope, state);
         }
@@ -232,7 +233,7 @@ fn collect_bound_fragment_output_uses_from_expr(
     current_dot: Option<&HelperBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
     relative_path: &YamlPath,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     let mut seen_set = HashSet::new();
@@ -285,7 +286,7 @@ fn collect_bound_fragment_output_uses_from_expr(
                 current_dot,
                 relative_path: &output_path,
                 kind,
-                active_output_guards,
+                active_output_predicates,
                 defaulted_paths: &fallback_paths,
             },
             &mut direct_output_uses,
@@ -298,7 +299,7 @@ fn collect_bound_fragment_output_uses_from_expr(
         text,
         &output_path,
         kind,
-        active_output_guards,
+        active_output_predicates,
         &local_fallback_paths,
         state.local_bindings,
     );
@@ -335,7 +336,7 @@ fn collect_bound_fragment_output_uses_from_expr(
         current_dot,
         output_path: &output_path,
         kind,
-        active_output_guards,
+        active_output_predicates,
         fallback_paths: &fallback_paths,
     };
     let expression_output_uses =
@@ -366,7 +367,7 @@ fn collect_bound_fragment_output_uses_from_expr(
         {
             continue;
         }
-        let meta = helper_output_meta_with_guards(meta, active_output_guards);
+        let meta = helper_output_meta_with_predicates(meta, active_output_predicates);
         push_helper_fragment_output(state.outputs, source_expr, relative_path, kind, meta);
     }
     for nested_output in nested.fragment_output_uses.drain(..) {
@@ -378,7 +379,7 @@ fn collect_bound_fragment_output_uses_from_expr(
         {
             continue;
         }
-        let meta = helper_output_meta_with_guards(nested_output.meta, active_output_guards);
+        let meta = helper_output_meta_with_predicates(nested_output.meta, active_output_predicates);
         push_helper_fragment_output(
             state.outputs,
             nested_output.source_expr,
@@ -470,7 +471,7 @@ fn local_output_uses_from_text(
     text: &str,
     output_path: &YamlPath,
     kind: ValueKind,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     local_fallback_paths: &BTreeSet<String>,
     local_bindings: &HashMap<String, FragmentBinding>,
 ) -> Vec<HelperFragmentOutputUse> {
@@ -498,7 +499,7 @@ fn local_output_uses_from_text(
                     &binding,
                     output_path,
                     kind,
-                    active_output_guards,
+                    active_output_predicates,
                     local_fallback_paths,
                 );
             }
@@ -531,7 +532,7 @@ fn helper_expression_output_uses_from_text(
                 &binding,
                 scope.output_path,
                 scope.kind,
-                scope.active_output_guards,
+                scope.active_output_predicates,
                 scope.fallback_paths,
             );
         }
@@ -564,8 +565,8 @@ fn collect_if_fragment_output_uses(
         );
     branch_guard_paths.extend(bound_helper_condition_paths(&nested));
 
-    let mut then_guards = scope.active_output_guards.clone();
-    then_guards.extend(branch_guard_paths);
+    let mut then_predicates = scope.active_output_predicates.clone();
+    then_predicates.extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
     let mut then_bindings = state.local_bindings.clone();
     let mut then_defaults = state.local_default_paths.clone();
     let mut then_state = FragmentOutputWalkState {
@@ -581,7 +582,7 @@ fn collect_if_fragment_output_uses(
         scope.current_dot,
         scope.current_dot_fragment,
         scope.relative_path,
-        &then_guards,
+        &then_predicates,
         &mut then_state,
     );
 
@@ -600,7 +601,7 @@ fn collect_if_fragment_output_uses(
         scope.current_dot,
         scope.current_dot_fragment,
         scope.relative_path,
-        scope.active_output_guards,
+        scope.active_output_predicates,
         &mut else_state,
     );
     *state.local_bindings = merge_fragment_locals(then_bindings, else_bindings);
@@ -631,8 +632,8 @@ fn collect_with_fragment_output_uses(
     branch_guard_paths.extend(bound_helper_condition_paths(&nested));
     let body_dot = computed_with_body_dot(header, scope.bindings, scope.current_dot);
 
-    let mut body_guards = scope.active_output_guards.clone();
-    body_guards.extend(branch_guard_paths);
+    let mut body_predicates = scope.active_output_predicates.clone();
+    body_predicates.extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
     let mut body_bindings = state.local_bindings.clone();
     let mut body_defaults = state.local_default_paths.clone();
     let body_dot_fragment = body_dot.as_ref().map(HelperBinding::to_fragment_binding);
@@ -649,7 +650,7 @@ fn collect_with_fragment_output_uses(
         body_dot.as_ref(),
         body_dot_fragment.as_ref(),
         scope.relative_path,
-        &body_guards,
+        &body_predicates,
         &mut body_state,
     );
 
@@ -668,7 +669,7 @@ fn collect_with_fragment_output_uses(
         scope.current_dot,
         scope.current_dot_fragment,
         scope.relative_path,
-        scope.active_output_guards,
+        scope.active_output_predicates,
         &mut else_state,
     );
     *state.local_bindings = merge_fragment_locals(body_bindings, else_bindings);
@@ -712,8 +713,8 @@ fn collect_range_fragment_output_uses(
         .as_ref()
         .and_then(FragmentBinding::to_helper_binding);
 
-    let mut body_guards = scope.active_output_guards.clone();
-    body_guards.extend(branch_guard_paths);
+    let mut body_predicates = scope.active_output_predicates.clone();
+    body_predicates.extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
     let mut body_bindings = state.local_bindings.clone();
     let mut body_defaults = state.local_default_paths.clone();
     if let Some(FragmentBinding::List(items)) = &range_binding {
@@ -737,7 +738,7 @@ fn collect_range_fragment_output_uses(
                 item_dot.as_ref(),
                 Some(item_binding),
                 scope.relative_path,
-                &body_guards,
+                &body_predicates,
                 &mut item_state,
             );
         }
@@ -755,7 +756,7 @@ fn collect_range_fragment_output_uses(
             body_dot.as_ref(),
             body_dot_fragment.as_ref(),
             scope.relative_path,
-            &body_guards,
+            &body_predicates,
             &mut body_state,
         );
     }
@@ -782,7 +783,7 @@ fn collect_range_fragment_output_uses(
             scope.current_dot,
             scope.current_dot_fragment,
             scope.relative_path,
-            scope.active_output_guards,
+            scope.active_output_predicates,
             &mut else_state,
         );
         *state.local_bindings = merge_fragment_locals(body_bindings, else_bindings);

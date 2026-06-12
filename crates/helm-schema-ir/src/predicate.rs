@@ -43,6 +43,10 @@ impl From<Guard> for Predicate {
 }
 
 impl Predicate {
+    pub(crate) fn truthy_path(path: impl Into<String>) -> Self {
+        Self::Atom(PredicateAtom::Truthy { path: path.into() })
+    }
+
     pub(crate) fn all(predicates: Vec<Self>) -> Self {
         match predicates.as_slice() {
             [] => Self::True,

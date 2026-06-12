@@ -164,7 +164,7 @@ impl ValuePathContext<'_> {
             walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                 for (path, meta) in self.local_alias_output_meta_for_expr(node) {
                     let entry = out.entry(path).or_default();
-                    entry.guards.extend(meta.guards);
+                    entry.predicates.extend(meta.predicates);
                     entry.defaulted |= meta.defaulted;
                 }
             });

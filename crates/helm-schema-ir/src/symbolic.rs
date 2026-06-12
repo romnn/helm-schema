@@ -387,12 +387,12 @@ impl<'a> SymbolicWalker<'a> {
         let analysis = self.analyze_bound_helper_calls(text);
         for (path, meta) in analysis.output {
             let entry = out.entry(path).or_default();
-            entry.guards.extend(meta.guards);
+            entry.predicates.extend(meta.predicates);
             entry.defaulted |= meta.defaulted;
         }
         for output in analysis.fragment_output_uses {
             let entry = out.entry(output.source_expr).or_default();
-            entry.guards.extend(output.meta.guards);
+            entry.predicates.extend(output.meta.predicates);
             entry.defaulted |= output.meta.defaulted;
         }
         out

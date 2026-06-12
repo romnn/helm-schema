@@ -107,7 +107,7 @@ pub(crate) fn local_output_meta_from_text(
             for (path, meta) in local_output_meta_from_expr(node, local_bindings, local_output_meta)
             {
                 let entry = out.entry(path).or_default();
-                entry.guards.extend(meta.guards);
+                entry.predicates.extend(meta.predicates);
                 entry.defaulted |= meta.defaulted;
             }
         });

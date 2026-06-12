@@ -1,12 +1,46 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::output_path;
-use crate::{ValueKind, YamlPath};
+use crate::predicate::Predicate;
+use crate::{Guard, ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct HelperOutputMeta {
-    pub(crate) guards: BTreeSet<String>,
+    pub(crate) predicates: BTreeSet<Predicate>,
     pub(crate) defaulted: bool,
+}
+
+impl HelperOutputMeta {
+    pub(crate) fn with_predicates(predicates: &BTreeSet<Predicate>, defaulted: bool) -> Self {
+        Self {
+            predicates: predicates.clone(),
+            defaulted,
+        }
+    }
+
+    pub(crate) fn add_predicates(&mut self, predicates: impl IntoIterator<Item = Predicate>) {
+        self.predicates.extend(predicates);
+    }
+
+    pub(crate) fn compatibility_guards(&self, source_expr: &str) -> Vec<Guard> {
+        let mut guards = Vec::new();
+        for predicate in &self.predicates {
+            for guard in predicate.compatibility_guards() {
+                if !guards.contains(&guard) {
+                    guards.push(guard);
+                }
+            }
+        }
+        if self.defaulted {
+            let default_guard = Guard::Default {
+                path: source_expr.to_string(),
+            };
+            if !guards.contains(&default_guard) {
+                guards.push(default_guard);
+            }
+        }
+        guards
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -80,12 +114,17 @@ impl BoundHelperAnalysis {
         self.chart_defaults.extend(other.chart_defaults);
     }
 
-    pub(crate) fn add_output(&mut self, path: String, guards: &BTreeSet<String>, defaulted: bool) {
+    pub(crate) fn add_output(
+        &mut self,
+        path: String,
+        predicates: &BTreeSet<Predicate>,
+        defaulted: bool,
+    ) {
         if path.trim().is_empty() {
             return;
         }
         let entry = self.output.entry(path).or_default();
-        entry.guards.extend(guards.iter().cloned());
+        entry.predicates.extend(predicates.iter().cloned());
         entry.defaulted |= defaulted;
     }
 
@@ -94,7 +133,7 @@ impl BoundHelperAnalysis {
             return;
         }
         let entry = self.output.entry(path).or_default();
-        entry.guards.extend(meta.guards);
+        entry.predicates.extend(meta.predicates);
         entry.defaulted |= meta.defaulted;
     }
 
@@ -108,7 +147,7 @@ impl BoundHelperAnalysis {
             }
             self.dependency_paths.insert(path.clone());
             let entry = self.dependency_meta.entry(path).or_default();
-            entry.guards.extend(meta.guards);
+            entry.predicates.extend(meta.predicates);
             entry.defaulted |= meta.defaulted;
         }
     }
@@ -174,7 +213,9 @@ pub(crate) fn helper_output_meta_from_analysis(
             continue;
         }
         let entry = out.entry(output.source_expr.clone()).or_default();
-        entry.guards.extend(output.meta.guards.iter().cloned());
+        entry
+            .predicates
+            .extend(output.meta.predicates.iter().cloned());
         entry.defaulted |= output.meta.defaulted;
     }
     for path in &analysis.fragment_output {
@@ -192,7 +233,7 @@ pub(crate) fn helper_dependency_meta_from_analysis(
     let mut out = analysis.dependency_meta.clone();
     for (path, meta) in helper_output_meta_from_analysis(analysis) {
         let entry = out.entry(path).or_default();
-        entry.guards.extend(meta.guards);
+        entry.predicates.extend(meta.predicates);
         entry.defaulted |= meta.defaulted;
     }
     out
@@ -207,7 +248,7 @@ pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut Boun
     let fragment_output_uses = std::mem::take(&mut analysis.fragment_output_uses);
     for output in fragment_output_uses {
         let entry = analysis.output.entry(output.source_expr).or_default();
-        entry.guards.extend(output.meta.guards);
+        entry.predicates.extend(output.meta.predicates);
         entry.defaulted |= output.meta.defaulted;
     }
 }
@@ -253,9 +294,42 @@ pub(crate) fn merge_helper_output_meta_maps(
         let entry = base.entry(var).or_default();
         for (path, meta) in meta_by_path {
             let path_entry = entry.entry(path).or_default();
-            path_entry.guards.extend(meta.guards);
+            path_entry.predicates.extend(meta.predicates);
             path_entry.defaulted |= meta.defaulted;
         }
     }
     base
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use super::HelperOutputMeta;
+    use crate::Guard;
+    use crate::predicate::{Predicate, PredicateAtom};
+
+    #[test]
+    fn helper_output_meta_projects_predicates_at_compatibility_boundary() {
+        let meta = HelperOutputMeta {
+            predicates: BTreeSet::from([Predicate::Not(Box::new(Predicate::Atom(
+                PredicateAtom::Truthy {
+                    path: "feature.enabled".to_string(),
+                },
+            )))]),
+            defaulted: true,
+        };
+
+        assert_eq!(
+            meta.compatibility_guards("serviceAccount.name"),
+            vec![
+                Guard::Not {
+                    path: "feature.enabled".to_string(),
+                },
+                Guard::Default {
+                    path: "serviceAccount.name".to_string(),
+                },
+            ]
+        );
+    }
 }

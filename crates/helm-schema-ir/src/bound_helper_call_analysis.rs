@@ -95,7 +95,7 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
     };
     let mut analysis = BoundHelperAnalysis::default();
     if let Some(body) = context.defines.get(name) {
-        let active_output_guards = BTreeSet::new();
+        let active_output_predicates = BTreeSet::new();
         let mut local_bindings = HashMap::new();
         let mut local_default_paths = HashMap::new();
         let mut local_output_meta = HashMap::new();
@@ -112,7 +112,7 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
                 node,
                 &bindings,
                 helper_body_dot.as_ref(),
-                &active_output_guards,
+                &active_output_predicates,
                 &mut helper_values_state,
             );
         }
@@ -139,7 +139,7 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
         let mut fragment_output_uses = Vec::new();
         let mut local_bindings = helper_fragment_locals;
         let mut local_default_paths = HashMap::new();
-        let active_output_guards = BTreeSet::new();
+        let active_output_predicates = BTreeSet::new();
         let mut fragment_output_state = FragmentOutputWalkState {
             local_bindings: &mut local_bindings,
             local_default_paths: &mut local_default_paths,
@@ -153,7 +153,7 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
             helper_body_dot.as_ref(),
             helper_dot.as_ref(),
             &YamlPath(Vec::new()),
-            &active_output_guards,
+            &active_output_predicates,
             &mut fragment_output_state,
         );
         for source in analysis.output.keys() {

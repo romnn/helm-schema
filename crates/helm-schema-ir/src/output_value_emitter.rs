@@ -70,18 +70,12 @@ pub(crate) fn emit_output_value_analysis(
         };
         let mut extra_guards: Vec<Guard> = Vec::new();
         if let Some(meta) = local_output_meta.get(&value) {
-            extra_guards.extend(
-                meta.guards
-                    .iter()
-                    .cloned()
-                    .map(|path| Guard::Truthy { path }),
-            );
-            if meta.defaulted {
-                extra_guards.push(default_guard.clone());
-            }
+            extra_guards.extend(meta.compatibility_guards(&value));
         }
         if default_fallback_values.contains(&value) {
-            extra_guards.push(default_guard);
+            if !extra_guards.contains(&default_guard) {
+                extra_guards.push(default_guard);
+            }
         }
         if extra_guards.is_empty() {
             sink.emit_use(value, emit_path, output_context.kind);
@@ -129,7 +123,7 @@ pub(crate) fn emit_output_value_analysis(
         let has_rendered_descendant =
             output_path::values_path_has_descendant(value, &helper_rendered_sources);
         if helper_call_caller_scalar_path && !has_rendered_descendant {
-            let extra_guards = helper_output_extra_guards(value, meta);
+            let extra_guards = helper_extra_guards(value, meta);
             sink.emit_use_with_extra_guards(
                 value.clone(),
                 output_context.path.clone(),
@@ -137,13 +131,13 @@ pub(crate) fn emit_output_value_analysis(
                 &extra_guards,
             );
         } else {
-            let extra_guards = helper_dependency_extra_guards(value, meta);
+            let extra_guards = helper_extra_guards(value, meta);
             sink.emit_helper_use_with_extra_guards(value.clone(), &extra_guards);
         }
     }
 
     for output in helper_fragment_output_uses {
-        let extra_guards = helper_output_extra_guards(&output.source_expr, &output.meta);
+        let extra_guards = helper_extra_guards(&output.source_expr, &output.meta);
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
         if helper_call_caller_structured_path && !has_rendered_descendant {
@@ -156,12 +150,10 @@ pub(crate) fn emit_output_value_analysis(
                 &extra_guards,
             );
         } else {
-            let dependency_guards =
-                helper_dependency_extra_guards(&output.source_expr, &output.meta);
             sink.emit_helper_use_kind_with_extra_guards(
                 output.source_expr,
                 output.kind,
-                &dependency_guards,
+                &extra_guards,
             );
         }
     }
@@ -180,7 +172,7 @@ pub(crate) fn emit_output_value_analysis(
     }
 
     for (value, meta) in helper_dependency_values {
-        let extra_guards = helper_dependency_extra_guards(&value, &meta);
+        let extra_guards = helper_extra_guards(&value, &meta);
         sink.emit_helper_use_with_extra_guards(value, &extra_guards);
     }
 
@@ -203,34 +195,6 @@ pub(crate) fn emit_output_value_analysis(
     }
 }
 
-fn helper_output_extra_guards(source_expr: &str, meta: &HelperOutputMeta) -> Vec<Guard> {
-    let mut guards: Vec<Guard> = meta
-        .guards
-        .iter()
-        .filter(|path| !path.trim().is_empty())
-        .cloned()
-        .map(|path| Guard::Truthy { path })
-        .collect();
-    if meta.defaulted {
-        guards.push(Guard::Default {
-            path: source_expr.to_string(),
-        });
-    }
-    guards
-}
-
-fn helper_dependency_extra_guards(source_expr: &str, meta: &HelperOutputMeta) -> Vec<Guard> {
-    let mut guards: Vec<Guard> = meta
-        .guards
-        .iter()
-        .filter(|path| !path.trim().is_empty())
-        .cloned()
-        .map(|path| Guard::Truthy { path })
-        .collect();
-    if meta.defaulted {
-        guards.push(Guard::Default {
-            path: source_expr.to_string(),
-        });
-    }
-    guards
+fn helper_extra_guards(source_expr: &str, meta: &HelperOutputMeta) -> Vec<Guard> {
+    meta.compatibility_guards(source_expr)
 }

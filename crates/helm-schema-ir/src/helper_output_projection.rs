@@ -5,6 +5,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_binding_eval::binding_from_expr;
+use crate::predicate::Predicate;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
 use crate::yaml_shape::parse_yaml_key;
@@ -16,7 +17,7 @@ pub(crate) struct HelperOutputExprContext<'a> {
     pub(crate) current_dot: Option<&'a HelperBinding>,
     pub(crate) relative_path: &'a YamlPath,
     pub(crate) kind: ValueKind,
-    pub(crate) active_output_guards: &'a BTreeSet<String>,
+    pub(crate) active_output_predicates: &'a BTreeSet<Predicate>,
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
 }
 
@@ -58,11 +59,11 @@ pub(crate) fn static_yaml_fragment_output_path(text: &str) -> Option<YamlPath> {
     Some(YamlPath(vec![key]))
 }
 
-pub(crate) fn helper_output_meta_with_guards(
+pub(crate) fn helper_output_meta_with_predicates(
     mut meta: HelperOutputMeta,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
 ) -> HelperOutputMeta {
-    meta.guards.extend(active_output_guards.iter().cloned());
+    meta.add_predicates(active_output_predicates.iter().cloned());
     meta
 }
 
@@ -86,7 +87,7 @@ pub(crate) fn collect_fragment_binding_output_uses(
     binding: &FragmentBinding,
     relative_path: &YamlPath,
     kind: ValueKind,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
     match binding {
@@ -96,10 +97,10 @@ pub(crate) fn collect_fragment_binding_output_uses(
                 path.clone(),
                 relative_path,
                 kind,
-                HelperOutputMeta {
-                    guards: active_output_guards.clone(),
-                    defaulted: defaulted_paths.contains(path),
-                },
+                HelperOutputMeta::with_predicates(
+                    active_output_predicates,
+                    defaulted_paths.contains(path),
+                ),
             );
         }
         FragmentBinding::PathSet(paths) => {
@@ -109,10 +110,10 @@ pub(crate) fn collect_fragment_binding_output_uses(
                     path.clone(),
                     relative_path,
                     kind,
-                    HelperOutputMeta {
-                        guards: active_output_guards.clone(),
-                        defaulted: defaulted_paths.contains(path),
-                    },
+                    HelperOutputMeta::with_predicates(
+                        active_output_predicates,
+                        defaulted_paths.contains(path),
+                    ),
                 );
             }
         }
@@ -123,10 +124,10 @@ pub(crate) fn collect_fragment_binding_output_uses(
                     path.clone(),
                     relative_path,
                     kind,
-                    HelperOutputMeta {
-                        guards: active_output_guards.clone(),
-                        defaulted: defaulted_paths.contains(path),
-                    },
+                    HelperOutputMeta::with_predicates(
+                        active_output_predicates,
+                        defaulted_paths.contains(path),
+                    ),
                 );
             }
         }
@@ -139,7 +140,7 @@ pub(crate) fn collect_fragment_binding_output_uses(
                     value,
                     &child_path,
                     value.output_child_kind(),
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -150,7 +151,7 @@ pub(crate) fn collect_fragment_binding_output_uses(
                 fallback,
                 relative_path,
                 kind,
-                active_output_guards,
+                active_output_predicates,
                 defaulted_paths,
             );
             for (key, value) in entries {
@@ -161,7 +162,7 @@ pub(crate) fn collect_fragment_binding_output_uses(
                     value,
                     &child_path,
                     value.output_child_kind(),
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -173,7 +174,7 @@ pub(crate) fn collect_fragment_binding_output_uses(
                     choice,
                     relative_path,
                     kind,
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -186,7 +187,7 @@ pub(crate) fn collect_fragment_binding_output_uses(
                     item,
                     &item_path,
                     item.output_child_kind(),
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -213,7 +214,7 @@ pub(crate) fn collect_helper_binding_output_uses_from_expr(
             &binding,
             context.relative_path,
             context.kind,
-            context.active_output_guards,
+            context.active_output_predicates,
             context.defaulted_paths,
         );
         return;
@@ -250,7 +251,7 @@ pub(crate) fn collect_helper_binding_output_uses(
     binding: &HelperBinding,
     relative_path: &YamlPath,
     kind: ValueKind,
-    active_output_guards: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
     match binding {
@@ -260,10 +261,10 @@ pub(crate) fn collect_helper_binding_output_uses(
                 path.clone(),
                 relative_path,
                 kind,
-                HelperOutputMeta {
-                    guards: active_output_guards.clone(),
-                    defaulted: defaulted_paths.contains(path),
-                },
+                HelperOutputMeta::with_predicates(
+                    active_output_predicates,
+                    defaulted_paths.contains(path),
+                ),
             );
         }
         HelperBinding::PathSet(paths) => {
@@ -273,21 +274,21 @@ pub(crate) fn collect_helper_binding_output_uses(
                     path.clone(),
                     relative_path,
                     kind,
-                    HelperOutputMeta {
-                        guards: active_output_guards.clone(),
-                        defaulted: defaulted_paths.contains(path),
-                    },
+                    HelperOutputMeta::with_predicates(
+                        active_output_predicates,
+                        defaulted_paths.contains(path),
+                    ),
                 );
             }
         }
         HelperBinding::OutputSet(outputs_by_path) => {
             for (path, meta) in outputs_by_path {
-                let meta = helper_output_meta_with_guards(
+                let meta = helper_output_meta_with_predicates(
                     HelperOutputMeta {
-                        guards: meta.guards.clone(),
+                        predicates: meta.predicates.clone(),
                         defaulted: meta.defaulted || defaulted_paths.contains(path),
                     },
-                    active_output_guards,
+                    active_output_predicates,
                 );
                 push_helper_fragment_output(outputs, path.clone(), relative_path, kind, meta);
             }
@@ -301,7 +302,7 @@ pub(crate) fn collect_helper_binding_output_uses(
                     value,
                     &child_path,
                     value.output_child_kind(),
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -312,7 +313,7 @@ pub(crate) fn collect_helper_binding_output_uses(
                 fallback,
                 relative_path,
                 kind,
-                active_output_guards,
+                active_output_predicates,
                 defaulted_paths,
             );
             for (key, value) in entries {
@@ -323,7 +324,7 @@ pub(crate) fn collect_helper_binding_output_uses(
                     value,
                     &child_path,
                     value.output_child_kind(),
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -335,7 +336,7 @@ pub(crate) fn collect_helper_binding_output_uses(
                     choice,
                     relative_path,
                     kind,
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
@@ -348,7 +349,7 @@ pub(crate) fn collect_helper_binding_output_uses(
                     item,
                     &item_path,
                     item.output_child_kind(),
-                    active_output_guards,
+                    active_output_predicates,
                     defaulted_paths,
                 );
             }
