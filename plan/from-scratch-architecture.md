@@ -1435,6 +1435,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   first lowers into private `AbstractDocumentProjection` /
   `AbstractDocumentUse` constraints and only then emits to `ValueUseSink`,
   giving the next A4 `ContractIR` step a concrete internal projection seam.
+  The latest pass moves ambient compatibility guards and chart-default
+  mutations into that projection context, so the document artifact now
+  produces fully guarded `ValueUse` DTOs and the old sink no longer has a
+  document/helper-specific projection API.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations

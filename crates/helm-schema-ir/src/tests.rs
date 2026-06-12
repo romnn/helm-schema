@@ -84,3 +84,37 @@ metadata:
     assert_eq!(resource.api_version, "v1");
     assert_eq!(resource.kind, "Service");
 }
+
+#[test]
+fn scalar_helper_document_projection_preserves_scope_guard() {
+    let helpers = r#"
+{{- define "common.serviceName" -}}
+{{ .Values.serviceName }}
+{{- end -}}
+"#;
+    let src = r#"
+apiVersion: v1
+kind: Service
+metadata:
+  {{- if .Values.enabled }}
+  name: {{ include "common.serviceName" . }}
+  {{- end }}
+"#;
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let mut idx = DefineIndex::new();
+    idx.add_source(&TreeSitterParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+
+    let name_use = ir
+        .iter()
+        .find(|use_| use_.source_expr == "serviceName")
+        .expect("serviceName use");
+
+    assert_eq!(
+        name_use.guards,
+        vec![Guard::Truthy {
+            path: "enabled".to_string()
+        }]
+    );
+}

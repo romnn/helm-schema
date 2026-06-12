@@ -95,14 +95,6 @@ impl ValueUseSink for FragmentOutputRuntime<'_, '_> {
         _extra_guards: &[crate::Guard],
     ) {
     }
-
-    fn emit_helper_use_kind_with_extra_guards(
-        &mut self,
-        _source_expr: String,
-        _kind: ValueKind,
-        _extra_guards: &[crate::Guard],
-    ) {
-    }
 }
 
 impl NodeActionEffectSink for FragmentOutputRuntime<'_, '_> {

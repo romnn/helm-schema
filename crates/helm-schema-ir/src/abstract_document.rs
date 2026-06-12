@@ -2,18 +2,20 @@ use crate::helper_analysis::HelperOutputMeta;
 use crate::output_node_context::OutputNodeContext;
 use crate::output_path;
 use crate::output_value_analysis::OutputValueAnalysis;
-use crate::value_use_sink::ValueUseSink;
-use crate::{Guard, ValueKind, YamlPath};
+use crate::{Guard, ValueKind, ValueUse, YamlPath};
+use std::collections::BTreeSet;
 
 /// A rendered manifest output site discovered while interpreting a template.
 ///
 /// This is still a compatibility-era document artifact: it records the
-/// structural position of one rendered hole and projects immediately into the
-/// existing `ValueUse` sink. Keeping that projection behind a document-shaped
-/// type gives the next A3 steps a single place to attach richer document facts.
+/// structural position of one rendered hole and lowers through a private
+/// document projection before producing the existing `ValueUse` compatibility
+/// DTO. Keeping that projection behind a document-shaped type gives the next
+/// A3 steps a single place to attach richer document facts.
 pub(crate) struct AbstractDocumentOutput {
     hole: AbstractDocumentHole,
     analysis: OutputValueAnalysis,
+    context: AbstractDocumentProjectionContext,
 }
 
 impl AbstractDocumentOutput {
@@ -21,18 +23,21 @@ impl AbstractDocumentOutput {
         output_context: OutputNodeContext,
         helper_inlined: bool,
         analysis: OutputValueAnalysis,
+        context: AbstractDocumentProjectionContext,
     ) -> Self {
         Self {
             hole: AbstractDocumentHole::new(output_context, helper_inlined),
             analysis,
+            context,
         }
     }
 
-    pub(crate) fn project_to_value_uses(self, sink: &mut dyn ValueUseSink) {
+    pub(crate) fn into_value_uses(self) -> Vec<ValueUse> {
         let projections = self.compatibility_projections();
-        for projection in projections {
-            projection.emit(sink);
-        }
+        projections
+            .into_iter()
+            .map(|projection| projection.into_value_use())
+            .collect()
     }
 
     fn compatibility_projections(self) -> Vec<AbstractDocumentProjection> {
@@ -207,6 +212,30 @@ impl AbstractDocumentOutput {
         }
 
         projections
+            .into_iter()
+            .map(|projection| projection.with_context(&self.context))
+            .collect()
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct AbstractDocumentProjectionContext {
+    guards: Vec<Guard>,
+    chart_value_defaults: BTreeSet<String>,
+    suppress_document_path: bool,
+}
+
+impl AbstractDocumentProjectionContext {
+    pub(crate) fn new(
+        guards: Vec<Guard>,
+        chart_value_defaults: BTreeSet<String>,
+        suppress_document_path: bool,
+    ) -> Self {
+        Self {
+            guards,
+            chart_value_defaults,
+            suppress_document_path,
+        }
     }
 }
 
@@ -228,14 +257,34 @@ impl AbstractDocumentProjection {
         }
     }
 
-    fn emit(self, sink: &mut dyn ValueUseSink) {
+    fn with_context(mut self, context: &AbstractDocumentProjectionContext) -> Self {
+        match &mut self {
+            Self::DocumentUse(use_) => use_.apply_context(context),
+            Self::HelperUse { guards, .. } => {
+                *guards = guards_with_context(&context.guards, guards);
+            }
+        }
+        self
+    }
+
+    fn into_value_use(self) -> ValueUse {
         match self {
-            Self::DocumentUse(use_) => use_.emit(sink),
+            Self::DocumentUse(use_) => use_.into_value_use(),
             Self::HelperUse {
                 source_expr,
                 kind,
                 guards,
-            } => sink.emit_helper_use_kind_with_extra_guards(source_expr, kind, &guards),
+            } => ValueUse {
+                source_expr,
+                path: YamlPath(Vec::new()),
+                kind: if kind == ValueKind::PartialScalar {
+                    ValueKind::Scalar
+                } else {
+                    kind
+                },
+                guards,
+                resource: None,
+            },
         }
     }
 }
@@ -249,14 +298,46 @@ struct AbstractDocumentUse {
 }
 
 impl AbstractDocumentUse {
-    fn emit(self, sink: &mut dyn ValueUseSink) {
-        sink.emit_document_use_with_extra_guards(
-            self.source_expr,
-            self.path,
-            self.kind,
-            &self.guards,
-            self.resource,
-        );
+    fn apply_context(&mut self, context: &AbstractDocumentProjectionContext) {
+        if context.suppress_document_path {
+            self.path = YamlPath(Vec::new());
+        }
+        if self.kind == ValueKind::PartialScalar && self.path.0.is_empty() {
+            self.kind = ValueKind::Scalar;
+        }
+        self.guards = guards_with_context(&context.guards, &self.guards);
+        if !self.path.0.is_empty() && context.chart_value_defaults.contains(&self.source_expr) {
+            let default_guard = Guard::Default {
+                path: self.source_expr.clone(),
+            };
+            if !self.guards.contains(&default_guard) {
+                self.guards.push(default_guard);
+            }
+        }
+    }
+
+    fn into_value_use(self) -> ValueUse {
+        ValueUse {
+            source_expr: self.source_expr,
+            path: self.path,
+            kind: self.kind,
+            guards: self.guards,
+            resource: self.resource,
+        }
+    }
+}
+
+fn guards_with_context(context_guards: &[Guard], extra_guards: &[Guard]) -> Vec<Guard> {
+    let mut guards = context_guards.to_vec();
+    merge_guards(&mut guards, extra_guards);
+    guards
+}
+
+fn merge_guards(target: &mut Vec<Guard>, extra_guards: &[Guard]) {
+    for guard in extra_guards {
+        if !target.contains(guard) {
+            target.push(guard.clone());
+        }
     }
 }
 

@@ -769,6 +769,9 @@ Current result:
 - Document output now lowers to private `AbstractDocumentProjection` /
   `AbstractDocumentUse` constraints before those constraints are emitted into
   the compatibility `ValueUseSink`.
+- The document projection context owns ambient compatibility guards and
+  chart-default mutation state, so document projections now produce fully
+  guarded `ValueUse` DTOs without a document/helper-specific sink method.
 - The artifact is intentionally private and behavior-preserving; it is the
   first A3 hook point for resource identity, anchor, and document-path facts
   before those facts are projected into the old DTO boundary.
