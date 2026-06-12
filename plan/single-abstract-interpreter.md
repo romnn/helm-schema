@@ -809,6 +809,10 @@ Current result:
   contract object to emit and normalize before compatibility DTO projection.
 - Contract emission now flows through `ContractUseSink`, so node/control-flow
   effects are no longer coupled to the `ValueUse` fixture DTO name.
+- Generator-side lowering has its first explicit policy seam:
+  `ResolvePolicy` owns provider-schema domain restriction and guard-constraint
+  lowering while `ValueUse` remains the compatibility DTO consumed at the
+  public boundary.
 
 ### Phase 8 — bundled emission
 

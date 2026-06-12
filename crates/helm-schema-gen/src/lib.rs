@@ -1,5 +1,6 @@
 mod merge;
 pub mod required_inference;
+mod resolve_policy;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
@@ -11,6 +12,7 @@ use helm_schema_ir::{ChartFacts, Guard, PathFact, ValueKind, ValueUse, derive_ch
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use merge::{merge_schema_list, merge_two_schemas, union_schema_list};
+use resolve_policy::ResolvePolicy;
 
 struct UseSignals {
     referenced_value_paths: BTreeSet<String>,
@@ -206,6 +208,7 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
     let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<Value>>> =
         HashMap::new();
+    let resolve_policy = ResolvePolicy;
 
     for u in uses {
         if u.source_expr.trim().is_empty() {
@@ -229,7 +232,7 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
                     ranged_value_paths.insert(path.to_string());
                 }
 
-                if let Some(schema) = infer_guard_constraint_schema(g) {
+                if let Some(schema) = resolve_policy.guard_constraint_schema(g) {
                     guard_constraints_by_value_path
                         .entry(path.to_string())
                         .or_default()
@@ -250,7 +253,7 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
             let schema = match provider_schema_cache.entry(lookup_key) {
                 std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
                 std::collections::hash_map::Entry::Vacant(entry) => {
-                    let schema = lookup_provider_schema(provider, u);
+                    let schema = lookup_provider_schema(provider, u, &resolve_policy);
                     entry.insert(schema.clone());
                     schema
                 }
@@ -303,279 +306,15 @@ fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> U
         path_len = use_.path.0.len(),
     )
 )]
-fn lookup_provider_schema(provider: &dyn K8sSchemaProvider, use_: &ValueUse) -> Option<Arc<Value>> {
+fn lookup_provider_schema(
+    provider: &dyn K8sSchemaProvider,
+    use_: &ValueUse,
+    resolve_policy: &ResolvePolicy,
+) -> Option<Arc<Value>> {
     provider
         .schema_for_use(use_)
-        .and_then(|schema| provider_schema_for_value_use(schema, use_))
+        .and_then(|schema| resolve_policy.provider_schema_for_value_use(schema, use_))
         .map(Arc::new)
-}
-
-fn provider_schema_for_value_use(schema: Value, use_: &ValueUse) -> Option<Value> {
-    match use_.kind {
-        ValueKind::Fragment => Some(schema),
-        ValueKind::PartialScalar => None,
-        ValueKind::Scalar if is_self_range_collection_use(use_) => {
-            restrict_schema_to_scalar_collection_domain(schema)
-        }
-        ValueKind::Scalar => restrict_schema_to_scalar_domain(schema),
-    }
-}
-
-fn is_self_range_collection_use(use_: &ValueUse) -> bool {
-    use_.guards
-        .iter()
-        .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr))
-        && use_
-            .path
-            .0
-            .last()
-            .is_none_or(|segment| !segment.ends_with("[*]"))
-}
-
-fn restrict_schema_to_scalar_domain(schema: Value) -> Option<Value> {
-    match schema {
-        Value::Object(mut obj) => {
-            if let Some(variants) = obj.get("anyOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "anyOf",
-                    variants,
-                    restrict_schema_to_scalar_domain,
-                );
-            }
-            if let Some(variants) = obj.get("oneOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "oneOf",
-                    variants,
-                    restrict_schema_to_scalar_domain,
-                );
-            }
-            if let Some(variants) = obj.get("allOf").and_then(Value::as_array).cloned() {
-                let mut scalar_variants = Vec::new();
-                for variant in variants {
-                    scalar_variants.push(restrict_schema_to_scalar_domain(variant)?);
-                }
-                obj.insert("allOf".to_string(), Value::Array(scalar_variants));
-                return Some(Value::Object(obj));
-            }
-
-            if schema_allows_type_object(&obj, "array") {
-                if let Some(items) = obj.remove("items") {
-                    obj.insert(
-                        "items".to_string(),
-                        restrict_schema_to_scalar_domain(items)?,
-                    );
-                }
-                obj.insert("type".to_string(), Value::String("array".to_string()));
-                remove_object_keywords(&mut obj);
-                return Some(Value::Object(obj));
-            }
-
-            match obj.get("type") {
-                Some(Value::String(schema_type)) => {
-                    if scalar_json_type(schema_type) {
-                        Some(Value::Object(obj))
-                    } else {
-                        None
-                    }
-                }
-                Some(Value::Array(schema_types)) => {
-                    let scalar_types: Vec<Value> = schema_types
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .filter(|schema_type| scalar_json_type(schema_type))
-                        .map(|schema_type| Value::String(schema_type.to_string()))
-                        .collect();
-                    if scalar_types.is_empty() {
-                        return None;
-                    }
-                    if scalar_types.len() != schema_types.len() {
-                        obj.insert("type".to_string(), Value::Array(scalar_types));
-                        remove_non_scalar_keywords(&mut obj);
-                    }
-                    Some(Value::Object(obj))
-                }
-                _ if has_non_scalar_keywords(&obj) => None,
-                _ => Some(Value::Object(obj)),
-            }
-        }
-        other => Some(other),
-    }
-}
-
-fn schema_allows_type_object(obj: &Map<String, Value>, expected: &str) -> bool {
-    match obj.get("type") {
-        Some(Value::String(schema_type)) => schema_type == expected,
-        Some(Value::Array(schema_types)) => schema_types
-            .iter()
-            .filter_map(Value::as_str)
-            .any(|schema_type| schema_type == expected),
-        Some(_) => false,
-        None if expected == "array" => has_array_keywords(obj),
-        None => false,
-    }
-}
-
-fn restrict_schema_to_scalar_collection_domain(schema: Value) -> Option<Value> {
-    match schema {
-        Value::Object(mut obj) => {
-            if let Some(variants) = obj.get("anyOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "anyOf",
-                    variants,
-                    restrict_schema_to_scalar_collection_domain,
-                );
-            }
-            if let Some(variants) = obj.get("oneOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "oneOf",
-                    variants,
-                    restrict_schema_to_scalar_collection_domain,
-                );
-            }
-            if let Some(variants) = obj.get("allOf").and_then(Value::as_array).cloned() {
-                let mut collection_variants = Vec::new();
-                for variant in variants {
-                    collection_variants.push(restrict_schema_to_scalar_collection_domain(variant)?);
-                }
-                obj.insert("allOf".to_string(), Value::Array(collection_variants));
-                return Some(Value::Object(obj));
-            }
-
-            let is_array_schema = match obj.get("type") {
-                Some(Value::String(schema_type)) => schema_type == "array",
-                Some(Value::Array(schema_types)) => schema_types
-                    .iter()
-                    .filter_map(Value::as_str)
-                    .any(|schema_type| schema_type == "array"),
-                Some(_) => false,
-                None => has_array_keywords(&obj),
-            };
-            if !is_array_schema {
-                return None;
-            }
-
-            if let Some(items) = obj.remove("items") {
-                obj.insert(
-                    "items".to_string(),
-                    restrict_schema_to_scalar_domain(items)?,
-                );
-            }
-            obj.insert("type".to_string(), Value::String("array".to_string()));
-            remove_object_keywords(&mut obj);
-            Some(Value::Object(obj))
-        }
-        _ => None,
-    }
-}
-
-fn restrict_schema_union(
-    obj: Map<String, Value>,
-    keyword: &str,
-    variants: Vec<Value>,
-    restrict: fn(Value) -> Option<Value>,
-) -> Option<Value> {
-    let retained_variants: Vec<Value> = variants.into_iter().filter_map(restrict).collect();
-    if retained_variants.is_empty() {
-        return None;
-    }
-
-    let mut out = retain_schema_annotations(obj);
-    out.insert(keyword.to_string(), Value::Array(retained_variants));
-    Some(Value::Object(out))
-}
-
-fn retain_schema_annotations(obj: Map<String, Value>) -> Map<String, Value> {
-    obj.into_iter()
-        .filter(|(key, _)| is_schema_annotation_keyword(key))
-        .collect()
-}
-
-fn is_schema_annotation_keyword(key: &str) -> bool {
-    matches!(
-        key,
-        "description" | "title" | "default" | "examples" | "deprecated" | "readOnly" | "writeOnly"
-    )
-}
-
-fn scalar_json_type(schema_type: &str) -> bool {
-    matches!(
-        schema_type,
-        "string" | "number" | "integer" | "boolean" | "null"
-    )
-}
-
-fn has_non_scalar_keywords(obj: &Map<String, Value>) -> bool {
-    const NON_SCALAR_KEYWORDS: &[&str] = &[
-        "additionalItems",
-        "additionalProperties",
-        "contains",
-        "items",
-        "maxItems",
-        "maxProperties",
-        "minItems",
-        "minProperties",
-        "patternProperties",
-        "prefixItems",
-        "properties",
-        "propertyNames",
-        "required",
-        "uniqueItems",
-    ];
-    NON_SCALAR_KEYWORDS.iter().any(|key| obj.contains_key(*key))
-}
-
-fn has_array_keywords(obj: &Map<String, Value>) -> bool {
-    const ARRAY_KEYWORDS: &[&str] = &[
-        "additionalItems",
-        "contains",
-        "items",
-        "maxItems",
-        "minItems",
-        "prefixItems",
-        "uniqueItems",
-    ];
-    ARRAY_KEYWORDS.iter().any(|key| obj.contains_key(*key))
-}
-
-fn remove_non_scalar_keywords(obj: &mut Map<String, Value>) {
-    const NON_SCALAR_KEYWORDS: &[&str] = &[
-        "additionalItems",
-        "additionalProperties",
-        "contains",
-        "items",
-        "maxItems",
-        "maxProperties",
-        "minItems",
-        "minProperties",
-        "patternProperties",
-        "prefixItems",
-        "properties",
-        "propertyNames",
-        "required",
-        "uniqueItems",
-    ];
-    for key in NON_SCALAR_KEYWORDS {
-        obj.remove(*key);
-    }
-}
-
-fn remove_object_keywords(obj: &mut Map<String, Value>) {
-    const OBJECT_KEYWORDS: &[&str] = &[
-        "additionalProperties",
-        "maxProperties",
-        "minProperties",
-        "patternProperties",
-        "properties",
-        "propertyNames",
-        "required",
-    ];
-    for key in OBJECT_KEYWORDS {
-        obj.remove(*key);
-    }
 }
 
 #[tracing::instrument(skip_all)]
@@ -617,6 +356,7 @@ fn build_root_schema(
     values_descriptions: &BTreeMap<String, String>,
 ) -> Value {
     let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
+    let resolve_policy = ResolvePolicy;
     let mut root_schema = object_schema(Map::new());
 
     for vp in signals.referenced_value_paths {
@@ -712,7 +452,9 @@ fn build_root_schema(
             && (is_scalar_like_schema(&type_hint_schema)
                 || is_scalar_like_schema(&guard_constraint_schema))
         {
-            restrict_schema_to_scalar_domain(provider_schema.clone()).unwrap_or(provider_schema)
+            resolve_policy
+                .restrict_to_scalar_domain(provider_schema.clone())
+                .unwrap_or(provider_schema)
         } else {
             provider_schema
         };
@@ -1065,41 +807,6 @@ fn is_empty_schema(v: &Value) -> bool {
 
 fn empty_schema() -> Value {
     Value::Object(Map::new())
-}
-
-fn infer_guard_constraint_schema(guard: &Guard) -> Option<Value> {
-    match guard {
-        Guard::Eq { value, .. } => Some(Value::Object(
-            [(
-                "anyOf".to_string(),
-                Value::Array(vec![
-                    Value::Object(
-                        [(
-                            "enum".to_string(),
-                            Value::Array(vec![Value::String(value.clone())]),
-                        )]
-                        .into_iter()
-                        .collect(),
-                    ),
-                    type_schema("string"),
-                ]),
-            )]
-            .into_iter()
-            .collect(),
-        )),
-        Guard::TypeIs { schema_type, .. } => match schema_type.as_str() {
-            "array" | "boolean" | "integer" | "number" | "object" | "string" => {
-                Some(type_schema(schema_type))
-            }
-            _ => None,
-        },
-        Guard::Truthy { .. }
-        | Guard::Not { .. }
-        | Guard::Or { .. }
-        | Guard::Range { .. }
-        | Guard::With { .. }
-        | Guard::Default { .. } => None,
-    }
 }
 
 #[tracing::instrument(skip_all)]
