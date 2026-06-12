@@ -596,14 +596,16 @@ Current result:
 - Assignment actions can now clear stale fragment aliases when the right-hand
   side is structurally unknown. That models Helm's local rebinding more
   faithfully than leaving a previous precise binding in place.
+- `AbstractValue` now has a deliberate `Top` value distinct from the legacy
+  compatibility `Unknown`. The shared join constructor is canonical,
+  idempotent, commutative, associative for tested finite values, and
+  `Top`-absorbing; compatibility `Unknown` widens joins to `Top` instead of
+  being silently dropped.
 
 Remaining A1 work:
 
 - Replace the remaining flat guard-stack internals with predicates and keep
   flat `Guard` projection only at the current `ValueUse` compatibility output.
-- Introduce a deliberate `Top` value distinct from today's compatibility
-  `Unknown`, then make abstract joins Top-absorbing and add law tests for
-  associativity, commutativity, idempotence, and Top absorption.
 - Move the remaining compatibility scope snapshot mechanics for guard and dot
   stacks behind the same environment boundary as local state. This is a
   cleanup step toward the from-scratch architecture, not a reason to keep

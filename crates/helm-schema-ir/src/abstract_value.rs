@@ -5,6 +5,7 @@ use crate::helper_analysis::HelperOutputMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum AbstractValue {
+    Top,
     Unknown,
     ValuesPath(String),
     RootContext,
@@ -38,7 +39,7 @@ impl AbstractValue {
                 .chain(fallback.paths())
                 .collect(),
             Self::Choice(choices) => choices.iter().flat_map(Self::paths).collect(),
-            Self::Unknown | Self::RootContext | Self::StringSet(_) => BTreeSet::new(),
+            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => BTreeSet::new(),
         }
     }
 
@@ -51,11 +52,24 @@ impl AbstractValue {
     }
 
     pub(crate) fn choice(values: Vec<Self>) -> Option<Self> {
+        Self::join_all(values)
+    }
+
+    pub(crate) fn join_all(values: Vec<Self>) -> Option<Self> {
         let mut flat = BTreeSet::new();
         for value in values {
             match value {
-                Self::Choice(inner) => flat.extend(inner),
-                Self::Unknown => {}
+                Self::Top | Self::Unknown => return Some(Self::Top),
+                Self::Choice(inner) => {
+                    for choice in inner {
+                        match choice {
+                            Self::Top | Self::Unknown => return Some(Self::Top),
+                            other => {
+                                flat.insert(other);
+                            }
+                        }
+                    }
+                }
                 other => {
                     flat.insert(other);
                 }
@@ -92,6 +106,7 @@ impl AbstractValue {
                     None
                 }
             }
+            Self::Top => Some(Self::Top),
             Self::Unknown => None,
             Self::StringSet(_) => None,
             Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
@@ -183,6 +198,7 @@ impl AbstractValue {
                 }
                 Self::choice(choices)
             }
+            Self::Top => Some(Self::Top),
             Self::Unknown => None,
         }
     }
@@ -206,7 +222,12 @@ impl AbstractValue {
                         }
                     }
                 }
-                Self::Unknown => {}
+                Self::Top => {
+                    non_dict_values.push(Self::Top);
+                }
+                Self::Unknown => {
+                    non_dict_values.push(Self::Unknown);
+                }
                 other => non_dict_values.push(other),
             }
         }
@@ -306,6 +327,7 @@ impl AbstractValue {
     pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
         match self {
             Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
+            Self::Top => Some(HelperBinding::Unknown),
             Self::RootContext => Some(HelperBinding::RootContext),
             Self::Unknown => Some(HelperBinding::Unknown),
             Self::StringSet(strings) => Some(HelperBinding::StringSet(strings.clone())),
@@ -342,6 +364,7 @@ impl AbstractValue {
         match self {
             Self::ValuesPath(path) if path.is_empty() => Some(FragmentBinding::ValuesRoot),
             Self::ValuesPath(path) => Some(FragmentBinding::ValuesPath(path.clone())),
+            Self::Top => Some(FragmentBinding::Unknown),
             Self::RootContext => Some(FragmentBinding::RootContext),
             Self::Unknown => Some(FragmentBinding::Unknown),
             Self::OutputSet(outputs) => Some(FragmentBinding::OutputSet(
@@ -374,5 +397,87 @@ impl AbstractValue {
                     .collect(),
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn path(value: &str) -> AbstractValue {
+        AbstractValue::ValuesPath(value.to_string())
+    }
+
+    fn string(value: &str) -> AbstractValue {
+        AbstractValue::StringSet(BTreeSet::from([value.to_string()]))
+    }
+
+    fn join(values: Vec<AbstractValue>) -> AbstractValue {
+        AbstractValue::join_all(values).expect("join should produce a value")
+    }
+
+    #[test]
+    fn join_is_idempotent() {
+        let value = path("image.tag");
+
+        assert_eq!(join(vec![value.clone(), value.clone()]), value);
+    }
+
+    #[test]
+    fn join_is_commutative() {
+        let left = path("image.repository");
+        let right = string("nginx");
+
+        assert_eq!(
+            join(vec![left.clone(), right.clone()]),
+            join(vec![right, left])
+        );
+    }
+
+    #[test]
+    fn join_is_associative() {
+        let left = path("image.repository");
+        let middle = string("nginx");
+        let right = path("image.tag");
+
+        let left_grouped = join(vec![
+            join(vec![left.clone(), middle.clone()]),
+            right.clone(),
+        ]);
+        let right_grouped = join(vec![left, join(vec![middle, right])]);
+
+        assert_eq!(left_grouped, right_grouped);
+    }
+
+    #[test]
+    fn top_absorbs_join() {
+        assert_eq!(
+            join(vec![path("image.tag"), AbstractValue::Top]),
+            AbstractValue::Top
+        );
+    }
+
+    #[test]
+    fn compatibility_unknown_widens_joins_to_top() {
+        assert_eq!(
+            join(vec![path("image.tag"), AbstractValue::Unknown]),
+            AbstractValue::Top
+        );
+    }
+
+    #[test]
+    fn top_inside_choice_absorbs_join() {
+        let nested = AbstractValue::Choice(BTreeSet::from([AbstractValue::Top, path("name")]));
+
+        assert_eq!(join(vec![path("image.tag"), nested]), AbstractValue::Top);
+    }
+
+    #[test]
+    fn top_propagates_through_descent() {
+        assert_eq!(
+            AbstractValue::Top.apply_to_path(&["nested".to_string()]),
+            Some(AbstractValue::Top)
+        );
+        assert_eq!(AbstractValue::Top.item(), Some(AbstractValue::Top));
     }
 }
