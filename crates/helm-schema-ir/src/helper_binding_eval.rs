@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 
 use crate::binding::HelperBinding;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
-use crate::template_expr_analysis::is_merge_function;
+use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::walker::values_path_from_expr;
 
 pub(crate) fn resolve_bound_path_expr(
@@ -77,52 +77,7 @@ pub(crate) fn bindings_for_helper_arg(
     outer: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
 ) -> HashMap<String, HelperBinding> {
-    let Some(arg) = arg else {
-        return HashMap::new();
-    };
-
-    match arg {
-        TemplateExpr::Parenthesized(inner) => {
-            bindings_for_helper_arg(Some(inner), outer, current_dot)
-        }
-        TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
-        TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
-        TemplateExpr::Call { function, args } if function == "dict" => {
-            let mut bindings = HashMap::new();
-            let mut index = 0usize;
-            while index + 1 < args.len() {
-                let TemplateExpr::Literal(Literal::String(key)) = &args[index] else {
-                    index += 1;
-                    continue;
-                };
-                let binding = binding_from_expr(&args[index + 1], outer, current_dot)
-                    .unwrap_or(HelperBinding::Unknown);
-                bindings.insert(key.clone(), binding);
-                index += 2;
-            }
-            bindings
-        }
-        TemplateExpr::Call { function, args } if is_merge_function(function) => {
-            let mut merged = HashMap::new();
-            for arg in args {
-                match binding_from_expr(arg, outer, current_dot) {
-                    Some(HelperBinding::Dict(map)) => {
-                        for (key, value) in map {
-                            merged.insert(key, value);
-                        }
-                    }
-                    Some(HelperBinding::RootContext) => {
-                        if let Some(outer) = outer {
-                            for (key, value) in outer {
-                                merged.insert(key.clone(), value.clone());
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            merged
-        }
-        _ => HashMap::new(),
-    }
+    bindings_for_helper_arg_with(arg, outer, |expr| {
+        binding_from_expr(expr, outer, current_dot)
+    })
 }

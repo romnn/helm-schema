@@ -1405,8 +1405,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   helper-summary methods. The obsolete `fragment_binding_eval` compatibility
   module has been deleted; its final outer-expression resolver now lives next
   to the rest of the shared fragment expression evaluator. The remaining A2
-  boundary is reducing the helper-binding evaluator and moving projected facts
-  into native helper-summary effects.
+  cleanup has also centralized helper-argument binding projection behind a
+  callback-based `TemplateExpr` projection, so plain helper calls and
+  fragment-local helper calls no longer carry duplicate `dict` / merge
+  walkers. The remaining A2 boundary is reducing the helper-binding evaluator
+  itself and moving projected facts into native helper-summary effects.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

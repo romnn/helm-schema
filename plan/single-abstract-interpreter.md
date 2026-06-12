@@ -722,11 +722,15 @@ Current result:
 - The obsolete `fragment_binding_eval` module is gone. Its final
   outer-expression resolver is colocated with `fragment_expr_eval`, so
   fragment binding compatibility now has one expression-evaluation home.
+- Helper-argument binding projection is centralized in
+  `helper_arg_projection`. Plain helper calls and fragment-local helper calls
+  now share the same typed `dict` / merge projection, with only the
+  expression-to-binding evaluator supplied by the caller.
 
 Remaining A2 work:
 
-- Delete or reduce the helper-binding evaluator once those facts are native
-  summary projections.
+- Delete or reduce the rest of the helper-binding evaluator once those facts
+  are native summary projections.
 - Move the remaining helper-body compatibility projections into native summary
   effects and reduce the compatibility DTO conversion layer.
 

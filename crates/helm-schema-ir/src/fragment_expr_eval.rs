@@ -1,15 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
+use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::define_body_cache::DefineBodyCache;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
+use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::helper_call_analyzer::HelperCallAnalyzer;
-use crate::template_expr_analysis::{expr_contains_helper_call, is_merge_function};
+use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
 
 #[derive(Clone, Copy)]
@@ -107,75 +108,16 @@ pub(crate) fn bindings_for_helper_arg_with_fragment_locals(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HashMap<String, HelperBinding> {
-    let Some(arg) = arg else {
-        return HashMap::new();
-    };
-
-    match arg {
-        TemplateExpr::Parenthesized(inner) => bindings_for_helper_arg_with_fragment_locals(
-            Some(inner),
+    bindings_for_helper_arg_with(arg, outer, |expr| {
+        helper_binding_from_expr_with_fragment_locals(
+            expr,
+            fragment_locals,
             outer,
             current_dot,
-            fragment_locals,
             context,
             seen,
-        ),
-        TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
-        TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
-        TemplateExpr::Call { function, args } if function == "dict" => {
-            let mut bindings = HashMap::new();
-            let mut index = 0usize;
-            while index + 1 < args.len() {
-                let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) =
-                    &args[index]
-                else {
-                    index += 1;
-                    continue;
-                };
-                let binding = helper_binding_from_expr_with_fragment_locals(
-                    &args[index + 1],
-                    fragment_locals,
-                    outer,
-                    current_dot,
-                    context,
-                    seen,
-                )
-                .unwrap_or(HelperBinding::Unknown);
-                bindings.insert(key.clone(), binding);
-                index += 2;
-            }
-            bindings
-        }
-        TemplateExpr::Call { function, args } if is_merge_function(function) => {
-            let mut merged = HashMap::new();
-            for arg in args {
-                match helper_binding_from_expr_with_fragment_locals(
-                    arg,
-                    fragment_locals,
-                    outer,
-                    current_dot,
-                    context,
-                    seen,
-                ) {
-                    Some(HelperBinding::Dict(map)) => {
-                        for (key, value) in map {
-                            merged.insert(key, value);
-                        }
-                    }
-                    Some(HelperBinding::RootContext) => {
-                        if let Some(outer) = outer {
-                            for (key, value) in outer {
-                                merged.insert(key.clone(), value.clone());
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            merged
-        }
-        _ => HashMap::new(),
-    }
+        )
+    })
 }
 
 pub(crate) fn fragment_binding_from_expr(
