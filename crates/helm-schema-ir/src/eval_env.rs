@@ -50,6 +50,19 @@ impl EvalEnv {
         }
     }
 
+    pub(crate) fn from_helper_context_with_fragment_locals(
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+        fragment_locals: &HashMap<String, FragmentBinding>,
+    ) -> Self {
+        let mut env = Self::from_helper_context(bindings, current_dot);
+        env.locals = fragment_locals
+            .iter()
+            .map(|(name, binding)| (name.clone(), AbstractValue::from_fragment_binding(binding)))
+            .collect();
+        env
+    }
+
     pub(crate) fn from_fragment_context(
         locals: &HashMap<String, FragmentBinding>,
         current_dot: Option<&FragmentBinding>,

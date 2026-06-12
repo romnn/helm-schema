@@ -58,6 +58,15 @@ pub(crate) fn helper_binding_from_expr_with_fragment_locals(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Option<HelperBinding> {
+    if !expr_contains_helper_call(expr) {
+        return shared_helper_binding_from_expr_with_fragment_locals(
+            expr,
+            fragment_locals,
+            outer,
+            current_dot,
+        );
+    }
+
     match expr {
         TemplateExpr::Parenthesized(inner) => helper_binding_from_expr_with_fragment_locals(
             inner,
@@ -216,6 +225,20 @@ pub(crate) fn helper_binding_from_expr_with_fragment_locals(
         }
         _ => binding_from_expr(expr, outer, current_dot),
     }
+}
+
+fn shared_helper_binding_from_expr_with_fragment_locals(
+    expr: &TemplateExpr,
+    fragment_locals: &HashMap<String, FragmentBinding>,
+    outer: Option<&HashMap<String, HelperBinding>>,
+    current_dot: Option<&HelperBinding>,
+) -> Option<HelperBinding> {
+    let env =
+        EvalEnv::from_helper_context_with_fragment_locals(outer, current_dot, fragment_locals);
+    eval_expr(expr, &env)
+        .value
+        .as_ref()
+        .and_then(AbstractValue::to_helper_binding)
 }
 
 pub(crate) fn bindings_for_helper_arg_with_fragment_locals(
@@ -626,6 +649,18 @@ pub(crate) fn fragment_binding_from_text_with_helper_context(
     let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
     let mut bindings = Vec::new();
     for expr in parse_expr_text(text) {
+        if !expr_contains_helper_call(&expr)
+            && let Some(binding) = fragment_binding_from_expr(
+                &expr,
+                fragment_locals,
+                current_dot_fragment.as_ref(),
+                context,
+                seen,
+            )
+        {
+            bindings.push(binding);
+            continue;
+        }
         if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
             &expr,
             fragment_locals,
@@ -648,4 +683,96 @@ pub(crate) fn fragment_binding_from_text_with_helper_context(
         }
     }
     FragmentBinding::choice(bindings)
+}
+
+#[cfg(test)]
+mod tests {
+    use helm_schema_ast::parse_action_expressions;
+
+    use super::*;
+    use crate::helper_summary::HelperSummaryCache;
+
+    fn single_expr(action: &str) -> TemplateExpr {
+        let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
+        assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        exprs.into_iter().next().expect("expression exists")
+    }
+
+    fn empty_context<'a>(
+        defines: &'a DefineIndex,
+        define_bodies: &'a DefineBodyCache,
+        helper_summaries: &'a HelperSummaryCache,
+    ) -> FragmentEvalContext<'a> {
+        FragmentEvalContext::new(defines, define_bodies, helper_summaries)
+    }
+
+    fn helper_binding_from_fragment_locals(
+        action: &str,
+        fragment_locals: &HashMap<String, FragmentBinding>,
+    ) -> Option<HelperBinding> {
+        let expr = single_expr(action);
+        let defines = DefineIndex::new();
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = empty_context(&defines, &define_bodies, &helper_summaries);
+        let mut seen = HashSet::new();
+        helper_binding_from_expr_with_fragment_locals(
+            &expr,
+            fragment_locals,
+            None,
+            None,
+            context,
+            &mut seen,
+        )
+    }
+
+    fn context_local() -> HashMap<String, FragmentBinding> {
+        HashMap::from([(
+            "ctx".to_string(),
+            FragmentBinding::Dict(BTreeMap::from([(
+                "config".to_string(),
+                FragmentBinding::ValuesPath("serviceAccount".to_string()),
+            )])),
+        )])
+    }
+
+    #[test]
+    fn helper_binding_fragment_local_selector_uses_abstract_eval() {
+        let binding = helper_binding_from_fragment_locals(
+            r#"$ctx.config.name | toYaml | fromYaml"#,
+            &context_local(),
+        );
+
+        assert_eq!(
+            binding,
+            Some(HelperBinding::ValuesPath("serviceAccount.name".to_string()))
+        );
+    }
+
+    #[test]
+    fn helper_binding_fragment_local_dict_uses_abstract_eval() {
+        let binding = helper_binding_from_fragment_locals(
+            r#"dict "name" $ctx.config.name"#,
+            &context_local(),
+        );
+
+        assert_eq!(
+            binding,
+            Some(HelperBinding::Dict(BTreeMap::from([(
+                "name".to_string(),
+                HelperBinding::ValuesPath("serviceAccount.name".to_string()),
+            )])))
+        );
+    }
+
+    #[test]
+    fn helper_binding_fragment_local_index_uses_abstract_eval() {
+        let binding =
+            helper_binding_from_fragment_locals(r#"index $ctx.config "name""#, &context_local());
+
+        assert_eq!(
+            binding,
+            Some(HelperBinding::ValuesPath("serviceAccount.name".to_string()))
+        );
+    }
 }

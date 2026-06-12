@@ -485,11 +485,14 @@ Current result:
   `getKeyFromList` / `getValueFromKey` carry literal path keys through
   `printf`, local assignment, `splitList`, `first`, `reverse`, `range`, and
   dynamic `index` without chart-specific logic.
-- Helper-context fragment binding evaluation now tries the shared
-  helper-aware expression evaluator before falling back to the legacy fragment
-  evaluator. This keeps helper arguments, local aliases, and current-dot
-  bindings in one structural path instead of splitting scalar and fragment
-  interpretation.
+- Helper-context helper-binding evaluation now routes helper-free expressions
+  with fragment locals through `eval_expr`. Selectors, `dict`, `index`, and
+  already-supported provenance-preserving wrappers therefore share the same
+  structural interpretation as ordinary helper bindings.
+- Fragment consumers still prefer fragment evaluation for helper-free
+  expressions. This keeps rendered-path and fragment-output semantics intact
+  for helpers such as JSON-patch walkers until those facts are promoted into
+  first-class `AbstractValue` / `Effects` concepts.
 - Helper-internal traversal prefixes are collapsed at the helper dependency
   boundary when a deeper exact path is known. The prefixes are interpreter
   state for walking `index $latestObj .`; they are not accepted chart inputs
@@ -661,6 +664,10 @@ Current result:
   helper-body interpreter one replacement point.
 - Helper root-suppression is now a helper-summary postprocess with focused
   coverage for descendant-output suppression versus exact-root outputs.
+- Helper-binding expressions with fragment locals now use the shared abstract
+  expression evaluator for helper-free subexpressions. This moves another
+  compatibility edge onto `eval_expr` while preserving the fragment path
+  projection needed by helper-body output-use analysis.
 
 Remaining A2 work:
 
