@@ -817,6 +817,9 @@ Current result:
 - Values-file schema evidence now lives in `values_yaml`, separating
   values.yaml traversal and YAML-to-schema evidence construction from the
   generator root.
+- Schema-tree mutation now lives in `schema_tree`, so wildcard/array/object
+  insertion and values-description placement are no longer embedded in the
+  generator root.
 
 ### Phase 8 — bundled emission
 

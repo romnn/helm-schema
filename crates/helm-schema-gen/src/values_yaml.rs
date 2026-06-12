@@ -3,8 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
+use crate::empty_schema;
 use crate::merge::merge_schema_list;
-use crate::{empty_schema, object_schema, unknown_object_schema};
+use crate::schema_tree::{object_schema, unknown_object_schema};
 use helm_schema_k8s::type_schema;
 
 pub(crate) struct ValuesYamlPathInfo {

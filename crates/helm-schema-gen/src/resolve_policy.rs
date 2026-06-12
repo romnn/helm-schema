@@ -6,10 +6,11 @@ use helm_schema_ir::{Guard, ValueKind, ValueUse};
 use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_two_schemas, union_schema_list};
+use crate::schema_tree::unknown_object_schema;
 use crate::{
     empty_schema, empty_string_schema, is_empty_schema, is_fixed_object_schema,
     is_object_or_array_schema, is_open_string_map_schema, is_scalar_schema,
-    schema_allows_scalar_type, schema_permits_empty_string, schema_type, unknown_object_schema,
+    schema_allows_scalar_type, schema_permits_empty_string, schema_type,
 };
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
