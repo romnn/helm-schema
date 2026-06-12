@@ -8,11 +8,11 @@ use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
+use crate::expression_analysis::helper_bindings_for_arg;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::{
     BoundHelperAnalysis, HelperOutputMeta, helper_output_meta_from_analysis,
 };
-use crate::helper_binding_eval::bindings_for_helper_arg;
 use crate::helper_inline::plan_exact_helper_inline;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_action_effect::NodeActionEffectSink;
@@ -387,7 +387,7 @@ impl<'a> SymbolicWalker<'a> {
         };
 
         let current_dot = self.current_dot_binding();
-        let bindings = bindings_for_helper_arg(
+        let bindings = helper_bindings_for_arg(
             plan.arg.as_ref(),
             Some(&self.root_bindings),
             current_dot.as_ref(),

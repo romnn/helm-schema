@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::TemplateExpr;
 
 use crate::binding::{FragmentBinding, HelperBinding};
+use crate::expression_analysis::helper_binding_from_expr;
 use crate::helper_analysis::HelperOutputMeta;
-use crate::helper_binding_eval::binding_from_expr;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
@@ -21,7 +21,7 @@ pub(crate) fn direct_bound_paths_from_text_in_context(
             if expr_contains_helper_call(node) {
                 return;
             }
-            if let Some(binding) = binding_from_expr(node, Some(bindings), current_dot) {
+            if let Some(binding) = helper_binding_from_expr(node, Some(bindings), current_dot) {
                 out.extend(binding.paths());
             }
         });

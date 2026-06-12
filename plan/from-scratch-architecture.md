@@ -1408,8 +1408,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   cleanup has also centralized helper-argument binding projection behind a
   callback-based `TemplateExpr` projection, so plain helper calls and
   fragment-local helper calls no longer carry duplicate `dict` / merge
-  walkers. The remaining A2 boundary is reducing the helper-binding evaluator
-  itself and moving projected facts into native helper-summary effects.
+  walkers. The plain helper-binding evaluator has been deleted; helper-context
+  binding projection now goes through `expression_analysis` and the shared
+  abstract expression evaluator. The remaining A2 boundary is reducing the
+  fragment-local helper binding resolver and moving projected facts into native
+  helper-summary effects.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

@@ -3,10 +3,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::binding::{FragmentBinding, HelperBinding};
-use crate::expression_analysis::{resolved_default_fallback_paths_for_text, type_is_schema_type};
+use crate::expression_analysis::{
+    helper_binding_from_expr, resolve_expr_to_values_path,
+    resolved_default_fallback_paths_for_text, type_is_schema_type,
+};
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
 use crate::helper_analysis::HelperOutputMeta;
-use crate::helper_binding_eval::{binding_from_expr, resolve_bound_path_expr};
 use crate::predicate::{Predicate, PredicateAtom};
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
@@ -40,7 +42,7 @@ pub(crate) fn computed_with_body_dot(
         return Some(HelperBinding::ValuesPath(String::new()));
     }
 
-    binding_from_expr(expr, Some(bindings), current_dot)
+    helper_binding_from_expr(expr, Some(bindings), current_dot)
 }
 
 impl ValuePathContext<'_> {
@@ -52,7 +54,9 @@ impl ValuePathContext<'_> {
         if !self.root_bindings.is_empty() {
             for expr in &exprs {
                 walk_expr_excluding_helper_call_args(expr, &mut |node| {
-                    if let Some(path) = resolve_bound_path_expr(node, self.root_bindings) {
+                    if let Some(path) =
+                        resolve_expr_to_values_path(node, Some(self.root_bindings), None)
+                    {
                         paths.insert(path);
                     }
                 });
@@ -578,7 +582,9 @@ fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, HelperBin
     match expr {
         TemplateExpr::Parenthesized(inner) => is_direct_path_expr(inner, bindings),
         TemplateExpr::Field(_) => true,
-        TemplateExpr::Selector { .. } => resolve_bound_path_expr(expr, bindings).is_some(),
+        TemplateExpr::Selector { .. } => {
+            resolve_expr_to_values_path(expr, Some(bindings), None).is_some()
+        }
         _ => false,
     }
 }

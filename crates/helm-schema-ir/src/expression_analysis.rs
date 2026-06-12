@@ -5,6 +5,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::binding::HelperBinding;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, type_is_schema_type as eval_type_is_schema_type};
+use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::template_expr_cache::parse_expr_text;
 use crate::walker::values_path_from_expr;
 
@@ -22,6 +23,28 @@ pub(crate) fn resolve_expr_to_values_path(
         .value
         .as_ref()
         .and_then(|value| value.unique_path())
+}
+
+pub(crate) fn helper_binding_from_expr(
+    expr: &TemplateExpr,
+    bindings: Option<&HashMap<String, HelperBinding>>,
+    current_dot: Option<&HelperBinding>,
+) -> Option<HelperBinding> {
+    let env = EvalEnv::from_helper_context(bindings, current_dot);
+    eval_expr(expr, &env)
+        .value
+        .as_ref()
+        .and_then(|value| value.to_helper_binding())
+}
+
+pub(crate) fn helper_bindings_for_arg(
+    arg: Option<&TemplateExpr>,
+    outer: Option<&HashMap<String, HelperBinding>>,
+    current_dot: Option<&HelperBinding>,
+) -> HashMap<String, HelperBinding> {
+    bindings_for_helper_arg_with(arg, outer, |expr| {
+        helper_binding_from_expr(expr, outer, current_dot)
+    })
 }
 
 pub(crate) fn resolved_default_fallback_paths_for_text(
@@ -135,4 +158,79 @@ pub(crate) fn set_default_chart_paths_for_text(
         });
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expr(text: &str) -> TemplateExpr {
+        let exprs = parse_expr_text(text);
+        assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        exprs.into_iter().next().expect("expression exists")
+    }
+
+    #[test]
+    fn helper_binding_projection_uses_shared_abstract_eval() {
+        let bindings = HashMap::from([(
+            "ctx".to_string(),
+            HelperBinding::Dict(
+                [(
+                    "config".to_string(),
+                    HelperBinding::ValuesPath("serviceAccount".to_string()),
+                )]
+                .into_iter()
+                .collect(),
+            ),
+        )]);
+
+        assert_eq!(
+            helper_binding_from_expr(
+                &expr(".ctx.config.name | default \"x\""),
+                Some(&bindings),
+                None
+            ),
+            Some(HelperBinding::Choice(
+                [
+                    HelperBinding::ValuesPath("serviceAccount.name".to_string()),
+                    HelperBinding::StringSet(["x".to_string()].into_iter().collect()),
+                ]
+                .into_iter()
+                .collect(),
+            )),
+        );
+    }
+
+    #[test]
+    fn helper_argument_projection_uses_shared_abstract_eval() {
+        let bindings = helper_bindings_for_arg(
+            Some(&expr(r#"dict "ctx" $ "config" .Values.serviceAccount"#)),
+            None,
+            None,
+        );
+
+        assert_eq!(
+            bindings,
+            HashMap::from([
+                ("ctx".to_string(), HelperBinding::RootContext),
+                (
+                    "config".to_string(),
+                    HelperBinding::ValuesPath("serviceAccount".to_string()),
+                ),
+            ]),
+        );
+    }
+
+    #[test]
+    fn bound_path_resolution_uses_shared_abstract_eval() {
+        let bindings = HashMap::from([(
+            "config".to_string(),
+            HelperBinding::ValuesPath("serviceAccount".to_string()),
+        )]);
+
+        assert_eq!(
+            resolve_expr_to_values_path(&expr(".config.name"), Some(&bindings), None),
+            Some("serviceAccount.name".to_string()),
+        );
+    }
 }

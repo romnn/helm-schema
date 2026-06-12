@@ -726,10 +726,13 @@ Current result:
   `helper_arg_projection`. Plain helper calls and fragment-local helper calls
   now share the same typed `dict` / merge projection, with only the
   expression-to-binding evaluator supplied by the caller.
+- The plain `helper_binding_eval` adapter is gone. Helper-context binding
+  projection and helper-argument projection now live in `expression_analysis`
+  and are backed by the shared abstract expression evaluator.
 
 Remaining A2 work:
 
-- Delete or reduce the rest of the helper-binding evaluator once those facts
+- Delete or reduce the fragment-local helper binding resolver once those facts
   are native summary projections.
 - Move the remaining helper-body compatibility projections into native summary
   effects and reduce the compatibility DTO conversion layer.

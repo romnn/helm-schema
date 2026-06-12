@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::binding::{FragmentBinding, HelperBinding};
+use crate::expression_analysis::helper_binding_from_expr;
 use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
-use crate::helper_binding_eval::binding_from_expr;
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
@@ -208,7 +208,9 @@ pub(crate) fn collect_helper_binding_output_uses_from_expr(
         return;
     }
 
-    if let Some(binding) = binding_from_expr(expr, Some(context.bindings), context.current_dot) {
+    if let Some(binding) =
+        helper_binding_from_expr(expr, Some(context.bindings), context.current_dot)
+    {
         collect_helper_binding_output_uses(
             outputs,
             &binding,
