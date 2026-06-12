@@ -335,7 +335,7 @@ fn join_output_meta(
 ) -> HashMap<String, BTreeMap<String, HelperOutputMeta>> {
     let mut joined = HashMap::new();
     for variable in outcome_variable_names(outcomes, |state| &state.output_meta) {
-        let mut merged = BTreeMap::new();
+        let mut merged: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         let mut present_in_all_outcomes = true;
         for outcome in outcomes {
             let Some(meta_by_path) = outcome.output_meta.get(&variable) else {
@@ -343,9 +343,7 @@ fn join_output_meta(
                 break;
             };
             for (path, meta) in meta_by_path {
-                let entry: &mut HelperOutputMeta = merged.entry(path.clone()).or_default();
-                entry.predicates.extend(meta.predicates.iter().cloned());
-                entry.defaulted |= meta.defaulted;
+                merged.entry(path.clone()).or_default().merge_ref(meta);
             }
         }
         if present_in_all_outcomes {

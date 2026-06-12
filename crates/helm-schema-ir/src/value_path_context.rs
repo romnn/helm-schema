@@ -163,9 +163,7 @@ impl ValuePathContext<'_> {
         for expr in parse_expr_text(text) {
             walk_expr_excluding_helper_call_args(&expr, &mut |node| {
                 for (path, meta) in self.local_alias_output_meta_for_expr(node) {
-                    let entry = out.entry(path).or_default();
-                    entry.predicates.extend(meta.predicates);
-                    entry.defaulted |= meta.defaulted;
+                    out.entry(path).or_default().merge(meta);
                 }
             });
         }

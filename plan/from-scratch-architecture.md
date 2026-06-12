@@ -1394,8 +1394,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   interpreters for those facts. Partial scalar interpolation is represented as
   `ValueKind::PartialScalar` at the compatibility DTO boundary and lowers to
   weak string-render evidence only when no stronger schema signal exists. The
-  remaining A2 boundary is reducing the fragment/helper binding evaluators and
-  moving their projected facts into native helper-summary effects.
+  helper-binding-to-output-metadata projection is now centralized in
+  `helper_output_projection`, and `HelperOutputMeta` owns predicate/default
+  merging instead of each compatibility caller open-coding the field merge.
+  The remaining A2 boundary is reducing the fragment/helper binding evaluators
+  and moving their projected facts into native helper-summary effects.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

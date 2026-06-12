@@ -22,7 +22,7 @@ use crate::helper_analysis::{
     extend_type_hints, helper_dependency_meta_from_analysis, merge_helper_output_meta_maps,
     merge_local_default_paths,
 };
-use crate::helper_output_projection::push_helper_fragment_output;
+use crate::helper_output_projection::{helper_binding_output_meta, push_helper_fragment_output};
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
     local_default_paths_from_text, local_output_meta_from_text, local_rendered_paths_from_text,
@@ -809,9 +809,10 @@ fn rhs_output_meta(
         let mut meta = meta.clone();
         meta.add_predicates(active_output_predicates.iter().cloned());
         meta.defaulted |= fallback_paths.contains(output);
-        let entry = rhs_output_meta.entry(output.clone()).or_default();
-        entry.predicates.extend(meta.predicates);
-        entry.defaulted |= meta.defaulted;
+        rhs_output_meta
+            .entry(output.clone())
+            .or_default()
+            .merge(meta);
     }
     for output in direct_outputs {
         let entry = rhs_output_meta.entry(output.clone()).or_default();
@@ -822,9 +823,10 @@ fn rhs_output_meta(
         let mut meta = local_meta_by_path.get(output).cloned().unwrap_or_default();
         meta.add_predicates(active_output_predicates.iter().cloned());
         meta.defaulted |= local_fallback_paths.contains(output);
-        let entry = rhs_output_meta.entry(output.clone()).or_default();
-        entry.predicates.extend(meta.predicates);
-        entry.defaulted |= meta.defaulted;
+        rhs_output_meta
+            .entry(output.clone())
+            .or_default()
+            .merge(meta);
     }
     rhs_output_meta
 }
@@ -837,7 +839,7 @@ fn helper_binding_output_meta_from_text(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> BTreeMap<String, HelperOutputMeta> {
-    let mut out = BTreeMap::new();
+    let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
     for expr in parse_expr_text(text) {
         if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
             &expr,
@@ -847,53 +849,10 @@ fn helper_binding_output_meta_from_text(
             context,
             seen,
         ) {
-            merge_helper_binding_output_meta(&mut out, &binding);
+            for (path, meta) in helper_binding_output_meta(&binding) {
+                out.entry(path).or_default().merge(meta);
+            }
         }
     }
     out
-}
-
-fn merge_helper_binding_output_meta(
-    out: &mut BTreeMap<String, HelperOutputMeta>,
-    binding: &HelperBinding,
-) {
-    match binding {
-        HelperBinding::ValuesPath(path) => {
-            out.entry(path.clone()).or_default();
-        }
-        HelperBinding::PathSet(paths) => {
-            for path in paths {
-                out.entry(path.clone()).or_default();
-            }
-        }
-        HelperBinding::OutputSet(meta_by_path) => {
-            for (path, meta) in meta_by_path {
-                let entry = out.entry(path.clone()).or_default();
-                entry.predicates.extend(meta.predicates.iter().cloned());
-                entry.defaulted |= meta.defaulted;
-            }
-        }
-        HelperBinding::Dict(entries) => {
-            for binding in entries.values() {
-                merge_helper_binding_output_meta(out, binding);
-            }
-        }
-        HelperBinding::List(items) => {
-            for binding in items {
-                merge_helper_binding_output_meta(out, binding);
-            }
-        }
-        HelperBinding::Overlay { entries, fallback } => {
-            for binding in entries.values() {
-                merge_helper_binding_output_meta(out, binding);
-            }
-            merge_helper_binding_output_meta(out, fallback);
-        }
-        HelperBinding::Choice(choices) => {
-            for binding in choices {
-                merge_helper_binding_output_meta(out, binding);
-            }
-        }
-        HelperBinding::RootContext | HelperBinding::Unknown | HelperBinding::StringSet(_) => {}
-    }
 }

@@ -23,6 +23,16 @@ impl HelperOutputMeta {
         self.predicates.extend(predicates);
     }
 
+    pub(crate) fn merge(&mut self, other: Self) {
+        self.predicates.extend(other.predicates);
+        self.defaulted |= other.defaulted;
+    }
+
+    pub(crate) fn merge_ref(&mut self, other: &Self) {
+        self.predicates.extend(other.predicates.iter().cloned());
+        self.defaulted |= other.defaulted;
+    }
+
     pub(crate) fn compatibility_guards(&self, source_expr: &str) -> Vec<Guard> {
         let mut guards = Vec::new();
         for predicate in &self.predicates {
@@ -121,21 +131,17 @@ impl BoundHelperAnalysis {
         predicates: &BTreeSet<Predicate>,
         defaulted: bool,
     ) {
-        if path.trim().is_empty() {
-            return;
-        }
-        let entry = self.output.entry(path).or_default();
-        entry.predicates.extend(predicates.iter().cloned());
-        entry.defaulted |= defaulted;
+        self.add_output_meta(
+            path,
+            HelperOutputMeta::with_predicates(predicates, defaulted),
+        );
     }
 
     pub(crate) fn add_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
         if path.trim().is_empty() {
             return;
         }
-        let entry = self.output.entry(path).or_default();
-        entry.predicates.extend(meta.predicates);
-        entry.defaulted |= meta.defaulted;
+        self.output.entry(path).or_default().merge(meta);
     }
 
     pub(crate) fn add_dependency_meta_map(
@@ -147,9 +153,7 @@ impl BoundHelperAnalysis {
                 continue;
             }
             self.dependency_paths.insert(path.clone());
-            let entry = self.dependency_meta.entry(path).or_default();
-            entry.predicates.extend(meta.predicates);
-            entry.defaulted |= meta.defaulted;
+            self.dependency_meta.entry(path).or_default().merge(meta);
         }
     }
 }
@@ -213,11 +217,9 @@ pub(crate) fn helper_output_meta_from_analysis(
         if output.source_expr.trim().is_empty() {
             continue;
         }
-        let entry = out.entry(output.source_expr.clone()).or_default();
-        entry
-            .predicates
-            .extend(output.meta.predicates.iter().cloned());
-        entry.defaulted |= output.meta.defaulted;
+        out.entry(output.source_expr.clone())
+            .or_default()
+            .merge_ref(&output.meta);
     }
     for path in &analysis.fragment_output {
         if path.trim().is_empty() {
@@ -233,9 +235,7 @@ pub(crate) fn helper_dependency_meta_from_analysis(
 ) -> BTreeMap<String, HelperOutputMeta> {
     let mut out = analysis.dependency_meta.clone();
     for (path, meta) in helper_output_meta_from_analysis(analysis) {
-        let entry = out.entry(path).or_default();
-        entry.predicates.extend(meta.predicates);
-        entry.defaulted |= meta.defaulted;
+        out.entry(path).or_default().merge(meta);
     }
     out
 }
@@ -248,9 +248,11 @@ pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut Boun
 
     let fragment_output_uses = std::mem::take(&mut analysis.fragment_output_uses);
     for output in fragment_output_uses {
-        let entry = analysis.output.entry(output.source_expr).or_default();
-        entry.predicates.extend(output.meta.predicates);
-        entry.defaulted |= output.meta.defaulted;
+        analysis
+            .output
+            .entry(output.source_expr)
+            .or_default()
+            .merge(output.meta);
     }
 }
 
@@ -314,9 +316,7 @@ pub(crate) fn merge_helper_output_meta_maps(
     for (var, meta_by_path) in other {
         let entry = base.entry(var).or_default();
         for (path, meta) in meta_by_path {
-            let path_entry = entry.entry(path).or_default();
-            path_entry.predicates.extend(meta.predicates);
-            path_entry.defaulted |= meta.defaulted;
+            entry.entry(path).or_default().merge(meta);
         }
     }
     base

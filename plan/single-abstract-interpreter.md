@@ -711,6 +711,10 @@ Current result:
   hint, or values.yaml schema exists, so command-line interpolation no longer
   widens numeric chart inputs to strings or imports Kubernetes command
   descriptions into chart-local values.
+- Helper-binding output metadata projection now lives in
+  `helper_output_projection`, and `HelperOutputMeta` owns predicate/default
+  merging. That keeps the remaining compatibility summary plumbing in one
+  place while A2 moves toward native helper-summary effects.
 
 Remaining A2 work:
 

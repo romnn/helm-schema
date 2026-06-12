@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -355,5 +355,96 @@ pub(crate) fn collect_helper_binding_output_uses(
             }
         }
         HelperBinding::RootContext | HelperBinding::Unknown | HelperBinding::StringSet(_) => {}
+    }
+}
+
+pub(crate) fn helper_binding_output_meta(
+    binding: &HelperBinding,
+) -> BTreeMap<String, HelperOutputMeta> {
+    let mut out = BTreeMap::new();
+    collect_helper_binding_output_meta(binding, &mut out);
+    out
+}
+
+fn collect_helper_binding_output_meta(
+    binding: &HelperBinding,
+    out: &mut BTreeMap<String, HelperOutputMeta>,
+) {
+    match binding {
+        HelperBinding::ValuesPath(path) => {
+            out.entry(path.clone()).or_default();
+        }
+        HelperBinding::PathSet(paths) => {
+            for path in paths {
+                out.entry(path.clone()).or_default();
+            }
+        }
+        HelperBinding::OutputSet(meta_by_path) => {
+            for (path, meta) in meta_by_path {
+                out.entry(path.clone()).or_default().merge_ref(meta);
+            }
+        }
+        HelperBinding::Dict(entries) => {
+            for binding in entries.values() {
+                collect_helper_binding_output_meta(binding, out);
+            }
+        }
+        HelperBinding::List(items) => {
+            for binding in items {
+                collect_helper_binding_output_meta(binding, out);
+            }
+        }
+        HelperBinding::Overlay { entries, fallback } => {
+            for binding in entries.values() {
+                collect_helper_binding_output_meta(binding, out);
+            }
+            collect_helper_binding_output_meta(fallback, out);
+        }
+        HelperBinding::Choice(choices) => {
+            for binding in choices {
+                collect_helper_binding_output_meta(binding, out);
+            }
+        }
+        HelperBinding::RootContext | HelperBinding::Unknown | HelperBinding::StringSet(_) => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{BTreeMap, BTreeSet};
+
+    use super::helper_binding_output_meta;
+    use crate::binding::HelperBinding;
+    use crate::helper_analysis::HelperOutputMeta;
+    use crate::predicate::Predicate;
+
+    #[test]
+    fn helper_binding_output_meta_preserves_output_set_metadata() {
+        let binding = HelperBinding::Overlay {
+            entries: BTreeMap::from([(
+                "name".to_string(),
+                HelperBinding::ValuesPath("serviceAccount.name".to_string()),
+            )]),
+            fallback: Box::new(HelperBinding::OutputSet(BTreeMap::from([(
+                "global.nameOverride".to_string(),
+                HelperOutputMeta {
+                    predicates: BTreeSet::from([Predicate::truthy_path(
+                        "global.enabled".to_string(),
+                    )]),
+                    defaulted: true,
+                },
+            )]))),
+        };
+
+        let meta = helper_binding_output_meta(&binding);
+
+        assert!(meta.contains_key("serviceAccount.name"));
+        assert_eq!(
+            meta.get("global.nameOverride"),
+            Some(&HelperOutputMeta {
+                predicates: BTreeSet::from([Predicate::truthy_path("global.enabled".to_string())]),
+                defaulted: true,
+            })
+        );
     }
 }
