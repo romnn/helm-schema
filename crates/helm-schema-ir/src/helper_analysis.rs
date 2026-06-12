@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use crate::binding::HelperBinding;
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::{Guard, ValueKind, YamlPath};
@@ -253,6 +254,26 @@ pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut Boun
     }
 }
 
+pub(crate) fn mark_suppressed_roots_for_bound_outputs(
+    analysis: &mut BoundHelperAnalysis,
+    bindings: &HashMap<String, HelperBinding>,
+) {
+    let rendered_sources: BTreeSet<String> = analysis
+        .output
+        .keys()
+        .chain(analysis.guard_paths.iter())
+        .cloned()
+        .collect();
+    for binding in bindings.values() {
+        let HelperBinding::ValuesPath(root) = binding else {
+            continue;
+        };
+        if output_path::values_path_has_descendant(root, &rendered_sources) {
+            analysis.suppress_roots.insert(root.clone());
+        }
+    }
+}
+
 pub(crate) fn merge_local_default_paths(
     mut base: HashMap<String, BTreeSet<String>>,
     other: HashMap<String, BTreeSet<String>>,
@@ -303,10 +324,11 @@ pub(crate) fn merge_helper_output_meta_maps(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeSet, HashMap};
 
-    use super::HelperOutputMeta;
+    use super::{BoundHelperAnalysis, HelperOutputMeta, mark_suppressed_roots_for_bound_outputs};
     use crate::Guard;
+    use crate::binding::HelperBinding;
     use crate::predicate::{Predicate, PredicateAtom};
 
     #[test]
@@ -331,5 +353,36 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn suppresses_bound_root_when_helper_outputs_descendant_path() {
+        let mut analysis = BoundHelperAnalysis::default();
+        analysis.add_output("serviceAccount.name".to_string(), &BTreeSet::new(), false);
+        let bindings = HashMap::from([(
+            "config".to_string(),
+            HelperBinding::ValuesPath("serviceAccount".to_string()),
+        )]);
+
+        mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
+
+        assert_eq!(
+            analysis.suppress_roots,
+            BTreeSet::from(["serviceAccount".to_string()])
+        );
+    }
+
+    #[test]
+    fn does_not_suppress_bound_root_for_exact_root_output() {
+        let mut analysis = BoundHelperAnalysis::default();
+        analysis.add_output("serviceAccount".to_string(), &BTreeSet::new(), false);
+        let bindings = HashMap::from([(
+            "config".to_string(),
+            HelperBinding::ValuesPath("serviceAccount".to_string()),
+        )]);
+
+        mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
+
+        assert!(analysis.suppress_roots.is_empty());
     }
 }

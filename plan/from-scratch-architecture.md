@@ -1370,9 +1370,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   cleanup is A2 helper-summary ownership.
 - **A2 — helper summaries under the §6.3 contract**: empty-pc summaries
   re-guarded at call sites; env-closed fingerprints; recursion ⇒ Top +
-  poisoned memo. Deletes: the twin helper-body walks, the fragment/helper
-  binding evaluators, and — once resource identity consumes interpreter
-  summaries — the 1,480-line `helper_eval.rs`.
+  poisoned memo. Current progress: bound helper-call context resolution and
+  the compatibility helper-body passes now live behind `helper_body_analysis`,
+  so the old twin walkers have a single replacement point. Deletes: the twin
+  helper-body walks, the fragment/helper binding evaluators, and — once
+  resource identity consumes interpreter summaries — the 1,480-line
+  `helper_eval.rs`.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected **feeding the existing `ValueUseSink`**, so

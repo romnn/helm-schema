@@ -654,6 +654,13 @@ Current result:
 - `static_file_template.rs` now owns helper-body `tpl` / `.Files.Get`
   request discovery. Static-file request extraction is helper analysis, not
   walker traversal state.
+- `helper_body_analysis.rs` now owns bound helper-call argument resolution and
+  the current compatibility helper-body interpretation passes. This keeps
+  `bound_helper_call_analysis.rs` limited to discovering `include` /
+  `template` calls and managing recursion, and gives the future `eval_node`
+  helper-body interpreter one replacement point.
+- Helper root-suppression is now a helper-summary postprocess with focused
+  coverage for descendant-output suppression versus exact-root outputs.
 
 Remaining A2 work:
 

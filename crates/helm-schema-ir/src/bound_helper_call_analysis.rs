@@ -1,20 +1,13 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::YamlPath;
 use crate::binding::{FragmentBinding, HelperBinding};
-use crate::fragment_binding_eval::fragment_binding_from_outer_expr;
-use crate::fragment_expr_eval::{
-    FragmentEvalContext, bindings_for_helper_arg_with_fragment_locals,
-    helper_binding_from_expr_with_fragment_locals,
+use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::helper_analysis::{BoundHelperAnalysis, mark_suppressed_roots_for_bound_outputs};
+use crate::helper_body_analysis::{
+    ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
-use crate::helper_analysis::BoundHelperAnalysis;
-use crate::helper_fragment_output_uses::{
-    FragmentOutputWalkState, collect_bound_fragment_output_uses_from_items,
-};
-use crate::helper_fragment_outputs::collect_bound_fragment_outputs_from_tree;
-use crate::helper_value_analysis::{HelperValuesWalkState, collect_bound_helper_values_from_ast};
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
 use crate::template_expr_cache::parse_expr_text;
 
@@ -68,122 +61,16 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
         return BoundHelperAnalysis::default();
     }
 
-    let mut binding_seen = seen.clone();
-    let bindings = bindings_for_helper_arg_with_fragment_locals(
+    let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
         arg,
         outer_bindings,
         current_dot,
         fragment_locals,
         context,
-        &mut binding_seen,
-    );
-    // Inside the helper body, `.` is what the caller passed as the helper
-    // argument. `None` is valid when that argument cannot be statically pinned.
-    let helper_body_dot = {
-        let mut dot_seen = seen.clone();
-        arg.and_then(|expr| {
-            helper_binding_from_expr_with_fragment_locals(
-                expr,
-                fragment_locals,
-                outer_bindings,
-                current_dot,
-                context,
-                &mut dot_seen,
-            )
-        })
-        .or_else(|| current_dot.cloned())
-    };
-    let mut analysis = BoundHelperAnalysis::default();
-    if let Some(body) = context.defines.get(name) {
-        let active_output_predicates = BTreeSet::new();
-        let mut local_bindings = HashMap::new();
-        let mut local_default_paths = HashMap::new();
-        let mut local_output_meta = HashMap::new();
-        let mut helper_values_state = HelperValuesWalkState {
-            local_bindings: &mut local_bindings,
-            local_default_paths: &mut local_default_paths,
-            local_output_meta: &mut local_output_meta,
-            context,
-            seen,
-            analysis: &mut analysis,
-        };
-        for node in body {
-            collect_bound_helper_values_from_ast(
-                node,
-                &bindings,
-                helper_body_dot.as_ref(),
-                &active_output_predicates,
-                &mut helper_values_state,
-            );
-        }
-    }
-
-    let mut helper_fragment_locals = HashMap::new();
-    let helper_dot = arg.and_then(|expr| {
-        fragment_binding_from_outer_expr(expr, Some(fragment_locals), outer_bindings, current_dot)
+        seen,
     });
-    if let Some(src) = context.define_bodies.source(name)
-        && let Some(tree) = context.define_bodies.tree(name)
-    {
-        collect_bound_fragment_outputs_from_tree(
-            tree.root_node(),
-            src,
-            &mut helper_fragment_locals,
-            helper_dot.as_ref(),
-            context,
-            seen,
-            &mut analysis.fragment_output,
-        );
-    }
-    if let Some(body) = context.defines.get(name) {
-        let mut fragment_output_uses = Vec::new();
-        let mut local_bindings = helper_fragment_locals;
-        let mut local_default_paths = HashMap::new();
-        let active_output_predicates = BTreeSet::new();
-        let mut fragment_output_state = FragmentOutputWalkState {
-            local_bindings: &mut local_bindings,
-            local_default_paths: &mut local_default_paths,
-            context,
-            seen,
-            outputs: &mut fragment_output_uses,
-        };
-        collect_bound_fragment_output_uses_from_items(
-            body,
-            &bindings,
-            helper_body_dot.as_ref(),
-            helper_dot.as_ref(),
-            &YamlPath(Vec::new()),
-            &active_output_predicates,
-            &mut fragment_output_state,
-        );
-        for source in analysis.output.keys() {
-            analysis.fragment_output.remove(source);
-        }
-        let structured_sources: BTreeSet<String> = fragment_output_uses
-            .iter()
-            .map(|output| output.source_expr.clone())
-            .collect();
-        for source in &structured_sources {
-            analysis.output.remove(source);
-            analysis.fragment_output.remove(source);
-        }
-        analysis.fragment_output_uses.extend(fragment_output_uses);
-    }
-
-    for binding in bindings.values() {
-        let HelperBinding::ValuesPath(root) = binding else {
-            continue;
-        };
-        let prefix = format!("{root}.");
-        if analysis
-            .output
-            .keys()
-            .chain(analysis.guard_paths.iter())
-            .any(|path| path.starts_with(&prefix))
-        {
-            analysis.suppress_roots.insert(root.clone());
-        }
-    }
+    let mut analysis = interpret_bound_helper_body(name, &resolution, context, seen);
+    mark_suppressed_roots_for_bound_outputs(&mut analysis, &resolution.bindings);
 
     seen.remove(name);
     analysis
