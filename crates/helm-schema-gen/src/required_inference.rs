@@ -8,9 +8,10 @@
 //! Why this is heuristic:
 //!   - "unconditionally referenced" relies on contract-level header-use
 //!     projection, which can misfire on empty-body `if not`/`if or` blocks.
-//!   - "never accessed via default" relies on the broader
+//!   - "never accessed via default" still accepts a compatibility fallback
 //!     [`helm_schema_ir::required_inference::extract_default_fallback_paths`]
-//!     regex which is text-based and can miss exotic syntax.
+//!     side channel from the CLI for helper text that is not yet fully
+//!     represented as contract guards.
 //!
 //! The schemadiff tool already strips `required` arrays from both
 //! sides before diffing — the only place this feature's output is
@@ -21,8 +22,17 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::ContractProjection;
+use helm_schema_ir::{ContractProjection, RequiredInferenceSignals};
 use serde_json::Value;
+
+#[derive(Debug, Default, Clone, Copy)]
+struct RequiredInferencePolicy;
+
+struct RequiredInferenceInputs<'a> {
+    signals: RequiredInferenceSignals,
+    synthetic_value_paths: &'a BTreeSet<String>,
+    external_default_fallback_paths: &'a BTreeSet<String>,
+}
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally and
@@ -43,11 +53,11 @@ pub fn apply_required_inference(
     synthetic_value_paths: &BTreeSet<String>,
     default_fallback_paths: &BTreeSet<String>,
 ) {
-    let paths = collect_required_paths(
-        contract_projection,
-        default_fallback_paths,
+    let paths = RequiredInferencePolicy.required_paths(RequiredInferenceInputs {
+        signals: contract_projection.required_inference_signals(),
         synthetic_value_paths,
-    );
+        external_default_fallback_paths: default_fallback_paths,
+    });
     for path in paths {
         add_path_to_required(schema, &path);
     }
@@ -61,24 +71,21 @@ pub fn apply_required_inference(
 /// has no body-side optionality signal to exclude it. In practice `if not`
 /// blocks usually contain content; the failure mode is rare. A proper fix
 /// would record header polarity directly in the contract graph.
-fn collect_required_paths(
-    contract_projection: &ContractProjection,
-    default_fallback_paths: &BTreeSet<String>,
-    synthetic_value_paths: &BTreeSet<String>,
-) -> BTreeSet<String> {
-    let signals = contract_projection.required_inference_signals();
-
-    let mut required: BTreeSet<String> = BTreeSet::new();
-    for path in signals.positive_header_paths {
-        if default_fallback_paths.contains(&path)
-            || signals.conditionally_optional_paths.contains(&path)
-            || synthetic_value_paths.contains(&path)
-        {
-            continue;
+impl RequiredInferencePolicy {
+    fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
+        let mut required: BTreeSet<String> = BTreeSet::new();
+        for path in input.signals.positive_header_paths {
+            if input.external_default_fallback_paths.contains(&path)
+                || input.signals.default_fallback_paths.contains(&path)
+                || input.signals.conditionally_optional_paths.contains(&path)
+                || input.synthetic_value_paths.contains(&path)
+            {
+                continue;
+            }
+            required.insert(path);
         }
-        required.insert(path);
+        required
     }
-    required
 }
 
 /// Locate `path`'s parent object schema and add the leaf segment to its
@@ -146,7 +153,10 @@ mod tests {
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
-    use helm_schema_ir::{ContractProjection, SymbolicIrGenerator, extract_default_type_hints};
+    use helm_schema_ir::{
+        ContractProjection, Guard, SymbolicIrGenerator, ValueKind, ValueUse, YamlPath,
+        extract_default_type_hints,
+    };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
     fn provider() -> KubernetesJsonSchemaProvider {
@@ -186,6 +196,37 @@ mod tests {
             &collect_fallbacks(src),
         );
         schema
+    }
+
+    #[test]
+    fn contract_default_guard_excludes_path_without_external_fallback_scan() {
+        let projection = ContractProjection::from_value_uses(vec![
+            ValueUse {
+                source_expr: "feature".to_string(),
+                path: YamlPath(Vec::new()),
+                kind: ValueKind::Scalar,
+                guards: Vec::new(),
+                resource: None,
+            },
+            ValueUse {
+                source_expr: "feature".to_string(),
+                path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                kind: ValueKind::Scalar,
+                guards: vec![Guard::Default {
+                    path: "feature".to_string(),
+                }],
+                resource: None,
+            },
+        ]);
+        let mut schema = generate_values_schema(ValuesSchemaInput::new(&projection, &provider()));
+
+        apply_required_inference(&mut schema, &projection, &BTreeSet::new(), &BTreeSet::new());
+
+        assert!(
+            schema.get("required").is_none(),
+            "contract default guards should suppress required inference without a text fallback scan, schema={}",
+            serde_json::to_string_pretty(&schema).unwrap()
+        );
     }
 
     /// Step 3: with `--infer-required`, an unconditional `if .Values.X` makes X

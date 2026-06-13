@@ -224,6 +224,7 @@ pub struct ContractPathSignals {
 pub struct RequiredInferenceSignals {
     pub positive_header_paths: BTreeSet<String>,
     pub conditionally_optional_paths: BTreeSet<String>,
+    pub default_fallback_paths: BTreeSet<String>,
 }
 
 /// Receives contract claims from node/action interpretation.
@@ -694,12 +695,14 @@ fn derive_required_inference_signals_from_uses(uses: &[ContractUse]) -> Required
                         .conditionally_optional_paths
                         .extend(paths.iter().cloned());
                 }
+                Guard::Default { path } => {
+                    signals.default_fallback_paths.insert(path.clone());
+                }
                 Guard::Truthy { .. }
                 | Guard::Eq { .. }
                 | Guard::Range { .. }
                 | Guard::With { .. }
-                | Guard::TypeIs { .. }
-                | Guard::Default { .. } => {}
+                | Guard::TypeIs { .. } => {}
             }
         }
 
@@ -1305,6 +1308,15 @@ mod tests {
                 }],
                 None,
             ),
+            ContractUse::new(
+                "defaulted".to_string(),
+                YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Default {
+                    path: "defaulted".to_string(),
+                }],
+                None,
+            ),
         ]);
 
         let signals = projection.required_inference_signals();
@@ -1320,6 +1332,10 @@ mod tests {
                 "either.primary".to_string(),
                 "either.fallback".to_string(),
             ])
+        );
+        assert_eq!(
+            signals.default_fallback_paths,
+            BTreeSet::from(["defaulted".to_string()])
         );
     }
 }

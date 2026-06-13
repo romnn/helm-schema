@@ -1559,6 +1559,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   generalization, fragment widening, partial-scalar fallback, provider
   schemas, type hints, and guard constraints as one named structural lowering
   step instead of a long chain of ambient resolver locals.
+  Required-inference default-fallback exclusions now also flow through typed
+  `RequiredInferenceSignals` on `ContractProjection`, with the generator
+  combining those contract-owned exclusions and the remaining CLI compatibility
+  fallback through a named policy input rather than treating the fallback scan
+  as the only source of default knowledge.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the
