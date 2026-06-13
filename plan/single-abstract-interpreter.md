@@ -881,7 +881,7 @@ Current result:
 
 ### Phase 8 — bundled emission
 
-Status: **pending**
+Status: **started**
 
 Goal:
 
@@ -889,6 +889,13 @@ Goal:
   default.
 - Keep full flattening as an explicit export mode.
 - Regenerate output goldens once as a deliberate output-shape change.
+
+Current result:
+
+- Final CLI emission now has a dedicated output pipeline for reference
+  flattening, description stripping, minimization, and JSON formatting. The
+  extraction preserves current output behavior but gives bundled-vs-flattened
+  emission one owner for the later default change.
 
 ## Completion criteria
 

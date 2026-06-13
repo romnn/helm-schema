@@ -3,6 +3,7 @@ pub mod cli;
 mod diag_emit;
 mod error;
 pub mod flatten;
+mod output_pipeline;
 mod provider_builder;
 mod required_inference;
 pub mod schema_override;
@@ -18,7 +19,6 @@ use helm_schema_ir::{
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
-use json_schema_minify::{MinimizeOptions, minimize_schema};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 use tracing_subscriber::Layer as _;
@@ -26,6 +26,7 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
 
 use crate::error::CliResult;
+use crate::output_pipeline::OutputPipelineOptions;
 
 pub use cli::Cli;
 pub use error::CliError;
@@ -128,6 +129,12 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         mut schema,
         subchart_value_prefixes,
     } = generate_values_schema_for_chart_with_diagnostics_inner(&opts, Some(&diagnostics))?;
+    let output_options = OutputPipelineOptions {
+        keep_refs: cli.output.keep_refs,
+        allow_net: !cli.k8s.offline,
+        strip_descriptions: cli.output.strip_descriptions,
+        minimize: cli.output.minimize,
+    };
 
     for path in cli.override_schema {
         let mut override_schema = load_json_file(&path)?;
@@ -156,38 +163,14 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         // merged schema (so chart-inference refs remain literal). We
         // honour the same flag here for symmetry — without it, an
         // override that wants to ship literal `$ref` strings can't.
-        let override_schema = if cli.output.keep_refs {
-            override_schema
-        } else {
-            let override_base = path.parent().unwrap_or_else(|| std::path::Path::new("."));
-            let allow_net = !cli.k8s.offline;
-            flatten::flatten_refs(
-                override_schema,
-                override_base,
-                &flatten::FlattenOptions { allow_net },
-            )?
-        };
+        let override_schema =
+            output_pipeline::prepare_override_schema(override_schema, &path, &output_options)?;
 
         schema = schema_override::apply_schema_override(schema, override_schema);
     }
     mirror_global_schema_into_subcharts(&mut schema, &subchart_value_prefixes);
 
-    if !cli.output.keep_refs {
-        let allow_net = !cli.k8s.offline;
-        schema = flatten::flatten_refs(
-            schema,
-            &cli.chart_dir,
-            &flatten::FlattenOptions { allow_net },
-        )?;
-    }
-
-    if cli.output.strip_descriptions {
-        strip_schema_descriptions(&mut schema);
-    }
-
-    if cli.output.minimize {
-        schema = minimize_schema(schema, &MinimizeOptions::default()).schema;
-    }
+    schema = output_pipeline::apply_output_transforms(schema, &cli.chart_dir, &output_options)?;
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
 
@@ -203,7 +186,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
             source: err,
         })?;
         let mut out = BufWriter::new(file);
-        write_schema_json(&mut out, &schema, cli.output.compact)
+        output_pipeline::write_schema_json(&mut out, &schema, cli.output.compact)
             .map_err(|err| write_output_error_with_path(err, &path))?;
         out.flush().map_err(|err| CliError::WriteOutput {
             path: path.clone(),
@@ -212,21 +195,10 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     } else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        write_schema_json(&mut out, &schema, cli.output.compact)?;
+        output_pipeline::write_schema_json(&mut out, &schema, cli.output.compact)?;
         out.flush()?;
     }
 
-    Ok(())
-}
-
-#[tracing::instrument(skip_all, fields(compact = compact))]
-fn write_schema_json(out: &mut impl Write, schema: &Value, compact: bool) -> CliResult<()> {
-    if compact {
-        serde_json::to_writer(&mut *out, schema)?;
-    } else {
-        serde_json::to_writer_pretty(&mut *out, schema)?;
-    }
-    out.write_all(b"\n")?;
     Ok(())
 }
 
@@ -237,69 +209,6 @@ fn write_output_error_with_path(err: CliError, path: &Path) -> CliError {
             source,
         },
         err => err,
-    }
-}
-
-fn strip_schema_descriptions(schema: &mut Value) {
-    let Some(object) = schema.as_object_mut() else {
-        return;
-    };
-
-    object.remove("description");
-
-    for key in [
-        "additionalItems",
-        "additionalProperties",
-        "contains",
-        "else",
-        "if",
-        "not",
-        "propertyNames",
-        "then",
-        "unevaluatedItems",
-        "unevaluatedProperties",
-    ] {
-        if let Some(child) = object.get_mut(key) {
-            strip_schema_descriptions(child);
-        }
-    }
-
-    if let Some(items) = object.get_mut("items") {
-        strip_schema_or_schema_array_descriptions(items);
-    }
-
-    for key in [
-        "$defs",
-        "definitions",
-        "dependentSchemas",
-        "dependencies",
-        "patternProperties",
-        "properties",
-    ] {
-        if let Some(Value::Object(children)) = object.get_mut(key) {
-            for child in children.values_mut() {
-                strip_schema_descriptions(child);
-            }
-        }
-    }
-
-    for key in ["allOf", "anyOf", "oneOf", "prefixItems"] {
-        if let Some(Value::Array(children)) = object.get_mut(key) {
-            for child in children {
-                strip_schema_descriptions(child);
-            }
-        }
-    }
-}
-
-fn strip_schema_or_schema_array_descriptions(value: &mut Value) {
-    match value {
-        Value::Array(items) => {
-            for item in items {
-                strip_schema_descriptions(item);
-            }
-        }
-        value => strip_schema_descriptions(value),
     }
 }
 
@@ -957,70 +866,6 @@ spec:
             Some(true),
             "shared open-global policy should be mirrored into nested child global: {nested_global}"
         );
-    }
-
-    #[test]
-    fn strip_schema_descriptions_preserves_description_value_property() {
-        let mut schema = serde_json::json!({
-            "description": "root annotation",
-            "type": "object",
-            "properties": {
-                "description": {
-                    "description": "value property annotation",
-                    "type": "string"
-                },
-                "nested": {
-                    "description": "nested annotation",
-                    "type": "object",
-                    "properties": {
-                        "description": {
-                            "description": "nested value property annotation",
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "$defs": {
-                "shared": {
-                    "description": "shared annotation",
-                    "type": "string"
-                }
-            },
-            "items": [
-                {
-                    "description": "tuple item annotation",
-                    "type": "string"
-                }
-            ]
-        });
-
-        strip_schema_descriptions(&mut schema);
-
-        assert!(schema.get("description").is_none());
-        assert_eq!(
-            schema.pointer("/properties/description/type"),
-            Some(&Value::String("string".to_string())),
-        );
-        assert!(
-            schema
-                .pointer("/properties/description/description")
-                .is_none(),
-        );
-        assert_eq!(
-            schema.pointer("/properties/nested/properties/description/type"),
-            Some(&Value::String("string".to_string())),
-        );
-        assert!(
-            schema
-                .pointer("/properties/nested/properties/description/description")
-                .is_none(),
-        );
-        assert!(schema.pointer("/$defs/shared/description").is_none());
-        assert_eq!(
-            schema.pointer("/items/0/type"),
-            Some(&Value::String("string".to_string())),
-        );
-        assert!(schema.pointer("/items/0/description").is_none());
     }
 
     #[test]

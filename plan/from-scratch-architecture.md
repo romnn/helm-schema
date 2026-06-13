@@ -1526,7 +1526,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
-  goldens once (deliberate, documented change).
+  goldens once (deliberate, documented change). Current progress: final CLI
+  emission now runs through a dedicated output pipeline that owns reference
+  flattening, description stripping, minimization, and JSON formatting while
+  preserving today's flags and output bytes. That makes the later bundled-vs-
+  flattened mode switch a single output-layer change instead of a root CLI
+  orchestration change.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
