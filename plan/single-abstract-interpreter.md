@@ -829,6 +829,9 @@ Current result:
   manifest contracts are scoped and combined as `ContractIr` before the final
   `ValueUse` projection, so subchart prefixing no longer rewrites
   compatibility DTOs directly.
+- Top-level values.yaml root seeds now enter through a pathless scalar claim
+  on `ContractIr`, so the CLI does not construct raw `ValueUse` compatibility
+  DTOs for values-file roots.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

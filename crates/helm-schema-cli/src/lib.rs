@@ -345,12 +345,11 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     )?;
 
     let ChartIrCollection {
-        mut uses,
+        uses,
         chart_facts,
         type_hints,
         call_graph,
-    } = collect_ir_for_charts(charts, &defines, opts.include_tests)?;
-    seed_top_level_values_yaml_keys(&mut uses, values_yaml.as_deref());
+    } = collect_ir_for_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
 
     let provider = provider_builder::build_provider(&opts.provider, diagnostic_sink);
 
@@ -434,7 +433,7 @@ pub(crate) struct ChartIrCollection {
     pub(crate) call_graph: HelperCallGraph,
 }
 
-fn seed_top_level_values_yaml_keys(uses: &mut Vec<ValueUse>, values_yaml: Option<&str>) {
+fn seed_top_level_values_yaml_keys(contract: &mut ContractIr, values_yaml: Option<&str>) {
     let Some(values_yaml) = values_yaml else {
         return;
     };
@@ -454,13 +453,7 @@ fn seed_top_level_values_yaml_keys(uses: &mut Vec<ValueUse>, values_yaml: Option
             continue;
         }
 
-        uses.push(ValueUse {
-            source_expr: key.to_string(),
-            path: helm_schema_ir::YamlPath(Vec::new()),
-            kind: helm_schema_ir::ValueKind::Scalar,
-            guards: Vec::new(),
-            resource: None,
-        });
+        contract.push_pathless_scalar(key.to_string());
     }
 }
 
@@ -599,6 +592,7 @@ fn collect_ir_for_charts(
     charts: &[chart::ChartContext],
     defines: &DefineIndex,
     include_tests: bool,
+    values_yaml: Option<&str>,
 ) -> CliResult<ChartIrCollection> {
     let mut contract = ContractIr::default();
     let mut chart_facts = ChartFacts::default();
@@ -631,6 +625,8 @@ fn collect_ir_for_charts(
             }
         }
     }
+
+    seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
     Ok(ChartIrCollection {
         uses: contract.into_value_uses(),
@@ -839,7 +835,7 @@ spec:
 
         let discovery = chart::discover_chart_contexts(&chart_dir)?;
         let defines = chart::build_define_index(&discovery.charts, false)?;
-        let collection = collect_ir_for_charts(&discovery.charts, &defines, false)?;
+        let collection = collect_ir_for_charts(&discovery.charts, &defines, false, None)?;
         let path = "kid.controller.ingressClassResource.parameters";
 
         let ir_facts = derive_chart_facts(&collection.uses);
@@ -1037,7 +1033,7 @@ spec:
         let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
         let discovery = chart::discover_chart_contexts(&chart_dir)?;
         let defines = chart::build_define_index(&discovery.charts, false)?;
-        let collection = collect_ir_for_charts(&discovery.charts, &defines, false)?;
+        let collection = collect_ir_for_charts(&discovery.charts, &defines, false, None)?;
         let path = "alertmanager.serviceAccount.name";
 
         assert!(

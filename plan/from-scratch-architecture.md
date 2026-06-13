@@ -1476,7 +1476,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   happens. The CLI now consumes that seam directly: chart-local manifest
   contracts are scoped and combined as `ContractIr` before the final `ValueUse`
   projection, so subchart prefixing no longer rewrites compatibility DTOs
-  directly. The
+  directly. Top-level values.yaml root seeds now also enter through a
+  pathless scalar claim on `ContractIr`, so the CLI no longer constructs raw
+  `ValueUse` compatibility DTOs for values-file roots. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

@@ -162,6 +162,20 @@ impl ContractIr {
         self.uses.extend(contract_uses);
     }
 
+    /// Add a pathless scalar claim for a value path.
+    ///
+    /// Pathless claims make a value path visible to downstream schema
+    /// generation without asserting any rendered Kubernetes field shape.
+    pub fn push_pathless_scalar(&mut self, source_expr: impl Into<String>) {
+        self.push(ContractUse::new(
+            source_expr.into(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            Vec::new(),
+            None,
+        ));
+    }
+
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
         self.uses.append(&mut other.uses);
@@ -479,5 +493,20 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
+        let mut contract = ContractIr::default();
+
+        contract.push_pathless_scalar("extraConfig");
+
+        let value_uses = contract.into_value_uses();
+        assert_eq!(value_uses.len(), 1);
+        assert_eq!(value_uses[0].source_expr, "extraConfig");
+        assert_eq!(value_uses[0].path, YamlPath(Vec::new()));
+        assert_eq!(value_uses[0].kind, ValueKind::Scalar);
+        assert!(value_uses[0].guards.is_empty());
+        assert!(value_uses[0].resource.is_none());
     }
 }
