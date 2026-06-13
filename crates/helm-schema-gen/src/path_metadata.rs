@@ -2,8 +2,6 @@ use std::collections::BTreeSet;
 
 use helm_schema_ir::ContractProjection;
 
-use crate::resolve_policy::ResolvePolicy;
-
 pub(crate) struct PathMetadata {
     pub(crate) nullable_paths: BTreeSet<String>,
     pub(crate) paths_with_descendants: BTreeSet<String>,
@@ -14,9 +12,8 @@ pub(crate) fn collect_path_metadata(
     contract_projection: &ContractProjection,
     referenced_value_paths: &BTreeSet<String>,
 ) -> PathMetadata {
-    let resolve_policy = ResolvePolicy::default();
     PathMetadata {
-        nullable_paths: resolve_policy.nullable_value_paths(contract_projection),
+        nullable_paths: contract_projection.nullable_value_paths(),
         paths_with_descendants: collect_paths_with_descendants(referenced_value_paths),
     }
 }

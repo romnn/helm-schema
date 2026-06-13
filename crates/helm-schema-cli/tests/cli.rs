@@ -1136,16 +1136,9 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
 -> color_eyre::eyre::Result<()> {
     // Charts pair the parens idiom with `| default` so a nil
     // `.Values.image.tag` falls back to `$appVersion`. The default
-    // pattern is what makes the inner path nullable in the schema —
-    // confirm that adding the parens to the *prefix* doesn't get in
-    // the way of `collect_nullable_value_paths` finding the inner
-    // `image.tag` path through the Default guard.
-    //
-    // Pre-fix the bug was structural: the IR didn't see
-    // `image.tag` as a Values path at all, so there was nothing for
-    // the nullability pass to mark. With the parens-collapse fix the
-    // path is visible, and the Default guard (also pointed at
-    // `image.tag`) should now flow through cleanly.
+    // pattern makes the inner path nullable in the contract projection.
+    // Parentheses on the prefix must still preserve the `image.tag`
+    // source path and its matching Default guard.
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(

@@ -772,7 +772,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
     "};
     let ir = parse_ir(src);
     let projection = ContractProjection::from_value_uses(ir.clone());
-    let nullable_paths = ResolvePolicy::default().nullable_value_paths(&projection);
+    let nullable_paths = projection.nullable_value_paths();
     assert!(
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
@@ -3844,7 +3844,7 @@ fn step2_default_in_string_literal_no_hint() {
     );
 }
 
-/// Strict per-use rule for `ResolvePolicy::nullable_value_paths`: a path is
+/// Strict per-use rule for contract nullable-path facts: a path is
 /// only null-tolerant when *every* render use carries a null-tolerating
 /// guard. Two uses of the same source expression - one with
 /// `Guard::Default { path }` matching, one with no guards - must not
@@ -3859,7 +3859,7 @@ fn step2_default_in_string_literal_no_hint() {
 /// per-use rule, that path correctly widens. Mixed-guards paths stay
 /// strict.
 #[test]
-fn resolve_policy_nullable_paths_requires_all_render_uses_to_be_null_tolerant() {
+fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
     let path = YamlPath(vec!["data".into(), "value".into()]);
     let guarded = ValueUse {
         source_expr: "image.tag".into(),
@@ -3879,7 +3879,7 @@ fn resolve_policy_nullable_paths_requires_all_render_uses_to_be_null_tolerant() 
     };
 
     let projection = ContractProjection::from_value_uses(vec![guarded, bare]);
-    let null_paths = ResolvePolicy::default().nullable_value_paths(&projection);
+    let null_paths = projection.nullable_value_paths();
     assert!(
         null_paths.is_empty(),
         "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",

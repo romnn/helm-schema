@@ -848,17 +848,19 @@ Current result:
 - CLI required-inference now accepts `ContractProjection` directly too, so its
   raw `ValueUse` access stays inside the generator compatibility module.
 - Generator evidence collection has started taking `ContractProjection`
-  directly as well: use signals, path metadata, and nullable-path policy now
-  own their compatibility-row access instead of forcing root schema generation
-  to pass raw slices around.
+  directly as well: use signals and path metadata now consume contract facts
+  instead of forcing root schema generation to pass raw slices around.
 - `ContractProjection` now stores normalized `ContractUse` claims directly.
   Generator evidence collection and `K8sSchemaProvider` lookups consume
   `ContractUse`; `ValueUse` remains an explicit fixture/external DTO
   projection via `into_value_uses()`.
+- Nullable-path classification now lives on `ContractProjection`, so the
+  generator consumes the contract's null-tolerance facts instead of
+  reinterpreting flat guards in `ResolvePolicy`.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
-  lowering, nullability classification, and per-path schema merge lowering
-  against the contract projection.
+  lowering, and per-path schema merge lowering against the contract
+  projection.
 - Values-file schema evidence now lives in `values_yaml`, separating
   values.yaml traversal and YAML-to-schema evidence construction from the
   generator root.

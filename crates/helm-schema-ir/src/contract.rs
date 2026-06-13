@@ -199,6 +199,20 @@ impl ContractProjection {
     pub fn chart_facts(&self) -> ChartFacts {
         derive_chart_facts_from_uses(&self.uses)
     }
+
+    /// Identify value paths for which an explicit `null` default is accepted
+    /// by the chart's template control flow.
+    ///
+    /// A path qualifies when every observed use is null-tolerant and at least
+    /// one rendered use provides non-null type evidence. Header-only
+    /// guard/binding uses are null-tolerant because Helm evaluates them
+    /// against `nil`; rendered uses must sit under a self-guard such as `if`,
+    /// `with`, `range`, `eq`, or a structural chart-default mutation for the
+    /// same values path.
+    #[must_use]
+    pub fn nullable_value_paths(&self) -> BTreeSet<String> {
+        derive_nullable_value_paths_from_uses(&self.uses)
+    }
 }
 
 /// Opaque guarded contract graph for one template interpretation.
@@ -502,6 +516,74 @@ fn derive_chart_facts_from_uses(uses: &[ContractUse]) -> ChartFacts {
     ChartFacts { path_facts }
 }
 
+fn derive_nullable_value_paths_from_uses(uses: &[ContractUse]) -> BTreeSet<String> {
+    struct NullablePathAccumulator {
+        has_render_use: bool,
+        all_uses_nullable: bool,
+    }
+
+    impl NullablePathAccumulator {
+        fn new() -> Self {
+            Self {
+                has_render_use: false,
+                all_uses_nullable: true,
+            }
+        }
+    }
+
+    let mut by_path: BTreeMap<&str, NullablePathAccumulator> = BTreeMap::new();
+    for contract_use in uses {
+        if contract_use.source_expr.trim().is_empty() {
+            continue;
+        }
+        let info = by_path
+            .entry(contract_use.source_expr.as_str())
+            .or_insert_with(NullablePathAccumulator::new);
+        let has_self_range_guard = contract_use.guards.iter().any(
+            |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
+        );
+        if !contract_use.path.0.is_empty()
+            || has_self_range_guard
+            || contract_use.kind == ValueKind::Fragment
+        {
+            info.has_render_use = true;
+        }
+        info.all_uses_nullable &= use_is_null_tolerant(contract_use);
+
+        for guard in &contract_use.guards {
+            if let Guard::Range { path } = guard
+                && !path.trim().is_empty()
+            {
+                by_path
+                    .entry(path.as_str())
+                    .or_insert_with(NullablePathAccumulator::new)
+                    .has_render_use = true;
+            }
+        }
+    }
+    by_path
+        .into_iter()
+        .filter_map(|(path, info)| {
+            (info.has_render_use && info.all_uses_nullable).then(|| path.to_string())
+        })
+        .collect()
+}
+
+fn use_is_null_tolerant(use_: &ContractUse) -> bool {
+    if use_.path.0.is_empty() {
+        return true;
+    }
+
+    use_.guards.iter().any(|guard| match guard {
+        Guard::Truthy { path }
+        | Guard::Eq { path, .. }
+        | Guard::Range { path }
+        | Guard::With { path }
+        | Guard::Default { path } => path == &use_.source_expr,
+        Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => false,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -676,5 +758,59 @@ mod tests {
         assert_eq!(value_uses[0].kind, ValueKind::Scalar);
         assert!(value_uses[0].guards.is_empty());
         assert!(value_uses[0].resource.is_none());
+    }
+
+    #[test]
+    fn contract_projection_nullable_paths_include_range_only_collection() {
+        let projection = ContractProjection::from_contract_uses(vec![ContractUse::new(
+            "snapshot".to_string(),
+            YamlPath(vec!["data".to_string(), "command".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Range {
+                path: "snapshots".to_string(),
+            }],
+            None,
+        )]);
+
+        let nullable_paths = projection.nullable_value_paths();
+
+        assert!(
+            nullable_paths.contains("snapshots"),
+            "range sources are null-tolerant because Helm treats nil range inputs as empty: {nullable_paths:?}",
+        );
+        assert!(
+            !nullable_paths.contains("snapshot"),
+            "range item values should not inherit collection nullability: {nullable_paths:?}",
+        );
+    }
+
+    #[test]
+    fn contract_projection_nullable_paths_require_every_render_use_to_be_tolerant() {
+        let path = YamlPath(vec!["metadata".to_string(), "name".to_string()]);
+        let projection = ContractProjection::from_contract_uses(vec![
+            ContractUse::new(
+                "serviceAccount.name".to_string(),
+                path.clone(),
+                ValueKind::Scalar,
+                vec![Guard::Default {
+                    path: "serviceAccount.name".to_string(),
+                }],
+                None,
+            ),
+            ContractUse::new(
+                "serviceAccount.name".to_string(),
+                path,
+                ValueKind::Scalar,
+                Vec::new(),
+                None,
+            ),
+        ]);
+
+        let nullable_paths = projection.nullable_value_paths();
+
+        assert!(
+            !nullable_paths.contains("serviceAccount.name"),
+            "one guarded render use must not make a bare render site nullable: {nullable_paths:?}",
+        );
     }
 }

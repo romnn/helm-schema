@@ -437,7 +437,7 @@ This is where `values.schema.json` should learn things like:
 
 The generator should become:
 
-1. resolve provider schema for concrete `ValueUse`s
+1. resolve provider schema for concrete `ContractUse` claims
 2. resolve `values.yaml` example schema
 3. apply `PathFact`:
    - preserve admitted falsey states
@@ -447,7 +447,7 @@ The generator should become:
 
 That means logic like:
 
-- `collect_nullable_value_paths`
+- nullable-path classification
 - placeholder-specific generator exceptions
 - path-specific "used as fragment" merge behavior
 

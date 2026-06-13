@@ -1502,14 +1502,16 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   required-inference now also accepts the projection artifact directly, keeping
   its heuristic raw-row access inside the generator compatibility module. The
   first generator evidence collectors now take `ContractProjection` directly
-  too (`use_signals`, path metadata, nullable-path policy), so raw DTO access
-  is increasingly contained inside compatibility collectors rather than the
-  root orchestration path. The
+  too (`use_signals`, path metadata), so raw DTO access is increasingly
+  contained inside compatibility collectors rather than the root orchestration
+  path. Nullable-path classification now lives on `ContractProjection`, so the
+  generator consumes contract-level null-tolerance facts instead of
+  reinterpreting flat guards in `ResolvePolicy`. The
   generator-side policy extraction has also started: provider schema domain
-  lowering, guard-constraint lowering, nullability classification, and the
-  per-path schema merge policy now live behind `ResolvePolicy`, leaving
-  root-schema construction to orchestrate collected evidence instead of owning
-  those semantic decisions directly. Values-file schema evidence is now also
+  lowering, guard-constraint lowering, and the per-path schema merge policy
+  now live behind `ResolvePolicy`, leaving root-schema construction to
+  orchestrate collected evidence instead of owning those semantic decisions
+  directly. Values-file schema evidence is now also
   isolated in `values_yaml`, so the generator root no longer owns values.yaml
   traversal and scalar/object evidence construction. Schema-tree mutation is
   now isolated in `schema_tree`, separating path insertion, wildcard descent,
@@ -1532,9 +1534,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   a second expression walker. The generator input no longer accepts external
   chart facts either, preventing callers from reintroducing that parallel
   projection channel. `ContractProjection` now stores normalized `ContractUse`
-  claims directly; generator evidence collection and `K8sSchemaProvider`
-  lookups consume those claims, while `ValueUse` remains only an explicit
-  fixture/external DTO projection.
+  claims directly; generator evidence collection, nullable-path
+  classification, and `K8sSchemaProvider` lookups consume those claims, while
+  `ValueUse` remains only an explicit fixture/external DTO projection.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the
