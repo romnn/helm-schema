@@ -49,7 +49,9 @@ pub use kubernetes_openapi::{
     K8sMirrorChain, K8sSource, K8sVersionChain, KubernetesJsonSchemaProvider,
 };
 pub use local_override::LocalSchemaProvider;
-pub use local_schema_universe::{ChartLocalCrdSchemaProvider, LocalSchemaUniverse};
+pub use local_schema_universe::{
+    ChartLocalCrdSchemaProvider, LocalResourceSchema, LocalSchemaUniverse,
+};
 pub use lookup::{
     ApiPresenceQuery, Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
     LookupTraceOutcome, LookupTraceSubject, ProviderLookupResult, ProviderOrigin,

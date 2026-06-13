@@ -1605,9 +1605,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   lookup chain, after explicit local overrides and before remote/default CRD
   catalogs. apiVersion guessing treats this chart-local provider as an
   authoritative local source with its own origin/source attribution. The
-  universe boundary is now source-agnostic, so template-rendered CRD
-  extraction can later populate the same artifact from A3 internal document
-  projection instead of adding another provider path.
+  universe boundary now has a source-neutral `LocalResourceSchema` insertion
+  surface: static CRD manifests are one producer, and fully-literal rendered
+  CRD document projection can later populate the same artifact instead of
+  adding another provider path.
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 

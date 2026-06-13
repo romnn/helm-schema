@@ -29,6 +29,29 @@ impl ResourceDocKey {
     }
 }
 
+/// A schema document for one concrete Kubernetes resource coordinate.
+///
+/// Static CRDs are one producer of this type today. Later, fully-literal
+/// rendered document projection can produce the same type without adding a
+/// second chart-local provider path.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LocalResourceSchema {
+    pub api_version: String,
+    pub kind: String,
+    pub schema: Value,
+}
+
+impl LocalResourceSchema {
+    #[must_use]
+    pub fn new(api_version: impl Into<String>, kind: impl Into<String>, schema: Value) -> Self {
+        Self {
+            api_version: api_version.into(),
+            kind: kind.into(),
+            schema,
+        }
+    }
+}
+
 /// Chart-local schemas keyed by Kubernetes resource coordinate.
 ///
 /// The universe is source-agnostic: static `crds/` files populate it today,
@@ -54,6 +77,10 @@ impl LocalSchemaUniverse {
 
     pub fn insert_crd_document(&mut self, document: Value) {
         insert_crd_versions(&mut self.docs, document);
+    }
+
+    pub fn insert_resource_schema(&mut self, resource_schema: LocalResourceSchema) {
+        insert_resource_schema(&mut self.docs, resource_schema);
     }
 
     #[must_use]
@@ -129,12 +156,22 @@ fn insert_schema_doc(
     kind: &str,
     schema: Value,
 ) {
+    insert_resource_schema(
+        docs,
+        LocalResourceSchema::new(format!("{group}/{version}"), kind, schema),
+    );
+}
+
+fn insert_resource_schema(
+    docs: &mut BTreeMap<ResourceDocKey, Arc<SchemaDoc>>,
+    resource_schema: LocalResourceSchema,
+) {
     let key = ResourceDocKey {
-        api_version: format!("{group}/{version}"),
-        kind: kind.to_string(),
+        api_version: resource_schema.api_version,
+        kind: resource_schema.kind,
     };
     docs.entry(key)
-        .or_insert_with(|| Arc::new(SchemaDoc::new(schema)));
+        .or_insert_with(|| Arc::new(SchemaDoc::new(resource_schema.schema)));
 }
 
 #[cfg(test)]
@@ -216,5 +253,35 @@ mod tests {
                 .schema_doc_for_resource(&resource("example.com/v1"))
                 .is_none()
         );
+    }
+
+    #[test]
+    fn inserts_direct_resource_schema_without_crd_envelope() {
+        let mut universe = LocalSchemaUniverse::default();
+        universe.insert_resource_schema(LocalResourceSchema::new(
+            "example.com/v1",
+            "Widget",
+            json!({
+                "type": "object",
+                "properties": {
+                    "spec": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {"type": "boolean"}
+                        }
+                    }
+                }
+            }),
+        ));
+
+        let schema = universe
+            .schema_doc_for_resource(&resource("example.com/v1"))
+            .and_then(|schema_doc| {
+                schema_doc
+                    .root()
+                    .pointer("/properties/spec/properties/enabled")
+            });
+
+        assert_eq!(schema, Some(&json!({"type": "boolean"})));
     }
 }
