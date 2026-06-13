@@ -16,7 +16,7 @@ use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
 use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::lookup::{ApiPresenceQuery, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::schema_doc::SchemaDoc;
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
@@ -379,9 +379,12 @@ impl KubernetesJsonSchemaProvider {
     /// completeness of a partial offline run doesn't get to vote on
     /// what the chart would emit.
     #[must_use]
-    pub fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
+    pub fn capability_has_query_at_primary_version(
+        &self,
+        query: &ApiPresenceQuery,
+    ) -> Option<bool> {
         let primary = self.versions.primary()?;
-        let probe = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(api)?;
+        let probe = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(query)?;
         let candidates = candidate_filenames_for_resource(&probe);
         // Aggregate the outcome across (source × filename) pairs.
         // Found-ness short-circuits to `Some(true)`. Without that, the
@@ -406,6 +409,12 @@ impl KubernetesJsonSchemaProvider {
             ProbeOutcome::AuthoritativelyAbsent => Some(false),
             ProbeOutcome::Uncertain => None,
         }
+    }
+
+    #[must_use]
+    pub fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
+        let query = ApiPresenceQuery::parse_helm_literal(api)?;
+        self.capability_has_query_at_primary_version(&query)
     }
 
     /// Single-probe upstream-first lookup with tri-state outcome. The
@@ -644,8 +653,8 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         KubernetesJsonSchemaProvider::cache_versions_holding(self, resource)
     }
 
-    fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
-        KubernetesJsonSchemaProvider::capability_has_at_primary_version(self, api)
+    fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
+        KubernetesJsonSchemaProvider::capability_has_query_at_primary_version(self, query)
     }
 
     fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {

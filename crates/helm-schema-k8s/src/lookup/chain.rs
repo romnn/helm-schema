@@ -9,9 +9,11 @@ use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::filename::candidate_filenames_for_resource;
 use crate::inference::{self, ApiVersionInferenceOutcome};
 
+use super::api_presence::ApiPresenceQuery;
 use super::chain_outcome::ChainLookupOutcome;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
+use super::trace::{LookupTrace, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
 
 /// Composed provider chain with precedence
@@ -258,6 +260,17 @@ impl Chain {
         self.resolve_against_chain_internal(resource, path, true)
     }
 
+    /// Resolve a single concrete `(apiVersion, kind)` and keep the executed
+    /// provider attempts. The current public schema APIs still consume only the
+    /// outcome; diagnostics can later be projected from this trace.
+    pub fn resolve_against_chain_traced(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> TracedLookupOutcome {
+        self.resolve_against_chain_traced_internal(resource, path, true)
+    }
+
     /// `commit_miss_diagnostics = false` is silent mode used by
     /// [`Self::schema_for_use`] during multi-candidate iteration. In
     /// silent mode the chain still returns the typed outcome and still
@@ -272,9 +285,22 @@ impl Chain {
         path: &YamlPath,
         commit_miss_diagnostics: bool,
     ) -> ChainLookupOutcome {
+        self.resolve_against_chain_traced_internal(resource, path, commit_miss_diagnostics)
+            .into_outcome()
+    }
+
+    fn resolve_against_chain_traced_internal(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+        commit_miss_diagnostics: bool,
+    ) -> TracedLookupOutcome {
+        let mut trace = LookupTrace::new(resource, path);
         for (provider_index, provider) in self.providers.iter().enumerate() {
-            match self.lookup_with_provider_cache(provider_index, provider.as_ref(), resource, path)
-            {
+            let result =
+                self.lookup_with_provider_cache(provider_index, provider.as_ref(), resource, path);
+            trace.record_provider(provider.origin(), &result);
+            match result {
                 ProviderLookupResult::Found {
                     schema,
                     resolved_k8s_version,
@@ -284,17 +310,23 @@ impl Chain {
                         provider.origin(),
                         resolved_k8s_version.as_deref(),
                     );
-                    return ChainLookupOutcome::Resolved {
-                        schema: Some(schema),
-                        resolving_provider: provider.origin(),
-                        resolved_k8s_version,
+                    return TracedLookupOutcome {
+                        outcome: ChainLookupOutcome::Resolved {
+                            schema: Some(schema),
+                            resolving_provider: provider.origin(),
+                            resolved_k8s_version,
+                        },
+                        trace,
                     };
                 }
                 ProviderLookupResult::PathUnresolved => {
-                    return ChainLookupOutcome::Resolved {
-                        schema: None,
-                        resolving_provider: provider.origin(),
-                        resolved_k8s_version: None,
+                    return TracedLookupOutcome {
+                        outcome: ChainLookupOutcome::Resolved {
+                            schema: None,
+                            resolving_provider: provider.origin(),
+                            resolved_k8s_version: None,
+                        },
+                        trace,
                     };
                 }
                 ProviderLookupResult::ResourceDocMissing {
@@ -310,9 +342,12 @@ impl Chain {
                                 io_error,
                             });
                         }
-                        return ChainLookupOutcome::MissingSchema {
-                            k8s_versions_tried: Vec::new(),
-                            tried_filenames: candidate_filenames_for_resource(resource),
+                        return TracedLookupOutcome {
+                            outcome: ChainLookupOutcome::MissingSchema {
+                                k8s_versions_tried: Vec::new(),
+                                tried_filenames: candidate_filenames_for_resource(resource),
+                            },
+                            trace,
                         };
                     }
                 }
@@ -326,7 +361,7 @@ impl Chain {
         if commit_miss_diagnostics {
             self.commit_missing_schema(resource);
         }
-        outcome
+        TracedLookupOutcome { outcome, trace }
     }
 
     /// Emit one `MissingSchema` for `resource` and all provider-side
@@ -488,13 +523,16 @@ impl K8sSchemaProvider for Chain {
         self.providers.iter().any(|p| p.has_resource(resource))
     }
 
-    fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
-        // First non-`None` answer wins — typically the K8s OpenAPI
-        // provider for built-in apis. CRD / local-override providers
-        // abstain (default `None`).
+    fn kube_version(&self) -> Option<&str> {
+        self.providers.iter().find_map(|p| p.kube_version())
+    }
+
+    fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
+        // First non-`None` answer wins — typically the K8s OpenAPI provider
+        // for built-in apis. CRD / local-override providers abstain.
         self.providers
             .iter()
-            .find_map(|p| p.capability_has_at_primary_version(api))
+            .find_map(|p| p.capability_has_query_at_primary_version(query))
     }
 }
 

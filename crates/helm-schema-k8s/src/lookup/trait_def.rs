@@ -5,6 +5,7 @@ use crate::diagnostic::Diagnostic;
 use crate::filename::ordered_api_versions_for_resource;
 use crate::inference::candidate::ApiVersionCandidate;
 
+use super::api_presence::ApiPresenceQuery;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
 
@@ -88,6 +89,13 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         None
     }
 
+    /// Kubernetes version targeted by capability evaluation. This is the
+    /// public adapter name used by higher layers; provider implementations can
+    /// keep `primary_k8s_version` as their source of truth during migration.
+    fn kube_version(&self) -> Option<&str> {
+        self.primary_k8s_version()
+    }
+
     /// Full K8s version chain (for `MissingSchema` payload). Non-K8s
     /// providers leave the default `None`.
     fn k8s_version_chain(&self) -> Option<Vec<String>> {
@@ -116,15 +124,12 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         Vec::new()
     }
 
-    /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`
-    /// against this provider's primary K8s version.
+    /// Authoritative answer to a typed `.Capabilities.APIVersions.Has ...`
+    /// query against this provider's primary K8s version.
     ///
-    /// `api` is the literal Helm argument: either `group/version`
-    /// (e.g. `"policy/v1"` — true if the K8s version supports the api
-    /// group at that version) or `group/version/Kind`
-    /// (e.g. `"policy/v1/PodSecurityPolicy"` — true if the kind exists
-    /// at that api version in this K8s version). The core API uses
-    /// `version` (e.g. `"v1"`).
+    /// [`ApiPresenceQuery::Resource`] probes an exact kind;
+    /// [`ApiPresenceQuery::GroupVersion`] asks whether the API group/version is
+    /// present.
     ///
     /// Returns:
     ///   - `Some(true)` when the api (and kind, if specified) exists
@@ -141,7 +146,15 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     ///
     /// Default returns `None` (providers that don't carry a K8s
     /// version concept — `LocalOverride`, `DefaultCatalog` — abstain).
-    fn capability_has_at_primary_version(&self, _api: &str) -> Option<bool> {
+    fn capability_has_query_at_primary_version(&self, _query: &ApiPresenceQuery) -> Option<bool> {
         None
+    }
+
+    /// Compatibility adapter for current callers that still carry the raw Helm
+    /// literal. New code should prefer
+    /// [`Self::capability_has_query_at_primary_version`].
+    fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
+        let query = ApiPresenceQuery::parse_helm_literal(api)?;
+        self.capability_has_query_at_primary_version(&query)
     }
 }

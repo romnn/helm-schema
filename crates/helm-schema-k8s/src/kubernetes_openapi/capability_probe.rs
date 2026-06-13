@@ -1,5 +1,7 @@
 use helm_schema_ir::ResourceRef;
 
+use crate::lookup::ApiPresenceQuery;
+
 /// Declarative probe table for `.Capabilities.APIVersions.Has "group/version"`.
 ///
 /// Helm's capability API accepts both api-version and resource-qualified forms.
@@ -24,25 +26,16 @@ impl CapabilityProbeTable {
     /// supplies the canonical probe kind. Unknown api-version-only literals
     /// return `None` so the caller can keep the capability guard potentially
     /// live.
-    pub(super) fn build_probe(self, api: &str) -> Option<ResourceRef> {
-        let parts: Vec<&str> = api.split('/').collect();
-        let (api_version, kind) = match parts.as_slice() {
-            [_, _, kind] => (parts[..2].join("/"), (*kind).to_string()),
-            [version, kind] if is_k8s_api_version_segment(version) => {
-                ((*version).to_string(), (*kind).to_string())
-            }
-            [_, _] | [_] => (api.to_string(), self.canonical_kind(api)?.to_string()),
-            _ => return None,
-        };
-        if api_version.is_empty() || kind.is_empty() {
-            return None;
+    pub(super) fn build_probe(self, query: &ApiPresenceQuery) -> Option<ResourceRef> {
+        match query {
+            ApiPresenceQuery::Resource(resource) => Some(resource.clone()),
+            ApiPresenceQuery::GroupVersion { api_version } => Some(ResourceRef {
+                api_version: api_version.clone(),
+                kind: self.canonical_kind(api_version)?.to_string(),
+                api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
+            }),
         }
-        Some(ResourceRef {
-            api_version,
-            kind,
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
     }
 
     fn canonical_kind(self, api_version: &str) -> Option<&'static str> {
@@ -51,26 +44,6 @@ impl CapabilityProbeTable {
             .find(|(candidate, _)| *candidate == api_version)
             .map(|(_, kind)| *kind)
     }
-}
-
-fn is_k8s_api_version_segment(segment: &str) -> bool {
-    let Some(rest) = segment.strip_prefix('v') else {
-        return false;
-    };
-    let digit_count = rest.chars().take_while(|c| c.is_ascii_digit()).count();
-    if digit_count == 0 {
-        return false;
-    }
-    let suffix = &rest[digit_count..];
-    if suffix.is_empty() {
-        return true;
-    }
-    for qualifier in ["alpha", "beta"] {
-        if let Some(number) = suffix.strip_prefix(qualifier) {
-            return !number.is_empty() && number.chars().all(|c| c.is_ascii_digit());
-        }
-    }
-    false
 }
 
 const WELL_KNOWN_API_VERSION_PROBES: &[(&str, &str)] = &[
@@ -128,7 +101,8 @@ mod tests {
     use super::*;
 
     fn probe(api: &str) -> Option<ResourceRef> {
-        DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(api)
+        let query = ApiPresenceQuery::parse_helm_literal(api)?;
+        DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(&query)
     }
 
     #[test]
@@ -172,19 +146,5 @@ mod tests {
     fn malformed_resource_qualified_probe_abstains() {
         assert!(probe("policy/v1/").is_none());
         assert!(probe("v1/").is_none());
-    }
-
-    #[test]
-    fn api_version_segment_parser_accepts_stable_and_prerelease_versions() {
-        assert!(is_k8s_api_version_segment("v1"));
-        assert!(is_k8s_api_version_segment("v2beta1"));
-        assert!(is_k8s_api_version_segment("v3alpha2"));
-    }
-
-    #[test]
-    fn api_version_segment_parser_rejects_group_names_and_incomplete_versions() {
-        assert!(!is_k8s_api_version_segment("policy"));
-        assert!(!is_k8s_api_version_segment("v"));
-        assert!(!is_k8s_api_version_segment("v1gamma1"));
     }
 }

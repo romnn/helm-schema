@@ -4,7 +4,8 @@
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
-    Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
+    ApiPresenceQuery, Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceOutcome,
+    ProviderLookupResult, ProviderOrigin,
 };
 use serde_json::Value;
 
@@ -75,8 +76,19 @@ impl K8sSchemaProvider for FakeProvider {
         self.has_resource
     }
 
-    fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
-        self.capability_answers.get(api).copied()
+    fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
+        self.capability_answers
+            .get(&capability_query_key(query))
+            .copied()
+    }
+}
+
+fn capability_query_key(query: &ApiPresenceQuery) -> String {
+    match query {
+        ApiPresenceQuery::GroupVersion { api_version } => api_version.clone(),
+        ApiPresenceQuery::Resource(resource) => {
+            format!("{}/{}", resource.api_version, resource.kind)
+        }
     }
 }
 
@@ -249,6 +261,85 @@ fn chain_non_override_resource_doc_missing_falls_through() {
         Some(Value::String("k8s-wins".to_string())),
         "non-override ResourceDocMissing falls through to next provider"
     );
+}
+
+#[test]
+fn traced_resolution_records_provider_attempts_until_resolution() {
+    let local = FakeProvider::new(
+        ProviderOrigin::LocalOverride,
+        false,
+        FakeBehaviour::NotOwned,
+    );
+    let crd = FakeProvider::new(
+        ProviderOrigin::DefaultCatalog,
+        true,
+        FakeBehaviour::ResourceDocMissing {
+            path: String::new(),
+            io: "transient".to_string(),
+        },
+    );
+    let k8s = FakeProvider::new(
+        ProviderOrigin::KubernetesOpenApi,
+        true,
+        FakeBehaviour::Found(Value::String("k8s-wins".to_string())),
+    );
+    let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
+
+    let traced = chain.resolve_against_chain_traced(&resource(), &YamlPath(Vec::new()));
+    let attempts: Vec<(ProviderOrigin, LookupTraceOutcome)> = traced
+        .trace
+        .entries()
+        .iter()
+        .map(|entry| (entry.provider, entry.outcome.clone()))
+        .collect();
+
+    assert_eq!(
+        attempts,
+        vec![
+            (ProviderOrigin::LocalOverride, LookupTraceOutcome::NotOwned),
+            (
+                ProviderOrigin::DefaultCatalog,
+                LookupTraceOutcome::ResourceDocMissing {
+                    source_path: String::new(),
+                    io_error: "transient".to_string(),
+                },
+            ),
+            (
+                ProviderOrigin::KubernetesOpenApi,
+                LookupTraceOutcome::Found {
+                    resolved_k8s_version: None,
+                },
+            ),
+        ]
+    );
+}
+
+#[test]
+fn chain_exposes_provider_kube_version() {
+    #[derive(Debug)]
+    struct VersionedProvider;
+
+    impl K8sSchemaProvider for VersionedProvider {
+        fn schema_for_resource_path(&self, _r: &ResourceRef, _p: &YamlPath) -> Option<Value> {
+            None
+        }
+
+        fn origin(&self) -> ProviderOrigin {
+            ProviderOrigin::KubernetesOpenApi
+        }
+
+        fn has_resource(&self, _r: &ResourceRef) -> bool {
+            false
+        }
+
+        fn primary_k8s_version(&self) -> Option<&str> {
+            Some("v1.35.0")
+        }
+    }
+
+    let chain = Chain::new(vec![Box::new(VersionedProvider)]);
+
+    assert_eq!(chain.kube_version(), Some("v1.35.0"));
 }
 
 #[test]
@@ -534,9 +625,10 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
 }
 
 // Round-12 Finding 1: end-to-end nested-branch composition through
-// the live Chain. Outer `if Has A then (Nested if Has B then "b"
-// else "b_legacy") else "y"` with both A and B live → chain picks
-// the deepest live literal "b" and attributes MissingSchema to it.
+// the live Chain. Outer `if Has example.com/v1 then (Nested if Has
+// other.example.com/v1 then "b" else "b_legacy") else "y"` with both guards
+// live → chain picks the deepest live literal "b" and attributes
+// MissingSchema to it.
 // This tests that the chain's commit_missing_schema path uses
 // live_literals (which recurses through Nested) for attribution.
 #[test]
@@ -548,15 +640,15 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
         false,
         FakeBehaviour::NotOwned,
     )
-    .with_capability("A", true)
-    .with_capability("B", true);
+    .with_capability("example.com/v1", true)
+    .with_capability("other.example.com/v1", true);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
     let nested = vec![
         HelperBranch::with_literals(
             Some(CapabilityGuard::Has {
-                api: "B".to_string(),
+                api: "other.example.com/v1".to_string(),
             }),
             vec!["b".to_string()],
         ),
@@ -569,7 +661,7 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
         api_version_branches: vec![
             HelperBranch::with_nested(
                 Some(CapabilityGuard::Has {
-                    api: "A".to_string(),
+                    api: "example.com/v1".to_string(),
                 }),
                 nested,
             ),
@@ -612,15 +704,15 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
         false,
         FakeBehaviour::NotOwned,
     )
-    .with_capability("A", true)
-    .with_capability("B", false);
+    .with_capability("example.com/v1", true)
+    .with_capability("other.example.com/v1", false);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
     let nested = vec![
         HelperBranch::with_literals(
             Some(CapabilityGuard::Has {
-                api: "B".to_string(),
+                api: "other.example.com/v1".to_string(),
             }),
             vec!["b".to_string()],
         ),
@@ -633,7 +725,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
         api_version_branches: vec![
             HelperBranch::with_nested(
                 Some(CapabilityGuard::Has {
-                    api: "A".to_string(),
+                    api: "example.com/v1".to_string(),
                 }),
                 nested,
             ),

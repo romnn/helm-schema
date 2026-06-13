@@ -908,7 +908,10 @@ Current result:
   api-version probe table into a dedicated provider submodule. Direct
   resource-qualified capability literals now bypass that table, including core
   resource literals such as `v1/Secret`; only api-version-only literals need
-  the declarative probe table until a bundled upstream index exists.
+  the declarative probe table until a bundled upstream index exists. Capability
+  literals now parse into typed `ApiPresenceQuery` values, the chain exposes
+  `kube_version()`, and normal chain lookup has a concrete `LookupTrace`
+  scaffold.
 
 ## Completion criteria
 

@@ -1538,7 +1538,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 - **B1 — planner/executor**: pure `plan()` + one `execute()` +
   `LookupTrace`; collapse both provider monoliths and the chain; diagnostics
   parity proven by projecting today's `MissingSchema` richness from the
-  trace.
+  trace. Current progress: concrete chain resolution now has a
+  `resolve_against_chain_traced` entry point and records provider attempts in
+  a `LookupTrace` while existing schema callers keep the same outcome surface.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
@@ -1557,10 +1559,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `capability_probe` module instead of the OpenAPI provider monolith.
   Resource-qualified capability literals bypass the table and probe their
   kind directly, including core resources such as `v1/Secret`; only
-  api-version-only literals consult the declarative table. The remaining B3
-  work is to route these probes through the same planner/executor trace that
-  will back normal schema lookup, and to expose `kube_version()` through the
-  same adapter boundary.
+  api-version-only literals consult the declarative table. Capability literals
+  now parse into a typed `ApiPresenceQuery`; the raw-string oracle method is a
+  compatibility adapter over the typed query, and the chain exposes
+  `kube_version()` through the same provider boundary. The remaining B3 work
+  is to route provider-level capability probes through the same
+  planner/executor trace that backs normal schema lookup.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's
