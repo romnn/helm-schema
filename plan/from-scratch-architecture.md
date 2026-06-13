@@ -1542,7 +1542,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
-  prerequisite for A5's bundling.
+  prerequisite for A5's bundling. Current progress: providers now share parsed
+  raw schema documents through a named `SchemaDoc` wrapper instead of cloning
+  whole `serde_json::Value` trees from raw document caches. The remaining B2
+  work is to make resource-path lookup descend through refs lazily and stop
+  caching fully expanded resource documents as the production lookup path.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the

@@ -17,6 +17,7 @@ use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::schema_doc::SchemaDoc;
 
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
 use super::resolve_ctx::{ResolveCtx, expand_schema_node};
@@ -66,7 +67,7 @@ pub struct KubernetesJsonSchemaProvider {
     layout_checker: Arc<LayoutChecker>,
     diagnostic_sink: Option<DiagnosticSink>,
 
-    mem: Mutex<HashMap<MemKey, Value>>,
+    mem: Mutex<HashMap<MemKey, SchemaDoc>>,
     materialized: Mutex<HashMap<ResourceDocKey, MaterializedResourceDoc>>,
 }
 
@@ -195,7 +196,10 @@ impl KubernetesJsonSchemaProvider {
     /// Provider-facing entry point: walk `(version, mirror)` and
     /// return the first source that owns the resource.
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
-    fn load_resource_doc(&self, resource: &ResourceRef) -> Option<(String, String, String, Value)> {
+    fn load_resource_doc(
+        &self,
+        resource: &ResourceRef,
+    ) -> Option<(String, String, String, SchemaDoc)> {
         if resource.api_version.trim().is_empty() {
             return None;
         }
@@ -240,7 +244,7 @@ impl KubernetesJsonSchemaProvider {
         source: &K8sSource,
         version: &str,
         filename: &str,
-    ) -> Option<Value> {
+    ) -> Option<SchemaDoc> {
         let local = k8s_cache_path(&self.cache_dir, &source.source_id, version, filename);
         if self.use_cache {
             if let Some(v) = self.read_mem_for(&source.source_id, version, filename) {
@@ -250,7 +254,8 @@ impl KubernetesJsonSchemaProvider {
                 && let Ok(bytes) = fs::read(&local)
                 && let Ok(doc) = serde_json::from_slice::<Value>(&bytes)
             {
-                self.write_mem(&source.source_id, version, filename, &doc);
+                let doc = SchemaDoc::new(doc);
+                self.write_mem(&source.source_id, version, filename, doc.clone());
                 return Some(doc);
             }
             if self
@@ -275,9 +280,9 @@ impl KubernetesJsonSchemaProvider {
                 if self.record_source {
                     write_meta_sidecar(&local, &url);
                 }
-                let doc = serde_json::from_slice::<Value>(&bytes).ok()?;
+                let doc = SchemaDoc::new(serde_json::from_slice::<Value>(&bytes).ok()?);
                 clear_not_found_marker(&local);
-                self.write_mem(&source.source_id, version, filename, &doc);
+                self.write_mem(&source.source_id, version, filename, doc.clone());
                 Some(doc)
             }
             Ok(None) => {
@@ -290,11 +295,11 @@ impl KubernetesJsonSchemaProvider {
         }
     }
 
-    fn read_mem(&self, version: &str, filename: &str) -> Option<Value> {
+    fn read_mem(&self, version: &str, filename: &str) -> Option<SchemaDoc> {
         self.read_mem_for(default_source_id(), version, filename)
     }
 
-    fn read_mem_for(&self, source_id: &str, version: &str, filename: &str) -> Option<Value> {
+    fn read_mem_for(&self, source_id: &str, version: &str, filename: &str) -> Option<SchemaDoc> {
         self.mem.lock().ok().and_then(|g| {
             g.get(&(
                 source_id.to_string(),
@@ -305,7 +310,7 @@ impl KubernetesJsonSchemaProvider {
         })
     }
 
-    fn write_mem(&self, source_id: &str, version: &str, filename: &str, doc: &Value) {
+    fn write_mem(&self, source_id: &str, version: &str, filename: &str, doc: SchemaDoc) {
         if let Ok(mut guard) = self.mem.lock() {
             guard.insert(
                 (
@@ -313,7 +318,7 @@ impl KubernetesJsonSchemaProvider {
                     version.to_string(),
                     filename.to_string(),
                 ),
-                doc.clone(),
+                doc,
             );
         }
     }
@@ -523,7 +528,7 @@ impl KubernetesJsonSchemaProvider {
                     return ProbeOutcome::Uncertain;
                 };
                 clear_not_found_marker(&local);
-                self.write_mem(source_id, version, filename, &doc);
+                self.write_mem(source_id, version, filename, SchemaDoc::new(doc));
                 ProbeOutcome::Found
             }
             Ok(None) => {

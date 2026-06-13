@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 use serde_json::{Map, Value};
 
+use crate::schema_doc::SchemaDoc;
+
 /// `$ref` resolution context. Holds previously-loaded documents and a
 /// stack of (filename, json-pointer) pairs to break cycles.
 ///
@@ -14,12 +16,12 @@ use serde_json::{Map, Value};
 /// path the resource doc came from).
 pub struct ResolveCtx<F: FnMut(&str) -> Option<PathBuf>> {
     loader: F,
-    docs: HashMap<String, Value>,
+    docs: HashMap<String, SchemaDoc>,
     stack: HashSet<(String, String)>,
 }
 
 impl<F: FnMut(&str) -> Option<PathBuf>> ResolveCtx<F> {
-    pub fn new(loader: F, root_filename: String, root_doc: Value) -> Self {
+    pub fn new(loader: F, root_filename: String, root_doc: SchemaDoc) -> Self {
         let mut docs = HashMap::new();
         docs.insert(root_filename, root_doc);
         Self {
@@ -38,18 +40,18 @@ impl<F: FnMut(&str) -> Option<PathBuf>> ResolveCtx<F> {
     }
 
     pub fn doc(&self, filename: &str) -> Option<&Value> {
-        self.docs.get(filename)
+        self.docs.get(filename).map(SchemaDoc::root)
     }
 
     fn load_doc(&mut self, filename: &str) -> Option<&Value> {
         if self.docs.contains_key(filename) {
-            return self.docs.get(filename);
+            return self.doc(filename);
         }
         let local = (self.loader)(filename)?;
         let bytes = fs::read(&local).ok()?;
         let doc: Value = serde_json::from_slice(&bytes).ok()?;
-        self.docs.insert(filename.to_string(), doc);
-        self.docs.get(filename)
+        self.docs.insert(filename.to_string(), SchemaDoc::new(doc));
+        self.doc(filename)
     }
 
     fn resolve_ref(&mut self, current_filename: &str, r: &str) -> Option<(String, Value)> {

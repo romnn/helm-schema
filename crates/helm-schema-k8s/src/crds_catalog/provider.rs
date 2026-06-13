@@ -16,6 +16,7 @@ use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_override::{descend_schema_path, expand_local_refs};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
+use crate::schema_doc::SchemaDoc;
 
 use super::cross_scan::collect_other_versions;
 use super::mirror_chain::{CrdMirrorChain, CrdSource};
@@ -38,7 +39,7 @@ pub struct CrdsCatalogSchemaProvider {
     layout_checker: Arc<LayoutChecker>,
     diagnostic_sink: Option<DiagnosticSink>,
 
-    mem: Mutex<HashMap<MemKey, Value>>,
+    mem: Mutex<HashMap<MemKey, SchemaDoc>>,
     materialized: Mutex<HashMap<ResourceRef, Arc<Value>>>,
 }
 
@@ -131,7 +132,7 @@ impl CrdsCatalogSchemaProvider {
         )
     }
 
-    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<(String, Value)> {
+    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<(String, SchemaDoc)> {
         let relative_path = relative_path_for_resource(resource)?;
         let layout = self.run_layout_check();
         if layout == LayoutCheckOutcome::ForwardIncompatible {
@@ -176,7 +177,7 @@ impl CrdsCatalogSchemaProvider {
             .collect()
     }
 
-    fn try_load_from_source(&self, source: &CrdSource, relative_path: &str) -> Option<Value> {
+    fn try_load_from_source(&self, source: &CrdSource, relative_path: &str) -> Option<SchemaDoc> {
         if let Some(v) = self.read_mem(&source.source_id, relative_path) {
             return Some(v);
         }
@@ -185,7 +186,8 @@ impl CrdsCatalogSchemaProvider {
             && let Ok(bytes) = fs::read(&local)
             && let Ok(doc) = serde_json::from_slice::<Value>(&bytes)
         {
-            self.write_mem(&source.source_id, relative_path, &doc);
+            let doc = SchemaDoc::new(doc);
+            self.write_mem(&source.source_id, relative_path, doc.clone());
             return Some(doc);
         }
         if !self.allow_download {
@@ -208,8 +210,8 @@ impl CrdsCatalogSchemaProvider {
                 if self.record_source {
                     write_meta_sidecar(&local, &url);
                 }
-                let doc = serde_json::from_slice::<Value>(&bytes).ok()?;
-                self.write_mem(&source.source_id, relative_path, &doc);
+                let doc = SchemaDoc::new(serde_json::from_slice::<Value>(&bytes).ok()?);
+                self.write_mem(&source.source_id, relative_path, doc.clone());
                 Some(doc)
             }
             Ok(None) => {
@@ -221,19 +223,16 @@ impl CrdsCatalogSchemaProvider {
         }
     }
 
-    fn read_mem(&self, source_id: &str, relative_path: &str) -> Option<Value> {
+    fn read_mem(&self, source_id: &str, relative_path: &str) -> Option<SchemaDoc> {
         self.mem.lock().ok().and_then(|g| {
             g.get(&(source_id.to_string(), relative_path.to_string()))
                 .cloned()
         })
     }
 
-    fn write_mem(&self, source_id: &str, relative_path: &str, doc: &Value) {
+    fn write_mem(&self, source_id: &str, relative_path: &str, doc: SchemaDoc) {
         if let Ok(mut g) = self.mem.lock() {
-            g.insert(
-                (source_id.to_string(), relative_path.to_string()),
-                doc.clone(),
-            );
+            g.insert((source_id.to_string(), relative_path.to_string()), doc);
         }
     }
 
@@ -266,7 +265,10 @@ impl CrdsCatalogSchemaProvider {
         let (_source_id, root) = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
         let materialized = Arc::new(enrich_root_metadata_schema(expand_local_refs(
-            &root, &root, 0, &mut stack,
+            root.root(),
+            root.root(),
+            0,
+            &mut stack,
         )));
         if let Ok(mut guard) = self.materialized.lock() {
             guard.insert(resource.clone(), Arc::clone(&materialized));

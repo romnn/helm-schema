@@ -896,6 +896,10 @@ Current result:
   flattening, description stripping, minimization, and JSON formatting. The
   extraction preserves current output behavior but gives bundled-vs-flattened
   emission one owner for the later default change.
+- B2 has started under the provider layer: raw parsed schema documents are now
+  shared through `SchemaDoc` instead of cloned out of provider caches. Fully
+  expanded per-resource documents still exist; deleting them remains the next
+  B2 prerequisite before bundled emission becomes the default.
 
 ## Completion criteria
 
