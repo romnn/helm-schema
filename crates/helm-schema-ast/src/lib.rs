@@ -3,7 +3,7 @@ mod tree_sitter_parser;
 mod values_comments;
 
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
-pub use tree_sitter_parser::TreeSitterParser;
+pub use tree_sitter_parser::{ParsedTemplate, TreeSitterParser, contains_template_action};
 pub use values_comments::extract_values_yaml_descriptions;
 
 use std::collections::{HashMap, hash_map::Entry};

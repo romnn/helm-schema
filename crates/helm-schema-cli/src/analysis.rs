@@ -1,12 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{
     ChartFacts, ContractIr, ContractProjection, SymbolicIrContext, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::LocalSchemaUniverse;
+use serde::Deserialize;
 use serde_json::{Value, json};
 use serde_yaml::Value as YamlValue;
 use vfs::VfsPath;
@@ -70,7 +71,7 @@ pub(crate) fn analyze_charts(
     let mut contract = ContractIr::default();
     let mut chart_facts = ChartFacts::default();
     let mut type_hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-    let local_schema_universe = chart::collect_static_crd_universe(charts)?;
+    let mut local_schema_universe = chart::collect_static_crd_universe(charts)?;
     let symbolic_context = SymbolicIrContext::new(defines);
 
     for chart in charts {
@@ -84,6 +85,7 @@ pub(crate) fn analyze_charts(
             include_tests,
             &mut contract,
             &mut chart_facts,
+            &mut local_schema_universe,
         )?;
     }
 
@@ -188,12 +190,14 @@ fn collect_manifest_ir_for_chart(
     include_tests: bool,
     contract: &mut ContractIr,
     chart_facts: &mut ChartFacts,
+    local_schema_universe: &mut LocalSchemaUniverse,
 ) -> CliResult<()> {
     let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
     for path in manifests {
         let ManifestIr {
             chart_facts: manifest_facts,
             contract: mut manifest_contract,
+            literal_crd_documents,
         } = collect_manifest_ir_for_template(&path, defines, symbolic_context)?;
         merge_chart_facts(
             chart_facts,
@@ -202,6 +206,9 @@ fn collect_manifest_ir_for_chart(
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         contract.append(manifest_contract);
+        for document in literal_crd_documents {
+            local_schema_universe.insert_crd_document(document);
+        }
     }
     Ok(())
 }
@@ -209,6 +216,7 @@ fn collect_manifest_ir_for_chart(
 struct ManifestIr {
     chart_facts: ChartFacts,
     contract: ContractIr,
+    literal_crd_documents: Vec<Value>,
 }
 
 #[tracing::instrument(skip_all)]
@@ -219,13 +227,35 @@ fn collect_manifest_ir_for_template(
 ) -> CliResult<ManifestIr> {
     let mut src = String::new();
     path.open_file()?.read_to_string(&mut src)?;
-    let ast = TreeSitterParser.parse(&src)?;
+    let parsed_template = TreeSitterParser.parse_with_metadata(&src)?;
+    let ast = parsed_template.ast;
     let chart_facts = derive_chart_facts_from_ast(&ast);
     let contract = symbolic_context.generate_contract_ir(&src, &ast, defines);
+    let literal_crd_documents =
+        literal_crd_documents_from_template(&src, parsed_template.contains_template_action)?;
     Ok(ManifestIr {
         chart_facts,
         contract,
+        literal_crd_documents,
     })
+}
+
+fn literal_crd_documents_from_template(
+    src: &str,
+    contains_template_action: bool,
+) -> CliResult<Vec<Value>> {
+    if contains_template_action {
+        return Ok(Vec::new());
+    }
+
+    let mut documents = Vec::new();
+    for document in serde_yaml::Deserializer::from_str(src) {
+        let document = Value::deserialize(document)?;
+        if !document.is_null() {
+            documents.push(document);
+        }
+    }
+    Ok(documents)
 }
 
 fn scope_chart_facts(chart_facts: ChartFacts, prefix: &[String]) -> ChartFacts {
@@ -349,6 +379,9 @@ fn reachable_helpers(graph: &HelperCallGraph, seeds: &BTreeSet<String>) -> BTree
 mod tests {
     use super::*;
     use helm_schema_ir::PathFact;
+    use helm_schema_ir::{ResourceRef, YamlPath};
+    use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
+    use serde_json::json;
 
     fn chart_facts_for(path: &str, all_render_uses_self_guarded: bool) -> ChartFacts {
         let mut chart_facts = ChartFacts::default();
@@ -471,6 +504,75 @@ spec:
                 .reachable_from_chart(&Vec::<String>::new()),
             collection.type_hints.keys().collect::<Vec<_>>()
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn literal_crd_template_populates_chart_local_schema_universe() -> color_eyre::eyre::Result<()>
+    {
+        let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+        test_util::write(
+            &chart_dir.join("Chart.yaml")?,
+            "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        )?;
+        test_util::write(&chart_dir.join("values.yaml")?, "spec:\n  size: 1\n")?;
+        test_util::write(
+            &chart_dir.join("templates/crd.yaml")?,
+            r#"apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: widgets.example.com
+spec:
+  group: example.com
+  names:
+    kind: Widget
+    plural: widgets
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size:
+                  type: integer
+"#,
+        )?;
+        test_util::write(
+            &chart_dir.join("templates/widget.yaml")?,
+            r#"apiVersion: example.com/v1
+kind: Widget
+metadata:
+  name: demo
+spec:
+  size: {{ .Values.spec.size }}
+"#,
+        )?;
+
+        let discovery = chart::discover_chart_contexts(&chart_dir)?;
+        let defines = chart::build_define_index(&discovery.charts, false)?;
+        let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+        let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
+        let resource = ResourceRef {
+            api_version: "example.com/v1".to_string(),
+            kind: "Widget".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        };
+
+        let schema = provider.schema_for_resource_path(
+            &resource,
+            &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+        );
+
+        assert_eq!(schema, Some(json!({"type": "integer"})));
 
         Ok(())
     }

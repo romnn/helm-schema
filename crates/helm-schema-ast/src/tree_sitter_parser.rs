@@ -6,6 +6,59 @@ use crate::{HelmAst, HelmParser, ParseError};
 /// `helm_template` grammar for re-parsing YAML fragments within text nodes.
 pub struct TreeSitterParser;
 
+/// Fused template parse result plus syntax-level metadata.
+pub struct ParsedTemplate {
+    pub ast: HelmAst,
+    pub contains_template_action: bool,
+}
+
+/// Return whether the source contains any Helm/Go-template action.
+///
+/// This is a syntax-level check over the template grammar. Callers that only
+/// accept literal YAML can use it to abstain before handing source text to a
+/// YAML parser.
+#[tracing::instrument(skip_all, fields(bytes = src.len()))]
+pub fn contains_template_action(src: &str) -> Result<bool, ParseError> {
+    let language =
+        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+    let mut parser = tree_sitter::Parser::new();
+    parser
+        .set_language(&language)
+        .map_err(|_| ParseError::TreeSitterParseFailed)?;
+
+    let tree = parser
+        .parse(src, None)
+        .ok_or(ParseError::TreeSitterParseFailed)?;
+
+    Ok(node_contains_template_action(tree.root_node()))
+}
+
+fn node_contains_template_action(node: tree_sitter::Node<'_>) -> bool {
+    if is_template_action_node(node.kind()) {
+        return true;
+    }
+
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .any(node_contains_template_action)
+}
+
+fn is_template_action_node(kind: &str) -> bool {
+    is_template_delim_start(kind)
+        || is_template_delim_end(kind)
+        || matches!(
+            kind,
+            "template_action"
+                | "if_action"
+                | "else_action"
+                | "range_action"
+                | "with_action"
+                | "define_action"
+                | "block_action"
+                | "end_action"
+        )
+}
+
 fn is_template_delim_start(kind: &str) -> bool {
     kind == "{{" || kind == "{{-"
 }
@@ -56,6 +109,13 @@ fn is_standalone_span(start: usize, end: usize, src: &str) -> bool {
 impl HelmParser for TreeSitterParser {
     #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError> {
+        self.parse_with_metadata(src).map(|parsed| parsed.ast)
+    }
+}
+
+impl TreeSitterParser {
+    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
+    pub fn parse_with_metadata(&self, src: &str) -> Result<ParsedTemplate, ParseError> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
         let mut parser = tree_sitter::Parser::new();
@@ -68,13 +128,17 @@ impl HelmParser for TreeSitterParser {
             .ok_or(ParseError::TreeSitterParseFailed)?;
 
         let root = tree.root_node();
+        let contains_template_action = node_contains_template_action(root);
         let mut blocks = Vec::new();
         let mut c = root.walk();
         for ch in root.children(&mut c) {
             blocks.push(ch);
         }
         let items = fuse_blocks(&blocks, src, false);
-        Ok(HelmAst::Document { items })
+        Ok(ParsedTemplate {
+            ast: HelmAst::Document { items },
+            contains_template_action,
+        })
     }
 }
 

@@ -1617,6 +1617,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   now owns that local schema universe next to the contract projection and other
   compatibility signals, matching the target `Analysis { contract,
   local_schemas }` shape while preserving today's provider lookup order.
+  Fully literal CRD manifests under `templates/` now also populate the same
+  universe after AST inspection proves the template contains no Helm actions;
+  templated CRD schemas still wait for the A3 document projection path so the
+  extractor never guesses through dynamic template code.
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 

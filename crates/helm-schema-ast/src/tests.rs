@@ -1,4 +1,4 @@
-use crate::{DefineIndex, HelmParser, TreeSitterParser};
+use crate::{DefineIndex, HelmParser, TreeSitterParser, contains_template_action};
 
 // ===========================================================================
 // Simple template
@@ -18,6 +18,20 @@ fn tree_sitter_ast_simple() {
     let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
     let ast = TreeSitterParser.parse(src).expect("parse");
     similar_asserts::assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
+}
+
+#[test]
+fn template_action_detection_finds_inline_output_action() {
+    let src = "metadata:\n  name: {{ .Values.name }}\n";
+
+    assert!(contains_template_action(src).expect("parse template source"));
+}
+
+#[test]
+fn template_action_detection_accepts_literal_yaml_comments() {
+    let src = "# comment\nmetadata:\n  name: demo\n";
+
+    assert!(!contains_template_action(src).expect("parse template source"));
 }
 
 // ===========================================================================
