@@ -1,9 +1,8 @@
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
 use crate::ResourceRef;
-use crate::helper_eval::{
-    CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, decode_guard, helper_evaluate,
-};
+use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard};
+use crate::helper_eval::{HelperOutput, helper_evaluate};
 
 /// AST-driven detector for Kubernetes resource identity.
 ///
@@ -392,7 +391,7 @@ mod tests {
     use indoc::indoc;
 
     use super::AstResourceDetector;
-    use crate::helper_eval::{CapabilityGuard, HelperBranchBody};
+    use crate::capability_branch::{CapabilityGuard, HelperBranchBody};
 
     fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
         let ast = TreeSitterParser.parse(src).expect("parse template");

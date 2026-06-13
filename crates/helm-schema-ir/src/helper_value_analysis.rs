@@ -142,17 +142,14 @@ impl HelperValueRuntime<'_, '_> {
         let mut branch_guard_paths =
             direct_bound_paths_from_text_in_context(text, self.bindings, current_dot.as_ref());
         branch_guard_paths.extend(local_bound_paths_from_text(text, self.local_bindings));
-        let nested = self
-            .context
-            .helper_call_analyzer()
-            .analyze_bound_helper_calls(
-                text,
-                Some(self.bindings),
-                current_dot.as_ref(),
-                self.local_bindings,
-                self.context,
-                self.seen,
-            );
+        let nested = self.context.helper_summaries().analyze_bound_helper_calls(
+            text,
+            Some(self.bindings),
+            current_dot.as_ref(),
+            self.local_bindings,
+            self.context,
+            self.seen,
+        );
         branch_guard_paths.extend(bound_helper_condition_paths(&nested));
         self.analysis
             .guard_paths
@@ -562,17 +559,14 @@ fn collect_bound_helper_values_from_expr(
                 &mut string_seen,
             ));
     }
-    let nested = state
-        .context
-        .helper_call_analyzer()
-        .analyze_bound_helper_calls(
-            text,
-            Some(bindings),
-            current_dot,
-            state.local_bindings,
-            state.context,
-            state.seen,
-        );
+    let nested = state.context.helper_summaries().analyze_bound_helper_calls(
+        text,
+        Some(bindings),
+        current_dot,
+        state.local_bindings,
+        state.context,
+        state.seen,
+    );
     if expression_kind == ValueKind::Fragment {
         state.analysis.extend_nested_fragment_render(
             nested,
@@ -670,17 +664,14 @@ fn collect_assignment_bound_helper_values(
         state.context,
         &mut result_seen,
     );
-    let nested = state
-        .context
-        .helper_call_analyzer()
-        .analyze_bound_helper_calls(
-            rhs,
-            Some(bindings),
-            current_dot,
-            state.local_bindings,
-            state.context,
-            state.seen,
-        );
+    let nested = state.context.helper_summaries().analyze_bound_helper_calls(
+        rhs,
+        Some(bindings),
+        current_dot,
+        state.local_bindings,
+        state.context,
+        state.seen,
+    );
     state
         .analysis
         .chart_defaults

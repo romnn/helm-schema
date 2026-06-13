@@ -27,7 +27,7 @@ pub(crate) trait NodeActionEffectSink: ContractUseSink {
 }
 
 pub(crate) fn apply_assignment_action_plan(
-    sink: &mut dyn NodeActionEffectSink,
+    sink: &mut impl NodeActionEffectSink,
     plan: AssignmentActionPlan,
 ) {
     if let Some(local_assignment) = plan.local_assignment {
@@ -39,7 +39,7 @@ pub(crate) fn apply_assignment_action_plan(
     }
 }
 
-fn apply_local_assignment_plan(sink: &mut dyn NodeActionEffectSink, plan: LocalAssignmentPlan) {
+fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: LocalAssignmentPlan) {
     match plan.kind {
         AssignmentKind::Declaration => {
             sink.declare_fragment_binding(plan.variable.clone(), plan.fragment_binding);
@@ -53,7 +53,7 @@ fn apply_local_assignment_plan(sink: &mut dyn NodeActionEffectSink, plan: LocalA
 }
 
 pub(crate) fn apply_if_condition_plan(
-    sink: &mut dyn NodeActionEffectSink,
+    sink: &mut impl NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
     let guards = plan.compatibility_guards();
@@ -78,7 +78,7 @@ pub(crate) fn apply_if_condition_plan(
 }
 
 pub(crate) fn apply_with_condition_plan(
-    sink: &mut dyn NodeActionEffectSink,
+    sink: &mut impl NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
     let guards = plan.compatibility_guards();
@@ -105,7 +105,7 @@ pub(crate) fn apply_with_condition_plan(
 }
 
 pub(crate) fn apply_condition_alternative_guards(
-    sink: &mut dyn NodeActionEffectSink,
+    sink: &mut impl NodeActionEffectSink,
     plan: &ConditionActionPlan,
 ) {
     if !plan.apply_alternative_predicate {
@@ -115,7 +115,7 @@ pub(crate) fn apply_condition_alternative_guards(
 }
 
 pub(crate) fn apply_range_action_plan(
-    sink: &mut dyn NodeActionEffectSink,
+    sink: &mut impl NodeActionEffectSink,
     plan: &RangeActionPlan,
     current_path: &YamlPath,
 ) {

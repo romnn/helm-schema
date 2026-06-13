@@ -5,6 +5,7 @@ mod assignment_action_plan;
 mod binding;
 mod bound_helper_call_analysis;
 mod bound_value_analysis;
+mod capability_branch;
 mod chart_facts;
 mod condition_action_plan;
 mod contract;
@@ -21,8 +22,7 @@ mod helper_analysis;
 mod helper_arg_projection;
 mod helper_aware_expr_eval;
 mod helper_body_analysis;
-mod helper_call_analyzer;
-pub mod helper_eval;
+mod helper_eval;
 mod helper_fragment_output_uses;
 mod helper_fragment_outputs;
 mod helper_inline;
@@ -51,15 +51,12 @@ mod value_path_context;
 mod walker;
 mod yaml_shape;
 
+pub use capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
 pub use chart_facts::{ChartFacts, PathFact};
 pub use contract::{
     ContractIr, ContractPathSignals, ContractProjection, ContractSchemaSignals, ContractUse,
     ContractValuePathFacts, GuardConstraint, MetadataFieldKind, ProviderSchemaUse,
     RequiredInferenceSignals,
-};
-pub use helper_eval::{
-    CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
-    helper_literal_outputs,
 };
 pub use symbolic::{SymbolicIrContext, SymbolicIrGenerator};
 pub use walker::{

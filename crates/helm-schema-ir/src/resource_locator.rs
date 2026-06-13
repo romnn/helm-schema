@@ -3,14 +3,6 @@ use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use crate::resource_detector::AstResourceDetector;
 use crate::{ResourceRef, YamlPath};
 
-/// Provides source-position-aware Kubernetes resource context for a manifest
-/// template.
-pub(crate) trait ResourceLocator {
-    fn advance_to(&mut self, byte: usize);
-    fn current_resource(&self) -> Option<&ResourceRef>;
-    fn rebase_path(&self, path: YamlPath) -> YamlPath;
-}
-
 /// AST-backed resource locator over rendered-manifest source bytes.
 ///
 /// Resource identity detection is delegated to [`AstResourceDetector`]. This
@@ -64,8 +56,8 @@ impl AstResourceLocator {
     }
 }
 
-impl ResourceLocator for AstResourceLocator {
-    fn advance_to(&mut self, byte: usize) {
+impl AstResourceLocator {
+    pub(crate) fn advance_to(&mut self, byte: usize) {
         self.current_span = self
             .spans
             .iter()
@@ -81,13 +73,13 @@ impl ResourceLocator for AstResourceLocator {
             .map(|(index, _)| index);
     }
 
-    fn current_resource(&self) -> Option<&ResourceRef> {
+    pub(crate) fn current_resource(&self) -> Option<&ResourceRef> {
         self.current_span
             .and_then(|index| self.spans.get(index))
             .map(|span| &span.resource)
     }
 
-    fn rebase_path(&self, path: YamlPath) -> YamlPath {
+    pub(crate) fn rebase_path(&self, path: YamlPath) -> YamlPath {
         let Some(span) = self.current_span.and_then(|index| self.spans.get(index)) else {
             return path;
         };
@@ -371,7 +363,7 @@ mod tests {
     use helm_schema_ast::DefineIndex;
     use indoc::indoc;
 
-    use super::{AstResourceLocator, ResourceLocator};
+    use super::AstResourceLocator;
 
     #[test]
     fn resource_locator_keeps_multi_document_resources_separate() {

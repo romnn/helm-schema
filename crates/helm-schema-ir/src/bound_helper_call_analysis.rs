@@ -32,7 +32,7 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals(
             let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
                 return;
             };
-            let nested = context.helper_call_analyzer().analyze_bound_helper_call(
+            let nested = context.helper_summaries().analyze_bound_helper_call(
                 name,
                 args.get(1),
                 bindings,

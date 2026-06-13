@@ -1,6 +1,6 @@
 use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
 
-use crate::resource_locator::{AstResourceLocator, ResourceLocator};
+use crate::resource_locator::AstResourceLocator;
 use crate::template_expr_cache::parse_expr_text;
 use crate::walker::is_fragment_expr;
 use crate::yaml_shape::{
@@ -19,7 +19,7 @@ pub(crate) struct RenderedYamlContext<'a> {
     defines: &'a DefineIndex,
     shape: Shape,
     output_inside_block_scalar: bool,
-    resource_locator: Box<dyn ResourceLocator>,
+    resource_locator: AstResourceLocator,
     text_spans: Vec<(usize, usize)>,
     text_span_idx: usize,
     text_pos: usize,
@@ -32,7 +32,7 @@ impl<'a> RenderedYamlContext<'a> {
             defines,
             shape: Shape::default(),
             output_inside_block_scalar: false,
-            resource_locator: Box::new(AstResourceLocator::default()),
+            resource_locator: AstResourceLocator::default(),
             text_spans: Vec::new(),
             text_span_idx: 0,
             text_pos: 0,
@@ -73,8 +73,7 @@ impl<'a> RenderedYamlContext<'a> {
         self.text_spans = merged;
         self.text_span_idx = 0;
         self.text_pos = 0;
-        self.resource_locator =
-            Box::new(AstResourceLocator::from_source(self.source, self.defines));
+        self.resource_locator = AstResourceLocator::from_source(self.source, self.defines);
         self.shape = Shape::default();
         self.output_inside_block_scalar = false;
     }

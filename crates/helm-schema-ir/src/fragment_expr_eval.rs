@@ -9,7 +9,7 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::helper_call_analyzer::HelperCallAnalyzer;
+use crate::helper_summary::HelperSummaryCache;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
 
@@ -17,24 +17,24 @@ use crate::template_expr_cache::parse_expr_text;
 pub(crate) struct FragmentEvalContext<'a> {
     pub(crate) defines: &'a DefineIndex,
     pub(crate) define_bodies: &'a DefineBodyCache,
-    helper_call_analyzer: &'a dyn HelperCallAnalyzer,
+    helper_summaries: &'a HelperSummaryCache,
 }
 
 impl<'a> FragmentEvalContext<'a> {
     pub(crate) fn new(
         defines: &'a DefineIndex,
         define_bodies: &'a DefineBodyCache,
-        helper_call_analyzer: &'a dyn HelperCallAnalyzer,
+        helper_summaries: &'a HelperSummaryCache,
     ) -> Self {
         Self {
             defines,
             define_bodies,
-            helper_call_analyzer,
+            helper_summaries,
         }
     }
 
-    pub(crate) fn helper_call_analyzer(&self) -> &'a dyn HelperCallAnalyzer {
-        self.helper_call_analyzer
+    pub(crate) fn helper_summaries(&self) -> &'a HelperSummaryCache {
+        self.helper_summaries
     }
 
     pub(crate) fn fragment_binding_from_expr(
@@ -141,7 +141,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         let analysis = self
             .params
             .context
-            .helper_call_analyzer()
+            .helper_summaries()
             .analyze_bound_helper_call(
                 name,
                 arg,

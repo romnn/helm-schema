@@ -1498,7 +1498,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   The old `IrGenerator -> Vec<ValueUse>` trait has also been removed; the
   public symbolic generator now returns `ContractProjection`, and tests that
   need fixture DTO rows opt into `into_value_uses()` explicitly. The
-  generator-side policy extraction has also started: provider schema domain
+  one-implementation `HelperCallAnalyzer` trait has been deleted too:
+  fragment evaluation now depends directly on the concrete `HelperSummaryCache`,
+  keeping helper-summary caching as data/implementation rather than a fake port.
+  The one-implementation `ResourceLocator` trait has likewise been removed:
+  rendered-YAML context now owns the AST-backed locator directly, leaving the
+  future identity projection seam as concrete data rather than dynamic dispatch.
+  The generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, and the per-path schema merge policy
   now live behind `ResolvePolicy`, leaving root-schema construction to
   orchestrate collected evidence instead of owning those semantic decisions
@@ -1586,6 +1592,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   only the explicit fixture/external DTO inspection boundary.
   The policy-extraction half does **not** depend on A3 and can continue
   against the current `ContractIr`-derived signal path.
+  Capability-guard branch DTOs are now separated from the old helper literal
+  evaluator: `CapabilityGuard` / `HelperBranch` / `HelperBranchBody` remain
+  the public resource-lookup contract, while `helper_eval` is private
+  resource-detector implementation detail rather than exported semantic API.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

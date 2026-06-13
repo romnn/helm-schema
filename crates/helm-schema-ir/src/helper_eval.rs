@@ -13,16 +13,14 @@
 //! - skips Field / Variable references (returns nothing for those —
 //!   the literal-only output set is the contract).
 //!
-//! Output is typed: `HelperOutput` preserves branch structure for the
-//! common `if Capabilities.APIVersions.Has … else …` shape that
-//! vendored apiVersion helpers use. Callers that want a flat literal
-//! list can still get one via `HelperOutput::all_literals()` or the
-//! back-compat wrapper `helper_literal_outputs()`.
+//! Output is typed so the common `if Capabilities.APIVersions.Has … else …`
+//! shape stays branch-aware for Kubernetes lookup.
 
 use std::collections::HashSet;
 
 use helm_schema_ast::{DefineIndex, HelmAst, TemplateExpr, parse_action_expressions};
-use serde::{Deserialize, Serialize};
+
+use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard};
 
 const MAX_RECURSION_DEPTH: usize = 6;
 
@@ -33,8 +31,8 @@ const MAX_RECURSION_DEPTH: usize = 6;
 /// — can evaluate `Capabilities.APIVersions.Has` guards against the
 /// actual K8s version cache and pick the live branch instead of
 /// guessing between mutually-exclusive alternatives.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum HelperOutput {
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum HelperOutput {
     /// Helper body is linear (no top-level branching). The vector
     /// holds the deduplicated literal outputs in first-seen order.
     /// Empty = could not be resolved statically.
@@ -45,140 +43,13 @@ pub enum HelperOutput {
     Branched { branches: Vec<HelperBranch> },
 }
 
-/// One branch of an if/elif/else chain in a helper body.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct HelperBranch {
-    /// `None` = unguarded (the trailing `else` branch, or a top-level
-    /// unguarded section). `Some(g)` = the guard expression decoded
-    /// from the `{{ if g }}` / `{{ else if g }}` action.
-    pub guard: Option<CapabilityGuard>,
-    /// What this branch resolves to when its guard is live: either a
-    /// flat list of literal alternatives, or a nested
-    /// `if`/`else` chain when the branch body delegates to another
-    /// typed-branched helper (or is itself a typed `if`). Nested
-    /// bodies preserve guard structure across delegation depth, so
-    /// the chain layer composes capability evaluation through
-    /// arbitrary nesting instead of flattening at the first
-    /// boundary.
-    pub body: HelperBranchBody,
-}
-
-/// What a `HelperBranch` produces when its guard is live.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum HelperBranchBody {
-    /// Flat list of literal alternatives. Deduplicated in
-    /// first-seen order. Empty = the branch resolves to no literal
-    /// (e.g. it references a Values field with no statically-known
-    /// value).
-    Literals { values: Vec<String> },
-    /// Branch body is itself a typed `if`/`else` chain. Reached when
-    /// the branch body is exactly one nested `HelmAst::If` or a lone
-    /// `{{ include "X" . }}` whose callee is itself branched.
-    /// Recursive: nested branches can themselves contain
-    /// `Nested` bodies.
-    Nested { branches: Vec<HelperBranch> },
-}
-
-impl HelperBranchBody {
-    /// Helper: build a literal-bodied branch.
-    #[must_use]
-    pub fn literals(values: Vec<String>) -> Self {
-        Self::Literals { values }
-    }
-
-    /// Convenience: empty literal-bodied branch. Used as the
-    /// per-branch accumulator while the IR walker is still
-    /// collecting literal values.
-    #[must_use]
-    pub fn empty_literals() -> Self {
-        Self::Literals { values: Vec::new() }
-    }
-
-    /// True when the body carries no statically-reachable literal,
-    /// either directly or through any nested branch — i.e. selecting
-    /// this branch would give the chain nothing to try.
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        match self {
-            HelperBranchBody::Literals { values } => values.is_empty(),
-            HelperBranchBody::Nested { branches } => branches.iter().all(|b| b.body.is_empty()),
-        }
-    }
-
-    /// Flatten to all reachable literals in first-seen depth-first
-    /// order. Used by the back-compat `all_literals` accessor and by
-    /// the chain's filename iteration when there's no oracle answer.
-    #[must_use]
-    pub fn all_literals(&self) -> Vec<String> {
-        let mut out: Vec<String> = Vec::new();
-        let mut seen: HashSet<String> = HashSet::new();
-        self.append_all_literals(&mut out, &mut seen);
-        out
-    }
-
-    pub(crate) fn append_all_literals(&self, out: &mut Vec<String>, seen: &mut HashSet<String>) {
-        match self {
-            HelperBranchBody::Literals { values } => {
-                for v in values {
-                    if seen.insert(v.clone()) {
-                        out.push(v.clone());
-                    }
-                }
-            }
-            HelperBranchBody::Nested { branches } => {
-                for b in branches {
-                    b.body.append_all_literals(out, seen);
-                }
-            }
-        }
-    }
-}
-
-impl HelperBranch {
-    /// Convenience constructor for the common literal-bodied case.
-    #[must_use]
-    pub fn with_literals(guard: Option<CapabilityGuard>, values: Vec<String>) -> Self {
-        Self {
-            guard,
-            body: HelperBranchBody::Literals { values },
-        }
-    }
-
-    /// Convenience constructor for a nested-bodied branch.
-    #[must_use]
-    pub fn with_nested(guard: Option<CapabilityGuard>, branches: Vec<HelperBranch>) -> Self {
-        Self {
-            guard,
-            body: HelperBranchBody::Nested { branches },
-        }
-    }
-}
-
-/// Structurally-decoded guard for an `if` action. Only the family of
-/// guards that the chain can actually evaluate against its K8s cache
-/// is decoded structurally; everything else is `Opaque`.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum CapabilityGuard {
-    /// `.Capabilities.APIVersions.Has "X"` where X is the literal
-    /// argument (typically `"group/version"` or
-    /// `"group/version/Kind"`).
-    Has { api: String },
-    /// `not .Capabilities.APIVersions.Has "X"` — the negated form.
-    NotHas { api: String },
-    /// Any guard the static decoder couldn't break apart. The chain
-    /// treats this as "potentially live" — it never proves the branch
-    /// dead, so the literals participate as candidates.
-    Opaque { text: String },
-}
-
 impl HelperOutput {
     /// Flatten branches into a single deduplicated literal list (in
     /// first-seen order, depth-first through nested branches).
-    /// Back-compat for callers that don't need the branch structure.
+    /// Test helper for assertions that do not need branch structure.
+    #[cfg(test)]
     #[must_use]
-    pub fn all_literals(&self) -> Vec<String> {
+    fn all_literals(&self) -> Vec<String> {
         match self {
             HelperOutput::Literals(l) => l.clone(),
             HelperOutput::Branched { branches } => {
@@ -191,19 +62,11 @@ impl HelperOutput {
             }
         }
     }
-
-    /// `true` when the helper body has any decodable branch
-    /// structure — i.e. the typed model is more precise than the
-    /// flat literal list.
-    #[must_use]
-    pub fn is_branched(&self) -> bool {
-        matches!(self, HelperOutput::Branched { .. })
-    }
 }
 
 /// Resolve a helper name to its typed output.
 #[must_use]
-pub fn helper_evaluate(name: &str, helpers: &DefineIndex) -> HelperOutput {
+pub(crate) fn helper_evaluate(name: &str, helpers: &DefineIndex) -> HelperOutput {
     let mut seen: HashSet<String> = HashSet::new();
     let body = helpers.get(name).unwrap_or(&[]);
     if let Some(branches) = extract_top_level_branches(body, helpers, &mut seen, 0) {
@@ -211,17 +74,6 @@ pub fn helper_evaluate(name: &str, helpers: &DefineIndex) -> HelperOutput {
     }
     let flat = collect_literals(body, helpers, &mut seen, 0);
     HelperOutput::Literals(dedup_preserve_order(flat))
-}
-
-/// Back-compat: resolve a helper name to the flat set of literal
-/// outputs it could produce. Empty list = "could not be resolved
-/// statically".
-///
-/// Caller is responsible for trimming / validating the returned
-/// strings as apiVersions (e.g. `apps/v1`, `policy/v1beta1`).
-#[must_use]
-pub fn helper_literal_outputs(name: &str, helpers: &DefineIndex) -> Vec<String> {
-    helper_evaluate(name, helpers).all_literals()
 }
 
 /// Try to project the helper body as a top-level if/elif/else chain.
@@ -438,132 +290,6 @@ fn lone_if_in(nodes: &[HelmAst]) -> Option<&HelmAst> {
         }
     }
     found
-}
-
-/// Decode an if-condition string into a typed `CapabilityGuard`.
-/// Recognises:
-///   - `.Capabilities.APIVersions.Has "X"` (any leading dot prefix)
-///   - `not .Capabilities.APIVersions.Has "X"`
-///
-/// Falls back to `Opaque` for anything else.
-///
-/// Implementation is fully structural: the condition is wrapped as a
-/// plain template action (`{{ <cond> }}`) so it parses as an
-/// expression rather than as a control directive, then walked
-/// recursively over the resulting `TemplateExpr` tree. The
-/// tree-sitter grammar lowers the dotted method-call form
-/// `.Capabilities.APIVersions.Has "X"` into a single
-/// `Call { function: ".Capabilities.APIVersions.Has", args: [Literal] }`,
-/// and lowers `not .X.Y.Has "Z"` into a `Call { function: "not",
-/// args: [Field([X, Y, Has]), Literal] }` (the dotted chain is split
-/// into a Field receiver with `Has` as the last segment, and the
-/// string arg becomes a peer of `not`). Both shapes are recognised
-/// without re-doing any text parsing on `cond`.
-pub fn decode_guard(cond: &str) -> CapabilityGuard {
-    let trimmed = cond.trim();
-    // Wrap as a plain expression action — NOT an `{{ if ... }}` block,
-    // which the grammar treats as a control directive and surfaces as
-    // an opaque `Unknown` node rather than parsing the condition.
-    let wrapped = format!("{{{{ {trimmed} }}}}");
-    let exprs = parse_action_expressions(&wrapped);
-    for expr in &exprs {
-        if let Some((negated, api)) = find_capability_has(expr, false) {
-            return if negated {
-                CapabilityGuard::NotHas { api }
-            } else {
-                CapabilityGuard::Has { api }
-            };
-        }
-    }
-    CapabilityGuard::Opaque {
-        text: cond.trim().to_string(),
-    }
-}
-
-/// Does this function-name (from `Call.function`) refer to the Helm
-/// builtin `.Capabilities.APIVersions.Has`? The grammar carries the
-/// receiver path as part of the `function` string, so the check is a
-/// suffix match on that field — not a regex on the raw template
-/// source. Matches `.Capabilities.APIVersions.Has`,
-/// `$.Capabilities.APIVersions.Has`, and any other variable/field
-/// prefix that ends in `.Capabilities.APIVersions.Has`.
-fn is_capabilities_has(function: &str) -> bool {
-    function == ".Capabilities.APIVersions.Has"
-        || function == "$.Capabilities.APIVersions.Has"
-        || function.ends_with(".Capabilities.APIVersions.Has")
-}
-
-/// Recursive structural walker: find a `Capabilities.APIVersions.Has
-/// "X"` call anywhere in `expr`, tracking whether the walk is
-/// currently under a `not` Call (flips `negated`). Returns the
-/// (negated, api) pair on first match.
-///
-/// Recognises two parser-produced shapes for the call site:
-///   - dotted method-call form: `Call { function: ".X.Y.Has", args:
-///     [Literal] }` — emitted for `.X.Y.Has "Z"` without negation.
-///   - negation-quirk form: `Call { function: "not", args:
-///     [Field([X, Y, Has]), Literal] }` — emitted for `not .X.Y.Has
-///     "Z"`, where the parser pulls `Has` off the dotted chain into
-///     the Field's last segment and hoists the literal arg up to be
-///     a peer of `not`.
-fn find_capability_has(expr: &TemplateExpr, negated: bool) -> Option<(bool, String)> {
-    match expr {
-        // Negation: walk args looking either for a Has call or for
-        // the parser-quirk Field+Literal pattern.
-        TemplateExpr::Call { function, args } if function == "not" => {
-            // First: nested Has call.
-            for a in args {
-                if let Some((n, api)) = find_capability_has(a, !negated) {
-                    return Some((n, api));
-                }
-            }
-            // Then: the (Field-ending-in-Has, Literal) quirk pattern.
-            let field_ends_in_has = args.iter().find_map(|a| match a {
-                TemplateExpr::Field(path)
-                    if path.last().map(String::as_str) == Some("Has")
-                        && path.iter().rev().nth(1).map(String::as_str) == Some("APIVersions")
-                        && path.iter().rev().nth(2).map(String::as_str) == Some("Capabilities") =>
-                {
-                    Some(())
-                }
-                _ => None,
-            });
-            if field_ends_in_has.is_some() {
-                let literal = args.iter().find_map(|a| match a {
-                    TemplateExpr::Literal(lit) => lit.as_string().map(str::to_string),
-                    _ => None,
-                });
-                if let Some(api) = literal {
-                    return Some((!negated, api));
-                }
-            }
-            None
-        }
-        // Dotted method-call form: the function name is the entire
-        // receiver chain ending in `.Capabilities.APIVersions.Has`.
-        TemplateExpr::Call { function, args } if is_capabilities_has(function) => {
-            args.iter().find_map(|a| match a {
-                TemplateExpr::Literal(lit) => lit.as_string().map(|s| (negated, s.to_string())),
-                _ => None,
-            })
-        }
-        // Other Calls: recurse into args.
-        TemplateExpr::Call { args, .. } => {
-            args.iter().find_map(|a| find_capability_has(a, negated))
-        }
-        TemplateExpr::Pipeline(stages) => {
-            stages.iter().find_map(|s| find_capability_has(s, negated))
-        }
-        TemplateExpr::Parenthesized(inner) => find_capability_has(inner, negated),
-        TemplateExpr::Selector { operand, .. } => find_capability_has(operand, negated),
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            find_capability_has(value, negated)
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => None,
-    }
 }
 
 fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
@@ -864,7 +590,7 @@ mod tests {
             {{- end -}}
         "#});
         assert_eq!(
-            helper_literal_outputs("x.apiVersion", &helpers),
+            helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
     }
@@ -880,7 +606,7 @@ mod tests {
             {{- end -}}
             {{- end -}}
         "#});
-        let outs = helper_literal_outputs("rbac.apiVersion", &helpers);
+        let outs = helper_evaluate("rbac.apiVersion", &helpers).all_literals();
         assert!(
             outs.contains(&"rbac.authorization.k8s.io/v1".to_string()),
             "must include modern; got {outs:?}"
@@ -907,7 +633,8 @@ mod tests {
             {{- end }}
             {{- end }}
         "#});
-        let outs = helper_literal_outputs("grafana.podDisruptionBudget.apiVersion", &helpers);
+        let outs =
+            helper_evaluate("grafana.podDisruptionBudget.apiVersion", &helpers).all_literals();
         assert!(
             outs.contains(&"policy/v1".to_string()),
             "must include policy/v1 literal branch; got {outs:?}"
@@ -922,7 +649,7 @@ mod tests {
     fn unknown_helper_returns_empty() {
         let helpers = DefineIndex::new();
         assert_eq!(
-            helper_literal_outputs("nope", &helpers),
+            helper_evaluate("nope", &helpers).all_literals(),
             Vec::<String>::new()
         );
     }
@@ -937,7 +664,10 @@ mod tests {
             {{- print "apps/v1" -}}
             {{- end -}}
         "#});
-        assert_eq!(helper_literal_outputs("outer", &helpers), vec!["apps/v1"]);
+        assert_eq!(
+            helper_evaluate("outer", &helpers).all_literals(),
+            vec!["apps/v1"]
+        );
     }
 
     #[test]
@@ -951,7 +681,7 @@ mod tests {
             {{- end -}}
         "#});
         // Either empty (cycle suppressed) — must NOT panic / overflow.
-        let outs = helper_literal_outputs("a", &helpers);
+        let outs = helper_evaluate("a", &helpers).all_literals();
         assert!(
             outs.is_empty(),
             "cyclic helper must return empty, not infinite recursion; got {outs:?}"
@@ -1317,41 +1047,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn decode_guard_recognises_capability_has() {
-        assert_eq!(
-            decode_guard(".Capabilities.APIVersions.Has \"policy/v1\""),
-            CapabilityGuard::Has {
-                api: "policy/v1".to_string()
-            }
-        );
-        assert_eq!(
-            decode_guard("$.Capabilities.APIVersions.Has \"networking.k8s.io/v1/Ingress\""),
-            CapabilityGuard::Has {
-                api: "networking.k8s.io/v1/Ingress".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn decode_guard_recognises_negated_capability_has() {
-        assert_eq!(
-            decode_guard("not .Capabilities.APIVersions.Has \"extensions/v1beta1\""),
-            CapabilityGuard::NotHas {
-                api: "extensions/v1beta1".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn decode_guard_falls_back_to_opaque_for_values_refs() {
-        let g = decode_guard("$.Values.podDisruptionBudget.apiVersion");
-        assert!(
-            matches!(g, CapabilityGuard::Opaque { .. }),
-            "expected Opaque; got {g:?}"
-        );
-    }
-
     /// Round-8 Finding 2: `printf "%s/%s" "apps" "v1"` is compositional
     /// formatting we don't statically model. The old code emitted ALL
     /// three string literals (`"%s/%s"`, `"apps"`, `"v1"`) as
@@ -1365,7 +1060,7 @@ mod tests {
             {{- printf "%s/%s" "apps" "v1" -}}
             {{- end -}}
         "#});
-        let outs = helper_literal_outputs("x.apiVersion", &helpers);
+        let outs = helper_evaluate("x.apiVersion", &helpers).all_literals();
         assert!(
             outs.is_empty(),
             "compositional printf must emit no literal candidates; got {outs:?}"
@@ -1383,7 +1078,7 @@ mod tests {
             {{- end -}}
         "#});
         assert_eq!(
-            helper_literal_outputs("x.apiVersion", &helpers),
+            helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
     }
@@ -1397,7 +1092,7 @@ mod tests {
             {{- end -}}
         "#});
         assert_eq!(
-            helper_literal_outputs("x.apiVersion", &helpers),
+            helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
     }
@@ -1410,7 +1105,7 @@ mod tests {
             {{- printf "%d" 1 -}}
             {{- end -}}
         "#});
-        let outs = helper_literal_outputs("x.apiVersion", &helpers);
+        let outs = helper_evaluate("x.apiVersion", &helpers).all_literals();
         assert!(
             outs.is_empty(),
             "non-%s printf directive must emit no candidates; got {outs:?}"
@@ -1428,7 +1123,7 @@ mod tests {
             {{- end -}}
         "#});
         assert_eq!(
-            helper_literal_outputs("x.apiVersion", &helpers),
+            helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
     }
@@ -1442,7 +1137,7 @@ mod tests {
             {{- print "apps" "v1" -}}
             {{- end -}}
         "#});
-        let outs = helper_literal_outputs("x.apiVersion", &helpers);
+        let outs = helper_evaluate("x.apiVersion", &helpers).all_literals();
         assert!(
             outs.is_empty(),
             "print with multiple args must emit no candidates; got {outs:?}"
@@ -1459,7 +1154,7 @@ mod tests {
             {{- end -}}
         "#});
         assert_eq!(
-            helper_literal_outputs("x.apiVersion", &helpers),
+            helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
     }

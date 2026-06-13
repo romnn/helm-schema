@@ -647,11 +647,11 @@ Current result:
   cache key construction. `SymbolicWalker` no longer builds helper-summary
   cache keys or calls the recursive helper analyzer directly; it requests a
   summary for the current root bindings, dot binding, and fragment locals.
-- `helper_call_analyzer.rs` is the provider boundary for helper summaries.
-  Fragment/value compatibility walkers now ask the context for helper-call
-  analysis instead of carrying recursive function pointers through their
-  state. Recursion-sensitive nested calls intentionally bypass the cache until
-  the full poisoned-memo semantics land.
+- `HelperSummaryCache` is the concrete provider for helper summaries.
+  Fragment/value compatibility walkers depend on that cache directly instead
+  of routing through a one-implementation trait or carrying recursive function
+  pointers through their state. Recursion-sensitive nested calls intentionally
+  bypass the cache until the full poisoned-memo semantics land.
 - `helper_inline.rs` owns exact `include`/`template` helper-call recognition
   and resource-body eligibility checks for manifest-helper inlining. The
   walker still executes the nested compatibility walk because that depends on

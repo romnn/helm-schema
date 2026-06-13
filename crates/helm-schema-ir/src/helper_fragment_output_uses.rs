@@ -167,17 +167,14 @@ impl FragmentOutputUseRuntime<'_, '_> {
         let mut branch_guard_paths =
             direct_bound_paths_from_text_in_context(text, self.bindings, current_dot.as_ref());
         branch_guard_paths.extend(local_bound_paths_from_text(text, self.local_bindings));
-        let nested = self
-            .context
-            .helper_call_analyzer()
-            .analyze_bound_helper_calls(
-                text,
-                Some(self.bindings),
-                current_dot.as_ref(),
-                self.local_bindings,
-                self.context,
-                self.seen,
-            );
+        let nested = self.context.helper_summaries().analyze_bound_helper_calls(
+            text,
+            Some(self.bindings),
+            current_dot.as_ref(),
+            self.local_bindings,
+            self.context,
+            self.seen,
+        );
         branch_guard_paths.extend(bound_helper_condition_paths(&nested));
         branch_guard_paths
     }
@@ -597,17 +594,14 @@ fn collect_bound_fragment_output_uses_from_expr(
         state.local_bindings,
     );
 
-    let mut nested = state
-        .context
-        .helper_call_analyzer()
-        .analyze_bound_helper_calls(
-            text,
-            Some(bindings),
-            current_dot,
-            state.local_bindings,
-            state.context,
-            state.seen,
-        );
+    let mut nested = state.context.helper_summaries().analyze_bound_helper_calls(
+        text,
+        Some(bindings),
+        current_dot,
+        state.local_bindings,
+        state.context,
+        state.seen,
+    );
     let nested_structured_sources: BTreeSet<String> = nested
         .fragment_output_uses
         .iter()
@@ -703,17 +697,14 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if text_starts_with_helper_call(rhs) {
         let mut rhs_seen = state.seen.clone();
-        let nested = state
-            .context
-            .helper_call_analyzer()
-            .analyze_bound_helper_calls(
-                rhs,
-                Some(bindings),
-                current_dot,
-                state.local_bindings,
-                state.context,
-                &mut rhs_seen,
-            );
+        let nested = state.context.helper_summaries().analyze_bound_helper_calls(
+            rhs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            &mut rhs_seen,
+        );
         top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
         if let Some(nested_binding) = nested.into_fragment_binding() {
             binding = match binding {

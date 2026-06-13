@@ -14,7 +14,7 @@
 //! to emit different `apiVersion` literals depending on what the
 //! target Kubernetes cluster supports. The IR layer
 //! (`helm_schema_ir`) decodes the structural shape into a list of
-//! `HelperBranch { guard, literals }` entries; the chain layer's job
+//! `HelperBranch { guard, body }` entries; the chain layer's job
 //! is to ask, for the user's configured primary K8s version, *which
 //! branch is live* — and then drive both schema resolution AND
 //! MissingSchema attribution from that branch's literals.

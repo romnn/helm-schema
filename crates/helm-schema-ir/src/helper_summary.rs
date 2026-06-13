@@ -7,7 +7,6 @@ use crate::bound_helper_call_analysis::{
 };
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::BoundHelperAnalysis;
-use crate::helper_call_analyzer::HelperCallAnalyzer;
 
 pub(crate) struct HelperSummaryCache {
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallsCacheKey, BoundHelperAnalysis>>,
@@ -52,9 +51,9 @@ impl HelperSummaryCache {
     }
 }
 
-impl HelperCallAnalyzer for HelperSummaryCache {
+impl HelperSummaryCache {
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn analyze_bound_helper_calls(
+    pub(crate) fn analyze_bound_helper_calls(
         &self,
         text: &str,
         bindings: Option<&HashMap<String, HelperBinding>>,
@@ -109,7 +108,7 @@ impl HelperCallAnalyzer for HelperSummaryCache {
     }
 
     #[tracing::instrument(skip_all)]
-    fn analyze_bound_helper_call(
+    pub(crate) fn analyze_bound_helper_call(
         &self,
         name: &str,
         arg: Option<&helm_schema_ast::TemplateExpr>,
