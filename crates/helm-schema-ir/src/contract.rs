@@ -241,6 +241,7 @@ pub struct ContractSchemaSignals {
     pub nullable_value_paths: BTreeSet<String>,
     pub paths_with_referenced_descendants: BTreeSet<String>,
     pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,
+    pub required_inference_signals: RequiredInferenceSignals,
 }
 
 /// Schema-generation facts for one input values path.
@@ -317,51 +318,10 @@ impl ContractProjection {
         self.uses.into_iter().map(ValueUse::from).collect()
     }
 
-    /// Derive chart-level path facts from this normalized projection.
-    #[must_use]
-    pub fn chart_facts(&self) -> ChartFacts {
-        self.schema_signals().chart_facts
-    }
-
     /// Derive the typed contract facts consumed by core schema generation.
     #[must_use]
     pub fn schema_signals(&self) -> ContractSchemaSignals {
         derive_schema_signals_from_uses(&self.uses)
-    }
-
-    /// Derive path-level reference and guard-constraint facts from this
-    /// normalized projection.
-    #[must_use]
-    pub fn path_signals(&self) -> ContractPathSignals {
-        self.schema_signals().path_signals
-    }
-
-    /// Return resource-schema lookup requests derived from rendered contract
-    /// claims.
-    #[must_use]
-    pub fn provider_schema_uses(&self) -> Vec<ProviderSchemaUse> {
-        self.schema_signals().provider_schema_uses
-    }
-
-    /// Derive the contract-side inputs for the optional `required` inference
-    /// post-pass.
-    #[must_use]
-    pub fn required_inference_signals(&self) -> RequiredInferenceSignals {
-        derive_required_inference_signals_from_uses(&self.uses)
-    }
-
-    /// Identify value paths for which an explicit `null` default is accepted
-    /// by the chart's template control flow.
-    ///
-    /// A path qualifies when every observed use is null-tolerant and at least
-    /// one rendered use provides non-null type evidence. Header-only
-    /// guard/binding uses are null-tolerant because Helm evaluates them
-    /// against `nil`; rendered uses must sit under a self-guard such as `if`,
-    /// `with`, `range`, `eq`, or a structural chart-default mutation for the
-    /// same values path.
-    #[must_use]
-    pub fn nullable_value_paths(&self) -> BTreeSet<String> {
-        self.schema_signals().nullable_value_paths
     }
 }
 
@@ -569,6 +529,7 @@ struct ContractSchemaSignalBuilder {
     path_signals: ContractPathSignals,
     provider_schema_uses: Vec<ProviderSchemaUse>,
     nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
+    required_inference_signals: RequiredInferenceSignals,
 }
 
 struct ChartPathAccumulator {
@@ -609,6 +570,7 @@ impl ContractSchemaSignalBuilder {
         self.record_chart_facts(contract_use);
         self.record_path_signals(contract_use);
         self.record_nullable_path(contract_use);
+        self.record_required_inference_signals(contract_use);
     }
 
     fn finish(self) -> ContractSchemaSignals {
@@ -650,6 +612,7 @@ impl ContractSchemaSignalBuilder {
             nullable_value_paths,
             paths_with_referenced_descendants,
             value_path_facts,
+            required_inference_signals: self.required_inference_signals,
         }
     }
 
@@ -828,6 +791,43 @@ impl ContractSchemaSignalBuilder {
             .entry(path.to_string())
             .or_insert_with(NullablePathAccumulator::new)
     }
+
+    fn record_required_inference_signals(&mut self, contract_use: &ContractUse) {
+        for guard in &contract_use.guards {
+            match guard {
+                Guard::Not { path } => {
+                    self.required_inference_signals
+                        .conditionally_optional_paths
+                        .insert(path.clone());
+                }
+                Guard::Or { paths } => {
+                    self.required_inference_signals
+                        .conditionally_optional_paths
+                        .extend(paths.iter().cloned());
+                }
+                Guard::Default { path } => {
+                    self.required_inference_signals
+                        .default_fallback_paths
+                        .insert(path.clone());
+                }
+                Guard::Truthy { .. }
+                | Guard::Eq { .. }
+                | Guard::Range { .. }
+                | Guard::With { .. }
+                | Guard::TypeIs { .. } => {}
+            }
+        }
+
+        if contract_use.kind == ValueKind::Scalar
+            && contract_use.path.0.is_empty()
+            && !contract_use.source_expr.trim().is_empty()
+            && use_is_positive_header(contract_use)
+        {
+            self.required_inference_signals
+                .positive_header_paths
+                .insert(contract_use.source_expr.clone());
+        }
+    }
 }
 
 fn build_contract_value_path_facts(
@@ -883,45 +883,6 @@ fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> 
         }
     }
     out
-}
-
-fn derive_required_inference_signals_from_uses(uses: &[ContractUse]) -> RequiredInferenceSignals {
-    let mut signals = RequiredInferenceSignals::default();
-
-    for contract_use in uses {
-        for guard in &contract_use.guards {
-            match guard {
-                Guard::Not { path } => {
-                    signals.conditionally_optional_paths.insert(path.clone());
-                }
-                Guard::Or { paths } => {
-                    signals
-                        .conditionally_optional_paths
-                        .extend(paths.iter().cloned());
-                }
-                Guard::Default { path } => {
-                    signals.default_fallback_paths.insert(path.clone());
-                }
-                Guard::Truthy { .. }
-                | Guard::Eq { .. }
-                | Guard::Range { .. }
-                | Guard::With { .. }
-                | Guard::TypeIs { .. } => {}
-            }
-        }
-
-        if contract_use.kind == ValueKind::Scalar
-            && contract_use.path.0.is_empty()
-            && !contract_use.source_expr.trim().is_empty()
-            && use_is_positive_header(contract_use)
-        {
-            signals
-                .positive_header_paths
-                .insert(contract_use.source_expr.clone());
-        }
-    }
-
-    signals
 }
 
 fn use_is_positive_header(use_: &ContractUse) -> bool {
@@ -1196,7 +1157,7 @@ mod tests {
             None,
         )]);
 
-        let nullable_paths = projection.nullable_value_paths();
+        let nullable_paths = projection.schema_signals().nullable_value_paths;
 
         assert!(
             nullable_paths.contains("snapshots"),
@@ -1230,7 +1191,7 @@ mod tests {
             ),
         ]);
 
-        let nullable_paths = projection.nullable_value_paths();
+        let nullable_paths = projection.schema_signals().nullable_value_paths;
 
         assert!(
             !nullable_paths.contains("serviceAccount.name"),
@@ -1293,7 +1254,7 @@ mod tests {
             ),
         ]);
 
-        let signals = projection.path_signals();
+        let signals = projection.schema_signals().path_signals;
 
         assert_eq!(
             signals.referenced_value_paths,
@@ -1413,7 +1374,7 @@ mod tests {
             ),
         ]);
 
-        let requests = projection.provider_schema_uses();
+        let requests = projection.schema_signals().provider_schema_uses;
 
         assert_eq!(requests.len(), 2, "{requests:#?}");
         assert_eq!(requests[0].value_path, "containers");
@@ -1554,7 +1515,7 @@ mod tests {
             ),
         ]);
 
-        let signals = projection.required_inference_signals();
+        let signals = projection.schema_signals().required_inference_signals;
 
         assert_eq!(
             signals.positive_header_paths,

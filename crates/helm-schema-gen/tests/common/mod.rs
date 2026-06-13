@@ -73,8 +73,9 @@ pub fn generate_schema_with_values_yaml(
     provider: &dyn K8sSchemaProvider,
     values_yaml: Option<&str>,
 ) -> Value {
+    let schema_signals = projection.schema_signals();
     generate_values_schema(
-        ValuesSchemaInput::new(projection, provider).with_values_yaml(values_yaml),
+        ValuesSchemaInput::new(&schema_signals, provider).with_values_yaml(values_yaml),
     )
 }
 

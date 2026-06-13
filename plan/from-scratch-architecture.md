@@ -1566,11 +1566,17 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   several separate projections. The generator still augments that map with
   external type-hint descendant evidence because type hints are caller input,
   not template-derived contract topology.
+  Required-inference signals now live in that same schema-signal projection,
+  and `ValuesSchemaInput` consumes `ContractSchemaSignals` directly. This
+  removes the remaining production path where generator code asked
+  `ContractProjection` for separate partial views and keeps optional
+  required-inference as a consumer of the shared contract projection rather
+  than a second raw-claim scan.
   Required-inference default-fallback exclusions now also flow through typed
-  `RequiredInferenceSignals` on `ContractProjection`, with the generator
-  combining those contract-owned exclusions and the remaining CLI compatibility
-  fallback through a named policy input rather than treating the fallback scan
-  as the only source of default knowledge.
+  `RequiredInferenceSignals` inside `ContractSchemaSignals`, with the
+  generator combining those contract-owned exclusions and the remaining CLI
+  compatibility fallback through a named policy input rather than treating the
+  fallback scan as the only source of default knowledge.
   Core schema generation now consumes a single `ContractSchemaSignals`
   projection containing chart facts, path signals, provider-schema lookup
   requests, and nullable-path evidence, so the generator boundary no longer

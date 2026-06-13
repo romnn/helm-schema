@@ -383,7 +383,7 @@ spec:
         let path = "kid.controller.ingressClassResource.parameters";
 
         let uses = collection.contract_projection.uses();
-        let ir_facts = collection.contract_projection.chart_facts();
+        let ir_facts = collection.contract_projection.schema_signals().chart_facts;
         let ir_fact = ir_facts
             .path_facts
             .get(path)

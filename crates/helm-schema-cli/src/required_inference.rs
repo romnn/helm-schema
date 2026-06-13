@@ -16,7 +16,7 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::ContractProjection;
+use helm_schema_ir::RequiredInferenceSignals;
 use helm_schema_ir::required_inference::extract_default_fallback_paths;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -28,14 +28,14 @@ use crate::chart::{ChartContext, scope_values_path};
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.
 ///
-/// `contract_projection` comes from the IR collection. `values_yaml` is the
-/// composed values.yaml (used to re-derive top-level seeded keys — those must
-/// not be marked required). `charts` and `call_graph` come from the IR
-/// collection too and drive per-prefix fallback-path scoping.
+/// `required_inference_signals` comes from the contract schema-signal bundle.
+/// `values_yaml` is the composed values.yaml (used to re-derive top-level
+/// seeded keys — those must not be marked required). `charts` and `call_graph`
+/// come from the IR collection too and drive per-prefix fallback-path scoping.
 #[instrument(skip_all)]
 pub(crate) fn apply(
     schema: &mut Value,
-    contract_projection: &ContractProjection,
+    required_inference_signals: &RequiredInferenceSignals,
     values_yaml: Option<&str>,
     charts: &[ChartContext],
     call_graph: &HelperCallGraph,
@@ -44,7 +44,7 @@ pub(crate) fn apply(
     let default_fallback_paths = collect_fallback_paths(charts, call_graph);
     helm_schema_gen::required_inference::apply_required_inference(
         schema,
-        contract_projection,
+        required_inference_signals,
         &synthetic_value_paths,
         &default_fallback_paths,
     );

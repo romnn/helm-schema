@@ -62,7 +62,8 @@ where
     let projection = ContractProjection::from_contract_uses(
         uses.iter().cloned().map(ContractUse::from).collect(),
     );
-    generate_values_schema(ValuesSchemaInput::new(&projection, &provider()))
+    let schema_signals = projection.schema_signals();
+    generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()))
 }
 
 fn schema_for_values_yaml<T>(uses: &[T], values_yaml: Option<&str>) -> Value
@@ -73,8 +74,9 @@ where
     let projection = ContractProjection::from_contract_uses(
         uses.iter().cloned().map(ContractUse::from).collect(),
     );
+    let schema_signals = projection.schema_signals();
     generate_values_schema(
-        ValuesSchemaInput::new(&projection, &provider()).with_values_yaml(values_yaml),
+        ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
     )
 }
 
@@ -90,8 +92,9 @@ where
     let projection = ContractProjection::from_contract_uses(
         uses.iter().cloned().map(ContractUse::from).collect(),
     );
+    let schema_signals = projection.schema_signals();
     generate_values_schema(
-        ValuesSchemaInput::new(&projection, &provider())
+        ValuesSchemaInput::new(&schema_signals, &provider())
             .with_values_yaml(values_yaml)
             .with_type_hints(type_hints),
     )
@@ -247,9 +250,10 @@ fn values_yaml_comments_override_provider_descriptions() {
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let projection = ContractProjection::from_value_uses(uses);
+    let schema_signals = projection.schema_signals();
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&projection, &DescriptionProvider)
+        ValuesSchemaInput::new(&schema_signals, &DescriptionProvider)
             .with_values_yaml(Some("name: example\n"))
             .with_values_descriptions(&descriptions),
     );
@@ -281,9 +285,10 @@ fn values_yaml_comments_do_not_create_schema_paths() {
     ]);
     let provider = Chain::new(Vec::new());
     let projection = ContractProjection::from_value_uses(uses);
+    let schema_signals = projection.schema_signals();
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&projection, &provider)
+        ValuesSchemaInput::new(&schema_signals, &provider)
             .with_values_yaml(Some("name: example\n"))
             .with_values_descriptions(&descriptions),
     );
@@ -818,7 +823,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
     "};
     let ir = parse_ir(src);
     let projection = ContractProjection::from_value_uses(ir.clone());
-    let nullable_paths = projection.nullable_value_paths();
+    let nullable_paths = projection.schema_signals().nullable_value_paths;
     assert!(
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
@@ -2511,8 +2516,9 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let schema_signals = ir.schema_signals();
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&ir, &provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(Some(values_yaml)),
     );
     let data_source = schema
         .pointer("/properties/persistence/properties/dataSource")
@@ -3925,7 +3931,7 @@ fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_toleran
     };
 
     let projection = ContractProjection::from_value_uses(vec![guarded, bare]);
-    let null_paths = projection.nullable_value_paths();
+    let null_paths = projection.schema_signals().nullable_value_paths;
     assert!(
         null_paths.is_empty(),
         "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",

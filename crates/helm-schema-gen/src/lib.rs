@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ContractProjection, ContractSchemaSignals, ContractValuePathFacts};
+use helm_schema_ir::{ContractSchemaSignals, ContractValuePathFacts};
 use helm_schema_k8s::K8sSchemaProvider;
 
 use path_resolver::PathSchemaResolver;
@@ -24,14 +24,14 @@ use use_signals::{UseSignals, collect_use_signals};
 // Core generation logic
 // ---------------------------------------------------------------------------
 
-/// Inputs for JSON Schema generation from the current contract projection.
+/// Inputs for JSON Schema generation from the current contract schema signals.
 ///
-/// The generated schema is derived from template uses plus optional structural
-/// signals collected by earlier analysis phases. Values-file descriptions are
-/// metadata only: they are applied only to schema nodes that already exist from
-/// template or values evidence.
+/// The generated schema is derived from the contract-layer signal bundle plus
+/// optional structural signals collected by earlier analysis phases.
+/// Values-file descriptions are metadata only: they are applied only to schema
+/// nodes that already exist from template or values evidence.
 pub struct ValuesSchemaInput<'a> {
-    pub contract_projection: &'a ContractProjection,
+    pub contract_schema_signals: &'a ContractSchemaSignals,
     pub provider: &'a dyn K8sSchemaProvider,
     pub values_yaml: Option<&'a str>,
     pub type_hints: Option<&'a BTreeMap<String, Vec<Value>>>,
@@ -40,11 +40,11 @@ pub struct ValuesSchemaInput<'a> {
 
 impl<'a> ValuesSchemaInput<'a> {
     pub fn new(
-        contract_projection: &'a ContractProjection,
+        contract_schema_signals: &'a ContractSchemaSignals,
         provider: &'a dyn K8sSchemaProvider,
     ) -> Self {
         Self {
-            contract_projection,
+            contract_schema_signals,
             provider,
             values_yaml: None,
             type_hints: None,
@@ -87,13 +87,13 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .values_descriptions
         .unwrap_or(&empty_values_descriptions);
 
-    let ContractSchemaSignals {
+    let path_signals = input.contract_schema_signals.path_signals.clone();
+    let mut value_path_facts = input.contract_schema_signals.value_path_facts.clone();
+    let mut signals = collect_use_signals(
         path_signals,
-        provider_schema_uses,
-        mut value_path_facts,
-        ..
-    } = input.contract_projection.schema_signals();
-    let mut signals = collect_use_signals(path_signals, &provider_schema_uses, input.provider);
+        &input.contract_schema_signals.provider_schema_uses,
+        input.provider,
+    );
     signals
         .referenced_value_paths
         .extend(type_hints.keys().cloned());

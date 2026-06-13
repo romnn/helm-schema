@@ -22,14 +22,14 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::{ContractProjection, RequiredInferenceSignals};
+use helm_schema_ir::RequiredInferenceSignals;
 use serde_json::Value;
 
 #[derive(Debug, Default, Clone, Copy)]
 struct RequiredInferencePolicy;
 
 struct RequiredInferenceInputs<'a> {
-    signals: RequiredInferenceSignals,
+    signals: &'a RequiredInferenceSignals,
     synthetic_value_paths: &'a BTreeSet<String>,
     external_default_fallback_paths: &'a BTreeSet<String>,
 }
@@ -43,18 +43,21 @@ struct RequiredInferenceInputs<'a> {
 /// aren't real template references (e.g. CLI-seeded top-level
 /// `values.yaml` keys).
 ///
+/// `signals` should come from [`helm_schema_ir::ContractSchemaSignals`], not
+/// from a second pass over raw compatibility rows.
+///
 /// `default_fallback_paths` should contain every path that has any
 /// `default <expr> .Values.X` fallback in the template — typically
 /// derived from [`helm_schema_ir::required_inference::extract_default_fallback_paths`]
 /// applied to chart templates with appropriate prefix scoping.
 pub fn apply_required_inference(
     schema: &mut Value,
-    contract_projection: &ContractProjection,
+    signals: &RequiredInferenceSignals,
     synthetic_value_paths: &BTreeSet<String>,
     default_fallback_paths: &BTreeSet<String>,
 ) {
     let paths = RequiredInferencePolicy.required_paths(RequiredInferenceInputs {
-        signals: contract_projection.required_inference_signals(),
+        signals,
         synthetic_value_paths,
         external_default_fallback_paths: default_fallback_paths,
     });
@@ -74,15 +77,15 @@ pub fn apply_required_inference(
 impl RequiredInferencePolicy {
     fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
         let mut required: BTreeSet<String> = BTreeSet::new();
-        for path in input.signals.positive_header_paths {
-            if input.external_default_fallback_paths.contains(&path)
-                || input.signals.default_fallback_paths.contains(&path)
-                || input.signals.conditionally_optional_paths.contains(&path)
-                || input.synthetic_value_paths.contains(&path)
+        for path in &input.signals.positive_header_paths {
+            if input.external_default_fallback_paths.contains(path)
+                || input.signals.default_fallback_paths.contains(path)
+                || input.signals.conditionally_optional_paths.contains(path)
+                || input.synthetic_value_paths.contains(path)
             {
                 continue;
             }
-            required.insert(path);
+            required.insert(path.clone());
         }
         required
     }
@@ -184,14 +187,15 @@ mod tests {
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let hints = collect_hints(src);
         let projection = parse_projection(src);
+        let schema_signals = projection.schema_signals();
         let mut schema = generate_values_schema(
-            ValuesSchemaInput::new(&projection, &provider())
+            ValuesSchemaInput::new(&schema_signals, &provider())
                 .with_values_yaml(values_yaml)
                 .with_type_hints(&hints),
         );
         apply_required_inference(
             &mut schema,
-            &projection,
+            &schema_signals.required_inference_signals,
             &BTreeSet::new(),
             &collect_fallbacks(src),
         );
@@ -218,9 +222,16 @@ mod tests {
                 resource: None,
             },
         ]);
-        let mut schema = generate_values_schema(ValuesSchemaInput::new(&projection, &provider()));
+        let schema_signals = projection.schema_signals();
+        let mut schema =
+            generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
-        apply_required_inference(&mut schema, &projection, &BTreeSet::new(), &BTreeSet::new());
+        apply_required_inference(
+            &mut schema,
+            &schema_signals.required_inference_signals,
+            &BTreeSet::new(),
+            &BTreeSet::new(),
+        );
 
         assert!(
             schema.get("required").is_none(),
@@ -391,7 +402,8 @@ mod tests {
             {{- end }}
         "};
         let projection = parse_projection(src);
-        let schema = generate_values_schema(ValuesSchemaInput::new(&projection, &provider()));
+        let schema_signals = projection.schema_signals();
+        let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
         // The core path must never emit `required` — that's the
         // separation of concerns this module exists to enforce.
         let any_required_anywhere = serde_json::to_string(&schema)

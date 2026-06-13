@@ -74,13 +74,14 @@ pub(crate) fn generate_values_schema_for_chart_output(
         call_graph,
         local_schema_universe,
     } = analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
+    let contract_schema_signals = contract_projection.schema_signals();
 
     let mut provider_options = opts.provider.clone();
     provider_options.local_schema_universe = local_schema_universe;
     let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
 
     let mut schema = generate_values_schema(
-        ValuesSchemaInput::new(&contract_projection, &provider)
+        ValuesSchemaInput::new(&contract_schema_signals, &provider)
             .with_values_yaml(values_yaml.as_deref())
             .with_type_hints(&type_hints)
             .with_values_descriptions(&values_descriptions),
@@ -89,7 +90,7 @@ pub(crate) fn generate_values_schema_for_chart_output(
     if opts.infer_required {
         required_inference::apply(
             &mut schema,
-            &contract_projection,
+            &contract_schema_signals.required_inference_signals,
             values_yaml.as_deref(),
             charts,
             &call_graph,
