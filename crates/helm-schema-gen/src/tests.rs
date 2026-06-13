@@ -778,7 +778,8 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         snapshots:
     "};
     let ir = parse_ir(src);
-    let nullable_paths = ResolvePolicy::default().nullable_value_paths(&ir);
+    let projection = ContractProjection::from_value_uses(ir.clone());
+    let nullable_paths = ResolvePolicy::default().nullable_value_paths(&projection);
     assert!(
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
@@ -3899,7 +3900,8 @@ fn resolve_policy_nullable_paths_requires_all_render_uses_to_be_null_tolerant() 
         resource: None,
     };
 
-    let null_paths = ResolvePolicy::default().nullable_value_paths(&[guarded, bare]);
+    let projection = ContractProjection::from_value_uses(vec![guarded, bare]);
+    let null_paths = ResolvePolicy::default().nullable_value_paths(&projection);
     assert!(
         null_paths.is_empty(),
         "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",

@@ -1497,6 +1497,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   need fixture DTO rows opt into `into_value_uses()` explicitly. CLI
   required-inference now also accepts the projection artifact directly, keeping
   its heuristic raw-row access inside the generator compatibility module. The
+  first generator evidence collectors now take `ContractProjection` directly
+  too (`use_signals`, path metadata, nullable-path policy), so raw DTO access
+  is increasingly contained inside compatibility collectors rather than the
+  root orchestration path. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

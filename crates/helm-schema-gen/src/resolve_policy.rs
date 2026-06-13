@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ContractProjection, Guard, ValueKind, ValueUse};
 use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_two_schemas, union_schema_list};
@@ -174,9 +174,12 @@ impl ResolvePolicy {
     /// attaching `Guard::Default` to reads of the mutated path. This policy
     /// only consumes those structural guards; it does not infer nullability
     /// from a path being mentioned in any one default expression.
-    pub(crate) fn nullable_value_paths(&self, uses: &[ValueUse]) -> BTreeSet<String> {
+    pub(crate) fn nullable_value_paths(
+        &self,
+        contract_projection: &ContractProjection,
+    ) -> BTreeSet<String> {
         let mut by_path: BTreeMap<&str, NullablePathInfo> = BTreeMap::new();
-        for use_ in uses {
+        for use_ in contract_projection.uses() {
             if use_.source_expr.trim().is_empty() {
                 continue;
             }

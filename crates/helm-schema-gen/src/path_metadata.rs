@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ir::ValueUse;
+use helm_schema_ir::ContractProjection;
 
 use crate::resolve_policy::ResolvePolicy;
 
@@ -11,12 +11,12 @@ pub(crate) struct PathMetadata {
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_path_metadata(
-    uses: &[ValueUse],
+    contract_projection: &ContractProjection,
     referenced_value_paths: &BTreeSet<String>,
 ) -> PathMetadata {
     let resolve_policy = ResolvePolicy::default();
     PathMetadata {
-        nullable_paths: resolve_policy.nullable_value_paths(uses),
+        nullable_paths: resolve_policy.nullable_value_paths(contract_projection),
         paths_with_descendants: collect_paths_with_descendants(referenced_value_paths),
     }
 }

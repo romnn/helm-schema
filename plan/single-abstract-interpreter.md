@@ -851,6 +851,10 @@ Current result:
   opt into `into_value_uses()` when they need compatibility rows.
 - CLI required-inference now accepts `ContractProjection` directly too, so its
   raw `ValueUse` access stays inside the generator compatibility module.
+- Generator evidence collection has started taking `ContractProjection`
+  directly as well: use signals, path metadata, and nullable-path policy now
+  own their compatibility-row access instead of forcing root schema generation
+  to pass raw slices around.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

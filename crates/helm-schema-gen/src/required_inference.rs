@@ -45,7 +45,7 @@ pub fn apply_required_inference(
     default_fallback_paths: &BTreeSet<String>,
 ) {
     let paths = collect_required_paths(
-        contract_projection.uses(),
+        contract_projection,
         default_fallback_paths,
         synthetic_value_paths,
     );
@@ -76,7 +76,7 @@ pub fn apply_required_inference(
 /// rare. A proper fix would require tagging header emits with their
 /// guard kind in the IR.
 fn collect_required_paths(
-    uses: &[ValueUse],
+    contract_projection: &ContractProjection,
     default_fallback_paths: &BTreeSet<String>,
     synthetic_value_paths: &BTreeSet<String>,
 ) -> BTreeSet<String> {
@@ -95,7 +95,7 @@ fn collect_required_paths(
     }
 
     let mut conditionally_excluded: BTreeSet<&str> = BTreeSet::new();
-    for u in uses {
+    for u in contract_projection.uses() {
         for g in &u.guards {
             match g {
                 Guard::Not { path } => {
@@ -112,7 +112,7 @@ fn collect_required_paths(
     }
 
     let mut required: BTreeSet<String> = BTreeSet::new();
-    for u in uses {
+    for u in contract_projection.uses() {
         if u.kind != ValueKind::Scalar
             || !u.path.0.is_empty()
             || !is_positive_header_use(u)

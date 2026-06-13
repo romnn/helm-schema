@@ -98,12 +98,12 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .values_descriptions
         .unwrap_or(&empty_values_descriptions);
 
-    let uses = input.contract_projection.uses();
-    let mut signals = collect_use_signals(uses, input.provider);
+    let mut signals = collect_use_signals(input.contract_projection, input.provider);
     signals
         .referenced_value_paths
         .extend(type_hints.keys().cloned());
-    let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
+    let path_metadata =
+        collect_path_metadata(input.contract_projection, &signals.referenced_value_paths);
     let mut merged_chart_facts = derive_chart_facts(input.contract_projection);
     merge_chart_facts(&mut merged_chart_facts, chart_facts);
 

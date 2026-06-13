@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ContractProjection, Guard, ValueKind, ValueUse};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use crate::resolve_policy::ResolvePolicy;
@@ -25,11 +25,12 @@ struct ProviderSchemaLookupKey {
     kind: ValueKind,
 }
 
-#[tracing::instrument(skip_all, fields(uses = uses.len()))]
+#[tracing::instrument(skip_all, fields(uses = contract_projection.uses().len()))]
 pub(crate) fn collect_use_signals(
-    uses: &[ValueUse],
+    contract_projection: &ContractProjection,
     provider: &dyn K8sSchemaProvider,
 ) -> UseSignals {
+    let uses = contract_projection.uses();
     let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut ranged_value_paths: BTreeSet<String> = BTreeSet::new();
     let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
