@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::{
     ValuesSchemaInput, generate_values_schema,
-    resolve_policy::{ResolvePolicy, ValuePathSchemaInputs},
+    resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
@@ -422,15 +422,18 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
     });
 
     let schema = ResolvePolicy::default().resolve_schema_for_value_path(ValuePathSchemaInputs {
-        has_referenced_descendants: false,
-        used_as_fragment: false,
+        facts: ValuePathSchemaFacts {
+            path_has_render_use: true,
+            path_all_render_uses_self_guarded: true,
+            contract_path_is_nullable: true,
+            values_yaml_is_empty_string: true,
+            ..ValuePathSchemaFacts::default()
+        },
         provider_schema,
         values_yaml_schema,
         guard_constraint_schema: serde_json::json!({}),
         type_hint_schema: serde_json::json!({}),
-        preserve_empty_string_fallback: true,
     });
-    let schema = crate::schema_model::add_null_schema(schema);
 
     assert!(
         permits_empty_string(&schema),

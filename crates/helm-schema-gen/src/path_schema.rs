@@ -1,6 +1,5 @@
 use serde_json::Value;
 
-use helm_schema_ir::PathFact;
 use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_schema_list, union_schema_list};
@@ -8,63 +7,32 @@ use crate::schema_model::{
     add_null_schema, empty_schema, exact_empty_object_schema, is_fixed_object_schema,
     schema_allows_type,
 };
-use crate::values_yaml::ValuesYamlPathInfo;
 
-pub(crate) fn values_yaml_schema_for_path(
-    path_info: &ValuesYamlPathInfo,
-    path_fact: &PathFact,
-    provider_schema: &Value,
-    used_as_fragment: bool,
-    is_ranged_source: bool,
-) -> Value {
-    if path_info.is_empty_map
-        && empty_map_placeholder_has_structural_object_use(
-            path_fact,
-            provider_schema,
-            used_as_fragment,
-            is_ranged_source,
-        )
-    {
-        return empty_schema();
-    }
-
-    path_info.schema.clone()
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct EmptyMapPlaceholderUse {
+    pub(crate) is_empty_map: bool,
+    pub(crate) is_ranged_source: bool,
+    pub(crate) has_self_range_guard_render_use: bool,
+    pub(crate) has_render_use: bool,
+    pub(crate) all_render_uses_self_guarded: bool,
+    pub(crate) used_as_fragment: bool,
 }
 
-pub(crate) fn preserve_explicit_empty_placeholder(
-    path_info: Option<&ValuesYamlPathInfo>,
-    path_fact: &PathFact,
+pub(crate) fn empty_map_placeholder_has_structural_object_use(
     provider_schema: &Value,
-    used_as_fragment: bool,
-    is_ranged_source: bool,
+    placeholder_use: EmptyMapPlaceholderUse,
 ) -> bool {
-    path_info.is_some_and(|info| info.is_empty_map)
-        && empty_map_placeholder_has_structural_object_use(
-            path_fact,
-            provider_schema,
-            used_as_fragment,
-            is_ranged_source,
-        )
+    placeholder_use.is_empty_map
+        && (placeholder_use.is_ranged_source
+            || placeholder_use.has_self_range_guard_render_use
+            || (schema_allows_type(provider_schema, "object")
+                && (placeholder_use.used_as_fragment
+                    || (placeholder_use.has_render_use
+                        && placeholder_use.all_render_uses_self_guarded))))
 }
 
-fn empty_map_placeholder_has_structural_object_use(
-    path_fact: &PathFact,
-    provider_schema: &Value,
-    used_as_fragment: bool,
-    is_ranged_source: bool,
-) -> bool {
-    is_ranged_source
-        || path_fact.has_self_range_guard_render_use
-        || (schema_allows_type(provider_schema, "object")
-            && (used_as_fragment
-                || (path_fact.has_render_use && path_fact.all_render_uses_self_guarded)))
-}
-
-pub(crate) fn merge_explicit_empty_placeholder(
-    schema: Value,
-    path_info: &ValuesYamlPathInfo,
-) -> Value {
-    if path_info.is_empty_map {
+pub(crate) fn merge_explicit_empty_placeholder(schema: Value, is_empty_map: bool) -> Value {
+    if is_empty_map {
         if schema_accepts_empty_object(&schema) {
             return schema;
         }

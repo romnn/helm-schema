@@ -1553,7 +1553,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `--infer-required` post-pass now consumes typed
   `RequiredInferenceSignals` from `ContractProjection`, so generator policy
   combines explicit exclusions and mutates JSON Schema without reinterpreting
-  flat contract rows itself.
+  flat contract rows itself. Path-level schema resolution now also passes an
+  explicit per-path evidence bundle into `ResolvePolicy`, which owns
+  null/default preservation, values.yaml placeholder handling, ranged-map
+  generalization, fragment widening, partial-scalar fallback, provider
+  schemas, type hints, and guard constraints as one named structural lowering
+  step instead of a long chain of ambient resolver locals.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the
