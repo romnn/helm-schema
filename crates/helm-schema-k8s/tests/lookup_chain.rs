@@ -236,6 +236,12 @@ fn chain_local_override_unreadable_does_not_fall_through() {
     assert_eq!(override_unreadable.0, "ServiceMonitor");
     assert_eq!(override_unreadable.1, "/path/to/override.json");
     assert!(override_unreadable.2.contains("permission denied"));
+    assert!(
+        !snapshot
+            .iter()
+            .any(|diagnostic| matches!(diagnostic, Diagnostic::MissingSchema { .. })),
+        "override unreadability is the actionable diagnostic; generic MissingSchema would be noise"
+    );
 }
 
 #[test]

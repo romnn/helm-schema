@@ -1543,7 +1543,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   a `LookupTrace` while existing schema callers keep the same outcome surface.
   `LookupTrace` is now subject-typed, so resource/path lookup and API-presence
   capability queries share one trace envelope instead of parallel ad hoc
-  records.
+  records. Final miss diagnostics now start from that trace too:
+  `MissingSchema`, local override unreadability, and provider companion
+  diagnostics are projected from the failed resource/path trace after the
+  chain decides the miss is final.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
@@ -1569,8 +1572,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   have a traced provider-chain entry point, and the OpenAPI provider records
   per-source cache/download probe outcomes (`Found`, authoritative absent,
   uncertain) before projecting the same `Option<bool>` answer as before. B3's
-  remaining work is to make those trace records the direct diagnostic source
-  when the planner/executor layer replaces the compatibility chain.
+  remaining work is to feed capability trace records into the final
+  planner/executor diagnostic projection once capability diagnostics exist;
+  resource/path misses already project diagnostics from `LookupTrace`.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's

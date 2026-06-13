@@ -11,6 +11,7 @@ use crate::inference::{self, ApiVersionInferenceOutcome};
 
 use super::api_presence::ApiPresenceQuery;
 use super::chain_outcome::ChainLookupOutcome;
+use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
@@ -19,9 +20,9 @@ use super::trait_def::K8sSchemaProvider;
 /// Composed provider chain with precedence
 /// `LocalOverride > DefaultCatalog > KubernetesOpenApi`.
 ///
-/// This is the only layer that emits
-/// [`Diagnostic::MissingSchema`]. Providers report their local
-/// outcomes; the chain decides what to do with them.
+/// This layer executes provider lookups and projects diagnostics from the
+/// resulting traces. Providers report their local outcomes; the chain decides
+/// when a miss is final.
 #[derive(Debug)]
 pub struct Chain {
     providers: Vec<Box<dyn K8sSchemaProvider>>,
@@ -242,11 +243,11 @@ impl Chain {
             // that silence; no MissingSchema.
             return None;
         }
-        // All candidates exhausted AND no provider claimed ownership —
-        // commit one MissingSchema attributed to the user-written
-        // primary apiVersion. Provider-side miss diagnostics
-        // (CrdVersionNotFound, etc.) ride along.
-        self.commit_missing_schema(resource);
+        // All candidates exhausted AND no provider claimed ownership: emit the
+        // final miss against the user-written primary apiVersion. Provider-side
+        // miss diagnostics (CrdVersionNotFound, etc.) ride along.
+        let miss_trace = LookupTrace::new(resource, &use_.path);
+        self.emit_missing_lookup_diagnostics(&miss_trace);
         None
     }
 
@@ -351,18 +352,10 @@ impl Chain {
                         trace,
                     };
                 }
-                ProviderLookupResult::ResourceDocMissing {
-                    io_error,
-                    source_path,
-                } => {
+                ProviderLookupResult::ResourceDocMissing { .. } => {
                     if provider.origin() == ProviderOrigin::LocalOverride {
-                        if commit_miss_diagnostics && let Some(sink) = &self.sink {
-                            sink.push(Diagnostic::LocalOverrideUnreadable {
-                                kind: resource.kind.clone(),
-                                api_version: resource.api_version.clone(),
-                                override_path: source_path,
-                                io_error,
-                            });
+                        if commit_miss_diagnostics {
+                            self.emit_missing_lookup_diagnostics(&trace);
                         }
                         return TracedLookupOutcome {
                             outcome: ChainLookupOutcome::MissingSchema {
@@ -381,74 +374,18 @@ impl Chain {
             tried_filenames: candidate_filenames_for_resource(resource),
         };
         if commit_miss_diagnostics {
-            self.commit_missing_schema(resource);
+            self.emit_missing_lookup_diagnostics(&trace);
         }
         TracedLookupOutcome { outcome, trace }
     }
 
-    /// Emit one `MissingSchema` for `resource` and all provider-side
-    /// miss-companion diagnostics
-    /// ([`K8sSchemaProvider::missing_schema_provider_diagnostics`]).
-    /// Attribution uses `resource.api_version` verbatim — callers in
-    /// multi-candidate iteration pass the user-written primary so we
-    /// don't attribute the miss to a speculative candidate.
-    fn commit_missing_schema(&self, resource: &ResourceRef) {
+    fn emit_missing_lookup_diagnostics(&self, trace: &LookupTrace) {
         let Some(sink) = &self.sink else {
             return;
         };
-
-        // Typed branches are mutually exclusive at runtime, so a final miss is
-        // attributed only to the live branch the chart would emit for the
-        // configured primary K8s version. Without typed branches, fall back to
-        // per-candidate attribution so users still see every attempted
-        // apiVersion instead of an uninformative empty-string attribution.
-        let attributions: Vec<String> = if !resource.api_version_branches.is_empty() {
-            // live_literals recurses through nested branch bodies, so
-            // the picked literal correctly reflects composed guards.
-            let live = capability_eval::live_literals(&resource.api_version_branches, self);
-            match live.first().cloned() {
-                Some(lit) => vec![lit],
-                // All branches dead / empty — fall through to the
-                // candidate / api_version fallback below.
-                None if resource.api_version.is_empty()
-                    && !resource.api_version_candidates.is_empty() =>
-                {
-                    resource.api_version_candidates.clone()
-                }
-                None => vec![resource.api_version.clone()],
-            }
-        } else if resource.api_version.is_empty() && !resource.api_version_candidates.is_empty() {
-            // Fallback for untyped multi-candidate resources.
-            resource.api_version_candidates.clone()
-        } else {
-            vec![resource.api_version.clone()]
-        };
-
-        for api_version in attributions {
-            let attribution = ResourceRef {
-                api_version,
-                kind: resource.kind.clone(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            };
-            let tried_filenames = candidate_filenames_for_resource(&attribution);
-            let k8s_versions_tried = self.collect_tried_k8s_versions();
-            let available_in_cache_versions = self.collect_available_cache_versions(&attribution);
-            let suggested_k8s_version = available_in_cache_versions.first().cloned();
-            sink.push(Diagnostic::MissingSchema {
-                kind: attribution.kind.clone(),
-                api_version: attribution.api_version.clone(),
-                k8s_versions_tried,
-                tried_filenames,
-                available_in_cache_versions,
-                suggested_k8s_version,
-                hint: crate::kubernetes_openapi::missing_schema_hint(&attribution),
-            });
-            for provider in &self.providers {
-                for diag in provider.missing_schema_provider_diagnostics(&attribution) {
-                    sink.push(diag);
-                }
-            }
+        let diagnostics = MissingLookupDiagnostics::new(self.providers.as_slice(), self);
+        for diagnostic in diagnostics.project(trace) {
+            sink.push(diagnostic);
         }
     }
 
@@ -460,17 +397,6 @@ impl Chain {
     /// upstream-first, cache is just a speed optimisation).
     pub fn select_live_branch<'a>(&self, branches: &'a [HelperBranch]) -> Option<&'a HelperBranch> {
         capability_eval::select_live_branch(branches, self)
-    }
-
-    fn collect_available_cache_versions(&self, resource: &ResourceRef) -> Vec<String> {
-        let mut out: Vec<String> = self
-            .providers
-            .iter()
-            .flat_map(|p| p.cache_versions_holding(resource))
-            .collect();
-        out.sort();
-        out.dedup();
-        out
     }
 
     fn maybe_emit_fallback_version(

@@ -3,8 +3,8 @@ use serde_json::Value;
 use super::provider_origin::ProviderOrigin;
 
 /// Outcome of resolving a known `(apiVersion, kind)` against the full
-/// provider chain. Chain-level; this is the only place
-/// [`crate::diagnostic::Diagnostic::MissingSchema`] is emitted from.
+/// provider chain. Missing diagnostics are projected from the corresponding
+/// lookup trace after the chain decides that the miss is final.
 #[derive(Debug)]
 pub enum ChainLookupOutcome {
     Resolved {
