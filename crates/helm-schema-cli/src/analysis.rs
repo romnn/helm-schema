@@ -3,7 +3,7 @@ use std::io::Read;
 
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{
-    ContractIr, ContractProjection, SymbolicIrContext, extract_default_type_hints,
+    ContractIr, ContractSchemaSignals, SymbolicIrContext, extract_default_type_hints,
     extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::LocalSchemaUniverse;
@@ -17,7 +17,7 @@ use crate::error::CliResult;
 
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {
-    pub(crate) contract_projection: ContractProjection,
+    pub(crate) contract_schema_signals: ContractSchemaSignals,
     pub(crate) type_hints: BTreeMap<String, Vec<Value>>,
     pub(crate) call_graph: HelperCallGraph,
     pub(crate) local_schema_universe: LocalSchemaUniverse,
@@ -102,8 +102,10 @@ pub(crate) fn analyze_charts(
 
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
+    let contract_schema_signals = contract.project().schema_signals();
+
     Ok(ChartAnalysis {
-        contract_projection: contract.project(),
+        contract_schema_signals,
         type_hints,
         call_graph,
         local_schema_universe,
@@ -382,16 +384,14 @@ spec:
         let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
         let path = "kid.controller.ingressClassResource.parameters";
 
-        let uses = collection.contract_projection.uses();
-        let ir_facts = collection.contract_projection.schema_signals().chart_facts;
+        let ir_facts = collection.contract_schema_signals.chart_facts;
         let ir_fact = ir_facts
             .path_facts
             .get(path)
-            .unwrap_or_else(|| panic!("missing IR-derived fact for {path}: {uses:#?}"));
+            .unwrap_or_else(|| panic!("missing IR-derived fact for {path}: {ir_facts:#?}"));
         assert!(
             ir_fact.all_render_uses_self_guarded,
-            "IR-derived chart fact should stay self-guarded: {ir_fact:#?}; uses={:#?}",
-            uses
+            "IR-derived chart fact should stay self-guarded: {ir_fact:#?}"
         );
 
         Ok(())

@@ -69,12 +69,11 @@ pub(crate) fn generate_values_schema_for_chart_output(
     )?;
 
     let ChartAnalysis {
-        contract_projection,
+        contract_schema_signals,
         type_hints,
         call_graph,
         local_schema_universe,
     } = analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
-    let contract_schema_signals = contract_projection.schema_signals();
 
     let mut provider_options = opts.provider.clone();
     provider_options.local_schema_universe = local_schema_universe;

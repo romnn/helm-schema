@@ -1478,35 +1478,26 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   projection, so subchart prefixing no longer rewrites compatibility DTOs
   directly. Top-level values.yaml root seeds now also enter through a
   pathless scalar claim on `ContractIr`, so the CLI no longer constructs raw
-  `ValueUse` compatibility DTOs for values-file roots. The final normalized
-  compatibility DTOs now sit behind a named `ContractProjection` artifact, so
-  CLI chart collection passes around the contract projection rather than a raw
-  `Vec<ValueUse>`. A dead `ValuesSchemaGenerator` trait abstraction was also
+  `ValueUse` compatibility DTOs for values-file roots. Final normalization
+  now runs through a named `ContractProjection` artifact and immediately
+  derives `ContractSchemaSignals` for the CLI analysis result, so production
+  chart collection no longer passes raw `Vec<ValueUse>` rows or normalized
+  projection rows into generation. A dead `ValuesSchemaGenerator` trait
+  abstraction was also
   removed instead of preserving a no-op wrapper around the free generator
   function. The generator's old `generate_values_schema_full_with_*` arity
   ladder has now been collapsed into one explicit `ValuesSchemaInput`, so
   optional analysis signals enter through named fields instead of pass-through
-  wrapper functions. That input now takes `ContractProjection` directly, so
+  wrapper functions. That input has since moved past `ContractProjection` and
+  now consumes the derived `ContractSchemaSignals` bundle directly, so
   production schema generation and CLI required-inference orchestration no
-  longer expose or peel raw `ValueUse` slices at the main CLI boundary.
-  Chart-fact derivation now also accepts the projection artifact directly, so
-  callers no longer unwrap compatibility rows just to recover per-path facts.
-  The chart-facts walker has also been moved out of its vague legacy bucket
-  into a dedicated chart-facts module, and
-  projection-derived facts now live as `ContractProjection::chart_facts()`.
-  That keeps raw compatibility-row inspection behind the contract artifact
-  instead of exporting another free function over `ValueUse`.
+  longer expose or peel raw `ValueUse` slices or normalized contract rows at
+  the main CLI boundary. Chart facts and nullable-path classification are now
+  fields in that schema-signal bundle, so the generator consumes contract-
+  level facts instead of reinterpreting flat guards in `ResolvePolicy`.
   The old `IrGenerator -> Vec<ValueUse>` trait has also been removed; the
   public symbolic generator now returns `ContractProjection`, and tests that
-  need fixture DTO rows opt into `into_value_uses()` explicitly. CLI
-  required-inference now also accepts the projection artifact directly, keeping
-  its heuristic raw-row access inside the generator compatibility module. The
-  first generator evidence collectors now take `ContractProjection` directly
-  too (`use_signals`, path metadata), so raw DTO access is increasingly
-  contained inside compatibility collectors rather than the root orchestration
-  path. Nullable-path classification now lives on `ContractProjection`, so the
-  generator consumes contract-level null-tolerance facts instead of
-  reinterpreting flat guards in `ResolvePolicy`. The
+  need fixture DTO rows opt into `into_value_uses()` explicitly. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, and the per-path schema merge policy
   now live behind `ResolvePolicy`, leaving root-schema construction to
@@ -1588,6 +1579,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   now part of that same contract-owned schema signal bundle, so generator
   lowering no longer reconstructs contract path topology from referenced path
   strings.
+  CLI chart analysis now returns that `ContractSchemaSignals` artifact
+  directly, so the generation boundary no longer receives or exposes the
+  compatibility-era projection. `ContractProjection` remains the internal
+  normalization step that derives the signal artifact, but the
+  analysis-to-generation seam is now explicitly signal-shaped.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the
