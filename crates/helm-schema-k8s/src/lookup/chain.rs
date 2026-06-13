@@ -6,6 +6,7 @@ use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::inference::ApiVersionInferenceOutcome;
 
 use super::api_presence::ApiPresenceQuery;
+use super::api_presence_executor::ApiPresenceLookupExecutor;
 use super::api_version_inference_cache::ApiVersionInferenceCache;
 use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
@@ -205,19 +206,7 @@ impl Chain {
         &self,
         query: &ApiPresenceQuery,
     ) -> TracedApiPresenceOutcome {
-        let mut trace = LookupTrace::new_api_presence(query);
-        for provider in &self.providers {
-            let provider_outcome = provider.capability_has_query_at_primary_version_traced(query);
-            let answer = provider_outcome.answer;
-            trace.extend_entries(provider_outcome.trace.into_entries());
-            if answer.is_some() {
-                return TracedApiPresenceOutcome { answer, trace };
-            }
-        }
-        TracedApiPresenceOutcome {
-            answer: None,
-            trace,
-        }
+        ApiPresenceLookupExecutor::new(self.providers.as_slice()).execute(query)
     }
 
     /// `commit_miss_diagnostics = false` is silent mode used by

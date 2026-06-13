@@ -1563,7 +1563,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   lookup execution now also lives behind `ResourceLookupExecutor`, leaving
   `Chain` to compose candidate planning, final-miss diagnostics, and the
   compatibility facade rather than owning provider precedence and stop/fall-
-  through mechanics inline.
+  through mechanics inline. API-presence/capability query execution now has
+  the matching `ApiPresenceLookupExecutor`, so both knowledge-query shapes use
+  named execution units that return traces while `Chain` remains the
+  compatibility and diagnostic projection boundary.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
