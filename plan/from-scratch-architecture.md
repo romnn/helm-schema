@@ -1549,7 +1549,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   to JSON Schema. Resource-schema lookup eligibility now also projects through
   a typed `ProviderSchemaUse` contract request. That request is narrower than
   a full contract claim and is the type consumed by `K8sSchemaProvider`,
-  while generator policy still owns value-kind domain restriction.
+  while generator policy still owns value-kind domain restriction. The optional
+  `--infer-required` post-pass now consumes typed
+  `RequiredInferenceSignals` from `ContractProjection`, so generator policy
+  combines explicit exclusions and mutates JSON Schema without reinterpreting
+  flat contract rows itself.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the

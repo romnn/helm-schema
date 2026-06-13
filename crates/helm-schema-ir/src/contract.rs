@@ -215,6 +215,17 @@ pub struct ContractPathSignals {
     pub metadata_fields_by_value_path: BTreeMap<String, BTreeSet<MetadataFieldKind>>,
 }
 
+/// Compatibility signal for the optional `required` schema post-pass.
+///
+/// The contract layer identifies which paths look like positive guard headers
+/// and which paths are ruled out by optional control flow. JSON Schema mutation
+/// remains a generator policy.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RequiredInferenceSignals {
+    pub positive_header_paths: BTreeSet<String>,
+    pub conditionally_optional_paths: BTreeSet<String>,
+}
+
 /// Receives contract claims from node/action interpretation.
 ///
 /// Some helper-summary passes intentionally implement this as a no-op because
@@ -293,6 +304,13 @@ impl ContractProjection {
             .iter()
             .filter_map(ProviderSchemaUse::from_contract_use)
             .collect()
+    }
+
+    /// Derive the contract-side inputs for the optional `required` inference
+    /// post-pass.
+    #[must_use]
+    pub fn required_inference_signals(&self) -> RequiredInferenceSignals {
+        derive_required_inference_signals_from_uses(&self.uses)
     }
 
     /// Identify value paths for which an explicit `null` default is accepted
@@ -660,6 +678,57 @@ fn derive_path_signals_from_uses(uses: &[ContractUse]) -> ContractPathSignals {
     }
 
     signals
+}
+
+fn derive_required_inference_signals_from_uses(uses: &[ContractUse]) -> RequiredInferenceSignals {
+    let mut signals = RequiredInferenceSignals::default();
+
+    for contract_use in uses {
+        for guard in &contract_use.guards {
+            match guard {
+                Guard::Not { path } => {
+                    signals.conditionally_optional_paths.insert(path.clone());
+                }
+                Guard::Or { paths } => {
+                    signals
+                        .conditionally_optional_paths
+                        .extend(paths.iter().cloned());
+                }
+                Guard::Truthy { .. }
+                | Guard::Eq { .. }
+                | Guard::Range { .. }
+                | Guard::With { .. }
+                | Guard::TypeIs { .. }
+                | Guard::Default { .. } => {}
+            }
+        }
+
+        if contract_use.kind == ValueKind::Scalar
+            && contract_use.path.0.is_empty()
+            && !contract_use.source_expr.trim().is_empty()
+            && use_is_positive_header(contract_use)
+        {
+            signals
+                .positive_header_paths
+                .insert(contract_use.source_expr.clone());
+        }
+    }
+
+    signals
+}
+
+fn use_is_positive_header(use_: &ContractUse) -> bool {
+    use_.guards.is_empty()
+        || use_.guards.iter().all(|guard| match guard {
+            Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
+                path == &use_.source_expr
+            }
+            Guard::Not { .. }
+            | Guard::Or { .. }
+            | Guard::Range { .. }
+            | Guard::With { .. }
+            | Guard::Default { .. } => false,
+        })
 }
 
 fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
@@ -1187,5 +1256,70 @@ mod tests {
         assert_eq!(requests[1].value_path, "ports");
         assert_eq!(requests[1].kind, ValueKind::Scalar);
         assert!(requests[1].is_self_range_collection);
+    }
+
+    #[test]
+    fn contract_projection_required_inference_signals_are_typed_header_facts() {
+        let projection = ContractProjection::from_contract_uses(vec![
+            ContractUse::new(
+                "feature.enabled".to_string(),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                Vec::new(),
+                None,
+            ),
+            ContractUse::new(
+                "mode".to_string(),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                vec![Guard::Eq {
+                    path: "mode".to_string(),
+                    value: "strict".to_string(),
+                }],
+                None,
+            ),
+            ContractUse::new(
+                "optional".to_string(),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                vec![Guard::Not {
+                    path: "optional".to_string(),
+                }],
+                None,
+            ),
+            ContractUse::new(
+                "either.primary".to_string(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Or {
+                    paths: vec!["either.primary".to_string(), "either.fallback".to_string()],
+                }],
+                None,
+            ),
+            ContractUse::new(
+                "ranged".to_string(),
+                YamlPath(vec!["spec".to_string(), "ports".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Range {
+                    path: "ranged".to_string(),
+                }],
+                None,
+            ),
+        ]);
+
+        let signals = projection.required_inference_signals();
+
+        assert_eq!(
+            signals.positive_header_paths,
+            BTreeSet::from(["feature.enabled".to_string(), "mode".to_string()])
+        );
+        assert_eq!(
+            signals.conditionally_optional_paths,
+            BTreeSet::from([
+                "optional".to_string(),
+                "either.primary".to_string(),
+                "either.fallback".to_string(),
+            ])
+        );
     }
 }

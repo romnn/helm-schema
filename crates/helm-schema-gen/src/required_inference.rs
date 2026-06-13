@@ -6,9 +6,8 @@
 //! unconditionally and never accesses via a `default` fallback.
 //!
 //! Why this is heuristic:
-//!   - "unconditionally referenced" relies on header-use detection
-//!     (Scalar use at empty `YamlPath` with empty `guards`) which can
-//!     misfire on empty-body `if not`/`if or` blocks.
+//!   - "unconditionally referenced" relies on contract-level header-use
+//!     projection, which can misfire on empty-body `if not`/`if or` blocks.
 //!   - "never accessed via default" relies on the broader
 //!     [`helm_schema_ir::required_inference::extract_default_fallback_paths`]
 //!     regex which is text-based and can miss exotic syntax.
@@ -22,7 +21,7 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::{ContractProjection, ContractUse, Guard, ValueKind};
+use helm_schema_ir::ContractProjection;
 use serde_json::Value;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
@@ -54,79 +53,30 @@ pub fn apply_required_inference(
     }
 }
 
-/// Identify paths checked unconditionally at the top of a template — `if
-/// .Values.X` / `eq .Values.X "..."` with no enclosing guards — and never
+/// Identify paths checked unconditionally at the top of a template and never
 /// accessed via a `default` expression.
 ///
-/// The signal comes from header uses emitted by `collect_if_with_guards`:
-/// such a use is a Scalar at empty `YamlPath` with empty `guards` (the
-/// matching guard is pushed *after* the header emit), uniquely
-/// identifying a top-level guard header. To distinguish positive
-/// (`if`/`eq`) from negative (`not`/`or`) headers — which look identical
-/// at the emit site — paths that appear inside any `Guard::Not` or
-/// `Guard::Or` anywhere in the IR are excluded. `with`-headers carry a
-/// `Guard::With` and are skipped: `with nil` is a valid runtime input.
-/// `range`-headers emit with a non-empty YamlPath and are skipped for
-/// the same reason.
-///
 /// Known precision loss: an empty-body `{{ if not .Values.X }}{{ end }}`
-/// generates no body uses carrying a `Not` guard, so the exclusion pass
-/// can't see it and X is still (incorrectly) marked required. In
-/// practice `if not` blocks always contain content; the failure mode is
-/// rare. A proper fix would require tagging header emits with their
-/// guard kind in the IR.
+/// can still be marked required because the compatibility header projection
+/// has no body-side optionality signal to exclude it. In practice `if not`
+/// blocks usually contain content; the failure mode is rare. A proper fix
+/// would record header polarity directly in the contract graph.
 fn collect_required_paths(
     contract_projection: &ContractProjection,
     default_fallback_paths: &BTreeSet<String>,
     synthetic_value_paths: &BTreeSet<String>,
 ) -> BTreeSet<String> {
-    fn is_positive_header_use(use_: &ContractUse) -> bool {
-        use_.guards.is_empty()
-            || use_.guards.iter().all(|guard| match guard {
-                Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
-                    path == &use_.source_expr
-                }
-                Guard::Not { .. }
-                | Guard::Or { .. }
-                | Guard::Range { .. }
-                | Guard::With { .. }
-                | Guard::Default { .. } => false,
-            })
-    }
-
-    let mut conditionally_excluded: BTreeSet<&str> = BTreeSet::new();
-    for u in contract_projection.uses() {
-        for g in &u.guards {
-            match g {
-                Guard::Not { path } => {
-                    conditionally_excluded.insert(path.as_str());
-                }
-                Guard::Or { paths } => {
-                    for p in paths {
-                        conditionally_excluded.insert(p.as_str());
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
+    let signals = contract_projection.required_inference_signals();
 
     let mut required: BTreeSet<String> = BTreeSet::new();
-    for u in contract_projection.uses() {
-        if u.kind != ValueKind::Scalar
-            || !u.path.0.is_empty()
-            || !is_positive_header_use(u)
-            || u.source_expr.trim().is_empty()
+    for path in signals.positive_header_paths {
+        if default_fallback_paths.contains(&path)
+            || signals.conditionally_optional_paths.contains(&path)
+            || synthetic_value_paths.contains(&path)
         {
             continue;
         }
-        if default_fallback_paths.contains(&u.source_expr)
-            || conditionally_excluded.contains(u.source_expr.as_str())
-            || synthetic_value_paths.contains(&u.source_expr)
-        {
-            continue;
-        }
-        required.insert(u.source_expr.clone());
+        required.insert(path);
     }
     required
 }
