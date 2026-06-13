@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_full_with_facts_and_descriptions;
 use helm_schema_ir::{
-    ChartFacts, Guard, SymbolicIrContext, ValueUse, derive_chart_facts_from_ast,
+    ChartFacts, ContractIr, SymbolicIrContext, ValueUse, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
@@ -600,7 +600,7 @@ fn collect_ir_for_charts(
     defines: &DefineIndex,
     include_tests: bool,
 ) -> CliResult<ChartIrCollection> {
-    let mut uses: Vec<ValueUse> = Vec::new();
+    let mut contract = ContractIr::default();
     let mut chart_facts = ChartFacts::default();
     let mut type_hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let symbolic_context = SymbolicIrContext::new(defines);
@@ -614,7 +614,7 @@ fn collect_ir_for_charts(
             defines,
             &symbolic_context,
             include_tests,
-            &mut uses,
+            &mut contract,
             &mut chart_facts,
         )?;
     }
@@ -633,7 +633,7 @@ fn collect_ir_for_charts(
     }
 
     Ok(ChartIrCollection {
-        uses,
+        uses: contract.into_value_uses(),
         chart_facts,
         type_hints,
         call_graph,
@@ -646,29 +646,28 @@ fn collect_manifest_ir_for_chart(
     defines: &DefineIndex,
     symbolic_context: &SymbolicIrContext,
     include_tests: bool,
-    uses: &mut Vec<ValueUse>,
+    contract: &mut ContractIr,
     chart_facts: &mut ChartFacts,
 ) -> CliResult<()> {
     let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
     for path in manifests {
         let ManifestIr {
             chart_facts: manifest_facts,
-            uses: manifest_uses,
+            contract: mut manifest_contract,
         } = collect_manifest_ir_for_template(&path, defines, symbolic_context)?;
         merge_chart_facts(
             chart_facts,
             scope_chart_facts(manifest_facts, &chart.values_prefix),
         );
-        for use_ in manifest_uses {
-            uses.push(scope_value_use(use_, &chart.values_prefix));
-        }
+        manifest_contract.map_value_paths(|path| scope_values_path(path, &chart.values_prefix));
+        contract.append(manifest_contract);
     }
     Ok(())
 }
 
 struct ManifestIr {
     chart_facts: ChartFacts,
-    uses: Vec<ValueUse>,
+    contract: ContractIr,
 }
 
 #[tracing::instrument(skip_all)]
@@ -681,8 +680,11 @@ fn collect_manifest_ir_for_template(
     path.open_file()?.read_to_string(&mut src)?;
     let ast = TreeSitterParser.parse(&src)?;
     let chart_facts = derive_chart_facts_from_ast(&ast);
-    let uses = symbolic_context.generate(&src, &ast, defines);
-    Ok(ManifestIr { chart_facts, uses })
+    let contract = symbolic_context.generate_contract_ir(&src, &ast, defines);
+    Ok(ManifestIr {
+        chart_facts,
+        contract,
+    })
 }
 
 fn scope_chart_facts(chart_facts: ChartFacts, prefix: &[String]) -> ChartFacts {
@@ -721,55 +723,6 @@ fn apply_type_hints_to(
     for (path, schema) in extract_default_type_hints(body_text) {
         let scoped = scope_values_path(&path, prefix);
         type_hints.entry(scoped).or_default().push(schema);
-    }
-}
-
-fn scope_value_use(mut u: ValueUse, prefix: &[String]) -> ValueUse {
-    if prefix.is_empty() {
-        return u;
-    }
-
-    u.source_expr = scope_values_path(&u.source_expr, prefix);
-    u.guards = u
-        .guards
-        .into_iter()
-        .map(|g| scope_guard(g, prefix))
-        .collect();
-
-    u
-}
-
-fn scope_guard(g: Guard, prefix: &[String]) -> Guard {
-    match g {
-        Guard::Truthy { path } => Guard::Truthy {
-            path: scope_values_path(&path, prefix),
-        },
-        Guard::Not { path } => Guard::Not {
-            path: scope_values_path(&path, prefix),
-        },
-        Guard::Eq { path, value } => Guard::Eq {
-            path: scope_values_path(&path, prefix),
-            value,
-        },
-        Guard::Or { paths } => Guard::Or {
-            paths: paths
-                .into_iter()
-                .map(|p| scope_values_path(&p, prefix))
-                .collect(),
-        },
-        Guard::Range { path } => Guard::Range {
-            path: scope_values_path(&path, prefix),
-        },
-        Guard::With { path } => Guard::With {
-            path: scope_values_path(&path, prefix),
-        },
-        Guard::Default { path } => Guard::Default {
-            path: scope_values_path(&path, prefix),
-        },
-        Guard::TypeIs { path, schema_type } => Guard::TypeIs {
-            path: scope_values_path(&path, prefix),
-            schema_type,
-        },
     }
 }
 

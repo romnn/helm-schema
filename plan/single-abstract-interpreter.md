@@ -822,9 +822,13 @@ Current result:
   normalization for one template interpretation. Document projection and
   recursive helper/file walks append internal contract artifacts instead of
   returning raw claim vectors to the walker.
-- `SymbolicIrContext` now exposes a crate-internal contract-generation seam,
-  so the walker returns `ContractIr` all the way to the public compatibility
-  boundary where `ValueUse` DTO projection happens.
+- `SymbolicIrContext` now exposes an opaque contract-generation seam, so the
+  walker returns `ContractIr` all the way to the compatibility boundary where
+  `ValueUse` DTO projection happens.
+- The CLI now consumes that seam as an opaque contract artifact: chart-local
+  manifest contracts are scoped and combined as `ContractIr` before the final
+  `ValueUse` projection, so subchart prefixing no longer rewrites
+  compatibility DTOs directly.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

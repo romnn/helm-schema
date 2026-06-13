@@ -53,6 +53,7 @@ mod walker;
 mod yaml_shape;
 
 pub use abstract_eval::{ChartFacts, PathFact, derive_chart_facts, derive_chart_facts_from_ast};
+pub use contract::ContractIr;
 pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
     helper_literal_outputs,
@@ -176,6 +177,32 @@ impl Guard {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
+        }
+    }
+
+    /// Rewrite value paths carried by this guard.
+    #[must_use]
+    pub fn map_value_paths<F>(self, map: &mut F) -> Self
+    where
+        F: FnMut(&str) -> String,
+    {
+        match self {
+            Guard::Truthy { path } => Guard::Truthy { path: map(&path) },
+            Guard::Not { path } => Guard::Not { path: map(&path) },
+            Guard::Eq { path, value } => Guard::Eq {
+                path: map(&path),
+                value,
+            },
+            Guard::Or { paths } => Guard::Or {
+                paths: paths.into_iter().map(|path| map(&path)).collect(),
+            },
+            Guard::Range { path } => Guard::Range { path: map(&path) },
+            Guard::With { path } => Guard::With { path: map(&path) },
+            Guard::Default { path } => Guard::Default { path: map(&path) },
+            Guard::TypeIs { path, schema_type } => Guard::TypeIs {
+                path: map(&path),
+                schema_type,
+            },
         }
     }
 }

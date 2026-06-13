@@ -110,6 +110,17 @@ impl ContractUse {
             resource: self.resource,
         }
     }
+
+    fn map_value_paths<F>(&mut self, map: &mut F)
+    where
+        F: FnMut(&str) -> String,
+    {
+        self.source_expr = map(&self.source_expr);
+        self.guards = std::mem::take(&mut self.guards)
+            .into_iter()
+            .map(|guard| guard.map_value_paths(map))
+            .collect();
+    }
 }
 
 /// Receives contract claims from node/action interpretation.
@@ -128,14 +139,14 @@ pub(crate) trait ContractUseSink {
     );
 }
 
-/// Internal guarded contract graph for one template interpretation.
+/// Opaque guarded contract graph for one template interpretation.
 ///
-/// This is still compatibility-era because its leaves are `ContractUse`
-/// claims that project to `ValueUse`, but accumulation and normalization now
-/// live behind one contract-layer artifact instead of a raw vector owned by
-/// the symbolic walker.
+/// This is still compatibility-era because its private leaves are `ContractUse`
+/// claims that project to [`ValueUse`], but accumulation, path rebasing, and
+/// normalization now live behind one contract-layer artifact instead of a raw
+/// vector owned by callers.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub(crate) struct ContractIr {
+pub struct ContractIr {
     uses: Vec<ContractUse>,
 }
 
@@ -151,11 +162,27 @@ impl ContractIr {
         self.uses.extend(contract_uses);
     }
 
-    pub(crate) fn append(&mut self, mut other: Self) {
+    /// Move all claims from another contract graph into this graph.
+    pub fn append(&mut self, mut other: Self) {
         self.uses.append(&mut other.uses);
     }
 
-    pub(crate) fn into_value_uses(mut self) -> Vec<ValueUse> {
+    /// Rewrite all referenced values paths while preserving rendered YAML paths.
+    ///
+    /// This is used at chart boundaries where a dependency's `.Values.foo`
+    /// contract becomes `.Values.subchart.foo`, while rendered manifest paths
+    /// such as `metadata.name` stay unchanged.
+    pub fn map_value_paths<F>(&mut self, mut map: F)
+    where
+        F: FnMut(&str) -> String,
+    {
+        for contract_use in &mut self.uses {
+            contract_use.map_value_paths(&mut map);
+        }
+    }
+
+    /// Normalize claims and project them to the compatibility `ValueUse` DTO.
+    pub fn into_value_uses(mut self) -> Vec<ValueUse> {
         self.normalize();
         self.uses
             .into_iter()
@@ -401,6 +428,56 @@ mod tests {
                 .and_then(|value_use| value_use.resource.as_ref())
                 .map(|resource| (resource.api_version.as_str(), resource.kind.as_str())),
             Some(("v1", "Service"))
+        );
+    }
+
+    #[test]
+    fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
+        let mut contract = ContractIr::default();
+        contract.push(ContractUse::new(
+            "serviceAccount.name".to_string(),
+            YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            ValueKind::Scalar,
+            vec![
+                Guard::Truthy {
+                    path: "serviceAccount.enabled".to_string(),
+                },
+                Guard::Or {
+                    paths: vec!["pod.enabled".to_string(), "global.enabled".to_string()],
+                },
+            ],
+            None,
+        ));
+
+        contract.map_value_paths(|path| {
+            if path.starts_with("global.") {
+                path.to_string()
+            } else {
+                format!("subchart.{path}")
+            }
+        });
+
+        let value_uses = contract.into_value_uses();
+        let value_use = value_uses.first().expect("mapped value use");
+
+        assert_eq!(value_use.source_expr, "subchart.serviceAccount.name");
+        assert_eq!(
+            value_use.path,
+            YamlPath(vec!["metadata".to_string(), "name".to_string()])
+        );
+        assert_eq!(
+            value_use.guards,
+            vec![
+                Guard::Truthy {
+                    path: "subchart.serviceAccount.enabled".to_string(),
+                },
+                Guard::Or {
+                    paths: vec![
+                        "subchart.pod.enabled".to_string(),
+                        "global.enabled".to_string()
+                    ],
+                },
+            ]
         );
     }
 }

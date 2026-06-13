@@ -75,7 +75,13 @@ impl SymbolicIrContext {
             .into_value_uses()
     }
 
-    pub(crate) fn generate_contract_ir(
+    /// Generate the opaque contract graph without projecting to compatibility DTOs.
+    ///
+    /// Callers that need to combine, scope, or otherwise transform chart-local
+    /// contracts should use this method and project with
+    /// [`ContractIr::into_value_uses`] only at the boundary that still consumes
+    /// `ValueUse`.
+    pub fn generate_contract_ir(
         &self,
         src: &str,
         _ast: &HelmAst,
