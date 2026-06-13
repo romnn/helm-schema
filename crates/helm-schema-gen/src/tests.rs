@@ -9,8 +9,8 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    ContractProjection, Guard, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse, YamlPath,
-    extract_default_type_hints,
+    ContractProjection, ContractUse, Guard, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
+    YamlPath, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -54,24 +54,42 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
     hints
 }
 
-fn schema_for(uses: &[ValueUse]) -> Value {
-    let projection = ContractProjection::from_value_uses(uses.to_vec());
+fn schema_for<T>(uses: &[T]) -> Value
+where
+    T: Clone,
+    ContractUse: From<T>,
+{
+    let projection = ContractProjection::from_contract_uses(
+        uses.iter().cloned().map(ContractUse::from).collect(),
+    );
     generate_values_schema(ValuesSchemaInput::new(&projection, &provider()))
 }
 
-fn schema_for_values_yaml(uses: &[ValueUse], values_yaml: Option<&str>) -> Value {
-    let projection = ContractProjection::from_value_uses(uses.to_vec());
+fn schema_for_values_yaml<T>(uses: &[T], values_yaml: Option<&str>) -> Value
+where
+    T: Clone,
+    ContractUse: From<T>,
+{
+    let projection = ContractProjection::from_contract_uses(
+        uses.iter().cloned().map(ContractUse::from).collect(),
+    );
     generate_values_schema(
         ValuesSchemaInput::new(&projection, &provider()).with_values_yaml(values_yaml),
     )
 }
 
-fn schema_for_values_yaml_and_hints(
-    uses: &[ValueUse],
+fn schema_for_values_yaml_and_hints<T>(
+    uses: &[T],
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
-) -> Value {
-    let projection = ContractProjection::from_value_uses(uses.to_vec());
+) -> Value
+where
+    T: Clone,
+    ContractUse: From<T>,
+{
+    let projection = ContractProjection::from_contract_uses(
+        uses.iter().cloned().map(ContractUse::from).collect(),
+    );
     generate_values_schema(
         ValuesSchemaInput::new(&projection, &provider())
             .with_values_yaml(values_yaml)
@@ -150,7 +168,7 @@ fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
 struct DescriptionProvider;
 
 impl K8sSchemaProvider for DescriptionProvider {
-    fn schema_for_use(&self, _use_: &ValueUse) -> Option<Value> {
+    fn schema_for_use(&self, _use_: &ContractUse) -> Option<Value> {
         Some(serde_json::json!({
             "description": "provider description",
             "type": "string",
@@ -3704,7 +3722,7 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
 #[test]
 fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
     let provider = production_chain_provider();
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "resources".to_string(),
         path: YamlPath(vec![
             "spec".to_string(),

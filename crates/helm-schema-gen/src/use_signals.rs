@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractProjection, Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ContractProjection, ContractUse, Guard, ValueKind};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use crate::resolve_policy::ResolvePolicy;
@@ -42,19 +42,19 @@ pub(crate) fn collect_use_signals(
         HashMap::new();
     let resolve_policy = ResolvePolicy::default();
 
-    for value_use in uses {
-        if value_use.source_expr.trim().is_empty() {
+    for contract_use in uses {
+        if contract_use.source_expr.trim().is_empty() {
             continue;
         }
 
-        referenced_value_paths.insert(value_use.source_expr.clone());
-        if value_use.kind == ValueKind::Fragment {
-            value_paths_used_as_fragment.insert(value_use.source_expr.clone());
+        referenced_value_paths.insert(contract_use.source_expr.clone());
+        if contract_use.kind == ValueKind::Fragment {
+            value_paths_used_as_fragment.insert(contract_use.source_expr.clone());
         }
-        if value_use.kind == ValueKind::PartialScalar && !value_use.path.0.is_empty() {
-            partial_scalar_value_paths.insert(value_use.source_expr.clone());
+        if contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty() {
+            partial_scalar_value_paths.insert(contract_use.source_expr.clone());
         }
-        for guard in &value_use.guards {
+        for guard in &contract_use.guards {
             for path in guard.value_paths() {
                 if path.trim().is_empty() {
                     continue;
@@ -73,26 +73,26 @@ pub(crate) fn collect_use_signals(
             }
         }
 
-        if value_use.kind != ValueKind::PartialScalar
-            && !value_use.path.0.is_empty()
-            && let Some(resource) = &value_use.resource
+        if contract_use.kind != ValueKind::PartialScalar
+            && !contract_use.path.0.is_empty()
+            && let Some(resource) = &contract_use.resource
         {
             let lookup_key = ProviderSchemaLookupKey {
                 resource: resource.clone(),
-                path: value_use.path.clone(),
-                kind: value_use.kind,
+                path: contract_use.path.clone(),
+                kind: contract_use.kind,
             };
             let schema = match provider_schema_cache.entry(lookup_key) {
                 std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
                 std::collections::hash_map::Entry::Vacant(entry) => {
-                    let schema = lookup_provider_schema(provider, value_use, &resolve_policy);
+                    let schema = lookup_provider_schema(provider, contract_use, &resolve_policy);
                     entry.insert(schema.clone());
                     schema
                 }
             };
             if let Some(schema) = schema {
                 let provider_schemas = provider_schemas_by_value_path
-                    .entry(value_use.source_expr.clone())
+                    .entry(contract_use.source_expr.clone())
                     .or_default();
                 if !provider_schemas
                     .iter()
@@ -103,9 +103,9 @@ pub(crate) fn collect_use_signals(
             }
         }
 
-        if let Some(schema) = infer_metadata_path_schema(&value_use.path.0) {
+        if let Some(schema) = infer_metadata_path_schema(&contract_use.path.0) {
             metadata_schemas_by_value_path
-                .entry(value_use.source_expr.clone())
+                .entry(contract_use.source_expr.clone())
                 .or_default()
                 .push(schema);
         }
@@ -125,27 +125,27 @@ pub(crate) fn collect_use_signals(
 #[tracing::instrument(
     skip_all,
     fields(
-        resource_kind = value_use
+        resource_kind = contract_use
             .resource
             .as_ref()
             .map(|resource| resource.kind.as_str())
             .unwrap_or(""),
-        resource_api_version = value_use
+        resource_api_version = contract_use
             .resource
             .as_ref()
             .map(|resource| resource.api_version.as_str())
             .unwrap_or(""),
-        path_len = value_use.path.0.len(),
+        path_len = contract_use.path.0.len(),
     )
 )]
 fn lookup_provider_schema(
     provider: &dyn K8sSchemaProvider,
-    value_use: &ValueUse,
+    contract_use: &ContractUse,
     resolve_policy: &ResolvePolicy,
 ) -> Option<Arc<Value>> {
     provider
-        .schema_for_use(value_use)
-        .and_then(|schema| resolve_policy.provider_schema_for_value_use(schema, value_use))
+        .schema_for_use(contract_use)
+        .and_then(|schema| resolve_policy.provider_schema_for_value_use(schema, contract_use))
         .map(Arc::new)
 }
 

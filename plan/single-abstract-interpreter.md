@@ -17,7 +17,7 @@ fn eval_node(node: &HelmAst, env: EvalEnv, cx: &mut Cx) -> EvalEnv;
 and "what semantic effects did evaluating it prove?". `eval_node` adds control
 flow, YAML sink attribution, local assignment, mutation ordering, and helper
 summary propagation, then returns the joined output environment. The current
-`ValueUseSink` and flat `Guard` APIs are compatibility projections at the
+`ContractUseSink` and flat `Guard` APIs are migration projections at the
 boundary, not the final interpreter shape.
 
 This is not a Helm renderer. It is a structural static analyzer. It should
@@ -468,9 +468,9 @@ Current result:
   - `output_value_analysis.rs` collects the expression/helper/local facts for
     that output node.
   - `abstract_document.rs` records those facts as a private document hole and
-    projects them into the compatibility `ValueUse` sink.
-  - `value_use_sink.rs` is the compatibility sink target while `ValueUse`
-    remains the downstream DTO.
+    projects them into contract claims.
+  - `ContractUseSink` is the contract claim target while `ValueUse` remains an
+    explicit DTO projection.
   This is intentionally shaped like the future `eval_node(..., sink)` boundary:
   the walker determines traversal order, while output-node interpretation and
   effect emission are no longer embedded in the traversal code.
@@ -750,8 +750,7 @@ Status: **in progress**
 Goal:
 
 - Build internal abstract documents during interpretation and project their
-  anchors, resource identities, and constraints into the current `ValueUse`
-  compatibility sink first.
+  anchors, resource identities, and constraints into contract claims.
 - Keep abstract documents private to the engine; they must not become the
   stable public seam.
 - Gate the migration with the abstained-enrichment budget: no corpus chart
@@ -770,7 +769,7 @@ Current result:
   `ContractUseContext`; the private document projection enum has been deleted.
 - The document projection context owns ambient compatibility guards and
   chart-default mutation state, so document projections now produce fully
-  guarded `ValueUse` DTOs without a document/helper-specific sink method.
+  guarded `ContractUse` claims without a document/helper-specific sink method.
 - Output-site context and value-fact collection now live under explicit
   document-hole/document-value analysis names, so the compatibility walker no
   longer exposes generic output-node plumbing at the A3 seam.
@@ -778,9 +777,9 @@ Current result:
   `AbstractDocumentOutput` remains focused on lowering classified document
   evidence into contract claims.
 - Document and scalar/control-flow outputs now emit internal `ContractUse`
-  claims. The old `ValueUse` normalization has moved to contract finalization,
-  and recursive helper/file interpretation stays in the contract layer until
-  the public generator boundary projects to `ValueUse`.
+  claims. Normalization has moved to contract finalization, and recursive
+  helper/file interpretation stays in the contract layer through the public
+  generator boundary.
 - `ValueUseSink` has been replaced by `ContractUseSink`, owned by the contract
   layer. Node action effects and helper-analysis runtimes therefore emit or
   ignore contract claims without naming the compatibility DTO boundary.
@@ -801,8 +800,7 @@ Goal:
 - Extract the polarity-table policy from generator reconstruction into named
   resolution/lowering policy functions.
 - Replace flat `Guard` at the IR boundary with the predicate algebra; keep
-  `ValueUse` only as a DTO/fixture projection until deleted from production
-  consumers.
+  `ValueUse` only as a DTO/fixture projection outside production consumers.
 
 Current result:
 
@@ -853,11 +851,14 @@ Current result:
   directly as well: use signals, path metadata, and nullable-path policy now
   own their compatibility-row access instead of forcing root schema generation
   to pass raw slices around.
+- `ContractProjection` now stores normalized `ContractUse` claims directly.
+  Generator evidence collection and `K8sSchemaProvider` lookups consume
+  `ContractUse`; `ValueUse` remains an explicit fixture/external DTO
+  projection via `into_value_uses()`.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering
-  while `ValueUse` remains the compatibility DTO consumed at the public
-  boundary.
+  against the contract projection.
 - Values-file schema evidence now lives in `values_yaml`, separating
   values.yaml traversal and YAML-to-schema evidence construction from the
   generator root.

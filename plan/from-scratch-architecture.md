@@ -1421,25 +1421,24 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   opportunistically.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
-  constraints are projected **feeding the existing `ValueUseSink`**, so
-  downstream is untouched while the artifact changes underneath. Gate: the
+  constraints are projected into contract claims, so downstream is untouched
+  while the artifact changes underneath. Gate: the
   abstained-enrichment budget — no corpus chart loses a type enrichment vs
   the current tool; `yaml_shape` survives as an upgrader until the gate
   passes, then is deleted. Current progress: output lowering now flows
   through an internal `AbstractDocumentOutput` / `AbstractDocumentHole`
-  artifact before projecting to the compatibility `ValueUseSink`. This does
-  not change inference behavior, but it establishes the A3 insertion point for
-  attaching resource identity, anchor, and document-path facts before the old
-  DTO projection. The document hole now also owns the rebased rendered path and
-  resource claim used for compatibility projection, rather than letting the
-  final sink infer those document facts at emission time. Document output now
-  lowers classified document evidence through `ContractUseContext` into
-  `ContractUse` claims, giving the next A4 `ContractIR` step a concrete
-  internal projection seam.
+  artifact before appending contract claims. This does not change inference
+  behavior, but it establishes the A3 insertion point for attaching resource
+  identity, anchor, and document-path facts before DTO projection. The
+  document hole now also owns the rebased rendered path and resource claim
+  used for contract projection, rather than letting the final sink infer those
+  document facts at emission time. Document output now lowers classified
+  document evidence through `ContractUseContext` into `ContractUse` claims,
+  giving A4 `ContractIR` a concrete internal projection seam.
   The latest pass moves ambient compatibility guards and chart-default
   mutations into that projection context, so the document artifact now
-  produces fully guarded `ValueUse` DTOs and the old sink no longer has a
-  document/helper-specific projection API.
+  produces fully guarded `ContractUse` claims and the old sink no longer has
+  a document/helper-specific projection API.
   The rendered output-site helpers have also been renamed and rehomed as
   document-hole/document-value analysis, making the A3 boundary explicit:
   the walker asks for a document hole plus document-local value facts, and
@@ -1532,9 +1531,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   those schema decisions come from the shared interpreter output rather than
   a second expression walker. The generator input no longer accepts external
   chart facts either, preventing callers from reintroducing that parallel
-  projection channel.
+  projection channel. `ContractProjection` now stores normalized `ContractUse`
+  claims directly; generator evidence collection and `K8sSchemaProvider`
+  lookups consume those claims, while `ValueUse` remains only an explicit
+  fixture/external DTO projection.
   The policy-extraction half does **not** depend on A3 and can start earlier
-  against today's `ValueUse`.
+  against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

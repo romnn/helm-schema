@@ -2,7 +2,7 @@
 //! PathUnresolved silence, and the "MissingSchema only from chain"
 //! invariant.
 
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_ir::{ContractUse, ResourceRef, YamlPath};
 use helm_schema_k8s::{
     ApiPresenceQuery, Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry,
     LookupTraceOutcome, ProviderLookupResult, ProviderOrigin,
@@ -434,8 +434,6 @@ fn local_provider_emits_local_override_origin() {
 // from the sink.
 #[test]
 fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
-    use helm_schema_ir::ValueUse;
-
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
         true,
@@ -483,7 +481,7 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
     })])
     .with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(Vec::new()),
         kind: helm_schema_ir::ValueKind::Scalar,
@@ -879,8 +877,6 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
 // every nested path.
 #[test]
 fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
-    use helm_schema_ir::ValueUse;
-
     // Provider claims ownership (has_resource=true) and returns
     // PathUnresolved (silent gap, not a missing-resource case).
     let provider = FakeProvider::new(
@@ -891,7 +887,7 @@ fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(vec!["data".to_string(), "config-blob".to_string()]),
         kind: helm_schema_ir::ValueKind::Scalar,
@@ -925,8 +921,6 @@ fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
 // ownership claim, and the chain must honour the silence.
 #[test]
 fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
-    use helm_schema_ir::ValueUse;
-
     #[derive(Debug)]
     struct AlwaysPathUnresolved;
     impl K8sSchemaProvider for AlwaysPathUnresolved {
@@ -948,7 +942,7 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
     let chain =
         Chain::new(vec![Box::new(AlwaysPathUnresolved)]).with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(vec!["data".to_string()]),
         kind: helm_schema_ir::ValueKind::Scalar,
@@ -978,7 +972,6 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
 // apiVersion, not a speculative candidate.
 #[test]
 fn chain_schema_for_use_total_failure_attributes_to_primary() {
-    use helm_schema_ir::ValueUse;
     let p = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
         false,
@@ -987,7 +980,7 @@ fn chain_schema_for_use_total_failure_attributes_to_primary() {
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(Vec::new()),
         kind: helm_schema_ir::ValueKind::Scalar,

@@ -79,12 +79,12 @@ impl SymbolicIrContext {
         self.generate_contract_ir(src, _ast, defines).project()
     }
 
-    /// Generate the opaque contract graph without projecting to compatibility DTOs.
+    /// Generate the opaque contract graph without projecting to fixture DTOs.
     ///
     /// Callers that need to combine, scope, or otherwise transform chart-local
-    /// contracts should use this method and project with
-    /// [`ContractIr::into_value_uses`] only at the boundary that still consumes
-    /// `ValueUse`.
+    /// contracts should use this method and project with [`ContractIr::project`]
+    /// for schema generation. [`ContractIr::into_value_uses`] is reserved for
+    /// fixture and external inspection output.
     pub fn generate_contract_ir(
         &self,
         src: &str,

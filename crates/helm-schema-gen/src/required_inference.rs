@@ -22,7 +22,7 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::{ContractProjection, Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ContractProjection, ContractUse, Guard, ValueKind};
 use serde_json::Value;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
@@ -80,7 +80,7 @@ fn collect_required_paths(
     default_fallback_paths: &BTreeSet<String>,
     synthetic_value_paths: &BTreeSet<String>,
 ) -> BTreeSet<String> {
-    fn is_positive_header_use(use_: &ValueUse) -> bool {
+    fn is_positive_header_use(use_: &ContractUse) -> bool {
         use_.guards.is_empty()
             || use_.guards.iter().all(|guard| match guard {
                 Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
@@ -196,21 +196,17 @@ mod tests {
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
-    use helm_schema_ir::{
-        ContractProjection, SymbolicIrGenerator, ValueUse, extract_default_type_hints,
-    };
+    use helm_schema_ir::{ContractProjection, SymbolicIrGenerator, extract_default_type_hints};
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
     fn provider() -> KubernetesJsonSchemaProvider {
         KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
     }
 
-    fn parse_ir(src: &str) -> Vec<ValueUse> {
+    fn parse_projection(src: &str) -> ContractProjection {
         let ast = TreeSitterParser.parse(src).expect("parse");
         let idx = DefineIndex::new();
-        SymbolicIrGenerator
-            .generate(src, &ast, &idx)
-            .into_value_uses()
+        SymbolicIrGenerator.generate(src, &ast, &idx)
     }
 
     fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
@@ -227,7 +223,7 @@ mod tests {
 
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let hints = collect_hints(src);
-        let projection = ContractProjection::from_value_uses(parse_ir(src));
+        let projection = parse_projection(src);
         let mut schema = generate_values_schema(
             ValuesSchemaInput::new(&projection, &provider())
                 .with_values_yaml(values_yaml)
@@ -403,7 +399,7 @@ mod tests {
             kind: ServiceAccount
             {{- end }}
         "};
-        let projection = ContractProjection::from_value_uses(parse_ir(src));
+        let projection = parse_projection(src);
         let schema = generate_values_schema(ValuesSchemaInput::new(&projection, &provider()));
         // The core path must never emit `required` — that's the
         // separation of concerns this module exists to enforce.

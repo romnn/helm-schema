@@ -1,4 +1,4 @@
-use helm_schema_ir::{HelperBranch, ResourceRef, ValueUse, YamlPath};
+use helm_schema_ir::{ContractUse, HelperBranch, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::capability_eval::{self, CapabilityOracle};
@@ -65,7 +65,7 @@ impl Chain {
         self.inference_cache.infer(self.providers.as_slice(), kind)
     }
 
-    /// Schema for a [`ValueUse`] — iterates the ordered api-version
+    /// Schema for a [`ContractUse`] — iterates the ordered api-version
     /// candidates silently and, on total exhaustion, commits ONE
     /// `MissingSchema` attributed to the user-written primary
     /// `api_version` (not to any speculative candidate). Speculative
@@ -86,7 +86,7 @@ impl Chain {
             path_len = use_.path.0.len(),
         )
     )]
-    pub fn schema_for_use(&self, use_: &ValueUse) -> Option<Value> {
+    pub fn schema_for_use(&self, use_: &ContractUse) -> Option<Value> {
         let resource = use_.resource.as_ref()?;
 
         if needs_inference(resource) {
@@ -313,7 +313,7 @@ fn needs_inference(resource: &ResourceRef) -> bool {
 }
 
 impl K8sSchemaProvider for Chain {
-    fn schema_for_use(&self, use_: &ValueUse) -> Option<Value> {
+    fn schema_for_use(&self, use_: &ContractUse) -> Option<Value> {
         self.schema_for_use(use_)
     }
 

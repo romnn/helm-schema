@@ -1,4 +1,4 @@
-use helm_schema_ir::{ResourceRef, ValueKind, ValueUse, YamlPath};
+use helm_schema_ir::{ContractUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider};
 
 #[test]
@@ -62,7 +62,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         .with_api_version_guess(true);
     let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
 
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "networkPolicy.ingressNSMatchLabels".to_string(),
         path: YamlPath(vec![
             "spec".to_string(),

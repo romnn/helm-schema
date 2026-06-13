@@ -1,10 +1,10 @@
 //! Regression tests for the resource-context path used by
 //! `SymbolicIrGenerator`. The detector reads `apiVersion` / `kind` out
 //! of each document header, and the locator attaches that resource
-//! context to each `ValueUse`.
+//! context to each contract claim.
 //!
 //! These tests pin the contract observed at the public API surface:
-//! every `ValueUse` produced from a templated value in the body must
+//! every claim produced from a templated value in the body must
 //! carry both `api_version` and `kind` on its `resource`, regardless
 //! of which order the two header fields appeared in.
 //!
@@ -16,7 +16,7 @@
 //! a large block of `MissingSchema(kind=..., api_version=)` noise.
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ContractProjection, SymbolicIrGenerator, ValueUse};
+use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrGenerator};
 use indoc::indoc;
 
 fn generate(template: &str) -> ContractProjection {
@@ -25,11 +25,11 @@ fn generate(template: &str) -> ContractProjection {
     SymbolicIrGenerator.generate(template, &ast, &idx)
 }
 
-fn resource_of(use_: &ValueUse) -> (String, String) {
+fn resource_of(use_: &ContractUse) -> (String, String) {
     let r = use_
         .resource
         .as_ref()
-        .expect("ValueUse must carry a resource");
+        .expect("contract claim must carry a resource");
     (r.api_version.clone(), r.kind.clone())
 }
 

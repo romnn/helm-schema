@@ -1,4 +1,4 @@
-use helm_schema_ir::{ResourceRef, ValueUse, YamlPath};
+use helm_schema_ir::{ContractUse, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::diagnostic::Diagnostic;
@@ -16,13 +16,13 @@ use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 /// upstream HTTP catalog, etc.) and delegate to shared `fetch`, `cache`,
 /// and `lookup` primitives.
 pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
-    /// Schema for a specific value use (resource + YAML path).
+    /// Schema for a specific contract claim (resource + YAML path).
     ///
     /// Default impl: iterate the resource's ordered apiVersion
     /// candidates and ask `schema_for_resource_path` for each. The
     /// `Chain` overrides this to layer fallback / inference / typed
     /// diagnostics on top.
-    fn schema_for_use(&self, use_: &ValueUse) -> Option<Value> {
+    fn schema_for_use(&self, use_: &ContractUse) -> Option<Value> {
         let resource = use_.resource.as_ref()?;
         for v in ordered_api_versions_for_resource(resource) {
             let candidate = ResourceRef {

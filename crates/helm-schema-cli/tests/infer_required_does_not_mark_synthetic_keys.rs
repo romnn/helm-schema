@@ -1,9 +1,9 @@
 //! Regression test for the `--infer-required` × seeded-top-level-keys bug.
 //!
-//! The CLI seeds one synthetic empty-path/empty-guards `ValueUse` per
+//! The CLI seeds one synthetic empty-path/empty-guards contract claim per
 //! top-level `values.yaml` key so the schema enumerates that key as a
-//! property even when no template references it. Those seeded uses look
-//! identical to real unconditional `if .Values.X` header uses, so the
+//! property even when no template references it. Those seeded claims look
+//! identical to real unconditional `if .Values.X` header claims, so the
 //! `required`-inference predicate used to misclassify every top-level key
 //! as `required`. This test pins the fixed behaviour.
 

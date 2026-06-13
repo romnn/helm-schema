@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{ChartFacts, Guard, PathFact, ResourceRef, ValueKind, ValueUse, YamlPath};
 
-/// Context applied when semantic facts are lowered to compatibility-era
-/// contract uses.
+/// Context applied when semantic facts are lowered to contract claims.
 ///
 /// The interpreter owns the facts. This type owns the common projection policy:
 /// ambient guards, render-suppressed paths, partial-scalar normalization, and
@@ -71,19 +70,18 @@ impl<'a> ContractUseContext<'a> {
     }
 }
 
-/// Internal compatibility-era contract use.
+/// A normalized contract claim for one observed values path.
 ///
-/// The symbolic interpreter builds these as semantic claims. The public
-/// `ValueUse` type is only produced after contract normalization, so later
-/// phases can grow richer contract witnesses without teaching the interpreter
-/// to construct fixture DTOs directly.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) struct ContractUse {
-    pub(crate) source_expr: String,
-    pub(crate) path: YamlPath,
-    pub(crate) kind: ValueKind,
-    pub(crate) guards: Vec<Guard>,
-    pub(crate) resource: Option<ResourceRef>,
+/// This is still the migration-era claim shape, but it is owned by the
+/// contract layer. [`ValueUse`] remains the serialized fixture DTO at the
+/// inspection boundary.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct ContractUse {
+    pub source_expr: String,
+    pub path: YamlPath,
+    pub kind: ValueKind,
+    pub guards: Vec<Guard>,
+    pub resource: Option<ResourceRef>,
 }
 
 impl ContractUse {
@@ -103,16 +101,6 @@ impl ContractUse {
         }
     }
 
-    fn into_value_use(self) -> ValueUse {
-        ValueUse {
-            source_expr: self.source_expr,
-            path: self.path,
-            kind: self.kind,
-            guards: self.guards,
-            resource: self.resource,
-        }
-    }
-
     fn map_value_paths<F>(&mut self, map: &mut F)
     where
         F: FnMut(&str) -> String,
@@ -122,6 +110,30 @@ impl ContractUse {
             .into_iter()
             .map(|guard| guard.map_value_paths(map))
             .collect();
+    }
+}
+
+impl From<ValueUse> for ContractUse {
+    fn from(value_use: ValueUse) -> Self {
+        Self {
+            source_expr: value_use.source_expr,
+            path: value_use.path,
+            kind: value_use.kind,
+            guards: value_use.guards,
+            resource: value_use.resource,
+        }
+    }
+}
+
+impl From<ContractUse> for ValueUse {
+    fn from(contract_use: ContractUse) -> Self {
+        Self {
+            source_expr: contract_use.source_expr,
+            path: contract_use.path,
+            kind: contract_use.kind,
+            guards: contract_use.guards,
+            resource: contract_use.resource,
+        }
     }
 }
 
@@ -141,15 +153,15 @@ pub(crate) trait ContractUseSink {
     );
 }
 
-/// Normalized compatibility projection of a contract graph.
+/// Normalized projection of a contract graph.
 ///
-/// This is the remaining bridge to generator and fixture code that still
-/// consumes [`ValueUse`]. Production callers should pass this artifact around
-/// instead of owning raw `Vec<ValueUse>` collections directly.
+/// Production callers pass this artifact between analysis and schema
+/// generation. Fixture and external tooling code can still project it to
+/// [`ValueUse`] DTO rows explicitly.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ContractProjection {
-    uses: Vec<ValueUse>,
+    uses: Vec<ContractUse>,
 }
 
 impl ContractProjection {
@@ -158,20 +170,28 @@ impl ContractProjection {
     /// This is for tests and transitional consumers that still construct
     /// [`ValueUse`] rows directly. Interpreter code should produce
     /// [`ContractIr`] and call [`ContractIr::project`] instead.
-    pub fn from_value_uses(mut uses: Vec<ValueUse>) -> Self {
+    pub fn from_value_uses(uses: Vec<ValueUse>) -> Self {
+        let mut uses: Vec<ContractUse> = uses.into_iter().map(ContractUse::from).collect();
         uses.sort();
         uses.dedup();
         Self { uses }
     }
 
-    /// Borrow the normalized compatibility uses.
-    pub fn uses(&self) -> &[ValueUse] {
+    /// Build a normalized projection from contract-layer claims.
+    pub fn from_contract_uses(mut uses: Vec<ContractUse>) -> Self {
+        uses.sort();
+        uses.dedup();
+        Self { uses }
+    }
+
+    /// Borrow the normalized contract claims.
+    pub fn uses(&self) -> &[ContractUse] {
         &self.uses
     }
 
     /// Consume the projection and return the compatibility DTOs.
     pub fn into_value_uses(self) -> Vec<ValueUse> {
-        self.uses
+        self.uses.into_iter().map(ValueUse::from).collect()
     }
 
     /// Derive chart-level path facts from this normalized projection.
@@ -183,10 +203,8 @@ impl ContractProjection {
 
 /// Opaque guarded contract graph for one template interpretation.
 ///
-/// This is still compatibility-era because its private leaves are `ContractUse`
-/// claims that project to [`ValueUse`], but accumulation, path rebasing, and
-/// normalization now live behind one contract-layer artifact instead of a raw
-/// vector owned by callers.
+/// Accumulation, path rebasing, and normalization live behind this
+/// contract-layer artifact instead of a raw vector owned by callers.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractIr {
     uses: Vec<ContractUse>,
@@ -230,19 +248,13 @@ impl ContractIr {
         }
     }
 
-    /// Normalize claims and project them to a compatibility artifact.
+    /// Normalize claims and project them to the schema-generation artifact.
     pub fn project(mut self) -> ContractProjection {
         self.normalize();
-        ContractProjection {
-            uses: self
-                .uses
-                .into_iter()
-                .map(ContractUse::into_value_use)
-                .collect(),
-        }
+        ContractProjection { uses: self.uses }
     }
 
-    /// Normalize claims and project them to the compatibility `ValueUse` DTO.
+    /// Normalize claims and project them to the fixture `ValueUse` DTO.
     pub fn into_value_uses(self) -> Vec<ValueUse> {
         self.project().into_value_uses()
     }
@@ -378,7 +390,7 @@ fn merge_guards(target: &mut Vec<Guard>, extra_guards: &[Guard]) {
     }
 }
 
-fn derive_chart_facts_from_uses(uses: &[ValueUse]) -> ChartFacts {
+fn derive_chart_facts_from_uses(uses: &[ContractUse]) -> ChartFacts {
     #[derive(Default)]
     struct Acc {
         has_render_use: bool,
@@ -387,7 +399,7 @@ fn derive_chart_facts_from_uses(uses: &[ValueUse]) -> ChartFacts {
         has_self_range_guard_render_use: bool,
     }
 
-    fn use_is_self_guarded(use_: &ValueUse) -> bool {
+    fn use_is_self_guarded(use_: &ContractUse) -> bool {
         if use_.path.0.is_empty() {
             return true;
         }

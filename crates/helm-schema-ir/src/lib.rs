@@ -52,7 +52,7 @@ mod walker;
 mod yaml_shape;
 
 pub use chart_facts::{ChartFacts, PathFact};
-pub use contract::{ContractIr, ContractProjection};
+pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
     helper_literal_outputs,

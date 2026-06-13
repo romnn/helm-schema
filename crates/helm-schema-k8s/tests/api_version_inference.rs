@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use helm_schema_ir::{ResourceRef, ValueUse, YamlPath};
+use helm_schema_ir::{ContractUse, ResourceRef, YamlPath};
 use helm_schema_k8s::inference::aggregate;
 use helm_schema_k8s::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, Chain, CrdsCatalogSchemaProvider, Diagnostic,
@@ -23,8 +23,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
     p
 }
 
-fn use_with_kind(kind: &str) -> ValueUse {
-    ValueUse {
+fn use_with_kind(kind: &str) -> ContractUse {
+    ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
         kind: helm_schema_ir::ValueKind::Scalar,
@@ -504,8 +504,6 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() {
 // test plus the loose-mode acceptance fixture.
 #[test]
 fn inference_for_builtin_kind_does_not_emit_diagnostic() {
-    use helm_schema_ir::ValueUse;
-
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_allow_download(false)
         .with_api_version_guess(true);
@@ -516,7 +514,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
 
     // ConfigMap with NO apiVersion → inference runs → shortlist
     // resolves to `v1` (core group, built-in).
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(vec!["data".to_string()]),
         kind: helm_schema_ir::ValueKind::Scalar,
@@ -545,8 +543,6 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
 // built-ins only and doesn't accidentally hide useful CRD diagnostics.
 #[test]
 fn inference_for_crd_kind_still_emits_diagnostic() {
-    use helm_schema_ir::ValueUse;
-
     let provider = CrdsCatalogSchemaProvider::new()
         .with_cache_dir(tmp_dir("inf-crd-emits"))
         .with_allow_download(false)
@@ -558,7 +554,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
 
     // ServiceMonitor with NO apiVersion → shortlist resolves to
     // monitoring.coreos.com/v1 (CRD group, NOT built-in).
-    let use_ = ValueUse {
+    let use_ = ContractUse {
         source_expr: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
         kind: helm_schema_ir::ValueKind::Scalar,

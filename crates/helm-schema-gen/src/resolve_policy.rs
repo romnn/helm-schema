@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractProjection, Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ContractProjection, ContractUse, Guard, ValueKind};
 use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_two_schemas, union_schema_list};
@@ -15,8 +15,7 @@ use crate::schema_tree::unknown_object_schema;
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
-/// Contract projections still expose [`ValueUse`] DTOs internally, but the
-/// decisions about provider-schema domains and guard-derived constraints live
+/// Decisions about provider-schema domains and guard-derived constraints live
 /// here rather than being spread across root-schema construction.
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct ResolvePolicy;
@@ -39,7 +38,7 @@ impl ResolvePolicy {
     pub(crate) fn provider_schema_for_value_use(
         &self,
         schema: Value,
-        use_: &ValueUse,
+        use_: &ContractUse,
     ) -> Option<Value> {
         match use_.kind {
             ValueKind::Fragment => Some(schema),
@@ -209,7 +208,7 @@ impl ResolvePolicy {
             .collect()
     }
 
-    fn is_self_range_collection_use(&self, use_: &ValueUse) -> bool {
+    fn is_self_range_collection_use(&self, use_: &ContractUse) -> bool {
         use_.guards
             .iter()
             .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr))
@@ -235,7 +234,7 @@ impl Default for NullablePathInfo {
     }
 }
 
-fn use_is_null_tolerant(use_: &ValueUse) -> bool {
+fn use_is_null_tolerant(use_: &ContractUse) -> bool {
     if use_.path.0.is_empty() {
         return true;
     }
