@@ -813,6 +813,11 @@ Current result:
   contract object to emit and normalize before compatibility DTO projection.
 - Contract emission now flows through `ContractUseSink`, so node/control-flow
   effects are no longer coupled to the `ValueUse` fixture DTO name.
+- `ContractUseContext` now owns compatibility projection policy for ambient
+  guards, render-suppressed paths, partial-scalar normalization, and
+  chart-default mutation guards. The walker and abstract-document projection
+  both lower through this contract-layer context instead of duplicating those
+  rules.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

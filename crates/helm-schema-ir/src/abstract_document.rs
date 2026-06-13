@@ -1,8 +1,6 @@
 use crate::abstract_document_hole::AbstractDocumentHole;
-use crate::abstract_document_projection::{
-    AbstractDocumentProjection, AbstractDocumentProjectionContext,
-};
-use crate::contract::ContractUse;
+use crate::abstract_document_projection::AbstractDocumentProjection;
+use crate::contract::{ContractUse, ContractUseContext};
 use crate::document_hole_context::DocumentHoleContext;
 use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;
@@ -19,7 +17,6 @@ use crate::{Guard, ValueKind, YamlPath};
 pub(crate) struct AbstractDocumentOutput {
     hole: AbstractDocumentHole,
     analysis: DocumentValueAnalysis,
-    context: AbstractDocumentProjectionContext,
 }
 
 impl AbstractDocumentOutput {
@@ -27,20 +24,18 @@ impl AbstractDocumentOutput {
         hole_context: DocumentHoleContext,
         helper_inlined: bool,
         analysis: DocumentValueAnalysis,
-        context: AbstractDocumentProjectionContext,
     ) -> Self {
         Self {
             hole: AbstractDocumentHole::new(hole_context, helper_inlined),
             analysis,
-            context,
         }
     }
 
-    pub(crate) fn into_contract_uses(self) -> Vec<ContractUse> {
+    pub(crate) fn into_contract_uses(self, context: &ContractUseContext<'_>) -> Vec<ContractUse> {
         let projections = self.compatibility_projections();
         projections
             .into_iter()
-            .map(|projection| projection.into_contract_use())
+            .map(|projection| projection.into_contract_use(context))
             .collect()
     }
 
@@ -216,9 +211,6 @@ impl AbstractDocumentOutput {
         }
 
         projections
-            .into_iter()
-            .map(|projection| projection.with_context(&self.context))
-            .collect()
     }
 }
 

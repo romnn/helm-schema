@@ -4,12 +4,11 @@ use std::rc::Rc;
 use helm_schema_ast::{DefineIndex, HelmAst};
 
 use crate::abstract_document::AbstractDocumentOutput;
-use crate::abstract_document_projection::AbstractDocumentProjectionContext;
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract::{ContractUse, ContractUseSink, finalize_contract_uses};
+use crate::contract::{ContractUse, ContractUseContext, ContractUseSink, finalize_contract_uses};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
@@ -292,49 +291,15 @@ impl<'a> SymbolicWalker<'a> {
         extra_guards: &[Guard],
         resource: Option<crate::ResourceRef>,
     ) {
-        let path = if self.no_output_depth > 0 {
-            YamlPath(Vec::new())
-        } else {
-            self.rendered_yaml.rebase_path(path)
-        };
-        let kind = if kind == ValueKind::PartialScalar && path.0.is_empty() {
-            ValueKind::Scalar
-        } else {
-            kind
-        };
-
-        let mut guards = self.compatibility_guards();
-        for guard in extra_guards {
-            if !guards.contains(guard) {
-                guards.push(guard.clone());
-            }
-        }
-        // If a helper already invoked above this walk in source order
-        // structurally set a default for this exact path (the chart
-        // writer's `set OPERAND "K" (OPERAND.K | default V)` mutation —
-        // see `set_default_chart_paths_for_text`), surface that as a
-        // `Guard::Default` so the nullability pass sees the same null
-        // tolerance Helm's render-time `set` produces. The chart-default
-        // applies only to reads with a non-empty `path` (i.e. ones
-        // contributing to a rendered field): without a render use the
-        // guard would be meaningless.
-        if !path.0.is_empty()
-            && self
-                .scope
-                .locals()
-                .chart_value_defaults
-                .contains(&source_expr)
-        {
-            let default_guard = Guard::Default {
-                path: source_expr.clone(),
-            };
-            if !guards.contains(&default_guard) {
-                guards.push(default_guard);
-            }
-        }
-
+        let path = self.rendered_yaml.rebase_path(path);
+        let guards = self.compatibility_guards();
+        let context = ContractUseContext::new(
+            &guards,
+            &self.scope.locals().chart_value_defaults,
+            self.no_output_depth > 0,
+        );
         self.uses
-            .push(ContractUse::new(source_expr, path, kind, guards, resource));
+            .push(context.contract_use(source_expr, path, kind, extra_guards, resource));
     }
 
     fn current_dot_binding(&self) -> Option<HelperBinding> {
@@ -426,18 +391,16 @@ impl<'a> SymbolicWalker<'a> {
             return;
         }
 
-        let projection_context = AbstractDocumentProjectionContext::new(
-            self.compatibility_guards(),
-            self.scope.locals().chart_value_defaults.clone(),
-            self.no_output_depth > 0,
-        );
-        let uses = AbstractDocumentOutput::new(
-            hole_context,
-            helper_inlined,
-            output_values,
-            projection_context,
-        )
-        .into_contract_uses();
+        let uses = {
+            let guards = self.compatibility_guards();
+            let projection_context = ContractUseContext::new(
+                &guards,
+                &self.scope.locals().chart_value_defaults,
+                self.no_output_depth > 0,
+            );
+            AbstractDocumentOutput::new(hole_context, helper_inlined, output_values)
+                .into_contract_uses(&projection_context)
+        };
         self.uses.extend(uses);
     }
 
