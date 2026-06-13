@@ -152,6 +152,20 @@ pub enum GuardConstraint {
     TypeIs { schema_type: String },
 }
 
+/// Kubernetes `metadata.*` field shape referenced by a values path.
+///
+/// The contract layer records the field category structurally from the
+/// rendered document path. JSON Schema lowering remains a generator policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum MetadataFieldKind {
+    /// `metadata.labels` and `metadata.annotations`.
+    StringMap,
+    /// `metadata.name`.
+    Name,
+    /// `metadata.namespace`.
+    Namespace,
+}
+
 /// Path-level facts derived directly from normalized contract claims.
 ///
 /// These are the values paths that downstream schema generation must consider,
@@ -163,6 +177,7 @@ pub struct ContractPathSignals {
     pub value_paths_used_as_fragment: BTreeSet<String>,
     pub partial_scalar_value_paths: BTreeSet<String>,
     pub guard_constraints_by_value_path: BTreeMap<String, Vec<GuardConstraint>>,
+    pub metadata_fields_by_value_path: BTreeMap<String, BTreeSet<MetadataFieldKind>>,
 }
 
 /// Receives contract claims from node/action interpretation.
@@ -571,6 +586,13 @@ fn derive_path_signals_from_uses(uses: &[ContractUse]) -> ContractPathSignals {
                 .partial_scalar_value_paths
                 .insert(contract_use.source_expr.clone());
         }
+        if let Some(field_kind) = metadata_field_kind_from_yaml_path(&contract_use.path.0) {
+            signals
+                .metadata_fields_by_value_path
+                .entry(contract_use.source_expr.clone())
+                .or_default()
+                .insert(field_kind);
+        }
         for guard in &contract_use.guards {
             for path in guard.value_paths() {
                 if path.trim().is_empty() {
@@ -593,6 +615,21 @@ fn derive_path_signals_from_uses(uses: &[ContractUse]) -> ContractPathSignals {
     }
 
     signals
+}
+
+fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
+    let last = path.last()?.as_str();
+    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
+    if prev != "metadata" {
+        return None;
+    }
+
+    match last {
+        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
+        "name" => Some(MetadataFieldKind::Name),
+        "namespace" => Some(MetadataFieldKind::Namespace),
+        _ => None,
+    }
 }
 
 fn guard_constraint_from_guard(guard: &Guard) -> Option<GuardConstraint> {
@@ -940,8 +977,22 @@ mod tests {
                 None,
             ),
             ContractUse::new(
+                "podName".to_string(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                Vec::new(),
+                None,
+            ),
+            ContractUse::new(
+                "podNamespace".to_string(),
+                YamlPath(vec!["metadata".to_string(), "namespace".to_string()]),
+                ValueKind::Scalar,
+                Vec::new(),
+                None,
+            ),
+            ContractUse::new(
                 String::new(),
-                YamlPath(vec!["ignored".to_string()]),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
                 ValueKind::Scalar,
                 vec![Guard::Eq {
                     path: "ignored.guard".to_string(),
@@ -961,6 +1012,8 @@ mod tests {
                 "image.tag".to_string(),
                 "mode".to_string(),
                 "podLabels".to_string(),
+                "podName".to_string(),
+                "podNamespace".to_string(),
             ]),
         );
         assert_eq!(
@@ -974,6 +1027,18 @@ mod tests {
         assert_eq!(
             signals.partial_scalar_value_paths,
             BTreeSet::from(["image.tag".to_string()]),
+        );
+        assert_eq!(
+            signals.metadata_fields_by_value_path.get("podLabels"),
+            Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
+        );
+        assert_eq!(
+            signals.metadata_fields_by_value_path.get("podName"),
+            Some(&BTreeSet::from([MetadataFieldKind::Name])),
+        );
+        assert_eq!(
+            signals.metadata_fields_by_value_path.get("podNamespace"),
+            Some(&BTreeSet::from([MetadataFieldKind::Namespace])),
         );
         assert_eq!(
             signals.guard_constraints_by_value_path.get("mode"),
@@ -990,6 +1055,10 @@ mod tests {
         assert!(
             !signals.referenced_value_paths.contains("ignored.guard"),
             "empty-source compatibility rows should not seed schema paths",
+        );
+        assert!(
+            !signals.metadata_fields_by_value_path.contains_key(""),
+            "empty-source compatibility rows should not seed metadata facts",
         );
     }
 }

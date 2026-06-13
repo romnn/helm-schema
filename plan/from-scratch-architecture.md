@@ -1542,6 +1542,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `GuardConstraint` facts), so generator use-signal collection no longer
   re-walks flat guards to rediscover those contract facts. JSON Schema
   lowering for those typed guard constraints still lives in generator policy.
+  Metadata field typing (`metadata.name`, `metadata.namespace`,
+  `metadata.labels`, `metadata.annotations`) has moved into the same typed
+  contract signal channel, so the generator no longer derives those facts by
+  re-inspecting raw rendered paths; it only lowers contract field categories
+  to JSON Schema.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the

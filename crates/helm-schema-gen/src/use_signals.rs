@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractPathSignals, ContractProjection, ContractUse, ValueKind};
+use helm_schema_ir::{
+    ContractPathSignals, ContractProjection, ContractUse, MetadataFieldKind, ValueKind,
+};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use crate::resolve_policy::ResolvePolicy;
@@ -38,9 +40,21 @@ pub(crate) fn collect_use_signals(
         value_paths_used_as_fragment,
         partial_scalar_value_paths,
         guard_constraints_by_value_path,
+        metadata_fields_by_value_path,
     } = contract_projection.path_signals();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>> = BTreeMap::new();
-    let mut metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let metadata_schemas_by_value_path = metadata_fields_by_value_path
+        .into_iter()
+        .map(|(path, fields)| {
+            (
+                path,
+                fields
+                    .into_iter()
+                    .map(metadata_field_schema)
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect();
     let guard_constraints_by_value_path = guard_constraints_by_value_path
         .into_iter()
         .filter_map(|(path, constraints)| {
@@ -88,13 +102,6 @@ pub(crate) fn collect_use_signals(
                 }
             }
         }
-
-        if let Some(schema) = infer_metadata_path_schema(&contract_use.path.0) {
-            metadata_schemas_by_value_path
-                .entry(contract_use.source_expr.clone())
-                .or_default()
-                .push(schema);
-        }
     }
 
     UseSignals {
@@ -135,17 +142,10 @@ fn lookup_provider_schema(
         .map(Arc::new)
 }
 
-fn infer_metadata_path_schema(path: &[String]) -> Option<Value> {
-    let last = path.last()?.as_str();
-    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
-    if prev != "metadata" {
-        return None;
-    }
-
-    match last {
-        "labels" | "annotations" => Some(string_map_schema()),
-        "name" | "namespace" => Some(type_schema("string")),
-        _ => None,
+fn metadata_field_schema(field: MetadataFieldKind) -> Value {
+    match field {
+        MetadataFieldKind::StringMap => string_map_schema(),
+        MetadataFieldKind::Name | MetadataFieldKind::Namespace => type_schema("string"),
     }
 }
 
