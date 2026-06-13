@@ -1,20 +1,22 @@
 mod merge;
+mod path_metadata;
 pub mod required_inference;
 mod resolve_policy;
 mod schema_model;
 mod schema_tree;
+mod use_signals;
 mod values_yaml;
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::sync::Arc;
+use std::collections::BTreeMap;
 
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ChartFacts, Guard, PathFact, ValueKind, ValueUse, derive_chart_facts};
+use helm_schema_ir::{ChartFacts, PathFact, ValueUse, derive_chart_facts};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use merge::{merge_schema_list, union_schema_list};
+use path_metadata::{PathMetadata, collect_path_metadata};
 use resolve_policy::{ResolvePolicy, ValuePathSchemaInputs};
 use schema_model::{
     add_null_schema, empty_schema, exact_empty_object_schema, is_empty_schema,
@@ -22,29 +24,8 @@ use schema_model::{
     schema_allows_type,
 };
 use schema_tree::{apply_values_descriptions, insert_schema_at_path_segments, object_schema};
+use use_signals::{UseSignals, collect_use_signals};
 use values_yaml::{ValuesYamlPathInfo, build_value_path_caches};
-
-struct UseSignals {
-    referenced_value_paths: BTreeSet<String>,
-    ranged_value_paths: BTreeSet<String>,
-    value_paths_used_as_fragment: BTreeSet<String>,
-    partial_scalar_value_paths: BTreeSet<String>,
-    provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>>,
-    metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>>,
-    guard_constraints_by_value_path: BTreeMap<String, Vec<Value>>,
-}
-
-struct PathMetadata {
-    nullable_paths: BTreeSet<String>,
-    paths_with_descendants: BTreeSet<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct ProviderSchemaLookupKey {
-    resource: helm_schema_ir::ResourceRef,
-    path: helm_schema_ir::YamlPath,
-    kind: ValueKind,
-}
 
 // ---------------------------------------------------------------------------
 // Traits
@@ -192,138 +173,6 @@ pub fn generate_values_schema_full_with_facts_and_descriptions(
         out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
     Value::Object(out)
-}
-
-#[tracing::instrument(skip_all, fields(uses = uses.len()))]
-fn collect_use_signals(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> UseSignals {
-    let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
-    let mut ranged_value_paths: BTreeSet<String> = BTreeSet::new();
-    let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
-    let mut partial_scalar_value_paths: BTreeSet<String> = BTreeSet::new();
-    let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>> = BTreeMap::new();
-    let mut metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-    let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-    let mut provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<Value>>> =
-        HashMap::new();
-    let resolve_policy = ResolvePolicy::default();
-
-    for u in uses {
-        if u.source_expr.trim().is_empty() {
-            continue;
-        }
-
-        referenced_value_paths.insert(u.source_expr.clone());
-        if u.kind == ValueKind::Fragment {
-            value_paths_used_as_fragment.insert(u.source_expr.clone());
-        }
-        if u.kind == ValueKind::PartialScalar && !u.path.0.is_empty() {
-            partial_scalar_value_paths.insert(u.source_expr.clone());
-        }
-        for g in &u.guards {
-            for path in g.value_paths() {
-                if path.trim().is_empty() {
-                    continue;
-                }
-                referenced_value_paths.insert(path.to_string());
-                if matches!(g, Guard::Range { .. }) {
-                    ranged_value_paths.insert(path.to_string());
-                }
-
-                if let Some(schema) = resolve_policy.guard_constraint_schema(g) {
-                    guard_constraints_by_value_path
-                        .entry(path.to_string())
-                        .or_default()
-                        .push(schema);
-                }
-            }
-        }
-
-        if u.kind != ValueKind::PartialScalar
-            && !u.path.0.is_empty()
-            && let Some(resource) = &u.resource
-        {
-            let lookup_key = ProviderSchemaLookupKey {
-                resource: resource.clone(),
-                path: u.path.clone(),
-                kind: u.kind,
-            };
-            let schema = match provider_schema_cache.entry(lookup_key) {
-                std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
-                std::collections::hash_map::Entry::Vacant(entry) => {
-                    let schema = lookup_provider_schema(provider, u, &resolve_policy);
-                    entry.insert(schema.clone());
-                    schema
-                }
-            };
-            if let Some(schema) = schema {
-                let provider_schemas = provider_schemas_by_value_path
-                    .entry(u.source_expr.clone())
-                    .or_default();
-                if !provider_schemas
-                    .iter()
-                    .any(|existing| Arc::ptr_eq(existing, &schema))
-                {
-                    provider_schemas.push(schema);
-                }
-            }
-        }
-
-        if let Some(schema) = infer_metadata_path_schema(&u.path.0) {
-            metadata_schemas_by_value_path
-                .entry(u.source_expr.clone())
-                .or_default()
-                .push(schema);
-        }
-    }
-
-    UseSignals {
-        referenced_value_paths,
-        ranged_value_paths,
-        value_paths_used_as_fragment,
-        partial_scalar_value_paths,
-        provider_schemas_by_value_path,
-        metadata_schemas_by_value_path,
-        guard_constraints_by_value_path,
-    }
-}
-
-#[tracing::instrument(
-    skip_all,
-    fields(
-        resource_kind = use_
-            .resource
-            .as_ref()
-            .map(|resource| resource.kind.as_str())
-            .unwrap_or(""),
-        resource_api_version = use_
-            .resource
-            .as_ref()
-            .map(|resource| resource.api_version.as_str())
-            .unwrap_or(""),
-        path_len = use_.path.0.len(),
-    )
-)]
-fn lookup_provider_schema(
-    provider: &dyn K8sSchemaProvider,
-    use_: &ValueUse,
-    resolve_policy: &ResolvePolicy,
-) -> Option<Arc<Value>> {
-    provider
-        .schema_for_use(use_)
-        .and_then(|schema| resolve_policy.provider_schema_for_value_use(schema, use_))
-        .map(Arc::new)
-}
-
-#[tracing::instrument(skip_all)]
-fn collect_path_metadata(
-    uses: &[ValueUse],
-    referenced_value_paths: &BTreeSet<String>,
-) -> PathMetadata {
-    let resolve_policy = ResolvePolicy::default();
-    PathMetadata {
-        nullable_paths: resolve_policy.nullable_value_paths(uses),
-        paths_with_descendants: collect_paths_with_descendants(referenced_value_paths),
-    }
 }
 
 fn merge_chart_facts(dst: &mut ChartFacts, src: &ChartFacts) {
@@ -500,27 +349,6 @@ fn build_root_schema(
 // Inference helpers
 // ---------------------------------------------------------------------------
 
-fn infer_metadata_path_schema(path: &[String]) -> Option<Value> {
-    let last = path.last()?.as_str();
-    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
-    if prev != "metadata" {
-        return None;
-    }
-
-    match last {
-        "labels" | "annotations" => Some(string_map_schema()),
-        "name" | "namespace" => Some(type_schema("string")),
-        _ => None,
-    }
-}
-
-fn string_map_schema() -> Value {
-    let mut schema = Map::new();
-    schema.insert("type".to_string(), Value::String("object".to_string()));
-    schema.insert("additionalProperties".to_string(), type_schema("string"));
-    Value::Object(schema)
-}
-
 fn values_yaml_schema_for_path(
     path_info: &ValuesYamlPathInfo,
     path_fact: &PathFact,
@@ -605,21 +433,6 @@ fn schema_accepts_empty_object(schema: &Value) -> bool {
         .is_none_or(|min| min == 0);
 
     required_is_empty && min_properties_allows_empty
-}
-
-fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    for path in paths {
-        let mut segments: Vec<&str> = path
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .collect();
-        while segments.len() > 1 {
-            segments.pop();
-            out.insert(segments.join("."));
-        }
-    }
-    out
 }
 
 fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {

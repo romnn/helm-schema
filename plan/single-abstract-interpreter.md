@@ -823,6 +823,9 @@ Current result:
 - JSON Schema predicate and algebra helpers now live in `schema_model`, so
   scalar/object classification, null admission, and empty-schema construction
   have one local model boundary instead of being ambient generator helpers.
+- Value-use evidence collection now lives in `use_signals`, and
+  nullable/descendant path metadata now lives in `path_metadata`, leaving the
+  generator root closer to a stage orchestrator.
 
 ### Phase 8 — bundled emission
 
