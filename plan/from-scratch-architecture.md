@@ -1621,7 +1621,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   behind a dedicated CLI-internal `analysis` module that owns contract
   collection, chart facts, local schema discovery, helper reachability, and
   type-hint scoping; the CLI root is left to orchestrate config, provider
-  construction, output transforms, diagnostics, and writing.
+  construction, diagnostics, and writing. Schema-output assembly now also
+  runs through `output_pipeline`: override loading/preparation, shared global
+  mirroring into subcharts, flattening, description stripping, minimization,
+  and JSON formatting are all behind one output boundary.
 - **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
   (feeds A4 policy; unlocks B4).
 - **C3 — the crate consolidation to §5.1's layout: last**, once module

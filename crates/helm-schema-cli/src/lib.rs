@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::DiagnosticSink;
-use serde_json::{Map, Value};
+use serde_json::Value;
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
@@ -132,41 +132,13 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         minimize: cli.output.minimize,
     };
 
-    for path in cli.override_schema {
-        let mut override_schema = load_json_file(&path)?;
-
-        // Tag every subtree that carries `$ref` with an internal
-        // "replace on merge" marker. The marker rides through the
-        // pre-flatten dereference pass below and tells
-        // `apply_schema_override` to swap the resolved content into the
-        // base instead of deep-merging it with whatever helm-schema's
-        // inference produced for the same path. Without this, an
-        // inferred `cloud: {type: [boolean, string]}` would end up
-        // alongside the override's resolved `enum: [null, "azure",
-        // "minikube"]`, leaving the schema impossible to satisfy.
-        schema_override::mark_refs_for_replacement(&mut override_schema);
-
-        // Resolve `$ref`s in the override against the override file's
-        // own directory, not the chart directory. This lets a shared
-        // override (e.g. `deployment/charts/schemas/foo.override.json`
-        // pulled in across many charts) carry refs to its siblings
-        // (`./bar.json`) and have them resolve to the same physical
-        // file regardless of where the chart being generated lives.
-        // Without this, every override would have to use a chart-dir-
-        // relative path that only works at one tree depth.
-        //
-        // `--keep-refs` opts out of the final flatten pass over the
-        // merged schema (so chart-inference refs remain literal). We
-        // honour the same flag here for symmetry — without it, an
-        // override that wants to ship literal `$ref` strings can't.
-        let override_schema =
-            output_pipeline::prepare_override_schema(override_schema, &path, &output_options)?;
-
-        schema = schema_override::apply_schema_override(schema, override_schema);
-    }
-    mirror_global_schema_into_subcharts(&mut schema, &subchart_value_prefixes);
-
-    schema = output_pipeline::apply_output_transforms(schema, &cli.chart_dir, &output_options)?;
+    schema = output_pipeline::apply_schema_output_pipeline(
+        schema,
+        &cli.override_schema,
+        &subchart_value_prefixes,
+        &cli.chart_dir,
+        &output_options,
+    )?;
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
 
@@ -287,166 +259,4 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
             .map(|chart| chart.values_prefix.clone())
             .collect(),
     })
-}
-
-fn mirror_global_schema_into_subcharts(schema: &mut Value, subchart_prefixes: &[Vec<String>]) {
-    let Some(root_global_schema) = schema.pointer("/properties/global").cloned() else {
-        return;
-    };
-
-    for prefix in subchart_prefixes {
-        let subchart_schema = schema_object_at_values_prefix(schema, prefix);
-        let subchart_global_schema = schema_property_mut(subchart_schema, "global");
-        let existing = std::mem::take(subchart_global_schema);
-        *subchart_global_schema =
-            schema_override::apply_schema_override(existing, root_global_schema.clone());
-    }
-}
-
-fn schema_object_at_values_prefix<'a>(schema: &'a mut Value, prefix: &[String]) -> &'a mut Value {
-    let mut current = schema;
-    for segment in prefix {
-        current = schema_property_mut(current, segment);
-    }
-    current
-}
-
-fn schema_property_mut<'a>(schema: &'a mut Value, property: &str) -> &'a mut Value {
-    let object = ensure_json_object(schema);
-    let properties = object
-        .entry("properties".to_string())
-        .or_insert_with(|| Value::Object(Map::new()));
-    let properties = ensure_json_object(properties);
-    properties
-        .entry(property.to_string())
-        .or_insert_with(|| Value::Object(Map::new()))
-}
-
-fn ensure_json_object(value: &mut Value) -> &mut Map<String, Value> {
-    if !value.is_object() {
-        *value = Value::Object(Map::new());
-    }
-    match value {
-        Value::Object(object) => object,
-        _ => unreachable!("json value was just replaced with an object"),
-    }
-}
-
-fn load_json_file(path: &Path) -> CliResult<Value> {
-    let bytes = std::fs::read(path)?;
-    let v: Value = serde_json::from_slice(&bytes)?;
-    Ok(v)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn shared_global_override_schema_is_mirrored_into_nested_subcharts() {
-        let mut schema = serde_json::json!({
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            "properties": {
-                "global": {
-                    "additionalProperties": true,
-                    "properties": {
-                        "kube-score/ignore": {
-                            "type": "string"
-                        }
-                    },
-                    "type": "object"
-                },
-                "oauth2-proxy": {
-                    "additionalProperties": false,
-                    "properties": {
-                        "global": {
-                            "additionalProperties": false,
-                            "properties": {
-                                "imageRegistry": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "redis": {
-                            "additionalProperties": false,
-                            "properties": {
-                                "global": {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                        "storageClass": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "type": "object"
-                }
-            },
-            "type": "object"
-        });
-
-        mirror_global_schema_into_subcharts(
-            &mut schema,
-            &[
-                vec!["oauth2-proxy".to_string()],
-                vec!["oauth2-proxy".to_string(), "redis".to_string()],
-            ],
-        );
-
-        let child_global = schema
-            .pointer("/properties/oauth2-proxy/properties/global")
-            .expect("child global schema");
-        assert_eq!(
-            child_global
-                .pointer("/properties/kube-score~1ignore/type")
-                .and_then(Value::as_str),
-            Some("string"),
-            "shared global property should be mirrored into child global: {child_global}"
-        );
-        assert_eq!(
-            child_global
-                .pointer("/properties/imageRegistry/type")
-                .and_then(Value::as_str),
-            Some("string"),
-            "child global-specific properties should be preserved: {child_global}"
-        );
-        assert_eq!(
-            child_global
-                .get("additionalProperties")
-                .and_then(Value::as_bool),
-            Some(true),
-            "shared open-global policy should be mirrored into child global: {child_global}"
-        );
-
-        let nested_global = schema
-            .pointer("/properties/oauth2-proxy/properties/redis/properties/global")
-            .expect("nested global schema");
-        assert_eq!(
-            nested_global
-                .pointer("/properties/kube-score~1ignore/type")
-                .and_then(Value::as_str),
-            Some("string"),
-            "shared global property should be mirrored into nested child global: {nested_global}"
-        );
-        assert_eq!(
-            nested_global
-                .pointer("/properties/storageClass/type")
-                .and_then(Value::as_str),
-            Some("string"),
-            "nested child global-specific properties should be preserved: {nested_global}"
-        );
-        assert_eq!(
-            nested_global
-                .get("additionalProperties")
-                .and_then(Value::as_bool),
-            Some(true),
-            "shared open-global policy should be mirrored into nested child global: {nested_global}"
-        );
-    }
 }
