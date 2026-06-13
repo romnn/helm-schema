@@ -3,7 +3,8 @@ use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, HelmAst};
 
-use crate::abstract_document::{AbstractDocumentOutput, AbstractDocumentProjectionContext};
+use crate::abstract_document::AbstractDocumentOutput;
+use crate::abstract_document_projection::AbstractDocumentProjectionContext;
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;

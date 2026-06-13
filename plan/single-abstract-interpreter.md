@@ -775,6 +775,10 @@ Current result:
 - Output-site context and value-fact collection now live under explicit
   document-hole/document-value analysis names, so the compatibility walker no
   longer exposes generic output-node plumbing at the A3 seam.
+- Document-hole mechanics and document-to-contract compatibility projection
+  now live in `abstract_document_hole` and `abstract_document_projection`, so
+  `AbstractDocumentOutput` remains focused on assembling projection claims from
+  classified document evidence.
 - Document and scalar/control-flow outputs now emit internal `ContractUse`
   claims. The old `ValueUse` normalization has moved to contract finalization,
   and recursive helper/file interpretation stays in the contract layer until

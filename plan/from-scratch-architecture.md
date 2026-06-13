@@ -1443,6 +1443,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   document-hole/document-value analysis, making the A3 boundary explicit:
   the walker asks for a document hole plus document-local value facts, and
   `AbstractDocumentOutput` owns their projection into compatibility DTOs.
+  Document-hole mechanics and document-to-contract compatibility projection
+  now live in separate `abstract_document_hole` and
+  `abstract_document_projection` modules, leaving `AbstractDocumentOutput` to
+  assemble projection claims from already-classified document evidence.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations

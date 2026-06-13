@@ -1,10 +1,13 @@
+use crate::abstract_document_hole::AbstractDocumentHole;
+use crate::abstract_document_projection::{
+    AbstractDocumentProjection, AbstractDocumentProjectionContext,
+};
 use crate::contract::ContractUse;
 use crate::document_hole_context::DocumentHoleContext;
 use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;
 use crate::output_path;
 use crate::{Guard, ValueKind, YamlPath};
-use std::collections::BTreeSet;
 
 /// A rendered manifest output site discovered while interpreting a template.
 ///
@@ -121,8 +124,8 @@ impl AbstractDocumentOutput {
             {
                 projections.push(self.hole.document_use(
                     value.clone(),
-                    self.hole.path.clone(),
-                    self.hole.kind,
+                    self.hole.path().clone(),
+                    self.hole.kind(),
                     extra_guards,
                 ));
             } else {
@@ -143,7 +146,7 @@ impl AbstractDocumentOutput {
             if self.hole.can_project_structured_helper_to_caller_path() && !has_rendered_descendant
             {
                 let emit_path =
-                    output_path::append_relative_path(&self.hole.path, &output.relative_path);
+                    output_path::append_relative_path(self.hole.path(), &output.relative_path);
                 projections.push(self.hole.document_use(
                     output.source_expr,
                     emit_path,
@@ -168,14 +171,14 @@ impl AbstractDocumentOutput {
             if self.hole.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
                 projections.push(self.hole.document_use(
                     value,
-                    self.hole.path.clone(),
-                    self.hole.kind,
+                    self.hole.path().clone(),
+                    self.hole.kind(),
                     Vec::new(),
                 ));
             } else {
                 projections.push(AbstractDocumentProjection::helper_use(
                     value,
-                    self.hole.kind,
+                    self.hole.kind(),
                     Vec::new(),
                 ));
             }
@@ -216,214 +219,6 @@ impl AbstractDocumentOutput {
             .into_iter()
             .map(|projection| projection.with_context(&self.context))
             .collect()
-    }
-}
-
-#[derive(Clone)]
-pub(crate) struct AbstractDocumentProjectionContext {
-    guards: Vec<Guard>,
-    chart_value_defaults: BTreeSet<String>,
-    suppress_document_path: bool,
-}
-
-impl AbstractDocumentProjectionContext {
-    pub(crate) fn new(
-        guards: Vec<Guard>,
-        chart_value_defaults: BTreeSet<String>,
-        suppress_document_path: bool,
-    ) -> Self {
-        Self {
-            guards,
-            chart_value_defaults,
-            suppress_document_path,
-        }
-    }
-}
-
-enum AbstractDocumentProjection {
-    DocumentUse(AbstractDocumentUse),
-    HelperUse {
-        source_expr: String,
-        kind: ValueKind,
-        guards: Vec<Guard>,
-    },
-}
-
-impl AbstractDocumentProjection {
-    fn helper_use(source_expr: String, kind: ValueKind, guards: Vec<Guard>) -> Self {
-        Self::HelperUse {
-            source_expr,
-            kind,
-            guards,
-        }
-    }
-
-    fn with_context(mut self, context: &AbstractDocumentProjectionContext) -> Self {
-        match &mut self {
-            Self::DocumentUse(use_) => use_.apply_context(context),
-            Self::HelperUse { guards, .. } => {
-                *guards = guards_with_context(&context.guards, guards);
-            }
-        }
-        self
-    }
-
-    fn into_contract_use(self) -> ContractUse {
-        match self {
-            Self::DocumentUse(use_) => use_.into_contract_use(),
-            Self::HelperUse {
-                source_expr,
-                kind,
-                guards,
-            } => ContractUse::new(
-                source_expr,
-                YamlPath(Vec::new()),
-                if kind == ValueKind::PartialScalar {
-                    ValueKind::Scalar
-                } else {
-                    kind
-                },
-                guards,
-                None,
-            ),
-        }
-    }
-}
-
-struct AbstractDocumentUse {
-    source_expr: String,
-    path: YamlPath,
-    kind: ValueKind,
-    guards: Vec<Guard>,
-    resource: Option<crate::ResourceRef>,
-}
-
-impl AbstractDocumentUse {
-    fn apply_context(&mut self, context: &AbstractDocumentProjectionContext) {
-        if context.suppress_document_path {
-            self.path = YamlPath(Vec::new());
-        }
-        if self.kind == ValueKind::PartialScalar && self.path.0.is_empty() {
-            self.kind = ValueKind::Scalar;
-        }
-        self.guards = guards_with_context(&context.guards, &self.guards);
-        if !self.path.0.is_empty() && context.chart_value_defaults.contains(&self.source_expr) {
-            let default_guard = Guard::Default {
-                path: self.source_expr.clone(),
-            };
-            if !self.guards.contains(&default_guard) {
-                self.guards.push(default_guard);
-            }
-        }
-    }
-
-    fn into_contract_use(self) -> ContractUse {
-        ContractUse::new(
-            self.source_expr,
-            self.path,
-            self.kind,
-            self.guards,
-            self.resource,
-        )
-    }
-}
-
-fn guards_with_context(context_guards: &[Guard], extra_guards: &[Guard]) -> Vec<Guard> {
-    let mut guards = context_guards.to_vec();
-    merge_guards(&mut guards, extra_guards);
-    guards
-}
-
-fn merge_guards(target: &mut Vec<Guard>, extra_guards: &[Guard]) {
-    for guard in extra_guards {
-        if !target.contains(guard) {
-            target.push(guard.clone());
-        }
-    }
-}
-
-struct AbstractDocumentHole {
-    path: YamlPath,
-    kind: ValueKind,
-    in_mapping_key: bool,
-    entire_scalar_value: bool,
-    helper_inlined: bool,
-    resource: Option<crate::ResourceRef>,
-}
-
-impl AbstractDocumentHole {
-    fn new(hole_context: DocumentHoleContext, helper_inlined: bool) -> Self {
-        Self {
-            path: hole_context.path,
-            kind: hole_context.kind,
-            in_mapping_key: hole_context.in_mapping_key,
-            entire_scalar_value: hole_context.entire_scalar_value,
-            helper_inlined,
-            resource: hole_context.resource,
-        }
-    }
-
-    fn document_use(
-        &self,
-        source_expr: String,
-        path: YamlPath,
-        kind: ValueKind,
-        guards: Vec<Guard>,
-    ) -> AbstractDocumentProjection {
-        AbstractDocumentProjection::DocumentUse(AbstractDocumentUse {
-            source_expr,
-            path,
-            kind,
-            guards,
-            resource: self.resource.clone(),
-        })
-    }
-
-    fn direct_value_kind(&self) -> ValueKind {
-        if self.kind == ValueKind::Scalar && !self.entire_scalar_value && !self.path.0.is_empty() {
-            ValueKind::PartialScalar
-        } else {
-            self.kind
-        }
-    }
-
-    fn direct_value_path(&self, source_expr: &str) -> YamlPath {
-        if source_expr.ends_with(".*") && !self.in_sequence_item() {
-            YamlPath(Vec::new())
-        } else {
-            self.path.clone()
-        }
-    }
-
-    fn in_sequence_item(&self) -> bool {
-        self.path
-            .0
-            .last()
-            .map(std::string::String::as_str)
-            .is_some_and(|segment| segment.ends_with("[*]"))
-    }
-
-    fn can_project_scalar_helper_to_caller_path(&self) -> bool {
-        !self.helper_inlined
-            && !self.in_mapping_key
-            && !self.path.0.is_empty()
-            && self.kind == ValueKind::Scalar
-            && self.entire_scalar_value
-    }
-
-    fn can_project_fragment_helper_to_caller_path(&self) -> bool {
-        !self.helper_inlined
-            && !self.in_mapping_key
-            && !self.path.0.is_empty()
-            && self.kind == ValueKind::Fragment
-    }
-
-    fn can_project_structured_helper_to_caller_path(&self) -> bool {
-        !self.helper_inlined
-            && !self.in_mapping_key
-            && !self.path.0.is_empty()
-            && (self.kind == ValueKind::Fragment
-                || (self.kind == ValueKind::Scalar && self.entire_scalar_value))
     }
 }
 

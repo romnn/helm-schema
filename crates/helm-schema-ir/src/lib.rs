@@ -1,4 +1,6 @@
 mod abstract_document;
+mod abstract_document_hole;
+mod abstract_document_projection;
 mod abstract_eval;
 mod abstract_value;
 mod assignment_action_plan;
