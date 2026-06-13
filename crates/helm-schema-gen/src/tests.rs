@@ -97,6 +97,49 @@ where
     )
 }
 
+#[test]
+fn type_hint_only_descendant_preserves_object_input_branch() {
+    let uses = vec![ValueUse {
+        source_expr: "image".to_string(),
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: Vec::new(),
+        resource: Some(ResourceRef {
+            api_version: "v1".to_string(),
+            kind: "Service".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }),
+    }];
+    let mut type_hints = BTreeMap::new();
+    type_hints.insert(
+        "image.tag".to_string(),
+        vec![serde_json::json!({ "type": "string" })],
+    );
+
+    let schema = schema_for_values_yaml_and_hints(&uses, Some("image: {}\n"), &type_hints);
+    let variants = schema
+        .pointer("/properties/image/anyOf")
+        .and_then(Value::as_array)
+        .expect("image schema should preserve object and scalar branches");
+
+    assert!(
+        variants.iter().any(|variant| {
+            variant
+                .pointer("/properties/tag/type")
+                .and_then(Value::as_str)
+                == Some("string")
+        }),
+        "type-hint descendant should preserve an object input branch with the hinted leaf: {schema:#}",
+    );
+    assert!(
+        variants
+            .iter()
+            .any(|variant| variant.get("type").and_then(Value::as_str) == Some("string")),
+        "rendered scalar sink should still preserve the scalar branch: {schema:#}",
+    );
+}
+
 fn schema_contains_open_string_map(schema: &Value) -> bool {
     if schema
         .pointer("/additionalProperties/type")

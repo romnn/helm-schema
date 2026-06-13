@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -7,7 +7,6 @@ use helm_schema_ir::ChartFacts;
 use helm_schema_k8s::type_schema;
 
 use crate::merge::merge_schema_list;
-use crate::path_metadata::PathMetadata;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema};
 use crate::use_signals::UseSignals;
@@ -20,7 +19,8 @@ pub(crate) struct ResolvedPathSchema {
 
 pub(crate) struct PathSchemaResolver<'a> {
     signals: UseSignals,
-    path_metadata: &'a PathMetadata,
+    nullable_value_paths: &'a BTreeSet<String>,
+    paths_with_referenced_descendants: &'a BTreeSet<String>,
     path_caches: ValuePathCaches,
     type_hints: &'a BTreeMap<String, Vec<Value>>,
     chart_facts: &'a ChartFacts,
@@ -30,7 +30,8 @@ pub(crate) struct PathSchemaResolver<'a> {
 impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
         signals: UseSignals,
-        path_metadata: &'a PathMetadata,
+        nullable_value_paths: &'a BTreeSet<String>,
+        paths_with_referenced_descendants: &'a BTreeSet<String>,
         values_yaml_doc: &YamlValue,
         type_hints: &'a BTreeMap<String, Vec<Value>>,
         chart_facts: &'a ChartFacts,
@@ -38,7 +39,8 @@ impl<'a> PathSchemaResolver<'a> {
         let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
         Self {
             signals,
-            path_metadata,
+            nullable_value_paths,
+            paths_with_referenced_descendants,
             path_caches,
             type_hints,
             chart_facts,
@@ -91,10 +93,7 @@ impl<'a> PathSchemaResolver<'a> {
             .map_or_else(empty_schema, merge_schema_list);
 
         let facts = ValuePathSchemaFacts {
-            has_referenced_descendants: self
-                .path_metadata
-                .paths_with_descendants
-                .contains(value_path),
+            has_referenced_descendants: self.paths_with_referenced_descendants.contains(value_path),
             used_as_fragment,
             is_ranged_source,
             is_partial_scalar_value_path: self
@@ -104,7 +103,7 @@ impl<'a> PathSchemaResolver<'a> {
             path_has_render_use: path_fact.has_render_use,
             path_all_render_uses_self_guarded: path_fact.all_render_uses_self_guarded,
             path_has_self_range_guard_render_use: path_fact.has_self_range_guard_render_use,
-            contract_path_is_nullable: self.path_metadata.nullable_paths.contains(value_path),
+            contract_path_is_nullable: self.nullable_value_paths.contains(value_path),
             has_type_hint: self.type_hints.contains_key(value_path),
             values_yaml_has_no_schema_evidence: values_yaml_info
                 .is_none_or(|path_info| is_empty_schema(&path_info.schema)),

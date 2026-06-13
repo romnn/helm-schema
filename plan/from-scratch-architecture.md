@@ -1571,7 +1571,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   That projection is now derived by one contract-layer signal builder pass,
   replacing the previous separate chart-fact, path-signal, provider-use, and
   nullability collectors with a single owner for core schema-generation
-  evidence.
+  evidence. Descendant-path topology used during per-path schema resolution is
+  now part of that same contract-owned schema signal bundle, so generator
+  lowering no longer reconstructs contract path topology from referenced path
+  strings.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the

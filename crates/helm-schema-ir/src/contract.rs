@@ -239,6 +239,7 @@ pub struct ContractSchemaSignals {
     pub path_signals: ContractPathSignals,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub nullable_value_paths: BTreeSet<String>,
+    pub paths_with_referenced_descendants: BTreeSet<String>,
 }
 
 /// Receives contract claims from node/action interpretation.
@@ -610,6 +611,8 @@ impl ContractSchemaSignalBuilder {
                 )
             })
             .collect();
+        let paths_with_referenced_descendants =
+            collect_paths_with_descendants(&self.path_signals.referenced_value_paths);
         let nullable_value_paths = self
             .nullable_by_path
             .into_iter()
@@ -621,6 +624,7 @@ impl ContractSchemaSignalBuilder {
             path_signals: self.path_signals,
             provider_schema_uses: self.provider_schema_uses,
             nullable_value_paths,
+            paths_with_referenced_descendants,
         }
     }
 
@@ -799,6 +803,21 @@ impl ContractSchemaSignalBuilder {
             .entry(path.to_string())
             .or_insert_with(NullablePathAccumulator::new)
     }
+}
+
+fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for path in paths {
+        let mut segments: Vec<&str> = path
+            .split('.')
+            .filter(|segment| !segment.is_empty())
+            .collect();
+        while segments.len() > 1 {
+            segments.pop();
+            out.insert(segments.join("."));
+        }
+    }
+    out
 }
 
 fn derive_required_inference_signals_from_uses(uses: &[ContractUse]) -> RequiredInferenceSignals {
@@ -1379,6 +1398,12 @@ mod tests {
         assert!(
             signals.nullable_value_paths.contains("serviceAccount.name"),
             "default-guarded render use should surface as nullable contract evidence",
+        );
+        assert!(
+            signals
+                .paths_with_referenced_descendants
+                .contains("serviceAccount"),
+            "contract schema signals should own descendant path topology",
         );
         assert!(
             signals

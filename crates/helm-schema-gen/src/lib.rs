@@ -1,5 +1,4 @@
 mod merge;
-mod path_metadata;
 mod path_resolver;
 mod path_schema;
 pub mod required_inference;
@@ -9,7 +8,7 @@ mod schema_tree;
 mod use_signals;
 mod values_yaml;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
@@ -17,7 +16,6 @@ use serde_yaml::Value as YamlValue;
 use helm_schema_ir::{ChartFacts, ContractProjection, ContractSchemaSignals};
 use helm_schema_k8s::K8sSchemaProvider;
 
-use path_metadata::{PathMetadata, collect_path_metadata};
 use path_resolver::PathSchemaResolver;
 use schema_tree::{apply_values_descriptions, insert_schema_at_path_segments, object_schema};
 use use_signals::{UseSignals, collect_use_signals};
@@ -94,13 +92,13 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         path_signals,
         provider_schema_uses,
         nullable_value_paths,
+        mut paths_with_referenced_descendants,
     } = input.contract_projection.schema_signals();
     let mut signals = collect_use_signals(path_signals, &provider_schema_uses, input.provider);
     signals
         .referenced_value_paths
         .extend(type_hints.keys().cloned());
-    let path_metadata =
-        collect_path_metadata(nullable_value_paths, &signals.referenced_value_paths);
+    extend_paths_with_descendants(&mut paths_with_referenced_descendants, type_hints.keys());
 
     let values_yaml_doc = input
         .values_yaml
@@ -109,7 +107,8 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 
     let root_schema = build_root_schema(
         signals,
-        &path_metadata,
+        &nullable_value_paths,
+        &paths_with_referenced_descendants,
         &values_yaml_doc,
         type_hints,
         &chart_facts,
@@ -134,10 +133,27 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     Value::Object(out)
 }
 
+fn extend_paths_with_descendants<'a>(
+    out: &mut BTreeSet<String>,
+    paths: impl IntoIterator<Item = &'a String>,
+) {
+    for path in paths {
+        let mut segments: Vec<&str> = path
+            .split('.')
+            .filter(|segment| !segment.is_empty())
+            .collect();
+        while segments.len() > 1 {
+            segments.pop();
+            out.insert(segments.join("."));
+        }
+    }
+}
+
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
     signals: UseSignals,
-    path_metadata: &PathMetadata,
+    nullable_value_paths: &BTreeSet<String>,
+    paths_with_referenced_descendants: &BTreeSet<String>,
     values_yaml_doc: &YamlValue,
     type_hints: &BTreeMap<String, Vec<Value>>,
     chart_facts: &ChartFacts,
@@ -146,7 +162,8 @@ fn build_root_schema(
     let mut root_schema = object_schema(Map::new());
     let path_resolver = PathSchemaResolver::new(
         signals,
-        path_metadata,
+        nullable_value_paths,
+        paths_with_referenced_descendants,
         values_yaml_doc,
         type_hints,
         chart_facts,
