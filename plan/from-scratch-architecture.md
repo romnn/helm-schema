@@ -1476,7 +1476,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   generator root closer to a stage orchestrator. Path-level schema rewrites
   for values.yaml placeholders, ranged-map generalization, and fragment
   widening now live in `path_schema`, so the generator root no longer owns
-  those adjustment rules directly.
+  those adjustment rules directly. Per-value-path schema assembly now runs
+  through `PathSchemaResolver`, which consumes the collected evidence streams
+  and returns resolved path/schema pairs; root-schema construction is reduced
+  to tree insertion and metadata decoration.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the

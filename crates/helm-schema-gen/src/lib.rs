@@ -1,5 +1,6 @@
 mod merge;
 mod path_metadata;
+mod path_resolver;
 mod path_schema;
 pub mod required_inference;
 mod resolve_policy;
@@ -14,22 +15,12 @@ use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::{ChartFacts, ValueUse, derive_chart_facts};
-use helm_schema_k8s::{K8sSchemaProvider, type_schema};
+use helm_schema_k8s::K8sSchemaProvider;
 
-use merge::merge_schema_list;
 use path_metadata::{PathMetadata, collect_path_metadata};
-use path_schema::{
-    generalize_fixed_object_schema_to_open_map, merge_explicit_empty_placeholder,
-    open_fragment_values_schema, preserve_explicit_empty_placeholder, values_yaml_schema_for_path,
-};
-use resolve_policy::{ResolvePolicy, ValuePathSchemaInputs};
-use schema_model::{
-    add_null_schema, empty_schema, is_empty_schema, is_scalar_like_schema, is_scalar_schema,
-    is_string_like_schema,
-};
+use path_resolver::PathSchemaResolver;
 use schema_tree::{apply_values_descriptions, insert_schema_at_path_segments, object_schema};
 use use_signals::{UseSignals, collect_use_signals};
-use values_yaml::build_value_path_caches;
 
 // ---------------------------------------------------------------------------
 // Traits
@@ -199,149 +190,28 @@ fn merge_chart_facts(dst: &mut ChartFacts, src: &ChartFacts) {
 
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
-    mut signals: UseSignals,
+    signals: UseSignals,
     path_metadata: &PathMetadata,
     values_yaml_doc: &YamlValue,
     type_hints: &BTreeMap<String, Vec<Value>>,
     chart_facts: &ChartFacts,
     values_descriptions: &BTreeMap<String, String>,
 ) -> Value {
-    let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
-    let resolve_policy = ResolvePolicy::default();
     let mut root_schema = object_schema(Map::new());
+    let path_resolver = PathSchemaResolver::new(
+        signals,
+        path_metadata,
+        values_yaml_doc,
+        type_hints,
+        chart_facts,
+    );
 
-    for vp in signals.referenced_value_paths {
-        let path_segments = path_caches
-            .path_segments
-            .get(&vp)
-            .expect("referenced path must have cached path segments");
-        let values_yaml_info = path_caches.values_yaml.get(&vp);
-        let path_fact = chart_facts.path_facts.get(&vp).cloned().unwrap_or_default();
-        let used_as_fragment = signals.value_paths_used_as_fragment.contains(&vp);
-        let is_ranged_source = signals.ranged_value_paths.contains(&vp);
-        let provider_schemas = signals
-            .provider_schemas_by_value_path
-            .remove(&vp)
-            .unwrap_or_default();
-        let provider_schema = if provider_schemas.len() > 1
-            && provider_schemas
-                .iter()
-                .all(|schema| is_string_like_schema(schema.as_ref()))
-        {
-            type_schema("string")
-        } else {
-            merge_schema_list(
-                provider_schemas
-                    .into_iter()
-                    .map(|schema| (*schema).clone())
-                    .collect(),
-            )
-        };
-        let metadata_schema = signals
-            .metadata_schemas_by_value_path
-            .remove(&vp)
-            .map_or_else(empty_schema, merge_schema_list);
-        let provider_schema = merge_schema_list(vec![provider_schema, metadata_schema]);
-        let type_hint_schema = type_hints
-            .get(&vp)
-            .cloned()
-            .map_or_else(empty_schema, merge_schema_list);
-        let guard_constraint_schema = signals
-            .guard_constraints_by_value_path
-            .remove(&vp)
-            .map_or_else(empty_schema, merge_schema_list);
-        let partial_scalar_schema = if signals.partial_scalar_value_paths.contains(&vp)
-            && is_empty_schema(&provider_schema)
-            && is_empty_schema(&type_hint_schema)
-            && is_empty_schema(&guard_constraint_schema)
-            && values_yaml_info.is_none_or(|path_info| is_empty_schema(&path_info.schema))
-        {
-            type_schema("string")
-        } else {
-            empty_schema()
-        };
-
-        let has_explicit_null_scalar_default = values_yaml_info
-            .is_some_and(|path_info| path_info.is_explicit_null)
-            && (is_scalar_like_schema(&type_hint_schema)
-                || is_scalar_like_schema(&guard_constraint_schema));
-        let path_is_nullable = path_metadata.nullable_paths.contains(&vp)
-            || type_hints.contains_key(&vp)
-            || has_explicit_null_scalar_default;
-        let preserve_explicit_null_default = path_is_nullable
-            && values_yaml_info.is_some_and(|path_info| path_info.is_explicit_null);
-        let preserve_empty_string_fallback = values_yaml_info
-            .is_some_and(|path_info| path_info.is_empty_string)
-            && ((path_fact.has_render_use && path_fact.all_render_uses_self_guarded)
-                || is_scalar_like_schema(&type_hint_schema)
-                || is_scalar_like_schema(&guard_constraint_schema));
-        let values_yaml_schema = values_yaml_info
-            .map(|path_info| {
-                values_yaml_schema_for_path(
-                    path_info,
-                    &path_fact,
-                    &provider_schema,
-                    used_as_fragment,
-                    is_ranged_source,
-                )
-            })
-            .unwrap_or_else(empty_schema);
-        let values_yaml_schema = if used_as_fragment && is_empty_schema(&provider_schema) {
-            open_fragment_values_schema(values_yaml_schema)
-        } else {
-            values_yaml_schema
-        };
-        let values_yaml_schema = if signals.ranged_value_paths.contains(&vp)
-            && values_yaml_info.is_some_and(|path_info| path_info.is_mapping)
-        {
-            generalize_fixed_object_schema_to_open_map(values_yaml_schema)
-        } else {
-            values_yaml_schema
-        };
-        let provider_schema = if used_as_fragment
-            && is_scalar_schema(&values_yaml_schema)
-            && (is_scalar_like_schema(&type_hint_schema)
-                || is_scalar_like_schema(&guard_constraint_schema))
-        {
-            resolve_policy
-                .restrict_to_scalar_domain(provider_schema.clone())
-                .unwrap_or(provider_schema)
-        } else {
-            provider_schema
-        };
-
-        let merged = resolve_policy.resolve_schema_for_value_path(ValuePathSchemaInputs {
-            has_referenced_descendants: path_metadata.paths_with_descendants.contains(&vp),
-            used_as_fragment,
-            provider_schema,
-            values_yaml_schema,
-            guard_constraint_schema: merge_schema_list(vec![
-                guard_constraint_schema,
-                partial_scalar_schema,
-            ]),
-            type_hint_schema,
-            preserve_empty_string_fallback,
-        });
-        let should_preserve_empty_placeholder = preserve_explicit_empty_placeholder(
-            values_yaml_info,
-            &path_fact,
-            &merged,
-            used_as_fragment,
-            is_ranged_source,
+    for resolved_path in path_resolver.resolve_all() {
+        insert_schema_at_path_segments(
+            &mut root_schema,
+            &resolved_path.path_segments,
+            resolved_path.schema,
         );
-        let merged = if (preserve_explicit_null_default
-            || (is_scalar_like_schema(&merged) && path_metadata.nullable_paths.contains(&vp)))
-            && !is_empty_schema(&merged)
-        {
-            add_null_schema(merged)
-        } else if preserve_explicit_null_default {
-            type_schema("null")
-        } else if should_preserve_empty_placeholder {
-            merge_explicit_empty_placeholder(merged, values_yaml_info.expect("placeholder info"))
-        } else {
-            merged
-        };
-        insert_schema_at_path_segments(&mut root_schema, path_segments, merged);
     }
 
     apply_values_descriptions(&mut root_schema, values_descriptions);

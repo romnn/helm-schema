@@ -829,6 +829,9 @@ Current result:
 - Path-level schema rewrites for values.yaml placeholders, ranged-map
   generalization, and fragment widening now live in `path_schema`, so the
   generator root no longer owns those adjustment rules directly.
+- Per-value-path schema assembly now runs through `PathSchemaResolver`, so the
+  generator root iterates resolved path/schema pairs and owns only schema-tree
+  insertion plus values-description decoration.
 
 ### Phase 8 — bundled emission
 
