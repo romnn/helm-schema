@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
@@ -10,6 +10,7 @@ use serde_yaml::Value as YamlValue;
 use tracing::instrument;
 use vfs::VfsPath;
 
+use crate::chart_files::{self, FileRole};
 use crate::error::{CliError, CliResult};
 
 #[derive(Debug, Clone)]
@@ -17,6 +18,13 @@ pub struct ChartContext {
     pub chart_dir: VfsPath,
     pub values_prefix: Vec<String>,
     pub is_library: bool,
+    pub dependency_activation: ChartDependencyActivation,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ChartDependencyActivation {
+    pub condition_paths: Vec<String>,
+    pub tag_paths: Vec<String>,
 }
 
 pub(crate) fn scope_values_path(path: &str, prefix: &[String]) -> String {
@@ -86,18 +94,32 @@ struct ChartYaml {
 struct ChartDependency {
     name: String,
     alias: Option<String>,
+    condition: Option<String>,
+    tags: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone)]
+struct DependencyMetadata {
+    values_key: String,
+    activation: ChartDependencyActivation,
 }
 
 #[instrument(skip_all)]
 pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<ChartDiscovery> {
     let mut out = Vec::new();
-    discover_chart_contexts_inner(root_chart_dir, &[], &mut out)?;
+    discover_chart_contexts_inner(
+        root_chart_dir,
+        &[],
+        ChartDependencyActivation::default(),
+        &mut out,
+    )?;
     Ok(ChartDiscovery { charts: out })
 }
 
 fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
     parent_prefix: &[String],
+    dependency_activation: ChartDependencyActivation,
     out: &mut Vec<ChartContext>,
 ) -> CliResult<()> {
     let chart_yaml = read_chart_yaml(chart_dir)?;
@@ -111,9 +133,10 @@ fn discover_chart_contexts_inner(
         chart_dir: chart_dir.clone(),
         values_prefix: parent_prefix.to_vec(),
         is_library,
+        dependency_activation,
     });
 
-    let dep_key_by_name = dependency_key_map(&chart_yaml);
+    let dependency_metadata_by_name = dependency_metadata_map(&chart_yaml, parent_prefix);
 
     let vendor_charts_dir = chart_dir.join("charts")?;
     if !vendor_charts_dir.is_dir()? {
@@ -180,15 +203,18 @@ fn discover_chart_contexts_inner(
                 path: sub_dir.as_str().to_string(),
             })?;
 
-        let key = dep_key_by_name
+        let dependency_metadata = dependency_metadata_by_name
             .get(&sub_name)
             .cloned()
-            .unwrap_or_else(|| sub_name.clone());
+            .unwrap_or_else(|| DependencyMetadata {
+                values_key: sub_name.clone(),
+                activation: ChartDependencyActivation::default(),
+            });
 
         let mut prefix = parent_prefix.to_vec();
-        prefix.push(key);
+        prefix.push(dependency_metadata.values_key);
 
-        discover_chart_contexts_inner(&sub_dir, &prefix, out)?;
+        discover_chart_contexts_inner(&sub_dir, &prefix, dependency_metadata.activation, out)?;
     }
 
     Ok(())
@@ -248,16 +274,76 @@ fn find_chart_dir(root: &VfsPath) -> CliResult<Option<VfsPath>> {
     Ok(None)
 }
 
-fn dependency_key_map(chart_yaml: &ChartYaml) -> HashMap<String, String> {
-    let mut out = HashMap::new();
+fn dependency_metadata_map(
+    chart_yaml: &ChartYaml,
+    parent_prefix: &[String],
+) -> BTreeMap<String, DependencyMetadata> {
+    let mut out = BTreeMap::new();
     let deps = chart_yaml.dependencies.as_deref().unwrap_or_default();
 
     for d in deps {
-        let key = d.alias.clone().unwrap_or_else(|| d.name.clone());
-        out.insert(d.name.clone(), key);
+        let values_key = d.alias.clone().unwrap_or_else(|| d.name.clone());
+        out.insert(
+            d.name.clone(),
+            DependencyMetadata {
+                values_key,
+                activation: dependency_activation(d, parent_prefix),
+            },
+        );
     }
 
     out
+}
+
+fn dependency_activation(
+    dependency: &ChartDependency,
+    parent_prefix: &[String],
+) -> ChartDependencyActivation {
+    let condition_paths = dependency
+        .condition
+        .as_deref()
+        .map(|condition| dependency_condition_paths(condition, parent_prefix))
+        .unwrap_or_default();
+
+    let tag_paths = dependency
+        .tags
+        .as_deref()
+        .map(dependency_tag_paths)
+        .unwrap_or_default();
+
+    ChartDependencyActivation {
+        condition_paths,
+        tag_paths,
+    }
+}
+
+fn dependency_condition_paths(condition: &str, parent_prefix: &[String]) -> Vec<String> {
+    condition
+        .split(',')
+        .map(str::trim)
+        .filter(|path| !path.is_empty())
+        .map(|path| scope_chart_yaml_value_path(path, parent_prefix))
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
+}
+
+fn dependency_tag_paths(tags: &[String]) -> Vec<String> {
+    tags.iter()
+        .map(|tag| tag.trim())
+        .filter(|tag| !tag.is_empty())
+        .map(|tag| format!("tags.{tag}"))
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
+}
+
+fn scope_chart_yaml_value_path(path: &str, prefix: &[String]) -> String {
+    let path = path.trim();
+    if path == "tags" || path.starts_with("tags.") {
+        return path.to_string();
+    }
+    scope_values_path(path, prefix)
 }
 
 fn read_chart_yaml(chart_dir: &VfsPath) -> CliResult<ChartYaml> {
@@ -284,7 +370,13 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
     let mut idx = DefineIndex::new();
 
     for c in charts {
-        for path in list_template_sources_for_define_index(&c.chart_dir, include_tests)? {
+        let chart_files = chart_files::list_chart_files(&c.chart_dir, include_tests)?;
+
+        for path in chart_files
+            .iter()
+            .filter(|file| file.has_role(FileRole::DefineIndexTemplate))
+            .map(|file| &file.path)
+        {
             let mut src = String::new();
             path.open_file()?.read_to_string(&mut src)?;
             idx.add_source(&TreeSitterParser, &src)?;
@@ -300,7 +392,11 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
         // Some charts render manifests by loading YAML fragments from `files/` via `.Files.Get`.
         // Collect those sources so downstream IR generation can statically inline them when the
         // file path is a literal.
-        for path in list_chart_files_sources(&c.chart_dir)? {
+        for path in chart_files
+            .iter()
+            .filter(|file| file.has_role(FileRole::FilesGetSource))
+            .map(|file| &file.path)
+        {
             let mut src = String::new();
             path.open_file()?.read_to_string(&mut src)?;
             let abs = path.as_str();
@@ -323,7 +419,7 @@ pub fn collect_static_crd_universe(charts: &[ChartContext]) -> CliResult<LocalSc
     let mut universe = LocalSchemaUniverse::default();
 
     for chart in charts {
-        for path in list_static_crd_sources(&chart.chart_dir)? {
+        for path in files_with_role(&chart.chart_dir, false, FileRole::StaticCrd)? {
             let mut src = String::new();
             path.open_file()?.read_to_string(&mut src)?;
 
@@ -341,93 +437,12 @@ pub fn collect_static_crd_universe(charts: &[ChartContext]) -> CliResult<LocalSc
     Ok(universe)
 }
 
-fn list_static_crd_sources(chart_dir: &VfsPath) -> CliResult<Vec<VfsPath>> {
-    let crds_dir = chart_dir.join("crds")?;
-    if !crds_dir.is_dir()? {
-        return Ok(Vec::new());
-    }
-
-    let mut out = Vec::new();
-    list_files_recursive(&crds_dir, &mut out)?;
-
-    out.retain(|p| {
-        let file_name = p.filename();
-        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
-        ext.is_some_and(|e| {
-            e.eq_ignore_ascii_case("json")
-                || e.eq_ignore_ascii_case("yaml")
-                || e.eq_ignore_ascii_case("yml")
-        })
-    });
-
-    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
-    out.dedup_by(|a, b| a.as_str() == b.as_str());
-    Ok(out)
-}
-
-fn list_chart_files_sources(chart_dir: &VfsPath) -> CliResult<Vec<VfsPath>> {
-    let files_dir = chart_dir.join("files")?;
-    if !files_dir.is_dir()? {
-        return Ok(Vec::new());
-    }
-
-    let mut out = Vec::new();
-    list_files_recursive(&files_dir, &mut out)?;
-
-    out.retain(|p| {
-        let file_name = p.filename();
-        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
-        ext.is_some_and(|e| {
-            e.eq_ignore_ascii_case("yaml")
-                || e.eq_ignore_ascii_case("yml")
-                || e.eq_ignore_ascii_case("tpl")
-        })
-    });
-
-    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
-    out.dedup_by(|a, b| a.as_str() == b.as_str());
-    Ok(out)
-}
-
-fn list_files_recursive(dir: &VfsPath, out: &mut Vec<VfsPath>) -> CliResult<()> {
-    for ent in dir.read_dir()? {
-        if ent.is_dir()? {
-            list_files_recursive(&ent, out)?;
-        } else if ent.is_file()? {
-            out.push(ent);
-        }
-    }
-
-    Ok(())
-}
-
 #[instrument(skip_all)]
 pub fn list_manifest_templates(
     chart_dir: &VfsPath,
     include_tests: bool,
 ) -> CliResult<Vec<VfsPath>> {
-    let templates_dir = chart_dir.join("templates")?;
-    if !templates_dir.is_dir()? {
-        return Ok(Vec::new());
-    }
-
-    let mut out = Vec::new();
-    list_templates_recursive(&templates_dir, include_tests, &mut out)?;
-
-    out.retain(|p| {
-        let file_name = p.filename();
-        let lower = file_name.to_ascii_lowercase();
-        if lower.starts_with('_') {
-            return false;
-        }
-
-        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
-        ext.is_some_and(|e| e.eq_ignore_ascii_case("yaml") || e.eq_ignore_ascii_case("yml"))
-    });
-
-    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
-    out.dedup_by(|a, b| a.as_str() == b.as_str());
-    Ok(out)
+    files_with_role(chart_dir, include_tests, FileRole::ManifestTemplate)
 }
 
 #[instrument(skip_all)]
@@ -589,53 +604,19 @@ pub fn list_template_sources_for_define_index(
     chart_dir: &VfsPath,
     include_tests: bool,
 ) -> CliResult<Vec<VfsPath>> {
-    let templates_dir = chart_dir.join("templates")?;
-    if !templates_dir.is_dir()? {
-        return Ok(Vec::new());
-    }
-
-    let mut out = Vec::new();
-    list_templates_recursive(&templates_dir, include_tests, &mut out)?;
-
-    out.retain(|p| {
-        let file_name = p.filename();
-        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
-        ext.is_some_and(|e| {
-            e.eq_ignore_ascii_case("tpl")
-                || e.eq_ignore_ascii_case("yaml")
-                || e.eq_ignore_ascii_case("yml")
-        })
-    });
-
-    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
-    out.dedup_by(|a, b| a.as_str() == b.as_str());
-    Ok(out)
+    files_with_role(chart_dir, include_tests, FileRole::DefineIndexTemplate)
 }
 
-fn list_templates_recursive(
-    dir: &VfsPath,
+fn files_with_role(
+    chart_dir: &VfsPath,
     include_tests: bool,
-    out: &mut Vec<VfsPath>,
-) -> CliResult<()> {
-    for ent in dir.read_dir()? {
-        if ent.is_dir()? {
-            if !include_tests {
-                let name = ent.filename();
-                let parent_name = ent.parent().filename();
-                if name.eq_ignore_ascii_case("tests")
-                    && parent_name.eq_ignore_ascii_case("templates")
-                {
-                    continue;
-                }
-            }
-
-            list_templates_recursive(&ent, include_tests, out)?;
-        } else if ent.is_file()? {
-            out.push(ent);
-        }
-    }
-
-    Ok(())
+    role: FileRole,
+) -> CliResult<Vec<VfsPath>> {
+    Ok(chart_files::list_chart_files(chart_dir, include_tests)?
+        .into_iter()
+        .filter(|file| file.has_role(role))
+        .map(|file| file.path)
+        .collect())
 }
 
 fn merge_values_at_prefix(root: &mut YamlValue, prefix: &[String], sub: YamlValue) {
@@ -683,5 +664,79 @@ fn merge_yaml_prefer_left(a: YamlValue, b: YamlValue) -> YamlValue {
             YamlValue::Mapping(ma)
         }
         (va, _) => va,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dependency_activation_paths_are_scoped_from_chart_yaml() -> color_eyre::eyre::Result<()> {
+        let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+        test_util::write(
+            &chart_dir.join("Chart.yaml")?,
+            r#"
+apiVersion: v2
+name: root
+version: 0.1.0
+dependencies:
+  - name: child
+    alias: kid
+    version: 0.1.0
+    condition: kid.enabled, global.kidEnabled
+    tags:
+      - observability
+"#,
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/Chart.yaml")?,
+            r#"
+apiVersion: v2
+name: child
+version: 0.1.0
+dependencies:
+  - name: leaf
+    version: 0.1.0
+    condition: leaf.enabled
+    tags:
+      - nested
+"#,
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/charts/leaf/Chart.yaml")?,
+            "apiVersion: v2\nname: leaf\nversion: 0.1.0\n",
+        )?;
+
+        let discovery = discover_chart_contexts(&chart_dir)?;
+        let child = discovery
+            .charts
+            .iter()
+            .find(|chart| chart.values_prefix == ["kid".to_string()])
+            .ok_or_else(|| color_eyre::eyre::eyre!("discover child chart"))?;
+        assert_eq!(
+            child.dependency_activation.condition_paths,
+            vec!["global.kidEnabled".to_string(), "kid.enabled".to_string()]
+        );
+        assert_eq!(
+            child.dependency_activation.tag_paths,
+            vec!["tags.observability".to_string()]
+        );
+
+        let leaf = discovery
+            .charts
+            .iter()
+            .find(|chart| chart.values_prefix == ["kid".to_string(), "leaf".to_string()])
+            .ok_or_else(|| color_eyre::eyre::eyre!("discover nested leaf chart"))?;
+        assert_eq!(
+            leaf.dependency_activation.condition_paths,
+            vec!["kid.leaf.enabled".to_string()]
+        );
+        assert_eq!(
+            leaf.dependency_activation.tag_paths,
+            vec!["tags.nested".to_string()]
+        );
+
+        Ok(())
     }
 }

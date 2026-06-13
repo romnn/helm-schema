@@ -1,5 +1,6 @@
 mod analysis;
 mod chart;
+mod chart_files;
 pub mod cli;
 mod diag_emit;
 mod error;

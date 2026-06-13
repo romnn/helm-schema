@@ -205,6 +205,83 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_ey
 }
 
 #[test]
+fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+                condition: kid.enabled, global.kidEnabled
+                tags:
+                  - observability
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("charts/child/values.yaml")?, "{}\n")?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: true,
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    };
+
+    let actual = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+
+    assert!(
+        schema_accepts_type(
+            actual
+                .pointer("/properties/kid/properties/enabled")
+                .ok_or_else(|| eyre!("missing kid.enabled schema"))?,
+            "boolean"
+        ),
+        "expected kid.enabled to be boolean: {actual}"
+    );
+    assert!(
+        schema_accepts_type(
+            actual
+                .pointer("/properties/global/properties/kidEnabled")
+                .ok_or_else(|| eyre!("missing global.kidEnabled schema"))?,
+            "boolean"
+        ),
+        "expected global.kidEnabled to be boolean: {actual}"
+    );
+    assert!(
+        schema_accepts_type(
+            actual
+                .pointer("/properties/tags/properties/observability")
+                .ok_or_else(|| eyre!("missing tags.observability schema"))?,
+            "boolean"
+        ),
+        "expected tags.observability to be boolean: {actual}"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 

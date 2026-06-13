@@ -7,7 +7,7 @@ use helm_schema_ir::{
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::LocalSchemaUniverse;
-use serde_json::Value;
+use serde_json::{Value, json};
 use serde_yaml::Value as YamlValue;
 use vfs::VfsPath;
 
@@ -99,6 +99,7 @@ pub(crate) fn analyze_charts(
             }
         }
     }
+    apply_dependency_activation_type_hints(&mut type_hints, charts);
 
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
@@ -263,6 +264,30 @@ fn apply_type_hints_to(
     for (path, schema) in extract_default_type_hints(body_text) {
         let scoped = chart::scope_values_path(&path, prefix);
         type_hints.entry(scoped).or_default().push(schema);
+    }
+}
+
+fn apply_dependency_activation_type_hints(
+    type_hints: &mut BTreeMap<String, Vec<Value>>,
+    charts: &[chart::ChartContext],
+) {
+    let paths = charts
+        .iter()
+        .flat_map(|chart| {
+            chart
+                .dependency_activation
+                .condition_paths
+                .iter()
+                .chain(chart.dependency_activation.tag_paths.iter())
+        })
+        .cloned()
+        .collect::<BTreeSet<_>>();
+
+    for path in paths {
+        type_hints
+            .entry(path)
+            .or_default()
+            .push(json!({ "type": "boolean" }));
     }
 }
 
