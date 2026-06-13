@@ -1552,7 +1552,15 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   still exist for tests/debug, but they compute from shared raw documents on
   demand.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
-  declarative data.
+  declarative data. Current progress: the K8s capability probe builder and
+  canonical api-version probe table now live in a dedicated
+  `capability_probe` module instead of the OpenAPI provider monolith.
+  Resource-qualified capability literals bypass the table and probe their
+  kind directly, including core resources such as `v1/Secret`; only
+  api-version-only literals consult the declarative table. The remaining B3
+  work is to route these probes through the same planner/executor trace that
+  will back normal schema lookup, and to expose `kube_version()` through the
+  same adapter boundary.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's

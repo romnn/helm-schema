@@ -904,6 +904,11 @@ Current result:
   caches fully expanded per-resource documents. Explicit materialization helpers
   still exist for tests/debug, but they compute on demand from shared raw
   documents.
+- B3 has started by moving capability probe construction and the canonical
+  api-version probe table into a dedicated provider submodule. Direct
+  resource-qualified capability literals now bypass that table, including core
+  resource literals such as `v1/Secret`; only api-version-only literals need
+  the declarative probe table until a bundled upstream index exists.
 
 ## Completion criteria
 

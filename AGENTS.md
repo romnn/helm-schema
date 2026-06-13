@@ -155,9 +155,9 @@ needs to answer `.Capabilities.APIVersions.Has "group/version"` — the
 kind exists at that api version. Since the upstream schema source is
 per-file (one JSON per kind, fetched on demand) with no bundle
 manifest we could enumerate, the probe needs a *canonical kind* to
-target. That table lives in `well_known_kind_at()` in
-`crates/helm-schema-k8s/src/kubernetes_openapi/provider.rs` and is
-manually maintained.
+target. That table lives in
+`crates/helm-schema-k8s/src/kubernetes_openapi/capability_probe.rs`
+and is manually maintained.
 
 This is a defensible heuristic for the current cache architecture —
 each entry is the kind that anchors a given api group/version (e.g.

@@ -19,6 +19,7 @@ use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::schema_doc::SchemaDoc;
 
+use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
 use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf, expand_schema_node};
 use super::version_chain::K8sVersionChain;
@@ -380,7 +381,7 @@ impl KubernetesJsonSchemaProvider {
     #[must_use]
     pub fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
         let primary = self.versions.primary()?;
-        let probe = build_capability_probe(api)?;
+        let probe = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(api)?;
         let candidates = candidate_filenames_for_resource(&probe);
         // Aggregate the outcome across (source × filename) pairs.
         // Found-ness short-circuits to `Some(true)`. Without that, the
@@ -672,114 +673,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         ));
         out
     }
-}
-
-/// Build the `ResourceRef` we'll probe to decide
-/// `.Capabilities.APIVersions.Has "api"`.
-///
-/// For `group/version/Kind`: probe that exact kind at that api
-/// version. For `group/version` (no kind): probe a structurally-known
-/// canonical kind at that api version — chosen so that if the api
-/// version is supported AT ALL in this K8s version, the probe kind is
-/// in it. Returns `None` for unknown api versions (custom CRD groups,
-/// etc.) where there's no canonical probe target.
-fn build_capability_probe(api: &str) -> Option<ResourceRef> {
-    let parts: Vec<&str> = api.split('/').collect();
-    let (api_version, kind) = match parts.as_slice() {
-        // `group/version/Kind` — probe directly.
-        [_, _, k] => (parts[..2].join("/"), (*k).to_string()),
-        // `group/version` or core `version` — probe canonical kind.
-        [_, _] | [_] => (api.to_string(), well_known_kind_at(api)?.to_string()),
-        _ => return None,
-    };
-    Some(ResourceRef {
-        api_version,
-        kind,
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    })
-}
-
-/// Map a well-known Kubernetes `apiGroup/version` (or core `version`)
-/// to a kind that has been the canonical resource at that api version
-/// since the api version was first introduced. If the K8s schema
-/// bundle holds this kind at `api_version`, the cluster supports
-/// `api_version`.
-///
-/// This table reflects structural facts about the K8s API surface
-/// (which kind anchors each api group/version), not user input.
-/// Returns `None` for api versions outside the table — for custom
-/// CRD groups or other exotic apis, the chain treats the guard as
-/// opaque (potentially live) rather than guessing.
-///
-/// **Architectural note (round-9 follow-up):** the table is a
-/// manually-maintained heuristic, here because the upstream schema
-/// source is per-file (one JSON per kind, fetched on demand) with no
-/// bundle manifest we could enumerate. To answer
-/// `Has "group/version"` without a Kind suffix, we have to probe
-/// *some* kind under that api version — the canonical one in the
-/// table is the structurally-justified choice (present from the api
-/// version's inception, so its existence proves the api version
-/// exists). A future cleaner implementation could:
-///   - depend on an upstream bundle that ships a `_index.json`-style
-///     manifest of all kinds per api version, and enumerate from it
-///     instead of probing; or
-///   - eagerly pre-fetch the primary K8s version's full bundle on
-///     startup and answer from the on-disk enumeration.
-///
-/// Until either of those lands, this table is the source of truth
-/// for "what's the cheapest probe target for api version X".
-fn well_known_kind_at(api_version: &str) -> Option<&'static str> {
-    let map = [
-        ("v1", "ConfigMap"),
-        ("apps/v1", "Deployment"),
-        ("apps/v1beta1", "Deployment"),
-        ("apps/v1beta2", "Deployment"),
-        ("batch/v1", "Job"),
-        ("batch/v1beta1", "CronJob"),
-        ("rbac.authorization.k8s.io/v1", "Role"),
-        ("rbac.authorization.k8s.io/v1beta1", "Role"),
-        ("rbac.authorization.k8s.io/v1alpha1", "Role"),
-        ("networking.k8s.io/v1", "Ingress"),
-        ("networking.k8s.io/v1beta1", "Ingress"),
-        ("extensions/v1beta1", "Ingress"),
-        ("policy/v1", "PodDisruptionBudget"),
-        ("policy/v1beta1", "PodDisruptionBudget"),
-        ("autoscaling/v1", "HorizontalPodAutoscaler"),
-        ("autoscaling/v2", "HorizontalPodAutoscaler"),
-        ("autoscaling/v2beta1", "HorizontalPodAutoscaler"),
-        ("autoscaling/v2beta2", "HorizontalPodAutoscaler"),
-        ("storage.k8s.io/v1", "StorageClass"),
-        ("storage.k8s.io/v1beta1", "StorageClass"),
-        ("apiextensions.k8s.io/v1", "CustomResourceDefinition"),
-        ("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition"),
-        (
-            "admissionregistration.k8s.io/v1",
-            "MutatingWebhookConfiguration",
-        ),
-        (
-            "admissionregistration.k8s.io/v1beta1",
-            "MutatingWebhookConfiguration",
-        ),
-        ("scheduling.k8s.io/v1", "PriorityClass"),
-        ("scheduling.k8s.io/v1beta1", "PriorityClass"),
-        ("coordination.k8s.io/v1", "Lease"),
-        ("coordination.k8s.io/v1beta1", "Lease"),
-        ("node.k8s.io/v1", "RuntimeClass"),
-        ("node.k8s.io/v1beta1", "RuntimeClass"),
-        ("discovery.k8s.io/v1", "EndpointSlice"),
-        ("discovery.k8s.io/v1beta1", "EndpointSlice"),
-        ("events.k8s.io/v1", "Event"),
-        ("events.k8s.io/v1beta1", "Event"),
-        ("certificates.k8s.io/v1", "CertificateSigningRequest"),
-        ("certificates.k8s.io/v1beta1", "CertificateSigningRequest"),
-        ("authentication.k8s.io/v1", "TokenReview"),
-        ("authorization.k8s.io/v1", "SubjectAccessReview"),
-        ("flowcontrol.apiserver.k8s.io/v1", "FlowSchema"),
-        ("flowcontrol.apiserver.k8s.io/v1beta3", "FlowSchema"),
-        ("flowcontrol.apiserver.k8s.io/v1beta2", "FlowSchema"),
-    ];
-    map.iter().find(|(k, _)| *k == api_version).map(|(_, v)| *v)
 }
 
 fn write_atomic(local: &Path, bytes: &[u8]) -> std::io::Result<()> {

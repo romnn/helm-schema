@@ -1,3 +1,4 @@
+mod capability_probe;
 mod mirror_chain;
 mod missing_schema_hint;
 mod provider;
