@@ -1473,7 +1473,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   and empty-schema construction are no longer ambient helpers on the generator
   root. Value-use evidence collection now lives in `use_signals`, and
   nullable/descendant path metadata now lives in `path_metadata`, leaving the
-  generator root closer to a stage orchestrator.
+  generator root closer to a stage orchestrator. Path-level schema rewrites
+  for values.yaml placeholders, ranged-map generalization, and fragment
+  widening now live in `path_schema`, so the generator root no longer owns
+  those adjustment rules directly.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the

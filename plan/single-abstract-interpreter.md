@@ -826,6 +826,9 @@ Current result:
 - Value-use evidence collection now lives in `use_signals`, and
   nullable/descendant path metadata now lives in `path_metadata`, leaving the
   generator root closer to a stage orchestrator.
+- Path-level schema rewrites for values.yaml placeholders, ranged-map
+  generalization, and fragment widening now live in `path_schema`, so the
+  generator root no longer owns those adjustment rules directly.
 
 ### Phase 8 — bundled emission
 
