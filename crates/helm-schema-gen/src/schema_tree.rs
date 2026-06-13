@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use serde_json::{Map, Value};
 
 use crate::merge::{merge_two_schemas, union_schema_list};
-use crate::{is_empty_schema, schema_type};
+use crate::schema_model::{is_empty_schema, schema_type};
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 

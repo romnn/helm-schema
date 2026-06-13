@@ -820,6 +820,9 @@ Current result:
 - Schema-tree mutation now lives in `schema_tree`, so wildcard/array/object
   insertion and values-description placement are no longer embedded in the
   generator root.
+- JSON Schema predicate and algebra helpers now live in `schema_model`, so
+  scalar/object classification, null admission, and empty-schema construction
+  have one local model boundary instead of being ambient generator helpers.
 
 ### Phase 8 — bundled emission
 

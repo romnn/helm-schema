@@ -398,7 +398,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         type_hint_schema: serde_json::json!({}),
         preserve_empty_string_fallback: true,
     });
-    let schema = crate::add_null_schema(schema);
+    let schema = crate::schema_model::add_null_schema(schema);
 
     assert!(
         permits_empty_string(&schema),

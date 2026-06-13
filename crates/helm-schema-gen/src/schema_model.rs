@@ -1,0 +1,235 @@
+use serde_json::{Map, Value};
+
+use helm_schema_k8s::type_schema;
+
+use crate::merge::{merge_two_schemas, union_schema_list};
+
+pub(crate) fn schema_type(value: &Value) -> Option<&str> {
+    value.as_object()?.get("type")?.as_str()
+}
+
+pub(crate) fn is_scalar_schema(value: &Value) -> bool {
+    matches!(
+        schema_type(value),
+        Some("string" | "integer" | "number" | "boolean")
+    )
+}
+
+pub(crate) fn is_string_like_schema(value: &Value) -> bool {
+    if schema_type(value) == Some("string") {
+        return true;
+    }
+
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+
+    if let Some(Value::Array(values)) = object.get("enum") {
+        return !values.is_empty()
+            && values
+                .iter()
+                .all(|value| matches!(value, Value::String(_) | Value::Null));
+    }
+
+    if let Some(Value::Array(types)) = object.get("type") {
+        return types
+            .iter()
+            .all(|value| matches!(value.as_str(), Some("string" | "null")));
+    }
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(Value::Array(variants)) = object.get(key) {
+            return !variants.is_empty() && variants.iter().all(is_string_like_schema);
+        }
+    }
+
+    false
+}
+
+pub(crate) fn is_scalar_like_schema(value: &Value) -> bool {
+    if is_scalar_schema(value) {
+        return true;
+    }
+
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+
+    if let Some(Value::Array(values)) = object.get("enum") {
+        return !values.is_empty()
+            && values.iter().all(|value| {
+                matches!(
+                    value,
+                    Value::String(_) | Value::Number(_) | Value::Bool(_) | Value::Null
+                )
+            });
+    }
+
+    if let Some(Value::Array(types)) = object.get("type") {
+        return types.iter().all(|value| {
+            matches!(
+                value.as_str(),
+                Some("string" | "number" | "integer" | "boolean" | "null")
+            )
+        });
+    }
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(Value::Array(variants)) = object.get(key) {
+            return !variants.is_empty() && variants.iter().all(is_scalar_like_schema);
+        }
+    }
+
+    false
+}
+
+pub(crate) fn is_object_or_array_schema(value: &Value) -> bool {
+    matches!(schema_type(value), Some("object" | "array"))
+}
+
+pub(crate) fn is_fixed_object_schema(value: &Value) -> bool {
+    if schema_type(value) != Some("object") {
+        return false;
+    }
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+    object
+        .get("properties")
+        .and_then(Value::as_object)
+        .is_some_and(|properties| !properties.is_empty())
+        && object.get("additionalProperties") == Some(&Value::Bool(false))
+}
+
+pub(crate) fn is_open_string_map_schema(value: &Value) -> bool {
+    if schema_type(value) != Some("object") {
+        return false;
+    }
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+    matches!(
+        object.get("additionalProperties"),
+        Some(Value::Object(map))
+            if map.get("type").and_then(Value::as_str) == Some("string")
+    )
+}
+
+pub(crate) fn schema_allows_scalar_type(schema: &Value, scalar_type: &str) -> bool {
+    if let Some(schema_type) = schema_type(schema) {
+        return schema_type == scalar_type;
+    }
+
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+
+    for key in ["oneOf", "anyOf"] {
+        if let Some(Value::Array(variants)) = object.get(key)
+            && variants
+                .iter()
+                .any(|variant| schema_allows_scalar_type(variant, scalar_type))
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub(crate) fn schema_allows_type(schema: &Value, expected_type: &str) -> bool {
+    if let Some(schema_type) = schema_type(schema) {
+        return schema_type == expected_type;
+    }
+
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+
+    for key in ["oneOf", "anyOf"] {
+        if let Some(Value::Array(variants)) = object.get(key)
+            && variants
+                .iter()
+                .any(|variant| schema_allows_type(variant, expected_type))
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub(crate) fn add_null_schema(schema: Value) -> Value {
+    if schema.get("anyOf").and_then(Value::as_array).is_some()
+        || schema.get("oneOf").and_then(Value::as_array).is_some()
+    {
+        union_schema_list(vec![schema, type_schema("null")])
+    } else {
+        merge_two_schemas(schema, type_schema("null"))
+    }
+}
+
+pub(crate) fn empty_string_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("string".to_string())),
+            (
+                "enum".to_string(),
+                Value::Array(vec![Value::String(String::new())]),
+            ),
+        ]
+        .into_iter()
+        .collect(),
+    )
+}
+
+pub(crate) fn schema_permits_empty_string(schema: &Value) -> bool {
+    if let Some(variants) = schema.get("anyOf").and_then(Value::as_array) {
+        return variants.iter().any(schema_permits_empty_string);
+    }
+    if let Some(variants) = schema.get("oneOf").and_then(Value::as_array) {
+        return variants.iter().any(schema_permits_empty_string);
+    }
+
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+    if let Some(values) = object.get("enum").and_then(Value::as_array) {
+        return values.iter().any(|value| value.as_str() == Some(""));
+    }
+    if object.get("pattern").is_some() {
+        return false;
+    }
+
+    let type_allows_string = object.get("type").and_then(Value::as_str) == Some("string")
+        || object
+            .get("type")
+            .and_then(Value::as_array)
+            .is_some_and(|types| types.iter().any(|value| value.as_str() == Some("string")));
+    type_allows_string
+        && object
+            .get("minLength")
+            .and_then(Value::as_u64)
+            .is_none_or(|min_length| min_length == 0)
+}
+
+pub(crate) fn is_empty_schema(value: &Value) -> bool {
+    value.as_object().is_some_and(serde_json::Map::is_empty)
+}
+
+pub(crate) fn empty_schema() -> Value {
+    Value::Object(Map::new())
+}
+
+pub(crate) fn exact_empty_object_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("object".to_string())),
+            ("properties".to_string(), Value::Object(Map::new())),
+            ("additionalProperties".to_string(), Value::Bool(false)),
+            ("maxProperties".to_string(), Value::Number(0.into())),
+        ]
+        .into_iter()
+        .collect(),
+    )
+}

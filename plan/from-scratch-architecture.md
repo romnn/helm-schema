@@ -1468,7 +1468,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   traversal and scalar/object evidence construction. Schema-tree mutation is
   now isolated in `schema_tree`, separating path insertion, wildcard descent,
   union-aware structural updates, and description placement from per-path
-  resolution policy.
+  resolution policy. JSON Schema predicate and algebra helpers are now
+  isolated in `schema_model`, so scalar/object classification, null admission,
+  and empty-schema construction are no longer ambient helpers on the generator
+  root.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the
