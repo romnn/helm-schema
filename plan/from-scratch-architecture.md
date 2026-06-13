@@ -1568,6 +1568,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   projection containing chart facts, path signals, provider-schema lookup
   requests, and nullable-path evidence, so the generator boundary no longer
   pulls those contract facts through several independent raw-claim views.
+  That projection is now derived by one contract-layer signal builder pass,
+  replacing the previous separate chart-fact, path-signal, provider-use, and
+  nullability collectors with a single owner for core schema-generation
+  evidence.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the
