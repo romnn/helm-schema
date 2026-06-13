@@ -14,7 +14,8 @@ use std::fs;
 use std::sync::Arc;
 
 use helm_schema_k8s::{
-    K8sVersionChain, KubernetesJsonSchemaProvider, MockFetcher, default_source_id,
+    ApiPresenceQuery, K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry, MockFetcher,
+    SourceProbeTraceOutcome, default_source_id,
 };
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
@@ -78,6 +79,50 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     );
 }
 
+#[test]
+fn traced_offline_partial_cache_records_uncertain_source_probe() {
+    let cache_dir = tmp_dir("capability_oracle_trace_partial");
+    let primary = "v1.35.0";
+    let source_id = default_source_id();
+    let version_dir = cache_dir.join(source_id).join(primary);
+    fs::create_dir_all(&version_dir).expect("create version dir");
+    fs::write(
+        version_dir.join("configmap-v1.json"),
+        r#"{"type":"object"}"#,
+    )
+    .expect("plant unrelated file");
+
+    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec![primary.to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir)
+    .with_allow_download(false)
+    .with_fetcher(Arc::new(MockFetcher::new()));
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+
+    let traced = provider.capability_has_query_at_primary_version_traced(&query);
+
+    assert_eq!(traced.answer, None);
+    assert!(
+        traced.trace.entries().iter().any(|entry| matches!(
+            entry,
+            LookupTraceEntry::ApiPresenceSourceProbe {
+                source_id,
+                k8s_version,
+                filename,
+                outcome: SourceProbeTraceOutcome::Uncertain,
+                ..
+            } if source_id == &default_source_id()
+                && k8s_version == primary
+                && filename == "horizontalpodautoscaler-autoscaling-v2.json"
+        )),
+        "offline partial cache must expose the uncertain HPA source probe in the trace: {:?}",
+        traced.trace.entries()
+    );
+}
+
 /// Offline + completely empty cache: the oracle has no information
 /// either way and must abstain with `None`. A `Some(false)` here
 /// would let a just-initialised cache silently mis-route branch
@@ -138,6 +183,37 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
         second,
         Some(false),
         "second probe in same process must still be authoritatively absent; got {second:?}"
+    );
+}
+
+#[test]
+fn traced_online_404_records_authoritative_absent_source_probe() {
+    let cache_dir = tmp_dir("capability_oracle_trace_404");
+    let primary = "v1.35.0";
+    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+        vec![primary.to_string()],
+        None,
+    ))
+    .with_cache_dir(cache_dir)
+    .with_allow_download(true)
+    .with_fetcher(Arc::new(MockFetcher::new()));
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+
+    let traced = provider.capability_has_query_at_primary_version_traced(&query);
+
+    assert_eq!(traced.answer, Some(false));
+    assert!(
+        traced.trace.entries().iter().any(|entry| matches!(
+            entry,
+            LookupTraceEntry::ApiPresenceSourceProbe {
+                filename,
+                outcome: SourceProbeTraceOutcome::AuthoritativelyAbsent,
+                ..
+            } if filename == "horizontalpodautoscaler-autoscaling-v2.json"
+        )),
+        "online 404 must expose the authoritative absent source probe in the trace: {:?}",
+        traced.trace.entries()
     );
 }
 

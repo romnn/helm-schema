@@ -50,7 +50,8 @@ pub use kubernetes_openapi::{
 pub use local_override::LocalSchemaProvider;
 pub use lookup::{
     ApiPresenceQuery, Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
-    LookupTraceOutcome, ProviderLookupResult, ProviderOrigin, TracedLookupOutcome,
+    LookupTraceOutcome, LookupTraceSubject, ProviderLookupResult, ProviderOrigin,
+    SourceProbeTraceOutcome, TracedApiPresenceOutcome, TracedLookupOutcome,
 };
 
 // ---------------------------------------------------------------------------

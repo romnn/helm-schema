@@ -13,7 +13,7 @@ use super::api_presence::ApiPresenceQuery;
 use super::chain_outcome::ChainLookupOutcome;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
-use super::trace::{LookupTrace, TracedLookupOutcome};
+use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
 
 /// Composed provider chain with precedence
@@ -269,6 +269,28 @@ impl Chain {
         path: &YamlPath,
     ) -> TracedLookupOutcome {
         self.resolve_against_chain_traced_internal(resource, path, true)
+    }
+
+    /// Answer a typed `.Capabilities.APIVersions.Has` query and retain the
+    /// executed provider/source probes. The first provider that can answer wins,
+    /// matching [`K8sSchemaProvider::capability_has_query_at_primary_version`].
+    pub fn capability_has_query_at_primary_version_traced(
+        &self,
+        query: &ApiPresenceQuery,
+    ) -> TracedApiPresenceOutcome {
+        let mut trace = LookupTrace::new_api_presence(query);
+        for provider in &self.providers {
+            let provider_outcome = provider.capability_has_query_at_primary_version_traced(query);
+            let answer = provider_outcome.answer;
+            trace.extend_entries(provider_outcome.trace.into_entries());
+            if answer.is_some() {
+                return TracedApiPresenceOutcome { answer, trace };
+            }
+        }
+        TracedApiPresenceOutcome {
+            answer: None,
+            trace,
+        }
     }
 
     /// `commit_miss_diagnostics = false` is silent mode used by
@@ -528,11 +550,15 @@ impl K8sSchemaProvider for Chain {
     }
 
     fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
-        // First non-`None` answer wins — typically the K8s OpenAPI provider
-        // for built-in apis. CRD / local-override providers abstain.
-        self.providers
-            .iter()
-            .find_map(|p| p.capability_has_query_at_primary_version(query))
+        self.capability_has_query_at_primary_version_traced(query)
+            .into_answer()
+    }
+
+    fn capability_has_query_at_primary_version_traced(
+        &self,
+        query: &ApiPresenceQuery,
+    ) -> TracedApiPresenceOutcome {
+        Chain::capability_has_query_at_primary_version_traced(self, query)
     }
 }
 

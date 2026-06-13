@@ -1541,6 +1541,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   trace. Current progress: concrete chain resolution now has a
   `resolve_against_chain_traced` entry point and records provider attempts in
   a `LookupTrace` while existing schema callers keep the same outcome surface.
+  `LookupTrace` is now subject-typed, so resource/path lookup and API-presence
+  capability queries share one trace envelope instead of parallel ad hoc
+  records.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
@@ -1562,9 +1565,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   api-version-only literals consult the declarative table. Capability literals
   now parse into a typed `ApiPresenceQuery`; the raw-string oracle method is a
   compatibility adapter over the typed query, and the chain exposes
-  `kube_version()` through the same provider boundary. The remaining B3 work
-  is to route provider-level capability probes through the same
-  planner/executor trace that backs normal schema lookup.
+  `kube_version()` through the same provider boundary. Capability probes now
+  have a traced provider-chain entry point, and the OpenAPI provider records
+  per-source cache/download probe outcomes (`Found`, authoritative absent,
+  uncertain) before projecting the same `Option<bool>` answer as before. B3's
+  remaining work is to make those trace records the direct diagnostic source
+  when the planner/executor layer replaces the compatibility chain.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's

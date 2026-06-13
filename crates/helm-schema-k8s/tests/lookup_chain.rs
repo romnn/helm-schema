@@ -4,8 +4,8 @@
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
-    ApiPresenceQuery, Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceOutcome,
-    ProviderLookupResult, ProviderOrigin,
+    ApiPresenceQuery, Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry,
+    LookupTraceOutcome, ProviderLookupResult, ProviderOrigin,
 };
 use serde_json::Value;
 
@@ -290,7 +290,12 @@ fn traced_resolution_records_provider_attempts_until_resolution() {
         .trace
         .entries()
         .iter()
-        .map(|entry| (entry.provider, entry.outcome.clone()))
+        .map(|entry| match entry {
+            LookupTraceEntry::ResourceProvider { provider, outcome } => {
+                (*provider, outcome.clone())
+            }
+            other => panic!("unexpected trace entry: {other:?}"),
+        })
         .collect();
 
     assert_eq!(
@@ -310,6 +315,50 @@ fn traced_resolution_records_provider_attempts_until_resolution() {
                     resolved_k8s_version: None,
                 },
             ),
+        ]
+    );
+}
+
+#[test]
+fn traced_capability_query_records_provider_attempts_until_answer() {
+    let local = FakeProvider::new(
+        ProviderOrigin::LocalOverride,
+        false,
+        FakeBehaviour::NotOwned,
+    );
+    let crd = FakeProvider::new(
+        ProviderOrigin::DefaultCatalog,
+        false,
+        FakeBehaviour::NotOwned,
+    );
+    let k8s = FakeProvider::new(
+        ProviderOrigin::KubernetesOpenApi,
+        false,
+        FakeBehaviour::NotOwned,
+    )
+    .with_capability("autoscaling/v2", true);
+    let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+
+    let traced = chain.capability_has_query_at_primary_version_traced(&query);
+    let attempts: Vec<(ProviderOrigin, Option<bool>)> = traced
+        .trace
+        .entries()
+        .iter()
+        .map(|entry| match entry {
+            LookupTraceEntry::ApiPresenceProvider { provider, answer } => (*provider, *answer),
+            other => panic!("unexpected trace entry: {other:?}"),
+        })
+        .collect();
+
+    assert_eq!(traced.answer, Some(true));
+    assert_eq!(
+        attempts,
+        vec![
+            (ProviderOrigin::LocalOverride, None),
+            (ProviderOrigin::DefaultCatalog, None),
+            (ProviderOrigin::KubernetesOpenApi, Some(true)),
         ]
     );
 }

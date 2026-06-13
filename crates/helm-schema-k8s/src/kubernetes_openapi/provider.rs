@@ -16,7 +16,10 @@ use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
 use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::lookup::{ApiPresenceQuery, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::lookup::{
+    ApiPresenceQuery, K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin,
+    SourceProbeTraceOutcome, TracedApiPresenceOutcome,
+};
 use crate::schema_doc::SchemaDoc;
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
@@ -60,6 +63,16 @@ enum ProbeOutcome {
     Found,
     AuthoritativelyAbsent,
     Uncertain,
+}
+
+impl From<ProbeOutcome> for SourceProbeTraceOutcome {
+    fn from(outcome: ProbeOutcome) -> Self {
+        match outcome {
+            ProbeOutcome::Found => Self::Found,
+            ProbeOutcome::AuthoritativelyAbsent => Self::AuthoritativelyAbsent,
+            ProbeOutcome::Uncertain => Self::Uncertain,
+        }
+    }
 }
 
 fn remove_cache_file_if_present(path: &Path, message: &'static str) {
@@ -383,8 +396,31 @@ impl KubernetesJsonSchemaProvider {
         &self,
         query: &ApiPresenceQuery,
     ) -> Option<bool> {
-        let primary = self.versions.primary()?;
-        let probe = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(query)?;
+        self.capability_has_query_at_primary_version_traced(query)
+            .into_answer()
+    }
+
+    /// Traced form of [`Self::capability_has_query_at_primary_version`].
+    #[must_use]
+    pub fn capability_has_query_at_primary_version_traced(
+        &self,
+        query: &ApiPresenceQuery,
+    ) -> TracedApiPresenceOutcome {
+        let mut trace = LookupTrace::new_api_presence(query);
+        let Some(primary) = self.versions.primary() else {
+            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
+            return TracedApiPresenceOutcome {
+                answer: None,
+                trace,
+            };
+        };
+        let Some(probe) = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(query) else {
+            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
+            return TracedApiPresenceOutcome {
+                answer: None,
+                trace,
+            };
+        };
         let candidates = candidate_filenames_for_resource(&probe);
         // Aggregate the outcome across (source × filename) pairs.
         // Found-ness short-circuits to `Some(true)`. Without that, the
@@ -394,8 +430,25 @@ impl KubernetesJsonSchemaProvider {
         let mut worst: ProbeOutcome = ProbeOutcome::AuthoritativelyAbsent;
         for filename in &candidates {
             for source in &self.mirrors.sources {
-                match self.probe_at(&source.source_id, primary, filename) {
-                    ProbeOutcome::Found => return Some(true),
+                let outcome = self.probe_at(&source.source_id, primary, filename);
+                trace.record_api_presence_source_probe(
+                    ProviderOrigin::KubernetesOpenApi,
+                    &source.source_id,
+                    primary,
+                    filename,
+                    SourceProbeTraceOutcome::from(outcome),
+                );
+                match outcome {
+                    ProbeOutcome::Found => {
+                        trace.record_api_presence_provider(
+                            ProviderOrigin::KubernetesOpenApi,
+                            Some(true),
+                        );
+                        return TracedApiPresenceOutcome {
+                            answer: Some(true),
+                            trace,
+                        };
+                    }
                     ProbeOutcome::Uncertain => worst = ProbeOutcome::Uncertain,
                     ProbeOutcome::AuthoritativelyAbsent => {
                         // worst stays at AuthoritativelyAbsent unless
@@ -404,11 +457,13 @@ impl KubernetesJsonSchemaProvider {
                 }
             }
         }
-        match worst {
+        let answer = match worst {
             ProbeOutcome::Found => unreachable!("Found short-circuits above"),
             ProbeOutcome::AuthoritativelyAbsent => Some(false),
             ProbeOutcome::Uncertain => None,
-        }
+        };
+        trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, answer);
+        TracedApiPresenceOutcome { answer, trace }
     }
 
     #[must_use]
@@ -655,6 +710,13 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
 
     fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
         KubernetesJsonSchemaProvider::capability_has_query_at_primary_version(self, query)
+    }
+
+    fn capability_has_query_at_primary_version_traced(
+        &self,
+        query: &ApiPresenceQuery,
+    ) -> TracedApiPresenceOutcome {
+        KubernetesJsonSchemaProvider::capability_has_query_at_primary_version_traced(self, query)
     }
 
     fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {
