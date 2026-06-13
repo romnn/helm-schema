@@ -71,12 +71,22 @@ impl SymbolicIrContext {
 
     #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     pub fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse> {
+        self.generate_contract_ir(src, _ast, defines)
+            .into_value_uses()
+    }
+
+    pub(crate) fn generate_contract_ir(
+        &self,
+        src: &str,
+        _ast: &HelmAst,
+        defines: &DefineIndex,
+    ) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
-            return Vec::new();
+            return ContractIr::default();
         };
 
         let mut w = SymbolicWalker::new_with_context(src, defines, self.clone());
-        w.run(&tree)
+        w.run_contract(&tree)
     }
 }
 
@@ -241,13 +251,8 @@ impl<'a> SymbolicWalker<'a> {
                 .with_inline_stack(stack)
                 .with_inline_helpers_in_fragments(true)
                 .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let uses = nested.run_contract(&tree);
-        self.contract.append(uses);
-    }
-
-    #[tracing::instrument(skip_all)]
-    fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
-        self.run_contract(tree).into_value_uses()
+        let contract = nested.run_contract(&tree);
+        self.contract.append(contract);
     }
 
     fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
@@ -346,8 +351,8 @@ impl<'a> SymbolicWalker<'a> {
                 .with_inline_helpers_in_fragments(true)
                 .with_helper_bindings(bindings)
                 .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let uses = nested.run_contract(&plan.tree);
-        self.contract.append(uses);
+        let contract = nested.run_contract(&plan.tree);
+        self.contract.append(contract);
         true
     }
 

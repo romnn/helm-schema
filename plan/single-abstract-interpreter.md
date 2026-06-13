@@ -822,6 +822,9 @@ Current result:
   normalization for one template interpretation. Document projection and
   recursive helper/file walks append internal contract artifacts instead of
   returning raw claim vectors to the walker.
+- `SymbolicIrContext` now exposes a crate-internal contract-generation seam,
+  so the walker returns `ContractIr` all the way to the public compatibility
+  boundary where `ValueUse` DTO projection happens.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

@@ -1470,7 +1470,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   parallel DTO-lowering logic. `ContractIr` now owns contract-claim
   accumulation and compatibility normalization for one template interpretation,
   so document projection and recursive helper/file walks append internal
-  contract artifacts rather than raw vectors. The
+  contract artifacts rather than raw vectors. `SymbolicIrContext` now also
+  exposes a crate-internal contract-generation seam, so the walker returns
+  `ContractIr` all the way to the public compatibility boundary where
+  `ValueUse` DTO projection happens. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving
