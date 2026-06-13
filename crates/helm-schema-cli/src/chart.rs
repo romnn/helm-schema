@@ -19,6 +19,24 @@ pub struct ChartContext {
     pub is_library: bool,
 }
 
+pub(crate) fn scope_values_path(path: &str, prefix: &[String]) -> String {
+    let path = path.trim();
+    if path.is_empty() {
+        return String::new();
+    }
+
+    if path == "global" || path.starts_with("global.") {
+        return path.to_string();
+    }
+
+    if prefix.is_empty() {
+        return path.to_string();
+    }
+
+    let prefix = prefix.join(".");
+    format!("{prefix}.{path}")
+}
+
 fn take_global_key(doc: &mut YamlValue) -> Option<YamlValue> {
     let YamlValue::Mapping(m) = doc else {
         return None;
@@ -545,7 +563,7 @@ fn add_values_file_descriptions(
     let descriptions = extract_values_yaml_descriptions(&src)?;
 
     for (path, description) in descriptions {
-        let scoped_path = crate::scope_values_path(&path, prefix);
+        let scoped_path = scope_values_path(&path, prefix);
         out.entry(scoped_path).or_insert(description);
     }
 

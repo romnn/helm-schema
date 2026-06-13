@@ -22,9 +22,8 @@ use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
 
-use crate::HelperCallGraph;
-use crate::chart::ChartContext;
-use crate::scope_values_path;
+use crate::analysis::HelperCallGraph;
+use crate::chart::{ChartContext, scope_values_path};
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.

@@ -1617,7 +1617,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 
 - **C1 — extract library logic from the CLI** (discovery, `compose_values`,
   overrides, flatten): *move, don't redesign*. Immediate payoff: hermetic
-  in-process integration tests.
+  in-process integration tests. Current progress: chart analysis now lives
+  behind a dedicated CLI-internal `analysis` module that owns contract
+  collection, chart facts, local schema discovery, helper reachability, and
+  type-hint scoping; the CLI root is left to orchestrate config, provider
+  construction, output transforms, diagnostics, and writing.
 - **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
   (feeds A4 policy; unlocks B4).
 - **C3 — the crate consolidation to §5.1's layout: last**, once module
