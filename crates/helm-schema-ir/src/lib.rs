@@ -65,8 +65,6 @@ pub use walker::{
 
 use serde::{Deserialize, Serialize};
 
-use helm_schema_ast::{DefineIndex, HelmAst};
-
 // ---------------------------------------------------------------------------
 // Core IR types
 // ---------------------------------------------------------------------------
@@ -205,15 +203,6 @@ impl Guard {
             },
         }
     }
-}
-
-// ---------------------------------------------------------------------------
-// Traits
-// ---------------------------------------------------------------------------
-
-/// Generates IR (`Vec<ValueUse>`) from a parsed Helm+YAML AST.
-pub trait IrGenerator {
-    fn generate(&self, src: &str, ast: &HelmAst, defines: &DefineIndex) -> Vec<ValueUse>;
 }
 
 #[cfg(test)]

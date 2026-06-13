@@ -846,6 +846,11 @@ Current result:
   raw `ValueUse` slice peel is contained inside compatibility modules.
 - Chart-fact derivation now takes `ContractProjection` too, so callers no
   longer unwrap compatibility rows just to recover path facts.
+- The old `IrGenerator -> Vec<ValueUse>` trait has been removed. The public
+  symbolic generator returns `ContractProjection`, and fixture tests explicitly
+  opt into `into_value_uses()` when they need compatibility rows.
+- CLI required-inference now accepts `ContractProjection` directly too, so its
+  raw `ValueUse` access stays inside the generator compatibility module.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

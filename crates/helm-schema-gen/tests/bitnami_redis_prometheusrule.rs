@@ -1,7 +1,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
+use helm_schema_ir::SymbolicIrGenerator;
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();

@@ -1330,10 +1330,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 
 1. **Shape first, move last.** Do *not* create the target crates and migrate
    code into them up front. Fix semantics in place behind the existing seams
-   (`IrGenerator`, `K8sSchemaProvider`, schema-generation entry points,
-   `ContractUseSink`, `HttpFetcher`); let target module boundaries emerge; the
-   crate consolidation is then a cheap mechanical final step — and v3's
-   target (one engine crate) makes that step *smaller* than v2's.
+   (`ContractIr` / `ContractProjection`, `K8sSchemaProvider`,
+   schema-generation entry points, `ContractUseSink`, `HttpFetcher`); let
+   target module boundaries emerge; the crate consolidation is then a cheap
+   mechanical final step — and v3's target (one engine crate) makes that step
+   *smaller* than v2's.
 2. **Every step deletes its predecessor in the same PR series.** No parallel
    engines, ever.
 3. **Gates before risk.** The measurement/test infrastructure lands *before*
@@ -1490,7 +1491,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   production schema generation and CLI required-inference orchestration no
   longer expose or peel raw `ValueUse` slices at the main CLI boundary.
   Chart-fact derivation now also accepts the projection artifact directly, so
-  callers no longer unwrap compatibility rows just to recover per-path facts. The
+  callers no longer unwrap compatibility rows just to recover per-path facts.
+  The old `IrGenerator -> Vec<ValueUse>` trait has also been removed; the
+  public symbolic generator now returns `ContractProjection`, and tests that
+  need fixture DTO rows opt into `into_value_uses()` explicitly. CLI
+  required-inference now also accepts the projection artifact directly, keeping
+  its heuristic raw-row access inside the generator compatibility module. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

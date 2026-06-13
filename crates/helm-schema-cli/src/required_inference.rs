@@ -45,7 +45,7 @@ pub(crate) fn apply(
     let default_fallback_paths = collect_fallback_paths(charts, call_graph);
     helm_schema_gen::required_inference::apply_required_inference(
         schema,
-        contract_projection.uses(),
+        contract_projection,
         &synthetic_value_paths,
         &default_fallback_paths,
     );

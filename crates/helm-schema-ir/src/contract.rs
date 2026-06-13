@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use serde::{Deserialize, Serialize};
+
 use crate::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 /// Context applied when semantic facts are lowered to compatibility-era
@@ -144,7 +146,8 @@ pub(crate) trait ContractUseSink {
 /// This is the remaining bridge to generator and fixture code that still
 /// consumes [`ValueUse`]. Production callers should pass this artifact around
 /// instead of owning raw `Vec<ValueUse>` collections directly.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct ContractProjection {
     uses: Vec<ValueUse>,
 }

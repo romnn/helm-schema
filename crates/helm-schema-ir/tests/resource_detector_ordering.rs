@@ -16,10 +16,10 @@
 //! a large block of `MissingSchema(kind=..., api_version=)` noise.
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator, ValueUse};
+use helm_schema_ir::{ContractProjection, SymbolicIrGenerator, ValueUse};
 use indoc::indoc;
 
-fn generate(template: &str) -> Vec<ValueUse> {
+fn generate(template: &str) -> ContractProjection {
     let idx = DefineIndex::new();
     let ast = TreeSitterParser.parse(template).expect("template parse");
     SymbolicIrGenerator.generate(template, &ast, &idx)
@@ -47,6 +47,7 @@ fn detector_records_both_when_api_version_precedes_kind() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "example")
         .expect("expected a use for `example`");
@@ -76,6 +77,7 @@ fn detector_records_both_when_kind_precedes_api_version() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "app")
         .expect("expected a use for `app`");
@@ -109,6 +111,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
     let ir = generate(template);
 
     let first = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "first")
         .expect("first use missing");
@@ -119,6 +122,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
     );
 
     let second = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "second")
         .expect("second use missing");
@@ -143,6 +147,7 @@ fn detector_does_not_capture_templated_api_version() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "example")
         .expect("expected a use for `example`");
@@ -168,6 +173,7 @@ fn detector_does_not_capture_templated_kind() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "example")
         .expect("expected a use for `example`");
@@ -203,6 +209,7 @@ fn detector_collects_api_version_inside_if_after_kind() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "minAvailable")
         .expect("expected a use for `minAvailable`");
@@ -245,6 +252,7 @@ fn detector_collects_kind_inside_if_after_api_version() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "rules")
         .expect("expected a use for `rules`");
@@ -279,6 +287,7 @@ fn detector_handles_loop_wrapped_manifest() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "commonLabels")
         .expect("expected a use for `commonLabels` inside the loop body");
@@ -313,6 +322,7 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
     let ir = generate(template);
 
     let first = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "first")
         .expect("first use missing");
@@ -326,6 +336,7 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
     );
 
     let app = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "app")
         .expect("app use missing");
@@ -371,6 +382,7 @@ fn detector_resolves_helper_returned_api_version() {
     let ir = SymbolicIrGenerator.generate(template, &ast, &idx);
 
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "replicas")
         .expect("expected use for `replicas`");
@@ -415,6 +427,7 @@ fn detector_resolves_helper_with_if_else_branches() {
     let ir = SymbolicIrGenerator.generate(template, &ast, &idx);
 
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "roleName")
         .expect("expected use for `roleName`");
@@ -472,6 +485,7 @@ fn detector_resolves_include_returned_api_version() {
     let ir = SymbolicIrGenerator.generate(template, &ast, &idx);
 
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "maxReplicas")
         .expect("expected use for `maxReplicas`");
@@ -512,6 +526,7 @@ fn detector_primary_is_source_order_not_stability_rank() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "allowPrivilegeEscalation")
         .expect("use missing");
@@ -541,6 +556,7 @@ fn detector_multi_branch_primary_is_first_seen_in_source() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "minAvailable")
         .expect("use missing");
@@ -571,6 +587,7 @@ fn detector_handles_yaml_comment_in_header() {
     "#};
     let ir = generate(template);
     let u = ir
+        .uses()
         .iter()
         .find(|u| u.source_expr == "selector")
         .expect("selector use missing");

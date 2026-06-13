@@ -1,7 +1,7 @@
 #![recursion_limit = "512"]
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
+use helm_schema_ir::SymbolicIrGenerator;
 
 const TEMPLATE_PATH: &str = "charts/surveyor/templates/hpa.yaml";
 

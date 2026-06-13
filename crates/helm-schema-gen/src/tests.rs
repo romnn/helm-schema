@@ -9,8 +9,8 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    ChartFacts, ContractProjection, Guard, IrGenerator, ResourceRef, SymbolicIrGenerator,
-    ValueKind, ValueUse, YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
+    ChartFacts, ContractProjection, Guard, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
+    YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -28,13 +28,17 @@ fn production_chain_provider() -> Chain {
 fn parse_ir(src: &str) -> Vec<ValueUse> {
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    SymbolicIrGenerator.generate(src, &ast, &idx)
+    SymbolicIrGenerator
+        .generate(src, &ast, &idx)
+        .into_value_uses()
 }
 
 fn parse_ir_and_chart_facts(src: &str) -> (Vec<ValueUse>, ChartFacts) {
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    let uses = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let uses = SymbolicIrGenerator
+        .generate(src, &ast, &idx)
+        .into_value_uses();
     let facts = derive_chart_facts_from_ast(&ast);
     (uses, facts)
 }
@@ -47,7 +51,9 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
         idx.add_source(&TreeSitterParser, helpers)
             .expect("helpers parse");
     }
-    SymbolicIrGenerator.generate(src, &ast, &idx)
+    SymbolicIrGenerator
+        .generate(src, &ast, &idx)
+        .into_value_uses()
 }
 
 fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
@@ -855,7 +861,7 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
+    let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -1006,7 +1012,7 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
+    let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
     for property in ["registry", "repository", "tag"] {
@@ -1069,7 +1075,7 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
+    let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
     for property in ["registry", "repository", "tag"] {
@@ -1645,7 +1651,7 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
+    let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let name_override = schema
         .pointer("/properties/nameOverride")
@@ -2470,8 +2476,12 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
     let facts = derive_chart_facts_from_ast(&ast);
-    let schema =
-        schema_for_values_yaml_hints_and_facts(&ir, Some(values_yaml), &BTreeMap::new(), &facts);
+    let schema = schema_for_values_yaml_hints_and_facts(
+        ir.uses(),
+        Some(values_yaml),
+        &BTreeMap::new(),
+        &facts,
+    );
     let data_source = schema
         .pointer("/properties/persistence/properties/dataSource")
         .expect("persistence.dataSource present");

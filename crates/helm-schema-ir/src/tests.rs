@@ -1,4 +1,4 @@
-use crate::{Guard, IrGenerator, SymbolicIrGenerator, ValueKind, YamlPath};
+use crate::{Guard, SymbolicIrGenerator, ValueKind, YamlPath};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 
 /// Simple template IR generation test.
@@ -12,12 +12,12 @@ foo: {{ .Values.name }}
     let idx = DefineIndex::new();
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
 
-    assert!(ir.iter().any(|u| u.source_expr == "enabled"
+    assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
         && u.guards
             == vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]));
-    assert!(ir.iter().any(|u| u.source_expr == "name"
+    assert!(ir.uses().iter().any(|u| u.source_expr == "name"
         && u.path == YamlPath(vec!["foo".to_string()])
         && u.kind == ValueKind::Scalar
         && u.guards
@@ -39,6 +39,7 @@ metadata:
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
 
     let name_use = ir
+        .uses()
         .iter()
         .find(|use_| use_.source_expr == "serviceName")
         .expect("serviceName use");
@@ -72,6 +73,7 @@ metadata:
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
 
     let name_use = ir
+        .uses()
         .iter()
         .find(|use_| use_.source_expr == "serviceName")
         .expect("serviceName use");
@@ -107,6 +109,7 @@ metadata:
     let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
 
     let name_use = ir
+        .uses()
         .iter()
         .find(|use_| use_.source_expr == "serviceName")
         .expect("serviceName use");

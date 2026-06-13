@@ -3,7 +3,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
+use helm_schema_ir::{ResourceRef, SymbolicIrGenerator};
 use helm_schema_k8s::CrdsCatalogSchemaProvider;
 use serde::Deserialize;
 use std::path::Path;

@@ -3,7 +3,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
+use helm_schema_ir::SymbolicIrGenerator;
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/svc.yaml";

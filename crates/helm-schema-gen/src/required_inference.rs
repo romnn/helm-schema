@@ -22,7 +22,7 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::{Guard, ValueKind, ValueUse};
+use helm_schema_ir::{ContractProjection, Guard, ValueKind, ValueUse};
 use serde_json::Value;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
@@ -40,11 +40,15 @@ use serde_json::Value;
 /// applied to chart templates with appropriate prefix scoping.
 pub fn apply_required_inference(
     schema: &mut Value,
-    uses: &[ValueUse],
+    contract_projection: &ContractProjection,
     synthetic_value_paths: &BTreeSet<String>,
     default_fallback_paths: &BTreeSet<String>,
 ) {
-    let paths = collect_required_paths(uses, default_fallback_paths, synthetic_value_paths);
+    let paths = collect_required_paths(
+        contract_projection.uses(),
+        default_fallback_paths,
+        synthetic_value_paths,
+    );
     for path in paths {
         add_path_to_required(schema, &path);
     }
@@ -193,7 +197,7 @@ mod tests {
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{
-        ContractProjection, IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints,
+        ContractProjection, SymbolicIrGenerator, ValueUse, extract_default_type_hints,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
@@ -204,7 +208,9 @@ mod tests {
     fn parse_ir(src: &str) -> Vec<ValueUse> {
         let ast = TreeSitterParser.parse(src).expect("parse");
         let idx = DefineIndex::new();
-        SymbolicIrGenerator.generate(src, &ast, &idx)
+        SymbolicIrGenerator
+            .generate(src, &ast, &idx)
+            .into_value_uses()
     }
 
     fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
@@ -220,9 +226,8 @@ mod tests {
     }
 
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
-        let uses = parse_ir(src);
         let hints = collect_hints(src);
-        let projection = ContractProjection::from_value_uses(uses.clone());
+        let projection = ContractProjection::from_value_uses(parse_ir(src));
         let mut schema = generate_values_schema(
             ValuesSchemaInput::new(&projection, &provider())
                 .with_values_yaml(values_yaml)
@@ -230,7 +235,7 @@ mod tests {
         );
         apply_required_inference(
             &mut schema,
-            &uses,
+            &projection,
             &BTreeSet::new(),
             &collect_fallbacks(src),
         );

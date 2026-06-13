@@ -3,7 +3,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{IrGenerator, SymbolicIrGenerator};
+use helm_schema_ir::SymbolicIrGenerator;
 
 const TEMPLATE_PATH: &str =
     "charts/zalando-postgres-operator/templates/postgres-pod-priority-class.yaml";

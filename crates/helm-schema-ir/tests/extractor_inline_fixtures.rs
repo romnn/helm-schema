@@ -16,7 +16,7 @@
 //!     second selector segment, not the root.
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{Guard, IrGenerator, SymbolicIrGenerator, ValueUse};
+use helm_schema_ir::{Guard, SymbolicIrGenerator, ValueUse};
 use indoc::indoc;
 
 fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
@@ -27,7 +27,9 @@ fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
             .expect("helpers parse");
     }
     let ast = TreeSitterParser.parse(template).expect("template parse");
-    SymbolicIrGenerator.generate(template, &ast, &idx)
+    SymbolicIrGenerator
+        .generate(template, &ast, &idx)
+        .into_value_uses()
 }
 
 fn truthy(p: &str) -> Guard {
