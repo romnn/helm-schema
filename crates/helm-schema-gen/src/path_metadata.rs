@@ -1,7 +1,5 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ir::ContractProjection;
-
 pub(crate) struct PathMetadata {
     pub(crate) nullable_paths: BTreeSet<String>,
     pub(crate) paths_with_descendants: BTreeSet<String>,
@@ -9,11 +7,11 @@ pub(crate) struct PathMetadata {
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_path_metadata(
-    contract_projection: &ContractProjection,
+    nullable_value_paths: BTreeSet<String>,
     referenced_value_paths: &BTreeSet<String>,
 ) -> PathMetadata {
     PathMetadata {
-        nullable_paths: contract_projection.nullable_value_paths(),
+        nullable_paths: nullable_value_paths,
         paths_with_descendants: collect_paths_with_descendants(referenced_value_paths),
     }
 }

@@ -227,6 +227,20 @@ pub struct RequiredInferenceSignals {
     pub default_fallback_paths: BTreeSet<String>,
 }
 
+/// Contract-derived facts consumed by core values-schema generation.
+///
+/// This is the typed seam between static template interpretation and JSON
+/// Schema lowering. Optional post-passes can ask for their own projections, but
+/// core schema generation should consume this artifact rather than re-reading
+/// raw contract claims.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ContractSchemaSignals {
+    pub chart_facts: ChartFacts,
+    pub path_signals: ContractPathSignals,
+    pub provider_schema_uses: Vec<ProviderSchemaUse>,
+    pub nullable_value_paths: BTreeSet<String>,
+}
+
 /// Receives contract claims from node/action interpretation.
 ///
 /// Some helper-summary passes intentionally implement this as a no-op because
@@ -288,6 +302,12 @@ impl ContractProjection {
     #[must_use]
     pub fn chart_facts(&self) -> ChartFacts {
         derive_chart_facts_from_uses(&self.uses)
+    }
+
+    /// Derive the typed contract facts consumed by core schema generation.
+    #[must_use]
+    pub fn schema_signals(&self) -> ContractSchemaSignals {
+        derive_schema_signals_from_uses(&self.uses)
     }
 
     /// Derive path-level reference and guard-constraint facts from this
@@ -679,6 +699,18 @@ fn derive_path_signals_from_uses(uses: &[ContractUse]) -> ContractPathSignals {
     }
 
     signals
+}
+
+fn derive_schema_signals_from_uses(uses: &[ContractUse]) -> ContractSchemaSignals {
+    ContractSchemaSignals {
+        chart_facts: derive_chart_facts_from_uses(uses),
+        path_signals: derive_path_signals_from_uses(uses),
+        provider_schema_uses: uses
+            .iter()
+            .filter_map(ProviderSchemaUse::from_contract_use)
+            .collect(),
+        nullable_value_paths: derive_nullable_value_paths_from_uses(uses),
+    }
 }
 
 fn derive_required_inference_signals_from_uses(uses: &[ContractUse]) -> RequiredInferenceSignals {
@@ -1259,6 +1291,56 @@ mod tests {
         assert_eq!(requests[1].value_path, "ports");
         assert_eq!(requests[1].kind, ValueKind::Scalar);
         assert!(requests[1].is_self_range_collection);
+    }
+
+    #[test]
+    fn contract_projection_schema_signals_bundle_core_generation_facts() {
+        let resource = ResourceRef {
+            api_version: "apps/v1".to_string(),
+            kind: "Deployment".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        };
+        let projection = ContractProjection::from_contract_uses(vec![
+            ContractUse::new(
+                "podLabels".to_string(),
+                YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+                ValueKind::Fragment,
+                Vec::new(),
+                Some(resource.clone()),
+            ),
+            ContractUse::new(
+                "serviceAccount.name".to_string(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Default {
+                    path: "serviceAccount.name".to_string(),
+                }],
+                Some(resource),
+            ),
+        ]);
+
+        let signals = projection.schema_signals();
+
+        assert_eq!(
+            signals
+                .path_signals
+                .metadata_fields_by_value_path
+                .get("podLabels"),
+            Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
+        );
+        assert!(
+            signals.nullable_value_paths.contains("serviceAccount.name"),
+            "default-guarded render use should surface as nullable contract evidence",
+        );
+        assert!(
+            signals
+                .chart_facts
+                .path_facts
+                .get("serviceAccount.name")
+                .is_some_and(|fact| fact.has_render_use && fact.all_render_uses_self_guarded),
+        );
+        assert_eq!(signals.provider_schema_uses.len(), 2);
     }
 
     #[test]

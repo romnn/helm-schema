@@ -3,9 +3,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{
-    ContractPathSignals, ContractProjection, MetadataFieldKind, ProviderSchemaUse,
-};
+use helm_schema_ir::{ContractPathSignals, MetadataFieldKind, ProviderSchemaUse};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use crate::resolve_policy::ResolvePolicy;
@@ -28,9 +26,10 @@ struct ProviderSchemaLookupKey {
     is_self_range_collection: bool,
 }
 
-#[tracing::instrument(skip_all, fields(uses = contract_projection.uses().len()))]
+#[tracing::instrument(skip_all, fields(provider_uses = provider_schema_uses.len()))]
 pub(crate) fn collect_use_signals(
-    contract_projection: &ContractProjection,
+    path_signals: ContractPathSignals,
+    provider_schema_uses: &[ProviderSchemaUse],
     provider: &dyn K8sSchemaProvider,
 ) -> UseSignals {
     let resolve_policy = ResolvePolicy::default();
@@ -41,7 +40,7 @@ pub(crate) fn collect_use_signals(
         partial_scalar_value_paths,
         guard_constraints_by_value_path,
         metadata_fields_by_value_path,
-    } = contract_projection.path_signals();
+    } = path_signals;
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>> = BTreeMap::new();
     let metadata_schemas_by_value_path = metadata_fields_by_value_path
         .into_iter()
@@ -68,7 +67,7 @@ pub(crate) fn collect_use_signals(
     let mut provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<Value>>> =
         HashMap::new();
 
-    for provider_use in contract_projection.provider_schema_uses() {
+    for provider_use in provider_schema_uses {
         let lookup_key = ProviderSchemaLookupKey {
             resource: provider_use.resource.clone(),
             path: provider_use.path.clone(),
