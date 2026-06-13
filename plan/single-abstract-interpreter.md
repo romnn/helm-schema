@@ -832,6 +832,11 @@ Current result:
 - Top-level values.yaml root seeds now enter through a pathless scalar claim
   on `ContractIr`, so the CLI does not construct raw `ValueUse` compatibility
   DTOs for values-file roots.
+- The final normalized compatibility DTOs now sit behind a named
+  `ContractProjection` artifact, so CLI chart collection passes around the
+  projection rather than a raw `Vec<ValueUse>`.
+- A dead `ValuesSchemaGenerator` trait abstraction was removed instead of
+  preserving a no-op wrapper around the free generator function.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

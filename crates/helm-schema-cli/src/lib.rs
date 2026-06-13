@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_gen::generate_values_schema_full_with_facts_and_descriptions;
 use helm_schema_ir::{
-    ChartFacts, ContractIr, SymbolicIrContext, ValueUse, derive_chart_facts_from_ast,
+    ChartFacts, ContractIr, ContractProjection, SymbolicIrContext, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::DiagnosticSink;
@@ -345,7 +345,7 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     )?;
 
     let ChartIrCollection {
-        uses,
+        contract_projection,
         chart_facts,
         type_hints,
         call_graph,
@@ -353,8 +353,9 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
 
     let provider = provider_builder::build_provider(&opts.provider, diagnostic_sink);
 
+    let uses = contract_projection.uses();
     let mut schema = generate_values_schema_full_with_facts_and_descriptions(
-        &uses,
+        uses,
         &provider,
         values_yaml.as_deref(),
         &type_hints,
@@ -365,7 +366,7 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     if opts.infer_required {
         required_inference::apply(
             &mut schema,
-            &uses,
+            uses,
             values_yaml.as_deref(),
             charts,
             &call_graph,
@@ -427,7 +428,7 @@ fn ensure_json_object(value: &mut Value) -> &mut Map<String, Value> {
 
 /// IR + auxiliary signals collected from a chart's templates.
 pub(crate) struct ChartIrCollection {
-    pub(crate) uses: Vec<ValueUse>,
+    pub(crate) contract_projection: ContractProjection,
     pub(crate) chart_facts: ChartFacts,
     pub(crate) type_hints: BTreeMap<String, Vec<Value>>,
     pub(crate) call_graph: HelperCallGraph,
@@ -629,7 +630,7 @@ fn collect_ir_for_charts(
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
     Ok(ChartIrCollection {
-        uses: contract.into_value_uses(),
+        contract_projection: contract.project(),
         chart_facts,
         type_hints,
         call_graph,
@@ -750,7 +751,6 @@ fn load_json_file(path: &Path) -> CliResult<Value> {
 mod tests {
     use super::*;
     use helm_schema_ir::PathFact;
-    use helm_schema_ir::derive_chart_facts;
     use vfs::VfsPath;
 
     fn chart_facts_for(path: &str, all_render_uses_self_guarded: bool) -> ChartFacts {
@@ -838,14 +838,16 @@ spec:
         let collection = collect_ir_for_charts(&discovery.charts, &defines, false, None)?;
         let path = "kid.controller.ingressClassResource.parameters";
 
-        let ir_facts = derive_chart_facts(&collection.uses);
-        let ir_fact = ir_facts.path_facts.get(path).unwrap_or_else(|| {
-            panic!("missing IR-derived fact for {path}: {:#?}", collection.uses)
-        });
+        let uses = collection.contract_projection.uses();
+        let ir_facts = helm_schema_ir::derive_chart_facts(uses);
+        let ir_fact = ir_facts
+            .path_facts
+            .get(path)
+            .unwrap_or_else(|| panic!("missing IR-derived fact for {path}: {uses:#?}"));
         assert!(
             ir_fact.all_render_uses_self_guarded,
             "IR-derived chart fact should stay self-guarded: {ir_fact:#?}; uses={:#?}",
-            collection.uses
+            uses
         );
 
         Ok(())

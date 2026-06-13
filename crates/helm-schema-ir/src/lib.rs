@@ -53,7 +53,7 @@ mod walker;
 mod yaml_shape;
 
 pub use abstract_eval::{ChartFacts, PathFact, derive_chart_facts, derive_chart_facts_from_ast};
-pub use contract::ContractIr;
+pub use contract::{ContractIr, ContractProjection};
 pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
     helper_literal_outputs,

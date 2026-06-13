@@ -4,8 +4,7 @@ use indoc::indoc;
 use serde_json::Value;
 
 use crate::{
-    DefaultValuesSchemaGenerator, ValuesSchemaGenerator, generate_values_schema_full,
-    generate_values_schema_full_with_facts,
+    generate_values_schema, generate_values_schema_full, generate_values_schema_full_with_facts,
     generate_values_schema_full_with_facts_and_descriptions,
     generate_values_schema_with_values_yaml,
     resolve_policy::{ResolvePolicy, ValuePathSchemaInputs},
@@ -364,7 +363,7 @@ fn simple_template_schema() {
         replicas: {{ .Values.replicas }}
         {{- end }}
     "};
-    let schema = DefaultValuesSchemaGenerator.generate(&parse_ir(src), &provider());
+    let schema = generate_values_schema(&parse_ir(src), &provider());
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -425,7 +424,7 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         key: {{ .Values.feature.name }}
         {{- end }}
     "};
-    let schema = DefaultValuesSchemaGenerator.generate(&parse_ir(src), &provider());
+    let schema = generate_values_schema(&parse_ir(src), &provider());
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",

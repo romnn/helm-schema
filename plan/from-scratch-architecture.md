@@ -1330,8 +1330,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 
 1. **Shape first, move last.** Do *not* create the target crates and migrate
    code into them up front. Fix semantics in place behind the existing seams
-   (`IrGenerator`, `K8sSchemaProvider`, `ValuesSchemaGenerator`,
-   `ValueUseSink`, `HttpFetcher`); let target module boundaries emerge; the
+   (`IrGenerator`, `K8sSchemaProvider`, schema-generation entry points,
+   `ContractUseSink`, `HttpFetcher`); let target module boundaries emerge; the
    crate consolidation is then a cheap mechanical final step — and v3's
    target (one engine crate) makes that step *smaller* than v2's.
 2. **Every step deletes its predecessor in the same PR series.** No parallel
@@ -1478,7 +1478,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   projection, so subchart prefixing no longer rewrites compatibility DTOs
   directly. Top-level values.yaml root seeds now also enter through a
   pathless scalar claim on `ContractIr`, so the CLI no longer constructs raw
-  `ValueUse` compatibility DTOs for values-file roots. The
+  `ValueUse` compatibility DTOs for values-file roots. The final normalized
+  compatibility DTOs now sit behind a named `ContractProjection` artifact, so
+  CLI chart collection passes around the contract projection rather than a raw
+  `Vec<ValueUse>`. A dead `ValuesSchemaGenerator` trait abstraction was also
+  removed instead of preserving a no-op wrapper around the free generator
+  function. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

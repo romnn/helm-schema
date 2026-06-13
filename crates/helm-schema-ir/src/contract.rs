@@ -139,6 +139,28 @@ pub(crate) trait ContractUseSink {
     );
 }
 
+/// Normalized compatibility projection of a contract graph.
+///
+/// This is the remaining bridge to generator and fixture code that still
+/// consumes [`ValueUse`]. Production callers should pass this artifact around
+/// instead of owning raw `Vec<ValueUse>` collections directly.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ContractProjection {
+    uses: Vec<ValueUse>,
+}
+
+impl ContractProjection {
+    /// Borrow the normalized compatibility uses.
+    pub fn uses(&self) -> &[ValueUse] {
+        &self.uses
+    }
+
+    /// Consume the projection and return the compatibility DTOs.
+    pub fn into_value_uses(self) -> Vec<ValueUse> {
+        self.uses
+    }
+}
+
 /// Opaque guarded contract graph for one template interpretation.
 ///
 /// This is still compatibility-era because its private leaves are `ContractUse`
@@ -195,13 +217,21 @@ impl ContractIr {
         }
     }
 
-    /// Normalize claims and project them to the compatibility `ValueUse` DTO.
-    pub fn into_value_uses(mut self) -> Vec<ValueUse> {
+    /// Normalize claims and project them to a compatibility artifact.
+    pub fn project(mut self) -> ContractProjection {
         self.normalize();
-        self.uses
-            .into_iter()
-            .map(ContractUse::into_value_use)
-            .collect()
+        ContractProjection {
+            uses: self
+                .uses
+                .into_iter()
+                .map(ContractUse::into_value_use)
+                .collect(),
+        }
+    }
+
+    /// Normalize claims and project them to the compatibility `ValueUse` DTO.
+    pub fn into_value_uses(self) -> Vec<ValueUse> {
+        self.project().into_value_uses()
     }
 
     fn normalize(&mut self) {
@@ -501,7 +531,8 @@ mod tests {
 
         contract.push_pathless_scalar("extraConfig");
 
-        let value_uses = contract.into_value_uses();
+        let projection = contract.project();
+        let value_uses = projection.uses();
         assert_eq!(value_uses.len(), 1);
         assert_eq!(value_uses[0].source_expr, "extraConfig");
         assert_eq!(value_uses[0].path, YamlPath(Vec::new()));

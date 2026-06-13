@@ -23,32 +23,6 @@ use schema_tree::{apply_values_descriptions, insert_schema_at_path_segments, obj
 use use_signals::{UseSignals, collect_use_signals};
 
 // ---------------------------------------------------------------------------
-// Traits
-// ---------------------------------------------------------------------------
-
-/// Generates a JSON Schema for Helm `values.yaml` from IR and a K8s schema provider.
-pub trait ValuesSchemaGenerator {
-    fn generate(&self, uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> Value;
-}
-
-// ---------------------------------------------------------------------------
-// Default implementation
-// ---------------------------------------------------------------------------
-
-/// Default values schema generator.
-///
-/// Collects all `.Values.*` uses, infers their types from the K8s schema
-/// provider and template-derived facts, merges conflicting schemas, and builds
-/// a nested JSON Schema tree.
-pub struct DefaultValuesSchemaGenerator;
-
-impl ValuesSchemaGenerator for DefaultValuesSchemaGenerator {
-    fn generate(&self, uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> Value {
-        generate_values_schema(uses, provider)
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Core generation logic
 // ---------------------------------------------------------------------------
 
@@ -88,7 +62,6 @@ pub fn generate_values_schema_with_values_yaml(
 /// returned schema. Keeping required-inference outside this function
 /// isolates a heuristic feature from the core schema-generation
 /// pipeline.
-#[tracing::instrument(skip_all)]
 pub fn generate_values_schema_full(
     uses: &[ValueUse],
     provider: &dyn K8sSchemaProvider,
@@ -99,7 +72,6 @@ pub fn generate_values_schema_full(
     generate_values_schema_full_with_facts(uses, provider, values_yaml, type_hints, &chart_facts)
 }
 
-#[tracing::instrument(skip_all)]
 pub fn generate_values_schema_full_with_facts(
     uses: &[ValueUse],
     provider: &dyn K8sSchemaProvider,
