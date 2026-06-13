@@ -2,8 +2,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use helm_schema_k8s::{
-    Chain, CrdsCatalogSchemaProvider, DiagnosticSink, K8sSchemaProvider, K8sVersionChain,
-    KubernetesJsonSchemaProvider, LayoutChecker, LocalSchemaProvider, NegativeCache,
+    Chain, ChartLocalCrdSchemaProvider, ChartLocalCrdSource, CrdsCatalogSchemaProvider,
+    DiagnosticSink, K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider,
+    LayoutChecker, LocalSchemaProvider, NegativeCache,
 };
 use tracing::instrument;
 
@@ -34,6 +35,8 @@ pub struct ProviderOptions {
     pub crd_catalog_cache_dir: Option<PathBuf>,
     /// Hand-maintained CRD override root.
     pub crd_override_dir: Option<PathBuf>,
+    /// Static CRD documents bundled in the chart tree under `crds/`.
+    pub chart_local_crds: Vec<ChartLocalCrdSource>,
     /// Write `.meta` sidecars next to CRD cache entries.
     pub crd_cache_record_source: bool,
 
@@ -51,6 +54,12 @@ pub fn build_provider(opts: &ProviderOptions, diagnostic_sink: Option<&Diagnosti
         providers.push(Box::new(
             LocalSchemaProvider::new(dir.clone()).with_api_version_guess(opts.api_version_guess),
         ));
+    }
+
+    let chart_local_crds = ChartLocalCrdSchemaProvider::new(opts.chart_local_crds.clone())
+        .with_api_version_guess(opts.api_version_guess);
+    if !chart_local_crds.is_empty() {
+        providers.push(Box::new(chart_local_crds));
     }
 
     let mut crds_catalog = CrdsCatalogSchemaProvider::new()

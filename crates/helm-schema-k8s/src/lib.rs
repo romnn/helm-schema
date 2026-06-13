@@ -11,11 +11,12 @@
 //!   - [`inference`]: Feature D apiVersion guessing.
 //!
 //! The per-provider modules ([`kubernetes_openapi`], [`crds_catalog`],
-//! [`local_override`]) are slim composers of the above.
+//! [`local_override`], [`chart_local_crds`]) are slim composers of the above.
 
 pub mod builtin_groups;
 pub mod cache;
 pub mod capability_eval;
+pub mod chart_local_crds;
 pub mod crds_catalog;
 pub mod diagnostic;
 pub mod fetch;
@@ -33,6 +34,7 @@ pub use cache::{
     default_source_id, source_id_for_url,
 };
 pub use capability_eval::{CapabilityOracle, StaticOracle, evaluate_guard, select_live_branch};
+pub use chart_local_crds::{ChartLocalCrdSchemaProvider, ChartLocalCrdSource};
 pub use crds_catalog::CrdsCatalogSchemaProvider;
 pub use diagnostic::{
     Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,

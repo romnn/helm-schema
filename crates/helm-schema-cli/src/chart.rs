@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use flate2::read::GzDecoder;
 use helm_schema_ast::{DefineIndex, TreeSitterParser, extract_values_yaml_descriptions};
+use helm_schema_k8s::ChartLocalCrdSource;
 use serde::Deserialize;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
@@ -297,6 +298,53 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
     }
 
     Ok(idx)
+}
+
+#[instrument(skip_all)]
+pub fn collect_static_crd_sources(charts: &[ChartContext]) -> CliResult<Vec<ChartLocalCrdSource>> {
+    let mut sources = Vec::new();
+
+    for chart in charts {
+        for path in list_static_crd_sources(&chart.chart_dir)? {
+            let mut src = String::new();
+            path.open_file()?.read_to_string(&mut src)?;
+
+            for document in serde_yaml::Deserializer::from_str(&src) {
+                let document = serde_json::Value::deserialize(document)?;
+                if document.is_null() {
+                    continue;
+                }
+
+                sources.push(ChartLocalCrdSource { document });
+            }
+        }
+    }
+
+    Ok(sources)
+}
+
+fn list_static_crd_sources(chart_dir: &VfsPath) -> CliResult<Vec<VfsPath>> {
+    let crds_dir = chart_dir.join("crds")?;
+    if !crds_dir.is_dir()? {
+        return Ok(Vec::new());
+    }
+
+    let mut out = Vec::new();
+    list_files_recursive(&crds_dir, &mut out)?;
+
+    out.retain(|p| {
+        let file_name = p.filename();
+        let ext = Path::new(&file_name).extension().and_then(|e| e.to_str());
+        ext.is_some_and(|e| {
+            e.eq_ignore_ascii_case("json")
+                || e.eq_ignore_ascii_case("yaml")
+                || e.eq_ignore_ascii_case("yml")
+        })
+    });
+
+    out.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+    out.dedup_by(|a, b| a.as_str() == b.as_str());
+    Ok(out)
 }
 
 fn list_chart_files_sources(chart_dir: &VfsPath) -> CliResult<Vec<VfsPath>> {

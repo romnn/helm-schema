@@ -1598,7 +1598,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's
-  resolution as the enforced-constraint intersection.
+  resolution as the enforced-constraint intersection. Current progress:
+  static CRDs bundled under discovered chart and subchart `crds/` directories
+  are parsed through the same VFS-backed chart discovery path and registered
+  as a first-class provider in the lookup chain, after explicit local
+  overrides and before remote/default CRD catalogs. apiVersion guessing now
+  treats this chart-local provider as an authoritative local source with its
+  own origin/source attribution. Template-rendered CRD extraction still waits
+  for A3 internal document projection.
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 

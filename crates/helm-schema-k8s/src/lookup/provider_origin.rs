@@ -9,6 +9,9 @@ pub enum ProviderOrigin {
     /// `LocalSchemaProvider` — hand-maintained CRD overrides under
     /// `--crd-override-dir`.
     LocalOverride,
+    /// `ChartLocalCrdSchemaProvider` — static CRDs bundled under a chart's
+    /// `crds/` directory.
+    ChartLocalCrd,
     /// `CrdsCatalogSchemaProvider` — default datreeio catalog plus any
     /// `--crd-catalog-mirror` URLs.
     DefaultCatalog,

@@ -205,6 +205,92 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_ey
 }
 
 #[test]
+fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            widget:
+              spec: {}
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("crds/widgets.example.com.yaml")?,
+        indoc! {"
+            apiVersion: apiextensions.k8s.io/v1
+            kind: CustomResourceDefinition
+            metadata:
+              name: widgets.example.com
+            spec:
+              group: example.com
+              names:
+                kind: Widget
+                plural: widgets
+              scope: Namespaced
+              versions:
+                - name: v1
+                  served: true
+                  storage: true
+                  schema:
+                    openAPIV3Schema:
+                      type: object
+                      properties:
+                        spec:
+                          type: object
+                          properties:
+                            size:
+                              type: integer
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/widget.yaml")?,
+        indoc! {r#"
+            apiVersion: example.com/v1
+            kind: Widget
+            metadata:
+              name: widget
+            spec:
+              size: {{ .Values.widget.spec.size }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    };
+
+    let schema = generate_values_schema_for_chart(&opts)
+        .map_err(into_eyre)
+        .wrap_err("generate schema")?;
+    let size = schema
+        .pointer("/properties/widget/properties/spec/properties/size")
+        .ok_or_else(|| eyre!("missing widget.spec.size schema: {schema}"))?;
+
+    assert!(
+        schema_accepts_type(size, "integer"),
+        "chart-local CRD should type widget.spec.size as integer, got {size}"
+    );
+    assert!(
+        !schema_accepts_type(size, "string"),
+        "values default does not type widget.spec.size as string, got {size}"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_eyre::eyre::Result<()>
 {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());

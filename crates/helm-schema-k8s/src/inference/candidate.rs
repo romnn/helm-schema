@@ -7,6 +7,8 @@ use crate::lookup::ProviderOrigin;
 /// tiers report the same apiVersion.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum InferenceSource {
+    /// CRD document bundled directly in the chart's static `crds/` directory.
+    ChartLocalCrd,
     /// Hardcoded canonical `kind → apiVersion` table.
     Shortlist,
     /// Scan across all configured K8s + CRD cache namespaces.
