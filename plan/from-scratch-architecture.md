@@ -1556,6 +1556,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   miss attribution now has the matching `MissingSchemaAttributionPlan`; it
   uses the same typed capability-branch evaluator while preserving the
   user-facing attribution contract for empty primaries and branch misses.
+  Resource-provider trace entries now carry the attempted `ResourceRef`
+  explicitly, which removes the old hidden assumption that a trace subject is
+  always the same coordinate as every provider attempt and prepares the trace
+  model for honest multi-candidate execution traces.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the

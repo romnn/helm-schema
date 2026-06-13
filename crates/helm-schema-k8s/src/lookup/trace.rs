@@ -36,10 +36,12 @@ impl LookupTrace {
 
     pub(crate) fn record_provider(
         &mut self,
+        resource: &ResourceRef,
         provider: ProviderOrigin,
         result: &ProviderLookupResult,
     ) {
         self.entries.push(LookupTraceEntry::ResourceProvider {
+            resource: resource.clone(),
             provider,
             outcome: LookupTraceOutcome::from(result),
         });
@@ -120,6 +122,7 @@ pub enum LookupTraceSubject {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum LookupTraceEntry {
     ResourceProvider {
+        resource: ResourceRef,
         provider: ProviderOrigin,
         outcome: LookupTraceOutcome,
     },

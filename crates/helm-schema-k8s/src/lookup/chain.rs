@@ -253,7 +253,7 @@ impl Chain {
                 resource,
                 path,
             );
-            trace.record_provider(provider.origin(), &result);
+            trace.record_provider(resource, provider.origin(), &result);
             match result {
                 ProviderLookupResult::Found {
                     schema,

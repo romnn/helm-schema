@@ -30,7 +30,7 @@ impl<'a> MissingLookupDiagnostics<'a> {
         let Some(resource) = trace.resource() else {
             return Vec::new();
         };
-        if let Some(diagnostic) = local_override_unreadable(trace, resource) {
+        if let Some(diagnostic) = local_override_unreadable(trace) {
             return vec![diagnostic];
         }
         let attribution_plan =
@@ -78,9 +78,10 @@ impl<'a> MissingLookupDiagnostics<'a> {
     }
 }
 
-fn local_override_unreadable(trace: &LookupTrace, resource: &ResourceRef) -> Option<Diagnostic> {
+fn local_override_unreadable(trace: &LookupTrace) -> Option<Diagnostic> {
     trace.entries().iter().find_map(|entry| match entry {
         LookupTraceEntry::ResourceProvider {
+            resource: attempted_resource,
             provider: ProviderOrigin::LocalOverride,
             outcome:
                 LookupTraceOutcome::ResourceDocMissing {
@@ -88,11 +89,55 @@ fn local_override_unreadable(trace: &LookupTrace, resource: &ResourceRef) -> Opt
                     io_error,
                 },
         } => Some(Diagnostic::LocalOverrideUnreadable {
-            kind: resource.kind.clone(),
-            api_version: resource.api_version.clone(),
+            kind: attempted_resource.kind.clone(),
+            api_version: attempted_resource.api_version.clone(),
             override_path: source_path.clone(),
             io_error: io_error.clone(),
         }),
         _ => None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use helm_schema_ir::YamlPath;
+
+    use super::*;
+    use crate::lookup::ProviderLookupResult;
+
+    fn resource(api_version: &str) -> ResourceRef {
+        ResourceRef {
+            api_version: api_version.to_string(),
+            kind: "Widget".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn local_override_unreadable_uses_attempted_resource_from_trace_entry() {
+        let subject = resource("example.com/v1beta1");
+        let attempted = resource("example.com/v1");
+        let mut trace = LookupTrace::new(&subject, &YamlPath(Vec::new()));
+        trace.record_provider(
+            &attempted,
+            ProviderOrigin::LocalOverride,
+            &ProviderLookupResult::ResourceDocMissing {
+                source_path: "/tmp/widget.schema.json".to_string(),
+                io_error: "permission denied".to_string(),
+            },
+        );
+
+        let diagnostic = local_override_unreadable(&trace).expect("diagnostic");
+
+        assert_eq!(
+            diagnostic,
+            Diagnostic::LocalOverrideUnreadable {
+                kind: "Widget".to_string(),
+                api_version: "example.com/v1".to_string(),
+                override_path: "/tmp/widget.schema.json".to_string(),
+                io_error: "permission denied".to_string(),
+            }
+        );
+    }
 }

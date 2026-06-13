@@ -291,15 +291,23 @@ fn traced_resolution_records_provider_attempts_until_resolution() {
     );
     let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
 
-    let traced = chain.resolve_against_chain_traced(&resource(), &YamlPath(Vec::new()));
-    let attempts: Vec<(ProviderOrigin, LookupTraceOutcome)> = traced
+    let target = resource();
+    let traced = chain.resolve_against_chain_traced(&target, &YamlPath(Vec::new()));
+    let attempts: Vec<(String, String, ProviderOrigin, LookupTraceOutcome)> = traced
         .trace
         .entries()
         .iter()
         .map(|entry| match entry {
-            LookupTraceEntry::ResourceProvider { provider, outcome } => {
-                (*provider, outcome.clone())
-            }
+            LookupTraceEntry::ResourceProvider {
+                resource,
+                provider,
+                outcome,
+            } => (
+                resource.api_version.clone(),
+                resource.kind.clone(),
+                *provider,
+                outcome.clone(),
+            ),
             other => panic!("unexpected trace entry: {other:?}"),
         })
         .collect();
@@ -307,8 +315,15 @@ fn traced_resolution_records_provider_attempts_until_resolution() {
     assert_eq!(
         attempts,
         vec![
-            (ProviderOrigin::LocalOverride, LookupTraceOutcome::NotOwned),
             (
+                target.api_version.clone(),
+                target.kind.clone(),
+                ProviderOrigin::LocalOverride,
+                LookupTraceOutcome::NotOwned,
+            ),
+            (
+                target.api_version.clone(),
+                target.kind.clone(),
                 ProviderOrigin::DefaultCatalog,
                 LookupTraceOutcome::ResourceDocMissing {
                     source_path: String::new(),
@@ -316,6 +331,8 @@ fn traced_resolution_records_provider_attempts_until_resolution() {
                 },
             ),
             (
+                target.api_version.clone(),
+                target.kind.clone(),
                 ProviderOrigin::KubernetesOpenApi,
                 LookupTraceOutcome::Found {
                     resolved_k8s_version: None,
