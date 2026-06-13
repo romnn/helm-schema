@@ -8,7 +8,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract::{ContractUse, ContractUseContext, ContractUseSink, finalize_contract_uses};
+use crate::contract::{ContractIr, ContractUseContext, ContractUseSink};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
@@ -84,7 +84,7 @@ struct SymbolicWalker<'a> {
     source: &'a str,
     defines: &'a DefineIndex,
     ir_context: SymbolicIrContext,
-    uses: Vec<ContractUse>,
+    contract: ContractIr,
     seed_predicates: Vec<Predicate>,
     seed_dot: Option<FragmentBinding>,
     no_output_depth: usize,
@@ -108,7 +108,7 @@ impl<'a> SymbolicWalker<'a> {
             source,
             defines,
             ir_context,
-            uses: Vec::new(),
+            contract: ContractIr::default(),
             seed_predicates: Vec::new(),
             seed_dot: None,
             no_output_depth: 0,
@@ -242,21 +242,21 @@ impl<'a> SymbolicWalker<'a> {
                 .with_inline_helpers_in_fragments(true)
                 .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let uses = nested.run_contract(&tree);
-        self.uses.extend(uses);
+        self.contract.append(uses);
     }
 
     #[tracing::instrument(skip_all)]
     fn run(&mut self, tree: &tree_sitter::Tree) -> Vec<ValueUse> {
-        finalize_contract_uses(self.run_contract(tree))
+        self.run_contract(tree).into_value_uses()
     }
 
-    fn run_contract(&mut self, tree: &tree_sitter::Tree) -> Vec<ContractUse> {
+    fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
         self.rendered_yaml.reset_for_tree(tree);
         self.scope
             .reset_control(&self.seed_predicates, self.seed_dot.clone());
         self.no_output_depth = 0;
         eval_node(self, tree.root_node());
-        std::mem::take(&mut self.uses)
+        std::mem::take(&mut self.contract)
     }
 
     fn compatibility_guards(&self) -> Vec<Guard> {
@@ -298,7 +298,7 @@ impl<'a> SymbolicWalker<'a> {
             &self.scope.locals().chart_value_defaults,
             self.no_output_depth > 0,
         );
-        self.uses
+        self.contract
             .push(context.contract_use(source_expr, path, kind, extra_guards, resource));
     }
 
@@ -347,7 +347,7 @@ impl<'a> SymbolicWalker<'a> {
                 .with_helper_bindings(bindings)
                 .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let uses = nested.run_contract(&plan.tree);
-        self.uses.extend(uses);
+        self.contract.append(uses);
         true
     }
 
@@ -391,7 +391,7 @@ impl<'a> SymbolicWalker<'a> {
             return;
         }
 
-        let uses = {
+        let document_contract = {
             let guards = self.compatibility_guards();
             let projection_context = ContractUseContext::new(
                 &guards,
@@ -399,9 +399,9 @@ impl<'a> SymbolicWalker<'a> {
                 self.no_output_depth > 0,
             );
             AbstractDocumentOutput::new(hole_context, helper_inlined, output_values)
-                .into_contract_uses(&projection_context)
+                .into_contract_ir(&projection_context)
         };
-        self.uses.extend(uses);
+        self.contract.append(document_contract);
     }
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]

@@ -818,6 +818,10 @@ Current result:
   chart-default mutation guards. The walker and abstract-document projection
   both lower through this contract-layer context instead of duplicating those
   rules.
+- `ContractIr` now owns contract-claim accumulation and compatibility
+  normalization for one template interpretation. Document projection and
+  recursive helper/file walks append internal contract artifacts instead of
+  returning raw claim vectors to the walker.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

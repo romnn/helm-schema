@@ -1467,7 +1467,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   partial-scalar normalization, and chart-default mutation guards now lives in
   `ContractUseContext`, so `SymbolicWalker` and the abstract-document
   projection both lower through one contract-layer rule instead of carrying
-  parallel DTO-lowering logic. The
+  parallel DTO-lowering logic. `ContractIr` now owns contract-claim
+  accumulation and compatibility normalization for one template interpretation,
+  so document projection and recursive helper/file walks append internal
+  contract artifacts rather than raw vectors. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

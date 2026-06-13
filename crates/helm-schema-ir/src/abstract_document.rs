@@ -1,6 +1,6 @@
 use crate::abstract_document_hole::AbstractDocumentHole;
 use crate::abstract_document_projection::AbstractDocumentProjection;
-use crate::contract::{ContractUse, ContractUseContext};
+use crate::contract::{ContractIr, ContractUseContext};
 use crate::document_hole_context::DocumentHoleContext;
 use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;
@@ -31,12 +31,15 @@ impl AbstractDocumentOutput {
         }
     }
 
-    pub(crate) fn into_contract_uses(self, context: &ContractUseContext<'_>) -> Vec<ContractUse> {
+    pub(crate) fn into_contract_ir(self, context: &ContractUseContext<'_>) -> ContractIr {
         let projections = self.compatibility_projections();
-        projections
-            .into_iter()
-            .map(|projection| projection.into_contract_use(context))
-            .collect()
+        let mut contract = ContractIr::default();
+        contract.extend(
+            projections
+                .into_iter()
+                .map(|projection| projection.into_contract_use(context)),
+        );
+        contract
     }
 
     fn compatibility_projections(self) -> Vec<AbstractDocumentProjection> {

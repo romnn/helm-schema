@@ -128,15 +128,50 @@ pub(crate) trait ContractUseSink {
     );
 }
 
-pub(crate) fn finalize_contract_uses(mut uses: Vec<ContractUse>) -> Vec<ValueUse> {
-    normalize_contract_uses(&mut uses);
-    uses.into_iter().map(ContractUse::into_value_use).collect()
+/// Internal guarded contract graph for one template interpretation.
+///
+/// This is still compatibility-era because its leaves are `ContractUse`
+/// claims that project to `ValueUse`, but accumulation and normalization now
+/// live behind one contract-layer artifact instead of a raw vector owned by
+/// the symbolic walker.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub(crate) struct ContractIr {
+    uses: Vec<ContractUse>,
 }
 
-fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
-    drop_default_guard_subsumed_duplicates(uses);
-    drop_values_list_envelope_duplicates(uses);
-    merge_pathless_resource_variants(uses);
+impl ContractIr {
+    pub(crate) fn push(&mut self, contract_use: ContractUse) {
+        self.uses.push(contract_use);
+    }
+
+    pub(crate) fn extend<I>(&mut self, contract_uses: I)
+    where
+        I: IntoIterator<Item = ContractUse>,
+    {
+        self.uses.extend(contract_uses);
+    }
+
+    pub(crate) fn append(&mut self, mut other: Self) {
+        self.uses.append(&mut other.uses);
+    }
+
+    pub(crate) fn into_value_uses(mut self) -> Vec<ValueUse> {
+        self.normalize();
+        self.uses
+            .into_iter()
+            .map(ContractUse::into_value_use)
+            .collect()
+    }
+
+    fn normalize(&mut self) {
+        drop_default_guard_subsumed_duplicates(&mut self.uses);
+        drop_values_list_envelope_duplicates(&mut self.uses);
+        merge_pathless_resource_variants(&mut self.uses);
+        sort_and_dedup_contract_uses(&mut self.uses);
+    }
+}
+
+fn sort_and_dedup_contract_uses(uses: &mut Vec<ContractUse>) {
     uses.sort_by(|a, b| {
         a.source_expr
             .cmp(&b.source_expr)
@@ -301,5 +336,71 @@ mod tests {
             context.pathless_contract_use("image.tag".to_string(), ValueKind::PartialScalar, &[]);
 
         assert_eq!(contract_use.kind, ValueKind::Scalar);
+    }
+
+    #[test]
+    fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicate() {
+        let mut contract = ContractIr::default();
+        contract.push(ContractUse::new(
+            "serviceAccount.name".to_string(),
+            YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            ValueKind::Scalar,
+            Vec::new(),
+            None,
+        ));
+        contract.push(ContractUse::new(
+            "serviceAccount.name".to_string(),
+            YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Default {
+                path: "serviceAccount.name".to_string(),
+            }],
+            None,
+        ));
+
+        let value_uses = contract.into_value_uses();
+
+        assert_eq!(value_uses.len(), 1);
+        assert_eq!(
+            value_uses.first().map(|value_use| &value_use.guards),
+            Some(&vec![Guard::Default {
+                path: "serviceAccount.name".to_string(),
+            }])
+        );
+    }
+
+    #[test]
+    fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
+        let mut contract = ContractIr::default();
+        contract.push(ContractUse::new(
+            "nameOverride".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            Vec::new(),
+            None,
+        ));
+        contract.push(ContractUse::new(
+            "nameOverride".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            Vec::new(),
+            Some(ResourceRef {
+                api_version: "v1".to_string(),
+                kind: "Service".to_string(),
+                api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
+            }),
+        ));
+
+        let value_uses = contract.into_value_uses();
+
+        assert_eq!(value_uses.len(), 1);
+        assert_eq!(
+            value_uses
+                .first()
+                .and_then(|value_use| value_use.resource.as_ref())
+                .map(|resource| (resource.api_version.as_str(), resource.kind.as_str())),
+            Some(("v1", "Service"))
+        );
     }
 }
