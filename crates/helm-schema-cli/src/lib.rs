@@ -353,9 +353,8 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
 
     let provider = provider_builder::build_provider(&opts.provider, diagnostic_sink);
 
-    let uses = contract_projection.uses();
     let mut schema = generate_values_schema(
-        ValuesSchemaInput::new(uses, &provider)
+        ValuesSchemaInput::new(&contract_projection, &provider)
             .with_values_yaml(values_yaml.as_deref())
             .with_type_hints(&type_hints)
             .with_chart_facts(&chart_facts)
@@ -365,7 +364,7 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     if opts.infer_required {
         required_inference::apply(
             &mut schema,
-            uses,
+            &contract_projection,
             values_yaml.as_deref(),
             charts,
             &call_graph,
@@ -838,7 +837,7 @@ spec:
         let path = "kid.controller.ingressClassResource.parameters";
 
         let uses = collection.contract_projection.uses();
-        let ir_facts = helm_schema_ir::derive_chart_facts(uses);
+        let ir_facts = helm_schema_ir::derive_chart_facts(&collection.contract_projection);
         let ir_fact = ir_facts
             .path_facts
             .get(path)

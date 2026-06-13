@@ -9,8 +9,8 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    ChartFacts, Guard, IrGenerator, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
-    YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
+    ChartFacts, ContractProjection, Guard, IrGenerator, ResourceRef, SymbolicIrGenerator,
+    ValueKind, ValueUse, YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -59,11 +59,15 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
 }
 
 fn schema_for(uses: &[ValueUse]) -> Value {
-    generate_values_schema(ValuesSchemaInput::new(uses, &provider()))
+    let projection = ContractProjection::from_value_uses(uses.to_vec());
+    generate_values_schema(ValuesSchemaInput::new(&projection, &provider()))
 }
 
 fn schema_for_values_yaml(uses: &[ValueUse], values_yaml: Option<&str>) -> Value {
-    generate_values_schema(ValuesSchemaInput::new(uses, &provider()).with_values_yaml(values_yaml))
+    let projection = ContractProjection::from_value_uses(uses.to_vec());
+    generate_values_schema(
+        ValuesSchemaInput::new(&projection, &provider()).with_values_yaml(values_yaml),
+    )
 }
 
 fn schema_for_values_yaml_and_hints(
@@ -71,8 +75,9 @@ fn schema_for_values_yaml_and_hints(
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> Value {
+    let projection = ContractProjection::from_value_uses(uses.to_vec());
     generate_values_schema(
-        ValuesSchemaInput::new(uses, &provider())
+        ValuesSchemaInput::new(&projection, &provider())
             .with_values_yaml(values_yaml)
             .with_type_hints(type_hints),
     )
@@ -84,8 +89,9 @@ fn schema_for_values_yaml_hints_and_facts(
     type_hints: &BTreeMap<String, Vec<Value>>,
     chart_facts: &ChartFacts,
 ) -> Value {
+    let projection = ContractProjection::from_value_uses(uses.to_vec());
     generate_values_schema(
-        ValuesSchemaInput::new(uses, &provider())
+        ValuesSchemaInput::new(&projection, &provider())
             .with_values_yaml(values_yaml)
             .with_type_hints(type_hints)
             .with_chart_facts(chart_facts),
@@ -198,9 +204,10 @@ fn values_yaml_comments_override_provider_descriptions() {
         kind: ValueKind::Scalar,
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
+    let projection = ContractProjection::from_value_uses(uses);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&uses, &DescriptionProvider)
+        ValuesSchemaInput::new(&projection, &DescriptionProvider)
             .with_values_yaml(Some("name: example\n"))
             .with_values_descriptions(&descriptions),
     );
@@ -231,9 +238,10 @@ fn values_yaml_comments_do_not_create_schema_paths() {
         ),
     ]);
     let provider = Chain::new(Vec::new());
+    let projection = ContractProjection::from_value_uses(uses);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&uses, &provider)
+        ValuesSchemaInput::new(&projection, &provider)
             .with_values_yaml(Some("name: example\n"))
             .with_values_descriptions(&descriptions),
     );

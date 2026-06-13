@@ -840,6 +840,12 @@ Current result:
 - The generator's old arity ladder now has one explicit `ValuesSchemaInput`
   entry point, so optional analysis signals are named inputs rather than
   pass-through wrapper functions.
+- `ValuesSchemaInput` now takes `ContractProjection` directly, so production
+  schema generation no longer peels raw `ValueUse` slices at the CLI boundary.
+- CLI required-inference orchestration also takes `ContractProjection`, so the
+  raw `ValueUse` slice peel is contained inside compatibility modules.
+- Chart-fact derivation now takes `ContractProjection` too, so callers no
+  longer unwrap compatibility rows just to recover path facts.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

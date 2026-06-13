@@ -192,7 +192,9 @@ mod tests {
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
-    use helm_schema_ir::{IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints};
+    use helm_schema_ir::{
+        ContractProjection, IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints,
+    };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
     fn provider() -> KubernetesJsonSchemaProvider {
@@ -220,8 +222,9 @@ mod tests {
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let uses = parse_ir(src);
         let hints = collect_hints(src);
+        let projection = ContractProjection::from_value_uses(uses.clone());
         let mut schema = generate_values_schema(
-            ValuesSchemaInput::new(&uses, &provider())
+            ValuesSchemaInput::new(&projection, &provider())
                 .with_values_yaml(values_yaml)
                 .with_type_hints(&hints),
         );
@@ -395,7 +398,8 @@ mod tests {
             kind: ServiceAccount
             {{- end }}
         "};
-        let schema = generate_values_schema(ValuesSchemaInput::new(&parse_ir(src), &provider()));
+        let projection = ContractProjection::from_value_uses(parse_ir(src));
+        let schema = generate_values_schema(ValuesSchemaInput::new(&projection, &provider()));
         // The core path must never emit `required` — that's the
         // separation of concerns this module exists to enforce.
         let any_required_anywhere = serde_json::to_string(&schema)

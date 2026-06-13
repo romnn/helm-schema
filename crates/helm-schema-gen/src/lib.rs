@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ChartFacts, ValueUse, derive_chart_facts};
+use helm_schema_ir::{ChartFacts, ContractProjection, derive_chart_facts};
 use helm_schema_k8s::K8sSchemaProvider;
 
 use path_metadata::{PathMetadata, collect_path_metadata};
@@ -33,7 +33,7 @@ use use_signals::{UseSignals, collect_use_signals};
 /// metadata only: they are applied only to schema nodes that already exist from
 /// template or values evidence.
 pub struct ValuesSchemaInput<'a> {
-    pub uses: &'a [ValueUse],
+    pub contract_projection: &'a ContractProjection,
     pub provider: &'a dyn K8sSchemaProvider,
     pub values_yaml: Option<&'a str>,
     pub type_hints: Option<&'a BTreeMap<String, Vec<Value>>>,
@@ -42,9 +42,12 @@ pub struct ValuesSchemaInput<'a> {
 }
 
 impl<'a> ValuesSchemaInput<'a> {
-    pub fn new(uses: &'a [ValueUse], provider: &'a dyn K8sSchemaProvider) -> Self {
+    pub fn new(
+        contract_projection: &'a ContractProjection,
+        provider: &'a dyn K8sSchemaProvider,
+    ) -> Self {
         Self {
-            uses,
+            contract_projection,
             provider,
             values_yaml: None,
             type_hints: None,
@@ -95,12 +98,13 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .values_descriptions
         .unwrap_or(&empty_values_descriptions);
 
-    let mut signals = collect_use_signals(input.uses, input.provider);
+    let uses = input.contract_projection.uses();
+    let mut signals = collect_use_signals(uses, input.provider);
     signals
         .referenced_value_paths
         .extend(type_hints.keys().cloned());
-    let path_metadata = collect_path_metadata(input.uses, &signals.referenced_value_paths);
-    let mut merged_chart_facts = derive_chart_facts(input.uses);
+    let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
+    let mut merged_chart_facts = derive_chart_facts(input.contract_projection);
     merge_chart_facts(&mut merged_chart_facts, chart_facts);
 
     let values_yaml_doc = input

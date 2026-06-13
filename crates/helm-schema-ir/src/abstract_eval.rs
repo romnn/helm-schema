@@ -8,7 +8,7 @@ use crate::expr_eval::{
     apply_assignment_expr, apply_local_set_mutations_expr, eval_expr, eval_expr_value,
 };
 use crate::walker::is_fragment_expr;
-use crate::{Guard, ValueKind, ValueUse};
+use crate::{ContractProjection, Guard, ValueKind, ValueUse};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChartFacts {
@@ -313,8 +313,13 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
     }
 }
 
+/// Derive chart-level path facts from a normalized contract projection.
 #[must_use]
-pub fn derive_chart_facts(uses: &[ValueUse]) -> ChartFacts {
+pub fn derive_chart_facts(contract_projection: &ContractProjection) -> ChartFacts {
+    derive_chart_facts_from_uses(contract_projection.uses())
+}
+
+fn derive_chart_facts_from_uses(uses: &[ValueUse]) -> ChartFacts {
     #[derive(Default)]
     struct Acc {
         has_render_use: bool,

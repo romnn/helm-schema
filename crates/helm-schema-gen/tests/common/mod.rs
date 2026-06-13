@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
-use helm_schema_ir::ValueUse;
+use helm_schema_ir::{ContractProjection, ValueUse};
 use helm_schema_k8s::{
     Chain, CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
 };
@@ -73,7 +73,10 @@ pub fn generate_schema_with_values_yaml(
     provider: &dyn K8sSchemaProvider,
     values_yaml: Option<&str>,
 ) -> Value {
-    generate_values_schema(ValuesSchemaInput::new(uses, provider).with_values_yaml(values_yaml))
+    let projection = ContractProjection::from_value_uses(uses.to_vec());
+    generate_values_schema(
+        ValuesSchemaInput::new(&projection, provider).with_values_yaml(values_yaml),
+    )
 }
 
 fn drop_nulls(v: &Value) -> Value {

@@ -150,6 +150,17 @@ pub struct ContractProjection {
 }
 
 impl ContractProjection {
+    /// Build a projection from already-projected compatibility DTOs.
+    ///
+    /// This is for tests and transitional consumers that still construct
+    /// [`ValueUse`] rows directly. Interpreter code should produce
+    /// [`ContractIr`] and call [`ContractIr::project`] instead.
+    pub fn from_value_uses(mut uses: Vec<ValueUse>) -> Self {
+        uses.sort();
+        uses.dedup();
+        Self { uses }
+    }
+
     /// Borrow the normalized compatibility uses.
     pub fn uses(&self) -> &[ValueUse] {
         &self.uses

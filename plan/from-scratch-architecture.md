@@ -1486,7 +1486,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   function. The generator's old `generate_values_schema_full_with_*` arity
   ladder has now been collapsed into one explicit `ValuesSchemaInput`, so
   optional analysis signals enter through named fields instead of pass-through
-  wrapper functions. The
+  wrapper functions. That input now takes `ContractProjection` directly, so
+  production schema generation and CLI required-inference orchestration no
+  longer expose or peel raw `ValueUse` slices at the main CLI boundary.
+  Chart-fact derivation now also accepts the projection artifact directly, so
+  callers no longer unwrap compatibility rows just to recover per-path facts. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

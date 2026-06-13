@@ -15,7 +15,7 @@ use crate::schema_tree::unknown_object_schema;
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
-/// The IR still crosses into the generator as [`ValueUse`] DTOs, but the
+/// Contract projections still expose [`ValueUse`] DTOs internally, but the
 /// decisions about provider-schema domains and guard-derived constraints live
 /// here rather than being spread across root-schema construction.
 #[derive(Debug, Default, Clone, Copy)]
