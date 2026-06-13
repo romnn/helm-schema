@@ -2,7 +2,7 @@
 //! PathUnresolved silence, and the "MissingSchema only from chain"
 //! invariant.
 
-use helm_schema_ir::{ContractUse, ResourceRef, YamlPath};
+use helm_schema_ir::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{
     ApiPresenceQuery, Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry,
     LookupTraceOutcome, ProviderLookupResult, ProviderOrigin,
@@ -23,6 +23,16 @@ enum FakeBehaviour {
     PathUnresolved,
     ResourceDocMissing { path: String, io: String },
     NotOwned,
+}
+
+fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
+    ProviderSchemaUse {
+        value_path: "x".to_string(),
+        path,
+        kind: ValueKind::Scalar,
+        resource,
+        is_self_range_collection: false,
+    }
 }
 
 impl FakeProvider {
@@ -481,12 +491,9 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
     })])
     .with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ContractUse {
-        source_expr: "x".to_string(),
-        path: YamlPath(Vec::new()),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+    let use_ = provider_use(
+        YamlPath(Vec::new()),
+        ResourceRef {
             api_version: "policy/v1beta1".to_string(),
             kind: "PodSecurityPolicy".to_string(),
             // `policy/v1` is a speculative candidate; ranking puts it
@@ -495,8 +502,8 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
             // MissingSchema(policy/v1, ...) in the snapshot.
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
-        }),
-    };
+        },
+    );
     let schema = chain.schema_for_use(&use_);
     assert_eq!(
         schema,
@@ -887,18 +894,15 @@ fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ContractUse {
-        source_expr: "x".to_string(),
-        path: YamlPath(vec!["data".to_string(), "config-blob".to_string()]),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+    let use_ = provider_use(
+        YamlPath(vec!["data".to_string(), "config-blob".to_string()]),
+        ResourceRef {
             api_version: "v1".to_string(),
             kind: "ConfigMap".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
-        }),
-    };
+        },
+    );
     let schema = chain.schema_for_use(&use_);
     assert!(
         schema.is_none(),
@@ -942,18 +946,15 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
     let chain =
         Chain::new(vec![Box::new(AlwaysPathUnresolved)]).with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ContractUse {
-        source_expr: "x".to_string(),
-        path: YamlPath(vec!["data".to_string()]),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+    let use_ = provider_use(
+        YamlPath(vec!["data".to_string()]),
+        ResourceRef {
             api_version: "policy/v1beta1".to_string(),
             kind: "PodSecurityPolicy".to_string(),
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
-        }),
-    };
+        },
+    );
     let _ = chain.schema_for_use(&use_);
 
     let missing_count = diagnostics
@@ -980,18 +981,15 @@ fn chain_schema_for_use_total_failure_attributes_to_primary() {
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
-    let use_ = ContractUse {
-        source_expr: "x".to_string(),
-        path: YamlPath(Vec::new()),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+    let use_ = provider_use(
+        YamlPath(Vec::new()),
+        ResourceRef {
             api_version: "policy/v1beta1".to_string(),
             kind: "PodSecurityPolicy".to_string(),
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
-        }),
-    };
+        },
+    );
     let _ = chain.schema_for_use(&use_);
 
     let missing: Vec<_> = diagnostics

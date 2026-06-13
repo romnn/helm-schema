@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use helm_schema_ir::{ContractUse, ResourceRef, YamlPath};
+use helm_schema_ir::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::inference::aggregate;
 use helm_schema_k8s::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, Chain, CrdsCatalogSchemaProvider, Diagnostic,
@@ -23,28 +23,27 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
     p
 }
 
-fn use_with_kind(kind: &str) -> ContractUse {
-    ContractUse {
-        source_expr: "x".to_string(),
+fn use_with_kind(kind: &str) -> ProviderSchemaUse {
+    ProviderSchemaUse {
+        value_path: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+        kind: ValueKind::Scalar,
+        resource: ResourceRef {
             api_version: String::new(),
             kind: kind.to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
-        }),
+        },
+        is_self_range_collection: false,
     }
 }
 
 #[test]
 fn inference_skipped_when_api_version_candidates_nonempty() {
     let mut use_ = use_with_kind("ServiceMonitor");
-    if let Some(r) = use_.resource.as_mut() {
-        r.api_version_candidates
-            .push("monitoring.coreos.com/v1".to_string());
-    }
+    use_.resource
+        .api_version_candidates
+        .push("monitoring.coreos.com/v1".to_string());
 
     let crd = CrdsCatalogSchemaProvider::new()
         .with_allow_download(false)
@@ -514,17 +513,17 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
 
     // ConfigMap with NO apiVersion → inference runs → shortlist
     // resolves to `v1` (core group, built-in).
-    let use_ = ContractUse {
-        source_expr: "x".to_string(),
+    let use_ = ProviderSchemaUse {
+        value_path: "x".to_string(),
         path: YamlPath(vec!["data".to_string()]),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+        kind: ValueKind::Scalar,
+        resource: ResourceRef {
             api_version: String::new(),
             kind: "ConfigMap".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
-        }),
+        },
+        is_self_range_collection: false,
     };
     let _ = chain.schema_for_use(&use_);
 
@@ -554,17 +553,17 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
 
     // ServiceMonitor with NO apiVersion → shortlist resolves to
     // monitoring.coreos.com/v1 (CRD group, NOT built-in).
-    let use_ = ContractUse {
-        source_expr: "x".to_string(),
+    let use_ = ProviderSchemaUse {
+        value_path: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
-        kind: helm_schema_ir::ValueKind::Scalar,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+        kind: ValueKind::Scalar,
+        resource: ResourceRef {
             api_version: String::new(),
             kind: "ServiceMonitor".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
-        }),
+        },
+        is_self_range_collection: false,
     };
     let _ = chain.schema_for_use(&use_);
 

@@ -1,4 +1,4 @@
-use helm_schema_ir::{ContractUse, ResourceRef, ValueKind, YamlPath};
+use helm_schema_ir::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider};
 
 #[test]
@@ -62,8 +62,8 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         .with_api_version_guess(true);
     let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
 
-    let use_ = ContractUse {
-        source_expr: "networkPolicy.ingressNSMatchLabels".to_string(),
+    let use_ = ProviderSchemaUse {
+        value_path: "networkPolicy.ingressNSMatchLabels".to_string(),
         path: YamlPath(vec![
             "spec".to_string(),
             "ingress[*]".to_string(),
@@ -72,13 +72,13 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
             "matchLabels".to_string(),
         ]),
         kind: ValueKind::Fragment,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+        resource: ResourceRef {
             api_version: String::new(),
             kind: "NetworkPolicy".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
-        }),
+        },
+        is_self_range_collection: false,
     };
 
     let schema = chain

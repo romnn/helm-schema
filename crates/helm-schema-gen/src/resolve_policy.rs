@@ -1,6 +1,6 @@
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractUse, Guard, GuardConstraint, ValueKind};
+use helm_schema_ir::{GuardConstraint, ProviderSchemaUse, ValueKind};
 use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_two_schemas, union_schema_list};
@@ -36,12 +36,12 @@ impl ResolvePolicy {
     pub(crate) fn provider_schema_for_value_use(
         &self,
         schema: Value,
-        use_: &ContractUse,
+        use_: &ProviderSchemaUse,
     ) -> Option<Value> {
         match use_.kind {
             ValueKind::Fragment => Some(schema),
             ValueKind::PartialScalar => None,
-            ValueKind::Scalar if self.is_self_range_collection_use(use_) => {
+            ValueKind::Scalar if use_.is_self_range_collection => {
                 restrict_schema_to_scalar_collection_domain(schema)
             }
             ValueKind::Scalar => restrict_schema_to_scalar_domain(schema),
@@ -144,17 +144,6 @@ impl ResolvePolicy {
         } else {
             merge_two_schemas(base, input.guard_constraint_schema)
         }
-    }
-
-    fn is_self_range_collection_use(&self, use_: &ContractUse) -> bool {
-        use_.guards
-            .iter()
-            .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr))
-            && use_
-                .path
-                .0
-                .last()
-                .is_none_or(|segment| !segment.ends_with("[*]"))
     }
 }
 

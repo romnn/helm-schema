@@ -9,8 +9,8 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    ContractProjection, ContractUse, Guard, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
-    YamlPath, extract_default_type_hints,
+    ContractProjection, ContractUse, Guard, ProviderSchemaUse, ResourceRef, SymbolicIrGenerator,
+    ValueKind, ValueUse, YamlPath, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -168,7 +168,7 @@ fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
 struct DescriptionProvider;
 
 impl K8sSchemaProvider for DescriptionProvider {
-    fn schema_for_use(&self, _use_: &ContractUse) -> Option<Value> {
+    fn schema_for_use(&self, _use_: &ProviderSchemaUse) -> Option<Value> {
         Some(serde_json::json!({
             "description": "provider description",
             "type": "string",
@@ -3722,8 +3722,8 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
 #[test]
 fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
     let provider = production_chain_provider();
-    let use_ = ContractUse {
-        source_expr: "resources".to_string(),
+    let use_ = ProviderSchemaUse {
+        value_path: "resources".to_string(),
         path: YamlPath(vec![
             "spec".to_string(),
             "template".to_string(),
@@ -3732,13 +3732,13 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
             "resources".to_string(),
         ]),
         kind: helm_schema_ir::ValueKind::Fragment,
-        guards: Vec::new(),
-        resource: Some(ResourceRef {
+        resource: ResourceRef {
             api_version: "apps/v1".to_string(),
             kind: "Deployment".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
-        }),
+        },
+        is_self_range_collection: false,
     };
 
     let schema = provider

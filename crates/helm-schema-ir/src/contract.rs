@@ -113,6 +113,41 @@ impl ContractUse {
     }
 }
 
+/// Contract fact that needs a Kubernetes resource schema lookup.
+///
+/// This is narrower than [`ContractUse`]: schema providers need only the
+/// rendered resource/path target, while generator policy also needs the input
+/// values path and value-kind domain.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ProviderSchemaUse {
+    pub value_path: String,
+    pub path: YamlPath,
+    pub kind: ValueKind,
+    pub resource: ResourceRef,
+    pub is_self_range_collection: bool,
+}
+
+impl ProviderSchemaUse {
+    #[must_use]
+    pub fn from_contract_use(contract_use: &ContractUse) -> Option<Self> {
+        if contract_use.source_expr.trim().is_empty()
+            || contract_use.kind == ValueKind::PartialScalar
+            || contract_use.path.0.is_empty()
+        {
+            return None;
+        }
+        let resource = contract_use.resource.clone()?;
+
+        Some(Self {
+            value_path: contract_use.source_expr.clone(),
+            path: contract_use.path.clone(),
+            kind: contract_use.kind,
+            resource,
+            is_self_range_collection: use_is_self_range_collection(contract_use),
+        })
+    }
+}
+
 impl From<ValueUse> for ContractUse {
     fn from(value_use: ValueUse) -> Self {
         Self {
@@ -248,6 +283,16 @@ impl ContractProjection {
     #[must_use]
     pub fn path_signals(&self) -> ContractPathSignals {
         derive_path_signals_from_uses(&self.uses)
+    }
+
+    /// Return resource-schema lookup requests derived from rendered contract
+    /// claims.
+    #[must_use]
+    pub fn provider_schema_uses(&self) -> Vec<ProviderSchemaUse> {
+        self.uses
+            .iter()
+            .filter_map(ProviderSchemaUse::from_contract_use)
+            .collect()
     }
 
     /// Identify value paths for which an explicit `null` default is accepted
@@ -717,6 +762,17 @@ fn use_is_null_tolerant(use_: &ContractUse) -> bool {
     })
 }
 
+fn use_is_self_range_collection(use_: &ContractUse) -> bool {
+    use_.guards
+        .iter()
+        .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr))
+        && use_
+            .path
+            .0
+            .last()
+            .is_none_or(|segment| !segment.ends_with("[*]"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1060,5 +1116,76 @@ mod tests {
             !signals.metadata_fields_by_value_path.contains_key(""),
             "empty-source compatibility rows should not seed metadata facts",
         );
+    }
+
+    #[test]
+    fn contract_projection_provider_schema_uses_are_rendered_resource_claims_only() {
+        let resource = ResourceRef {
+            api_version: "apps/v1".to_string(),
+            kind: "Deployment".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        };
+        let projection = ContractProjection::from_contract_uses(vec![
+            ContractUse::new(
+                "containers".to_string(),
+                YamlPath(vec![
+                    "spec".to_string(),
+                    "template".to_string(),
+                    "spec".to_string(),
+                    "containers".to_string(),
+                ]),
+                ValueKind::Fragment,
+                Vec::new(),
+                Some(resource.clone()),
+            ),
+            ContractUse::new(
+                "ports".to_string(),
+                YamlPath(vec!["spec".to_string(), "ports".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Range {
+                    path: "ports".to_string(),
+                }],
+                Some(resource.clone()),
+            ),
+            ContractUse::new(
+                "image.tag".to_string(),
+                YamlPath(vec!["spec".to_string(), "image".to_string()]),
+                ValueKind::PartialScalar,
+                Vec::new(),
+                Some(resource.clone()),
+            ),
+            ContractUse::new(
+                "pathless".to_string(),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                Vec::new(),
+                Some(resource.clone()),
+            ),
+            ContractUse::new(
+                "noResource".to_string(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                Vec::new(),
+                None,
+            ),
+            ContractUse::new(
+                String::new(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                Vec::new(),
+                Some(resource),
+            ),
+        ]);
+
+        let requests = projection.provider_schema_uses();
+
+        assert_eq!(requests.len(), 2, "{requests:#?}");
+        assert_eq!(requests[0].value_path, "containers");
+        assert_eq!(requests[0].kind, ValueKind::Fragment);
+        assert!(!requests[0].is_self_range_collection);
+        assert_eq!(requests[1].value_path, "ports");
+        assert_eq!(requests[1].kind, ValueKind::Scalar);
+        assert!(requests[1].is_self_range_collection);
     }
 }
