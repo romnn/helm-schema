@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use helm_schema_ir::{ResourceRef, YamlPath};
 use serde_json::Value;
@@ -8,6 +9,7 @@ use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
+use crate::schema_doc::SchemaDoc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ResourceDocKey {
@@ -28,7 +30,7 @@ impl ResourceDocKey {
 pub struct LocalSchemaProvider {
     root_dir: PathBuf,
     allow_api_version_guess: bool,
-    materialized: Mutex<std::collections::HashMap<ResourceDocKey, Arc<Value>>>,
+    docs: Mutex<HashMap<ResourceDocKey, SchemaDoc>>,
 }
 
 impl LocalSchemaProvider {
@@ -37,7 +39,7 @@ impl LocalSchemaProvider {
         Self {
             root_dir: root_dir.into(),
             allow_api_version_guess: false,
-            materialized: Mutex::new(std::collections::HashMap::new()),
+            docs: Mutex::new(HashMap::new()),
         }
     }
 
@@ -70,44 +72,88 @@ impl LocalSchemaProvider {
         )
     }
 
-    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<Value> {
-        let local = self.override_file_for(resource)?;
-        let bytes = std::fs::read(local).ok()?;
-        let doc: Value = serde_json::from_slice(&bytes).ok()?;
-        Some(doc)
+    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<SchemaDoc> {
+        match self.load_schema_doc_result(resource) {
+            LocalSchemaDocLoad::Loaded(doc) => Some(doc),
+            LocalSchemaDocLoad::NotOwned | LocalSchemaDocLoad::Error { .. } => None,
+        }
+    }
+
+    fn load_schema_doc_result(&self, resource: &ResourceRef) -> LocalSchemaDocLoad {
+        let Some(local) = self.override_file_for(resource) else {
+            return LocalSchemaDocLoad::NotOwned;
+        };
+        if !local.exists() {
+            return LocalSchemaDocLoad::NotOwned;
+        }
+
+        let cache_key = ResourceDocKey::from_resource(resource);
+        if let Ok(guard) = self.docs.lock()
+            && let Some(doc) = guard.get(&cache_key)
+        {
+            return LocalSchemaDocLoad::Loaded(doc.clone());
+        }
+
+        let source_path = local.display().to_string();
+        let bytes = match std::fs::read(&local) {
+            Ok(bytes) => bytes,
+            Err(err) => {
+                return LocalSchemaDocLoad::Error {
+                    source_path,
+                    io_error: err.to_string(),
+                };
+            }
+        };
+        let doc = match serde_json::from_slice::<Value>(&bytes) {
+            Ok(doc) => SchemaDoc::new(doc),
+            Err(err) => {
+                return LocalSchemaDocLoad::Error {
+                    source_path,
+                    io_error: err.to_string(),
+                };
+            }
+        };
+        if let Ok(mut guard) = self.docs.lock() {
+            guard.insert(cache_key, doc.clone());
+        }
+        LocalSchemaDocLoad::Loaded(doc)
+    }
+
+    fn schema_for_resource_path_from_doc(
+        &self,
+        root: &SchemaDoc,
+        path: &YamlPath,
+    ) -> Option<Value> {
+        let root = enrich_root_metadata_schema(root.root().clone());
+        descend_schema_path_expanding_leaf(&root, &path.0)
     }
 
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let materialized = self.materialized_schema_root(resource)?;
-        Some((*materialized).clone())
-    }
-
-    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
-    fn materialized_schema_root(&self, resource: &ResourceRef) -> Option<Arc<Value>> {
-        let cache_key = ResourceDocKey::from_resource(resource);
-        if let Ok(guard) = self.materialized.lock()
-            && let Some(root) = guard.get(&cache_key)
-        {
-            return Some(Arc::clone(root));
-        }
-
         let root = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
-        let materialized = Arc::new(enrich_root_metadata_schema(expand_local_refs(
-            &root, &root, 0, &mut stack,
-        )));
-        if let Ok(mut guard) = self.materialized.lock() {
-            guard.insert(cache_key, Arc::clone(&materialized));
-        }
-        Some(materialized)
+        Some(enrich_root_metadata_schema(expand_local_refs(
+            root.root(),
+            root.root(),
+            0,
+            &mut stack,
+        )))
     }
+}
+
+enum LocalSchemaDocLoad {
+    Loaded(SchemaDoc),
+    NotOwned,
+    Error {
+        source_path: String,
+        io_error: String,
+    },
 }
 
 impl K8sSchemaProvider for LocalSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        let root = self.materialized_schema_root(resource)?;
-        descend_schema_path(&root, &path.0)
+        let root = self.load_schema_doc(resource)?;
+        self.schema_for_resource_path_from_doc(&root, path)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -116,48 +162,22 @@ impl K8sSchemaProvider for LocalSchemaProvider {
 
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        if let Some(root) = self.materialized_schema_root(resource) {
-            return match descend_schema_path(&root, &path.0) {
-                Some(schema) => ProviderLookupResult::Found {
-                    schema,
-                    resolved_k8s_version: None,
-                },
-                None => ProviderLookupResult::PathUnresolved,
-            };
-        }
-
-        let Some(file) = self.override_file_for(resource) else {
-            return ProviderLookupResult::NotOwned;
-        };
-        if !file.exists() {
-            return ProviderLookupResult::NotOwned;
-        }
-        // Override is claimed; any read failure now is a hard error.
-        let source_path = file.display().to_string();
-        match std::fs::read(&file) {
-            Ok(bytes) => match serde_json::from_slice::<Value>(&bytes) {
-                Ok(_) => {
-                    let Some(root) = self.materialized_schema_root(resource) else {
-                        return ProviderLookupResult::ResourceDocMissing {
-                            io_error: "failed to materialize local override schema".to_string(),
-                            source_path,
-                        };
-                    };
-                    match descend_schema_path(&root, &path.0) {
-                        Some(schema) => ProviderLookupResult::Found {
-                            schema,
-                            resolved_k8s_version: None,
-                        },
-                        None => ProviderLookupResult::PathUnresolved,
-                    }
+        match self.load_schema_doc_result(resource) {
+            LocalSchemaDocLoad::Loaded(root) => {
+                match self.schema_for_resource_path_from_doc(&root, path) {
+                    Some(schema) => ProviderLookupResult::Found {
+                        schema,
+                        resolved_k8s_version: None,
+                    },
+                    None => ProviderLookupResult::PathUnresolved,
                 }
-                Err(err) => ProviderLookupResult::ResourceDocMissing {
-                    io_error: err.to_string(),
-                    source_path,
-                },
-            },
-            Err(err) => ProviderLookupResult::ResourceDocMissing {
-                io_error: err.to_string(),
+            }
+            LocalSchemaDocLoad::NotOwned => ProviderLookupResult::NotOwned,
+            LocalSchemaDocLoad::Error {
+                source_path,
+                io_error,
+            } => ProviderLookupResult::ResourceDocMissing {
+                io_error,
                 source_path,
             },
         }
@@ -226,6 +246,123 @@ fn descend_one<'a>(schema: &'a Value, seg: &str) -> Option<&'a Value> {
     }
 
     Some(next)
+}
+
+/// Descends a schema path while resolving local `$ref`s only along that path,
+/// then expands references inside the returned leaf. The result matches
+/// expanding the full document before path descent without materialising the
+/// full expanded resource schema for every lookup.
+#[tracing::instrument(skip_all, fields(path_len = path.len()))]
+pub fn descend_schema_path_expanding_leaf(root: &Value, path: &[String]) -> Option<Value> {
+    let mut stack = std::collections::HashSet::new();
+    let leaf = descend_schema_path_node(root, root, path, 0, &mut stack)?;
+    let mut expand_stack = std::collections::HashSet::new();
+    Some(expand_local_refs(root, &leaf, 0, &mut expand_stack))
+}
+
+fn descend_schema_path_node(
+    root: &Value,
+    schema: &Value,
+    path: &[String],
+    depth: usize,
+    stack: &mut std::collections::HashSet<String>,
+) -> Option<Value> {
+    if depth > 64 {
+        return Some(schema.clone());
+    }
+
+    let Some((segment, remaining_path)) = path.split_first() else {
+        return Some(schema.clone());
+    };
+
+    let next = descend_one_expanding_refs(root, schema, segment, depth, stack)?;
+    descend_schema_path_node(root, &next, remaining_path, depth + 1, stack)
+}
+
+fn descend_one_expanding_refs(
+    root: &Value,
+    schema: &Value,
+    segment: &str,
+    depth: usize,
+    stack: &mut std::collections::HashSet<String>,
+) -> Option<Value> {
+    let schema = resolve_local_ref(root, schema, depth, stack);
+
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        if let Some(branches) = schema.get(keyword).and_then(Value::as_array) {
+            for branch in branches {
+                if let Some(next) =
+                    descend_one_expanding_refs(root, branch, segment, depth + 1, stack)
+                {
+                    return Some(next);
+                }
+            }
+        }
+    }
+
+    let (key, is_array_item) = segment
+        .strip_suffix("[*]")
+        .map_or((segment, false), |key| (key, true));
+
+    let mut next = schema
+        .get("properties")
+        .and_then(Value::as_object)
+        .and_then(|properties| properties.get(key))
+        .or_else(|| {
+            schema
+                .get("additionalProperties")
+                .and_then(|additional_properties| {
+                    if additional_properties.is_boolean() {
+                        None
+                    } else {
+                        Some(additional_properties)
+                    }
+                })
+        })?
+        .clone();
+
+    if is_array_item {
+        next = resolve_local_ref(root, &next, depth + 1, stack);
+        next = next
+            .get("items")
+            .or_else(|| {
+                next.get("prefixItems")
+                    .and_then(Value::as_array)
+                    .and_then(|items| items.first())
+            })?
+            .clone();
+    }
+
+    Some(next)
+}
+
+fn resolve_local_ref(
+    root: &Value,
+    schema: &Value,
+    depth: usize,
+    stack: &mut std::collections::HashSet<String>,
+) -> Value {
+    if depth > 64 {
+        return schema.clone();
+    }
+    let Some(reference) = schema.get("$ref").and_then(Value::as_str) else {
+        return schema.clone();
+    };
+    if stack.contains(reference) {
+        return strip_ref(schema);
+    }
+    stack.insert(reference.to_string());
+
+    let resolved = if let Some(pointer) = reference.strip_prefix('#') {
+        root.pointer(pointer)
+            .map(|target| resolve_local_ref(root, target, depth + 1, stack))
+            .unwrap_or_else(|| strip_ref(schema))
+    } else {
+        strip_ref(schema)
+    };
+
+    stack.remove(reference);
+    resolved
 }
 
 pub fn expand_local_refs(
@@ -312,4 +449,61 @@ fn strip_ref(schema: &Value) -> Value {
     let mut out = obj.clone();
     out.remove("$ref");
     Value::Object(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn lazy_local_path_descent_matches_full_expansion_for_array_ref() {
+        let root = json!({
+            "type": "object",
+            "properties": {
+                "spec": {
+                    "$ref": "#/definitions/Spec"
+                }
+            },
+            "definitions": {
+                "Spec": {
+                    "type": "object",
+                    "properties": {
+                        "containers": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Container"
+                            }
+                        }
+                    }
+                },
+                "Container": {
+                    "type": "object",
+                    "properties": {
+                        "env": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        let path = vec![
+            "spec".to_string(),
+            "containers[*]".to_string(),
+            "env".to_string(),
+        ];
+
+        let mut stack = std::collections::HashSet::new();
+        let expanded = expand_local_refs(&root, &root, 0, &mut stack);
+        let expected =
+            descend_schema_path(&expanded, &path).expect("expanded root should contain path");
+        let actual = descend_schema_path_expanding_leaf(&root, &path)
+            .expect("lazy descent should contain path");
+
+        assert_eq!(actual, expected);
+    }
 }

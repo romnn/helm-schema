@@ -13,7 +13,7 @@ use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::local_override::{descend_schema_path, expand_local_refs};
+use crate::local_override::{descend_schema_path_expanding_leaf, expand_local_refs};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
@@ -40,7 +40,6 @@ pub struct CrdsCatalogSchemaProvider {
     diagnostic_sink: Option<DiagnosticSink>,
 
     mem: Mutex<HashMap<MemKey, SchemaDoc>>,
-    materialized: Mutex<HashMap<ResourceRef, Arc<Value>>>,
 }
 
 impl CrdsCatalogSchemaProvider {
@@ -60,7 +59,6 @@ impl CrdsCatalogSchemaProvider {
             layout_checker: Arc::new(LayoutChecker::new()),
             diagnostic_sink: None,
             mem: Mutex::new(HashMap::new()),
-            materialized: Mutex::new(HashMap::new()),
         }
     }
 
@@ -251,29 +249,23 @@ impl CrdsCatalogSchemaProvider {
 
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let materialized = self.materialized_schema_root(resource)?;
-        Some((*materialized).clone())
-    }
-
-    fn materialized_schema_root(&self, resource: &ResourceRef) -> Option<Arc<Value>> {
-        if let Ok(guard) = self.materialized.lock()
-            && let Some(root) = guard.get(resource)
-        {
-            return Some(Arc::clone(root));
-        }
-
         let (_source_id, root) = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
-        let materialized = Arc::new(enrich_root_metadata_schema(expand_local_refs(
+        Some(enrich_root_metadata_schema(expand_local_refs(
             root.root(),
             root.root(),
             0,
             &mut stack,
-        )));
-        if let Ok(mut guard) = self.materialized.lock() {
-            guard.insert(resource.clone(), Arc::clone(&materialized));
-        }
-        Some(materialized)
+        )))
+    }
+
+    fn schema_for_resource_path_from_doc(
+        &self,
+        root: &SchemaDoc,
+        path: &YamlPath,
+    ) -> Option<Value> {
+        let root = enrich_root_metadata_schema(root.root().clone());
+        descend_schema_path_expanding_leaf(&root, &path.0)
     }
 }
 
@@ -288,8 +280,8 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
-        let root = self.materialized_schema_root(resource)?;
-        descend_schema_path(&root, &path.0)
+        let (_source_id, root) = self.load_schema_doc(resource)?;
+        self.schema_for_resource_path_from_doc(&root, path)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -300,10 +292,10 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return ProviderLookupResult::NotOwned;
         }
-        let Some(root) = self.materialized_schema_root(resource) else {
+        let Some((_source_id, root)) = self.load_schema_doc(resource) else {
             return ProviderLookupResult::NotOwned;
         };
-        match descend_schema_path(&root, &path.0) {
+        match self.schema_for_resource_path_from_doc(&root, path) {
             Some(schema) => ProviderLookupResult::Found {
                 schema,
                 resolved_k8s_version: None,

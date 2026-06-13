@@ -1546,10 +1546,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   raw schema documents through a named `SchemaDoc` wrapper instead of cloning
   whole `serde_json::Value` trees from raw document caches, and the upstream
   K8s provider's production path lookup now descends through `$ref`s lazily
-  while expanding only the returned leaf schema. The remaining B2 work is to
-  move CRD/local override lookup to the same lazy document model, then delete
-  the fully expanded per-resource materialization cache once explicit
-  materialization tests/debug helpers have another home.
+  while expanding only the returned leaf schema. CRD catalog and local override
+  lookup now use the same lazy local-ref descent model, and providers no longer
+  cache fully expanded per-resource documents. Explicit materialization helpers
+  still exist for tests/debug, but they compute from shared raw documents on
+  demand.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the

@@ -899,9 +899,11 @@ Current result:
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and
-  expands only the returned leaf schema. Fully expanded per-resource documents
-  still exist for explicit materialization; deleting that path remains the next
-  B2 prerequisite before bundled emission becomes the default.
+  expands only the returned leaf schema. CRD catalog and local override lookup
+  now use the same lazy local-ref descent model, and provider state no longer
+  caches fully expanded per-resource documents. Explicit materialization helpers
+  still exist for tests/debug, but they compute on demand from shared raw
+  documents.
 
 ## Completion criteria
 

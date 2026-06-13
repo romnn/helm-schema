@@ -26,26 +26,6 @@ use super::version_chain::K8sVersionChain;
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
 type MemKey = (String, String, String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct ResourceDocKey {
-    api_version: String,
-    kind: String,
-}
-
-impl ResourceDocKey {
-    fn from_resource(resource: &ResourceRef) -> Self {
-        Self {
-            api_version: resource.api_version.clone(),
-            kind: resource.kind.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-struct MaterializedResourceDoc {
-    root: Arc<Value>,
-}
-
 /// Composer of fetch + cache + lookup primitives for upstream K8s
 /// OpenAPI schemas. Carries a [`K8sVersionChain`] (Feature B) and a
 /// [`K8sMirrorChain`] (Feature B+) and walks the cross product
@@ -67,7 +47,6 @@ pub struct KubernetesJsonSchemaProvider {
     diagnostic_sink: Option<DiagnosticSink>,
 
     mem: Mutex<HashMap<MemKey, SchemaDoc>>,
-    materialized: Mutex<HashMap<ResourceDocKey, MaterializedResourceDoc>>,
 }
 
 /// Tri-state outcome for the capability-oracle probe path. See
@@ -128,7 +107,6 @@ impl KubernetesJsonSchemaProvider {
             layout_checker: Arc::new(LayoutChecker::new()),
             diagnostic_sink: None,
             mem: Mutex::new(HashMap::new()),
-            materialized: Mutex::new(HashMap::new()),
         }
     }
 
@@ -348,53 +326,14 @@ impl KubernetesJsonSchemaProvider {
 
     /// Materialise the entire schema for a resource (used by tests).
     #[must_use]
-    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let materialized = self.materialized_schema_for_resource(resource)?;
-        Some((*materialized.root).clone())
-    }
-
-    #[tracing::instrument(skip_all, fields(kind = key.kind.as_str(), api_version = key.api_version.as_str()))]
-    fn materialized_cache_get(&self, key: &ResourceDocKey) -> Option<MaterializedResourceDoc> {
-        self.materialized
-            .lock()
-            .ok()
-            .and_then(|guard| guard.get(key).cloned())
-    }
-
-    fn materialized_cache_insert(&self, key: ResourceDocKey, doc: MaterializedResourceDoc) {
-        if let Ok(mut guard) = self.materialized.lock() {
-            guard.insert(key, doc);
-        }
-    }
-
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
-    fn materialize_schema_for_resource_uncached(
-        &self,
-        resource: &ResourceRef,
-    ) -> Option<MaterializedResourceDoc> {
+    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
         let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
         let loader = self.loader_for_source(source_id, version.clone());
         let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
         let root_doc = ctx.doc(&filename)?.clone();
         let (_, expanded) = expand_schema_node(&mut ctx, &filename, &root_doc, 0);
-        Some(MaterializedResourceDoc {
-            root: Arc::new(expanded),
-        })
-    }
-
-    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
-    fn materialized_schema_for_resource(
-        &self,
-        resource: &ResourceRef,
-    ) -> Option<MaterializedResourceDoc> {
-        let cache_key = ResourceDocKey::from_resource(resource);
-        if let Some(doc) = self.materialized_cache_get(&cache_key) {
-            return Some(doc);
-        }
-
-        let materialized = self.materialize_schema_for_resource_uncached(resource)?;
-        self.materialized_cache_insert(cache_key, materialized.clone());
-        Some(materialized)
+        Some(expanded)
     }
 
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
