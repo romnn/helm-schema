@@ -1,6 +1,6 @@
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractUse, Guard, ValueKind};
+use helm_schema_ir::{ContractUse, Guard, GuardConstraint, ValueKind};
 use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_two_schemas, union_schema_list};
@@ -48,9 +48,9 @@ impl ResolvePolicy {
         }
     }
 
-    pub(crate) fn guard_constraint_schema(&self, guard: &Guard) -> Option<Value> {
-        match guard {
-            Guard::Eq { value, .. } => Some(Value::Object(
+    pub(crate) fn guard_constraint_schema(&self, constraint: &GuardConstraint) -> Option<Value> {
+        match constraint {
+            GuardConstraint::Eq { value } => Some(Value::Object(
                 [(
                     "anyOf".to_string(),
                     Value::Array(vec![
@@ -68,18 +68,12 @@ impl ResolvePolicy {
                 .into_iter()
                 .collect(),
             )),
-            Guard::TypeIs { schema_type, .. } => match schema_type.as_str() {
+            GuardConstraint::TypeIs { schema_type } => match schema_type.as_str() {
                 "array" | "boolean" | "integer" | "number" | "object" | "string" => {
                     Some(type_schema(schema_type))
                 }
                 _ => None,
             },
-            Guard::Truthy { .. }
-            | Guard::Not { .. }
-            | Guard::Or { .. }
-            | Guard::Range { .. }
-            | Guard::With { .. }
-            | Guard::Default { .. } => None,
         }
     }
 

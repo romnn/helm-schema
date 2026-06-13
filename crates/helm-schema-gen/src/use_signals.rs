@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractProjection, ContractUse, Guard, ValueKind};
+use helm_schema_ir::{ContractPathSignals, ContractProjection, ContractUse, ValueKind};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use crate::resolve_policy::ResolvePolicy;
@@ -31,46 +31,32 @@ pub(crate) fn collect_use_signals(
     provider: &dyn K8sSchemaProvider,
 ) -> UseSignals {
     let uses = contract_projection.uses();
-    let mut referenced_value_paths: BTreeSet<String> = BTreeSet::new();
-    let mut ranged_value_paths: BTreeSet<String> = BTreeSet::new();
-    let mut value_paths_used_as_fragment: BTreeSet<String> = BTreeSet::new();
-    let mut partial_scalar_value_paths: BTreeSet<String> = BTreeSet::new();
+    let resolve_policy = ResolvePolicy::default();
+    let ContractPathSignals {
+        referenced_value_paths,
+        ranged_value_paths,
+        value_paths_used_as_fragment,
+        partial_scalar_value_paths,
+        guard_constraints_by_value_path,
+    } = contract_projection.path_signals();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>> = BTreeMap::new();
     let mut metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-    let mut guard_constraints_by_value_path: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let guard_constraints_by_value_path = guard_constraints_by_value_path
+        .into_iter()
+        .filter_map(|(path, constraints)| {
+            let schemas: Vec<Value> = constraints
+                .iter()
+                .filter_map(|constraint| resolve_policy.guard_constraint_schema(constraint))
+                .collect();
+            (!schemas.is_empty()).then_some((path, schemas))
+        })
+        .collect();
     let mut provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<Value>>> =
         HashMap::new();
-    let resolve_policy = ResolvePolicy::default();
 
     for contract_use in uses {
         if contract_use.source_expr.trim().is_empty() {
             continue;
-        }
-
-        referenced_value_paths.insert(contract_use.source_expr.clone());
-        if contract_use.kind == ValueKind::Fragment {
-            value_paths_used_as_fragment.insert(contract_use.source_expr.clone());
-        }
-        if contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty() {
-            partial_scalar_value_paths.insert(contract_use.source_expr.clone());
-        }
-        for guard in &contract_use.guards {
-            for path in guard.value_paths() {
-                if path.trim().is_empty() {
-                    continue;
-                }
-                referenced_value_paths.insert(path.to_string());
-                if matches!(guard, Guard::Range { .. }) {
-                    ranged_value_paths.insert(path.to_string());
-                }
-
-                if let Some(schema) = resolve_policy.guard_constraint_schema(guard) {
-                    guard_constraints_by_value_path
-                        .entry(path.to_string())
-                        .or_default()
-                        .push(schema);
-                }
-            }
         }
 
         if contract_use.kind != ValueKind::PartialScalar

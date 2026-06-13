@@ -857,6 +857,11 @@ Current result:
 - Nullable-path classification now lives on `ContractProjection`, so the
   generator consumes the contract's null-tolerance facts instead of
   reinterpreting flat guards in `ResolvePolicy`.
+- `ContractProjection` now exposes typed `ContractPathSignals` for referenced
+  paths, ranged paths, fragment/partial-scalar use, and guard constraints, so
+  generator use-signal collection no longer re-walks guards to rediscover
+  those contract facts. JSON Schema lowering for the typed guard constraints
+  remains in generator policy.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, and per-path schema merge lowering against the contract

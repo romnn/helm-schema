@@ -1537,6 +1537,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   claims directly; generator evidence collection, nullable-path
   classification, and `K8sSchemaProvider` lookups consume those claims, while
   `ValueUse` remains only an explicit fixture/external DTO projection.
+  `ContractProjection` also now exposes typed `ContractPathSignals`
+  (referenced paths, ranged paths, fragment/partial-scalar use, and
+  `GuardConstraint` facts), so generator use-signal collection no longer
+  re-walks flat guards to rediscover those contract facts. JSON Schema
+  lowering for those typed guard constraints still lives in generator policy.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against the current contract projection.
 - **A5 — bundled emission**: switch the default output to the

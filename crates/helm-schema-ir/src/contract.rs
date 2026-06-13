@@ -137,6 +137,34 @@ impl From<ContractUse> for ValueUse {
     }
 }
 
+/// Type-level constraints declared by template guards.
+///
+/// These are contract facts, not JSON Schema fragments. Schema lowering stays
+/// in the generator so the contract layer remains independent from output
+/// format policy.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum GuardConstraint {
+    /// `if eq .Values.X "value"` admits the literal value when the branch
+    /// renders.
+    Eq { value: String },
+    /// `if typeIs "<json type>" .Values.X` declares the type accepted by the
+    /// branch.
+    TypeIs { schema_type: String },
+}
+
+/// Path-level facts derived directly from normalized contract claims.
+///
+/// These are the values paths that downstream schema generation must consider,
+/// plus typed guard facts that can be lowered by generator policy.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ContractPathSignals {
+    pub referenced_value_paths: BTreeSet<String>,
+    pub ranged_value_paths: BTreeSet<String>,
+    pub value_paths_used_as_fragment: BTreeSet<String>,
+    pub partial_scalar_value_paths: BTreeSet<String>,
+    pub guard_constraints_by_value_path: BTreeMap<String, Vec<GuardConstraint>>,
+}
+
 /// Receives contract claims from node/action interpretation.
 ///
 /// Some helper-summary passes intentionally implement this as a no-op because
@@ -198,6 +226,13 @@ impl ContractProjection {
     #[must_use]
     pub fn chart_facts(&self) -> ChartFacts {
         derive_chart_facts_from_uses(&self.uses)
+    }
+
+    /// Derive path-level reference and guard-constraint facts from this
+    /// normalized projection.
+    #[must_use]
+    pub fn path_signals(&self) -> ContractPathSignals {
+        derive_path_signals_from_uses(&self.uses)
     }
 
     /// Identify value paths for which an explicit `null` default is accepted
@@ -516,6 +551,67 @@ fn derive_chart_facts_from_uses(uses: &[ContractUse]) -> ChartFacts {
     ChartFacts { path_facts }
 }
 
+fn derive_path_signals_from_uses(uses: &[ContractUse]) -> ContractPathSignals {
+    let mut signals = ContractPathSignals::default();
+    for contract_use in uses {
+        if contract_use.source_expr.trim().is_empty() {
+            continue;
+        }
+
+        signals
+            .referenced_value_paths
+            .insert(contract_use.source_expr.clone());
+        if contract_use.kind == ValueKind::Fragment {
+            signals
+                .value_paths_used_as_fragment
+                .insert(contract_use.source_expr.clone());
+        }
+        if contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty() {
+            signals
+                .partial_scalar_value_paths
+                .insert(contract_use.source_expr.clone());
+        }
+        for guard in &contract_use.guards {
+            for path in guard.value_paths() {
+                if path.trim().is_empty() {
+                    continue;
+                }
+                signals.referenced_value_paths.insert(path.to_string());
+                if matches!(guard, Guard::Range { .. }) {
+                    signals.ranged_value_paths.insert(path.to_string());
+                }
+
+                if let Some(constraint) = guard_constraint_from_guard(guard) {
+                    signals
+                        .guard_constraints_by_value_path
+                        .entry(path.to_string())
+                        .or_default()
+                        .push(constraint);
+                }
+            }
+        }
+    }
+
+    signals
+}
+
+fn guard_constraint_from_guard(guard: &Guard) -> Option<GuardConstraint> {
+    match guard {
+        Guard::Eq { value, .. } => Some(GuardConstraint::Eq {
+            value: value.clone(),
+        }),
+        Guard::TypeIs { schema_type, .. } => Some(GuardConstraint::TypeIs {
+            schema_type: schema_type.clone(),
+        }),
+        Guard::Truthy { .. }
+        | Guard::Not { .. }
+        | Guard::Or { .. }
+        | Guard::Range { .. }
+        | Guard::With { .. }
+        | Guard::Default { .. } => None,
+    }
+}
+
 fn derive_nullable_value_paths_from_uses(uses: &[ContractUse]) -> BTreeSet<String> {
     struct NullablePathAccumulator {
         has_render_use: bool,
@@ -811,6 +907,89 @@ mod tests {
         assert!(
             !nullable_paths.contains("serviceAccount.name"),
             "one guarded render use must not make a bare render site nullable: {nullable_paths:?}",
+        );
+    }
+
+    #[test]
+    fn contract_projection_path_signals_collect_references_and_typed_guard_constraints() {
+        let projection = ContractProjection::from_contract_uses(vec![
+            ContractUse::new(
+                "podLabels".to_string(),
+                YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+                ValueKind::Fragment,
+                vec![
+                    Guard::Eq {
+                        path: "mode".to_string(),
+                        value: "prod".to_string(),
+                    },
+                    Guard::TypeIs {
+                        path: "extraConfig".to_string(),
+                        schema_type: "string".to_string(),
+                    },
+                    Guard::Range {
+                        path: "extraEnv".to_string(),
+                    },
+                ],
+                None,
+            ),
+            ContractUse::new(
+                "image.tag".to_string(),
+                YamlPath(vec!["spec".to_string(), "image".to_string()]),
+                ValueKind::PartialScalar,
+                Vec::new(),
+                None,
+            ),
+            ContractUse::new(
+                String::new(),
+                YamlPath(vec!["ignored".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Eq {
+                    path: "ignored.guard".to_string(),
+                    value: "ignored".to_string(),
+                }],
+                None,
+            ),
+        ]);
+
+        let signals = projection.path_signals();
+
+        assert_eq!(
+            signals.referenced_value_paths,
+            BTreeSet::from([
+                "extraConfig".to_string(),
+                "extraEnv".to_string(),
+                "image.tag".to_string(),
+                "mode".to_string(),
+                "podLabels".to_string(),
+            ]),
+        );
+        assert_eq!(
+            signals.ranged_value_paths,
+            BTreeSet::from(["extraEnv".to_string()]),
+        );
+        assert_eq!(
+            signals.value_paths_used_as_fragment,
+            BTreeSet::from(["podLabels".to_string()]),
+        );
+        assert_eq!(
+            signals.partial_scalar_value_paths,
+            BTreeSet::from(["image.tag".to_string()]),
+        );
+        assert_eq!(
+            signals.guard_constraints_by_value_path.get("mode"),
+            Some(&vec![GuardConstraint::Eq {
+                value: "prod".to_string(),
+            }]),
+        );
+        assert_eq!(
+            signals.guard_constraints_by_value_path.get("extraConfig"),
+            Some(&vec![GuardConstraint::TypeIs {
+                schema_type: "string".to_string(),
+            }]),
+        );
+        assert!(
+            !signals.referenced_value_paths.contains("ignored.guard"),
+            "empty-source compatibility rows should not seed schema paths",
         );
     }
 }
