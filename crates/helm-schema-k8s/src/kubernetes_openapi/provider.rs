@@ -20,7 +20,7 @@ use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::schema_doc::SchemaDoc;
 
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
-use super::resolve_ctx::{ResolveCtx, expand_schema_node};
+use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf, expand_schema_node};
 use super::version_chain::K8sVersionChain;
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
@@ -43,7 +43,6 @@ impl ResourceDocKey {
 
 #[derive(Debug, Clone)]
 struct MaterializedResourceDoc {
-    resolved_k8s_version: String,
     root: Arc<Value>,
 }
 
@@ -335,23 +334,15 @@ impl KubernetesJsonSchemaProvider {
         &self,
         source_id: String,
         version: String,
-    ) -> impl FnMut(&str) -> Option<PathBuf> + '_ {
+    ) -> impl FnMut(&str) -> Option<SchemaDoc> + '_ {
         move |filename: &str| {
-            let local = k8s_cache_path(&self.cache_dir, &source_id, &version, filename);
-            if local.exists() {
-                return Some(local);
-            }
-            // Fall through to fetch the neighbour file via the same
-            // source. Look it up through `try_load_from_source` so the
-            // negative-cache + meta-sidecar paths still run.
             let source = self
                 .mirrors
                 .sources
                 .iter()
                 .find(|s| s.source_id == source_id)
                 .cloned()?;
-            self.try_load_from_source(&source, &version, filename)?;
-            if local.exists() { Some(local) } else { None }
+            self.try_load_from_source(&source, &version, filename)
         }
     }
 
@@ -387,7 +378,6 @@ impl KubernetesJsonSchemaProvider {
         let root_doc = ctx.doc(&filename)?.clone();
         let (_, expanded) = expand_schema_node(&mut ctx, &filename, &root_doc, 0);
         Some(MaterializedResourceDoc {
-            resolved_k8s_version: version,
             root: Arc::new(expanded),
         })
     }
@@ -405,6 +395,20 @@ impl KubernetesJsonSchemaProvider {
         let materialized = self.materialize_schema_for_resource_uncached(resource)?;
         self.materialized_cache_insert(cache_key, materialized.clone());
         Some(materialized)
+    }
+
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
+    fn schema_for_resource_path_uncached(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<(String, Option<Value>)> {
+        let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
+        let loader = self.loader_for_source(source_id, version.clone());
+        let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
+        let root_doc = ctx.doc(&filename)?.clone();
+        let schema = descend_schema_path_expanding_leaf(&mut ctx, &filename, &root_doc, &path.0);
+        Some((version, schema))
     }
 
     /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`
@@ -648,8 +652,8 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
-        let materialized = self.materialized_schema_for_resource(resource)?;
-        crate::local_override::descend_schema_path(&materialized.root, &path.0)
+        self.schema_for_resource_path_uncached(resource, path)
+            .and_then(|(_version, schema)| schema)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -661,24 +665,26 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return ProviderLookupResult::NotOwned;
         }
-        let Some(materialized) = self.materialized_schema_for_resource(resource) else {
+        let Some((resolved_k8s_version, schema)) =
+            self.schema_for_resource_path_uncached(resource, path)
+        else {
             return ProviderLookupResult::NotOwned;
+        };
+        let Some(schema) = schema else {
+            return ProviderLookupResult::PathUnresolved;
         };
         let primary = self
             .versions
             .primary()
-            .unwrap_or(&materialized.resolved_k8s_version)
+            .unwrap_or(&resolved_k8s_version)
             .to_string();
-        match crate::local_override::descend_schema_path(&materialized.root, &path.0) {
-            Some(schema) => ProviderLookupResult::Found {
-                schema,
-                resolved_k8s_version: if primary == materialized.resolved_k8s_version {
-                    None
-                } else {
-                    Some(materialized.resolved_k8s_version)
-                },
+        ProviderLookupResult::Found {
+            schema,
+            resolved_k8s_version: if primary == resolved_k8s_version {
+                None
+            } else {
+                Some(resolved_k8s_version)
             },
-            None => ProviderLookupResult::PathUnresolved,
         }
     }
 

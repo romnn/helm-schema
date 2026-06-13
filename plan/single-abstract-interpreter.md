@@ -897,8 +897,10 @@ Current result:
   extraction preserves current output behavior but gives bundled-vs-flattened
   emission one owner for the later default change.
 - B2 has started under the provider layer: raw parsed schema documents are now
-  shared through `SchemaDoc` instead of cloned out of provider caches. Fully
-  expanded per-resource documents still exist; deleting them remains the next
+  shared through `SchemaDoc` instead of cloned out of provider caches, and the
+  upstream K8s provider's production path lookup now follows `$ref`s lazily and
+  expands only the returned leaf schema. Fully expanded per-resource documents
+  still exist for explicit materialization; deleting that path remains the next
   B2 prerequisite before bundled emission becomes the default.
 
 ## Completion criteria

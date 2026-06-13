@@ -1544,9 +1544,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   interpreter, so memory blame lands on the right layer. Also the
   prerequisite for A5's bundling. Current progress: providers now share parsed
   raw schema documents through a named `SchemaDoc` wrapper instead of cloning
-  whole `serde_json::Value` trees from raw document caches. The remaining B2
-  work is to make resource-path lookup descend through refs lazily and stop
-  caching fully expanded resource documents as the production lookup path.
+  whole `serde_json::Value` trees from raw document caches, and the upstream
+  K8s provider's production path lookup now descends through `$ref`s lazily
+  while expanding only the returned leaf schema. The remaining B2 work is to
+  move CRD/local override lookup to the same lazy document model, then delete
+  the fully expanded per-resource materialization cache once explicit
+  materialization tests/debug helpers have another home.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the

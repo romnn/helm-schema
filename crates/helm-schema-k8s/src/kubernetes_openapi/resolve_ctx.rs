@@ -1,6 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::path::PathBuf;
 
 use serde_json::{Map, Value};
 
@@ -12,15 +10,15 @@ use crate::schema_doc::SchemaDoc;
 /// The context is short-lived: one per top-level `schema_for_resource_path`
 /// call. The provider supplies a loader that knows how to fetch a
 /// neighboring schema file by relative filename (typically by mapping
-/// the filename into the K8s cache layout and calling the same fetch
-/// path the resource doc came from).
-pub struct ResolveCtx<F: FnMut(&str) -> Option<PathBuf>> {
+/// the filename through the same provider fetch/cache path the
+/// resource doc came from).
+pub struct ResolveCtx<F: FnMut(&str) -> Option<SchemaDoc>> {
     loader: F,
     docs: HashMap<String, SchemaDoc>,
     stack: HashSet<(String, String)>,
 }
 
-impl<F: FnMut(&str) -> Option<PathBuf>> ResolveCtx<F> {
+impl<F: FnMut(&str) -> Option<SchemaDoc>> ResolveCtx<F> {
     pub fn new(loader: F, root_filename: String, root_doc: SchemaDoc) -> Self {
         let mut docs = HashMap::new();
         docs.insert(root_filename, root_doc);
@@ -47,22 +45,20 @@ impl<F: FnMut(&str) -> Option<PathBuf>> ResolveCtx<F> {
         if self.docs.contains_key(filename) {
             return self.doc(filename);
         }
-        let local = (self.loader)(filename)?;
-        let bytes = fs::read(&local).ok()?;
-        let doc: Value = serde_json::from_slice(&bytes).ok()?;
-        self.docs.insert(filename.to_string(), SchemaDoc::new(doc));
+        let doc = (self.loader)(filename)?;
+        self.docs.insert(filename.to_string(), doc);
         self.doc(filename)
     }
 
-    fn resolve_ref(&mut self, current_filename: &str, r: &str) -> Option<(String, Value)> {
-        if let Some(ptr) = r.strip_prefix('#') {
+    fn resolve_ref(&mut self, current_filename: &str, reference: &str) -> Option<(String, Value)> {
+        if let Some(ptr) = reference.strip_prefix('#') {
             let doc = self.doc(current_filename)?;
             return doc
                 .pointer(ptr)
                 .cloned()
                 .map(|v| (current_filename.to_string(), v));
         }
-        let (file, ptr) = r.split_once('#').unwrap_or((r, ""));
+        let (file, ptr) = reference.split_once('#').unwrap_or((reference, ""));
         let filename = Self::normalize_ref_filename(current_filename, file);
         let doc = self.load_doc(&filename)?.clone();
         if ptr.is_empty() {
@@ -82,7 +78,7 @@ fn strip_ref(schema: &Value) -> Value {
     Value::Object(out)
 }
 
-pub fn expand_schema_node<F: FnMut(&str) -> Option<PathBuf>>(
+pub fn expand_schema_node<F: FnMut(&str) -> Option<SchemaDoc>>(
     ctx: &mut ResolveCtx<F>,
     current_filename: &str,
     schema: &Value,
@@ -188,4 +184,211 @@ pub fn expand_schema_node<F: FnMut(&str) -> Option<PathBuf>>(
     }
 
     (current_filename.to_string(), Value::Object(obj))
+}
+
+pub fn descend_schema_path_expanding_leaf<F: FnMut(&str) -> Option<SchemaDoc>>(
+    ctx: &mut ResolveCtx<F>,
+    current_filename: &str,
+    schema: &Value,
+    path: &[String],
+) -> Option<Value> {
+    let (leaf_filename, leaf_schema) =
+        descend_schema_path_node(ctx, current_filename, schema, path, 0)?;
+    Some(expand_schema_node(ctx, &leaf_filename, &leaf_schema, 0).1)
+}
+
+fn descend_schema_path_node<F: FnMut(&str) -> Option<SchemaDoc>>(
+    ctx: &mut ResolveCtx<F>,
+    current_filename: &str,
+    schema: &Value,
+    path: &[String],
+    depth: usize,
+) -> Option<(String, Value)> {
+    if depth > 64 {
+        return Some((current_filename.to_string(), schema.clone()));
+    }
+
+    let Some((segment, remaining_path)) = path.split_first() else {
+        return Some((current_filename.to_string(), schema.clone()));
+    };
+
+    let (next_filename, next_schema) =
+        descend_one_schema_path_segment(ctx, current_filename, schema, segment, depth)?;
+    descend_schema_path_node(ctx, &next_filename, &next_schema, remaining_path, depth + 1)
+}
+
+fn descend_one_schema_path_segment<F: FnMut(&str) -> Option<SchemaDoc>>(
+    ctx: &mut ResolveCtx<F>,
+    current_filename: &str,
+    schema: &Value,
+    segment: &str,
+    depth: usize,
+) -> Option<(String, Value)> {
+    let (schema_filename, schema) = resolve_direct_ref(ctx, current_filename, schema, depth)?;
+
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        if let Some(branches) = schema.get(keyword).and_then(Value::as_array) {
+            for branch in branches {
+                if let Some(next) = descend_one_schema_path_segment(
+                    ctx,
+                    &schema_filename,
+                    branch,
+                    segment,
+                    depth + 1,
+                ) {
+                    return Some(next);
+                }
+            }
+        }
+    }
+
+    let (key, is_array_item) = segment
+        .strip_suffix("[*]")
+        .map_or((segment, false), |key| (key, true));
+
+    let mut next = schema
+        .get("properties")
+        .and_then(Value::as_object)
+        .and_then(|properties| properties.get(key))
+        .or_else(|| {
+            schema
+                .get("additionalProperties")
+                .and_then(|additional_properties| {
+                    if additional_properties.is_boolean() {
+                        None
+                    } else {
+                        Some(additional_properties)
+                    }
+                })
+        })?
+        .clone();
+    let mut next_filename = schema_filename;
+
+    if is_array_item {
+        (next_filename, next) = resolve_direct_ref(ctx, &next_filename, &next, depth + 1)?;
+        next = next
+            .get("items")
+            .or_else(|| {
+                next.get("prefixItems")
+                    .and_then(Value::as_array)
+                    .and_then(|items| items.first())
+            })?
+            .clone();
+    }
+
+    Some((next_filename, next))
+}
+
+fn resolve_direct_ref<F: FnMut(&str) -> Option<SchemaDoc>>(
+    ctx: &mut ResolveCtx<F>,
+    current_filename: &str,
+    schema: &Value,
+    depth: usize,
+) -> Option<(String, Value)> {
+    if depth > 64 {
+        return Some((current_filename.to_string(), schema.clone()));
+    }
+    let Some(reference) = schema.get("$ref").and_then(Value::as_str) else {
+        return Some((current_filename.to_string(), schema.clone()));
+    };
+
+    let key = if let Some(pointer) = reference.strip_prefix('#') {
+        (current_filename.to_string(), format!("#{pointer}"))
+    } else {
+        let (file, pointer) = reference.split_once('#').unwrap_or((reference, ""));
+        let filename = ResolveCtx::<F>::normalize_ref_filename(current_filename, file);
+        (filename, format!("#{pointer}"))
+    };
+
+    if ctx.stack.contains(&key) {
+        return Some((current_filename.to_string(), strip_ref(schema)));
+    }
+    ctx.stack.insert(key.clone());
+
+    let resolved = ctx
+        .resolve_ref(current_filename, reference)
+        .and_then(|(filename, target)| resolve_direct_ref(ctx, &filename, &target, depth + 1));
+
+    ctx.stack.remove(&key);
+    resolved.or_else(|| Some((current_filename.to_string(), strip_ref(schema))))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn lazy_path_descent_matches_full_expansion_for_cross_file_array_ref() {
+        let root = SchemaDoc::new(json!({
+            "type": "object",
+            "properties": {
+                "spec": {
+                    "$ref": "defs.json#/definitions/Spec"
+                }
+            }
+        }));
+        let definitions = SchemaDoc::new(json!({
+            "definitions": {
+                "Spec": {
+                    "type": "object",
+                    "properties": {
+                        "containers": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Container"
+                            }
+                        }
+                    }
+                },
+                "Container": {
+                    "type": "object",
+                    "properties": {
+                        "env": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }));
+        let docs = HashMap::from([("defs.json".to_string(), definitions.clone())]);
+        let path = vec![
+            "spec".to_string(),
+            "containers[*]".to_string(),
+            "env".to_string(),
+        ];
+
+        let mut full_ctx = ResolveCtx::new(
+            {
+                let docs = docs.clone();
+                move |filename| docs.get(filename).cloned()
+            },
+            "root.json".to_string(),
+            root.clone(),
+        );
+        let expanded_root = expand_schema_node(&mut full_ctx, "root.json", root.root(), 0).1;
+        let expected = crate::local_override::descend_schema_path(&expanded_root, &path)
+            .expect("expanded root should contain path");
+
+        let mut lazy_ctx = ResolveCtx::new(
+            move |filename| docs.get(filename).cloned(),
+            "root.json".to_string(),
+            root,
+        );
+        let lazy_root = lazy_ctx
+            .doc("root.json")
+            .cloned()
+            .expect("root doc should be present");
+        let actual =
+            descend_schema_path_expanding_leaf(&mut lazy_ctx, "root.json", &lazy_root, &path)
+                .expect("lazy descent should contain path");
+
+        assert_eq!(actual, expected);
+    }
 }
