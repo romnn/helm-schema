@@ -1550,7 +1550,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   behind a dedicated `ProviderLookupCache`, and apiVersion inference
   memoization lives behind `ApiVersionInferenceCache`, leaving `Chain`
   focused on execution ordering, final-miss decisions, and the current
-  compatibility facade.
+  compatibility facade. Candidate apiVersion planning now has a named
+  `ResourceLookupPlan`, so `schema_for_use` consumes concrete resource
+  attempts instead of open-coding branch/candidate selection inline.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the

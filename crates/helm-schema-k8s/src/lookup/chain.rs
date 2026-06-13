@@ -13,6 +13,7 @@ use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
+use super::resource_lookup_plan::ResourceLookupPlan;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
 
@@ -141,29 +142,6 @@ impl Chain {
             }
         }
 
-        // Typed apiVersion branches are evaluated against the primary K8s
-        // version's capability oracle, and only live branch literals are
-        // probed. Nested helper branch bodies compose through delegation
-        // depth, so resource identity matches the manifest the chart would
-        // emit at runtime. Without typed branches, fall back to the flat
-        // candidate list.
-        let iteration_versions: Vec<String> = if !resource.api_version_branches.is_empty() {
-            let live = capability_eval::live_literals(&resource.api_version_branches, self);
-            if live.is_empty() {
-                crate::ordered_api_versions_for_resource(resource)
-                    .into_iter()
-                    .map(str::to_string)
-                    .collect()
-            } else {
-                live
-            }
-        } else {
-            crate::ordered_api_versions_for_resource(resource)
-                .into_iter()
-                .map(str::to_string)
-                .collect()
-        };
-
         // Track whether ANY candidate's resolution reached a
         // `Resolved` outcome — including `Resolved { schema: None }`,
         // which is the intentional PathUnresolved silence (provider
@@ -173,14 +151,9 @@ impl Chain {
         // where the spec doesn't constrain free-form data) into
         // diagnostic noise.
         let mut any_resolved_owner = false;
-        for api_version in iteration_versions {
-            let candidate = ResourceRef {
-                api_version,
-                kind: resource.kind.clone(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            };
-            let outcome = self.resolve_against_chain_internal(&candidate, &use_.path, false);
+        let plan = ResourceLookupPlan::for_resource(resource, self);
+        for candidate in plan.candidates() {
+            let outcome = self.resolve_against_chain_internal(candidate, &use_.path, false);
             match outcome {
                 ChainLookupOutcome::Resolved {
                     schema: Some(v), ..
