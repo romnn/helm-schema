@@ -102,7 +102,7 @@ pub(crate) fn analyze_charts(
 
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
-    let contract_schema_signals = contract.project().schema_signals();
+    let contract_schema_signals = contract.into_schema_signals();
 
     Ok(ChartAnalysis {
         contract_schema_signals,

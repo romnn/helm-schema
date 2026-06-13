@@ -378,6 +378,16 @@ impl ContractIr {
         ContractProjection { uses: self.uses }
     }
 
+    /// Normalize claims and derive the typed schema-generation signals.
+    ///
+    /// Production schema generation should use this method when it does not
+    /// need fixture/inspection rows. [`ContractProjection`] remains the
+    /// explicit DTO projection boundary.
+    pub fn into_schema_signals(mut self) -> ContractSchemaSignals {
+        self.normalize();
+        derive_schema_signals_from_uses(&self.uses)
+    }
+
     /// Normalize claims and project them to the fixture `ValueUse` DTO.
     pub fn into_value_uses(self) -> Vec<ValueUse> {
         self.project().into_value_uses()
@@ -1455,6 +1465,47 @@ mod tests {
             "contract value-path facts should bundle nullable render-use evidence",
         );
         assert_eq!(signals.provider_schema_uses.len(), 2);
+    }
+
+    #[test]
+    fn contract_ir_derives_schema_signals_without_projection_detour() {
+        let resource = ResourceRef {
+            api_version: "v1".to_string(),
+            kind: "ServiceAccount".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        };
+        let uses = vec![
+            ContractUse::new(
+                "serviceAccount.name".to_string(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                Vec::new(),
+                Some(resource.clone()),
+            ),
+            ContractUse::new(
+                "serviceAccount.name".to_string(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                ValueKind::Scalar,
+                vec![Guard::Default {
+                    path: "serviceAccount.name".to_string(),
+                }],
+                Some(resource),
+            ),
+            ContractUse::new(
+                "podLabels".to_string(),
+                YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+                ValueKind::Fragment,
+                Vec::new(),
+                None,
+            ),
+        ];
+
+        let contract = ContractIr { uses };
+        let projection_signals = contract.clone().project().schema_signals();
+        let direct_signals = contract.into_schema_signals();
+
+        assert_eq!(direct_signals, projection_signals);
     }
 
     #[test]

@@ -1581,11 +1581,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   strings.
   CLI chart analysis now returns that `ContractSchemaSignals` artifact
   directly, so the generation boundary no longer receives or exposes the
-  compatibility-era projection. `ContractProjection` remains the internal
-  normalization step that derives the signal artifact, but the
-  analysis-to-generation seam is now explicitly signal-shaped.
-  The policy-extraction half does **not** depend on A3 and can start earlier
-  against the current contract projection.
+  compatibility-era projection. Production analysis derives those signals
+  directly from the normalized `ContractIr`; `ContractProjection` remains
+  only the explicit fixture/external DTO inspection boundary.
+  The policy-extraction half does **not** depend on A3 and can continue
+  against the current `ContractIr`-derived signal path.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI
