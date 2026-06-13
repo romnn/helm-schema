@@ -18,7 +18,7 @@ use helm_schema_ir::{
     ChartFacts, ContractIr, ContractProjection, SymbolicIrContext, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };
-use helm_schema_k8s::DiagnosticSink;
+use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 use tracing_subscriber::Layer as _;
@@ -254,15 +254,16 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
         &opts.values_files,
     )?;
 
-    let ChartIrCollection {
+    let ChartAnalysis {
         contract_projection,
         chart_facts,
         type_hints,
         call_graph,
-    } = collect_ir_for_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
+        local_schema_universe,
+    } = analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
 
     let mut provider_options = opts.provider.clone();
-    provider_options.local_schema_universe = chart::collect_static_crd_universe(charts)?;
+    provider_options.local_schema_universe = local_schema_universe;
     let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
 
     let mut schema = generate_values_schema(
@@ -336,12 +337,13 @@ fn ensure_json_object(value: &mut Value) -> &mut Map<String, Value> {
     }
 }
 
-/// IR + auxiliary signals collected from a chart's templates.
-pub(crate) struct ChartIrCollection {
+/// Contract and auxiliary signals collected from a chart tree.
+pub(crate) struct ChartAnalysis {
     pub(crate) contract_projection: ContractProjection,
     pub(crate) chart_facts: ChartFacts,
     pub(crate) type_hints: BTreeMap<String, Vec<Value>>,
     pub(crate) call_graph: HelperCallGraph,
+    pub(crate) local_schema_universe: LocalSchemaUniverse,
 }
 
 fn seed_top_level_values_yaml_keys(contract: &mut ContractIr, values_yaml: Option<&str>) {
@@ -499,15 +501,16 @@ fn reachable_helpers(graph: &HelperCallGraph, seeds: &BTreeSet<String>) -> BTree
 }
 
 #[tracing::instrument(skip_all)]
-fn collect_ir_for_charts(
+fn analyze_charts(
     charts: &[chart::ChartContext],
     defines: &DefineIndex,
     include_tests: bool,
     values_yaml: Option<&str>,
-) -> CliResult<ChartIrCollection> {
+) -> CliResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
     let mut chart_facts = ChartFacts::default();
     let mut type_hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let local_schema_universe = chart::collect_static_crd_universe(charts)?;
     let symbolic_context = SymbolicIrContext::new(defines);
 
     for c in charts {
@@ -539,11 +542,12 @@ fn collect_ir_for_charts(
 
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
-    Ok(ChartIrCollection {
+    Ok(ChartAnalysis {
         contract_projection: contract.project(),
         chart_facts,
         type_hints,
         call_graph,
+        local_schema_universe,
     })
 }
 
@@ -745,7 +749,7 @@ spec:
 
         let discovery = chart::discover_chart_contexts(&chart_dir)?;
         let defines = chart::build_define_index(&discovery.charts, false)?;
-        let collection = collect_ir_for_charts(&discovery.charts, &defines, false, None)?;
+        let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
         let path = "kid.controller.ingressClassResource.parameters";
 
         let uses = collection.contract_projection.uses();
@@ -881,7 +885,7 @@ spec:
         let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
         let discovery = chart::discover_chart_contexts(&chart_dir)?;
         let defines = chart::build_define_index(&discovery.charts, false)?;
-        let collection = collect_ir_for_charts(&discovery.charts, &defines, false, None)?;
+        let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
         let path = "alertmanager.serviceAccount.name";
 
         assert!(

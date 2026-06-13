@@ -1608,7 +1608,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   universe boundary now has a source-neutral `LocalResourceSchema` insertion
   surface: static CRD manifests are one producer, and fully-literal rendered
   CRD document projection can later populate the same artifact instead of
-  adding another provider path.
+  adding another provider path. The CLI's transitional chart analysis artifact
+  now owns that local schema universe next to the contract projection and other
+  compatibility signals, matching the target `Analysis { contract,
+  local_schemas }` shape while preserving today's provider lookup order.
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 
