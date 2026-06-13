@@ -2,6 +2,7 @@ mod api_presence;
 mod chain;
 mod chain_outcome;
 mod miss_diagnostics;
+mod provider_lookup_cache;
 mod provider_origin;
 mod provider_result;
 mod trace;

@@ -12,6 +12,7 @@ use crate::inference::{self, ApiVersionInferenceOutcome};
 use super::api_presence::ApiPresenceQuery;
 use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
+use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
@@ -29,15 +30,7 @@ pub struct Chain {
     sink: Option<DiagnosticSink>,
     inference_enabled: bool,
     inference_cache: Mutex<HashMap<String, ApiVersionInferenceOutcome>>,
-    provider_lookup_cache: Mutex<HashMap<ProviderLookupCacheKey, ProviderLookupResult>>,
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-struct ProviderLookupCacheKey {
-    provider_index: usize,
-    api_version: String,
-    kind: String,
-    path: Vec<String>,
+    provider_lookup_cache: ProviderLookupCache,
 }
 
 impl Chain {
@@ -48,7 +41,7 @@ impl Chain {
             sink: None,
             inference_enabled: false,
             inference_cache: Mutex::new(HashMap::new()),
-            provider_lookup_cache: Mutex::new(HashMap::new()),
+            provider_lookup_cache: ProviderLookupCache::default(),
         }
     }
 
@@ -81,33 +74,6 @@ impl Chain {
             guard.insert(kind.to_string(), inferred.clone());
         }
         inferred
-    }
-
-    fn lookup_with_provider_cache(
-        &self,
-        provider_index: usize,
-        provider: &dyn K8sSchemaProvider,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> ProviderLookupResult {
-        let key = ProviderLookupCacheKey {
-            provider_index,
-            api_version: resource.api_version.clone(),
-            kind: resource.kind.clone(),
-            path: path.0.clone(),
-        };
-
-        if let Ok(guard) = self.provider_lookup_cache.lock()
-            && let Some(cached) = guard.get(&key)
-        {
-            return cached.clone();
-        }
-
-        let result = provider.lookup(resource, path);
-        if let Ok(mut guard) = self.provider_lookup_cache.lock() {
-            guard.insert(key, result.clone());
-        }
-        result
     }
 
     /// Schema for a [`ValueUse`] — iterates the ordered api-version
@@ -320,8 +286,12 @@ impl Chain {
     ) -> TracedLookupOutcome {
         let mut trace = LookupTrace::new(resource, path);
         for (provider_index, provider) in self.providers.iter().enumerate() {
-            let result =
-                self.lookup_with_provider_cache(provider_index, provider.as_ref(), resource, path);
+            let result = self.provider_lookup_cache.lookup(
+                provider_index,
+                provider.as_ref(),
+                resource,
+                path,
+            );
             trace.record_provider(provider.origin(), &result);
             match result {
                 ProviderLookupResult::Found {

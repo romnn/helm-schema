@@ -1546,7 +1546,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   records. Final miss diagnostics now start from that trace too:
   `MissingSchema`, local override unreadability, and provider companion
   diagnostics are projected from the failed resource/path trace after the
-  chain decides the miss is final.
+  chain decides the miss is final. Provider lookup memoization also moved
+  behind a dedicated `ProviderLookupCache`, leaving `Chain` focused on
+  execution ordering, final-miss decisions, and the current compatibility
+  facade.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the

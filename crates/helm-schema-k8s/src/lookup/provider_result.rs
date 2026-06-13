@@ -3,9 +3,9 @@ use serde_json::Value;
 /// Result of a single provider answering "do you own this resource,
 /// and if so, can you resolve this path?". Provider-local: emits no
 /// diagnostics directly. The chain ([`crate::lookup::Chain`])
-/// aggregates these into a [`crate::lookup::ChainLookupOutcome`] and
-/// is the only layer allowed to emit
-/// [`crate::diagnostic::Diagnostic::MissingSchema`].
+/// records these outcomes in a lookup trace, projects diagnostics
+/// from final misses, and returns the public
+/// [`crate::lookup::ChainLookupOutcome`].
 #[derive(Clone, Debug)]
 pub enum ProviderLookupResult {
     /// Provider owns the resource AND resolved the requested path.
