@@ -96,24 +96,6 @@ pub(crate) fn eval_expr_value(expr: &TemplateExpr, env: &EvalEnv) -> Option<Abst
     eval_expr(expr, env).value
 }
 
-pub(crate) fn apply_assignment_expr(expr: &TemplateExpr, env: &mut EvalEnv) -> bool {
-    match expr {
-        TemplateExpr::VariableDefinition { name, value } => {
-            let name = name.trim_start_matches('$');
-            let value = eval_expr_value(value, env);
-            env.declare_local(name, value);
-            true
-        }
-        TemplateExpr::Assignment { name, value } => {
-            let name = name.trim_start_matches('$');
-            let value = eval_expr_value(value, env);
-            env.assign_local(name, value);
-            true
-        }
-        _ => false,
-    }
-}
-
 pub(crate) fn apply_local_set_mutations_expr(expr: &TemplateExpr, env: &mut EvalEnv) -> bool {
     let mutation_expr = match expr {
         TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
@@ -824,9 +806,9 @@ mod tests {
     fn set_call_updates_local_key_with_assigned_literal() {
         let expr = single_expr(r#"set $config (printf "%s" "name") "generated""#);
         let mut env = EvalEnv::default();
-        env.declare_local(
-            "config",
-            Some(dict(&[
+        env.locals.insert(
+            "config".to_string(),
+            dict(&[
                 (
                     "name",
                     AbstractValue::ValuesPath("serviceAccount.name".to_string()),
@@ -835,7 +817,7 @@ mod tests {
                     "annotations",
                     AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
                 ),
-            ])),
+            ]),
         );
 
         assert!(apply_local_set_mutations_expr(&expr, &mut env));
@@ -865,12 +847,12 @@ mod tests {
     fn set_call_inside_throwaway_assignment_updates_local_key() {
         let expr = single_expr(r#"$_ := set $config (printf "%s" "name") "generated""#);
         let mut env = EvalEnv::default();
-        env.declare_local(
-            "config",
-            Some(dict(&[(
+        env.locals.insert(
+            "config".to_string(),
+            dict(&[(
                 "name",
                 AbstractValue::ValuesPath("serviceAccount.name".to_string()),
-            )])),
+            )]),
         );
 
         assert!(apply_local_set_mutations_expr(&expr, &mut env));
@@ -894,12 +876,12 @@ mod tests {
     fn set_call_preserves_assigned_value_path() {
         let expr = single_expr(r#"$_ := set $config "name" .Values.generatedName"#);
         let mut env = EvalEnv::default();
-        env.declare_local(
-            "config",
-            Some(dict(&[(
+        env.locals.insert(
+            "config".to_string(),
+            dict(&[(
                 "name",
                 AbstractValue::ValuesPath("serviceAccount.name".to_string()),
-            )])),
+            )]),
         );
 
         assert!(apply_local_set_mutations_expr(&expr, &mut env));
@@ -915,9 +897,9 @@ mod tests {
     fn selector_on_local_dict_records_only_selected_child_reads() {
         let expr = single_expr(r#"$config.annotations"#);
         let mut env = EvalEnv::default();
-        env.declare_local(
-            "config",
-            Some(dict(&[
+        env.locals.insert(
+            "config".to_string(),
+            dict(&[
                 (
                     "name",
                     AbstractValue::ValuesPath("serviceAccount.name".to_string()),
@@ -926,7 +908,7 @@ mod tests {
                     "annotations",
                     AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
                 ),
-            ])),
+            ]),
         );
 
         let result = eval_expr(&expr, &env);

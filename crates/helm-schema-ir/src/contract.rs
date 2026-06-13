@@ -197,13 +197,6 @@ impl ContractIr {
         self.uses.push(contract_use);
     }
 
-    pub(crate) fn extend<I>(&mut self, contract_uses: I)
-    where
-        I: IntoIterator<Item = ContractUse>,
-    {
-        self.uses.extend(contract_uses);
-    }
-
     /// Add a pathless scalar claim for a value path.
     ///
     /// Pathless claims make a value path visible to downstream schema

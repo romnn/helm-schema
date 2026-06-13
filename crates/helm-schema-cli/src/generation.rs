@@ -70,7 +70,6 @@ pub(crate) fn generate_values_schema_for_chart_output(
 
     let ChartAnalysis {
         contract_projection,
-        chart_facts,
         type_hints,
         call_graph,
         local_schema_universe,
@@ -84,7 +83,6 @@ pub(crate) fn generate_values_schema_for_chart_output(
         ValuesSchemaInput::new(&contract_projection, &provider)
             .with_values_yaml(values_yaml.as_deref())
             .with_type_hints(&type_hints)
-            .with_chart_facts(&chart_facts)
             .with_values_descriptions(&values_descriptions),
     );
 

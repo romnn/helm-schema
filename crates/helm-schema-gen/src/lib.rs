@@ -37,7 +37,6 @@ pub struct ValuesSchemaInput<'a> {
     pub provider: &'a dyn K8sSchemaProvider,
     pub values_yaml: Option<&'a str>,
     pub type_hints: Option<&'a BTreeMap<String, Vec<Value>>>,
-    pub chart_facts: Option<&'a ChartFacts>,
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
 }
 
@@ -51,7 +50,6 @@ impl<'a> ValuesSchemaInput<'a> {
             provider,
             values_yaml: None,
             type_hints: None,
-            chart_facts: None,
             values_descriptions: None,
         }
     }
@@ -63,11 +61,6 @@ impl<'a> ValuesSchemaInput<'a> {
 
     pub fn with_type_hints(mut self, type_hints: &'a BTreeMap<String, Vec<Value>>) -> Self {
         self.type_hints = Some(type_hints);
-        self
-    }
-
-    pub fn with_chart_facts(mut self, chart_facts: &'a ChartFacts) -> Self {
-        self.chart_facts = Some(chart_facts);
         self
     }
 
@@ -91,8 +84,6 @@ impl<'a> ValuesSchemaInput<'a> {
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     let empty_type_hints = BTreeMap::new();
     let type_hints = input.type_hints.unwrap_or(&empty_type_hints);
-    let empty_chart_facts = ChartFacts::default();
-    let chart_facts = input.chart_facts.unwrap_or(&empty_chart_facts);
     let empty_values_descriptions = BTreeMap::new();
     let values_descriptions = input
         .values_descriptions
@@ -104,8 +95,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .extend(type_hints.keys().cloned());
     let path_metadata =
         collect_path_metadata(input.contract_projection, &signals.referenced_value_paths);
-    let mut merged_chart_facts = input.contract_projection.chart_facts();
-    merge_chart_facts(&mut merged_chart_facts, chart_facts);
+    let chart_facts = input.contract_projection.chart_facts();
 
     let values_yaml_doc = input
         .values_yaml
@@ -117,7 +107,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         &path_metadata,
         &values_yaml_doc,
         type_hints,
-        &merged_chart_facts,
+        &chart_facts,
         values_descriptions,
     );
 
@@ -137,24 +127,6 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
     Value::Object(out)
-}
-
-fn merge_chart_facts(dst: &mut ChartFacts, src: &ChartFacts) {
-    for (path, fact) in &src.path_facts {
-        let entry = dst.path_facts.entry(path.clone()).or_default();
-        let had_render_use = entry.has_render_use;
-        if fact.has_render_use {
-            entry.all_render_uses_self_guarded = if had_render_use {
-                entry.all_render_uses_self_guarded && fact.all_render_uses_self_guarded
-            } else {
-                fact.all_render_uses_self_guarded
-            };
-        }
-        entry.has_render_use |= fact.has_render_use;
-        entry.has_fragment_render |= fact.has_fragment_render;
-        entry.descendant_accessed |= fact.descendant_accessed;
-        entry.has_self_range_guard_render_use |= fact.has_self_range_guard_render_use;
-    }
 }
 
 #[tracing::instrument(skip_all)]

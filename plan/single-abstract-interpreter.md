@@ -354,15 +354,14 @@ Deliverables:
 - `paths()`
 - `choice()`
 - `apply_to_path()`
-- `item()`
 - `merge_all()` if needed by the current code
-- `derive_chart_facts_from_ast` uses the reusable lattice
+- chart-fact derivation initially uses the reusable lattice
 
 Current result:
 
 - `crates/helm-schema-ir/src/abstract_value.rs` owns the reusable lattice.
-- `derive_chart_facts_from_ast` no longer carries its own nested `Binding`
-  type.
+- The temporary AST chart-facts walker has since been deleted; production
+  facts now derive from `ContractProjection::chart_facts()`.
 - This phase intentionally preserves existing chart-facts behavior and does
   not yet change `SymbolicWalker` or schema generation semantics.
 
@@ -388,8 +387,9 @@ Current result:
 - `crates/helm-schema-ir/src/eval_effect.rs` introduces `EvalResult` and
   `Effects`.
 - The first effect is `reads`, populated from the evaluated `AbstractValue`.
-- `derive_chart_facts_from_ast` now collects rendered paths through
-  `EvalResult.effects.reads` while preserving the previous chart-facts output.
+- The rendered-path fact consumer moved beyond this phase: production
+  chart-fact derivation now reads normalized contract projection rows instead
+  of walking the AST a second time.
 - Default/type/string/mutation effects are still pending Phase 2+ work.
 
 ### Phase 2 — move expression facts onto `eval_expr`
@@ -761,24 +761,22 @@ Goal:
 Current result:
 
 - Rendered output lowering now passes through an internal
-  `AbstractDocumentOutput` / `AbstractDocumentHole` artifact and only then
-  projects into the compatibility `ValueUseSink`.
+  `AbstractDocumentOutput` / `AbstractDocumentHole` artifact before entering
+  the contract graph.
 - The document hole owns the rebased rendered path and resource claim for
   document-projected uses, so resource identity is no longer inferred by the
   final `SymbolicWalker` sink at compatibility emission time.
-- Document output now lowers to private `AbstractDocumentProjection` /
-  `AbstractDocumentUse` constraints before those constraints are emitted into
-  the compatibility `ValueUseSink`.
+- Document output now appends `ContractUse` claims directly through
+  `ContractUseContext`; the private document projection enum has been deleted.
 - The document projection context owns ambient compatibility guards and
   chart-default mutation state, so document projections now produce fully
   guarded `ValueUse` DTOs without a document/helper-specific sink method.
 - Output-site context and value-fact collection now live under explicit
   document-hole/document-value analysis names, so the compatibility walker no
   longer exposes generic output-node plumbing at the A3 seam.
-- Document-hole mechanics and document-to-contract compatibility projection
-  now live in `abstract_document_hole` and `abstract_document_projection`, so
-  `AbstractDocumentOutput` remains focused on assembling projection claims from
-  classified document evidence.
+- Document-hole mechanics live in `abstract_document_hole`, while
+  `AbstractDocumentOutput` remains focused on lowering classified document
+  evidence into contract claims.
 - Document and scalar/control-flow outputs now emit internal `ContractUse`
   claims. The old `ValueUse` normalization has moved to contract finalization,
   and recursive helper/file interpretation stays in the contract layer until

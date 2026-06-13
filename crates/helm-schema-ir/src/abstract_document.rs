@@ -1,5 +1,4 @@
 use crate::abstract_document_hole::AbstractDocumentHole;
-use crate::abstract_document_projection::AbstractDocumentProjection;
 use crate::contract::{ContractIr, ContractUseContext};
 use crate::document_hole_context::DocumentHoleContext;
 use crate::document_value_analysis::DocumentValueAnalysis;
@@ -32,17 +31,13 @@ impl AbstractDocumentOutput {
     }
 
     pub(crate) fn into_contract_ir(self, context: &ContractUseContext<'_>) -> ContractIr {
-        let projections = self.compatibility_projections();
         let mut contract = ContractIr::default();
-        contract.extend(
-            projections
-                .into_iter()
-                .map(|projection| projection.into_contract_use(context)),
-        );
+        self.append_contract_uses(&mut contract, context);
         contract
     }
 
-    fn compatibility_projections(self) -> Vec<AbstractDocumentProjection> {
+    fn append_contract_uses(self, contract: &mut ContractIr, context: &ContractUseContext<'_>) {
+        let hole = self.hole;
         let DocumentValueAnalysis {
             default_fallback_values,
             values,
@@ -57,11 +52,11 @@ impl AbstractDocumentOutput {
             suppress_direct_values,
             chart_value_defaults: _,
         } = self.analysis;
-        let mut projections = Vec::new();
 
         for value in values {
             if suppress_direct_values.contains(&value) {
-                projections.push(self.hole.document_use(
+                contract.push(hole.contract_use(
+                    context,
                     value,
                     YamlPath(Vec::new()),
                     ValueKind::Scalar,
@@ -81,16 +76,14 @@ impl AbstractDocumentOutput {
                 extra_guards.push(default_guard);
             }
 
-            let emit_path = self.hole.direct_value_path(&value);
-            let emit_kind = self.hole.direct_value_kind();
-            projections.push(
-                self.hole
-                    .document_use(value, emit_path, emit_kind, extra_guards),
-            );
+            let emit_path = hole.direct_value_path(&value);
+            let emit_kind = hole.direct_value_kind();
+            contract.push(hole.contract_use(context, value, emit_path, emit_kind, extra_guards));
         }
 
         for value in bound_values {
-            projections.push(self.hole.document_use(
+            contract.push(hole.contract_use(
+                context,
                 value,
                 YamlPath(Vec::new()),
                 ValueKind::Scalar,
@@ -117,20 +110,21 @@ impl AbstractDocumentOutput {
                 output_path::values_path_has_descendant(value, &helper_rendered_sources);
             let extra_guards = helper_extra_guards(value, meta);
             if only_scalar_helper_outputs
-                && self.hole.can_project_scalar_helper_to_caller_path()
+                && hole.can_project_scalar_helper_to_caller_path()
                 && !has_rendered_descendant
             {
-                projections.push(self.hole.document_use(
+                contract.push(hole.contract_use(
+                    context,
                     value.clone(),
-                    self.hole.path().clone(),
-                    self.hole.kind(),
+                    hole.path().clone(),
+                    hole.kind(),
                     extra_guards,
                 ));
             } else {
-                projections.push(AbstractDocumentProjection::helper_use(
+                contract.push(context.pathless_contract_use(
                     value.clone(),
                     ValueKind::Scalar,
-                    extra_guards,
+                    &extra_guards,
                 ));
             }
         }
@@ -141,21 +135,21 @@ impl AbstractDocumentOutput {
                 &output.source_expr,
                 &helper_rendered_sources,
             );
-            if self.hole.can_project_structured_helper_to_caller_path() && !has_rendered_descendant
-            {
+            if hole.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
                 let emit_path =
-                    output_path::append_relative_path(self.hole.path(), &output.relative_path);
-                projections.push(self.hole.document_use(
+                    output_path::append_relative_path(hole.path(), &output.relative_path);
+                contract.push(hole.contract_use(
+                    context,
                     output.source_expr,
                     emit_path,
                     output.kind,
                     extra_guards,
                 ));
             } else {
-                projections.push(AbstractDocumentProjection::helper_use(
+                contract.push(context.pathless_contract_use(
                     output.source_expr,
                     output.kind,
-                    extra_guards,
+                    &extra_guards,
                 ));
             }
         }
@@ -166,42 +160,32 @@ impl AbstractDocumentOutput {
             }
             let has_rendered_descendant =
                 output_path::values_path_has_descendant(&value, &helper_rendered_sources);
-            if self.hole.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
-                projections.push(self.hole.document_use(
+            if hole.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
+                contract.push(hole.contract_use(
+                    context,
                     value,
-                    self.hole.path().clone(),
-                    self.hole.kind(),
+                    hole.path().clone(),
+                    hole.kind(),
                     Vec::new(),
                 ));
             } else {
-                projections.push(AbstractDocumentProjection::helper_use(
-                    value,
-                    self.hole.kind(),
-                    Vec::new(),
-                ));
+                contract.push(context.pathless_contract_use(value, hole.kind(), &[]));
             }
         }
 
         for (value, meta) in helper_dependency_values {
             let extra_guards = helper_extra_guards(&value, &meta);
-            projections.push(AbstractDocumentProjection::helper_use(
-                value,
-                ValueKind::Scalar,
-                extra_guards,
-            ));
+            contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &extra_guards));
         }
 
         for value in helper_guard_values {
-            projections.push(AbstractDocumentProjection::helper_use(
-                value,
-                ValueKind::Scalar,
-                Vec::new(),
-            ));
+            contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &[]));
         }
 
         for (path, schema_types) in helper_type_hints {
             for schema_type in schema_types {
-                projections.push(self.hole.document_use(
+                contract.push(hole.contract_use(
+                    context,
                     path.clone(),
                     YamlPath(Vec::new()),
                     ValueKind::Scalar,
@@ -212,8 +196,6 @@ impl AbstractDocumentOutput {
                 ));
             }
         }
-
-        projections
     }
 }
 

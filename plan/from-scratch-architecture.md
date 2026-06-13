@@ -1433,9 +1433,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   DTO projection. The document hole now also owns the rebased rendered path and
   resource claim used for compatibility projection, rather than letting the
   final sink infer those document facts at emission time. Document output now
-  first lowers into private `AbstractDocumentProjection` /
-  `AbstractDocumentUse` constraints and only then emits to `ValueUseSink`,
-  giving the next A4 `ContractIR` step a concrete internal projection seam.
+  lowers classified document evidence through `ContractUseContext` into
+  `ContractUse` claims, giving the next A4 `ContractIR` step a concrete
+  internal projection seam.
   The latest pass moves ambient compatibility guards and chart-default
   mutations into that projection context, so the document artifact now
   produces fully guarded `ValueUse` DTOs and the old sink no longer has a
@@ -1443,11 +1443,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   The rendered output-site helpers have also been renamed and rehomed as
   document-hole/document-value analysis, making the A3 boundary explicit:
   the walker asks for a document hole plus document-local value facts, and
-  `AbstractDocumentOutput` owns their projection into compatibility DTOs.
-  Document-hole mechanics and document-to-contract compatibility projection
-  now live in separate `abstract_document_hole` and
-  `abstract_document_projection` modules, leaving `AbstractDocumentOutput` to
-  assemble projection claims from already-classified document evidence.
+  `AbstractDocumentOutput` owns their lowering into contract claims.
+  Document-hole mechanics live in `abstract_document_hole`, while
+  `AbstractDocumentOutput` appends `ContractUse` claims directly through
+  `ContractUseContext`. Rendered document holes no longer detour through a
+  DTO-shaped compatibility artifact before entering the contract graph.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations
@@ -1526,7 +1526,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   those adjustment rules directly. Per-value-path schema assembly now runs
   through `PathSchemaResolver`, which consumes the collected evidence streams
   and returns resolved path/schema pairs; root-schema construction is reduced
-  to tree insertion and metadata decoration.
+  to tree insertion and metadata decoration. The parallel AST-derived
+  chart-facts extractor has also been deleted: production now derives
+  render/self-guard/fragment path facts from `ContractProjection` only, so
+  those schema decisions come from the shared interpreter output rather than
+  a second expression walker. The generator input no longer accepts external
+  chart facts either, preventing callers from reintroducing that parallel
+  projection channel.
   The policy-extraction half does **not** depend on A3 and can start earlier
   against today's `ValueUse`.
 - **A5 — bundled emission**: switch the default output to the

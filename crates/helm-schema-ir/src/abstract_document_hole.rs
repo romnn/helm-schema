@@ -1,4 +1,4 @@
-use crate::abstract_document_projection::AbstractDocumentProjection;
+use crate::contract::{ContractUse, ContractUseContext};
 use crate::document_hole_context::DocumentHoleContext;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
@@ -31,20 +31,15 @@ impl AbstractDocumentHole {
         self.kind
     }
 
-    pub(crate) fn document_use(
+    pub(crate) fn contract_use(
         &self,
+        context: &ContractUseContext<'_>,
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
         guards: Vec<Guard>,
-    ) -> AbstractDocumentProjection {
-        AbstractDocumentProjection::document_use(
-            source_expr,
-            path,
-            kind,
-            guards,
-            self.resource.clone(),
-        )
+    ) -> ContractUse {
+        context.contract_use(source_expr, path, kind, &guards, self.resource.clone())
     }
 
     pub(crate) fn direct_value_kind(&self) -> ValueKind {

@@ -3,8 +3,8 @@ use std::io::Read;
 
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{
-    ChartFacts, ContractIr, ContractProjection, SymbolicIrContext, derive_chart_facts_from_ast,
-    extract_default_type_hints, extract_define_blocks, extract_helper_calls,
+    ContractIr, ContractProjection, SymbolicIrContext, extract_default_type_hints,
+    extract_define_blocks, extract_helper_calls,
 };
 use helm_schema_k8s::LocalSchemaUniverse;
 use serde::Deserialize;
@@ -18,7 +18,6 @@ use crate::error::CliResult;
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {
     pub(crate) contract_projection: ContractProjection,
-    pub(crate) chart_facts: ChartFacts,
     pub(crate) type_hints: BTreeMap<String, Vec<Value>>,
     pub(crate) call_graph: HelperCallGraph,
     pub(crate) local_schema_universe: LocalSchemaUniverse,
@@ -69,7 +68,6 @@ pub(crate) fn analyze_charts(
     values_yaml: Option<&str>,
 ) -> CliResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
-    let mut chart_facts = ChartFacts::default();
     let mut type_hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut local_schema_universe = chart::collect_static_crd_universe(charts)?;
     let symbolic_context = SymbolicIrContext::new(defines);
@@ -84,7 +82,6 @@ pub(crate) fn analyze_charts(
             &symbolic_context,
             include_tests,
             &mut contract,
-            &mut chart_facts,
             &mut local_schema_universe,
         )?;
     }
@@ -107,7 +104,6 @@ pub(crate) fn analyze_charts(
 
     Ok(ChartAnalysis {
         contract_projection: contract.project(),
-        chart_facts,
         type_hints,
         call_graph,
         local_schema_universe,
@@ -189,20 +185,14 @@ fn collect_manifest_ir_for_chart(
     symbolic_context: &SymbolicIrContext,
     include_tests: bool,
     contract: &mut ContractIr,
-    chart_facts: &mut ChartFacts,
     local_schema_universe: &mut LocalSchemaUniverse,
 ) -> CliResult<()> {
     let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
     for path in manifests {
         let ManifestIr {
-            chart_facts: manifest_facts,
             contract: mut manifest_contract,
             literal_crd_documents,
         } = collect_manifest_ir_for_template(&path, defines, symbolic_context)?;
-        merge_chart_facts(
-            chart_facts,
-            scope_chart_facts(manifest_facts, &chart.values_prefix),
-        );
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         contract.append(manifest_contract);
@@ -214,7 +204,6 @@ fn collect_manifest_ir_for_chart(
 }
 
 struct ManifestIr {
-    chart_facts: ChartFacts,
     contract: ContractIr,
     literal_crd_documents: Vec<Value>,
 }
@@ -229,12 +218,10 @@ fn collect_manifest_ir_for_template(
     path.open_file()?.read_to_string(&mut src)?;
     let parsed_template = TreeSitterParser.parse_with_metadata(&src)?;
     let ast = parsed_template.ast;
-    let chart_facts = derive_chart_facts_from_ast(&ast);
     let contract = symbolic_context.generate_contract_ir(&src, &ast, defines);
     let literal_crd_documents =
         literal_crd_documents_from_template(&src, parsed_template.contains_template_action)?;
     Ok(ManifestIr {
-        chart_facts,
         contract,
         literal_crd_documents,
     })
@@ -256,34 +243,6 @@ fn literal_crd_documents_from_template(
         }
     }
     Ok(documents)
-}
-
-fn scope_chart_facts(chart_facts: ChartFacts, prefix: &[String]) -> ChartFacts {
-    ChartFacts {
-        path_facts: chart_facts
-            .path_facts
-            .into_iter()
-            .map(|(path, fact)| (chart::scope_values_path(&path, prefix), fact))
-            .collect(),
-    }
-}
-
-fn merge_chart_facts(dst: &mut ChartFacts, src: ChartFacts) {
-    for (path, fact) in src.path_facts {
-        let entry = dst.path_facts.entry(path).or_default();
-        let had_render_use = entry.has_render_use;
-        if fact.has_render_use {
-            entry.all_render_uses_self_guarded = if had_render_use {
-                entry.all_render_uses_self_guarded && fact.all_render_uses_self_guarded
-            } else {
-                fact.all_render_uses_self_guarded
-            };
-        }
-        entry.has_render_use |= fact.has_render_use;
-        entry.has_fragment_render |= fact.has_fragment_render;
-        entry.descendant_accessed |= fact.descendant_accessed;
-        entry.has_self_range_guard_render_use |= fact.has_self_range_guard_render_use;
-    }
 }
 
 fn apply_type_hints_to(
@@ -378,54 +337,9 @@ fn reachable_helpers(graph: &HelperCallGraph, seeds: &BTreeSet<String>) -> BTree
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helm_schema_ir::PathFact;
     use helm_schema_ir::{ResourceRef, YamlPath};
     use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
     use serde_json::json;
-
-    fn chart_facts_for(path: &str, all_render_uses_self_guarded: bool) -> ChartFacts {
-        let mut chart_facts = ChartFacts::default();
-        chart_facts.path_facts.insert(
-            path.to_string(),
-            PathFact {
-                has_render_use: true,
-                all_render_uses_self_guarded,
-                ..PathFact::default()
-            },
-        );
-        chart_facts
-    }
-
-    #[test]
-    fn merge_chart_facts_initializes_self_guarded_state_from_first_render_use() {
-        let mut merged = ChartFacts::default();
-
-        merge_chart_facts(&mut merged, chart_facts_for("annotations", true));
-
-        assert_eq!(
-            merged
-                .path_facts
-                .get("annotations")
-                .map(|fact| fact.all_render_uses_self_guarded),
-            Some(true),
-        );
-    }
-
-    #[test]
-    fn merge_chart_facts_conjoins_self_guarded_state_across_render_uses() {
-        let mut merged = ChartFacts::default();
-
-        merge_chart_facts(&mut merged, chart_facts_for("annotations", true));
-        merge_chart_facts(&mut merged, chart_facts_for("annotations", false));
-
-        assert_eq!(
-            merged
-                .path_facts
-                .get("annotations")
-                .map(|fact| fact.all_render_uses_self_guarded),
-            Some(false),
-        );
-    }
 
     #[test]
     fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact()

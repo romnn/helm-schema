@@ -156,53 +156,6 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn item(&self) -> Option<Self> {
-        match self {
-            Self::ValuesPath(path) => {
-                if path.is_empty() {
-                    Some(Self::ValuesPath("*".to_string()))
-                } else {
-                    Some(Self::ValuesPath(format!("{path}.*")))
-                }
-            }
-            Self::RootContext => None,
-            Self::PathSet(paths) => Some(Self::PathSet(
-                paths
-                    .iter()
-                    .map(|path| {
-                        if path.is_empty() {
-                            "*".to_string()
-                        } else {
-                            format!("{path}.*")
-                        }
-                    })
-                    .collect(),
-            )),
-            Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
-            Self::StringSet(_) => None,
-            Self::Choice(choices) => {
-                let mut out = Vec::new();
-                for choice_value in choices {
-                    if let Some(bound) = choice_value.item() {
-                        out.push(bound);
-                    }
-                }
-                Self::choice(out)
-            }
-            Self::List(items) => Self::choice(items.clone()),
-            Self::Dict(map) => Self::choice(map.values().cloned().collect()),
-            Self::Overlay { entries, fallback } => {
-                let mut choices: Vec<_> = entries.values().cloned().collect();
-                if let Some(fallback_item) = fallback.item() {
-                    choices.push(fallback_item);
-                }
-                Self::choice(choices)
-            }
-            Self::Top => Some(Self::Top),
-            Self::Unknown => None,
-        }
-    }
-
     pub(crate) fn merge_all(values: Vec<Self>) -> Option<Self> {
         let mut map = BTreeMap::new();
         let mut non_dict_values = Vec::new();
@@ -526,7 +479,6 @@ mod tests {
             AbstractValue::Top.apply_to_path(&["nested".to_string()]),
             Some(AbstractValue::Top)
         );
-        assert_eq!(AbstractValue::Top.item(), Some(AbstractValue::Top));
     }
 
     #[test]

@@ -9,8 +9,8 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    ChartFacts, ContractProjection, Guard, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse,
-    YamlPath, derive_chart_facts_from_ast, extract_default_type_hints,
+    ContractProjection, Guard, ResourceRef, SymbolicIrGenerator, ValueKind, ValueUse, YamlPath,
+    extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -31,16 +31,6 @@ fn parse_ir(src: &str) -> Vec<ValueUse> {
     SymbolicIrGenerator
         .generate(src, &ast, &idx)
         .into_value_uses()
-}
-
-fn parse_ir_and_chart_facts(src: &str) -> (Vec<ValueUse>, ChartFacts) {
-    let ast = TreeSitterParser.parse(src).expect("parse");
-    let idx = DefineIndex::new();
-    let uses = SymbolicIrGenerator
-        .generate(src, &ast, &idx)
-        .into_value_uses();
-    let facts = derive_chart_facts_from_ast(&ast);
-    (uses, facts)
 }
 
 fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
@@ -86,21 +76,6 @@ fn schema_for_values_yaml_and_hints(
         ValuesSchemaInput::new(&projection, &provider())
             .with_values_yaml(values_yaml)
             .with_type_hints(type_hints),
-    )
-}
-
-fn schema_for_values_yaml_hints_and_facts(
-    uses: &[ValueUse],
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-    chart_facts: &ChartFacts,
-) -> Value {
-    let projection = ContractProjection::from_value_uses(uses.to_vec());
-    generate_values_schema(
-        ValuesSchemaInput::new(&projection, &provider())
-            .with_values_yaml(values_yaml)
-            .with_type_hints(type_hints)
-            .with_chart_facts(chart_facts),
     )
 }
 
@@ -2428,9 +2403,8 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
         dataSource: {}
     "};
 
-    let (ir, facts) = parse_ir_and_chart_facts(src);
-    let schema =
-        schema_for_values_yaml_hints_and_facts(&ir, Some(values_yaml), &BTreeMap::new(), &facts);
+    let ir = parse_ir(src);
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let parameters = schema
         .pointer("/properties/dataSource")
         .expect("dataSource present");
@@ -2440,10 +2414,7 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
             && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
     })
     .unwrap_or_else(|| {
-        panic!(
-            "exact empty object placeholder variant missing: {parameters}; facts={:?}; ir={ir:?}",
-            facts.path_facts.get("dataSource")
-        )
+        panic!("exact empty object placeholder variant missing: {parameters}; ir={ir:?}",)
     });
     assert_eq!(
         empty_variant
@@ -2476,12 +2447,8 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let facts = derive_chart_facts_from_ast(&ast);
-    let schema = schema_for_values_yaml_hints_and_facts(
-        ir.uses(),
-        Some(values_yaml),
-        &BTreeMap::new(),
-        &facts,
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&ir, &provider()).with_values_yaml(Some(values_yaml)),
     );
     let data_source = schema
         .pointer("/properties/persistence/properties/dataSource")
@@ -2493,8 +2460,7 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     })
     .unwrap_or_else(|| {
         panic!(
-            "exact empty object placeholder variant missing from helper-rendered object union: {data_source}; facts={:?}; ir={ir:?}",
-            facts.path_facts.get("persistence.dataSource")
+            "exact empty object placeholder variant missing from helper-rendered object union: {data_source}; ir={ir:?}",
         )
     });
 }
@@ -2522,21 +2488,15 @@ fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
         env: {}
     "};
 
-    let (ir, facts) = parse_ir_and_chart_facts(src);
-    let schema =
-        schema_for_values_yaml_hints_and_facts(&ir, Some(values_yaml), &BTreeMap::new(), &facts);
+    let ir = parse_ir(src);
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let env = schema.pointer("/properties/env").expect("env present");
 
     any_of_variant_matching(env, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("object")
             && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
     })
-    .unwrap_or_else(|| {
-        panic!(
-            "exact empty object off-state missing: {env}; facts={:?}",
-            facts.path_facts.get("env")
-        )
-    });
+    .unwrap_or_else(|| panic!("exact empty object off-state missing: {env}; ir={ir:?}",));
 
     any_of_variant_matching(env, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("array")

@@ -1,6 +1,5 @@
 mod abstract_document;
 mod abstract_document_hole;
-mod abstract_document_projection;
 mod abstract_value;
 mod assignment_action_plan;
 mod binding;
@@ -52,7 +51,7 @@ mod value_path_context;
 mod walker;
 mod yaml_shape;
 
-pub use chart_facts::{ChartFacts, PathFact, derive_chart_facts_from_ast};
+pub use chart_facts::{ChartFacts, PathFact};
 pub use contract::{ContractIr, ContractProjection};
 pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
