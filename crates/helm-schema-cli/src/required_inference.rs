@@ -8,7 +8,7 @@
 //!   - the `infer_required` field on [`crate::ChartArgs`] and
 //!     [`crate::GenerateOptions`]
 //!   - the conditional call in
-//!     [`crate::generate_values_schema_for_chart_with_warnings`]
+//!     `generation::generate_values_schema_for_chart_output`
 //!   - the six `infer_required_*` / `library_*` integration test
 //!     files under `crates/helm-schema-cli/tests/`.
 //!
@@ -83,7 +83,7 @@ fn top_level_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
 /// value prefix.
 ///
 /// Mirrors the shape of the type-hint extraction loop in
-/// `analyze_charts` (lib.rs) but with the broader fallback-
+/// `analysis::analyze_charts` but with the broader fallback-
 /// path regex instead of the literal-only type-hint regex. Sharing
 /// the call graph keeps scoping consistent between the two consumers
 /// without re-deriving graph edges.

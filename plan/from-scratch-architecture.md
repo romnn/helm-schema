@@ -1624,7 +1624,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   construction, diagnostics, and writing. Schema-output assembly now also
   runs through `output_pipeline`: override loading/preparation, shared global
   mirroring into subcharts, flattening, description stripping, minimization,
-  and JSON formatting are all behind one output boundary.
+  and JSON formatting are all behind one output boundary. The public
+  chart-schema generation API now lives in a dedicated `generation` module
+  that owns chart discovery, values composition, chart analysis, provider
+  setup, schema generation, and required-inference application; the crate root
+  re-exports that API while keeping process-level CLI orchestration.
 - **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
   (feeds A4 policy; unlocks B4).
 - **C3 — the crate consolidation to §5.1's layout: last**, once module
