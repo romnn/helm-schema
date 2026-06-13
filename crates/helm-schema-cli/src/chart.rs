@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use flate2::read::GzDecoder;
 use helm_schema_ast::{DefineIndex, TreeSitterParser, extract_values_yaml_descriptions};
-use helm_schema_k8s::ChartLocalCrdSource;
+use helm_schema_k8s::LocalSchemaUniverse;
 use serde::Deserialize;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
@@ -301,8 +301,8 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
 }
 
 #[instrument(skip_all)]
-pub fn collect_static_crd_sources(charts: &[ChartContext]) -> CliResult<Vec<ChartLocalCrdSource>> {
-    let mut sources = Vec::new();
+pub fn collect_static_crd_universe(charts: &[ChartContext]) -> CliResult<LocalSchemaUniverse> {
+    let mut universe = LocalSchemaUniverse::default();
 
     for chart in charts {
         for path in list_static_crd_sources(&chart.chart_dir)? {
@@ -315,12 +315,12 @@ pub fn collect_static_crd_sources(charts: &[ChartContext]) -> CliResult<Vec<Char
                     continue;
                 }
 
-                sources.push(ChartLocalCrdSource { document });
+                universe.insert_crd_document(document);
             }
         }
     }
 
-    Ok(sources)
+    Ok(universe)
 }
 
 fn list_static_crd_sources(chart_dir: &VfsPath) -> CliResult<Vec<VfsPath>> {

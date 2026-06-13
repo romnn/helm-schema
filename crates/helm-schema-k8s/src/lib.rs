@@ -11,12 +11,11 @@
 //!   - [`inference`]: Feature D apiVersion guessing.
 //!
 //! The per-provider modules ([`kubernetes_openapi`], [`crds_catalog`],
-//! [`local_override`], [`chart_local_crds`]) are slim composers of the above.
+//! [`local_override`], [`local_schema_universe`]) are slim composers of the above.
 
 pub mod builtin_groups;
 pub mod cache;
 pub mod capability_eval;
-pub mod chart_local_crds;
 pub mod crds_catalog;
 pub mod diagnostic;
 pub mod fetch;
@@ -24,6 +23,7 @@ mod filename;
 pub mod inference;
 pub mod kubernetes_openapi;
 pub mod local_override;
+pub mod local_schema_universe;
 pub mod lookup;
 mod metadata_enrichment;
 mod schema_doc;
@@ -34,7 +34,6 @@ pub use cache::{
     default_source_id, source_id_for_url,
 };
 pub use capability_eval::{CapabilityOracle, StaticOracle, evaluate_guard, select_live_branch};
-pub use chart_local_crds::{ChartLocalCrdSchemaProvider, ChartLocalCrdSource};
 pub use crds_catalog::CrdsCatalogSchemaProvider;
 pub use diagnostic::{
     Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
@@ -50,6 +49,7 @@ pub use kubernetes_openapi::{
     K8sMirrorChain, K8sSource, K8sVersionChain, KubernetesJsonSchemaProvider,
 };
 pub use local_override::LocalSchemaProvider;
+pub use local_schema_universe::{ChartLocalCrdSchemaProvider, LocalSchemaUniverse};
 pub use lookup::{
     ApiPresenceQuery, Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
     LookupTraceOutcome, LookupTraceSubject, ProviderLookupResult, ProviderOrigin,

@@ -2,9 +2,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use helm_schema_k8s::{
-    Chain, ChartLocalCrdSchemaProvider, ChartLocalCrdSource, CrdsCatalogSchemaProvider,
-    DiagnosticSink, K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider,
-    LayoutChecker, LocalSchemaProvider, NegativeCache,
+    Chain, ChartLocalCrdSchemaProvider, CrdsCatalogSchemaProvider, DiagnosticSink,
+    K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, LayoutChecker,
+    LocalSchemaProvider, LocalSchemaUniverse, NegativeCache,
 };
 use tracing::instrument;
 
@@ -35,8 +35,8 @@ pub struct ProviderOptions {
     pub crd_catalog_cache_dir: Option<PathBuf>,
     /// Hand-maintained CRD override root.
     pub crd_override_dir: Option<PathBuf>,
-    /// Static CRD documents bundled in the chart tree under `crds/`.
-    pub chart_local_crds: Vec<ChartLocalCrdSource>,
+    /// Chart-local schema universe built from sources such as static `crds/`.
+    pub local_schema_universe: LocalSchemaUniverse,
     /// Write `.meta` sidecars next to CRD cache entries.
     pub crd_cache_record_source: bool,
 
@@ -56,10 +56,10 @@ pub fn build_provider(opts: &ProviderOptions, diagnostic_sink: Option<&Diagnosti
         ));
     }
 
-    let chart_local_crds = ChartLocalCrdSchemaProvider::new(opts.chart_local_crds.clone())
+    let chart_local_provider = ChartLocalCrdSchemaProvider::new(opts.local_schema_universe.clone())
         .with_api_version_guess(opts.api_version_guess);
-    if !chart_local_crds.is_empty() {
-        providers.push(Box::new(chart_local_crds));
+    if !chart_local_provider.is_empty() {
+        providers.push(Box::new(chart_local_provider));
     }
 
     let mut crds_catalog = CrdsCatalogSchemaProvider::new()

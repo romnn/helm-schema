@@ -111,7 +111,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         crd_catalog_mirrors: cli.crd.crd_catalog_mirror.clone(),
         crd_catalog_cache_dir: cli.crd.crd_catalog_cache_dir.clone(),
         crd_override_dir: cli.crd.crd_override_dir.clone(),
-        chart_local_crds: Vec::new(),
+        local_schema_universe: Default::default(),
         crd_cache_record_source: cli.crd.crd_cache_record_source,
         api_version_guess: cli.inference.enabled(),
     };
@@ -262,7 +262,7 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     } = collect_ir_for_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
 
     let mut provider_options = opts.provider.clone();
-    provider_options.chart_local_crds = chart::collect_static_crd_sources(charts)?;
+    provider_options.local_schema_universe = chart::collect_static_crd_universe(charts)?;
     let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
 
     let mut schema = generate_values_schema(
