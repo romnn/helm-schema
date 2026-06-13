@@ -1,9 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::ChartFacts;
+use helm_schema_ir::ContractValuePathFacts;
 use helm_schema_k8s::type_schema;
 
 use crate::merge::merge_schema_list;
@@ -19,31 +19,25 @@ pub(crate) struct ResolvedPathSchema {
 
 pub(crate) struct PathSchemaResolver<'a> {
     signals: UseSignals,
-    nullable_value_paths: &'a BTreeSet<String>,
-    paths_with_referenced_descendants: &'a BTreeSet<String>,
+    value_path_facts: &'a BTreeMap<String, ContractValuePathFacts>,
     path_caches: ValuePathCaches,
     type_hints: &'a BTreeMap<String, Vec<Value>>,
-    chart_facts: &'a ChartFacts,
     resolve_policy: ResolvePolicy,
 }
 
 impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
         signals: UseSignals,
-        nullable_value_paths: &'a BTreeSet<String>,
-        paths_with_referenced_descendants: &'a BTreeSet<String>,
+        value_path_facts: &'a BTreeMap<String, ContractValuePathFacts>,
         values_yaml_doc: &YamlValue,
         type_hints: &'a BTreeMap<String, Vec<Value>>,
-        chart_facts: &'a ChartFacts,
     ) -> Self {
         let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
         Self {
             signals,
-            nullable_value_paths,
-            paths_with_referenced_descendants,
+            value_path_facts,
             path_caches,
             type_hints,
-            chart_facts,
             resolve_policy: ResolvePolicy::default(),
         }
     }
@@ -68,17 +62,11 @@ impl<'a> PathSchemaResolver<'a> {
     }
 
     fn path_schema_evidence(&mut self, value_path: &str) -> ValuePathSchemaInputs {
-        let path_fact = self
-            .chart_facts
-            .path_facts
+        let contract_facts = self
+            .value_path_facts
             .get(value_path)
-            .cloned()
+            .copied()
             .unwrap_or_default();
-        let used_as_fragment = self
-            .signals
-            .value_paths_used_as_fragment
-            .contains(value_path);
-        let is_ranged_source = self.signals.ranged_value_paths.contains(value_path);
         let provider_schema = self.provider_schema_for_path(value_path);
         let values_yaml_info = self.path_caches.values_yaml.get(value_path);
         let type_hint_schema = self
@@ -93,17 +81,14 @@ impl<'a> PathSchemaResolver<'a> {
             .map_or_else(empty_schema, merge_schema_list);
 
         let facts = ValuePathSchemaFacts {
-            has_referenced_descendants: self.paths_with_referenced_descendants.contains(value_path),
-            used_as_fragment,
-            is_ranged_source,
-            is_partial_scalar_value_path: self
-                .signals
-                .partial_scalar_value_paths
-                .contains(value_path),
-            path_has_render_use: path_fact.has_render_use,
-            path_all_render_uses_self_guarded: path_fact.all_render_uses_self_guarded,
-            path_has_self_range_guard_render_use: path_fact.has_self_range_guard_render_use,
-            contract_path_is_nullable: self.nullable_value_paths.contains(value_path),
+            has_referenced_descendants: contract_facts.has_referenced_descendants,
+            used_as_fragment: contract_facts.used_as_fragment,
+            is_ranged_source: contract_facts.is_ranged_source,
+            is_partial_scalar_value_path: contract_facts.is_partial_scalar_value_path,
+            path_has_render_use: contract_facts.has_render_use,
+            path_all_render_uses_self_guarded: contract_facts.all_render_uses_self_guarded,
+            path_has_self_range_guard_render_use: contract_facts.has_self_range_guard_render_use,
+            contract_path_is_nullable: contract_facts.is_nullable,
             has_type_hint: self.type_hints.contains_key(value_path),
             values_yaml_has_no_schema_evidence: values_yaml_info
                 .is_none_or(|path_info| is_empty_schema(&path_info.schema)),

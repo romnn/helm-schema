@@ -10,9 +10,6 @@ use crate::resolve_policy::ResolvePolicy;
 
 pub(crate) struct UseSignals {
     pub(crate) referenced_value_paths: BTreeSet<String>,
-    pub(crate) ranged_value_paths: BTreeSet<String>,
-    pub(crate) value_paths_used_as_fragment: BTreeSet<String>,
-    pub(crate) partial_scalar_value_paths: BTreeSet<String>,
     pub(crate) provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>>,
     pub(crate) metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>>,
     pub(crate) guard_constraints_by_value_path: BTreeMap<String, Vec<Value>>,
@@ -35,11 +32,9 @@ pub(crate) fn collect_use_signals(
     let resolve_policy = ResolvePolicy::default();
     let ContractPathSignals {
         referenced_value_paths,
-        ranged_value_paths,
-        value_paths_used_as_fragment,
-        partial_scalar_value_paths,
         guard_constraints_by_value_path,
         metadata_fields_by_value_path,
+        ..
     } = path_signals;
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<Value>>> = BTreeMap::new();
     let metadata_schemas_by_value_path = metadata_fields_by_value_path
@@ -97,9 +92,6 @@ pub(crate) fn collect_use_signals(
 
     UseSignals {
         referenced_value_paths,
-        ranged_value_paths,
-        value_paths_used_as_fragment,
-        partial_scalar_value_paths,
         provider_schemas_by_value_path,
         metadata_schemas_by_value_path,
         guard_constraints_by_value_path,

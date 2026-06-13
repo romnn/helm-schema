@@ -1559,6 +1559,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   generalization, fragment widening, partial-scalar fallback, provider
   schemas, type hints, and guard constraints as one named structural lowering
   step instead of a long chain of ambient resolver locals.
+  Per-value-path schema facts are now bundled on `ContractSchemaSignals` too,
+  so `PathSchemaResolver` consumes one contract-owned fact map for nullable
+  evidence, descendant topology, ranged sources, fragment use, partial scalar
+  use, and render/self-guard facts instead of reassembling those decisions from
+  several separate projections. The generator still augments that map with
+  external type-hint descendant evidence because type hints are caller input,
+  not template-derived contract topology.
   Required-inference default-fallback exclusions now also flow through typed
   `RequiredInferenceSignals` on `ContractProjection`, with the generator
   combining those contract-owned exclusions and the remaining CLI compatibility

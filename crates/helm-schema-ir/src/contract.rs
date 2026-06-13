@@ -240,6 +240,24 @@ pub struct ContractSchemaSignals {
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub nullable_value_paths: BTreeSet<String>,
     pub paths_with_referenced_descendants: BTreeSet<String>,
+    pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,
+}
+
+/// Schema-generation facts for one input values path.
+///
+/// This bundles the contract-owned path state that schema lowering needs, so
+/// generator code does not have to reconstruct semantic facts from multiple
+/// lower-level projections.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ContractValuePathFacts {
+    pub has_referenced_descendants: bool,
+    pub used_as_fragment: bool,
+    pub is_ranged_source: bool,
+    pub is_partial_scalar_value_path: bool,
+    pub has_render_use: bool,
+    pub all_render_uses_self_guarded: bool,
+    pub has_self_range_guard_render_use: bool,
+    pub is_nullable: bool,
 }
 
 /// Receives contract claims from node/action interpretation.
@@ -595,7 +613,7 @@ impl ContractSchemaSignalBuilder {
 
     fn finish(self) -> ContractSchemaSignals {
         let chart_descendant_paths = self.chart_descendant_paths;
-        let path_facts = self
+        let path_facts: BTreeMap<String, PathFact> = self
             .chart_facts_by_path
             .into_iter()
             .map(|(path, acc)| {
@@ -618,6 +636,12 @@ impl ContractSchemaSignalBuilder {
             .into_iter()
             .filter_map(|(path, acc)| (acc.has_render_use && acc.all_uses_nullable).then_some(path))
             .collect();
+        let value_path_facts = build_contract_value_path_facts(
+            &path_facts,
+            &self.path_signals,
+            &nullable_value_paths,
+            &paths_with_referenced_descendants,
+        );
 
         ContractSchemaSignals {
             chart_facts: ChartFacts { path_facts },
@@ -625,6 +649,7 @@ impl ContractSchemaSignalBuilder {
             provider_schema_uses: self.provider_schema_uses,
             nullable_value_paths,
             paths_with_referenced_descendants,
+            value_path_facts,
         }
     }
 
@@ -803,6 +828,46 @@ impl ContractSchemaSignalBuilder {
             .entry(path.to_string())
             .or_insert_with(NullablePathAccumulator::new)
     }
+}
+
+fn build_contract_value_path_facts(
+    path_facts: &BTreeMap<String, PathFact>,
+    path_signals: &ContractPathSignals,
+    nullable_value_paths: &BTreeSet<String>,
+    paths_with_referenced_descendants: &BTreeSet<String>,
+) -> BTreeMap<String, ContractValuePathFacts> {
+    let mut paths = BTreeSet::new();
+    paths.extend(path_facts.keys().cloned());
+    paths.extend(path_signals.referenced_value_paths.iter().cloned());
+    paths.extend(path_signals.ranged_value_paths.iter().cloned());
+    paths.extend(path_signals.value_paths_used_as_fragment.iter().cloned());
+    paths.extend(path_signals.partial_scalar_value_paths.iter().cloned());
+    paths.extend(path_signals.guard_constraints_by_value_path.keys().cloned());
+    paths.extend(path_signals.metadata_fields_by_value_path.keys().cloned());
+    paths.extend(nullable_value_paths.iter().cloned());
+    paths.extend(paths_with_referenced_descendants.iter().cloned());
+
+    paths
+        .into_iter()
+        .map(|path| {
+            let chart_fact = path_facts.get(&path).cloned().unwrap_or_default();
+            (
+                path.clone(),
+                ContractValuePathFacts {
+                    has_referenced_descendants: paths_with_referenced_descendants.contains(&path),
+                    used_as_fragment: path_signals.value_paths_used_as_fragment.contains(&path),
+                    is_ranged_source: path_signals.ranged_value_paths.contains(&path),
+                    is_partial_scalar_value_path: path_signals
+                        .partial_scalar_value_paths
+                        .contains(&path),
+                    has_render_use: chart_fact.has_render_use,
+                    all_render_uses_self_guarded: chart_fact.all_render_uses_self_guarded,
+                    has_self_range_guard_render_use: chart_fact.has_self_range_guard_render_use,
+                    is_nullable: nullable_value_paths.contains(&path),
+                },
+            )
+        })
+        .collect()
 }
 
 fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
@@ -1411,6 +1476,22 @@ mod tests {
                 .path_facts
                 .get("serviceAccount.name")
                 .is_some_and(|fact| fact.has_render_use && fact.all_render_uses_self_guarded),
+        );
+        assert!(
+            signals
+                .value_path_facts
+                .get("serviceAccount")
+                .is_some_and(|fact| fact.has_referenced_descendants),
+            "contract value-path facts should own descendant path topology",
+        );
+        assert!(
+            signals
+                .value_path_facts
+                .get("serviceAccount.name")
+                .is_some_and(|fact| fact.has_render_use
+                    && fact.all_render_uses_self_guarded
+                    && fact.is_nullable),
+            "contract value-path facts should bundle nullable render-use evidence",
         );
         assert_eq!(signals.provider_schema_uses.len(), 2);
     }

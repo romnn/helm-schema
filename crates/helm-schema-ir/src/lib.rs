@@ -54,7 +54,8 @@ mod yaml_shape;
 pub use chart_facts::{ChartFacts, PathFact};
 pub use contract::{
     ContractIr, ContractPathSignals, ContractProjection, ContractSchemaSignals, ContractUse,
-    GuardConstraint, MetadataFieldKind, ProviderSchemaUse, RequiredInferenceSignals,
+    ContractValuePathFacts, GuardConstraint, MetadataFieldKind, ProviderSchemaUse,
+    RequiredInferenceSignals,
 };
 pub use helper_eval::{
     CapabilityGuard, HelperBranch, HelperBranchBody, HelperOutput, helper_evaluate,
