@@ -1,4 +1,5 @@
 mod api_presence;
+mod api_version_inference_cache;
 mod chain;
 mod chain_outcome;
 mod miss_diagnostics;

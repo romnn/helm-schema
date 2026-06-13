@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
-
 use helm_schema_ir::{HelperBranch, ResourceRef, ValueUse, YamlPath};
 use serde_json::Value;
 
 use crate::capability_eval::{self, CapabilityOracle};
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::filename::candidate_filenames_for_resource;
-use crate::inference::{self, ApiVersionInferenceOutcome};
+use crate::inference::ApiVersionInferenceOutcome;
 
 use super::api_presence::ApiPresenceQuery;
+use super::api_version_inference_cache::ApiVersionInferenceCache;
 use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
@@ -29,7 +27,7 @@ pub struct Chain {
     providers: Vec<Box<dyn K8sSchemaProvider>>,
     sink: Option<DiagnosticSink>,
     inference_enabled: bool,
-    inference_cache: Mutex<HashMap<String, ApiVersionInferenceOutcome>>,
+    inference_cache: ApiVersionInferenceCache,
     provider_lookup_cache: ProviderLookupCache,
 }
 
@@ -40,7 +38,7 @@ impl Chain {
             providers,
             sink: None,
             inference_enabled: false,
-            inference_cache: Mutex::new(HashMap::new()),
+            inference_cache: ApiVersionInferenceCache::default(),
             provider_lookup_cache: ProviderLookupCache::default(),
         }
     }
@@ -63,17 +61,7 @@ impl Chain {
     }
 
     fn infer_api_version_for_kind(&self, kind: &str) -> ApiVersionInferenceOutcome {
-        if let Ok(guard) = self.inference_cache.lock()
-            && let Some(cached) = guard.get(kind)
-        {
-            return cached.clone();
-        }
-
-        let inferred = inference::infer_api_version(self.providers.as_slice(), kind);
-        if let Ok(mut guard) = self.inference_cache.lock() {
-            guard.insert(kind.to_string(), inferred.clone());
-        }
-        inferred
+        self.inference_cache.infer(self.providers.as_slice(), kind)
     }
 
     /// Schema for a [`ValueUse`] — iterates the ordered api-version
