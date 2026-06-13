@@ -8,21 +8,34 @@ pub(crate) struct ResourceLookupPlan {
     candidates: Vec<ResourceRef>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct MissingSchemaAttributionPlan {
+    candidates: Vec<ResourceRef>,
+}
+
 impl ResourceLookupPlan {
     pub(crate) fn for_resource<O: CapabilityOracle + ?Sized>(
         resource: &ResourceRef,
         oracle: &O,
     ) -> Self {
         let api_versions = candidate_api_versions(resource, oracle);
-        let candidates = api_versions
-            .into_iter()
-            .map(|api_version| ResourceRef {
-                api_version,
-                kind: resource.kind.clone(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            })
-            .collect();
+        let candidates = resource_candidates_with_api_versions(resource, api_versions);
+
+        Self { candidates }
+    }
+
+    pub(crate) fn candidates(&self) -> &[ResourceRef] {
+        &self.candidates
+    }
+}
+
+impl MissingSchemaAttributionPlan {
+    pub(crate) fn for_resource<O: CapabilityOracle + ?Sized>(
+        resource: &ResourceRef,
+        oracle: &O,
+    ) -> Self {
+        let api_versions = missing_schema_attribution_api_versions(resource, oracle);
+        let candidates = resource_candidates_with_api_versions(resource, api_versions);
 
         Self { candidates }
     }
@@ -46,6 +59,45 @@ fn candidate_api_versions<O: CapabilityOracle + ?Sized>(
     ordered_api_versions_for_resource(resource)
         .into_iter()
         .map(str::to_string)
+        .collect()
+}
+
+fn missing_schema_attribution_api_versions<O: CapabilityOracle + ?Sized>(
+    resource: &ResourceRef,
+    oracle: &O,
+) -> Vec<String> {
+    if !resource.api_version_branches.is_empty() {
+        let live = capability_eval::live_literals(&resource.api_version_branches, oracle);
+        return match live.first().cloned() {
+            Some(api_version) => vec![api_version],
+            None if resource.api_version.is_empty()
+                && !resource.api_version_candidates.is_empty() =>
+            {
+                resource.api_version_candidates.clone()
+            }
+            None => vec![resource.api_version.clone()],
+        };
+    }
+
+    if resource.api_version.is_empty() && !resource.api_version_candidates.is_empty() {
+        return resource.api_version_candidates.clone();
+    }
+
+    vec![resource.api_version.clone()]
+}
+
+fn resource_candidates_with_api_versions(
+    resource: &ResourceRef,
+    api_versions: Vec<String>,
+) -> Vec<ResourceRef> {
+    api_versions
+        .into_iter()
+        .map(|api_version| ResourceRef {
+            api_version,
+            kind: resource.kind.clone(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        })
         .collect()
 }
 
@@ -101,6 +153,13 @@ mod tests {
             .collect()
     }
 
+    fn planned_missing_api_versions(plan: &MissingSchemaAttributionPlan) -> Vec<String> {
+        plan.candidates()
+            .iter()
+            .map(|candidate| candidate.api_version.clone())
+            .collect()
+    }
+
     #[test]
     fn explicit_candidates_are_ranked_for_resolution() {
         let resource = resource("extensions/v1beta1", &["networking.k8s.io/v1"], Vec::new());
@@ -141,6 +200,70 @@ mod tests {
         assert_eq!(
             planned_api_versions(&plan),
             vec!["networking.k8s.io/v1", "extensions/v1beta1"]
+        );
+    }
+
+    #[test]
+    fn missing_attribution_uses_first_live_branch_literal_only() {
+        let resource = resource(
+            "",
+            &["networking.k8s.io/v1beta1", "networking.k8s.io/v1"],
+            vec![
+                branch_has(
+                    "networking.k8s.io/v1/Ingress",
+                    &["networking.k8s.io/v1", "networking.k8s.io/v1beta1"],
+                ),
+                branch_else(&["extensions/v1beta1"]),
+            ],
+        );
+        let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
+        let plan = MissingSchemaAttributionPlan::for_resource(&resource, &oracle);
+
+        assert_eq!(
+            planned_missing_api_versions(&plan),
+            vec!["networking.k8s.io/v1"]
+        );
+    }
+
+    #[test]
+    fn missing_attribution_preserves_empty_primary_candidates_in_source_order() {
+        let resource = resource(
+            "",
+            &["extensions/v1beta1", "networking.k8s.io/v1"],
+            Vec::new(),
+        );
+        let plan = MissingSchemaAttributionPlan::for_resource(&resource, &StaticOracle::new());
+
+        assert_eq!(
+            planned_missing_api_versions(&plan),
+            vec!["extensions/v1beta1", "networking.k8s.io/v1"]
+        );
+    }
+
+    #[test]
+    fn missing_attribution_preserves_unresolved_branch_candidates_in_source_order() {
+        let resource = resource(
+            "",
+            &["extensions/v1beta1", "networking.k8s.io/v1"],
+            vec![branch_has("networking.k8s.io/v1/Ingress", &[])],
+        );
+        let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
+        let plan = MissingSchemaAttributionPlan::for_resource(&resource, &oracle);
+
+        assert_eq!(
+            planned_missing_api_versions(&plan),
+            vec!["extensions/v1beta1", "networking.k8s.io/v1"]
+        );
+    }
+
+    #[test]
+    fn missing_attribution_uses_primary_when_primary_is_present() {
+        let resource = resource("extensions/v1beta1", &["networking.k8s.io/v1"], Vec::new());
+        let plan = MissingSchemaAttributionPlan::for_resource(&resource, &StaticOracle::new());
+
+        assert_eq!(
+            planned_missing_api_versions(&plan),
+            vec!["extensions/v1beta1"]
         );
     }
 }

@@ -1552,7 +1552,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   focused on execution ordering, final-miss decisions, and the current
   compatibility facade. Candidate apiVersion planning now has a named
   `ResourceLookupPlan`, so `schema_for_use` consumes concrete resource
-  attempts instead of open-coding branch/candidate selection inline.
+  attempts instead of open-coding branch/candidate selection inline. Final
+  miss attribution now has the matching `MissingSchemaAttributionPlan`; it
+  uses the same typed capability-branch evaluator while preserving the
+  user-facing attribution contract for empty primaries and branch misses.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the

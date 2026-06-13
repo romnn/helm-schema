@@ -1,10 +1,11 @@
 use helm_schema_ir::ResourceRef;
 
-use crate::capability_eval::{self, CapabilityOracle};
+use crate::capability_eval::CapabilityOracle;
 use crate::diagnostic::Diagnostic;
 use crate::filename::candidate_filenames_for_resource;
 
 use super::provider_origin::ProviderOrigin;
+use super::resource_lookup_plan::MissingSchemaAttributionPlan;
 use super::trace::{LookupTrace, LookupTraceEntry, LookupTraceOutcome};
 use super::trait_def::K8sSchemaProvider;
 
@@ -32,48 +33,16 @@ impl<'a> MissingLookupDiagnostics<'a> {
         if let Some(diagnostic) = local_override_unreadable(trace, resource) {
             return vec![diagnostic];
         }
+        let attribution_plan =
+            MissingSchemaAttributionPlan::for_resource(resource, self.capability_oracle);
         let mut diagnostics = Vec::new();
-        for attribution in self.attribution_resources(resource) {
-            diagnostics.push(self.missing_schema_diagnostic(&attribution));
+        for attribution in attribution_plan.candidates() {
+            diagnostics.push(self.missing_schema_diagnostic(attribution));
             for provider in self.providers {
-                diagnostics.extend(provider.missing_schema_provider_diagnostics(&attribution));
+                diagnostics.extend(provider.missing_schema_provider_diagnostics(attribution));
             }
         }
         diagnostics
-    }
-
-    fn attribution_resources(&self, resource: &ResourceRef) -> Vec<ResourceRef> {
-        self.attribution_api_versions(resource)
-            .into_iter()
-            .map(|api_version| ResourceRef {
-                api_version,
-                kind: resource.kind.clone(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            })
-            .collect()
-    }
-
-    fn attribution_api_versions(&self, resource: &ResourceRef) -> Vec<String> {
-        if !resource.api_version_branches.is_empty() {
-            let live = capability_eval::live_literals(
-                &resource.api_version_branches,
-                self.capability_oracle,
-            );
-            match live.first().cloned() {
-                Some(api_version) => vec![api_version],
-                None if resource.api_version.is_empty()
-                    && !resource.api_version_candidates.is_empty() =>
-                {
-                    resource.api_version_candidates.clone()
-                }
-                None => vec![resource.api_version.clone()],
-            }
-        } else if resource.api_version.is_empty() && !resource.api_version_candidates.is_empty() {
-            resource.api_version_candidates.clone()
-        } else {
-            vec![resource.api_version.clone()]
-        }
     }
 
     fn missing_schema_diagnostic(&self, resource: &ResourceRef) -> Diagnostic {
