@@ -3,7 +3,6 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
 use helm_schema_k8s::KubernetesJsonSchemaProvider;
 use serde::Deserialize;
@@ -102,7 +101,7 @@ fn schema_from_tree_sitter() {
                   key: tls.key
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_signal));
+    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_signal));
 
     let actual: serde_json::Value = schema;
 

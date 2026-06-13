@@ -44,9 +44,9 @@ remaining local maxima:
    contract projection, chart-local knowledge extraction, resolution and
    schema lowering co-evolve (every corpus feature touches several of them),
    so they are one crate; the only hard product boundaries left are the
-   external knowledge resolver and the IO shell. Today's plumbing-heavy
+   external knowledge resolver and the IO shell. The former plumbing-heavy
    `generate_values_schema_full_with_*` arity ladder is what a premature
-   public boundary on this seam looks like.
+   public boundary on this seam looked like.
 3. **Guarded typing is a precision ladder, not a blanket weakening.** v2's
    P1 overstated JSON Schema's limits: predicates decidable over the values
    document alone (`Values` atoms) can be *lowered* to draft-07
@@ -237,8 +237,8 @@ answers**, and cache state may move output only in the widening direction
   interleaved special cases, precedence rules scattered as inline
   conditionals, three competing definitions of "scalar", and a
   triple-meaning `{}`.
-- **A premature public seam, demonstrated.** The IR→gen boundary is public,
-  and the data it must carry kept growing — producing the
+- **A premature public seam, demonstrated.** The IR→gen boundary was public,
+  and the data it had to carry kept growing — producing the
   `generate_values_schema_full_with_facts_and_descriptions(uses, provider,
   values_yaml, type_hints, chart_facts, values_descriptions)` arity ladder.
   This is direct evidence that the analysis→synthesis seam wants to be
@@ -414,7 +414,7 @@ world, (b) the external knowledge resolver, (c) the grammar's build
 isolation. Parse/interpret/contract/resolve/lower co-evolve — the corpus
 shows every feature touching several at once (tpl-admits-string: interpreter
 marker + lowering rule; overlays: lattice node + co-walk + `partialize`;
-shipped schemas: chart model + resolution) — and the current code's
+shipped schemas: chart model + resolution) — and the removed
 `generate_values_schema_full_with_*` arity ladder is the fossil record of
 publishing that seam too early. Internal phase boundaries stay (modules with
 named types between them); they just stop being semver surfaces.
@@ -1483,7 +1483,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   CLI chart collection passes around the contract projection rather than a raw
   `Vec<ValueUse>`. A dead `ValuesSchemaGenerator` trait abstraction was also
   removed instead of preserving a no-op wrapper around the free generator
-  function. The
+  function. The generator's old `generate_values_schema_full_with_*` arity
+  ladder has now been collapsed into one explicit `ValuesSchemaInput`, so
+  optional analysis signals enter through named fields instead of pass-through
+  wrapper functions. The
   generator-side policy extraction has also started: provider schema domain
   lowering, guard-constraint lowering, nullability classification, and the
   per-path schema merge policy now live behind `ResolvePolicy`, leaving

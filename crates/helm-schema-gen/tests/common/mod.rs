@@ -1,4 +1,10 @@
-use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
+#![allow(dead_code)]
+
+use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
+use helm_schema_ir::ValueUse;
+use helm_schema_k8s::{
+    Chain, CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
+};
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
@@ -60,6 +66,14 @@ pub fn relax_schema(schema: &Value) -> Value {
 pub fn values_yaml_to_json(values_yaml: &str) -> Value {
     let yaml: Value = serde_yaml::from_str(values_yaml).expect("parse values.yaml as JSON");
     yaml
+}
+
+pub fn generate_schema_with_values_yaml(
+    uses: &[ValueUse],
+    provider: &dyn K8sSchemaProvider,
+    values_yaml: Option<&str>,
+) -> Value {
+    generate_values_schema(ValuesSchemaInput::new(uses, provider).with_values_yaml(values_yaml))
 }
 
 fn drop_nulls(v: &Value) -> Value {

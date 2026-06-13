@@ -26,92 +26,85 @@ use use_signals::{UseSignals, collect_use_signals};
 // Core generation logic
 // ---------------------------------------------------------------------------
 
-pub fn generate_values_schema(uses: &[ValueUse], provider: &dyn K8sSchemaProvider) -> Value {
-    generate_values_schema_with_values_yaml(uses, provider, None)
+/// Inputs for JSON Schema generation from the current contract projection.
+///
+/// The generated schema is derived from template uses plus optional structural
+/// signals collected by earlier analysis phases. Values-file descriptions are
+/// metadata only: they are applied only to schema nodes that already exist from
+/// template or values evidence.
+pub struct ValuesSchemaInput<'a> {
+    pub uses: &'a [ValueUse],
+    pub provider: &'a dyn K8sSchemaProvider,
+    pub values_yaml: Option<&'a str>,
+    pub type_hints: Option<&'a BTreeMap<String, Vec<Value>>>,
+    pub chart_facts: Option<&'a ChartFacts>,
+    pub values_descriptions: Option<&'a BTreeMap<String, String>>,
 }
 
-/// Generate a JSON Schema for Helm values.
-///
-/// If `values_yaml` is provided, it is used as an additional type signal:
-/// scalar types found in `values.yaml` may be preferred over provider-derived
-/// schemas in some cases (e.g. when values are scalar presets expanded into
-/// full objects by templates).
-pub fn generate_values_schema_with_values_yaml(
-    uses: &[ValueUse],
-    provider: &dyn K8sSchemaProvider,
-    values_yaml: Option<&str>,
-) -> Value {
-    generate_values_schema_full(uses, provider, values_yaml, &BTreeMap::new())
-}
+impl<'a> ValuesSchemaInput<'a> {
+    pub fn new(uses: &'a [ValueUse], provider: &'a dyn K8sSchemaProvider) -> Self {
+        Self {
+            uses,
+            provider,
+            values_yaml: None,
+            type_hints: None,
+            chart_facts: None,
+            values_descriptions: None,
+        }
+    }
 
-/// Generate a JSON Schema with all available signals.
-///
-/// Extends [`generate_values_schema_with_values_yaml`] with one extra
-/// input:
-///
-/// - `type_hints`: per-path JSON Schema fragments inferred from `default
-///   <literal> .Values.X` patterns in templates (see
-///   [`helm_schema_ir::extract_default_type_hints`]). When values.yaml ships a
-///   null default for a hinted path, the null is preserved alongside the
-///   hint, producing a nullable union. Literal-only because we need the
-///   type to build the schema fragment.
-///
-/// The output schema has no `required` arrays inferred by helm-schema;
-/// callers that want that behaviour layer
-/// [`required_inference::apply_required_inference`] on top of the
-/// returned schema. Keeping required-inference outside this function
-/// isolates a heuristic feature from the core schema-generation
-/// pipeline.
-pub fn generate_values_schema_full(
-    uses: &[ValueUse],
-    provider: &dyn K8sSchemaProvider,
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-) -> Value {
-    let chart_facts = ChartFacts::default();
-    generate_values_schema_full_with_facts(uses, provider, values_yaml, type_hints, &chart_facts)
-}
+    pub fn with_values_yaml(mut self, values_yaml: Option<&'a str>) -> Self {
+        self.values_yaml = values_yaml;
+        self
+    }
 
-pub fn generate_values_schema_full_with_facts(
-    uses: &[ValueUse],
-    provider: &dyn K8sSchemaProvider,
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-    chart_facts: &ChartFacts,
-) -> Value {
-    generate_values_schema_full_with_facts_and_descriptions(
-        uses,
-        provider,
-        values_yaml,
-        type_hints,
-        chart_facts,
-        &BTreeMap::new(),
-    )
+    pub fn with_type_hints(mut self, type_hints: &'a BTreeMap<String, Vec<Value>>) -> Self {
+        self.type_hints = Some(type_hints);
+        self
+    }
+
+    pub fn with_chart_facts(mut self, chart_facts: &'a ChartFacts) -> Self {
+        self.chart_facts = Some(chart_facts);
+        self
+    }
+
+    pub fn with_values_descriptions(
+        mut self,
+        values_descriptions: &'a BTreeMap<String, String>,
+    ) -> Self {
+        self.values_descriptions = Some(values_descriptions);
+        self
+    }
 }
 
 /// Generate a JSON Schema with chart-authored values-file descriptions.
 ///
-/// `values_descriptions` is metadata only. A description is applied only when
-/// the schema node already exists from template or values evidence, so comments
-/// cannot create accepted values paths or influence inferred types.
+/// The output schema has no `required` arrays inferred by helm-schema; callers
+/// that want that behaviour layer [`required_inference::apply_required_inference`]
+/// on top of the returned schema. Keeping required-inference outside this
+/// function isolates a heuristic feature from the core schema-generation
+/// pipeline.
 #[tracing::instrument(skip_all)]
-pub fn generate_values_schema_full_with_facts_and_descriptions(
-    uses: &[ValueUse],
-    provider: &dyn K8sSchemaProvider,
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-    chart_facts: &ChartFacts,
-    values_descriptions: &BTreeMap<String, String>,
-) -> Value {
-    let mut signals = collect_use_signals(uses, provider);
+pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
+    let empty_type_hints = BTreeMap::new();
+    let type_hints = input.type_hints.unwrap_or(&empty_type_hints);
+    let empty_chart_facts = ChartFacts::default();
+    let chart_facts = input.chart_facts.unwrap_or(&empty_chart_facts);
+    let empty_values_descriptions = BTreeMap::new();
+    let values_descriptions = input
+        .values_descriptions
+        .unwrap_or(&empty_values_descriptions);
+
+    let mut signals = collect_use_signals(input.uses, input.provider);
     signals
         .referenced_value_paths
         .extend(type_hints.keys().cloned());
-    let path_metadata = collect_path_metadata(uses, &signals.referenced_value_paths);
-    let mut merged_chart_facts = derive_chart_facts(uses);
+    let path_metadata = collect_path_metadata(input.uses, &signals.referenced_value_paths);
+    let mut merged_chart_facts = derive_chart_facts(input.uses);
     merge_chart_facts(&mut merged_chart_facts, chart_facts);
 
-    let values_yaml_doc = values_yaml
+    let values_yaml_doc = input
+        .values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
         .unwrap_or(YamlValue::Null);
 

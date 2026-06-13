@@ -7,8 +7,9 @@
 //! resource and rebased from `items[*].spec...` to the inner
 //! resource's `spec...` path.
 
+mod common;
+
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
@@ -61,7 +62,7 @@ fn kind_list_envelope_descends_into_inner_resource() {
     let chain =
         Chain::new(vec![Box::new(FakeIngressProvider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let schema = generate_values_schema_with_values_yaml(&ir, &chain, Some(KIND_LIST_VALUES));
+    let schema = common::generate_schema_with_values_yaml(&ir, &chain, Some(KIND_LIST_VALUES));
     assert_eq!(
         schema.pointer("/properties/host/description"),
         Some(&Value::String("inner ingress host".to_string())),

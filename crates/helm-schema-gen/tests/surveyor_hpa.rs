@@ -3,7 +3,6 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
 use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
 use serde::Deserialize;
@@ -39,7 +38,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
 
     let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let _schema = generate_values_schema_with_values_yaml(&ir, &chain, Some(&values_yaml));
+    let _schema = common::generate_schema_with_values_yaml(&ir, &chain, Some(&values_yaml));
 
     let actual = diagnostics.snapshot();
     let w = actual
@@ -126,7 +125,7 @@ fn schema_from_tree_sitter() {
     // releases, so we must validate/generate against an upstream schema bundle that still
     // contains that apiVersion.
     let provider = common::production_k8s_chain("v1.24.0");
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
 
@@ -163,7 +162,7 @@ fn schema_validates_values_yaml() {
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     // See comment in `schema_from_tree_sitter`.
     let provider = common::production_k8s_chain("v1.24.0");
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
     assert!(

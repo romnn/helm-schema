@@ -837,6 +837,9 @@ Current result:
   projection rather than a raw `Vec<ValueUse>`.
 - A dead `ValuesSchemaGenerator` trait abstraction was removed instead of
   preserving a no-op wrapper around the free generator function.
+- The generator's old arity ladder now has one explicit `ValuesSchemaInput`
+  entry point, so optional analysis signals are named inputs rather than
+  pass-through wrapper functions.
 - Generator-side lowering has its first explicit policy seam:
   `ResolvePolicy` owns provider-schema domain restriction, guard-constraint
   lowering, nullability classification, and per-path schema merge lowering

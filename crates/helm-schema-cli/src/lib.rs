@@ -12,7 +12,7 @@ use std::io::{BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_full_with_facts_and_descriptions;
+use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::{
     ChartFacts, ContractIr, ContractProjection, SymbolicIrContext, derive_chart_facts_from_ast,
     extract_default_type_hints, extract_define_blocks, extract_helper_calls,
@@ -354,13 +354,12 @@ fn generate_values_schema_for_chart_with_diagnostics_inner(
     let provider = provider_builder::build_provider(&opts.provider, diagnostic_sink);
 
     let uses = contract_projection.uses();
-    let mut schema = generate_values_schema_full_with_facts_and_descriptions(
-        uses,
-        &provider,
-        values_yaml.as_deref(),
-        &type_hints,
-        &chart_facts,
-        &values_descriptions,
+    let mut schema = generate_values_schema(
+        ValuesSchemaInput::new(uses, &provider)
+            .with_values_yaml(values_yaml.as_deref())
+            .with_type_hints(&type_hints)
+            .with_chart_facts(&chart_facts)
+            .with_values_descriptions(&values_descriptions),
     );
 
     if opts.infer_required {

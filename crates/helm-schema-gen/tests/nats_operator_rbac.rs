@@ -3,7 +3,6 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_gen::generate_values_schema_with_values_yaml;
 use helm_schema_ir::{IrGenerator, ResourceRef, SymbolicIrGenerator};
 use helm_schema_k8s::KubernetesJsonSchemaProvider;
 use serde::Deserialize;
@@ -69,7 +68,7 @@ fn schema_from_tree_sitter() {
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
 
@@ -101,7 +100,7 @@ fn schema_validates_values_yaml() {
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
     assert!(

@@ -12,9 +12,7 @@
 //!   - the six `infer_required_*` / `library_*` integration test
 //!     files under `crates/helm-schema-cli/tests/`.
 //!
-//! Nothing in the core schema-generation pipeline (`lib.rs`,
-//! `helm-schema-gen::generate_values_schema_full`) depends on
-//! anything here.
+//! Nothing in the core schema-generation pipeline depends on anything here.
 
 use std::collections::BTreeSet;
 

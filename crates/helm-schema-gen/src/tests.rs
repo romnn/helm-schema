@@ -4,9 +4,7 @@ use indoc::indoc;
 use serde_json::Value;
 
 use crate::{
-    generate_values_schema, generate_values_schema_full, generate_values_schema_full_with_facts,
-    generate_values_schema_full_with_facts_and_descriptions,
-    generate_values_schema_with_values_yaml,
+    ValuesSchemaInput, generate_values_schema,
     resolve_policy::{ResolvePolicy, ValuePathSchemaInputs},
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
@@ -58,6 +56,40 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
         hints.entry(path).or_default().push(schema);
     }
     hints
+}
+
+fn schema_for(uses: &[ValueUse]) -> Value {
+    generate_values_schema(ValuesSchemaInput::new(uses, &provider()))
+}
+
+fn schema_for_values_yaml(uses: &[ValueUse], values_yaml: Option<&str>) -> Value {
+    generate_values_schema(ValuesSchemaInput::new(uses, &provider()).with_values_yaml(values_yaml))
+}
+
+fn schema_for_values_yaml_and_hints(
+    uses: &[ValueUse],
+    values_yaml: Option<&str>,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+) -> Value {
+    generate_values_schema(
+        ValuesSchemaInput::new(uses, &provider())
+            .with_values_yaml(values_yaml)
+            .with_type_hints(type_hints),
+    )
+}
+
+fn schema_for_values_yaml_hints_and_facts(
+    uses: &[ValueUse],
+    values_yaml: Option<&str>,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    chart_facts: &ChartFacts,
+) -> Value {
+    generate_values_schema(
+        ValuesSchemaInput::new(uses, &provider())
+            .with_values_yaml(values_yaml)
+            .with_type_hints(type_hints)
+            .with_chart_facts(chart_facts),
+    )
 }
 
 fn schema_contains_open_string_map(schema: &Value) -> bool {
@@ -167,13 +199,10 @@ fn values_yaml_comments_override_provider_descriptions() {
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
 
-    let schema = generate_values_schema_full_with_facts_and_descriptions(
-        &uses,
-        &DescriptionProvider,
-        Some("name: example\n"),
-        &BTreeMap::new(),
-        &ChartFacts::default(),
-        &descriptions,
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&uses, &DescriptionProvider)
+            .with_values_yaml(Some("name: example\n"))
+            .with_values_descriptions(&descriptions),
     );
 
     assert_eq!(
@@ -203,13 +232,10 @@ fn values_yaml_comments_do_not_create_schema_paths() {
     ]);
     let provider = Chain::new(Vec::new());
 
-    let schema = generate_values_schema_full_with_facts_and_descriptions(
-        &uses,
-        &provider,
-        Some("name: example\n"),
-        &BTreeMap::new(),
-        &ChartFacts::default(),
-        &descriptions,
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&uses, &provider)
+            .with_values_yaml(Some("name: example\n"))
+            .with_values_descriptions(&descriptions),
     );
 
     assert_eq!(
@@ -363,7 +389,7 @@ fn simple_template_schema() {
         replicas: {{ .Values.replicas }}
         {{- end }}
     "};
-    let schema = generate_values_schema(&parse_ir(src), &provider());
+    let schema = schema_for(&parse_ir(src));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -424,7 +450,7 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         key: {{ .Values.feature.name }}
         {{- end }}
     "};
-    let schema = generate_values_schema(&parse_ir(src), &provider());
+    let schema = schema_for(&parse_ir(src));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -462,8 +488,7 @@ fn step1_with_fragment_null_default_is_nullable() {
     let values_yaml = indoc! {"
         extraAnnotations:
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let extra = schema
         .pointer("/properties/extraAnnotations")
@@ -491,8 +516,7 @@ fn step1_no_with_fragment_does_not_widen_to_null() {
     let values_yaml = indoc! {"
         nameOverride:
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     // nameOverride should remain `{}` — no signal points to a specific type.
     let name = schema
@@ -511,12 +535,8 @@ fn step2_default_prefix_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema = generate_values_schema_full(
-        &parse_ir(src),
-        &provider(),
-        Some(values_yaml),
-        &collect_hints(src),
-    );
+    let schema =
+        schema_for_values_yaml_and_hints(&parse_ir(src), Some(values_yaml), &collect_hints(src));
 
     let name = schema.pointer("/properties/name").expect("name present");
     let variants = name
@@ -541,12 +561,8 @@ fn step2_default_pipeline_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema = generate_values_schema_full(
-        &parse_ir(src),
-        &provider(),
-        Some(values_yaml),
-        &collect_hints(src),
-    );
+    let schema =
+        schema_for_values_yaml_and_hints(&parse_ir(src), Some(values_yaml), &collect_hints(src));
 
     let name = schema.pointer("/properties/name").expect("name present");
     let variants = name
@@ -611,8 +627,7 @@ fn step1_with_or_per_path_guards_enable_null_preservation() {
         primary:
         fallback:
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let primary = schema
         .pointer("/properties/primary")
@@ -642,8 +657,7 @@ fn step1_with_fragment_non_null_default_not_widened() {
         extraAnnotations:
           foo: bar
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let extra = schema
         .pointer("/properties/extraAnnotations")
@@ -672,8 +686,7 @@ fn nullable_scalar_preserved_for_with_guarded_render_use() {
     let values_yaml = indoc! {"
         priorityClassName:
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let priority = schema
         .pointer("/properties/priorityClassName")
@@ -717,7 +730,7 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
               nodePort:
     "};
     let ir = parse_ir(src);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let node_port = schema
         .pointer("/properties/service/properties/ports/properties/smtp/properties/nodePort")
@@ -756,7 +769,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
     );
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let snapshots = schema
         .pointer("/properties/snapshots")
@@ -786,8 +799,7 @@ fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
     let values_yaml = indoc! {"
         fullnameOverride: \"\"
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -835,7 +847,7 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -880,7 +892,7 @@ fn nested_label_helpers_keep_common_name_override_nullable_string() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let name_override = schema
         .pointer("/properties/nameOverride")
@@ -923,7 +935,7 @@ fn assignment_inside_inline_label_helper_does_not_project_to_parent_map() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let name_override = schema
         .pointer("/properties/nameOverride")
@@ -986,7 +998,7 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
     for property in ["registry", "repository", "tag"] {
@@ -1049,7 +1061,7 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
     for property in ["registry", "repository", "tag"] {
@@ -1079,8 +1091,7 @@ fn step_fragment_open_string_map_stays_open() {
         podLabels:
           app: inbucket
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -1119,8 +1130,7 @@ fn step_fragment_empty_map_default_keeps_open_string_map() {
     let values_yaml = indoc! {"
         annotations: {}
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let annotations = schema
         .pointer("/properties/annotations")
@@ -1155,8 +1165,7 @@ fn destructured_range_map_input_does_not_become_output_array() {
         environment:
           INBUCKET_LOGLEVEL: debug
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let environment = schema
         .pointer("/properties/environment")
@@ -1200,8 +1209,7 @@ fn destructured_range_map_with_len_guard_generalizes_to_open_string_map() {
         environment:
           INBUCKET_LOGLEVEL: debug
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let environment = schema
         .pointer("/properties/environment")
@@ -1235,8 +1243,7 @@ fn scalar_item_range_keeps_provider_array_metadata() {
         accessModes:
           - ReadWriteOnce
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let access_modes = schema
         .pointer("/properties/accessModes")
@@ -1300,8 +1307,7 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
             paths:
               - /
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let host_paths = schema
         .pointer("/properties/hosts/items/properties/paths")
@@ -1354,11 +1360,7 @@ fn scalar_range_with_root_helper_stays_scalar_array() {
         hosts:
           - /
     "};
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let hosts = schema.pointer("/properties/hosts").expect("hosts present");
     assert_eq!(
@@ -1400,7 +1402,7 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
           pullSecrets: []
     "};
 
-    let schema = generate_values_schema_with_values_yaml(&uses, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&uses, Some(values_yaml));
     let pull_secrets = schema
         .pointer("/properties/image/properties/pullSecrets")
         .expect("image.pullSecrets present");
@@ -1447,11 +1449,7 @@ fn dict_bound_helper_object_input_stays_object() {
           name: workload
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let service_account = schema
         .pointer("/properties/serviceAccount")
@@ -1490,11 +1488,7 @@ fn helper_defaulted_bound_name_allows_null() {
           name: ""
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let name = schema
         .pointer("/properties/serviceAccount/properties/name")
@@ -1525,11 +1519,7 @@ fn helper_direct_boolean_render_keeps_provider_shape() {
           name: workload
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let automount = schema
         .pointer("/properties/serviceAccount/properties/automount")
@@ -1585,11 +1575,7 @@ fn nested_bound_helper_keeps_structured_parent_object() {
           tag: stable
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
     assert_eq!(
@@ -1651,7 +1637,7 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let name_override = schema
         .pointer("/properties/nameOverride")
@@ -1724,11 +1710,7 @@ fn image_pull_secret_fragment_helper_does_not_project_image_root_as_pod_spec() {
           tag: stable
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     for pointer in ["/properties/image", "/properties/clientImage"] {
         let image = schema.pointer(pointer).expect("image root present");
@@ -1783,11 +1765,7 @@ fn helper_string_output_conflicts_collapse_to_plain_string() {
         fullnameOverride: custom
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -1829,11 +1807,7 @@ fn template_call_in_scalar_slot_propagates_helper_value_types() {
         fullnameOverride: custom
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -1868,7 +1842,7 @@ fn nested_printf_helper_call_preserves_helper_output_guards() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -1912,7 +1886,7 @@ fn assigned_nested_printf_helper_call_preserves_helper_output_guards() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -1960,7 +1934,7 @@ fn assigned_capability_helper_dependency_does_not_inherit_api_version_schema() {
     "#};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let kube_version = schema
         .pointer("/properties/kubeVersion")
         .expect("kubeVersion present");
@@ -1994,8 +1968,7 @@ fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
         existingSecret: \"\"
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
     let existing_secret = schema
         .pointer("/properties/existingSecret")
         .expect("existingSecret present");
@@ -2039,11 +2012,7 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
               - memory
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2142,11 +2111,7 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
               - memory
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2204,8 +2169,7 @@ fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
           storageClass:
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2274,8 +2238,7 @@ fn unconstrained_object_fragment_keeps_nested_maps_open() {
             memory: 200Mi
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2342,7 +2305,7 @@ fn with_bound_range_dot_annotations_stay_string_map() {
           foo: bar
     "};
     let ir = parse_ir(src);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let annotations = schema
         .pointer("/properties/annotations")
@@ -2377,8 +2340,7 @@ fn with_defaulted_object_body_rebinds_dot_to_fallback_path() {
           first: {}
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     assert_eq!(
         schema
@@ -2419,7 +2381,7 @@ fn ranged_with_defaulted_object_body_attributes_defaulted_leaf_to_fallback_path(
     "};
 
     let ir = parse_ir(src);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let image = schema
         .pointer("/properties/migrations/properties/image")
         .expect("migrations image schema present");
@@ -2452,13 +2414,8 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
     "};
 
     let (ir, facts) = parse_ir_and_chart_facts(src);
-    let schema = generate_values_schema_full_with_facts(
-        &ir,
-        &provider(),
-        Some(values_yaml),
-        &BTreeMap::new(),
-        &facts,
-    );
+    let schema =
+        schema_for_values_yaml_hints_and_facts(&ir, Some(values_yaml), &BTreeMap::new(), &facts);
     let parameters = schema
         .pointer("/properties/dataSource")
         .expect("dataSource present");
@@ -2505,13 +2462,8 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         .expect("helpers parse");
     let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
     let facts = derive_chart_facts_from_ast(&ast);
-    let schema = generate_values_schema_full_with_facts(
-        &ir,
-        &provider(),
-        Some(values_yaml),
-        &BTreeMap::new(),
-        &facts,
-    );
+    let schema =
+        schema_for_values_yaml_hints_and_facts(&ir, Some(values_yaml), &BTreeMap::new(), &facts);
     let data_source = schema
         .pointer("/properties/persistence/properties/dataSource")
         .expect("persistence.dataSource present");
@@ -2552,13 +2504,8 @@ fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
     "};
 
     let (ir, facts) = parse_ir_and_chart_facts(src);
-    let schema = generate_values_schema_full_with_facts(
-        &ir,
-        &provider(),
-        Some(values_yaml),
-        &BTreeMap::new(),
-        &facts,
-    );
+    let schema =
+        schema_for_values_yaml_hints_and_facts(&ir, Some(values_yaml), &BTreeMap::new(), &facts);
     let env = schema.pointer("/properties/env").expect("env present");
 
     any_of_variant_matching(env, |variant| {
@@ -2598,8 +2545,7 @@ fn guard_only_empty_map_default_stays_open_object() {
         config: {}
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
     let config = schema
         .pointer("/properties/config")
         .expect("config present");
@@ -2645,8 +2591,7 @@ fn quoted_matchlabels_key_value_stays_string() {
           ingressController:
             namespace: ingress-nginx
     "};
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let namespace = schema
         .pointer("/properties/networkPolicies/properties/ingressController/properties/namespace")
@@ -2678,8 +2623,7 @@ fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
           name: surveyor
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
     let name = schema
         .pointer("/properties/account/properties/name")
         .expect("account.name present");
@@ -2749,7 +2693,7 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     assert!(
         schema
@@ -2819,11 +2763,7 @@ fn helper_defaulted_root_service_account_name_allows_null() {
             name:
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let name = schema
         .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
@@ -2899,7 +2839,7 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     assert!(
         schema
@@ -2972,7 +2912,7 @@ fn exact_bound_helper_with_bound_dot_arg_infers_classname_without_values_default
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let class_name = schema
         .pointer("/properties/ingress/properties/className")
@@ -3058,11 +2998,7 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
           cluster: prod
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let pod_annotations = schema
         .pointer("/properties/admintools/properties/podAnnotations")
@@ -3127,11 +3063,7 @@ fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call()
           extra: enabled
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, &helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -3161,11 +3093,7 @@ fn assigned_annotations_fragment_variable_keeps_open_string_map() {
             team: platform
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let annotations = schema
         .pointer("/properties/serviceAccount/properties/annotations")
@@ -3201,11 +3129,7 @@ fn direct_rendered_annotations_helper_keeps_open_string_map() {
           owner: infra
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
@@ -3242,11 +3166,7 @@ fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map()
         podAnnotations: {}
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
@@ -3292,11 +3212,7 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
           probeCommandTimeout: 2
     "};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
     let probe = schema
         .pointer("/properties/livenessProbe")
         .expect("livenessProbe present");
@@ -3331,11 +3247,7 @@ fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
         podLabels: {}
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, &helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -3379,7 +3291,7 @@ fn helper_built_matchlabels_keeps_name_override_scalar() {
     "#};
 
     let ir = parse_ir_with_helpers(src, &helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let name_override = schema
         .pointer("/properties/nameOverride")
         .expect("nameOverride present");
@@ -3432,7 +3344,7 @@ fn bitnami_standard_labels_merge_keeps_name_override_scalar() {
     "#};
 
     let ir = parse_ir_with_helpers(src, &helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let name_override = schema
         .pointer("/properties/nameOverride")
         .expect("nameOverride present");
@@ -3466,8 +3378,7 @@ fn scalar_slot_rendered_array_keeps_provider_item_schema() {
           loadBalancerSourceRanges: []
     "#};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
     let source_ranges = schema
         .pointer("/properties/service/properties/loadBalancerSourceRanges")
         .expect("service.loadBalancerSourceRanges present");
@@ -3509,11 +3420,7 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
         podAnnotations: {}
     "#};
 
-    let schema = generate_values_schema_with_values_yaml(
-        &parse_ir_with_helpers(src, &helpers),
-        &provider(),
-        Some(values_yaml),
-    );
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -3552,8 +3459,7 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
         leaderElection: {}
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     assert!(
         permits_type(
@@ -3583,8 +3489,7 @@ fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
           repository: jetstack/cert-manager-acmesolver
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     for pointer in [
         "/properties/image/properties/registry",
@@ -3617,8 +3522,7 @@ fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_pat
           repository: jetstack/cert-manager-acmesolver
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     for pointer in [
         "/properties/image/properties/registry",
@@ -3716,7 +3620,7 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
     "};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let schema = generate_values_schema_with_values_yaml(&ir, &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     assert_eq!(
         schema
@@ -3794,8 +3698,7 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
             memory: 250Mi
     "};
 
-    let schema =
-        generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), Some(values_yaml));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let requests = schema
         .pointer("/properties/resources/properties/requests")

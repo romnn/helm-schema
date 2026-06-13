@@ -189,7 +189,7 @@ mod tests {
     use serde_json::Value;
 
     use super::apply_required_inference;
-    use crate::{generate_values_schema_full, generate_values_schema_with_values_yaml};
+    use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{IrGenerator, SymbolicIrGenerator, ValueUse, extract_default_type_hints};
@@ -220,7 +220,11 @@ mod tests {
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let uses = parse_ir(src);
         let hints = collect_hints(src);
-        let mut schema = generate_values_schema_full(&uses, &provider(), values_yaml, &hints);
+        let mut schema = generate_values_schema(
+            ValuesSchemaInput::new(&uses, &provider())
+                .with_values_yaml(values_yaml)
+                .with_type_hints(&hints),
+        );
         apply_required_inference(
             &mut schema,
             &uses,
@@ -391,7 +395,7 @@ mod tests {
             kind: ServiceAccount
             {{- end }}
         "};
-        let schema = generate_values_schema_with_values_yaml(&parse_ir(src), &provider(), None);
+        let schema = generate_values_schema(ValuesSchemaInput::new(&parse_ir(src), &provider()));
         // The core path must never emit `required` — that's the
         // separation of concerns this module exists to enforce.
         let any_required_anywhere = serde_json::to_string(&schema)
