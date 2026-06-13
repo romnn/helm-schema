@@ -6,6 +6,7 @@ mod miss_diagnostics;
 mod provider_lookup_cache;
 mod provider_origin;
 mod provider_result;
+mod resource_lookup_executor;
 mod resource_lookup_plan;
 mod trace;
 mod trait_def;

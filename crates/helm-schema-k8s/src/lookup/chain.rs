@@ -3,7 +3,6 @@ use serde_json::Value;
 
 use crate::capability_eval::{self, CapabilityOracle};
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
-use crate::filename::candidate_filenames_for_resource;
 use crate::inference::ApiVersionInferenceOutcome;
 
 use super::api_presence::ApiPresenceQuery;
@@ -12,7 +11,7 @@ use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
-use super::provider_result::ProviderLookupResult;
+use super::resource_lookup_executor::ResourceLookupExecutor;
 use super::resource_lookup_plan::ResourceLookupPlan;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
@@ -20,9 +19,9 @@ use super::trait_def::K8sSchemaProvider;
 /// Composed provider chain with precedence
 /// `LocalOverride > DefaultCatalog > KubernetesOpenApi`.
 ///
-/// This layer executes provider lookups and projects diagnostics from the
-/// resulting traces. Providers report their local outcomes; the chain decides
-/// when a miss is final.
+/// This layer plans candidate lookups, delegates concrete provider-chain
+/// execution, and projects diagnostics from final-miss traces. Providers report
+/// their local outcomes; the chain decides when a miss is final.
 #[derive(Debug)]
 pub struct Chain {
     providers: Vec<Box<dyn K8sSchemaProvider>>,
@@ -245,69 +244,22 @@ impl Chain {
         path: &YamlPath,
         commit_miss_diagnostics: bool,
     ) -> TracedLookupOutcome {
-        let mut trace = LookupTrace::new(resource, path);
-        for (provider_index, provider) in self.providers.iter().enumerate() {
-            let result = self.provider_lookup_cache.lookup(
-                provider_index,
-                provider.as_ref(),
-                resource,
-                path,
-            );
-            trace.record_provider(resource, provider.origin(), &result);
-            match result {
-                ProviderLookupResult::Found {
-                    schema,
-                    resolved_k8s_version,
-                } => {
-                    self.maybe_emit_fallback_version(
-                        resource,
-                        provider.origin(),
-                        resolved_k8s_version.as_deref(),
-                    );
-                    return TracedLookupOutcome {
-                        outcome: ChainLookupOutcome::Resolved {
-                            schema: Some(schema),
-                            resolving_provider: provider.origin(),
-                            resolved_k8s_version,
-                        },
-                        trace,
-                    };
-                }
-                ProviderLookupResult::PathUnresolved => {
-                    return TracedLookupOutcome {
-                        outcome: ChainLookupOutcome::Resolved {
-                            schema: None,
-                            resolving_provider: provider.origin(),
-                            resolved_k8s_version: None,
-                        },
-                        trace,
-                    };
-                }
-                ProviderLookupResult::ResourceDocMissing { .. } => {
-                    if provider.origin() == ProviderOrigin::LocalOverride {
-                        if commit_miss_diagnostics {
-                            self.emit_missing_lookup_diagnostics(&trace);
-                        }
-                        return TracedLookupOutcome {
-                            outcome: ChainLookupOutcome::MissingSchema {
-                                k8s_versions_tried: Vec::new(),
-                                tried_filenames: candidate_filenames_for_resource(resource),
-                            },
-                            trace,
-                        };
-                    }
-                }
-                ProviderLookupResult::NotOwned => {}
-            }
+        let executor =
+            ResourceLookupExecutor::new(self.providers.as_slice(), &self.provider_lookup_cache);
+        let traced = executor.execute(resource, path);
+        if let ChainLookupOutcome::Resolved {
+            resolved_k8s_version,
+            ..
+        } = &traced.outcome
+        {
+            self.maybe_emit_fallback_version(resource, resolved_k8s_version.as_deref());
         }
-        let outcome = ChainLookupOutcome::MissingSchema {
-            k8s_versions_tried: self.collect_tried_k8s_versions(),
-            tried_filenames: candidate_filenames_for_resource(resource),
-        };
-        if commit_miss_diagnostics {
-            self.emit_missing_lookup_diagnostics(&trace);
+        if commit_miss_diagnostics
+            && matches!(traced.outcome, ChainLookupOutcome::MissingSchema { .. })
+        {
+            self.emit_missing_lookup_diagnostics(&traced.trace);
         }
-        TracedLookupOutcome { outcome, trace }
+        traced
     }
 
     fn emit_missing_lookup_diagnostics(&self, trace: &LookupTrace) {
@@ -333,7 +285,6 @@ impl Chain {
     fn maybe_emit_fallback_version(
         &self,
         resource: &ResourceRef,
-        _origin: ProviderOrigin,
         resolved_k8s_version: Option<&str>,
     ) {
         let Some(sink) = &self.sink else {
@@ -359,14 +310,6 @@ impl Chain {
             primary_version: primary.to_string(),
             resolved_version: resolved_version.to_string(),
         });
-    }
-
-    fn collect_tried_k8s_versions(&self) -> Vec<String> {
-        self.providers
-            .iter()
-            .filter_map(|p| p.k8s_version_chain())
-            .flatten()
-            .collect()
     }
 }
 

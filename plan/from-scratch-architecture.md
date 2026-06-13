@@ -1559,7 +1559,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Resource-provider trace entries now carry the attempted `ResourceRef`
   explicitly, which removes the old hidden assumption that a trace subject is
   always the same coordinate as every provider attempt and prepares the trace
-  model for honest multi-candidate execution traces.
+  model for honest multi-candidate execution traces. Concrete resource/path
+  lookup execution now also lives behind `ResourceLookupExecutor`, leaving
+  `Chain` to compose candidate planning, final-miss diagnostics, and the
+  compatibility facade rather than owning provider precedence and stop/fall-
+  through mechanics inline.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
