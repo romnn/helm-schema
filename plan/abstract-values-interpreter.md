@@ -111,7 +111,7 @@ not scale as a design.
 
 Introduce a new IR-layer module, tentatively:
 
-- `crates/helm-schema-ir/src/abstract_eval.rs`
+- `crates/helm-schema-ir/src/chart_facts.rs`
 
 It interprets `HelmAst` + `TemplateExpr` into **chart facts**.
 
@@ -529,7 +529,7 @@ Do **not** big-bang rewrite `SymbolicWalker`.
 
 Add:
 
-- `abstract_eval.rs`
+- `chart_facts.rs`
 - `ChartFacts`
 - `PathFact`
 - a minimal `AbstractValue`

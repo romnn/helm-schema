@@ -3,12 +3,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use helm_schema_ast::{HelmAst, parse_action_expressions};
 use serde::{Deserialize, Serialize};
 
+use crate::Guard;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{
     apply_assignment_expr, apply_local_set_mutations_expr, eval_expr, eval_expr_value,
 };
 use crate::walker::is_fragment_expr;
-use crate::{ContractProjection, Guard, ValueKind, ValueUse};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChartFacts {
@@ -311,124 +311,6 @@ pub fn derive_chart_facts_from_ast(ast: &HelmAst) -> ChartFacts {
             })
             .collect(),
     }
-}
-
-/// Derive chart-level path facts from a normalized contract projection.
-#[must_use]
-pub fn derive_chart_facts(contract_projection: &ContractProjection) -> ChartFacts {
-    derive_chart_facts_from_uses(contract_projection.uses())
-}
-
-fn derive_chart_facts_from_uses(uses: &[ValueUse]) -> ChartFacts {
-    #[derive(Default)]
-    struct Acc {
-        has_render_use: bool,
-        all_render_uses_self_guarded: bool,
-        has_fragment_render: bool,
-        has_self_range_guard_render_use: bool,
-    }
-
-    fn use_is_self_guarded(use_: &ValueUse) -> bool {
-        if use_.path.0.is_empty() {
-            return true;
-        }
-
-        use_.guards.iter().any(|guard| match guard {
-            Guard::Truthy { path }
-            | Guard::Eq { path, .. }
-            | Guard::Range { path }
-            | Guard::With { path }
-            | Guard::Default { path } => path == &use_.source_expr,
-            Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => false,
-        })
-    }
-
-    let mut by_path: BTreeMap<String, Acc> = BTreeMap::new();
-    let mut descendant_paths: BTreeSet<String> = BTreeSet::new();
-
-    for use_ in uses {
-        if use_.source_expr.trim().is_empty() {
-            for guard in &use_.guards {
-                for path in guard.value_paths() {
-                    if path.trim().is_empty() {
-                        continue;
-                    }
-                    let acc = by_path.entry(path.to_string()).or_insert_with(|| Acc {
-                        all_render_uses_self_guarded: true,
-                        ..Acc::default()
-                    });
-                    if !use_.path.0.is_empty() {
-                        acc.has_render_use = true;
-                        acc.has_fragment_render |= use_.kind == ValueKind::Fragment;
-                        acc.has_self_range_guard_render_use |= matches!(guard, Guard::Range { .. });
-                    }
-                }
-            }
-            continue;
-        }
-
-        let acc = by_path
-            .entry(use_.source_expr.clone())
-            .or_insert_with(|| Acc {
-                all_render_uses_self_guarded: true,
-                ..Acc::default()
-            });
-
-        if !use_.path.0.is_empty() {
-            acc.has_render_use = true;
-            acc.has_fragment_render |= use_.kind == ValueKind::Fragment;
-            acc.has_self_range_guard_render_use |= use_
-                .guards
-                .iter()
-                .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr));
-            acc.all_render_uses_self_guarded &= use_is_self_guarded(use_);
-        }
-
-        for guard in &use_.guards {
-            for path in guard.value_paths() {
-                if path.trim().is_empty() || path == use_.source_expr {
-                    continue;
-                }
-                let acc = by_path.entry(path.to_string()).or_insert_with(|| Acc {
-                    all_render_uses_self_guarded: true,
-                    ..Acc::default()
-                });
-                if !use_.path.0.is_empty() {
-                    acc.has_render_use = true;
-                    acc.has_fragment_render |= use_.kind == ValueKind::Fragment;
-                    acc.has_self_range_guard_render_use |= matches!(guard, Guard::Range { .. });
-                }
-            }
-        }
-
-        let mut segments: Vec<&str> = use_
-            .source_expr
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .collect();
-        while segments.len() > 1 {
-            segments.pop();
-            descendant_paths.insert(segments.join("."));
-        }
-    }
-
-    let path_facts = by_path
-        .into_iter()
-        .map(|(path, acc)| {
-            (
-                path.clone(),
-                PathFact {
-                    has_render_use: acc.has_render_use,
-                    all_render_uses_self_guarded: acc.all_render_uses_self_guarded,
-                    has_fragment_render: acc.has_fragment_render,
-                    descendant_accessed: descendant_paths.contains(&path),
-                    has_self_range_guard_render_use: acc.has_self_range_guard_render_use,
-                },
-            )
-        })
-        .collect();
-
-    ChartFacts { path_facts }
 }
 
 #[cfg(test)]

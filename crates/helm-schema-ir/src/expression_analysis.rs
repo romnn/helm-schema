@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn helper_binding_projection_uses_shared_abstract_eval() {
+    fn helper_binding_projection_uses_shared_expression_eval() {
         let bindings = HashMap::from([(
             "ctx".to_string(),
             HelperBinding::Dict(
@@ -202,7 +202,7 @@ mod tests {
     }
 
     #[test]
-    fn helper_argument_projection_uses_shared_abstract_eval() {
+    fn helper_argument_projection_uses_shared_expression_eval() {
         let bindings = helper_bindings_for_arg(
             Some(&expr(r#"dict "ctx" $ "config" .Values.serviceAccount"#)),
             None,
@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn bound_path_resolution_uses_shared_abstract_eval() {
+    fn bound_path_resolution_uses_shared_expression_eval() {
         let bindings = HashMap::from([(
             "config".to_string(),
             HelperBinding::ValuesPath("serviceAccount".to_string()),

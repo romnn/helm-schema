@@ -343,7 +343,7 @@ Status: **complete**
 
 Goal:
 
-- extract the mini `Binding` lattice currently nested in `abstract_eval.rs`
+- extract the mini `Binding` lattice currently nested in the chart-facts walker
   into a reusable `abstract_value.rs`
 - preserve current chart-facts behavior exactly
 - avoid touching `symbolic.rs` semantics
@@ -933,7 +933,7 @@ The redesign is complete when:
 
 ## Live notes
 
-- The old chart-facts `abstract_eval.rs` is a useful seed but not the final
+- The chart-facts walker is a useful seed but not the final
   architecture. It already has a small local lattice; phase 0 turns that into
   shared production vocabulary.
 - The recent `symbolic.rs` module split is a good migration base: it separated

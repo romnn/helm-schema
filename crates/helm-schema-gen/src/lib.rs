@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ChartFacts, ContractProjection, derive_chart_facts};
+use helm_schema_ir::{ChartFacts, ContractProjection};
 use helm_schema_k8s::K8sSchemaProvider;
 
 use path_metadata::{PathMetadata, collect_path_metadata};
@@ -104,7 +104,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .extend(type_hints.keys().cloned());
     let path_metadata =
         collect_path_metadata(input.contract_projection, &signals.referenced_value_paths);
-    let mut merged_chart_facts = derive_chart_facts(input.contract_projection);
+    let mut merged_chart_facts = input.contract_projection.chart_facts();
     merge_chart_facts(&mut merged_chart_facts, chart_facts);
 
     let values_yaml_doc = input

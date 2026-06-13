@@ -416,7 +416,7 @@ mod tests {
     }
 
     #[test]
-    fn local_set_mutation_uses_abstract_eval_for_computed_key() {
+    fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
         let mut locals = HashMap::from([(
             "config".to_string(),
             FragmentBinding::Dict(BTreeMap::from([

@@ -411,7 +411,7 @@ spec:
         let path = "kid.controller.ingressClassResource.parameters";
 
         let uses = collection.contract_projection.uses();
-        let ir_facts = helm_schema_ir::derive_chart_facts(&collection.contract_projection);
+        let ir_facts = collection.contract_projection.chart_facts();
         let ir_fact = ir_facts
             .path_facts
             .get(path)

@@ -1492,6 +1492,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   longer expose or peel raw `ValueUse` slices at the main CLI boundary.
   Chart-fact derivation now also accepts the projection artifact directly, so
   callers no longer unwrap compatibility rows just to recover per-path facts.
+  The chart-facts walker has also been moved out of its vague legacy bucket
+  into a dedicated chart-facts module, and
+  projection-derived facts now live as `ContractProjection::chart_facts()`.
+  That keeps raw compatibility-row inspection behind the contract artifact
+  instead of exporting another free function over `ValueUse`.
   The old `IrGenerator -> Vec<ValueUse>` trait has also been removed; the
   public symbolic generator now returns `ContractProjection`, and tests that
   need fixture DTO rows opt into `into_value_uses()` explicitly. CLI

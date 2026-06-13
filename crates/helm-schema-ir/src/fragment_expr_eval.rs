@@ -367,7 +367,7 @@ mod tests {
     }
 
     #[test]
-    fn outer_expr_fragment_local_selector_uses_shared_abstract_eval() {
+    fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
         let expr = single_expr(r#"dict "name" $ctx.config.name"#);
         let fragment_locals = context_local();
 
@@ -381,7 +381,7 @@ mod tests {
     }
 
     #[test]
-    fn helper_binding_fragment_local_selector_uses_abstract_eval() {
+    fn helper_binding_fragment_local_selector_uses_shared_expression_eval() {
         let binding = helper_binding_from_fragment_locals(
             r#"$ctx.config.name | toYaml | fromYaml"#,
             &context_local(),
@@ -394,7 +394,7 @@ mod tests {
     }
 
     #[test]
-    fn helper_binding_fragment_local_dict_uses_abstract_eval() {
+    fn helper_binding_fragment_local_dict_uses_shared_expression_eval() {
         let binding = helper_binding_from_fragment_locals(
             r#"dict "name" $ctx.config.name"#,
             &context_local(),
@@ -410,7 +410,7 @@ mod tests {
     }
 
     #[test]
-    fn helper_binding_fragment_local_index_uses_abstract_eval() {
+    fn helper_binding_fragment_local_index_uses_shared_expression_eval() {
         let binding =
             helper_binding_from_fragment_locals(r#"index $ctx.config "name""#, &context_local());
 
