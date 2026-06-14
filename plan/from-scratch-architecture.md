@@ -1581,12 +1581,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   That projection is now derived by one contract-layer signal builder pass,
   replacing the previous separate chart-fact, path-signal, provider-use, and
   nullability collectors with a single owner for core schema-generation
-  evidence. That builder and the generator-facing signal DTOs now live in a
-  focused `contract_signals` module, leaving `contract` to own normalized
-  claim accumulation, projection, and normalization only. Descendant-path
-  topology used during per-path schema resolution is now part of that same
-  contract-owned schema signal bundle, so generator lowering no longer
-  reconstructs contract path topology from referenced path strings.
+  evidence. The generator-facing signal DTOs live in `contract_signals`,
+  while `contract_signal_builder` owns accumulation/classification policy.
+  That leaves `contract` to own normalized claim accumulation, projection,
+  and normalization only. Descendant-path topology used during per-path
+  schema resolution is now part of that same contract-owned schema signal
+  bundle, so generator lowering no longer reconstructs contract path topology
+  from referenced path strings.
   CLI chart analysis now returns that `ContractSchemaSignals` artifact
   directly, so the generation boundary no longer receives or exposes the
   compatibility-era projection. Production analysis derives those signals
@@ -1633,7 +1634,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `contract_normalization` owns the difference between DTO canonicalization
   and semantic `ContractIr` finalization. That keeps raw DTO inspection from
   accidentally dropping evidence while preserving one owner for production
-  finalization policy.
+  finalization policy. Template helper discovery has also moved out of the
+  walker grab bag into `helper_discovery`, so define/include graph extraction
+  has a parser-focused owner while `walker` continues to provide the
+  compatibility re-export surface.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

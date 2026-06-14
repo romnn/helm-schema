@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::contract_normalization::{canonicalize_contract_uses, normalize_contract_uses};
-use crate::contract_signals::{ContractSchemaSignals, derive_schema_signals_from_uses};
+use crate::contract_signal_builder::derive_schema_signals_from_uses;
+use crate::contract_signals::ContractSchemaSignals;
 use crate::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 /// A contract claim for one observed values path.
