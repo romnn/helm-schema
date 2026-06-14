@@ -1,4 +1,5 @@
-use crate::contract::{ContractUse, ContractUseContext};
+use crate::contract::ContractUse;
+use crate::contract_sink::ContractUseContext;
 use crate::document_hole_context::DocumentHoleContext;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 

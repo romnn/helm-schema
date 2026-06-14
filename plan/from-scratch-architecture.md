@@ -1627,7 +1627,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   module, with the helper-output evaluator, structural detector, and
   source-position index behind resource-identity names instead of top-level
   parser-implementation modules. That leaves A3's future abstract-document
-  identity projection with one local replacement boundary.
+  identity projection with one local replacement boundary. Contract emission
+  mechanics have also been split out of the graph type: `contract_sink` owns
+  interpreter-to-claim lowering and `ContractUseSink`, while
+  `contract_normalization` owns the difference between DTO canonicalization
+  and semantic `ContractIr` finalization. That keeps raw DTO inspection from
+  accidentally dropping evidence while preserving one owner for production
+  finalization policy.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

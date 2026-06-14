@@ -2,7 +2,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::contract::ContractUseSink;
+use crate::contract_sink::ContractUseSink;
 use crate::fragment_scope_eval::AssignmentKind;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;

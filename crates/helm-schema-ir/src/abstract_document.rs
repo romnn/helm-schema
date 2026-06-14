@@ -1,5 +1,6 @@
 use crate::abstract_document_hole::AbstractDocumentHole;
-use crate::contract::{ContractIr, ContractUseContext};
+use crate::contract::ContractIr;
+use crate::contract_sink::ContractUseContext;
 use crate::document_hole_context::DocumentHoleContext;
 use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;

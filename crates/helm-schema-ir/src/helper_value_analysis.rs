@@ -4,7 +4,7 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::contract::ContractUseSink;
+use crate::contract_sink::ContractUseSink;
 use crate::expression_analysis::{
     resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
     resolved_type_is_paths_for_text, set_default_chart_paths_for_text,

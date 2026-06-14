@@ -8,7 +8,8 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract::{ContractIr, ContractUseContext, ContractUseSink};
+use crate::contract::ContractIr;
+use crate::contract_sink::{ContractUseContext, ContractUseSink};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
@@ -63,9 +64,9 @@ impl SymbolicIrContext {
     /// Generate the opaque contract graph without projecting to fixture DTOs.
     ///
     /// Callers that need to combine, scope, or otherwise transform chart-local
-    /// contracts should use this method and project with [`ContractIr::project`]
-    /// for schema generation. [`ContractIr::into_value_uses`] is reserved for
-    /// fixture and external inspection output.
+    /// contracts should use this method and derive schema facts with
+    /// [`ContractIr::into_schema_signals`]. [`ContractIr::into_value_uses`] is
+    /// reserved for fixture and external inspection output.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
             return ContractIr::default();

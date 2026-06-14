@@ -6,7 +6,7 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::contract::ContractUseSink;
+use crate::contract_sink::ContractUseSink;
 use crate::document_hole_context::collect_document_hole_context;
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
 use crate::fragment_expr_eval::{
