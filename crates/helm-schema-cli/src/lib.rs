@@ -24,7 +24,7 @@ use vfs::VfsPath;
 
 use crate::error::CliResult;
 use crate::generation::{GeneratedSchema, generate_values_schema_for_chart_output};
-use crate::output_pipeline::OutputPipelineOptions;
+use crate::output_pipeline::{JsonOutputFormat, OutputPipelineOptions, ReferenceHandling};
 
 pub use cli::Cli;
 pub use error::CliError;
@@ -117,15 +117,17 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         subchart_value_prefixes,
     } = generate_values_schema_for_chart_output(&opts, Some(&diagnostics))?;
     let output_options = OutputPipelineOptions {
-        keep_refs: cli.output.keep_refs,
+        reference_handling: ReferenceHandling::from_keep_refs(cli.output.keep_refs),
         allow_net: !cli.k8s.offline,
         strip_descriptions: cli.output.strip_descriptions,
         minimize: cli.output.minimize,
     };
+    let override_schemas =
+        output_pipeline::load_prepared_override_schemas(&cli.override_schema, &output_options)?;
 
     schema = output_pipeline::apply_schema_output_pipeline(
         schema,
-        &cli.override_schema,
+        override_schemas,
         &subchart_value_prefixes,
         &cli.chart_dir,
         &output_options,
@@ -145,8 +147,12 @@ fn run_inner(cli: Cli) -> CliResult<()> {
             source: err,
         })?;
         let mut out = BufWriter::new(file);
-        output_pipeline::write_schema_json(&mut out, &schema, cli.output.compact)
-            .map_err(|err| write_output_error_with_path(err, &path))?;
+        output_pipeline::write_schema_json(
+            &mut out,
+            &schema,
+            JsonOutputFormat::from_compact(cli.output.compact),
+        )
+        .map_err(|err| write_output_error_with_path(err, &path))?;
         out.flush().map_err(|err| CliError::WriteOutput {
             path: path.clone(),
             source: err,
@@ -154,7 +160,11 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     } else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        output_pipeline::write_schema_json(&mut out, &schema, cli.output.compact)?;
+        output_pipeline::write_schema_json(
+            &mut out,
+            &schema,
+            JsonOutputFormat::from_compact(cli.output.compact),
+        )?;
         out.flush()?;
     }
 

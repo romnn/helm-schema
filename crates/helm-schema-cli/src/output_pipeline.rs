@@ -14,32 +14,78 @@ use crate::schema_override;
 /// feed information back into template analysis.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OutputPipelineOptions {
-    pub(crate) keep_refs: bool,
+    pub(crate) reference_handling: ReferenceHandling,
     pub(crate) allow_net: bool,
     pub(crate) strip_descriptions: bool,
     pub(crate) minimize: bool,
 }
 
+/// Override schema document after file loading and output-mode preparation.
+///
+/// The final output pipeline consumes these prepared documents as data, so
+/// override file IO and override merge policy stay separate.
+#[derive(Debug)]
+pub(crate) struct PreparedOverrideSchema {
+    schema: Value,
+}
+
+/// How final output should handle JSON Schema `$ref` nodes.
+///
+/// This is an output concern only. It controls whether the final schema stays
+/// as a bundled document with references or is exported as a fully flattened
+/// document for consumers that cannot resolve references themselves.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ReferenceHandling {
+    PreserveRefs,
+    FlattenedExport,
+}
+
+impl ReferenceHandling {
+    pub(crate) fn from_keep_refs(keep_refs: bool) -> Self {
+        if keep_refs {
+            Self::PreserveRefs
+        } else {
+            Self::FlattenedExport
+        }
+    }
+
+    fn flatten(self) -> bool {
+        matches!(self, Self::FlattenedExport)
+    }
+}
+
+/// JSON serialization format for the final schema document.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum JsonOutputFormat {
+    Pretty,
+    Compact,
+}
+
+impl JsonOutputFormat {
+    pub(crate) fn from_compact(compact: bool) -> Self {
+        if compact { Self::Compact } else { Self::Pretty }
+    }
+}
+
 #[tracing::instrument(
     skip_all,
     fields(
-        override_count = override_paths.len(),
+        override_count = override_schemas.len(),
         subchart_count = subchart_value_prefixes.len(),
-        keep_refs = options.keep_refs,
+        reference_handling = ?options.reference_handling,
         strip_descriptions = options.strip_descriptions,
         minimize = options.minimize,
     )
 )]
 pub(crate) fn apply_schema_output_pipeline(
     mut schema: Value,
-    override_paths: &[PathBuf],
+    override_schemas: Vec<PreparedOverrideSchema>,
     subchart_value_prefixes: &[Vec<String>],
     base_dir: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    for path in override_paths {
-        let override_schema = load_prepared_override_schema(path, options)?;
-        schema = schema_override::apply_schema_override(schema, override_schema);
+    for override_schema in override_schemas {
+        schema = schema_override::apply_schema_override(schema, override_schema.schema);
     }
 
     mirror_global_schema_into_subcharts(&mut schema, subchart_value_prefixes);
@@ -47,8 +93,22 @@ pub(crate) fn apply_schema_output_pipeline(
     apply_output_transforms(schema, base_dir, options)
 }
 
+#[tracing::instrument(skip_all, fields(override_count = paths.len()))]
+pub(crate) fn load_prepared_override_schemas(
+    paths: &[PathBuf],
+    options: &OutputPipelineOptions,
+) -> CliResult<Vec<PreparedOverrideSchema>> {
+    paths
+        .iter()
+        .map(|path| load_prepared_override_schema(path, options))
+        .collect()
+}
+
 #[tracing::instrument(skip_all)]
-fn load_prepared_override_schema(path: &Path, options: &OutputPipelineOptions) -> CliResult<Value> {
+fn load_prepared_override_schema(
+    path: &Path,
+    options: &OutputPipelineOptions,
+) -> CliResult<PreparedOverrideSchema> {
     let mut override_schema = load_json_file(path)?;
 
     // Tag every subtree that carries `$ref` with an internal "replace on
@@ -57,16 +117,17 @@ fn load_prepared_override_schema(path: &Path, options: &OutputPipelineOptions) -
     // deep-merging it with inferred constraints for the same path.
     schema_override::mark_refs_for_replacement(&mut override_schema);
 
-    prepare_override_schema(override_schema, path, options)
+    let schema = prepare_override_schema(override_schema, path, options)?;
+    Ok(PreparedOverrideSchema { schema })
 }
 
-#[tracing::instrument(skip_all, fields(keep_refs = options.keep_refs))]
+#[tracing::instrument(skip_all, fields(reference_handling = ?options.reference_handling))]
 fn prepare_override_schema(
     schema: Value,
     override_path: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    if options.keep_refs {
+    if !options.reference_handling.flatten() {
         return Ok(schema);
     }
 
@@ -83,7 +144,7 @@ fn prepare_override_schema(
 #[tracing::instrument(
     skip_all,
     fields(
-        keep_refs = options.keep_refs,
+        reference_handling = ?options.reference_handling,
         strip_descriptions = options.strip_descriptions,
         minimize = options.minimize,
     )
@@ -93,7 +154,7 @@ fn apply_output_transforms(
     base_dir: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    if !options.keep_refs {
+    if options.reference_handling.flatten() {
         schema = flatten::flatten_refs(
             schema,
             base_dir,
@@ -114,16 +175,15 @@ fn apply_output_transforms(
     Ok(schema)
 }
 
-#[tracing::instrument(skip_all, fields(compact = compact))]
+#[tracing::instrument(skip_all, fields(format = ?format))]
 pub(crate) fn write_schema_json(
     out: &mut impl Write,
     schema: &Value,
-    compact: bool,
+    format: JsonOutputFormat,
 ) -> CliResult<()> {
-    if compact {
-        serde_json::to_writer(&mut *out, schema)?;
-    } else {
-        serde_json::to_writer_pretty(&mut *out, schema)?;
+    match format {
+        JsonOutputFormat::Compact => serde_json::to_writer(&mut *out, schema)?,
+        JsonOutputFormat::Pretty => serde_json::to_writer_pretty(&mut *out, schema)?,
     }
     out.write_all(b"\n")?;
     Ok(())
@@ -243,9 +303,200 @@ fn strip_schema_or_schema_array_descriptions(value: &mut Value) {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+    use std::path::PathBuf;
+
     use serde_json::Value;
 
-    use super::{mirror_global_schema_into_subcharts, strip_schema_descriptions};
+    use super::{
+        JsonOutputFormat, OutputPipelineOptions, ReferenceHandling, apply_schema_output_pipeline,
+        load_prepared_override_schemas, mirror_global_schema_into_subcharts,
+        strip_schema_descriptions, write_schema_json,
+    };
+
+    fn test_temp_dir(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "helm-schema-output-pipeline-{name}-{}",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn reference_handling_preserves_refs_when_requested() {
+        let schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "properties": {
+                "fromRef": {
+                    "$ref": "./shared.json#/definitions/stringValue"
+                }
+            },
+            "type": "object"
+        });
+
+        let output = apply_schema_output_pipeline(
+            schema,
+            Vec::new(),
+            &[],
+            std::path::Path::new("/does/not/matter"),
+            &OutputPipelineOptions {
+                reference_handling: ReferenceHandling::PreserveRefs,
+                allow_net: false,
+                strip_descriptions: false,
+                minimize: false,
+            },
+        )
+        .expect("apply output pipeline");
+
+        assert_eq!(
+            output
+                .pointer("/properties/fromRef/$ref")
+                .and_then(Value::as_str),
+            Some("./shared.json#/definitions/stringValue"),
+            "reference-preserving output mode should not dereference refs"
+        );
+    }
+
+    #[test]
+    fn reference_handling_flattened_export_resolves_file_refs() {
+        let temp_dir = test_temp_dir("flattened-export");
+        fs::create_dir_all(&temp_dir).expect("create temp dir");
+        let shared_schema_path = temp_dir.join("shared.json");
+        fs::write(
+            &shared_schema_path,
+            r#"{
+                "definitions": {
+                    "stringValue": {
+                        "type": "string"
+                    }
+                }
+            }"#,
+        )
+        .expect("write shared schema");
+
+        let schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "properties": {
+                "fromRef": {
+                    "$ref": "./shared.json#/definitions/stringValue"
+                }
+            },
+            "type": "object"
+        });
+
+        let output = apply_schema_output_pipeline(
+            schema,
+            Vec::new(),
+            &[],
+            &temp_dir,
+            &OutputPipelineOptions {
+                reference_handling: ReferenceHandling::FlattenedExport,
+                allow_net: false,
+                strip_descriptions: false,
+                minimize: false,
+            },
+        )
+        .expect("apply output pipeline");
+
+        assert_eq!(
+            output
+                .pointer("/properties/fromRef/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "flattened export mode should inline file refs"
+        );
+        assert!(output.pointer("/properties/fromRef/$ref").is_none());
+
+        fs::remove_dir_all(&temp_dir).expect("remove temp dir");
+    }
+
+    #[test]
+    fn prepared_override_schemas_resolve_refs_before_merge() {
+        let temp_dir = test_temp_dir("prepared-overrides");
+        fs::create_dir_all(&temp_dir).expect("create temp dir");
+        fs::write(
+            temp_dir.join("shared.json"),
+            r#"{
+                "definitions": {
+                    "cloud": {
+                        "enum": [null, "azure", "minikube"]
+                    }
+                }
+            }"#,
+        )
+        .expect("write shared schema");
+        let override_path = temp_dir.join("override.json");
+        fs::write(
+            &override_path,
+            r#"{
+                "properties": {
+                    "cloud": {
+                        "$ref": "./shared.json#/definitions/cloud"
+                    }
+                }
+            }"#,
+        )
+        .expect("write override schema");
+
+        let options = OutputPipelineOptions {
+            reference_handling: ReferenceHandling::FlattenedExport,
+            allow_net: false,
+            strip_descriptions: false,
+            minimize: false,
+        };
+        let overrides =
+            load_prepared_override_schemas(&[override_path], &options).expect("load overrides");
+        let schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "properties": {
+                "cloud": {
+                    "type": ["boolean", "string"]
+                }
+            },
+            "type": "object"
+        });
+
+        let output = apply_schema_output_pipeline(schema, overrides, &[], &temp_dir, &options)
+            .expect("apply output pipeline");
+
+        let cloud = output.pointer("/properties/cloud").expect("cloud schema");
+        assert_eq!(
+            cloud,
+            &serde_json::json!({
+                "enum": [null, "azure", "minikube"]
+            }),
+            "prepared override refs should replace inferred constraints after pre-flattening"
+        );
+
+        fs::remove_dir_all(&temp_dir).expect("remove temp dir");
+    }
+
+    #[test]
+    fn json_output_format_controls_pretty_vs_compact_serialization() {
+        let schema = serde_json::json!({
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        });
+
+        let mut pretty = Vec::new();
+        write_schema_json(&mut pretty, &schema, JsonOutputFormat::Pretty).expect("write pretty");
+        let pretty = String::from_utf8(pretty).expect("pretty utf8");
+        assert!(
+            pretty.contains("\n  "),
+            "pretty output should contain indentation: {pretty}"
+        );
+
+        let mut compact = Vec::new();
+        write_schema_json(&mut compact, &schema, JsonOutputFormat::Compact).expect("write compact");
+        let compact = String::from_utf8(compact).expect("compact utf8");
+        assert_eq!(
+            compact,
+            r#"{"properties":{"name":{"type":"string"}},"type":"object"}"#.to_string() + "\n"
+        );
+    }
 
     #[test]
     fn strip_schema_descriptions_preserves_description_value_property() {

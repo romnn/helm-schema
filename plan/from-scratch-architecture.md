@@ -1630,7 +1630,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   flattening, description stripping, minimization, and JSON formatting while
   preserving today's flags and output bytes. That makes the later bundled-vs-
   flattened mode switch a single output-layer change instead of a root CLI
-  orchestration change.
+  orchestration change. The output pipeline now also carries explicit
+  `ReferenceHandling` and `JsonOutputFormat` values instead of boolean
+  plumbing, so the future default switch can be made by changing the output
+  mode mapping rather than rewriting transform order. Override schema loading
+  now produces explicit prepared override inputs before the final merge and
+  transform pass, moving that path closer to the target `PolicyInputs` shape
+  while preserving today's override semantics and output bytes.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
