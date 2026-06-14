@@ -1592,6 +1592,17 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   compatibility-era projection. Production analysis derives those signals
   directly from the normalized `ContractIr`; `ContractProjection` remains
   only the explicit fixture/external DTO inspection boundary.
+  CLI chart analysis is now split into explicit stage modules as well:
+  `manifest_analysis` owns manifest template parsing, contract collection,
+  and literal CRD extraction, while `chart_evidence` owns non-contract
+  template evidence such as reachable-helper type hints and default-fallback
+  paths. This leaves the top-level analysis function as orchestration rather
+  than a mixed manifest/evidence/helper-graph implementation, and the optional
+  required-inference post-pass now consumes precomputed fallback-path evidence
+  instead of re-walking helper reachability itself.
+  `manifest_analysis` now returns a named manifest-analysis artifact instead
+  of mutating caller-owned contract and schema-universe state, and the helper
+  call graph has been narrowed back to a private evidence-collector detail.
   The policy-extraction half does **not** depend on A3 and can continue
   against the current `ContractIr`-derived signal path.
   Capability-guard branch DTOs are now separated from the old helper literal

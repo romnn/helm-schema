@@ -1,11 +1,13 @@
 mod analysis;
 mod chart;
+mod chart_evidence;
 mod chart_files;
 pub mod cli;
 mod diag_emit;
 mod error;
 pub mod flatten;
 mod generation;
+mod manifest_analysis;
 mod output_pipeline;
 mod provider_builder;
 mod required_inference;

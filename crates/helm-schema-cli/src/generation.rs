@@ -70,8 +70,7 @@ pub(crate) fn generate_values_schema_for_chart_output(
 
     let ChartAnalysis {
         contract_schema_signals,
-        type_hints,
-        call_graph,
+        template_evidence,
         local_schema_universe,
     } = analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
 
@@ -82,7 +81,7 @@ pub(crate) fn generate_values_schema_for_chart_output(
     let mut schema = generate_values_schema(
         ValuesSchemaInput::new(&contract_schema_signals, &provider)
             .with_values_yaml(values_yaml.as_deref())
-            .with_type_hints(&type_hints)
+            .with_type_hints(&template_evidence.type_hints)
             .with_values_descriptions(&values_descriptions),
     );
 
@@ -91,8 +90,7 @@ pub(crate) fn generate_values_schema_for_chart_output(
             &mut schema,
             &contract_schema_signals.required_inference_signals,
             values_yaml.as_deref(),
-            charts,
-            &call_graph,
+            &template_evidence.default_fallback_paths,
         );
     }
 

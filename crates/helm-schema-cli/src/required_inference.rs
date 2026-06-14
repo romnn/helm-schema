@@ -9,6 +9,7 @@
 //!     [`crate::GenerateOptions`]
 //!   - the conditional call in
 //!     `generation::generate_values_schema_for_chart_output`
+//!   - the `default_fallback_paths` field in [`crate::chart_evidence::ChartTemplateEvidence`]
 //!   - the six `infer_required_*` / `library_*` integration test
 //!     files under `crates/helm-schema-cli/tests/`.
 //!
@@ -17,36 +18,30 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ir::RequiredInferenceSignals;
-use helm_schema_ir::required_inference::extract_default_fallback_paths;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
-
-use crate::analysis::HelperCallGraph;
-use crate::chart::{ChartContext, scope_values_path};
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.
 ///
 /// `required_inference_signals` comes from the contract schema-signal bundle.
 /// `values_yaml` is the composed values.yaml (used to re-derive top-level
-/// seeded keys — those must not be marked required). `charts` and `call_graph`
-/// come from the IR collection too and drive per-prefix fallback-path scoping.
+/// seeded keys — those must not be marked required). `default_fallback_paths`
+/// is template evidence scoped to the consuming chart.
 #[instrument(skip_all)]
 pub(crate) fn apply(
     schema: &mut Value,
     required_inference_signals: &RequiredInferenceSignals,
     values_yaml: Option<&str>,
-    charts: &[ChartContext],
-    call_graph: &HelperCallGraph,
+    default_fallback_paths: &BTreeSet<String>,
 ) {
     let synthetic_value_paths = top_level_value_paths(values_yaml);
-    let default_fallback_paths = collect_fallback_paths(charts, call_graph);
     helm_schema_gen::required_inference::apply_required_inference(
         schema,
         required_inference_signals,
         &synthetic_value_paths,
-        &default_fallback_paths,
+        default_fallback_paths,
     );
 }
 
@@ -75,39 +70,4 @@ fn top_level_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
         }
     }
     out
-}
-
-/// Walk every non-library chart's reachable-helper closure (via the
-/// shared call graph) and union the default-fallback paths extracted
-/// from each reached body's text, scoped to the consuming chart's
-/// value prefix.
-///
-/// Mirrors the shape of the type-hint extraction loop in
-/// `analysis::analyze_charts` but with the broader fallback-
-/// path regex instead of the literal-only type-hint regex. Sharing
-/// the call graph keeps scoping consistent between the two consumers
-/// without re-deriving graph edges.
-fn collect_fallback_paths(
-    charts: &[ChartContext],
-    call_graph: &HelperCallGraph,
-) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    for c in charts.iter().filter(|c| !c.is_library) {
-        let prefix = &c.values_prefix;
-        if let Some(text) = call_graph.chart_direct_body(prefix) {
-            apply_fallback_paths_to(&mut out, text, prefix);
-        }
-        for helper_name in call_graph.reachable_from_chart(prefix) {
-            if let Some(text) = call_graph.helper_body(&helper_name) {
-                apply_fallback_paths_to(&mut out, text, prefix);
-            }
-        }
-    }
-    out
-}
-
-fn apply_fallback_paths_to(out: &mut BTreeSet<String>, body_text: &str, prefix: &[String]) {
-    for path in extract_default_fallback_paths(body_text) {
-        out.insert(scope_values_path(&path, prefix));
-    }
 }
