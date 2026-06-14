@@ -9,6 +9,7 @@ use crate::expression_analysis::{
     resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
     resolved_type_is_paths_for_text, set_default_chart_paths_for_text,
 };
+use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr,
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
@@ -33,7 +34,6 @@ use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_context::computed_with_body_dot;
-use crate::walker::is_fragment_expr;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) struct HelperValuesWalkState<'context, 'state> {

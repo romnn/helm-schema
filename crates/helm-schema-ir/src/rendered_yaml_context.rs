@@ -1,8 +1,8 @@
 use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
 
+use crate::fragment_classification::is_fragment_expr;
 use crate::resource_identity::ResourceIdentityIndex;
 use crate::template_expr_cache::parse_expr_text;
-use crate::walker::is_fragment_expr;
 use crate::yaml_shape::{
     Shape, first_mapping_colon_offset, parse_yaml_key, source_line_starts_block_scalar,
 };

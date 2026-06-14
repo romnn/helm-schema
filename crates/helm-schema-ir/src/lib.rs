@@ -8,11 +8,13 @@ mod bound_value_analysis;
 mod capability_branch;
 mod chart_facts;
 mod condition_action_plan;
+mod condition_guards;
 mod contract;
 mod contract_normalization;
 mod contract_signal_builder;
 mod contract_signals;
 mod contract_sink;
+mod default_type_hints;
 mod define_body_cache;
 mod document_hole_context;
 mod document_value_analysis;
@@ -20,6 +22,7 @@ mod eval_effect;
 mod eval_env;
 mod expr_eval;
 mod expression_analysis;
+mod fragment_classification;
 mod fragment_expr_eval;
 mod fragment_scope_eval;
 mod helper_analysis;
@@ -47,11 +50,12 @@ mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
 mod symbolic_scope_state;
+mod template_comment_filter;
 mod template_expr_analysis;
 mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
-mod walker;
+mod value_path_extraction;
 mod yaml_shape;
 
 pub use capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
@@ -61,10 +65,9 @@ pub use contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
     MetadataFieldKind, ProviderSchemaUse, RequiredInferenceSignals,
 };
+pub use default_type_hints::extract_default_type_hints;
+pub use helper_discovery::{DefineBlock, extract_define_blocks, extract_helper_calls};
 pub use symbolic::SymbolicIrContext;
-pub use walker::{
-    DefineBlock, extract_default_type_hints, extract_define_blocks, extract_helper_calls,
-};
 
 use serde::{Deserialize, Serialize};
 

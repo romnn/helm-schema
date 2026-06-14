@@ -1,7 +1,6 @@
-//! IR-level regression tests for the typed-AST extractors in
-//! `walker.rs`. Unlike the unit tests on the extractors themselves
-//! (which feed text directly into `parse_condition` /
-//! `extract_values_paths`), these run the full
+//! IR-level regression tests for the typed-AST value-path and condition
+//! extractors. Unlike the unit tests on the extractors themselves (which feed
+//! text directly into `parse_condition` / `extract_values_paths`), these run the full
 //! [`SymbolicIrContext`] projection pipeline against minimal in-memory chart
 //! fixtures so we lock in the behaviour at the surface every
 //! downstream consumer actually sees.

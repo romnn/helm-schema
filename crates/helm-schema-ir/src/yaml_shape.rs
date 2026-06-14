@@ -1,4 +1,4 @@
-use crate::YamlPath;
+use crate::{YamlPath, fragment_classification::is_fragment_expr};
 
 /// Tracks the rendered YAML location while the symbolic walker moves across
 /// mixed YAML/template source.
@@ -77,12 +77,7 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
         let rest = rest.strip_prefix(':').unwrap_or(rest);
         let rest = rest.trim_start();
         let starts_block_scalar = rest.starts_with('|') || rest.starts_with('>');
-        let is_template = rest.starts_with("{{");
-        let is_template_fragment = is_template
-            && (rest.contains("toYaml")
-                || rest.contains("nindent")
-                || rest.contains("indent")
-                || rest.contains("tpl"));
+        let is_template_fragment = rest.starts_with("{{") && is_fragment_expr(rest);
         let is_block = rest.is_empty() || starts_block_scalar || is_template_fragment;
         Some(ParsedYamlKey {
             key,

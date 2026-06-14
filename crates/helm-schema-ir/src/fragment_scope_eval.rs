@@ -5,10 +5,10 @@ use helm_schema_ast::TemplateExpr;
 use crate::binding::FragmentBinding;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::apply_local_set_mutations_expr;
+use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
-use crate::walker::is_fragment_expr;
 use crate::yaml_shape::parse_yaml_key;
 
 fn strip_template_action_wrapping(line: &str) -> Option<String> {

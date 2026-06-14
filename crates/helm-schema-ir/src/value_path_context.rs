@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::binding::{FragmentBinding, HelperBinding};
+use crate::condition_guards::parse_condition;
 use crate::expression_analysis::{
     helper_binding_from_expr, resolve_expr_to_values_path,
     resolved_default_fallback_paths_for_text, type_is_schema_type,
@@ -14,7 +15,7 @@ use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
 use crate::template_expr_cache::parse_expr_text;
-use crate::walker::{parse_condition, values_path_from_expr};
+use crate::value_path_extraction::values_path_from_expr;
 
 pub(crate) struct ValuePathContext<'a> {
     pub(crate) root_bindings: &'a HashMap<String, HelperBinding>,

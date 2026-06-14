@@ -1634,10 +1634,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `contract_normalization` owns the difference between DTO canonicalization
   and semantic `ContractIr` finalization. That keeps raw DTO inspection from
   accidentally dropping evidence while preserving one owner for production
-  finalization policy. Template helper discovery has also moved out of the
-  walker grab bag into `helper_discovery`, so define/include graph extraction
-  has a parser-focused owner while `walker` continues to provide the
-  compatibility re-export surface.
+  finalization policy. The old `walker` grab bag has now been deleted: helper
+  discovery, default type hints, value-path extraction, condition guards,
+  fragment classification, and template-comment filtering each have focused
+  owners behind the unchanged crate-root API. Fragment classification is now
+  based on the typed template expression AST rather than substring scanning,
+  and `yaml_shape` shares that same classifier instead of maintaining a second
+  detector.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

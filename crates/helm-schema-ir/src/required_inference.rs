@@ -9,7 +9,8 @@
 
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
-use crate::walker::{strip_yaml_comment_lines, values_path_from_expr};
+use crate::template_comment_filter::strip_yaml_comment_lines;
+use crate::value_path_extraction::values_path_from_expr;
 
 /// Extract paths that have a `default <ANY-EXPR> .Values.X` (prefix) or
 /// `.Values.X | default <ANY-EXPR>` (pipeline) fallback. Broader than
