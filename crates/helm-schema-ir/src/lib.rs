@@ -9,6 +9,7 @@ mod capability_branch;
 mod chart_facts;
 mod condition_action_plan;
 mod contract;
+mod contract_signals;
 mod define_body_cache;
 mod document_hole_context;
 mod document_value_analysis;
@@ -53,10 +54,10 @@ mod yaml_shape;
 
 pub use capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
 pub use chart_facts::{ChartFacts, PathFact};
-pub use contract::{
-    ContractIr, ContractPathSignals, ContractProjection, ContractSchemaSignals, ContractUse,
-    ContractValuePathFacts, GuardConstraint, MetadataFieldKind, ProviderSchemaUse,
-    RequiredInferenceSignals,
+pub use contract::{ContractIr, ContractProjection, ContractUse};
+pub use contract_signals::{
+    ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
+    MetadataFieldKind, ProviderSchemaUse, RequiredInferenceSignals,
 };
 pub use symbolic::{SymbolicIrContext, SymbolicIrGenerator};
 pub use walker::{

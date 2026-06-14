@@ -30,12 +30,6 @@ impl HelperBranchBody {
         Self::Literals { values }
     }
 
-    /// Build an empty literal-bodied branch payload.
-    #[must_use]
-    pub fn empty_literals() -> Self {
-        Self::Literals { values: Vec::new() }
-    }
-
     /// True when the body carries no statically-reachable literal.
     #[must_use]
     pub fn is_empty(&self) -> bool {
@@ -45,9 +39,7 @@ impl HelperBranchBody {
         }
     }
 
-    /// Flatten to all reachable literals in first-seen depth-first order.
-    #[must_use]
-    pub fn all_literals(&self) -> Vec<String> {
+    pub(crate) fn all_literals(&self) -> Vec<String> {
         let mut out = Vec::new();
         let mut seen = HashSet::new();
         self.append_all_literals(&mut out, &mut seen);

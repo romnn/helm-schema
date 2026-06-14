@@ -1581,10 +1581,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   That projection is now derived by one contract-layer signal builder pass,
   replacing the previous separate chart-fact, path-signal, provider-use, and
   nullability collectors with a single owner for core schema-generation
-  evidence. Descendant-path topology used during per-path schema resolution is
-  now part of that same contract-owned schema signal bundle, so generator
-  lowering no longer reconstructs contract path topology from referenced path
-  strings.
+  evidence. That builder and the generator-facing signal DTOs now live in a
+  focused `contract_signals` module, leaving `contract` to own normalized
+  claim accumulation, projection, and normalization only. Descendant-path
+  topology used during per-path schema resolution is now part of that same
+  contract-owned schema signal bundle, so generator lowering no longer
+  reconstructs contract path topology from referenced path strings.
   CLI chart analysis now returns that `ContractSchemaSignals` artifact
   directly, so the generation boundary no longer receives or exposes the
   compatibility-era projection. Production analysis derives those signals
@@ -1596,6 +1598,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   evaluator: `CapabilityGuard` / `HelperBranch` / `HelperBranchBody` remain
   the public resource-lookup contract, while `helper_eval` is private
   resource-detector implementation detail rather than exported semantic API.
+  The branch DTO public surface has also been narrowed to the operations used
+  across crate boundaries; internal literal flattening stays crate-local.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI
