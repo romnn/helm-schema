@@ -1641,7 +1641,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   module, with the helper-output evaluator, structural detector, and
   source-position index behind resource-identity names instead of top-level
   parser-implementation modules. That leaves A3's future abstract-document
-  identity projection with one local replacement boundary. Contract emission
+  identity projection with one local replacement boundary. The helper-output
+  path is now split further into a small output-model/entry module and a
+  private evaluator that owns recursion/cycle traversal state explicitly,
+  keeping literal helper interpretation as one replaceable implementation
+  rather than a mixed model/evaluator grab bag. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
