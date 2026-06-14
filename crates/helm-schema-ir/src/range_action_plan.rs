@@ -2,7 +2,7 @@ use crate::YamlPath;
 use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::parse_literal_list_range;
 use crate::fragment_scope_eval::{
-    range_body_emits_sequence_item_from_source,
+    range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_body_renders_scalar_sequence_items_from_source,
     range_has_destructured_variable_definition, range_header_text_from_source,
 };
@@ -27,6 +27,7 @@ pub(crate) fn plan_range_action(
 ) -> RangeActionPlan {
     let has_variable_definition = range_has_destructured_variable_definition(node);
     let body_emits_sequence_item = range_body_emits_sequence_item_from_source(node, source);
+    let body_renders_mapping_entries = range_body_renders_mapping_entries_from_ast(node, source);
     let body_renders_scalar_sequence_items = !has_variable_definition
         && range_body_renders_scalar_sequence_items_from_source(node, source);
 
@@ -60,6 +61,7 @@ pub(crate) fn plan_range_action(
         || (body_renders_scalar_sequence_items && direct_iterable_header_path.is_some());
     let renders_mapping_entries = has_variable_definition
         && !body_emits_sequence_item
+        && body_renders_mapping_entries
         && !current_path.0.is_empty()
         && current_path
             .0

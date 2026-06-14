@@ -454,13 +454,14 @@ Current result:
 - Helper-body fragment and value analysis have been split out of
   `symbolic.rs`:
   - `bound_helper_call_analysis.rs`
-  - `helper_fragment_outputs.rs`
   - `helper_fragment_output_uses.rs`
   - `helper_value_analysis.rs`
-  These modules still expose compatibility walkers, but they isolate helper
-  summary orchestration and helper-body transfer functions so they can be
-  replaced by `eval_node` / helper summaries without further growing
-  `SymbolicWalker`.
+  The old flat helper-fragment output walker has been deleted; structured
+  helper-fragment output uses now own destructured map-range projection and
+  helper-local `with` body-dot resolution. The remaining helper modules still
+  expose compatibility DTO projections, but helper-body traversal itself now
+  runs through the shared node evaluator instead of parallel source-order
+  walkers.
 - Output-action handling has also been split into focused compatibility
   modules:
   - `output_node_context.rs` owns YAML sink attribution for one template output

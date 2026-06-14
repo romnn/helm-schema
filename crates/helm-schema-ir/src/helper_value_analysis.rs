@@ -33,7 +33,7 @@ use crate::node_eval::{NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::template_expr_cache::parse_expr_text;
-use crate::value_path_context::computed_with_body_dot;
+use crate::value_path_context::computed_with_body_fragment_binding;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) struct HelperValuesWalkState<'context, 'state> {
@@ -395,11 +395,19 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
-        let body_dot = computed_with_body_dot(header, self.bindings, current_dot.as_ref());
+        let current_dot_fragment = current_dot.as_ref().map(HelperBinding::to_fragment_binding);
+        let body_dot = computed_with_body_fragment_binding(
+            header,
+            self.bindings,
+            self.local_bindings,
+            self.context,
+            current_dot_fragment.as_ref(),
+            current_dot.as_ref(),
+        );
         ConditionActionPlan {
             predicate: Self::truthy_predicate_for_paths(&branch_guard_paths),
             bound_values: Vec::new(),
-            dot_binding: body_dot.as_ref().map(HelperBinding::to_fragment_binding),
+            dot_binding: body_dot,
             apply_alternative_predicate: false,
         }
     }

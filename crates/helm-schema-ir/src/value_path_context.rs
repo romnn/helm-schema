@@ -5,8 +5,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::condition_guards::parse_condition;
 use crate::expression_analysis::{
-    helper_binding_from_expr, resolve_expr_to_values_path,
-    resolved_default_fallback_paths_for_text, type_is_schema_type,
+    resolve_expr_to_values_path, resolved_default_fallback_paths_for_text, type_is_schema_type,
 };
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
 use crate::helper_analysis::HelperOutputMeta;
@@ -27,23 +26,40 @@ pub(crate) struct ValuePathContext<'a> {
     pub(crate) current_dot_binding: Option<HelperBinding>,
 }
 
-/// Resolves a `with` header's value to the helper binding callers should use as
-/// `current_dot` while walking the body.
-pub(crate) fn computed_with_body_dot(
+/// Resolves a `with` header's value to the fragment binding walkers should use
+/// as `current_dot` while interpreting the body.
+pub(crate) fn computed_with_body_fragment_binding(
     header: &str,
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
-) -> Option<HelperBinding> {
+    root_bindings: &HashMap<String, HelperBinding>,
+    template_bindings: &HashMap<String, FragmentBinding>,
+    fragment_context: FragmentEvalContext<'_>,
+    current_dot_fragment: Option<&FragmentBinding>,
+    current_dot_binding: Option<&HelperBinding>,
+) -> Option<FragmentBinding> {
     let exprs = parse_expr_text(header);
     let [expr] = exprs.as_slice() else {
         return None;
     };
 
-    if is_bare_values_root_expr(expr) {
-        return Some(HelperBinding::ValuesPath(String::new()));
+    let mut locals = template_bindings.clone();
+    for (key, value) in root_bindings {
+        locals.insert(key.clone(), value.to_fragment_binding());
     }
 
-    helper_binding_from_expr(expr, Some(bindings), current_dot)
+    fragment_binding_from_outer_expr(
+        expr,
+        Some(&locals),
+        Some(root_bindings),
+        current_dot_binding,
+    )
+    .or_else(|| {
+        fragment_context.fragment_binding_from_expr(
+            expr,
+            template_bindings,
+            current_dot_fragment,
+            &mut HashSet::new(),
+        )
+    })
 }
 
 impl ValuePathContext<'_> {
@@ -209,22 +225,14 @@ impl ValuePathContext<'_> {
     }
 
     pub(crate) fn with_body_fragment_binding(&self, header: &str) -> Option<FragmentBinding> {
-        let mut locals = self.template_bindings.clone();
-        for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), value.to_fragment_binding());
-        }
-
-        let exprs = parse_expr_text(header);
-        let [expr] = exprs.as_slice() else {
-            return None;
-        };
-        fragment_binding_from_outer_expr(
-            expr,
-            Some(&locals),
-            Some(self.root_bindings),
+        computed_with_body_fragment_binding(
+            header,
+            self.root_bindings,
+            self.template_bindings,
+            self.fragment_context,
+            self.current_dot_fragment.as_ref(),
             self.current_dot_binding.as_ref(),
         )
-        .or_else(|| self.fragment_binding_from_expr(expr, self.current_dot_fragment.as_ref()))
     }
 
     pub(crate) fn single_resolved_values_path(&self, text: &str) -> Option<String> {
@@ -475,16 +483,6 @@ impl ValuePathContext<'_> {
         }
         paths
     }
-}
-
-fn is_bare_values_root_expr(expr: &TemplateExpr) -> bool {
-    matches!(expr, TemplateExpr::Field(path) if matches!(path.as_slice(), [head] if head == "Values"))
-        || matches!(
-            expr,
-            TemplateExpr::Selector { operand, path }
-                if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
-                    && matches!(path.as_slice(), [head] if head == "Values"),
-        )
 }
 
 fn direct_values_paths_from_exprs(exprs: &[TemplateExpr]) -> BTreeSet<String> {

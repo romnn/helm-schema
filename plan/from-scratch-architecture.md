@@ -1418,7 +1418,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   switchpoint for helper/body semantics: remaining binding DTOs are projection
   outputs rather than parallel evaluators. The next broader step is A3 internal
   documents and contract projection, while smaller A2 DTO cleanup can continue
-  opportunistically.
+  opportunistically. The old flat helper-fragment output walker
+  (`helper_fragment_outputs.rs`) has now been deleted: destructured map-range
+  fragment outputs are emitted by the structured helper-fragment output-use
+  runtime, and helper `with` body-dot resolution uses the shared abstract
+  value path with root bindings, current dot, and helper-local fragment
+  bindings. The residual A2 compatibility surface is therefore the
+  `BoundHelperAnalysis` / `HelperFragmentOutputUse` DTO projection, not a
+  parallel helper-body interpreter.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected into contract claims, so downstream is untouched

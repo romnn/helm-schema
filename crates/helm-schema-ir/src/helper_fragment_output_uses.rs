@@ -16,11 +16,13 @@ use crate::fragment_expr_eval::{
 };
 use crate::fragment_scope_eval::{
     apply_local_set_mutations, merge_fragment_locals, parse_helper_assignment,
-    range_header_text_from_source, range_iterable_binding, range_variable_name,
+    range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
+    range_has_destructured_variable_definition, range_header_text_from_source,
+    range_iterable_binding, range_variable_name,
 };
 use crate::helper_analysis::{
-    HelperFragmentOutputUse, bound_helper_condition_paths, bound_helper_dependency_paths,
-    merge_local_default_paths,
+    HelperFragmentOutputUse, HelperOutputMeta, bound_helper_condition_paths,
+    bound_helper_dependency_paths, merge_local_default_paths,
 };
 use crate::helper_output_projection::{
     HelperOutputExprContext, collect_fragment_binding_output_uses,
@@ -43,7 +45,7 @@ use crate::template_expr_analysis::{
     walk_expr_excluding_helper_call_args,
 };
 use crate::template_expr_cache::parse_expr_text;
-use crate::value_path_context::computed_with_body_dot;
+use crate::value_path_context::computed_with_body_fragment_binding;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) struct FragmentOutputWalkState<'context, 'state> {
@@ -214,6 +216,34 @@ impl FragmentOutputUseRuntime<'_, '_> {
             renders_mapping_entries: false,
             dot_binding: None,
             apply_dot_binding: true,
+        }
+    }
+
+    fn collect_destructured_range_fragment_outputs(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        range_binding: Option<&FragmentBinding>,
+        current_path: &YamlPath,
+    ) {
+        if !range_has_destructured_variable_definition(node)
+            || range_body_emits_sequence_item_from_source(node, self.source)
+            || !range_body_renders_mapping_entries_from_ast(node, self.source)
+        {
+            return;
+        }
+        let Some(range_binding) = range_binding else {
+            return;
+        };
+
+        let meta = HelperOutputMeta::with_predicates(&self.active_output_predicates, false);
+        for source_expr in FragmentBinding::paths(range_binding) {
+            push_helper_fragment_output(
+                self.outputs,
+                source_expr,
+                current_path,
+                ValueKind::Fragment,
+                meta.clone(),
+            );
         }
     }
 }
@@ -445,11 +475,19 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
-        let body_dot = computed_with_body_dot(header, self.bindings, current_dot.as_ref());
+        let current_dot_fragment = self.current_dot_fragment().cloned();
+        let body_dot = computed_with_body_fragment_binding(
+            header,
+            self.bindings,
+            self.local_bindings,
+            self.context,
+            current_dot_fragment.as_ref(),
+            current_dot.as_ref(),
+        );
         ConditionActionPlan {
             predicate: Self::truthy_predicate_for_paths(&branch_guard_paths),
             bound_values: Vec::new(),
-            dot_binding: body_dot.as_ref().map(HelperBinding::to_fragment_binding),
+            dot_binding: body_dot,
             apply_alternative_predicate: false,
         }
     }
@@ -457,7 +495,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     fn plan_range_action(
         &mut self,
         node: tree_sitter::Node<'_>,
-        _current_path: &YamlPath,
+        current_path: &YamlPath,
     ) -> RangeActionPlan {
         let Some(header) = range_header_text_from_source(node, self.source) else {
             self.range_frames.push(RangeFrame {
@@ -482,6 +520,11 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         let body_dot_fragment = range_binding
             .as_ref()
             .and_then(FragmentBinding::item_binding);
+        self.collect_destructured_range_fragment_outputs(
+            node,
+            range_binding.as_ref(),
+            current_path,
+        );
 
         let exact_iterations = if let Some(FragmentBinding::List(items)) = &range_binding {
             let range_variable = range_variable_name(&header);

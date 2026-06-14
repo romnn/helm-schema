@@ -363,8 +363,8 @@ fn eval_index(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
         };
         let mut next_values = Vec::new();
         for value in &values {
-            for segment in &options {
-                if let Some(next) = value.apply_to_path(std::slice::from_ref(segment)) {
+            for option in &options {
+                if let Some(next) = apply_index_segment(value, option) {
                     next_values.push(next);
                 }
             }
@@ -377,6 +377,35 @@ fn eval_index(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
         effects.reads.extend(value.paths());
     }
     EvalResult::with_effects(value, effects)
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct PathSegmentOption {
+    segment: String,
+    integer_index: bool,
+}
+
+pub(crate) fn apply_index_segment(
+    value: &AbstractValue,
+    option: &PathSegmentOption,
+) -> Option<AbstractValue> {
+    if !option.integer_index {
+        return value.apply_to_path(std::slice::from_ref(&option.segment));
+    }
+
+    match value {
+        AbstractValue::List(items) => {
+            let index = option.segment.parse::<usize>().ok()?;
+            items.get(index).cloned()
+        }
+        AbstractValue::Choice(choices) => AbstractValue::choice(
+            choices
+                .iter()
+                .filter_map(|choice| apply_index_segment(choice, option))
+                .collect(),
+        ),
+        _ => value.apply_to_path(&["*".to_string()]),
+    }
 }
 
 fn eval_append(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
@@ -653,15 +682,21 @@ fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
     value.as_ref().map(AbstractValue::paths).unwrap_or_default()
 }
 
-fn path_segment_options(
+pub(crate) fn path_segment_options(
     expr: &TemplateExpr,
     evaluated_value: Option<&AbstractValue>,
-) -> Option<Vec<String>> {
+) -> Option<Vec<PathSegmentOption>> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            Some(vec![value.clone()])
+            Some(vec![PathSegmentOption {
+                segment: value.clone(),
+                integer_index: false,
+            }])
         }
-        TemplateExpr::Literal(Literal::Int(value)) => Some(vec![value.to_string()]),
+        TemplateExpr::Literal(Literal::Int(value)) => Some(vec![PathSegmentOption {
+            segment: value.to_string(),
+            integer_index: true,
+        }]),
         _ => {
             let strings = evaluated_value
                 .map(AbstractValue::strings)
@@ -669,7 +704,15 @@ fn path_segment_options(
             if strings.is_empty() {
                 None
             } else {
-                Some(strings.into_iter().collect())
+                Some(
+                    strings
+                        .into_iter()
+                        .map(|segment| PathSegmentOption {
+                            segment,
+                            integer_index: false,
+                        })
+                        .collect(),
+                )
             }
         }
     }
@@ -800,6 +843,38 @@ mod tests {
             None
         );
         assert_eq!(render_printf_string_sets("%s-%s", &values), None);
+    }
+
+    #[test]
+    fn integer_index_on_values_path_descends_array_item_wildcard() {
+        let expr = single_expr(r#"index .Values.sentinel.externalAccess.service.loadBalancerIP 0"#);
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::ValuesPath(
+                "sentinel.externalAccess.service.loadBalancerIP.*".to_string()
+            ))
+        );
+        assert!(
+            result
+                .effects
+                .reads
+                .contains("sentinel.externalAccess.service.loadBalancerIP.*")
+        );
+    }
+
+    #[test]
+    fn integer_index_on_known_list_stays_positional() {
+        let expr = single_expr(r#"index (list "root" "scope" "pod") 1"#);
+        let result = eval_expr(&expr, &EvalEnv::default());
+
+        assert_eq!(
+            result.value,
+            Some(AbstractValue::StringSet(BTreeSet::from([
+                "scope".to_string()
+            ])))
+        );
     }
 
     #[test]

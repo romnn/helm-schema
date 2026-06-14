@@ -207,23 +207,6 @@ pub(crate) fn fragment_binding_from_expr(
     .and_then(|value| value.to_fragment_binding())
 }
 
-pub(crate) fn fragment_binding_from_text(
-    text: &str,
-    locals: &HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<FragmentBinding> {
-    let mut bindings = Vec::new();
-    for expr in parse_expr_text(text) {
-        if let Some(binding) = context.fragment_binding_from_expr(&expr, locals, current_dot, seen)
-        {
-            bindings.push(binding);
-        }
-    }
-    FragmentBinding::choice(bindings)
-}
-
 pub(crate) fn fragment_binding_from_text_with_helper_context(
     text: &str,
     fragment_locals: &HashMap<String, FragmentBinding>,

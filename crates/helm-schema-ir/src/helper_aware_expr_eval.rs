@@ -5,8 +5,8 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{
-    eval_expr, literal_printf_format, pipeline_preserves_current, render_printf_string_sets,
-    transform_source_arg,
+    apply_index_segment, eval_expr, literal_printf_format, path_segment_options,
+    pipeline_preserves_current, render_printf_string_sets, transform_source_arg,
 };
 use crate::template_expr_analysis::{expr_contains_helper_call, is_merge_function};
 
@@ -212,7 +212,7 @@ fn eval_index(
         let mut next_values = Vec::new();
         for value in &values {
             for option in &options {
-                if let Some(next) = value.apply_to_path(std::slice::from_ref(option)) {
+                if let Some(next) = apply_index_segment(value, option) {
                     next_values.push(next);
                 }
             }
@@ -267,28 +267,6 @@ fn eval_pipeline_with_helper_calls(
         };
     }
     current
-}
-
-fn path_segment_options(
-    expr: &TemplateExpr,
-    evaluated_value: Option<&AbstractValue>,
-) -> Option<Vec<String>> {
-    match expr.deparen() {
-        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            Some(vec![value.clone()])
-        }
-        TemplateExpr::Literal(Literal::Int(value)) => Some(vec![value.to_string()]),
-        _ => {
-            let strings = evaluated_value
-                .map(AbstractValue::strings)
-                .unwrap_or_default();
-            if strings.is_empty() {
-                None
-            } else {
-                Some(strings.into_iter().collect())
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -362,6 +340,23 @@ mod tests {
                 (
                     "base".to_string(),
                     AbstractValue::StringSet(["static".to_string()].into_iter().collect()),
+                ),
+            ])))
+        );
+    }
+
+    #[test]
+    fn integer_index_on_values_path_uses_array_item_wildcard_with_helper_context() {
+        assert_eq!(
+            eval(r#"dict "value" (index .Values.items 0) "name" (include "common.name" .)"#),
+            Some(AbstractValue::Dict(BTreeMap::from([
+                (
+                    "name".to_string(),
+                    AbstractValue::ValuesPath("nameOverride".to_string()),
+                ),
+                (
+                    "value".to_string(),
+                    AbstractValue::ValuesPath("items.*".to_string()),
                 ),
             ])))
         );

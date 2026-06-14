@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{HelmAst, HelmParser as _, TemplateExpr, TreeSitterParser};
 
 use crate::binding::FragmentBinding;
 use crate::eval_env::EvalEnv;
@@ -310,6 +310,72 @@ pub(crate) fn range_body_emits_sequence_item_from_source(
     false
 }
 
+pub(crate) fn range_body_renders_mapping_entries_from_ast(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+) -> bool {
+    let Some(key_variable) = range_destructured_key_variable(node, source) else {
+        return false;
+    };
+    let mut body_text = String::new();
+    for body_node in children_with_field(node, "body") {
+        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
+            continue;
+        };
+        body_text.push_str(text);
+    }
+
+    let Ok(ast) = TreeSitterParser.parse(&body_text) else {
+        return false;
+    };
+    ast_directly_renders_templated_mapping_key(&ast, &key_variable)
+}
+
+fn ast_directly_renders_templated_mapping_key(ast: &HelmAst, key_variable: &str) -> bool {
+    match ast {
+        HelmAst::Pair { key, .. } => ast_key_refs_range_key_variable(key, key_variable),
+        HelmAst::Document { items } | HelmAst::Mapping { items } => items
+            .iter()
+            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
+        HelmAst::Sequence { .. } => false,
+        HelmAst::If {
+            then_branch,
+            else_branch,
+            ..
+        } => then_branch
+            .iter()
+            .chain(else_branch)
+            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
+        HelmAst::With {
+            body, else_branch, ..
+        } => body
+            .iter()
+            .chain(else_branch)
+            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
+        HelmAst::Range { .. } => false,
+        HelmAst::Block { body, .. } | HelmAst::Define { body, .. } => body
+            .iter()
+            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
+        HelmAst::Scalar { .. } | HelmAst::HelmExpr { .. } | HelmAst::HelmComment { .. } => false,
+    }
+}
+
+fn ast_key_refs_range_key_variable(key: &HelmAst, key_variable: &str) -> bool {
+    let text = match key {
+        HelmAst::HelmExpr { text } | HelmAst::Scalar { text } => text,
+        _ => return false,
+    };
+    parse_expr_text(text).iter().any(|expr| {
+        let mut matches_key_variable = false;
+        expr.walk(|node| {
+            if matches!(node, TemplateExpr::Variable(name) if name == key_variable) {
+                matches_key_variable = true;
+            }
+        });
+        matches_key_variable
+    })
+}
+
 pub(crate) fn range_body_renders_scalar_sequence_items_from_source(
     node: tree_sitter::Node<'_>,
     source: &str,
@@ -354,13 +420,33 @@ pub(crate) fn range_has_destructured_variable_definition(node: tree_sitter::Node
         })
 }
 
+fn range_destructured_key_variable(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
+    let mut walker = node.walk();
+    let definition = node
+        .named_children(&mut walker)
+        .find(|child| child.kind() == "range_variable_definition")?;
+    let mut definition_walker = definition.walk();
+    let mut variables = definition
+        .named_children(&mut definition_walker)
+        .filter(|child| child.kind() == "variable");
+    let first = variables.next()?;
+    variables.next()?;
+    first
+        .utf8_text(source.as_bytes())
+        .ok()
+        .map(|text| text.trim_start_matches('$').to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
     use helm_schema_ast::{DefineIndex, TemplateExpr};
 
-    use super::{AssignmentKind, apply_local_set_mutations, parse_helper_assignment};
+    use super::{
+        AssignmentKind, apply_local_set_mutations, parse_helper_assignment,
+        range_body_renders_mapping_entries_from_ast,
+    };
     use crate::binding::FragmentBinding;
     use crate::define_body_cache::DefineBodyCache;
     use crate::fragment_expr_eval::FragmentEvalContext;
@@ -463,5 +549,84 @@ mod tests {
                 ]))),
             })
         );
+    }
+
+    #[test]
+    fn range_body_mapping_entry_detection_sees_dynamic_template_key() {
+        let source = indoc::indoc! {r#"
+            {{- range $key, $value := .Values.annotations }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+        "#};
+        let tree = parse_raw_template_tree(source);
+        let range = find_first_node(tree.root_node(), "range_action").expect("range action");
+
+        assert!(range_body_renders_mapping_entries_from_ast(range, source));
+    }
+
+    #[test]
+    fn range_body_mapping_entry_detection_ignores_mutation_only_body() {
+        let source = indoc::indoc! {r#"
+            {{- range $key, $value := .Values.contexts }}
+              {{- $_ := set $value "dir" (printf "/etc/%s" $key) }}
+            {{- end }}
+        "#};
+        let tree = parse_raw_template_tree(source);
+        let range = find_first_node(tree.root_node(), "range_action").expect("range action");
+
+        assert!(!range_body_renders_mapping_entries_from_ast(range, source));
+    }
+
+    #[test]
+    fn range_body_mapping_entry_detection_ignores_sequence_item_mapping() {
+        let source = indoc::indoc! {r#"
+            {{- range $key, $value := .Values.containers }}
+            - name: {{ $key }}
+              image: {{ $value.image }}
+            {{- end }}
+        "#};
+        let tree = parse_raw_template_tree(source);
+        let range = find_first_node(tree.root_node(), "range_action").expect("range action");
+
+        assert!(!range_body_renders_mapping_entries_from_ast(range, source));
+    }
+
+    #[test]
+    fn range_body_mapping_entry_detection_ignores_static_wrapper_mapping() {
+        let source = indoc::indoc! {r#"
+            {{- range $key, $value := .Values.annotations }}
+            labels:
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
+        "#};
+        let tree = parse_raw_template_tree(source);
+        let range = find_first_node(tree.root_node(), "range_action").expect("range action");
+
+        assert!(!range_body_renders_mapping_entries_from_ast(range, source));
+    }
+
+    fn parse_raw_template_tree(source: &str) -> tree_sitter::Tree {
+        let language =
+            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&language).expect("set language");
+        parser.parse(source, None).expect("parse template")
+    }
+
+    fn find_first_node<'tree>(
+        node: tree_sitter::Node<'tree>,
+        kind: &str,
+    ) -> Option<tree_sitter::Node<'tree>> {
+        if node.kind() == kind {
+            return Some(node);
+        }
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            if let Some(found) = find_first_node(child, kind) {
+                return Some(found);
+            }
+        }
+        None
     }
 }

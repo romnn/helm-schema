@@ -12,7 +12,6 @@ use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_fragment_output_uses::{
     FragmentOutputWalkState, collect_bound_fragment_output_uses_from_tree,
 };
-use crate::helper_fragment_outputs::collect_bound_fragment_outputs_from_tree;
 use crate::helper_value_analysis::{HelperValuesWalkState, collect_bound_helper_values_from_tree};
 
 pub(crate) struct BoundHelperCallResolution {
@@ -84,8 +83,7 @@ pub(crate) fn interpret_bound_helper_body(
     let mut analysis = BoundHelperAnalysis::default();
     collect_value_facts(name, resolution, context, seen, &mut analysis);
 
-    let mut helper_fragment_locals =
-        collect_fragment_output_locals(name, resolution, context, seen, &mut analysis);
+    let mut helper_fragment_locals = HashMap::new();
     collect_fragment_output_uses(
         name,
         resolution,
@@ -130,30 +128,6 @@ fn collect_value_facts(
         resolution.helper_body_dot.as_ref(),
         &mut helper_values_state,
     );
-}
-
-fn collect_fragment_output_locals(
-    name: &str,
-    resolution: &BoundHelperCallResolution,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-    analysis: &mut BoundHelperAnalysis,
-) -> HashMap<String, FragmentBinding> {
-    let mut helper_fragment_locals = HashMap::new();
-    if let Some(src) = context.define_bodies.structured_source(name)
-        && let Some(tree) = context.define_bodies.structured_tree(name)
-    {
-        collect_bound_fragment_outputs_from_tree(
-            tree.root_node(),
-            src,
-            &mut helper_fragment_locals,
-            resolution.helper_fragment_dot.as_ref(),
-            context,
-            seen,
-            &mut analysis.fragment_output,
-        );
-    }
-    helper_fragment_locals
 }
 
 fn collect_fragment_output_uses(

@@ -31,7 +31,6 @@ mod helper_aware_expr_eval;
 mod helper_body_analysis;
 mod helper_discovery;
 mod helper_fragment_output_uses;
-mod helper_fragment_outputs;
 mod helper_inline;
 mod helper_output_projection;
 mod helper_summary;
