@@ -3,7 +3,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::SymbolicIrGenerator;
+use helm_schema_ir::SymbolicIrContext;
 
 fn build_cert_manager_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -20,7 +20,9 @@ fn schema_from_tree_sitter() {
     let values_yaml = test_util::read_testdata("charts/cert-manager/values.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_cert_manager_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
@@ -46,7 +48,9 @@ fn schema_validates_values_yaml() {
     let values_yaml = test_util::read_testdata("charts/cert-manager/values.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_cert_manager_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 

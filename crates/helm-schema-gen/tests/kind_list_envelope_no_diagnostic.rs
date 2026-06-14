@@ -10,7 +10,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ResourceRef, SymbolicIrGenerator, YamlPath};
+use helm_schema_ir::{ResourceRef, SymbolicIrContext, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
 };
@@ -40,7 +40,9 @@ host: example.com
 fn kind_list_envelope_descends_into_inner_resource() {
     let ast = TreeSitterParser.parse(KIND_LIST_TEMPLATE).expect("parse");
     let idx = DefineIndex::new();
-    let ir = SymbolicIrGenerator.generate(KIND_LIST_TEMPLATE, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(KIND_LIST_TEMPLATE, &ast, &idx)
+        .project();
     assert!(
         ir.uses().iter().any(|use_| {
             use_.source_expr == "host"

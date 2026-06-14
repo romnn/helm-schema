@@ -1,7 +1,7 @@
 #![recursion_limit = "1024"]
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::SymbolicIrGenerator;
+use helm_schema_ir::SymbolicIrContext;
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml";
@@ -26,7 +26,9 @@ fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
 
     let actual = serde_json::to_value(&ir).unwrap();
 

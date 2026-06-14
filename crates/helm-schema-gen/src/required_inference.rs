@@ -157,7 +157,7 @@ mod tests {
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{
-        ContractProjection, Guard, SymbolicIrGenerator, ValueKind, ValueUse, YamlPath,
+        ContractProjection, Guard, SymbolicIrContext, ValueKind, ValueUse, YamlPath,
         extract_default_type_hints,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
@@ -169,7 +169,9 @@ mod tests {
     fn parse_projection(src: &str) -> ContractProjection {
         let ast = TreeSitterParser.parse(src).expect("parse");
         let idx = DefineIndex::new();
-        SymbolicIrGenerator.generate(src, &ast, &idx)
+        SymbolicIrContext::new(&idx)
+            .generate_contract_ir(src, &ast, &idx)
+            .project()
     }
 
     fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {

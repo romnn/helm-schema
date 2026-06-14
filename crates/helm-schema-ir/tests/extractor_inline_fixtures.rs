@@ -2,7 +2,7 @@
 //! `walker.rs`. Unlike the unit tests on the extractors themselves
 //! (which feed text directly into `parse_condition` /
 //! `extract_values_paths`), these run the full
-//! [`SymbolicIrGenerator`] pipeline against minimal in-memory chart
+//! [`SymbolicIrContext`] projection pipeline against minimal in-memory chart
 //! fixtures so we lock in the behaviour at the surface every
 //! downstream consumer actually sees.
 //!
@@ -16,7 +16,7 @@
 //!     second selector segment, not the root.
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{Guard, SymbolicIrGenerator, ValueUse};
+use helm_schema_ir::{Guard, SymbolicIrContext, ValueUse};
 use indoc::indoc;
 
 fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
@@ -27,8 +27,9 @@ fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
             .expect("helpers parse");
     }
     let ast = TreeSitterParser.parse(template).expect("template parse");
-    SymbolicIrGenerator
-        .generate(template, &ast, &idx)
+    SymbolicIrContext::new(&idx)
+        .generate_contract_ir(template, &ast, &idx)
+        .project()
         .into_value_uses()
 }
 
@@ -185,7 +186,7 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     // Inside the destructured range body, any `.Values.X` reference
     // must carry a Truthy guard on the destructured source (`themap`).
     // This proves the guard pushed by the range header propagates into
-    // body uses — the exact contract `SymbolicIrGenerator` requires.
+    // body uses — the exact contract `SymbolicIrContext` requires.
     let template = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap

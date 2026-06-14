@@ -1603,6 +1603,15 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `manifest_analysis` now returns a named manifest-analysis artifact instead
   of mutating caller-owned contract and schema-universe state, and the helper
   call graph has been narrowed back to a private evidence-collector detail.
+  The obsolete one-method `SymbolicIrGenerator` facade and the follow-on
+  `generate_projection` wrapper have also been removed: tests and external
+  fixture callers now construct `SymbolicIrContext` explicitly, generate a
+  `ContractIr`, and opt into `.project()` at the fixture DTO boundary, while
+  production callers use the same context's `generate_contract_ir` path
+  directly.
+  Top-level composed-values root detection is now shared by contract seeding
+  and optional required-inference synthetic-path exclusion, so both consumers
+  use one structural YAML mapping parser instead of parallel local copies.
   The policy-extraction half does **not** depend on A3 and can continue
   against the current `ContractIr`-derived signal path.
   Capability-guard branch DTOs are now separated from the old helper literal

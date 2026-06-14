@@ -12,6 +12,7 @@ mod output_pipeline;
 mod provider_builder;
 mod required_inference;
 pub mod schema_override;
+mod values_roots;
 
 use std::io::{BufWriter, Write};
 use std::path::Path;

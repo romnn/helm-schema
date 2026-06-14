@@ -59,7 +59,7 @@ pub use contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
     MetadataFieldKind, ProviderSchemaUse, RequiredInferenceSignals,
 };
-pub use symbolic::{SymbolicIrContext, SymbolicIrGenerator};
+pub use symbolic::SymbolicIrContext;
 pub use walker::{
     DefineBlock, extract_default_type_hints, extract_define_blocks, extract_helper_calls,
 };

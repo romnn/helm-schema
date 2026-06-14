@@ -1,4 +1,4 @@
-use crate::{Guard, SymbolicIrGenerator, ValueKind, YamlPath};
+use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 
 /// Simple template IR generation test.
@@ -10,7 +10,9 @@ foo: {{ .Values.name }}
 ";
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &ast, &idx)
+        .project();
 
     assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
         && u.guards
@@ -36,7 +38,9 @@ metadata:
 ";
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &ast, &idx)
+        .project();
 
     let name_use = ir
         .uses()
@@ -70,7 +74,9 @@ metadata:
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &ast, &idx)
+        .project();
 
     let name_use = ir
         .uses()
@@ -106,7 +112,9 @@ metadata:
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &ast, &idx)
+        .project();
 
     let name_use = ir
         .uses()

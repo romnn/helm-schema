@@ -8,7 +8,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract::{ContractIr, ContractProjection, ContractUseContext, ContractUseSink};
+use crate::contract::{ContractIr, ContractUseContext, ContractUseSink};
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
@@ -31,15 +31,6 @@ use crate::symbolic_scope_state::{SymbolicScopeSnapshot, SymbolicScopeState};
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 use crate::{Guard, ValueKind, YamlPath};
-
-pub struct SymbolicIrGenerator;
-
-impl SymbolicIrGenerator {
-    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
-    pub fn generate(&self, src: &str, _ast: &HelmAst, defines: &DefineIndex) -> ContractProjection {
-        SymbolicIrContext::new(defines).generate_projection(src, _ast, defines)
-    }
-}
 
 /// Reusable state for generating symbolic IR across many templates that
 /// share one [`DefineIndex`].
@@ -67,16 +58,6 @@ impl SymbolicIrContext {
                 helper_summaries: HelperSummaryCache::new(),
             }),
         }
-    }
-
-    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
-    pub fn generate_projection(
-        &self,
-        src: &str,
-        _ast: &HelmAst,
-        defines: &DefineIndex,
-    ) -> ContractProjection {
-        self.generate_contract_ir(src, _ast, defines).project()
     }
 
     /// Generate the opaque contract graph without projecting to fixture DTOs.

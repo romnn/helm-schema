@@ -1,5 +1,5 @@
 //! Regression tests for the resource-context path used by
-//! `SymbolicIrGenerator`. The detector reads `apiVersion` / `kind` out
+//! `SymbolicIrContext`. The detector reads `apiVersion` / `kind` out
 //! of each document header, and the locator attaches that resource
 //! context to each contract claim.
 //!
@@ -16,13 +16,15 @@
 //! a large block of `MissingSchema(kind=..., api_version=)` noise.
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrGenerator};
+use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrContext};
 use indoc::indoc;
 
 fn generate(template: &str) -> ContractProjection {
     let idx = DefineIndex::new();
     let ast = TreeSitterParser.parse(template).expect("template parse");
-    SymbolicIrGenerator.generate(template, &ast, &idx)
+    SymbolicIrContext::new(&idx)
+        .generate_contract_ir(template, &ast, &idx)
+        .project()
 }
 
 fn resource_of(use_: &ContractUse) -> (String, String) {
@@ -379,7 +381,9 @@ fn detector_resolves_helper_returned_api_version() {
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ast = TreeSitterParser.parse(template).expect("template parse");
-    let ir = SymbolicIrGenerator.generate(template, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(template, &ast, &idx)
+        .project();
 
     let u = ir
         .uses()
@@ -424,7 +428,9 @@ fn detector_resolves_helper_with_if_else_branches() {
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ast = TreeSitterParser.parse(template).expect("template parse");
-    let ir = SymbolicIrGenerator.generate(template, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(template, &ast, &idx)
+        .project();
 
     let u = ir
         .uses()
@@ -482,7 +488,9 @@ fn detector_resolves_include_returned_api_version() {
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ast = TreeSitterParser.parse(template).expect("template parse");
-    let ir = SymbolicIrGenerator.generate(template, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(template, &ast, &idx)
+        .project();
 
     let u = ir
         .uses()

@@ -78,15 +78,17 @@ Sketch, on top of the AST-driven detector:
    `Mapping`, run the AST detector recursively on that mapping. The result is one `ResourceRef`
    per item.
 
-3. **YAML path rebasing for ValueUse attribution.** `SymbolicIrGenerator` produces `ValueUse {
-   path: ["items", "0", "spec", "rules"], resource: Some(List), ... }` today. After descent, it
-   produces `ValueUse { path: ["spec", "rules"], resource: Some(Ingress), ... }` — the `items.[i]`
-   prefix is stripped, and the resource attribution is the inner item's.
+3. **YAML path rebasing for contract attribution.** `SymbolicIrContext` produces contract claims
+   whose document paths are currently rooted at `["items", "0", "spec", "rules"]` and attributed to
+   the `List` envelope. After descent, it produces claims rooted at `["spec", "rules"]` and
+   attributed to the inner `Ingress` item — the `items.[i]` prefix is stripped before compatibility
+   `ValueUse` fixture projection.
 
 4. **Drop the envelope entirely from the IR.** The List wrapper has no contributed value uses of
    its own (its only field is `items`, which is structural plumbing). After descent, the IR for a
    List envelope file contains exactly the union of the IRs each inner item would have produced
-   as its own top-level document. The wrapper's `ResourceRef` never appears in any `ValueUse`.
+   as its own top-level document. The wrapper's `ResourceRef` never appears in any projected
+   contract claim.
 
 5. **Delete the chain suppressions** in `Chain::schema_for_use` and `Chain::commit_missing_schema`.
    They become dead code.

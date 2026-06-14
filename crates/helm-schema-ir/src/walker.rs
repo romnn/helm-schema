@@ -187,7 +187,7 @@ pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Opt
 /// sorted and deduplicated.
 ///
 /// Wildcards (`*` segments) are accepted at non-leading positions to
-/// match what [`crate::symbolic::SymbolicIrGenerator`]'s dot-binding
+/// match what [`crate::symbolic::SymbolicIrContext`]'s dot-binding
 /// rewrite produces (e.g. `.Values.someList.*.name`). The first segment
 /// after `Values` must be a real identifier, matching the old regex's
 /// `[\w]+(?:\.(?:[\w]+|\*))*` shape.
@@ -221,7 +221,7 @@ fn collect_loose_values_paths(
 ///
 /// Wraps the input in `{{ ... }}` so tree-sitter recognises it as an
 /// action body. Wildcard markers (`*` segments produced by the
-/// dot-binding rewrite in [`crate::symbolic::SymbolicIrGenerator`])
+/// dot-binding rewrite in [`crate::symbolic::SymbolicIrContext`])
 /// are first substituted with a placeholder identifier (tree-sitter
 /// rejects bare `*` in selector chains), then restored to literal
 /// `*` in every node of the returned tree — so callers see a normal
@@ -254,7 +254,7 @@ fn parse_bare_expression_text(text: &str) -> Vec<helm_schema_ast::TemplateExpr> 
 }
 
 /// Placeholder identifier substituted for `*` path segments so
-/// tree-sitter can parse [`crate::symbolic::SymbolicIrGenerator`]'s
+/// tree-sitter can parse [`crate::symbolic::SymbolicIrContext`]'s
 /// dot-binding rewrites. Stripped from the AST in
 /// [`restore_wildcards_in_expr`] before any caller observes a parse
 /// result — the constant is purely an internal token, never exposed.

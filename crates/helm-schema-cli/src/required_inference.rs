@@ -19,8 +19,9 @@ use std::collections::BTreeSet;
 
 use helm_schema_ir::RequiredInferenceSignals;
 use serde_json::Value;
-use serde_yaml::Value as YamlValue;
 use tracing::instrument;
+
+use crate::values_roots;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.
@@ -36,38 +37,11 @@ pub(crate) fn apply(
     values_yaml: Option<&str>,
     default_fallback_paths: &BTreeSet<String>,
 ) {
-    let synthetic_value_paths = top_level_value_paths(values_yaml);
+    let synthetic_value_paths = values_roots::top_level_value_paths(values_yaml);
     helm_schema_gen::required_inference::apply_required_inference(
         schema,
         required_inference_signals,
         &synthetic_value_paths,
         default_fallback_paths,
     );
-}
-
-/// Re-derive the set of top-level `values.yaml` keys that the CLI
-/// seeded as synthetic uses. Kept here (not exposed from
-/// `seed_top_level_values_yaml_keys` in `lib.rs`) so the core seeding
-/// function's contract stays narrow — only required-inference needs
-/// to know which uses are synthetic.
-fn top_level_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    let Some(yaml) = values_yaml else {
-        return out;
-    };
-    let Ok(doc) = serde_yaml::from_str::<YamlValue>(yaml) else {
-        return out;
-    };
-    let YamlValue::Mapping(m) = doc else {
-        return out;
-    };
-    for (k, _) in m {
-        if let Some(key) = k.as_str() {
-            let key = key.trim();
-            if !key.is_empty() {
-                out.insert(key.to_string());
-            }
-        }
-    }
-    out
 }

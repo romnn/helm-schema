@@ -9,7 +9,7 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{
-    ContractProjection, ContractUse, Guard, ProviderSchemaUse, ResourceRef, SymbolicIrGenerator,
+    ContractProjection, ContractUse, Guard, ProviderSchemaUse, ResourceRef, SymbolicIrContext,
     ValueKind, ValueUse, YamlPath, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
@@ -28,8 +28,9 @@ fn production_chain_provider() -> Chain {
 fn parse_ir(src: &str) -> Vec<ValueUse> {
     let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
-    SymbolicIrGenerator
-        .generate(src, &ast, &idx)
+    SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &ast, &idx)
+        .project()
         .into_value_uses()
 }
 
@@ -41,8 +42,9 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
         idx.add_source(&TreeSitterParser, helpers)
             .expect("helpers parse");
     }
-    SymbolicIrGenerator
-        .generate(src, &ast, &idx)
+    SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &ast, &idx)
+        .project()
         .into_value_uses()
 }
 
@@ -905,7 +907,9 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let ir = SymbolicIrContext::new(&define_index)
+        .generate_contract_ir(src, &ast, &define_index)
+        .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let fullname = schema
@@ -1056,7 +1060,9 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let ir = SymbolicIrContext::new(&define_index)
+        .generate_contract_ir(src, &ast, &define_index)
+        .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
@@ -1119,7 +1125,9 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let ir = SymbolicIrContext::new(&define_index)
+        .generate_contract_ir(src, &ast, &define_index)
+        .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
@@ -1695,7 +1703,9 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let ir = SymbolicIrContext::new(&define_index)
+        .generate_contract_ir(src, &ast, &define_index)
+        .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let name_override = schema
@@ -2515,7 +2525,9 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrGenerator.generate(src, &ast, &define_index);
+    let ir = SymbolicIrContext::new(&define_index)
+        .generate_contract_ir(src, &ast, &define_index)
+        .project();
     let schema_signals = ir.schema_signals();
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(Some(values_yaml)),

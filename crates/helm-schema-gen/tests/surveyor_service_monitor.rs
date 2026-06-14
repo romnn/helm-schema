@@ -3,7 +3,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ResourceRef, SymbolicIrGenerator};
+use helm_schema_ir::{ResourceRef, SymbolicIrContext};
 use helm_schema_k8s::CrdsCatalogSchemaProvider;
 use serde::Deserialize;
 use std::path::Path;
@@ -68,7 +68,9 @@ fn schema_from_tree_sitter() {
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
 
     let provider = common::production_crd_k8s_chain("v1.35.0");
 

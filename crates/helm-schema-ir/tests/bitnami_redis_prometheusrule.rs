@@ -1,5 +1,5 @@
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::SymbolicIrGenerator;
+use helm_schema_ir::SymbolicIrContext;
 
 fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
     let mut idx = DefineIndex::new();
@@ -19,7 +19,9 @@ fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");
 

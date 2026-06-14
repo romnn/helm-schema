@@ -4,7 +4,7 @@ Status: implemented.
 
 The shipped implementation lives in `crates/helm-schema-ir/src/resource_detector.rs`. It removes
 the old `DefaultResourceDetector` API and the line-oriented detector embedded in
-`symbolic.rs`; both direct detector tests and `SymbolicIrGenerator` now use the AST resource
+`symbolic.rs`; both direct detector tests and `SymbolicIrContext` now use the AST resource
 detector. Production attribution is handled by a byte-position cursor over tree-sitter document
 spans, while resource identity itself is derived from parsed manifest structure and helper
 evaluation.
@@ -27,7 +27,7 @@ this document represent?":
   List` envelopes.**
 
 - **`SymbolicWalker::ResourceDetector`** (`crates/helm-schema-ir/src/symbolic.rs:1569`) — line-based
-  detector used by the production `SymbolicIrGenerator`. Accumulates raw template source via a
+  detector used by the production `SymbolicIrContext`. Accumulates raw template source via a
   dual-buffer split in `ingest_text_up_to`, tracks `---` document boundaries, evaluates
   helper-returned apiVersions via `helper_evaluate`, captures inline `{{- if -}}`/`{{- else -}}`
   branch chains via a depth-tracked state machine (`InlineIfState`, `ActionDirective` enum,
@@ -66,8 +66,8 @@ One AST-driven `ResourceDetector` (replacing both `DefaultResourceDetector` and
 - (sets up the seam for) structural descent into `kind: List` items[*] — see the sibling plan
   `list-envelope-items-descent.md`.
 
-`SymbolicIrGenerator` keeps owning value-use extraction; only the resource-identity detection is
-unified.
+`SymbolicIrContext` keeps owning template interpretation and contract-claim extraction; only the
+resource-identity detection is unified.
 
 ## How (high-level)
 
@@ -85,13 +85,13 @@ This is a non-trivial refactor. Suggested staging:
    wrapping an apiVersion pair is exactly the shape `decode_guard` already operates on —
    reuse it.
 
-3. **Make `SymbolicIrGenerator` consume the new detector.** Replace the line-based
+3. **Make `SymbolicIrContext` consume the new detector.** Replace the line-based
    `ResourceDetector` machinery in `crates/helm-schema-ir/src/symbolic.rs` with calls to the new
-   AST walker, threading detected `ResourceRef`s through the existing `ValueUse` attribution path.
+   AST walker, threading detected `ResourceRef`s through the existing contract attribution path.
 
 4. **Migrate IR tests off `DefaultResourceDetector`.** Each test under
    `crates/helm-schema-ir/tests/` either:
-   - parses a real template and asserts on the IR `SymbolicIrGenerator` produces (preferred — this
+   - parses a real template and asserts on the IR `SymbolicIrContext` produces (preferred — this
      is what we wanted all along), or
    - exercises the new AST detector directly for the few cases that want a focused unit shape.
 
@@ -152,7 +152,7 @@ follow-up. Not required for the plan to be useful.
 
 ## Out of scope
 
-- Restructuring the rest of `SymbolicIrGenerator` (value-use extraction, guard accumulation,
+- Restructuring the rest of `SymbolicIrContext` (contract-claim extraction, guard accumulation,
   range-domain tracking). Only resource-identity detection unifies here.
 - Migrating `helper_evaluate`'s typed branch output to a different shape. The existing
   `HelperOutput`/`HelperBranch` types stay; the new detector just consumes them more directly.

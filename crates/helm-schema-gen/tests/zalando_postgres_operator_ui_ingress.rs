@@ -3,7 +3,7 @@
 mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ResourceRef, SymbolicIrGenerator};
+use helm_schema_ir::{ResourceRef, SymbolicIrContext};
 use helm_schema_k8s::KubernetesJsonSchemaProvider;
 use serde::Deserialize;
 use std::path::Path;
@@ -67,7 +67,9 @@ fn schema_from_tree_sitter() {
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 
@@ -111,7 +113,9 @@ fn schema_validates_values_yaml() {
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrGenerator.generate(&src, &ast, &idx);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &ast, &idx)
+        .project();
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
 

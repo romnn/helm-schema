@@ -1,12 +1,12 @@
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractIr, ContractSchemaSignals, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
-use serde_yaml::Value as YamlValue;
 
 use crate::chart;
 use crate::chart_evidence::{ChartTemplateEvidence, collect_chart_template_evidence};
 use crate::error::CliResult;
 use crate::manifest_analysis::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
+use crate::values_roots;
 
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {
@@ -54,26 +54,8 @@ pub(crate) fn analyze_charts(
 }
 
 fn seed_top_level_values_yaml_keys(contract: &mut ContractIr, values_yaml: Option<&str>) {
-    let Some(values_yaml) = values_yaml else {
-        return;
-    };
-    let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
-        return;
-    };
-    let YamlValue::Mapping(mapping) = doc else {
-        return;
-    };
-
-    for (key, _) in mapping {
-        let Some(key) = key.as_str() else {
-            continue;
-        };
-        let key = key.trim();
-        if key.is_empty() {
-            continue;
-        }
-
-        contract.push_pathless_scalar(key.to_string());
+    for path in values_roots::top_level_value_paths(values_yaml) {
+        contract.push_pathless_scalar(path);
     }
 }
 
