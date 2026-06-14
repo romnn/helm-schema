@@ -1617,12 +1617,17 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   use one structural YAML mapping parser instead of parallel local copies.
   The policy-extraction half does **not** depend on A3 and can continue
   against the current `ContractIr`-derived signal path.
-  Capability-guard branch DTOs are now separated from the old helper literal
-  evaluator: `CapabilityGuard` / `HelperBranch` / `HelperBranchBody` remain
-  the public resource-lookup contract, while `helper_eval` is private
-  resource-detector implementation detail rather than exported semantic API.
+  Capability-guard branch DTOs are now separated from helper-output
+  evaluation: `CapabilityGuard` / `HelperBranch` / `HelperBranchBody` remain
+  the public resource-lookup contract, while literal helper output is private
+  resource-identity implementation detail rather than exported semantic API.
   The branch DTO public surface has also been narrowed to the operations used
-  across crate boundaries; internal literal flattening stays crate-local.
+  across crate boundaries; internal literal flattening stays crate-local. The
+  resource-identity path is now consolidated under one `resource_identity`
+  module, with the helper-output evaluator, structural detector, and
+  source-position index behind resource-identity names instead of top-level
+  parser-implementation modules. That leaves A3's future abstract-document
+  identity projection with one local replacement boundary.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

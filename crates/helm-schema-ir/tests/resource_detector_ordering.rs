@@ -8,12 +8,9 @@
 //! carry both `api_version` and `kind` on its `resource`, regardless
 //! of which order the two header fields appeared in.
 //!
-//! Round-2 regression: the detector previously gated `apiVersion`
-//! parsing on `det.kind.is_none()`, so any document that wrote
-//! `kind:` before `apiVersion:` silently produced `api_version=""`
-//! resources. This is the exact shape Temporal's
-//! `templates/network-policies.yaml` ships and was the root cause of
-//! a large block of `MissingSchema(kind=..., api_version=)` noise.
+//! Some real charts write `kind:` before `apiVersion:`. Resource identity
+//! detection must treat both header fields independently so source order never
+//! controls whether resource lookup can run.
 
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrContext};
@@ -59,11 +56,8 @@ fn detector_records_both_when_api_version_precedes_kind() {
     );
 }
 
-// Pins Finding (round 3) #1 — `kind` THEN `apiVersion` is the exact
-// shape that Temporal's `templates/network-policies.yaml` ships. The
-// old detector dropped apiVersion in this case and produced
-// `api_version=""` resources, which the chain then emitted as
-// `MissingSchema(kind=NetworkPolicy, api_version=)`.
+// `kind` before `apiVersion` is valid manifest structure and must still yield
+// a complete resource identity.
 #[test]
 fn detector_records_both_when_kind_precedes_api_version() {
     let template = indoc! {r#"
@@ -436,13 +430,8 @@ fn detector_resolves_helper_with_if_else_branches() {
         .expect("expected use for `roleName`");
     let r = u.resource.as_ref().expect("resource on use");
     assert_eq!(r.kind, "RoleBinding");
-    // Round-6 Finding 2: a helper with `{{ if … }}…{{ else }}…{{ end }}`
-    // resolves to two literals whose selection is conditioned on a
-    // semantic predicate (`.Capabilities.APIVersions.Has`). The IR
-    // can't statically pick one without K8s capability context, so
-    // it preserves BOTH alternatives in `api_version_candidates`
-    // with an EMPTY primary. The chain (which has cache / version
-    // chain visibility) is the version-aware phase that resolves.
+    // Capability-gated helper output is resolved by the version-aware lookup
+    // chain, so the IR preserves both alternatives without choosing a primary.
     assert!(
         r.api_version.is_empty(),
         "primary must be empty for multi-branch helper (preserve exact alternatives); got {:?}",
@@ -459,8 +448,7 @@ fn detector_resolves_helper_with_if_else_branches() {
     );
 }
 
-// Pins Finding (round 5) #1 — `include` keyword works the same as
-// `template`. grafana's hpa.yaml uses `{{ include "grafana.hpa.apiVersion" . }}`.
+// `include` works like `template` for helper-returned apiVersion values.
 #[test]
 fn detector_resolves_include_returned_api_version() {
     let helpers = indoc! {r#"
@@ -495,10 +483,8 @@ fn detector_resolves_include_returned_api_version() {
         .expect("expected use for `maxReplicas`");
     let r = u.resource.as_ref().expect("resource on use");
     assert_eq!(r.kind, "HorizontalPodAutoscaler");
-    // Round-6 Finding 2: same preserve-exact-alternatives contract
-    // as the rbac.apiVersion case. The version-aware chain layer
-    // picks whichever branch resolves against the configured K8s
-    // cache.
+    // Capability-gated helper output is resolved by the version-aware lookup
+    // chain, so the IR preserves both alternatives without choosing a primary.
     assert!(
         r.api_version.is_empty(),
         "primary must be empty for multi-branch helper; got {:?}",

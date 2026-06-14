@@ -1,6 +1,6 @@
 use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
 
-use crate::resource_locator::AstResourceLocator;
+use crate::resource_identity::ResourceIdentityIndex;
 use crate::template_expr_cache::parse_expr_text;
 use crate::walker::is_fragment_expr;
 use crate::yaml_shape::{
@@ -19,7 +19,7 @@ pub(crate) struct RenderedYamlContext<'a> {
     defines: &'a DefineIndex,
     shape: Shape,
     output_inside_block_scalar: bool,
-    resource_locator: AstResourceLocator,
+    resource_identity: ResourceIdentityIndex,
     text_spans: Vec<(usize, usize)>,
     text_span_idx: usize,
     text_pos: usize,
@@ -32,7 +32,7 @@ impl<'a> RenderedYamlContext<'a> {
             defines,
             shape: Shape::default(),
             output_inside_block_scalar: false,
-            resource_locator: AstResourceLocator::default(),
+            resource_identity: ResourceIdentityIndex::default(),
             text_spans: Vec::new(),
             text_span_idx: 0,
             text_pos: 0,
@@ -73,14 +73,14 @@ impl<'a> RenderedYamlContext<'a> {
         self.text_spans = merged;
         self.text_span_idx = 0;
         self.text_pos = 0;
-        self.resource_locator = AstResourceLocator::from_source(self.source, self.defines);
+        self.resource_identity = ResourceIdentityIndex::from_source(self.source, self.defines);
         self.shape = Shape::default();
         self.output_inside_block_scalar = false;
     }
 
     pub(crate) fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
         self.ingest_text_up_to(node.start_byte());
-        self.resource_locator.advance_to(node.start_byte());
+        self.resource_identity.advance_to(node.start_byte());
         self.sync_action_for_node(node);
     }
 
@@ -89,11 +89,11 @@ impl<'a> RenderedYamlContext<'a> {
     }
 
     pub(crate) fn current_resource(&self) -> Option<&ResourceRef> {
-        self.resource_locator.current_resource()
+        self.resource_identity.current_resource()
     }
 
     pub(crate) fn rebase_path(&self, path: YamlPath) -> YamlPath {
-        self.resource_locator.rebase_path(path)
+        self.resource_identity.rebase_path(path)
     }
 
     pub(crate) fn trailing_pending_mapping_segments_at_or_above(&self, indent: usize) -> usize {

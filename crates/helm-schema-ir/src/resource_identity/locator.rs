@@ -1,15 +1,16 @@
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 
-use crate::resource_detector::AstResourceDetector;
+use super::ResourceIdentityDetector;
 use crate::{ResourceRef, YamlPath};
 
 /// AST-backed resource locator over rendered-manifest source bytes.
 ///
-/// Resource identity detection is delegated to [`AstResourceDetector`]. This
-/// type owns only source span selection and transparent Kubernetes `kind: List`
-/// descent, keeping byte-position concerns out of the symbolic IR walker.
+/// Resource identity detection is delegated to [`ResourceIdentityDetector`].
+/// This type owns only source span selection and transparent Kubernetes
+/// `kind: List` descent, keeping byte-position concerns out of the symbolic IR
+/// walker.
 #[derive(Default, Clone, Debug)]
-pub(crate) struct AstResourceLocator {
+pub(crate) struct ResourceIdentityIndex {
     spans: Vec<ResourceSpan>,
     current_span: Option<usize>,
 }
@@ -22,7 +23,7 @@ struct ResourceSpan {
     path_prefix: Vec<String>,
 }
 
-impl AstResourceLocator {
+impl ResourceIdentityIndex {
     #[must_use]
     pub(crate) fn from_source(source: &str, defines: &DefineIndex) -> Self {
         let mut spans = Vec::new();
@@ -56,7 +57,7 @@ impl AstResourceLocator {
     }
 }
 
-impl AstResourceLocator {
+impl ResourceIdentityIndex {
     pub(crate) fn advance_to(&mut self, byte: usize) {
         self.current_span = self
             .spans
@@ -125,7 +126,7 @@ fn detect_manifest_resource(source: &str, defines: &DefineIndex) -> Option<Resou
     if let Some(resource) = TreeSitterParser
         .parse(source)
         .ok()
-        .and_then(|ast| AstResourceDetector::new(defines).detect(&ast))
+        .and_then(|ast| ResourceIdentityDetector::new(defines).detect(&ast))
     {
         return Some(resource);
     }
@@ -137,7 +138,7 @@ fn detect_manifest_resource(source: &str, defines: &DefineIndex) -> Option<Resou
     TreeSitterParser
         .parse(&normalized)
         .ok()
-        .and_then(|ast| AstResourceDetector::new(defines).detect(&ast))
+        .and_then(|ast| ResourceIdentityDetector::new(defines).detect(&ast))
 }
 
 fn normalize_sequence_item_source(source: &str) -> String {
@@ -363,7 +364,7 @@ mod tests {
     use helm_schema_ast::DefineIndex;
     use indoc::indoc;
 
-    use super::AstResourceLocator;
+    use super::ResourceIdentityIndex;
 
     #[test]
     fn resource_locator_keeps_multi_document_resources_separate() {
@@ -378,7 +379,7 @@ mod tests {
             spec:
               replicas: {{ .Values.replicas }}
         "#};
-        let mut locator = AstResourceLocator::from_source(source, &DefineIndex::new());
+        let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
 
         locator.advance_to(source.find("first").expect("first marker"));
         let first = locator.current_resource().expect("first resource");
@@ -410,7 +411,7 @@ mod tests {
                   ports:
                     - port: {{ .Values.port }}
         "#};
-        let mut locator = AstResourceLocator::from_source(source, &DefineIndex::new());
+        let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
         assert_eq!(
             locator.span_count(),
             2,
@@ -474,7 +475,7 @@ mod tests {
                     - host: {{ $.Values.host | quote }}
             {{- end }}
         "#};
-        let mut locator = AstResourceLocator::from_source(source, &DefineIndex::new());
+        let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
         assert_eq!(
             locator.span_count(),
             1,
@@ -512,7 +513,7 @@ mod tests {
                   ports:
                     - port: {{ .Values.port }}
         "#};
-        let mut locator = AstResourceLocator::from_source(source, &DefineIndex::new());
+        let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
         assert_eq!(
             locator.span_count(),
             1,

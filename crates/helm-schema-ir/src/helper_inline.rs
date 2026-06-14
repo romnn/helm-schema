@@ -1,7 +1,7 @@
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr};
 
 use crate::define_body_cache::DefineBodyCache;
-use crate::resource_detector::AstResourceDetector;
+use crate::resource_identity::ResourceIdentityDetector;
 use crate::template_expr_cache::parse_expr_text;
 
 pub(crate) struct ExactHelperInlinePlan<'a> {
@@ -53,5 +53,5 @@ fn define_body_resource(defines: &DefineIndex, name: &str) -> Option<crate::Reso
     let ast = HelmAst::Document {
         items: body.to_vec(),
     };
-    AstResourceDetector::new(defines).detect(&ast)
+    ResourceIdentityDetector::new(defines).detect(&ast)
 }

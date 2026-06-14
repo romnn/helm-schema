@@ -35,8 +35,7 @@ fn symbolic_ir_from_tree_sitter() {
     // Source-order, not alphabetical: the chart's `if/else if/else`
     // chain declares them in this sequence (primary → v1beta1 fallback
     // → legacy extensions fallback). The detector preserves that
-    // order verbatim instead of imposing a generic stability rank
-    // (round-5 Finding 2 fix).
+    // order verbatim instead of imposing a generic stability rank.
     let _ingress = serde_json::json!({
         "api_version": "networking.k8s.io/v1",
         "kind": "Ingress",

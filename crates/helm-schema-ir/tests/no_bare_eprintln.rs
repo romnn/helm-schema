@@ -4,10 +4,8 @@
 //! JSON object"; a debug println anywhere on the hot path would
 //! silently break that.
 //!
-//! Round-4 regression: the IR carried env-gated `SYMBOLIC_DEBUG`
-//! `eprintln!` calls that would have violated the contract when
-//! enabled during a JSON-mode run. They're removed now; this test
-//! enforces that they stay removed.
+//! Debug output must go through tracing so diagnostic-mode stderr remains
+//! machine-readable.
 
 use std::fs;
 use std::path::Path;

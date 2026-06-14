@@ -1,8 +1,8 @@
 use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
 
+use super::helper_output::{HelperOutput, helper_evaluate};
 use crate::ResourceRef;
 use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard};
-use crate::helper_eval::{HelperOutput, helper_evaluate};
 
 /// AST-driven detector for Kubernetes resource identity.
 ///
@@ -12,11 +12,11 @@ use crate::helper_eval::{HelperOutput, helper_evaluate};
 /// outputs. It preserves typed capability branches so the K8s lookup layer can
 /// choose the runtime-live branch instead of flattening mutually-exclusive
 /// alternatives.
-pub(crate) struct AstResourceDetector<'a> {
+pub(crate) struct ResourceIdentityDetector<'a> {
     defines: &'a DefineIndex,
 }
 
-impl<'a> AstResourceDetector<'a> {
+impl<'a> ResourceIdentityDetector<'a> {
     #[must_use]
     pub(crate) fn new(defines: &'a DefineIndex) -> Self {
         Self { defines }
@@ -390,12 +390,12 @@ mod tests {
     use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
     use indoc::indoc;
 
-    use super::AstResourceDetector;
+    use super::ResourceIdentityDetector;
     use crate::capability_branch::{CapabilityGuard, HelperBranchBody};
 
     fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
         let ast = TreeSitterParser.parse(src).expect("parse template");
-        AstResourceDetector::new(defines).detect(&ast)
+        ResourceIdentityDetector::new(defines).detect(&ast)
     }
 
     #[test]

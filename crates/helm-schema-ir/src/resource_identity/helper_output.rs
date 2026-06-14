@@ -254,9 +254,8 @@ fn collect_if_branches(
 /// Build a branch payload from a sub-AST. Tries the typed-branched
 /// shape first (the branch body is itself a typed `if`/`else` chain
 /// or a delegation to a branched helper) so guard structure
-/// composes through nested boundaries — round-12 Finding 1. Falls
-/// through to flat literal collection when the body has mixed
-/// content or no decodable structure.
+/// composes through nested bodies. Falls through to flat literal collection
+/// when the body has mixed content or no decodable structure.
 fn collect_branch_body(
     nodes: &[HelmAst],
     helpers: &DefineIndex,
@@ -730,13 +729,8 @@ mod tests {
         );
     }
 
-    /// Round-11 Finding 1: typed branch structure must survive
-    /// through a wrapper helper that just delegates via
-    /// `{{ include "branched_inner" . }}`. Before the fix, this
-    /// shape silently degraded to `Literals(["v1", "v1beta1"])` —
-    /// losing the CapabilityHas guards — because
-    /// `extract_top_level_branches` only recognised a top-level If
-    /// node, not a top-level helper-call delegation.
+    /// Typed branch structure survives through a wrapper helper that only
+    /// delegates via `{{ include "branched_inner" . }}`.
     #[test]
     fn typed_output_preserves_branches_through_wrapper_include() {
         let helpers = index_with(indoc! {r#"
@@ -833,8 +827,8 @@ mod tests {
         );
     }
 
-    /// Round-12 Finding 1: typed branch structure must compose
-    /// THROUGH branch bodies, not just at the top level. The shape:
+    /// Typed branch structure composes through branch bodies, not just at the
+    /// top level. The shape:
     ///
     /// ```text
     /// {{- define "outer" -}}
@@ -905,10 +899,8 @@ mod tests {
         assert_eq!(literals_of(&branches[1]), vec!["fallback".to_string()]);
     }
 
-    /// Round-12 Finding 1: the same shape but with an INLINE nested
-    /// if inside the branch body (no delegation through include).
-    /// Demonstrates that the structural recursion comes from the AST
-    /// shape, not from helper-call lookup specifically.
+    /// The same nested-branch structure is preserved when the nested branch is
+    /// inline rather than delegated through `include`.
     #[test]
     fn typed_output_preserves_nested_branches_through_inline_nested_if() {
         let helpers = index_with(indoc! {r#"
@@ -1014,13 +1006,8 @@ mod tests {
         let HelperOutput::Branched { branches } = out else {
             panic!("expected Branched; got {out:?}");
         };
-        // The Values-guard branch has no literal output, so the
-        // extractor drops it (per `has_lits` guard? no — wait, we
-        // _keep_ the branch even with empty literals because callers
-        // still want to see the guard). Actually we DO keep empty
-        // branches with guards so the chain has a complete picture.
-        // Check that the CapabilityHas branch is present with the
-        // correct literal.
+        // Values-guarded output is not a literal apiVersion candidate, but
+        // later capability branches still keep their structural guards.
         let has_branch = branches.iter().find(|b| {
             matches!(
                 &b.guard,
@@ -1047,12 +1034,9 @@ mod tests {
         );
     }
 
-    /// Round-8 Finding 2: `printf "%s/%s" "apps" "v1"` is compositional
-    /// formatting we don't statically model. The old code emitted ALL
-    /// three string literals (`"%s/%s"`, `"apps"`, `"v1"`) as
-    /// candidate apiVersions — none of which would actually appear at
-    /// runtime. The tightened code rejects this shape (returns no
-    /// literal) rather than emitting bogus candidates.
+    /// `printf "%s/%s" "apps" "v1"` is compositional formatting we do not
+    /// statically model, so it must not emit its format or arguments as
+    /// literal apiVersion candidates.
     #[test]
     fn printf_compositional_format_emits_no_bogus_candidates() {
         let helpers = index_with(indoc! {r#"
