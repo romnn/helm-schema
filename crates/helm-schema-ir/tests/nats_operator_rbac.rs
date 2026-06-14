@@ -15,10 +15,9 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 #[test]
 fn symbolic_ir_from_tree_sitter() {
     let src = test_util::read_testdata("charts/nats-operator/templates/rbac.yaml");
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
 
     let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");

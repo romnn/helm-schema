@@ -15,7 +15,7 @@
 //!     helper) emit a value use for `X` even though `Values` is the
 //!     second selector segment, not the root.
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{Guard, SymbolicIrContext, ValueUse};
 use indoc::indoc;
 
@@ -26,9 +26,8 @@ fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
         idx.add_source(&TreeSitterParser, helpers)
             .expect("helpers parse");
     }
-    let ast = TreeSitterParser.parse(template).expect("template parse");
     SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &ast, &idx)
+        .generate_contract_ir(template, &idx)
         .project()
         .into_value_uses()
 }

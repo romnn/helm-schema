@@ -154,7 +154,7 @@ mod tests {
 
     use super::apply_required_inference;
     use crate::{ValuesSchemaInput, generate_values_schema};
-    use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+    use helm_schema_ast::DefineIndex;
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{
         ContractProjection, Guard, SymbolicIrContext, ValueKind, ValueUse, YamlPath,
@@ -167,10 +167,9 @@ mod tests {
     }
 
     fn parse_projection(src: &str) -> ContractProjection {
-        let ast = TreeSitterParser.parse(src).expect("parse");
         let idx = DefineIndex::new();
         SymbolicIrContext::new(&idx)
-            .generate_contract_ir(src, &ast, &idx)
+            .generate_contract_ir(src, &idx)
             .project()
     }
 

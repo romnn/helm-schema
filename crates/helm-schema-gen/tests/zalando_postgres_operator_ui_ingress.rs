@@ -65,10 +65,9 @@ fn helm_template_render_ingress(chart_dir: &Path) -> Result<String, String> {
 fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
@@ -111,10 +110,9 @@ fn helm_template_renders_successfully() {
 fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
     let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));

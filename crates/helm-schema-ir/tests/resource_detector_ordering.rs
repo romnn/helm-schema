@@ -15,15 +15,14 @@
 //! `templates/network-policies.yaml` ships and was the root cause of
 //! a large block of `MissingSchema(kind=..., api_version=)` noise.
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrContext};
 use indoc::indoc;
 
 fn generate(template: &str) -> ContractProjection {
     let idx = DefineIndex::new();
-    let ast = TreeSitterParser.parse(template).expect("template parse");
     SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &ast, &idx)
+        .generate_contract_ir(template, &idx)
         .project()
 }
 
@@ -380,9 +379,8 @@ fn detector_resolves_helper_returned_api_version() {
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ast = TreeSitterParser.parse(template).expect("template parse");
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &ast, &idx)
+        .generate_contract_ir(template, &idx)
         .project();
 
     let u = ir
@@ -427,9 +425,8 @@ fn detector_resolves_helper_with_if_else_branches() {
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ast = TreeSitterParser.parse(template).expect("template parse");
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &ast, &idx)
+        .generate_contract_ir(template, &idx)
         .project();
 
     let u = ir
@@ -487,9 +484,8 @@ fn detector_resolves_include_returned_api_version() {
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ast = TreeSitterParser.parse(template).expect("template parse");
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &ast, &idx)
+        .generate_contract_ir(template, &idx)
         .project();
 
     let u = ir

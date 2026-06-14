@@ -1,5 +1,5 @@
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 
 /// Simple template IR generation test.
 #[test]
@@ -8,10 +8,9 @@ fn simple_template_ir() {
 foo: {{ .Values.name }}
 {{- end }}
 ";
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &ast, &idx)
+        .generate_contract_ir(src, &idx)
         .project();
 
     assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
@@ -36,10 +35,9 @@ kind: Service
 metadata:
   name: {{ .Values.serviceName }}
 ";
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &ast, &idx)
+        .generate_contract_ir(src, &idx)
         .project();
 
     let name_use = ir
@@ -70,12 +68,11 @@ kind: Service
 metadata:
   name: {{ include "common.serviceName" . }}
 "#;
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &ast, &idx)
+        .generate_contract_ir(src, &idx)
         .project();
 
     let name_use = ir
@@ -108,12 +105,11 @@ metadata:
   name: {{ include "common.serviceName" . }}
   {{- end }}
 "#;
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut idx = DefineIndex::new();
     idx.add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &ast, &idx)
+        .generate_contract_ir(src, &idx)
         .project();
 
     let name_use = ir

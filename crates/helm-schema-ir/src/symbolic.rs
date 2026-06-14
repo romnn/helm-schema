@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, HelmAst};
+use helm_schema_ast::DefineIndex;
 
 use crate::abstract_document::AbstractDocumentOutput;
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
@@ -66,12 +66,7 @@ impl SymbolicIrContext {
     /// contracts should use this method and project with [`ContractIr::project`]
     /// for schema generation. [`ContractIr::into_value_uses`] is reserved for
     /// fixture and external inspection output.
-    pub fn generate_contract_ir(
-        &self,
-        src: &str,
-        _ast: &HelmAst,
-        defines: &DefineIndex,
-    ) -> ContractIr {
+    pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
             return ContractIr::default();
         };

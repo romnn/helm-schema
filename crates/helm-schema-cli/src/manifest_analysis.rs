@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, contains_template_action};
 use helm_schema_ir::{ContractIr, SymbolicIrContext};
 use serde::Deserialize;
 use serde_json::Value;
@@ -55,11 +55,9 @@ fn collect_manifest_contract_for_template(
 ) -> CliResult<TemplateManifestAnalysis> {
     let mut source = String::new();
     path.open_file()?.read_to_string(&mut source)?;
-    let parsed_template = TreeSitterParser.parse_with_metadata(&source)?;
-    let ast = parsed_template.ast;
-    let contract = symbolic_context.generate_contract_ir(&source, &ast, defines);
+    let contract = symbolic_context.generate_contract_ir(&source, defines);
     let literal_crd_documents =
-        literal_crd_documents_from_template(&source, parsed_template.contains_template_action)?;
+        literal_crd_documents_from_template(&source, contains_template_action(&source)?)?;
     Ok(TemplateManifestAnalysis {
         contract,
         literal_crd_documents,

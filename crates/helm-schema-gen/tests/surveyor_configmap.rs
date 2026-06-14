@@ -78,10 +78,9 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
     let provider = common::production_k8s_chain("v1.35.0");
 

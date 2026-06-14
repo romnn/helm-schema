@@ -1608,7 +1608,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   fixture callers now construct `SymbolicIrContext` explicitly, generate a
   `ContractIr`, and opt into `.project()` at the fixture DTO boundary, while
   production callers use the same context's `generate_contract_ir` path
-  directly.
+  directly. That contract-generation seam also no longer accepts a parsed
+  `HelmAst` parameter; it owns the template parse needed by the interpreter,
+  and manifest analysis uses only the lightweight template-action detector
+  needed for literal CRD extraction instead of building a second AST.
   Top-level composed-values root detection is now shared by contract seeding
   and optional required-inference synthetic-path exclusion, so both consumers
   use one structural YAML mapping parser instead of parallel local copies.

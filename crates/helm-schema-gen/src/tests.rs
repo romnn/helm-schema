@@ -7,7 +7,7 @@ use crate::{
     ValuesSchemaInput, generate_values_schema,
     resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
 };
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{
     ContractProjection, ContractUse, Guard, ProviderSchemaUse, ResourceRef, SymbolicIrContext,
     ValueKind, ValueUse, YamlPath, extract_default_type_hints,
@@ -26,16 +26,14 @@ fn production_chain_provider() -> Chain {
 }
 
 fn parse_ir(src: &str) -> Vec<ValueUse> {
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let idx = DefineIndex::new();
     SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &ast, &idx)
+        .generate_contract_ir(src, &idx)
         .project()
         .into_value_uses()
 }
 
 fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut idx = DefineIndex::new();
     if !helpers.trim().is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
@@ -43,7 +41,7 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
             .expect("helpers parse");
     }
     SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &ast, &idx)
+        .generate_contract_ir(src, &idx)
         .project()
         .into_value_uses()
 }
@@ -902,13 +900,12 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         fullnameOverride:
     "};
 
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &ast, &define_index)
+        .generate_contract_ir(src, &define_index)
         .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -1055,13 +1052,12 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
           imageRegistry:
     "};
 
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &ast, &define_index)
+        .generate_contract_ir(src, &define_index)
         .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -1120,13 +1116,12 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
         global: {}
     "};
 
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &ast, &define_index)
+        .generate_contract_ir(src, &define_index)
         .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -1698,13 +1693,12 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         fullnameOverride: \"\"
     "};
 
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &ast, &define_index)
+        .generate_contract_ir(src, &define_index)
         .project();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -2519,14 +2513,13 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     "};
     let helpers = bitnami_tplvalues_helpers();
 
-    let ast = TreeSitterParser.parse(src).expect("parse");
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &ast, &define_index)
+        .generate_contract_ir(src, &define_index)
         .project();
     let schema_signals = ir.schema_signals();
     let schema = generate_values_schema(

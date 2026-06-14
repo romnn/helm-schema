@@ -26,10 +26,9 @@ fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
 fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
 
     let diagnostics = DiagnosticSink::new();
@@ -117,10 +116,9 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
     // The Surveyor chart template hardcodes autoscaling/v2beta1, and it also uses
     // v2beta1-only metric fields like `targetAverageUtilization`.
@@ -161,10 +159,9 @@ fn helm_template_renders_successfully() {
 fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
     let idx = build_define_index(&TreeSitterParser);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &ast, &idx)
+        .generate_contract_ir(&src, &idx)
         .project();
     // See comment in `schema_from_tree_sitter`.
     let provider = common::production_k8s_chain("v1.24.0");
