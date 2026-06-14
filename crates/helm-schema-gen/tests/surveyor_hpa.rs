@@ -27,9 +27,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
 
     let diagnostics = DiagnosticSink::new();
 
@@ -39,7 +37,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
 
     let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let _schema = common::generate_schema_with_values_yaml(&ir, &chain, Some(&values_yaml));
+    let _schema = common::generate_schema_with_values_yaml(ir, &chain, Some(&values_yaml));
 
     let actual = diagnostics.snapshot();
     let w = actual
@@ -117,9 +115,7 @@ fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     // The Surveyor chart template hardcodes autoscaling/v2beta1, and it also uses
     // v2beta1-only metric fields like `targetAverageUtilization`.
     //
@@ -127,7 +123,7 @@ fn schema_from_tree_sitter() {
     // releases, so we must validate/generate against an upstream schema bundle that still
     // contains that apiVersion.
     let provider = common::production_k8s_chain("v1.24.0");
-    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
 
@@ -160,12 +156,10 @@ fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     // See comment in `schema_from_tree_sitter`.
     let provider = common::production_k8s_chain("v1.24.0");
-    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
     assert!(

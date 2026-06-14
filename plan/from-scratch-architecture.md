@@ -1486,10 +1486,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   directly. Top-level values.yaml root seeds now also enter through a
   pathless scalar claim on `ContractIr`, so the CLI no longer constructs raw
   `ValueUse` compatibility DTOs for values-file roots. Final normalization
-  now runs through a named `ContractProjection` artifact and immediately
-  derives `ContractSchemaSignals` for the CLI analysis result, so production
-  chart collection no longer passes raw `Vec<ValueUse>` rows or normalized
-  projection rows into generation. A dead `ValuesSchemaGenerator` trait
+  now runs on `ContractIr` and directly derives `ContractSchemaSignals` for
+  the CLI analysis result, so production chart collection no longer passes raw
+  `Vec<ValueUse>` rows or normalized projection rows into generation. A dead
+  `ValuesSchemaGenerator` trait
   abstraction was also
   removed instead of preserving a no-op wrapper around the free generator
   function. The generator's old `generate_values_schema_full_with_*` arity
@@ -1503,8 +1503,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   fields in that schema-signal bundle, so the generator consumes contract-
   level facts instead of reinterpreting flat guards in `ResolvePolicy`.
   The old `IrGenerator -> Vec<ValueUse>` trait has also been removed; the
-  public symbolic generator now returns `ContractProjection`, and tests that
-  need fixture DTO rows opt into `into_value_uses()` explicitly. The
+  public symbolic generator now returns `ContractIr`, and tests that need
+  fixture DTO rows opt into `.project().into_value_uses()` explicitly. The
   one-implementation `HelperCallAnalyzer` trait has been deleted too:
   fragment evaluation now depends directly on the concrete `HelperSummaryCache`,
   keeping helper-summary caching as data/implementation rather than a fake port.
@@ -1533,18 +1533,21 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   and returns resolved path/schema pairs; root-schema construction is reduced
   to tree insertion and metadata decoration. The parallel AST-derived
   chart-facts extractor has also been deleted: production now derives
-  render/self-guard/fragment path facts from `ContractProjection` only, so
+  render/self-guard/fragment path facts from `ContractSchemaSignals` only, so
   those schema decisions come from the shared interpreter output rather than
   a second expression walker. The generator input no longer accepts external
   chart facts either, preventing callers from reintroducing that parallel
-  projection channel. `ContractProjection` now stores normalized `ContractUse`
-  claims directly; generator evidence collection, nullable-path
-  classification, and `K8sSchemaProvider` lookups consume those claims, while
-  `ValueUse` remains only an explicit fixture/external DTO projection.
+  projection channel. `ContractIr` now derives `ContractSchemaSignals`
+  directly after semantic finalization; generator evidence collection,
+  nullable-path classification, and `K8sSchemaProvider` lookups consume that
+  signal bundle, while `ContractProjection` / `ValueUse` remain only explicit
+  fixture/external inspection projections.
   The reverse compatibility constructor has been removed, so tests and
   tooling cannot accidentally treat `ValueUse` as input to the semantic
   contract layer; hand-built evidence now uses `ContractUse` directly.
-  `ContractProjection` also now exposes typed `ContractPathSignals`
+  The projection-level schema-signal derivation has been removed too, so
+  schema lowering can no longer use the DTO boundary as input.
+  `ContractSchemaSignals` also now exposes typed `ContractPathSignals`
   (referenced paths, ranged paths, fragment/partial-scalar use, and
   `GuardConstraint` facts), so generator use-signal collection no longer
   re-walks flat guards to rediscover those contract facts. JSON Schema
@@ -1558,7 +1561,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   a full contract claim and is the type consumed by `K8sSchemaProvider`,
   while generator policy still owns value-kind domain restriction. The optional
   `--infer-required` post-pass now consumes typed
-  `RequiredInferenceSignals` from `ContractProjection`, so generator policy
+  `RequiredInferenceSignals` from `ContractSchemaSignals`, so generator policy
   combines explicit exclusions and mutates JSON Schema without reinterpreting
   flat contract rows itself. Path-level schema resolution now also passes an
   explicit per-path evidence bundle into `ResolvePolicy`, which owns
@@ -1575,9 +1578,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   not template-derived contract topology.
   Required-inference signals now live in that same schema-signal projection,
   and `ValuesSchemaInput` consumes `ContractSchemaSignals` directly. This
-  removes the remaining production path where generator code asked
-  `ContractProjection` for separate partial views and keeps optional
-  required-inference as a consumer of the shared contract projection rather
+  removes the remaining production path where generator code asked the
+  inspection DTO for separate partial views and keeps optional
+  required-inference as a consumer of the shared contract signal bundle rather
   than a second raw-claim scan.
   Required-inference default-fallback exclusions now also flow through typed
   `RequiredInferenceSignals` inside `ContractSchemaSignals`, with the

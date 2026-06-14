@@ -42,11 +42,9 @@ fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
 
     let actual: serde_json::Value = schema;
 
@@ -85,11 +83,9 @@ fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
     assert!(

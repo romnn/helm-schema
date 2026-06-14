@@ -141,11 +141,15 @@ fn use_is_self_range_collection(use_: &ContractUse) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contract::{ContractIr, ContractProjection};
+    use crate::contract::ContractIr;
+
+    fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
+        ContractIr::from_contract_uses(uses).into_schema_signals()
+    }
 
     #[test]
-    fn contract_projection_nullable_paths_include_range_only_collection() {
-        let projection = ContractProjection::from_contract_uses(vec![ContractUse::new(
+    fn contract_ir_nullable_paths_include_range_only_collection() {
+        let nullable_paths = signals_for(vec![ContractUse::new(
             "snapshot".to_string(),
             YamlPath(vec!["data".to_string(), "command".to_string()]),
             ValueKind::Scalar,
@@ -153,9 +157,8 @@ mod tests {
                 path: "snapshots".to_string(),
             }],
             None,
-        )]);
-
-        let nullable_paths = projection.schema_signals().nullable_value_paths;
+        )])
+        .nullable_value_paths;
 
         assert!(
             nullable_paths.contains("snapshots"),
@@ -168,12 +171,11 @@ mod tests {
     }
 
     #[test]
-    fn contract_projection_nullable_paths_require_every_render_use_to_be_tolerant() {
-        let path = YamlPath(vec!["metadata".to_string(), "name".to_string()]);
-        let projection = ContractProjection::from_contract_uses(vec![
+    fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
+        let nullable_paths = signals_for(vec![
             ContractUse::new(
                 "serviceAccount.name".to_string(),
-                path.clone(),
+                YamlPath(vec!["metadata".to_string(), "name".to_string()]),
                 ValueKind::Scalar,
                 vec![Guard::Default {
                     path: "serviceAccount.name".to_string(),
@@ -182,14 +184,13 @@ mod tests {
             ),
             ContractUse::new(
                 "serviceAccount.name".to_string(),
-                path,
+                YamlPath(vec!["metadata".to_string(), "namespace".to_string()]),
                 ValueKind::Scalar,
                 Vec::new(),
                 None,
             ),
-        ]);
-
-        let nullable_paths = projection.schema_signals().nullable_value_paths;
+        ])
+        .nullable_value_paths;
 
         assert!(
             !nullable_paths.contains("serviceAccount.name"),
@@ -198,8 +199,8 @@ mod tests {
     }
 
     #[test]
-    fn contract_projection_path_signals_collect_references_and_typed_guard_constraints() {
-        let projection = ContractProjection::from_contract_uses(vec![
+    fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
+        let signals = signals_for(vec![
             ContractUse::new(
                 "podLabels".to_string(),
                 YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
@@ -250,9 +251,8 @@ mod tests {
                 }],
                 None,
             ),
-        ]);
-
-        let signals = projection.schema_signals().path_signals;
+        ])
+        .path_signals;
 
         assert_eq!(
             signals.referenced_value_paths,
@@ -313,14 +313,14 @@ mod tests {
     }
 
     #[test]
-    fn contract_projection_provider_schema_uses_are_rendered_resource_claims_only() {
+    fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
         let resource = ResourceRef {
             api_version: "apps/v1".to_string(),
             kind: "Deployment".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         };
-        let projection = ContractProjection::from_contract_uses(vec![
+        let requests = signals_for(vec![
             ContractUse::new(
                 "containers".to_string(),
                 YamlPath(vec![
@@ -370,9 +370,8 @@ mod tests {
                 Vec::new(),
                 Some(resource),
             ),
-        ]);
-
-        let requests = projection.schema_signals().provider_schema_uses;
+        ])
+        .provider_schema_uses;
 
         assert_eq!(requests.len(), 2, "{requests:#?}");
         assert_eq!(requests[0].value_path, "containers");
@@ -384,14 +383,14 @@ mod tests {
     }
 
     #[test]
-    fn contract_projection_schema_signals_bundle_core_generation_facts() {
+    fn contract_ir_schema_signals_bundle_core_generation_facts() {
         let resource = ResourceRef {
             api_version: "apps/v1".to_string(),
             kind: "Deployment".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         };
-        let projection = ContractProjection::from_contract_uses(vec![
+        let signals = signals_for(vec![
             ContractUse::new(
                 "podLabels".to_string(),
                 YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
@@ -409,8 +408,6 @@ mod tests {
                 Some(resource),
             ),
         ]);
-
-        let signals = projection.schema_signals();
 
         assert_eq!(
             signals
@@ -488,15 +485,26 @@ mod tests {
             None,
         ));
 
-        let projection_signals = contract.clone().project().schema_signals();
         let direct_signals = contract.into_schema_signals();
 
-        assert_eq!(direct_signals, projection_signals);
+        assert!(
+            direct_signals
+                .nullable_value_paths
+                .contains("serviceAccount.name"),
+            "semantic finalization should keep the default-guarded render claim",
+        );
+        assert_eq!(direct_signals.provider_schema_uses.len(), 1);
+        assert!(
+            direct_signals
+                .path_signals
+                .metadata_fields_by_value_path
+                .contains_key("podLabels"),
+        );
     }
 
     #[test]
-    fn contract_projection_required_inference_signals_are_typed_header_facts() {
-        let projection = ContractProjection::from_contract_uses(vec![
+    fn contract_ir_required_inference_signals_are_typed_header_facts() {
+        let signals = signals_for(vec![
             ContractUse::new(
                 "feature.enabled".to_string(),
                 YamlPath(Vec::new()),
@@ -550,9 +558,8 @@ mod tests {
                 }],
                 None,
             ),
-        ]);
-
-        let signals = projection.schema_signals().required_inference_signals;
+        ])
+        .required_inference_signals;
 
         assert_eq!(
             signals.positive_header_paths,

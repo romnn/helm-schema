@@ -28,16 +28,14 @@ fn schema_from_tree_sitter() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     // This chart's `apiVersion` comes from a helper
     // (`common.capabilities.networkPolicy.apiVersion`). A bare K8s provider
     // no longer resolves empty `api_version`; the chain's inference path is
     // the intended route for recovering `networking.k8s.io/v1` from
     // `kind: NetworkPolicy`.
     let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
 
     if std::env::var("SCHEMA_DUMP").is_ok() {
         eprintln!(
@@ -58,11 +56,9 @@ fn schema_validates_values_yaml() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/networkpolicy.yaml");
     let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
     let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(&ir, &provider, Some(&values_yaml));
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
 
     let errors = common::validate_values_yaml(&values_yaml, &schema);
     assert!(

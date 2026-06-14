@@ -95,12 +95,6 @@ impl ContractProjection {
     pub fn into_value_uses(self) -> Vec<ValueUse> {
         self.uses.into_iter().map(ValueUse::from).collect()
     }
-
-    /// Derive the typed contract facts consumed by core schema generation.
-    #[must_use]
-    pub fn schema_signals(&self) -> ContractSchemaSignals {
-        derive_schema_signals_from_uses(&self.uses)
-    }
 }
 
 /// Opaque guarded contract graph for one template interpretation.
@@ -113,6 +107,17 @@ pub struct ContractIr {
 }
 
 impl ContractIr {
+    /// Build a contract graph from already-structured contract claims.
+    ///
+    /// This is the contract-layer constructor for tests and expert callers
+    /// that already have semantic claims. Schema signals are still derived
+    /// through [`ContractIr::into_schema_signals`], so semantic finalization
+    /// stays on the contract graph rather than the inspection projection.
+    #[must_use]
+    pub fn from_contract_uses(uses: Vec<ContractUse>) -> Self {
+        Self { uses }
+    }
+
     pub(crate) fn push(&mut self, contract_use: ContractUse) {
         self.uses.push(contract_use);
     }
@@ -162,6 +167,7 @@ impl ContractIr {
     /// Production schema generation should use this method when it does not
     /// need fixture/inspection rows. [`ContractProjection`] remains the
     /// explicit DTO projection boundary.
+    #[must_use]
     pub fn into_schema_signals(mut self) -> ContractSchemaSignals {
         self.normalize();
         derive_schema_signals_from_uses(&self.uses)

@@ -39,11 +39,10 @@ host: example.com
 #[test]
 fn kind_list_envelope_descends_into_inner_resource() {
     let idx = DefineIndex::new();
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(KIND_LIST_TEMPLATE, &idx)
-        .project();
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(KIND_LIST_TEMPLATE, &idx);
+    let projection = ir.clone().project();
     assert!(
-        ir.uses().iter().any(|use_| {
+        projection.uses().iter().any(|use_| {
             use_.source_expr == "host"
                 && use_.path.0
                     == [
@@ -56,14 +55,14 @@ fn kind_list_envelope_descends_into_inner_resource() {
                 })
         }),
         "host use must be attributed to the inner Ingress with a rebased path: {:#?}",
-        ir
+        projection
     );
 
     let diagnostics = DiagnosticSink::new();
     let chain =
         Chain::new(vec![Box::new(FakeIngressProvider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let schema = common::generate_schema_with_values_yaml(&ir, &chain, Some(KIND_LIST_VALUES));
+    let schema = common::generate_schema_with_values_yaml(ir, &chain, Some(KIND_LIST_VALUES));
     assert_eq!(
         schema.pointer("/properties/host/description"),
         Some(&Value::String("inner ingress host".to_string())),

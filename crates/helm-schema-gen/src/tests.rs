@@ -9,8 +9,8 @@ use crate::{
 };
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{
-    ContractProjection, ContractUse, Guard, ProviderSchemaUse, ResourceRef, SymbolicIrContext,
-    ValueKind, YamlPath, extract_default_type_hints,
+    ContractIr, ContractSchemaSignals, ContractUse, Guard, ProviderSchemaUse, ResourceRef,
+    SymbolicIrContext, ValueKind, YamlPath, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -56,15 +56,17 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
     hints
 }
 
+fn schema_signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
+    ContractIr::from_contract_uses(uses).into_schema_signals()
+}
+
 fn schema_for(uses: &[ContractUse]) -> Value {
-    let projection = ContractProjection::from_contract_uses(uses.to_vec());
-    let schema_signals = projection.schema_signals();
+    let schema_signals = schema_signals_for(uses.to_vec());
     generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()))
 }
 
 fn schema_for_values_yaml(uses: &[ContractUse], values_yaml: Option<&str>) -> Value {
-    let projection = ContractProjection::from_contract_uses(uses.to_vec());
-    let schema_signals = projection.schema_signals();
+    let schema_signals = schema_signals_for(uses.to_vec());
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
     )
@@ -75,8 +77,7 @@ fn schema_for_values_yaml_and_hints(
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> Value {
-    let projection = ContractProjection::from_contract_uses(uses.to_vec());
-    let schema_signals = projection.schema_signals();
+    let schema_signals = schema_signals_for(uses.to_vec());
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider())
             .with_values_yaml(values_yaml)
@@ -233,8 +234,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         }),
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
-    let projection = ContractProjection::from_contract_uses(uses);
-    let schema_signals = projection.schema_signals();
+    let schema_signals = schema_signals_for(uses);
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &DescriptionProvider)
@@ -268,8 +268,7 @@ fn values_yaml_comments_do_not_create_schema_paths() {
         ),
     ]);
     let provider = Chain::new(Vec::new());
-    let projection = ContractProjection::from_contract_uses(uses);
-    let schema_signals = projection.schema_signals();
+    let schema_signals = schema_signals_for(uses);
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider)
@@ -806,8 +805,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         snapshots:
     "};
     let ir = parse_ir(src);
-    let projection = ContractProjection::from_contract_uses(ir.clone());
-    let nullable_paths = projection.schema_signals().nullable_value_paths;
+    let nullable_paths = schema_signals_for(ir.clone()).nullable_value_paths;
     assert!(
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
@@ -2502,10 +2500,9 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     define_index
         .add_source(&TreeSitterParser, helpers)
         .expect("helpers parse");
-    let ir = SymbolicIrContext::new(&define_index)
+    let schema_signals = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
-        .project();
-    let schema_signals = ir.schema_signals();
+        .into_schema_signals();
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(Some(values_yaml)),
     );
@@ -2519,7 +2516,7 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     })
     .unwrap_or_else(|| {
         panic!(
-            "exact empty object placeholder variant missing from helper-rendered object union: {data_source}; ir={ir:?}",
+            "exact empty object placeholder variant missing from helper-rendered object union: {data_source}",
         )
     });
 }
@@ -3900,11 +3897,10 @@ fn step2_default_in_string_literal_no_hint() {
 /// per-use rule, that path correctly widens. Mixed-guards paths stay
 /// strict.
 #[test]
-fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
-    let path = YamlPath(vec!["data".into(), "value".into()]);
+fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
     let guarded = ContractUse {
         source_expr: "image.tag".into(),
-        path: path.clone(),
+        path: YamlPath(vec!["data".into(), "guarded".into()]),
         kind: ValueKind::Scalar,
         guards: vec![Guard::Default {
             path: "image.tag".into(),
@@ -3913,14 +3909,13 @@ fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_toleran
     };
     let bare = ContractUse {
         source_expr: "image.tag".into(),
-        path,
+        path: YamlPath(vec!["data".into(), "bare".into()]),
         kind: ValueKind::Scalar,
         guards: vec![],
         resource: None,
     };
 
-    let projection = ContractProjection::from_contract_uses(vec![guarded, bare]);
-    let null_paths = projection.schema_signals().nullable_value_paths;
+    let null_paths = schema_signals_for(vec![guarded, bare]).nullable_value_paths;
     assert!(
         null_paths.is_empty(),
         "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",

@@ -361,7 +361,8 @@ Current result:
 
 - `crates/helm-schema-ir/src/abstract_value.rs` owns the reusable lattice.
 - The temporary AST chart-facts walker has since been deleted; production
-  facts now derive from `ContractProjection::chart_facts()`.
+  facts now derive from `ContractSchemaSignals`, which is built from the
+  normalized `ContractIr`.
 - This phase intentionally preserves existing chart-facts behavior and does
   not yet change `SymbolicWalker` or schema generation semantics.
 
@@ -388,8 +389,8 @@ Current result:
   `Effects`.
 - The first effect is `reads`, populated from the evaluated `AbstractValue`.
 - The rendered-path fact consumer moved beyond this phase: production
-  chart-fact derivation now reads normalized contract projection rows instead
-  of walking the AST a second time.
+  chart-fact derivation now reads the contract-layer schema-signal bundle
+  instead of walking the AST a second time.
 - Default/type/string/mutation effects are still pending Phase 2+ work.
 
 ### Phase 2 — move expression facts onto `eval_expr`
@@ -829,40 +830,41 @@ Current result:
 - Top-level values.yaml root seeds now enter through a pathless scalar claim
   on `ContractIr`, so the CLI does not construct raw `ValueUse` compatibility
   DTOs for values-file roots.
-- The final normalized compatibility DTOs now sit behind a named
-  `ContractProjection` artifact, so CLI chart collection passes around the
-  projection rather than a raw `Vec<ValueUse>`.
+- The normalized compatibility DTO rows now sit behind a named
+  `ContractProjection` artifact only when callers explicitly request fixture
+  or inspection rows.
 - A dead `ValuesSchemaGenerator` trait abstraction was removed instead of
   preserving a no-op wrapper around the free generator function.
 - The generator's old arity ladder now has one explicit `ValuesSchemaInput`
   entry point, so optional analysis signals are named inputs rather than
   pass-through wrapper functions.
-- `ValuesSchemaInput` now takes `ContractProjection` directly, so production
-  schema generation no longer peels raw `ValueUse` slices at the CLI boundary.
-- CLI required-inference orchestration also takes `ContractProjection`, so the
-  raw `ValueUse` slice peel is contained inside compatibility modules.
-- Chart-fact derivation now takes `ContractProjection` too, so callers no
-  longer unwrap compatibility rows just to recover path facts.
+- `ValuesSchemaInput` now takes `ContractSchemaSignals` directly, so
+  production schema generation no longer peels raw `ValueUse` slices or
+  inspection projections at the CLI boundary.
+- CLI required-inference orchestration consumes the same
+  `ContractSchemaSignals` bundle, so required exclusions and fallback evidence
+  are contract-owned typed facts rather than a second compatibility-row scan.
+- Chart facts are fields on `ContractSchemaSignals`, so callers no longer
+  unwrap compatibility rows just to recover path facts.
 - The old `IrGenerator -> Vec<ValueUse>` trait has been removed. The public
-  symbolic generator returns `ContractProjection`, and fixture tests explicitly
-  opt into `into_value_uses()` when they need compatibility rows.
-- CLI required-inference now accepts `ContractProjection` directly too, so its
-  raw `ValueUse` access stays inside the generator compatibility module.
-- Generator evidence collection has started taking `ContractProjection`
-  directly as well: use signals and path metadata now consume contract facts
+  symbolic generator returns `ContractIr`, and fixture tests explicitly opt
+  into `.project().into_value_uses()` when they need compatibility rows.
+- Generator evidence collection now starts from `ContractSchemaSignals`: use
+  signals, path metadata, provider lookup requests, chart facts, and
+  required-inference inputs all come from one contract-layer signal builder
   instead of forcing root schema generation to pass raw slices around.
-- `ContractProjection` now stores normalized `ContractUse` claims directly.
-  Generator evidence collection and `K8sSchemaProvider` lookups consume
-  `ContractUse`; `ValueUse` remains an explicit fixture/external DTO
-  projection via `into_value_uses()`.
+- `ContractIr` now derives `ContractSchemaSignals` directly after semantic
+  finalization. `ContractProjection` stores normalized `ContractUse` claims
+  only for fixture/external inspection; `ValueUse` remains an explicit
+  outward DTO projection via `into_value_uses()`.
 - The reverse compatibility path has been removed: `ContractProjection` can
   no longer be built from `ValueUse` rows. Tests that need hand-built evidence
   construct `ContractUse` directly, so `ValueUse` only flows outward as an
   inspection/fixture DTO.
-- Nullable-path classification now lives on `ContractProjection`, so the
+- Nullable-path classification now lives on `ContractSchemaSignals`, so the
   generator consumes the contract's null-tolerance facts instead of
   reinterpreting flat guards in `ResolvePolicy`.
-- `ContractProjection` now exposes typed `ContractPathSignals` for referenced
+- `ContractSchemaSignals` now exposes typed `ContractPathSignals` for referenced
   paths, ranged paths, fragment/partial-scalar use, and guard constraints, so
   generator use-signal collection no longer re-walks guards to rediscover
   those contract facts. JSON Schema lowering for the typed guard constraints

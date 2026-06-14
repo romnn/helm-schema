@@ -157,8 +157,8 @@ mod tests {
     use helm_schema_ast::DefineIndex;
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{
-        ContractProjection, ContractUse, Guard, SymbolicIrContext, ValueKind, YamlPath,
-        extract_default_type_hints,
+        ContractIr, ContractSchemaSignals, ContractUse, Guard, SymbolicIrContext, ValueKind,
+        YamlPath, extract_default_type_hints,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
@@ -166,11 +166,15 @@ mod tests {
         KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
     }
 
-    fn parse_projection(src: &str) -> ContractProjection {
+    fn parse_schema_signals(src: &str) -> ContractSchemaSignals {
         let idx = DefineIndex::new();
         SymbolicIrContext::new(&idx)
             .generate_contract_ir(src, &idx)
-            .project()
+            .into_schema_signals()
+    }
+
+    fn schema_signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
+        ContractIr::from_contract_uses(uses).into_schema_signals()
     }
 
     fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
@@ -187,8 +191,7 @@ mod tests {
 
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let hints = collect_hints(src);
-        let projection = parse_projection(src);
-        let schema_signals = projection.schema_signals();
+        let schema_signals = parse_schema_signals(src);
         let mut schema = generate_values_schema(
             ValuesSchemaInput::new(&schema_signals, &provider())
                 .with_values_yaml(values_yaml)
@@ -205,7 +208,7 @@ mod tests {
 
     #[test]
     fn contract_default_guard_excludes_path_without_external_fallback_scan() {
-        let projection = ContractProjection::from_contract_uses(vec![
+        let schema_signals = schema_signals_for(vec![
             ContractUse {
                 source_expr: "feature".to_string(),
                 path: YamlPath(Vec::new()),
@@ -223,7 +226,6 @@ mod tests {
                 resource: None,
             },
         ]);
-        let schema_signals = projection.schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
@@ -402,8 +404,7 @@ mod tests {
             kind: ServiceAccount
             {{- end }}
         "};
-        let projection = parse_projection(src);
-        let schema_signals = projection.schema_signals();
+        let schema_signals = parse_schema_signals(src);
         let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
         // The core path must never emit `required` — that's the
         // separation of concerns this module exists to enforce.
