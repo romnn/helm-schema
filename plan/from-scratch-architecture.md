@@ -1667,7 +1667,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   mode mapping rather than rewriting transform order. Override schema loading
   now produces explicit prepared override inputs before the final merge and
   transform pass, moving that path closer to the target `PolicyInputs` shape
-  while preserving today's override semantics and output bytes.
+  while preserving today's override semantics and output bytes. The output
+  pipeline has also been split by responsibility — option model, override
+  preparation, final transforms, global mirroring, description stripping, and
+  serialization — so A5's later bundled/default-output switch has focused
+  owners instead of one CLI output grab bag. CLI output args now construct
+  those typed output policies directly, leaving the top-level run path to
+  orchestrate stages rather than translate flags into output internals.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 

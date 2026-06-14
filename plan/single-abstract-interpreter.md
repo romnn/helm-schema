@@ -909,6 +909,11 @@ Current result:
   flattening, description stripping, minimization, and JSON formatting. The
   extraction preserves current output behavior but gives bundled-vs-flattened
   emission one owner for the later default change.
+- The output pipeline is now split into focused modules for option modeling,
+  prepared override loading, final transforms, global schema mirroring,
+  description stripping, and serialization. `OutputArgs` owns conversion from
+  CLI booleans to typed output policy, so the top-level CLI run path no longer
+  translates output flags by hand.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and

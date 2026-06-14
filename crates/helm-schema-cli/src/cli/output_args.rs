@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::Args;
 
+use crate::output_pipeline::{JsonOutputFormat, OutputPipelineOptions, ReferenceHandling};
+
 #[derive(Args, Debug, Clone)]
 pub struct OutputArgs {
     #[arg(short, long)]
@@ -30,4 +32,19 @@ pub struct OutputArgs {
     /// participate in Helm template inference.
     #[arg(long)]
     pub minimize: bool,
+}
+
+impl OutputArgs {
+    pub(crate) fn pipeline_options(&self, allow_net: bool) -> OutputPipelineOptions {
+        OutputPipelineOptions {
+            reference_handling: ReferenceHandling::from_keep_refs(self.keep_refs),
+            allow_net,
+            strip_descriptions: self.strip_descriptions,
+            minimize: self.minimize,
+        }
+    }
+
+    pub(crate) fn json_format(&self) -> JsonOutputFormat {
+        JsonOutputFormat::from_compact(self.compact)
+    }
 }

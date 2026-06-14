@@ -24,7 +24,6 @@ use vfs::VfsPath;
 
 use crate::error::CliResult;
 use crate::generation::{GeneratedSchema, generate_values_schema_for_chart_output};
-use crate::output_pipeline::{JsonOutputFormat, OutputPipelineOptions, ReferenceHandling};
 
 pub use cli::Cli;
 pub use error::CliError;
@@ -116,12 +115,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         mut schema,
         subchart_value_prefixes,
     } = generate_values_schema_for_chart_output(&opts, Some(&diagnostics))?;
-    let output_options = OutputPipelineOptions {
-        reference_handling: ReferenceHandling::from_keep_refs(cli.output.keep_refs),
-        allow_net: !cli.k8s.offline,
-        strip_descriptions: cli.output.strip_descriptions,
-        minimize: cli.output.minimize,
-    };
+    let output_options = cli.output.pipeline_options(!cli.k8s.offline);
     let override_schemas =
         output_pipeline::load_prepared_override_schemas(&cli.override_schema, &output_options)?;
 
@@ -135,6 +129,8 @@ fn run_inner(cli: Cli) -> CliResult<()> {
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
 
+    let json_format = cli.output.json_format();
+
     if let Some(path) = cli.output.output {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| CliError::CreateOutputDir {
@@ -147,12 +143,8 @@ fn run_inner(cli: Cli) -> CliResult<()> {
             source: err,
         })?;
         let mut out = BufWriter::new(file);
-        output_pipeline::write_schema_json(
-            &mut out,
-            &schema,
-            JsonOutputFormat::from_compact(cli.output.compact),
-        )
-        .map_err(|err| write_output_error_with_path(err, &path))?;
+        output_pipeline::write_schema_json(&mut out, &schema, json_format)
+            .map_err(|err| write_output_error_with_path(err, &path))?;
         out.flush().map_err(|err| CliError::WriteOutput {
             path: path.clone(),
             source: err,
@@ -160,11 +152,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     } else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        output_pipeline::write_schema_json(
-            &mut out,
-            &schema,
-            JsonOutputFormat::from_compact(cli.output.compact),
-        )?;
+        output_pipeline::write_schema_json(&mut out, &schema, json_format)?;
         out.flush()?;
     }
 
