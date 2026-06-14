@@ -48,18 +48,6 @@ impl ContractUse {
     }
 }
 
-impl From<ValueUse> for ContractUse {
-    fn from(value_use: ValueUse) -> Self {
-        Self {
-            source_expr: value_use.source_expr,
-            path: value_use.path,
-            kind: value_use.kind,
-            guards: value_use.guards,
-            resource: value_use.resource,
-        }
-    }
-}
-
 impl From<ContractUse> for ValueUse {
     fn from(contract_use: ContractUse) -> Self {
         Self {
@@ -72,7 +60,7 @@ impl From<ContractUse> for ValueUse {
     }
 }
 
-/// Canonical DTO projection of a contract graph.
+/// Canonical inspection projection of a contract graph.
 ///
 /// Fixture and external tooling code use this boundary when they need
 /// inspection rows. Production schema generation consumes
@@ -84,29 +72,26 @@ pub struct ContractProjection {
 }
 
 impl ContractProjection {
-    /// Build a projection from already-projected compatibility DTOs.
+    /// Build a canonical projection from already-projected contract claims.
     ///
-    /// This is for tests and transitional consumers that still construct
-    /// [`ValueUse`] rows directly. Interpreter code should produce
-    /// [`ContractIr`] instead.
-    pub fn from_value_uses(uses: Vec<ValueUse>) -> Self {
-        let mut uses: Vec<ContractUse> = uses.into_iter().map(ContractUse::from).collect();
-        canonicalize_contract_uses(&mut uses);
-        Self { uses }
-    }
-
-    /// Build a canonical projection from contract-layer claims.
+    /// This constructor is for tests and external tooling that construct
+    /// inspection rows directly. Interpreter output should normally flow
+    /// through [`ContractIr::project`], which applies semantic finalization
+    /// before creating this projection.
+    #[must_use]
     pub fn from_contract_uses(mut uses: Vec<ContractUse>) -> Self {
         canonicalize_contract_uses(&mut uses);
         Self { uses }
     }
 
     /// Borrow the canonicalized contract claims.
+    #[must_use]
     pub fn uses(&self) -> &[ContractUse] {
         &self.uses
     }
 
     /// Consume the projection and return the compatibility DTOs.
+    #[must_use]
     pub fn into_value_uses(self) -> Vec<ValueUse> {
         self.uses.into_iter().map(ValueUse::from).collect()
     }
@@ -166,6 +151,7 @@ impl ContractIr {
     }
 
     /// Finalize claims and project them to the inspection DTO artifact.
+    #[must_use]
     pub fn project(mut self) -> ContractProjection {
         self.normalize();
         ContractProjection { uses: self.uses }
@@ -179,11 +165,6 @@ impl ContractIr {
     pub fn into_schema_signals(mut self) -> ContractSchemaSignals {
         self.normalize();
         derive_schema_signals_from_uses(&self.uses)
-    }
-
-    /// Finalize claims and project them to the fixture `ValueUse` DTO.
-    pub fn into_value_uses(self) -> Vec<ValueUse> {
-        self.project().into_value_uses()
     }
 
     fn normalize(&mut self) {
@@ -215,7 +196,7 @@ mod tests {
             None,
         ));
 
-        let value_uses = contract.into_value_uses();
+        let value_uses = contract.project().into_value_uses();
 
         assert_eq!(value_uses.len(), 1);
         assert_eq!(
@@ -249,7 +230,7 @@ mod tests {
             }),
         ));
 
-        let value_uses = contract.into_value_uses();
+        let value_uses = contract.project().into_value_uses();
 
         assert_eq!(value_uses.len(), 1);
         assert_eq!(
@@ -287,7 +268,7 @@ mod tests {
             }
         });
 
-        let value_uses = contract.into_value_uses();
+        let value_uses = contract.project().into_value_uses();
         let value_use = value_uses.first().expect("mapped value use");
 
         assert_eq!(value_use.source_expr, "subchart.serviceAccount.name");

@@ -71,10 +71,14 @@ pub use symbolic::SymbolicIrContext;
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
-// Core IR types
+// Compatibility DTO types
 // ---------------------------------------------------------------------------
 
-/// A single use of a `.Values.*` path in a Helm template.
+/// Serialized inspection row for one observed `.Values.*` path.
+///
+/// The semantic interpreter produces `ContractIr` / `ContractUse` internally.
+/// `ValueUse` is kept as a stable fixture and external-tooling projection
+/// format, not as the production contract artifact.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ValueUse {
     /// The `.Values.*` sub-path, e.g. `"metrics.enabled"`.

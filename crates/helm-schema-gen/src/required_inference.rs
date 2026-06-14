@@ -157,7 +157,7 @@ mod tests {
     use helm_schema_ast::DefineIndex;
     use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{
-        ContractProjection, Guard, SymbolicIrContext, ValueKind, ValueUse, YamlPath,
+        ContractProjection, ContractUse, Guard, SymbolicIrContext, ValueKind, YamlPath,
         extract_default_type_hints,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
@@ -205,15 +205,15 @@ mod tests {
 
     #[test]
     fn contract_default_guard_excludes_path_without_external_fallback_scan() {
-        let projection = ContractProjection::from_value_uses(vec![
-            ValueUse {
+        let projection = ContractProjection::from_contract_uses(vec![
+            ContractUse {
                 source_expr: "feature".to_string(),
                 path: YamlPath(Vec::new()),
                 kind: ValueKind::Scalar,
                 guards: Vec::new(),
                 resource: None,
             },
-            ValueUse {
+            ContractUse {
                 source_expr: "feature".to_string(),
                 path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
                 kind: ValueKind::Scalar,

@@ -65,8 +65,9 @@ impl SymbolicIrContext {
     ///
     /// Callers that need to combine, scope, or otherwise transform chart-local
     /// contracts should use this method and derive schema facts with
-    /// [`ContractIr::into_schema_signals`]. [`ContractIr::into_value_uses`] is
-    /// reserved for fixture and external inspection output.
+    /// [`ContractIr::into_schema_signals`]. Fixture and external inspection
+    /// output should first call [`ContractIr::project`] and then explicitly
+    /// convert the projection to compatibility DTO rows.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
             return ContractIr::default();

@@ -1541,6 +1541,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   claims directly; generator evidence collection, nullable-path
   classification, and `K8sSchemaProvider` lookups consume those claims, while
   `ValueUse` remains only an explicit fixture/external DTO projection.
+  The reverse compatibility constructor has been removed, so tests and
+  tooling cannot accidentally treat `ValueUse` as input to the semantic
+  contract layer; hand-built evidence now uses `ContractUse` directly.
   `ContractProjection` also now exposes typed `ContractPathSignals`
   (referenced paths, ranged paths, fragment/partial-scalar use, and
   `GuardConstraint` facts), so generator use-signal collection no longer

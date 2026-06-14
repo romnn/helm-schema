@@ -15,10 +15,10 @@
 //!     second selector segment, not the root.
 
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
-use helm_schema_ir::{Guard, SymbolicIrContext, ValueUse};
+use helm_schema_ir::{ContractUse, Guard, SymbolicIrContext};
 use indoc::indoc;
 
-fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
+fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
     let mut idx = DefineIndex::new();
     if !helpers.is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
@@ -28,7 +28,8 @@ fn generate(template: &str, helpers: &str) -> Vec<ValueUse> {
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
         .project()
-        .into_value_uses()
+        .uses()
+        .to_vec()
 }
 
 fn truthy(p: &str) -> Guard {
@@ -77,7 +78,7 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
 
     let ir = generate(template, "");
 
-    let map_uses: Vec<&ValueUse> = ir.iter().filter(|u| u.source_expr == "map").collect();
+    let map_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "map").collect();
     assert_eq!(
         map_uses.len(),
         2,
@@ -131,7 +132,7 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
 
     let ir = generate(template, "");
 
-    let fallback_map_uses: Vec<&ValueUse> = ir
+    let fallback_map_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|u| u.source_expr == "fallbackMap")
         .collect();
@@ -203,7 +204,7 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     // Truthy(themap) guard. The IR shape for this fixture is precise
     // enough to pin exactly one use; a regression that emitted a
     // second wrongly-guarded duplicate would fail this assertion.
-    let suffix_uses: Vec<&ValueUse> = ir.iter().filter(|u| u.source_expr == "suffix").collect();
+    let suffix_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "suffix").collect();
     assert_eq!(
         suffix_uses.len(),
         1,
@@ -216,7 +217,8 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     );
 
     // `fallback` is OUTSIDE the range — must NOT carry that guard.
-    let fallback_uses: Vec<&ValueUse> = ir.iter().filter(|u| u.source_expr == "fallback").collect();
+    let fallback_uses: Vec<&ContractUse> =
+        ir.iter().filter(|u| u.source_expr == "fallback").collect();
     assert!(
         !fallback_uses.is_empty(),
         "expected `fallback` use outside range; got: {ir:#?}",
@@ -453,7 +455,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
 
     let ir = generate(template, "");
 
-    let primary_uses: Vec<&ValueUse> = ir
+    let primary_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|use_| use_.source_expr == "primary")
         .collect();
@@ -468,7 +470,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         primary_uses[0].guards,
     );
 
-    let fallback_uses: Vec<&ValueUse> = ir
+    let fallback_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|use_| use_.source_expr == "fallback")
         .collect();
@@ -483,7 +485,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         fallback_uses[0].guards,
     );
 
-    let after_uses: Vec<&ValueUse> = ir
+    let after_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|use_| use_.source_expr == "after")
         .collect();
@@ -516,7 +518,7 @@ fn local_storage_class_alias_emits_guarded_leaf_use() {
     "#};
 
     let ir = generate(template, "");
-    let matching_uses: Vec<&ValueUse> = ir
+    let matching_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|use_| use_.source_expr == "global.storageClass")
         .collect();
@@ -657,7 +659,7 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
 
     let ir = generate(template, helpers);
 
-    let target_uses: Vec<&ValueUse> = ir
+    let target_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|u| u.source_expr == "deeplyNested.fieldName")
         .collect();
@@ -699,7 +701,7 @@ fn quoted_yaml_key_keeps_concrete_leaf_path() {
 
     let ir = generate(template, "");
 
-    let namespace_uses: Vec<&ValueUse> =
+    let namespace_uses: Vec<&ContractUse> =
         ir.iter().filter(|u| u.source_expr == "namespace").collect();
     assert_eq!(
         namespace_uses.len(),
@@ -1018,7 +1020,7 @@ fn conditional_annotations_fragment_stays_under_annotations_path() {
         eprintln!("{ir:#?}");
     }
 
-    let pod_annotations: Vec<&ValueUse> = ir
+    let pod_annotations: Vec<&ContractUse> = ir
         .iter()
         .filter(|use_| use_.source_expr == "podAnnotations")
         .collect();
@@ -1088,7 +1090,7 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
 
     let ir = generate(template, helpers);
 
-    let flag_uses: Vec<&ValueUse> = ir
+    let flag_uses: Vec<&ContractUse> = ir
         .iter()
         .filter(|u| u.source_expr == "featureFlag")
         .collect();
@@ -1243,7 +1245,7 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
     // No `fake` source_expr should appear anywhere in the IR — it
     // lives inside a string literal, not a real `.Values.fake`
     // reference.
-    let fake_uses: Vec<&ValueUse> = ir.iter().filter(|u| u.source_expr == "fake").collect();
+    let fake_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "fake").collect();
     assert!(
         fake_uses.is_empty(),
         "string-literal payload `.Values.fake` leaked into IR as a use: \
@@ -1255,7 +1257,8 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
     // Tighten beyond "contains the Eq": there must be no `Truthy(mode)`
     // or `Truthy(fake)` either, which is what the OLD regex pipeline
     // would have emitted from the contamination fall-through.
-    let payload_uses: Vec<&ValueUse> = ir.iter().filter(|u| u.source_expr == "payload").collect();
+    let payload_uses: Vec<&ContractUse> =
+        ir.iter().filter(|u| u.source_expr == "payload").collect();
     assert_eq!(
         payload_uses.len(),
         1,

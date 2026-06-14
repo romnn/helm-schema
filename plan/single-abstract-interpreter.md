@@ -855,6 +855,10 @@ Current result:
   Generator evidence collection and `K8sSchemaProvider` lookups consume
   `ContractUse`; `ValueUse` remains an explicit fixture/external DTO
   projection via `into_value_uses()`.
+- The reverse compatibility path has been removed: `ContractProjection` can
+  no longer be built from `ValueUse` rows. Tests that need hand-built evidence
+  construct `ContractUse` directly, so `ValueUse` only flows outward as an
+  inspection/fixture DTO.
 - Nullable-path classification now lives on `ContractProjection`, so the
   generator consumes the contract's null-tolerance facts instead of
   reinterpreting flat guards in `ResolvePolicy`.

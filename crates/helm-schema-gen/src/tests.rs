@@ -10,7 +10,7 @@ use crate::{
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{
     ContractProjection, ContractUse, Guard, ProviderSchemaUse, ResourceRef, SymbolicIrContext,
-    ValueKind, ValueUse, YamlPath, extract_default_type_hints,
+    ValueKind, YamlPath, extract_default_type_hints,
 };
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
 
@@ -25,15 +25,16 @@ fn production_chain_provider() -> Chain {
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 
-fn parse_ir(src: &str) -> Vec<ValueUse> {
+fn parse_ir(src: &str) -> Vec<ContractUse> {
     let idx = DefineIndex::new();
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
         .project()
-        .into_value_uses()
+        .uses()
+        .to_vec()
 }
 
-fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
+fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ContractUse> {
     let mut idx = DefineIndex::new();
     if !helpers.trim().is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
@@ -43,7 +44,8 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ValueUse> {
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
         .project()
-        .into_value_uses()
+        .uses()
+        .to_vec()
 }
 
 fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
@@ -54,44 +56,26 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
     hints
 }
 
-fn schema_for<T>(uses: &[T]) -> Value
-where
-    T: Clone,
-    ContractUse: From<T>,
-{
-    let projection = ContractProjection::from_contract_uses(
-        uses.iter().cloned().map(ContractUse::from).collect(),
-    );
+fn schema_for(uses: &[ContractUse]) -> Value {
+    let projection = ContractProjection::from_contract_uses(uses.to_vec());
     let schema_signals = projection.schema_signals();
     generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()))
 }
 
-fn schema_for_values_yaml<T>(uses: &[T], values_yaml: Option<&str>) -> Value
-where
-    T: Clone,
-    ContractUse: From<T>,
-{
-    let projection = ContractProjection::from_contract_uses(
-        uses.iter().cloned().map(ContractUse::from).collect(),
-    );
+fn schema_for_values_yaml(uses: &[ContractUse], values_yaml: Option<&str>) -> Value {
+    let projection = ContractProjection::from_contract_uses(uses.to_vec());
     let schema_signals = projection.schema_signals();
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
     )
 }
 
-fn schema_for_values_yaml_and_hints<T>(
-    uses: &[T],
+fn schema_for_values_yaml_and_hints(
+    uses: &[ContractUse],
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
-) -> Value
-where
-    T: Clone,
-    ContractUse: From<T>,
-{
-    let projection = ContractProjection::from_contract_uses(
-        uses.iter().cloned().map(ContractUse::from).collect(),
-    );
+) -> Value {
+    let projection = ContractProjection::from_contract_uses(uses.to_vec());
     let schema_signals = projection.schema_signals();
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider())
@@ -102,7 +86,7 @@ where
 
 #[test]
 fn type_hint_only_descendant_preserves_object_input_branch() {
-    let uses = vec![ValueUse {
+    let uses = vec![ContractUse {
         source_expr: "image".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
@@ -236,20 +220,20 @@ impl K8sSchemaProvider for DescriptionProvider {
 
 #[test]
 fn values_yaml_comments_override_provider_descriptions() {
-    let uses = vec![ValueUse {
+    let uses = vec![ContractUse {
         source_expr: "name".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: Vec::new(),
         resource: Some(ResourceRef {
             api_version: "v1".to_string(),
             kind: "ConfigMap".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         }),
-        guards: Vec::new(),
-        kind: ValueKind::Scalar,
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
-    let projection = ContractProjection::from_value_uses(uses);
+    let projection = ContractProjection::from_contract_uses(uses);
     let schema_signals = projection.schema_signals();
 
     let schema = generate_values_schema(
@@ -284,7 +268,7 @@ fn values_yaml_comments_do_not_create_schema_paths() {
         ),
     ]);
     let provider = Chain::new(Vec::new());
-    let projection = ContractProjection::from_value_uses(uses);
+    let projection = ContractProjection::from_contract_uses(uses);
     let schema_signals = projection.schema_signals();
 
     let schema = generate_values_schema(
@@ -822,7 +806,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         snapshots:
     "};
     let ir = parse_ir(src);
-    let projection = ContractProjection::from_value_uses(ir.clone());
+    let projection = ContractProjection::from_contract_uses(ir.clone());
     let nullable_paths = projection.schema_signals().nullable_value_paths;
     assert!(
         nullable_paths.contains("snapshots"),
@@ -1443,7 +1427,7 @@ fn scalar_range_with_root_helper_stays_scalar_array() {
 
 #[test]
 fn wildcard_source_path_creates_array_without_empty_object_variant() {
-    let uses = vec![ValueUse {
+    let uses = vec![ContractUse {
         source_expr: "image.pullSecrets.*".to_string(),
         path: helm_schema_ir::YamlPath(vec![
             "spec".to_string(),
@@ -3918,7 +3902,7 @@ fn step2_default_in_string_literal_no_hint() {
 #[test]
 fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
     let path = YamlPath(vec!["data".into(), "value".into()]);
-    let guarded = ValueUse {
+    let guarded = ContractUse {
         source_expr: "image.tag".into(),
         path: path.clone(),
         kind: ValueKind::Scalar,
@@ -3927,7 +3911,7 @@ fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_toleran
         }],
         resource: None,
     };
-    let bare = ValueUse {
+    let bare = ContractUse {
         source_expr: "image.tag".into(),
         path,
         kind: ValueKind::Scalar,
@@ -3935,7 +3919,7 @@ fn contract_projection_nullable_paths_require_all_render_uses_to_be_null_toleran
         resource: None,
     };
 
-    let projection = ContractProjection::from_value_uses(vec![guarded, bare]);
+    let projection = ContractProjection::from_contract_uses(vec![guarded, bare]);
     let null_paths = projection.schema_signals().nullable_value_paths;
     assert!(
         null_paths.is_empty(),
