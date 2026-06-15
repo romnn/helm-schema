@@ -1793,8 +1793,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   resolves external file/URL refs into root-level `$defs`; `PreserveRefs`
   keeps literal refs for advanced consumers; `FullyInlinedExport` is the
   explicit export mode for consumers that reject internal refs. Override schema
-  loading produces explicit prepared override inputs before the final merge and
-  transform pass, moving that path closer to the target `PolicyInputs` shape.
+  loading now produces explicit `PolicyInputs` before the final merge and
+  transform pass. `PolicyInputOptions` is separate from
+  `OutputPipelineOptions`, so file/URL retrieval policy is type-confined to
+  input assembly; the final output transform only accepts already-prepared
+  internal refs and fails if an external `$ref` reaches it.
   The remaining A5 work is deeper lowering support so provider/foreign subtrees
   can be emitted as shared definitions directly instead of first materializing
   as inline schema values and relying on optional minimization.

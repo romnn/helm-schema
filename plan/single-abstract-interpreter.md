@@ -924,7 +924,11 @@ Current result:
 - The reference policy is now named by product contract. `SelfContained` is the
   default and resolves external file/URL refs into root-level `$defs`;
   `PreserveRefs` keeps literal refs for advanced consumers; `FullyInlinedExport`
-  is the explicit export mode for consumers that reject internal refs. The
+  is the explicit export mode for consumers that reject internal refs.
+  Override schema loading now produces explicit `PolicyInputs`, with
+  `PolicyInputOptions` separate from final `OutputPipelineOptions`; file/URL
+  retrieval is confined to input assembly, and final output transforms reject
+  unprepared external refs. The
   remaining A5 work is deeper lowering support so provider/foreign subtrees can
   be emitted as shared definitions directly instead of first materializing as
   inline schema values.

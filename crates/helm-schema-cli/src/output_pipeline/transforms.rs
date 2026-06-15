@@ -4,16 +4,16 @@ use json_schema_minify::{MinimizeOptions, minimize_schema};
 use serde_json::Value;
 
 use crate::error::CliResult;
-use crate::flatten::{self, FlattenOptions};
+use crate::flatten;
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
 use crate::output_pipeline::global_mirror::mirror_global_schema_into_subcharts;
-use crate::output_pipeline::{OutputPipelineOptions, PreparedOverrideSchema};
+use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs};
 use crate::schema_override;
 
 #[tracing::instrument(
     skip_all,
     fields(
-        override_count = override_schemas.len(),
+        override_count = policy_inputs.override_count(),
         subchart_count = subchart_value_prefixes.len(),
         reference_mode = ?options.reference_mode,
         strip_descriptions = options.strip_descriptions,
@@ -22,12 +22,12 @@ use crate::schema_override;
 )]
 pub(crate) fn apply_schema_output_pipeline(
     mut schema: Value,
-    override_schemas: Vec<PreparedOverrideSchema>,
+    policy_inputs: PolicyInputs,
     subchart_value_prefixes: &[Vec<String>],
     base_dir: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    for override_schema in override_schemas {
+    for override_schema in policy_inputs.into_prepared_override_schemas() {
         schema = schema_override::apply_schema_override(schema, override_schema.schema);
     }
 
@@ -50,21 +50,9 @@ fn apply_output_transforms(
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
     if options.reference_mode.bundles_refs() {
-        schema = flatten::bundle_refs(
-            schema,
-            base_dir,
-            &FlattenOptions {
-                allow_net: options.allow_net,
-            },
-        )?;
+        schema = flatten::bundle_prepared_refs(schema, base_dir)?;
     } else if options.reference_mode.fully_inlines_refs() {
-        schema = flatten::flatten_refs(
-            schema,
-            base_dir,
-            &FlattenOptions {
-                allow_net: options.allow_net,
-            },
-        )?;
+        schema = flatten::flatten_prepared_refs(schema, base_dir)?;
     }
 
     if options.strip_descriptions {
@@ -80,21 +68,11 @@ fn apply_output_transforms(
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-    use std::path::PathBuf;
-
     use serde_json::Value;
 
     use crate::output_pipeline::{
-        OutputPipelineOptions, ReferenceMode, apply_schema_output_pipeline,
+        OutputPipelineOptions, PolicyInputs, ReferenceMode, apply_schema_output_pipeline,
     };
-
-    fn test_temp_dir(name: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "helm-schema-output-pipeline-{name}-{}",
-            std::process::id()
-        ))
-    }
 
     #[test]
     fn reference_mode_preserves_refs_when_requested() {
@@ -110,12 +88,11 @@ mod tests {
 
         let output = apply_schema_output_pipeline(
             schema,
-            Vec::new(),
+            PolicyInputs::default(),
             &[],
             std::path::Path::new("/does/not/matter"),
             &OutputPipelineOptions {
                 reference_mode: ReferenceMode::PreserveRefs,
-                allow_net: false,
                 strip_descriptions: false,
                 minimize: false,
             },
@@ -132,27 +109,17 @@ mod tests {
     }
 
     #[test]
-    fn self_contained_reference_mode_bundles_file_refs() {
-        let temp_dir = test_temp_dir("self-contained");
-        fs::create_dir_all(&temp_dir).expect("create temp dir");
-        let shared_schema_path = temp_dir.join("shared.json");
-        fs::write(
-            &shared_schema_path,
-            r#"{
-                "definitions": {
-                    "stringValue": {
-                        "type": "string"
-                    }
-                }
-            }"#,
-        )
-        .expect("write shared schema");
-
+    fn self_contained_reference_mode_preserves_prepared_internal_refs() {
         let schema = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
+            "$defs": {
+                "stringValue": {
+                    "type": "string"
+                }
+            },
             "properties": {
                 "fromRef": {
-                    "$ref": "./shared.json#/definitions/stringValue"
+                    "$ref": "#/$defs/stringValue"
                 }
             },
             "type": "object"
@@ -160,60 +127,35 @@ mod tests {
 
         let output = apply_schema_output_pipeline(
             schema,
-            Vec::new(),
+            PolicyInputs::default(),
             &[],
-            &temp_dir,
+            std::path::Path::new("/does/not/matter"),
             &OutputPipelineOptions {
                 reference_mode: ReferenceMode::SelfContained,
-                allow_net: false,
                 strip_descriptions: false,
                 minimize: false,
             },
         )
         .expect("apply output pipeline");
 
-        assert_eq!(
-            output
-                .pointer("/properties/fromRef/type")
-                .and_then(Value::as_str),
-            None,
-            "self-contained mode should keep the ref at the use site"
-        );
         assert_eq!(
             output
                 .pointer("/properties/fromRef/$ref")
                 .and_then(Value::as_str),
-            Some("#/$defs/schema1"),
-            "self-contained mode should rewrite file refs to internal defs"
+            Some("#/$defs/stringValue"),
+            "self-contained final output should keep prepared internal refs"
         );
         assert_eq!(
             output
-                .pointer("/$defs/schema1/type")
+                .pointer("/$defs/stringValue/type")
                 .and_then(Value::as_str),
             Some("string"),
-            "self-contained mode should place resolved refs under $defs"
+            "prepared definitions should remain available under $defs"
         );
-
-        fs::remove_dir_all(&temp_dir).expect("remove temp dir");
     }
 
     #[test]
-    fn fully_inlined_export_reference_mode_resolves_file_refs() {
-        let temp_dir = test_temp_dir("fully-inlined-export");
-        fs::create_dir_all(&temp_dir).expect("create temp dir");
-        let shared_schema_path = temp_dir.join("shared.json");
-        fs::write(
-            &shared_schema_path,
-            r#"{
-                "definitions": {
-                    "stringValue": {
-                        "type": "string"
-                    }
-                }
-            }"#,
-        )
-        .expect("write shared schema");
-
+    fn self_contained_reference_mode_rejects_unprepared_external_refs() {
         let schema = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "properties": {
@@ -224,14 +166,50 @@ mod tests {
             "type": "object"
         });
 
+        let err = apply_schema_output_pipeline(
+            schema,
+            PolicyInputs::default(),
+            &[],
+            std::path::Path::new("/does/not/matter"),
+            &OutputPipelineOptions {
+                reference_mode: ReferenceMode::SelfContained,
+                strip_descriptions: false,
+                minimize: false,
+            },
+        )
+        .expect_err("unprepared external ref should fail final output transform");
+
+        assert!(
+            err.to_string()
+                .contains("external $ref remained after input preparation"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn fully_inlined_export_reference_mode_inlines_prepared_internal_refs() {
+        let schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "$defs": {
+                "stringValue": {
+                    "type": "string"
+                }
+            },
+            "properties": {
+                "fromRef": {
+                    "$ref": "#/$defs/stringValue"
+                }
+            },
+            "type": "object"
+        });
+
         let output = apply_schema_output_pipeline(
             schema,
-            Vec::new(),
+            PolicyInputs::default(),
             &[],
-            &temp_dir,
+            std::path::Path::new("/does/not/matter"),
             &OutputPipelineOptions {
                 reference_mode: ReferenceMode::FullyInlinedExport,
-                allow_net: false,
                 strip_descriptions: false,
                 minimize: false,
             },
@@ -243,10 +221,8 @@ mod tests {
                 .pointer("/properties/fromRef/type")
                 .and_then(Value::as_str),
             Some("string"),
-            "fully inlined export mode should inline file refs"
+            "fully inlined export mode should inline prepared internal refs"
         );
         assert!(output.pointer("/properties/fromRef/$ref").is_none());
-
-        fs::remove_dir_all(&temp_dir).expect("remove temp dir");
     }
 }

@@ -115,13 +115,14 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         mut schema,
         subchart_value_prefixes,
     } = generate_values_schema_for_chart_output(&opts, Some(&diagnostics))?;
-    let output_options = cli.output.pipeline_options(!cli.k8s.offline);
-    let override_schemas =
-        output_pipeline::load_prepared_override_schemas(&cli.override_schema, &output_options)?;
+    let policy_input_options = cli.output.policy_input_options(!cli.k8s.offline);
+    let output_options = cli.output.pipeline_options();
+    let policy_inputs =
+        output_pipeline::load_policy_inputs(&cli.override_schema, &policy_input_options)?;
 
     schema = output_pipeline::apply_schema_output_pipeline(
         schema,
-        override_schemas,
+        policy_inputs,
         &subchart_value_prefixes,
         &cli.chart_dir,
         &output_options,

@@ -5,9 +5,16 @@
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OutputPipelineOptions {
     pub(crate) reference_mode: ReferenceMode,
-    pub(crate) allow_net: bool,
     pub(crate) strip_descriptions: bool,
     pub(crate) minimize: bool,
+}
+
+/// Input-loading policy for schema documents that must be prepared before
+/// final output transforms run.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct PolicyInputOptions {
+    pub(crate) reference_mode: ReferenceMode,
+    pub(crate) allow_net: bool,
 }
 
 /// How final output should handle JSON Schema references.

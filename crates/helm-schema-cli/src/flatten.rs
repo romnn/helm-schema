@@ -65,6 +65,17 @@ pub fn flatten_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) ->
     flatten_with_retriever(schema, &base_uri, retriever)
 }
 
+/// Fully inline already-prepared refs without allowing file/URL retrieval.
+///
+/// This is the final-output counterpart to [`flatten_refs`]. Input assembly is
+/// responsible for fetching and preparing external refs. If an external ref
+/// reaches this pass, the schema is not self-contained and the run fails.
+#[instrument(skip_all)]
+pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> CliResult<Value> {
+    let base_uri = path_to_file_uri(base_dir);
+    flatten_with_retriever(schema, &base_uri, NoExternalRetrieve)
+}
+
 /// Resolve external `$ref`s into root-level `$defs` entries while preserving
 /// internal refs as refs.
 ///
@@ -77,6 +88,17 @@ pub fn bundle_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) -> 
     let base_uri = path_to_file_uri(base_dir);
     let retriever = FsHttpRetrieve::new(options.allow_net);
     bundle_with_retriever(schema, &base_uri, retriever)
+}
+
+/// Validate and normalize already-prepared refs without allowing file/URL
+/// retrieval.
+///
+/// Internal refs are preserved. External refs fail, because input assembly
+/// should have already re-homed them under root-level `$defs`.
+#[instrument(skip_all)]
+pub fn bundle_prepared_refs(schema: Value, base_dir: &Path) -> CliResult<Value> {
+    let base_uri = path_to_file_uri(base_dir);
+    bundle_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
 
 /// Low-level dereference entry point: lets callers (most importantly,
@@ -316,6 +338,17 @@ impl Retrieve for FsHttpRetrieve {
             }
             other => Err(format!("unsupported $ref scheme: {other} (uri={uri})").into()),
         }
+    }
+}
+
+struct NoExternalRetrieve;
+
+impl Retrieve for NoExternalRetrieve {
+    fn retrieve(
+        &self,
+        uri: &Uri<String>,
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+        Err(format!("external $ref remained after input preparation: {uri}").into())
     }
 }
 

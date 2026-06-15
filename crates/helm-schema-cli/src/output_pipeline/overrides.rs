@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use crate::error::CliResult;
 use crate::flatten::{self, FlattenOptions};
-use crate::output_pipeline::OutputPipelineOptions;
+use crate::output_pipeline::PolicyInputOptions;
 use crate::schema_override;
 
 /// Override schema document after file loading and output-mode preparation.
@@ -12,25 +12,48 @@ use crate::schema_override;
 /// The final output pipeline consumes these prepared documents as data, so
 /// override file IO and override merge policy stay separate.
 #[derive(Debug)]
-pub(crate) struct PreparedOverrideSchema {
+pub(super) struct PreparedOverrideSchema {
     pub(super) schema: Value,
 }
 
+/// Output policy inputs loaded from the filesystem before final schema
+/// transforms run.
+///
+/// This keeps override IO and external `$ref` retrieval out of the pure output
+/// transform path.
+#[derive(Debug, Default)]
+pub(crate) struct PolicyInputs {
+    prepared_override_schemas: Vec<PreparedOverrideSchema>,
+}
+
+impl PolicyInputs {
+    pub(super) fn override_count(&self) -> usize {
+        self.prepared_override_schemas.len()
+    }
+
+    pub(super) fn into_prepared_override_schemas(self) -> Vec<PreparedOverrideSchema> {
+        self.prepared_override_schemas
+    }
+}
+
 #[tracing::instrument(skip_all, fields(override_count = paths.len()))]
-pub(crate) fn load_prepared_override_schemas(
+pub(crate) fn load_policy_inputs(
     paths: &[PathBuf],
-    options: &OutputPipelineOptions,
-) -> CliResult<Vec<PreparedOverrideSchema>> {
-    paths
+    options: &PolicyInputOptions,
+) -> CliResult<PolicyInputs> {
+    let prepared_override_schemas = paths
         .iter()
         .map(|path| load_prepared_override_schema(path, options))
-        .collect()
+        .collect::<CliResult<Vec<_>>>()?;
+    Ok(PolicyInputs {
+        prepared_override_schemas,
+    })
 }
 
 #[tracing::instrument(skip_all)]
 fn load_prepared_override_schema(
     path: &Path,
-    options: &OutputPipelineOptions,
+    options: &PolicyInputOptions,
 ) -> CliResult<PreparedOverrideSchema> {
     let mut override_schema = load_json_file(path)?;
 
@@ -48,7 +71,7 @@ fn load_prepared_override_schema(
 fn prepare_override_schema(
     schema: Value,
     override_path: &Path,
-    options: &OutputPipelineOptions,
+    options: &PolicyInputOptions,
 ) -> CliResult<Value> {
     if options.reference_mode.bundles_refs() {
         let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
@@ -89,8 +112,8 @@ mod tests {
     use serde_json::Value;
 
     use crate::output_pipeline::{
-        OutputPipelineOptions, ReferenceMode, apply_schema_output_pipeline,
-        load_prepared_override_schemas,
+        OutputPipelineOptions, PolicyInputOptions, ReferenceMode, apply_schema_output_pipeline,
+        load_policy_inputs,
     };
 
     fn test_temp_dir(name: &str) -> PathBuf {
@@ -98,6 +121,21 @@ mod tests {
             "helm-schema-output-pipeline-{name}-{}",
             std::process::id()
         ))
+    }
+
+    fn policy_options(reference_mode: ReferenceMode) -> PolicyInputOptions {
+        PolicyInputOptions {
+            reference_mode,
+            allow_net: false,
+        }
+    }
+
+    fn output_options(reference_mode: ReferenceMode) -> OutputPipelineOptions {
+        OutputPipelineOptions {
+            reference_mode,
+            strip_descriptions: false,
+            minimize: false,
+        }
     }
 
     #[test]
@@ -128,14 +166,10 @@ mod tests {
         )
         .expect("write override schema");
 
-        let options = OutputPipelineOptions {
-            reference_mode: ReferenceMode::SelfContained,
-            allow_net: false,
-            strip_descriptions: false,
-            minimize: false,
-        };
-        let overrides =
-            load_prepared_override_schemas(&[override_path], &options).expect("load overrides");
+        let policy_options = policy_options(ReferenceMode::SelfContained);
+        let output_options = output_options(ReferenceMode::SelfContained);
+        let policy_inputs =
+            load_policy_inputs(&[override_path], &policy_options).expect("load overrides");
         let schema = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "properties": {
@@ -146,8 +180,9 @@ mod tests {
             "type": "object"
         });
 
-        let output = apply_schema_output_pipeline(schema, overrides, &[], &temp_dir, &options)
-            .expect("apply output pipeline");
+        let output =
+            apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, &output_options)
+                .expect("apply output pipeline");
 
         let cloud = output.pointer("/properties/cloud").expect("cloud schema");
         assert_eq!(
@@ -196,14 +231,10 @@ mod tests {
         )
         .expect("write override schema");
 
-        let options = OutputPipelineOptions {
-            reference_mode: ReferenceMode::FullyInlinedExport,
-            allow_net: false,
-            strip_descriptions: false,
-            minimize: false,
-        };
-        let overrides =
-            load_prepared_override_schemas(&[override_path], &options).expect("load overrides");
+        let policy_options = policy_options(ReferenceMode::FullyInlinedExport);
+        let output_options = output_options(ReferenceMode::FullyInlinedExport);
+        let policy_inputs =
+            load_policy_inputs(&[override_path], &policy_options).expect("load overrides");
         let schema = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "properties": {
@@ -214,8 +245,9 @@ mod tests {
             "type": "object"
         });
 
-        let output = apply_schema_output_pipeline(schema, overrides, &[], &temp_dir, &options)
-            .expect("apply output pipeline");
+        let output =
+            apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, &output_options)
+                .expect("apply output pipeline");
 
         let cloud = output.pointer("/properties/cloud").expect("cloud schema");
         assert_eq!(
@@ -246,14 +278,10 @@ mod tests {
         )
         .expect("write override schema");
 
-        let options = OutputPipelineOptions {
-            reference_mode: ReferenceMode::PreserveRefs,
-            allow_net: false,
-            strip_descriptions: false,
-            minimize: false,
-        };
-        let overrides =
-            load_prepared_override_schemas(&[override_path], &options).expect("load overrides");
+        let policy_options = policy_options(ReferenceMode::PreserveRefs);
+        let output_options = output_options(ReferenceMode::PreserveRefs);
+        let policy_inputs =
+            load_policy_inputs(&[override_path], &policy_options).expect("load overrides");
         let schema = serde_json::json!({
             "properties": {
                 "cloud": {
@@ -263,8 +291,9 @@ mod tests {
             "type": "object"
         });
 
-        let output = apply_schema_output_pipeline(schema, overrides, &[], &temp_dir, &options)
-            .expect("apply output pipeline");
+        let output =
+            apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, &output_options)
+                .expect("apply output pipeline");
 
         assert_eq!(
             output
