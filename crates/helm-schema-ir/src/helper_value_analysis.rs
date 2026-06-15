@@ -13,13 +13,11 @@ use crate::fragment_range_scope::{
 };
 use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
 use crate::helper_analysis_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
-use crate::helper_analysis_projection::bound_helper_condition_paths;
 use crate::helper_binding::HelperBinding;
+use crate::helper_range_frame::RangeFrame;
+use crate::helper_runtime_guards::{branch_guard_paths, truthy_predicate_for_paths};
 use crate::helper_value_expression::collect_helper_value_expression;
 use crate::helper_walk_state::HelperValuesWalkState;
-use crate::local_projection::{
-    direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
-};
 use crate::node_action_effect::NodeActionEffectSink;
 use crate::node_eval::{NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
@@ -65,7 +63,7 @@ struct HelperValueRuntime<'context, 'state> {
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
     analysis: &'state mut BoundHelperAnalysis,
-    range_frames: Vec<RangeFrame>,
+    range_frames: Vec<RangeFrame<RangeIteration>>,
     no_output_depth: usize,
 }
 
@@ -76,12 +74,6 @@ struct HelperValueSnapshot {
     local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     dot_stack_len: usize,
     active_output_predicates: BTreeSet<Predicate>,
-}
-
-#[derive(Clone)]
-struct RangeFrame {
-    definitely_nonempty: bool,
-    iterations: Option<Vec<RangeIteration>>,
 }
 
 #[derive(Clone)]
@@ -121,26 +113,18 @@ impl HelperValueRuntime<'_, '_> {
 
     fn branch_guard_paths(&mut self, text: &str) -> BTreeSet<String> {
         let current_dot = self.current_dot().cloned();
-        let mut branch_guard_paths =
-            direct_bound_paths_from_text_in_context(text, self.bindings, current_dot.as_ref());
-        branch_guard_paths.extend(local_bound_paths_from_text(text, self.local_bindings));
-        let nested = self.context.helper_summaries().analyze_bound_helper_calls(
+        let branch_guard_paths = branch_guard_paths(
             text,
-            Some(self.bindings),
+            self.bindings,
             current_dot.as_ref(),
             self.local_bindings,
             self.context,
             self.seen,
         );
-        branch_guard_paths.extend(bound_helper_condition_paths(&nested));
         self.analysis
             .guard_paths
             .extend(branch_guard_paths.iter().cloned());
         branch_guard_paths
-    }
-
-    fn truthy_predicate_for_paths(paths: &BTreeSet<String>) -> Predicate {
-        Predicate::all(paths.iter().cloned().map(Predicate::truthy_path).collect())
     }
 
     fn merge_outcome_maps(&mut self, outcomes: Vec<HelperValueSnapshot>) {
@@ -289,7 +273,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         if self
             .range_frames
             .pop()
-            .is_some_and(|frame| frame.definitely_nonempty)
+            .is_some_and(|frame| frame.is_definitely_nonempty())
         {
             if let Some(body_outcome) = outcomes.into_iter().next() {
                 self.promote_outcome_maps(body_outcome);
@@ -303,7 +287,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn range_iteration_count(&self) -> usize {
         self.range_frames
             .last()
-            .and_then(|frame| frame.iterations.as_ref().map(Vec::len))
+            .map(RangeFrame::iteration_count)
             .unwrap_or(1)
     }
 
@@ -311,9 +295,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         let Some(iteration) = self
             .range_frames
             .last()
-            .and_then(|frame| frame.iterations.as_ref())
-            .and_then(|iterations| iterations.get(index))
-            .cloned()
+            .and_then(|frame| frame.iteration(index))
         else {
             return;
         };
@@ -327,8 +309,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         if self
             .range_frames
             .last()
-            .and_then(|frame| frame.iterations.as_ref())
-            .is_some()
+            .is_some_and(RangeFrame::has_exact_iterations)
         {
             self.dot_stack.pop();
         }
@@ -367,7 +348,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn plan_if_condition(&mut self, header: &str) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         ConditionActionPlan {
-            predicate: Self::truthy_predicate_for_paths(&branch_guard_paths),
+            predicate: truthy_predicate_for_paths(&branch_guard_paths),
             bound_values: Vec::new(),
             dot_binding: None,
             apply_alternative_predicate: false,
@@ -387,7 +368,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             current_dot.as_ref(),
         );
         ConditionActionPlan {
-            predicate: Self::truthy_predicate_for_paths(&branch_guard_paths),
+            predicate: truthy_predicate_for_paths(&branch_guard_paths),
             bound_values: Vec::new(),
             dot_binding: body_dot,
             apply_alternative_predicate: false,
@@ -400,10 +381,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         _current_path: &YamlPath,
     ) -> RangeActionPlan {
         let Some(header) = range_header_text_from_source(node, self.source) else {
-            self.range_frames.push(RangeFrame {
-                definitely_nonempty: false,
-                iterations: None,
-            });
+            self.range_frames.push(RangeFrame::unknown());
             return Self::empty_range_action_plan();
         };
         let branch_guard_paths = self.branch_guard_paths(&header);
@@ -452,12 +430,12 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         };
 
         let apply_dot_binding = exact_iterations.is_none();
-        self.range_frames.push(RangeFrame {
-            definitely_nonempty: range_binding
+        self.range_frames.push(RangeFrame::new(
+            range_binding
                 .as_ref()
                 .is_some_and(HelperBinding::definitely_nonempty_iterable),
-            iterations: exact_iterations,
-        });
+            exact_iterations,
+        ));
 
         Self::range_action_plan(
             body_dot.as_ref().map(HelperBinding::to_fragment_binding),

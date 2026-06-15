@@ -1672,7 +1672,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   branch predicates, while `helper_value_expression` owns output-action,
   assignment, local-set, string-output, and nested-helper expression effects.
   Shared helper walk state now lives behind one small `helper_walk_state`
-  boundary instead of being embedded in either runtime module.
+  boundary instead of being embedded in either runtime module. Branch-guard
+  path extraction and exact-range-frame state are shared by the helper value
+  and helper fragment-output runtimes too, so both paths use one control-flow
+  model while they continue to emit different semantic facts.
   Helper-to-document value projection is now owned by the document value layer
   rather than `BoundHelperAnalysis`, and helper
   document lowering has its own contract emitter. That removes another

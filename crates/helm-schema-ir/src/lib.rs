@@ -49,6 +49,8 @@ mod helper_discovery;
 mod helper_fragment_output_uses;
 mod helper_inline;
 mod helper_output_projection;
+mod helper_range_frame;
+mod helper_runtime_guards;
 mod helper_summary;
 mod helper_value_analysis;
 mod helper_value_expression;
