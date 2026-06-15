@@ -1624,6 +1624,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `HelmAst` parameter; it owns the template parse needed by the interpreter,
   and manifest analysis uses only the lightweight template-action detector
   needed for literal CRD extraction instead of building a second AST.
+  The remaining symbolic interpreter shell is now a module family rather than
+  one mixed implementation file: recursive helper/static-file inlining,
+  rendered output lowering, and node/action runtime adapters each have a
+  focused owner while the root keeps context construction and orchestration.
   Top-level composed-values root detection is now shared by contract seeding
   and optional required-inference synthetic-path exclusion, so both consumers
   use one structural YAML mapping parser instead of parallel local copies.
