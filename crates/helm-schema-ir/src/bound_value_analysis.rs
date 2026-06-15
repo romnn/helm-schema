@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::fragment_scope_eval::AssignmentKind;
+use crate::fragment_assignment::AssignmentKind;
 use crate::template_expr_cache::parse_expr_text;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -383,7 +383,7 @@ mod tests {
         GetBinding, GetBindingPlan, extract_bound_values, parse_get_binding,
         parse_literal_list_range,
     };
-    use crate::fragment_scope_eval::AssignmentKind;
+    use crate::fragment_assignment::AssignmentKind;
 
     #[test]
     fn parse_get_binding_detects_declaration_from_ast() {

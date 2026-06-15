@@ -6,12 +6,12 @@ use crate::expression_analysis::{
     resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
     resolved_type_is_paths_for_text, set_default_chart_paths_for_text,
 };
+use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
 use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr,
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
 };
-use crate::fragment_scope_eval::{apply_local_set_mutations, parse_helper_assignment};
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_analysis_mutation::{
     extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,

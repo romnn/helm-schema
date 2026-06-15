@@ -27,10 +27,14 @@ mod expr_eval;
 #[cfg(test)]
 mod expr_eval_tests;
 mod expr_function_catalog;
+mod expr_pipeline_eval;
 mod expression_analysis;
+mod fragment_assignment;
 mod fragment_classification;
 mod fragment_expr_eval;
-mod fragment_scope_eval;
+mod fragment_range_scope;
+#[cfg(test)]
+mod fragment_scope_eval_tests;
 mod helper_analysis;
 mod helper_analysis_mutation;
 mod helper_analysis_projection;

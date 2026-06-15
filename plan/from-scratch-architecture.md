@@ -1711,7 +1711,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   the structural semantics for `default`, `dict`, `list`, `set`, `index`,
   merge/coalesce, string transforms, and pipelines. Local-state and
   expression-evaluator regression tests now live outside their production
-  modules, so those files expose only runtime mechanics.
+  modules, so those files expose only runtime mechanics. The former
+  `fragment_scope_eval` grab bag has also been deleted: assignment parsing
+  and local `set` mutation effects now live in `fragment_assignment`, while
+  range header/body analysis lives in `fragment_range_scope`.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

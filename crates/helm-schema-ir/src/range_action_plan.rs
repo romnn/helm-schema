@@ -1,7 +1,7 @@
 use crate::YamlPath;
 use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::parse_literal_list_range;
-use crate::fragment_scope_eval::{
+use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_body_renders_scalar_sequence_items_from_source,
     range_has_destructured_variable_definition, range_header_text_from_source,
