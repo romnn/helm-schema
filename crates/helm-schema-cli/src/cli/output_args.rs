@@ -20,11 +20,15 @@ pub struct OutputArgs {
     pub strip_descriptions: bool,
 
     /// Leave file/URL `$ref` strings in the generated schema as-is.
-    /// By default, the final output pass walks the merged schema and
-    /// inlines every file `$ref` (and, unless `--offline`, every URL
-    /// `$ref`), recursively, with cycle detection.
-    #[arg(long)]
+    ///
+    /// By default, external refs are resolved into root-level `$defs` so the
+    /// output is self-contained while still sharing referenced schemas.
+    #[arg(long, conflicts_with = "inline_refs")]
     pub keep_refs: bool,
+
+    /// Fully inline resolved file/URL `$ref`s instead of writing `$defs`.
+    #[arg(long)]
+    pub inline_refs: bool,
 
     /// Deduplicate repeated schema subtrees into root-level `$defs`.
     ///
@@ -37,7 +41,7 @@ pub struct OutputArgs {
 impl OutputArgs {
     pub(crate) fn pipeline_options(&self, allow_net: bool) -> OutputPipelineOptions {
         OutputPipelineOptions {
-            reference_mode: ReferenceMode::from_keep_refs(self.keep_refs),
+            reference_mode: ReferenceMode::from_flags(self.keep_refs, self.inline_refs),
             allow_net,
             strip_descriptions: self.strip_descriptions,
             minimize: self.minimize,

@@ -1,6 +1,6 @@
-//! Inline all `$ref`s in a generated schema before it's written to disk.
+//! Prepare `$ref`s in a generated schema before it's written to disk.
 //!
-//! The flattening pass is delegated to the [`jsonschema`] crate's
+//! Fully inlined export mode is delegated to the [`jsonschema`] crate's
 //! [`dereference`](jsonschema::dereference) helper, which sits on top of
 //! [`referencing`](::jsonschema::Retrieve) — the same ref-resolution
 //! library that the broader JSON Schema validator ecosystem uses. This
@@ -19,20 +19,23 @@
 //! their content — files from the chart-local filesystem and URLs over
 //! HTTP via `ureq` (gated by `--offline`).
 //!
-//! For tests, the lower-level [`flatten_with_retriever`] accepts any
-//! `Retrieve` impl so callers can wire in an in-memory map keyed by URI
-//! and avoid disk I/O entirely.
+//! Self-contained output mode keeps use sites as `$ref`s but re-homes
+//! external documents under root-level `$defs`. For tests, the lower-level
+//! entry points accept any `Retrieve` impl so callers can wire in an
+//! in-memory map keyed by URI and avoid disk I/O entirely.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 use std::path::Path;
 
 use jsonschema::{Retrieve, Uri};
-use serde_json::Value;
+use referencing::uri;
+use serde_json::{Map, Value};
 use tracing::instrument;
 
-use crate::error::CliResult;
+use crate::error::{CliError, CliResult};
 
-/// Knobs for [`flatten_refs`].
+/// Knobs for reference preparation.
 #[derive(Debug, Clone)]
 pub struct FlattenOptions {
     /// When true, URL `$ref`s (http/https) are fetched; when false they
@@ -62,6 +65,20 @@ pub fn flatten_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) ->
     flatten_with_retriever(schema, &base_uri, retriever)
 }
 
+/// Resolve external `$ref`s into root-level `$defs` entries while preserving
+/// internal refs as refs.
+///
+/// The result is self-contained: file and URL references are loaded through
+/// the same [`Retrieve`] implementation used by [`flatten_refs`], but the
+/// referenced schema is re-homed under `#/$defs/...` instead of being inlined
+/// at each use site.
+#[instrument(skip_all)]
+pub fn bundle_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) -> CliResult<Value> {
+    let base_uri = path_to_file_uri(base_dir);
+    let retriever = FsHttpRetrieve::new(options.allow_net);
+    bundle_with_retriever(schema, &base_uri, retriever)
+}
+
 /// Low-level dereference entry point: lets callers (most importantly,
 /// tests) plug in a custom [`Retrieve`] so they don't have to touch the
 /// filesystem to exercise the ref-resolution behaviour.
@@ -83,6 +100,163 @@ pub fn flatten_with_retriever(
         .with_retriever(retriever)
         .dereference(&schema)?;
     Ok(dereferenced)
+}
+
+/// Low-level bundling entry point for tests and custom retrievers.
+///
+/// `base_uri` is the URI relative refs resolve against. External refs are
+/// fetched through `retriever`, rewritten to root-level `$defs`, and any refs
+/// inside fetched schemas are interpreted relative to the document they came
+/// from before being re-homed.
+#[instrument(skip_all)]
+pub fn bundle_with_retriever(
+    mut schema: Value,
+    base_uri: &str,
+    retriever: impl Retrieve,
+) -> CliResult<Value> {
+    let root_document_uri = document_uri(&uri::from_str(base_uri)?)?;
+    let root_base_uri = effective_base_uri(&schema, &root_document_uri)?;
+    let root_document_uris = BTreeSet::from([
+        root_document_uri.as_str().to_string(),
+        root_base_uri.as_str().to_string(),
+    ]);
+    let existing_definition_names = existing_definition_names(&schema);
+    let mut state = BundleState::new(retriever, root_document_uris, existing_definition_names);
+    state.bundle_schema(&mut schema, &root_document_uri)?;
+    state.insert_definitions(&mut schema)?;
+    Ok(schema)
+}
+
+struct BundleState<R> {
+    retriever: R,
+    root_document_uris: BTreeSet<String>,
+    names_by_target_uri: BTreeMap<String, String>,
+    definitions: BTreeMap<String, Value>,
+    existing_definition_names: BTreeSet<String>,
+    next_definition_id: usize,
+}
+
+impl<R: Retrieve> BundleState<R> {
+    fn new(
+        retriever: R,
+        root_document_uris: BTreeSet<String>,
+        existing_definition_names: BTreeSet<String>,
+    ) -> Self {
+        Self {
+            retriever,
+            root_document_uris,
+            names_by_target_uri: BTreeMap::new(),
+            definitions: BTreeMap::new(),
+            existing_definition_names,
+            next_definition_id: 1,
+        }
+    }
+
+    fn bundle_schema(
+        &mut self,
+        schema: &mut Value,
+        current_document_uri: &Uri<String>,
+    ) -> CliResult<()> {
+        let current_document_uri = effective_base_uri(schema, current_document_uri)?;
+        if let Some(reference) = schema_reference(schema) {
+            let target_uri = uri::resolve_against(&current_document_uri.borrow(), &reference)?;
+            if self.should_preserve_reference(&target_uri, &current_document_uri)? {
+                return Ok(());
+            }
+            let definition_name = self.definition_name_for_target(&target_uri)?;
+            *schema = definition_ref(&definition_name);
+            return Ok(());
+        }
+
+        visit_subschemas_mut(schema, &mut |subschema| {
+            self.bundle_schema(subschema, &current_document_uri)
+        })
+    }
+
+    fn should_preserve_reference(
+        &self,
+        target_uri: &Uri<String>,
+        current_document_uri: &Uri<String>,
+    ) -> CliResult<bool> {
+        let target_document_uri = document_uri(target_uri)?;
+        Ok(self.is_root_document(&target_document_uri)
+            && self.is_root_document(current_document_uri))
+    }
+
+    fn definition_name_for_target(&mut self, target_uri: &Uri<String>) -> CliResult<String> {
+        let target_key = target_uri.as_str().to_string();
+        if let Some(name) = self.names_by_target_uri.get(&target_key) {
+            return Ok(name.clone());
+        }
+
+        let name = self.next_definition_name();
+        self.names_by_target_uri.insert(target_key, name.clone());
+
+        let target_document_uri = document_uri(target_uri)?;
+        let mut target_schema = self.resolve_target_schema(target_uri, &target_document_uri)?;
+        self.bundle_schema(&mut target_schema, &target_document_uri)?;
+        self.definitions.insert(name.clone(), target_schema);
+
+        Ok(name)
+    }
+
+    fn resolve_target_schema(
+        &self,
+        target_uri: &Uri<String>,
+        target_document_uri: &Uri<String>,
+    ) -> CliResult<Value> {
+        if self.is_root_document(target_document_uri) {
+            return Err(CliError::RefBundling(format!(
+                "cannot bundle non-local ref back to root document: {target_uri}"
+            )));
+        }
+
+        let document = self
+            .retriever
+            .retrieve(target_document_uri)
+            .map_err(|err| {
+                CliError::RefBundling(format!("retrieve {target_document_uri}: {err}"))
+            })?;
+        select_fragment(document, target_uri)
+    }
+
+    fn next_definition_name(&mut self) -> String {
+        loop {
+            let name = format!("schema{}", self.next_definition_id);
+            self.next_definition_id += 1;
+            if self.existing_definition_names.insert(name.clone()) {
+                return name;
+            }
+        }
+    }
+
+    fn insert_definitions(self, schema: &mut Value) -> CliResult<()> {
+        if self.definitions.is_empty() {
+            return Ok(());
+        }
+
+        let Value::Object(root) = schema else {
+            return Err(CliError::RefBundling(
+                "cannot insert bundled definitions into non-object root schema".to_string(),
+            ));
+        };
+        let entry = root
+            .entry("$defs".to_string())
+            .or_insert_with(|| Value::Object(Map::new()));
+        let Value::Object(existing) = entry else {
+            return Err(CliError::RefBundling(
+                "cannot insert bundled definitions because root $defs is not an object".to_string(),
+            ));
+        };
+        for (name, definition) in self.definitions {
+            existing.insert(name, definition);
+        }
+        Ok(())
+    }
+
+    fn is_root_document(&self, document_uri: &Uri<String>) -> bool {
+        self.root_document_uris.contains(document_uri.as_str())
+    }
 }
 
 /// Production [`Retrieve`]: file URIs go through `std::fs`; HTTP/HTTPS
@@ -145,6 +319,141 @@ impl Retrieve for FsHttpRetrieve {
     }
 }
 
+fn schema_reference(schema: &Value) -> Option<String> {
+    let Value::Object(object) = schema else {
+        return None;
+    };
+    object
+        .get("$ref")
+        .and_then(Value::as_str)
+        .map(str::to_string)
+}
+
+fn document_uri(uri: &Uri<String>) -> CliResult<Uri<String>> {
+    let document = uri.strip_fragment().as_str().to_string();
+    Uri::parse(document)
+        .map_err(|err| CliError::RefBundling(format!("parse document uri for {uri}: {err:?}")))
+}
+
+fn effective_base_uri(
+    schema: &Value,
+    current_document_uri: &Uri<String>,
+) -> CliResult<Uri<String>> {
+    let Some(id) = schema
+        .as_object()
+        .and_then(|object| object.get("$id"))
+        .and_then(Value::as_str)
+    else {
+        return Ok(current_document_uri.clone());
+    };
+
+    let resolved = uri::resolve_against(&current_document_uri.borrow(), id)?;
+    document_uri(&resolved)
+}
+
+fn select_fragment(document: Value, target_uri: &Uri<String>) -> CliResult<Value> {
+    let Some(fragment) = target_uri.fragment() else {
+        return Ok(document);
+    };
+    let pointer = fragment.decode().to_string().map_err(|_| {
+        CliError::RefBundling(format!("decode json pointer fragment for {target_uri}"))
+    })?;
+    if pointer.is_empty() {
+        return Ok(document);
+    }
+    if !pointer.starts_with('/') {
+        return Err(CliError::RefBundling(format!(
+            "unsupported non-json-pointer fragment in {target_uri}"
+        )));
+    }
+
+    document.pointer(&pointer).cloned().ok_or_else(|| {
+        CliError::RefBundling(format!("json pointer {pointer} not found in {target_uri}"))
+    })
+}
+
+fn existing_definition_names(schema: &Value) -> BTreeSet<String> {
+    schema
+        .get("$defs")
+        .and_then(Value::as_object)
+        .map(|definitions| definitions.keys().cloned().collect())
+        .unwrap_or_default()
+}
+
+fn definition_ref(name: &str) -> Value {
+    Value::Object(Map::from_iter([(
+        "$ref".to_string(),
+        Value::String(format!("#/$defs/{name}")),
+    )]))
+}
+
+fn visit_subschemas_mut(
+    schema: &mut Value,
+    visitor: &mut impl FnMut(&mut Value) -> CliResult<()>,
+) -> CliResult<()> {
+    let Value::Object(object) = schema else {
+        return Ok(());
+    };
+    if object.contains_key("$ref") {
+        return Ok(());
+    }
+
+    for key in DIRECT_SCHEMA_KEYS {
+        if let Some(value) = object.get_mut(*key) {
+            visit_schema_or_schema_array_mut(value, visitor)?;
+        }
+    }
+
+    for key in MAP_OF_SCHEMAS_KEYS {
+        if let Some(Value::Object(values)) = object.get_mut(*key) {
+            for value in values.values_mut() {
+                visit_schema_value_mut(value, visitor)?;
+            }
+        }
+    }
+
+    for key in ARRAY_OF_SCHEMAS_KEYS {
+        if let Some(Value::Array(values)) = object.get_mut(*key) {
+            for value in values {
+                visit_schema_value_mut(value, visitor)?;
+            }
+        }
+    }
+
+    if let Some(Value::Object(values)) = object.get_mut("dependencies") {
+        for value in values.values_mut() {
+            visit_schema_value_mut(value, visitor)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn visit_schema_or_schema_array_mut(
+    value: &mut Value,
+    visitor: &mut impl FnMut(&mut Value) -> CliResult<()>,
+) -> CliResult<()> {
+    match value {
+        Value::Array(values) => {
+            for value in values {
+                visit_schema_value_mut(value, visitor)?;
+            }
+            Ok(())
+        }
+        _ => visit_schema_value_mut(value, visitor),
+    }
+}
+
+fn visit_schema_value_mut(
+    value: &mut Value,
+    visitor: &mut impl FnMut(&mut Value) -> CliResult<()>,
+) -> CliResult<()> {
+    if matches!(value, Value::Object(_) | Value::Bool(_)) {
+        visitor(value)?;
+    }
+    Ok(())
+}
+
 /// Convert a filesystem path into a base `file://` URI suitable for
 /// passing to `with_base_uri`. The trailing `/` ensures relative refs
 /// resolve as *children* of the base, not as siblings replacing the last
@@ -157,3 +466,28 @@ fn path_to_file_uri(p: &Path) -> String {
     let trimmed = s.trim_end_matches('/');
     format!("file://{trimmed}/")
 }
+
+const DIRECT_SCHEMA_KEYS: &[&str] = &[
+    "additionalItems",
+    "additionalProperties",
+    "contains",
+    "contentSchema",
+    "else",
+    "if",
+    "items",
+    "not",
+    "propertyNames",
+    "then",
+    "unevaluatedItems",
+    "unevaluatedProperties",
+];
+
+const MAP_OF_SCHEMAS_KEYS: &[&str] = &[
+    "$defs",
+    "definitions",
+    "dependentSchemas",
+    "patternProperties",
+    "properties",
+];
+
+const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems"];

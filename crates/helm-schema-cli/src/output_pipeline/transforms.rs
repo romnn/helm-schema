@@ -49,7 +49,15 @@ fn apply_output_transforms(
     base_dir: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    if options.reference_mode.dereference() {
+    if options.reference_mode.bundles_refs() {
+        schema = flatten::bundle_refs(
+            schema,
+            base_dir,
+            &FlattenOptions {
+                allow_net: options.allow_net,
+            },
+        )?;
+    } else if options.reference_mode.fully_inlines_refs() {
         schema = flatten::flatten_refs(
             schema,
             base_dir,
@@ -124,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn self_contained_reference_mode_resolves_file_refs() {
+    fn self_contained_reference_mode_bundles_file_refs() {
         let temp_dir = test_temp_dir("self-contained");
         fs::create_dir_all(&temp_dir).expect("create temp dir");
         let shared_schema_path = temp_dir.join("shared.json");
@@ -168,8 +176,74 @@ mod tests {
             output
                 .pointer("/properties/fromRef/type")
                 .and_then(Value::as_str),
+            None,
+            "self-contained mode should keep the ref at the use site"
+        );
+        assert_eq!(
+            output
+                .pointer("/properties/fromRef/$ref")
+                .and_then(Value::as_str),
+            Some("#/$defs/schema1"),
+            "self-contained mode should rewrite file refs to internal defs"
+        );
+        assert_eq!(
+            output
+                .pointer("/$defs/schema1/type")
+                .and_then(Value::as_str),
             Some("string"),
-            "self-contained mode should inline file refs"
+            "self-contained mode should place resolved refs under $defs"
+        );
+
+        fs::remove_dir_all(&temp_dir).expect("remove temp dir");
+    }
+
+    #[test]
+    fn fully_inlined_export_reference_mode_resolves_file_refs() {
+        let temp_dir = test_temp_dir("fully-inlined-export");
+        fs::create_dir_all(&temp_dir).expect("create temp dir");
+        let shared_schema_path = temp_dir.join("shared.json");
+        fs::write(
+            &shared_schema_path,
+            r#"{
+                "definitions": {
+                    "stringValue": {
+                        "type": "string"
+                    }
+                }
+            }"#,
+        )
+        .expect("write shared schema");
+
+        let schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "properties": {
+                "fromRef": {
+                    "$ref": "./shared.json#/definitions/stringValue"
+                }
+            },
+            "type": "object"
+        });
+
+        let output = apply_schema_output_pipeline(
+            schema,
+            Vec::new(),
+            &[],
+            &temp_dir,
+            &OutputPipelineOptions {
+                reference_mode: ReferenceMode::FullyInlinedExport,
+                allow_net: false,
+                strip_descriptions: false,
+                minimize: false,
+            },
+        )
+        .expect("apply output pipeline");
+
+        assert_eq!(
+            output
+                .pointer("/properties/fromRef/type")
+                .and_then(Value::as_str),
+            Some("string"),
+            "fully inlined export mode should inline file refs"
         );
         assert!(output.pointer("/properties/fromRef/$ref").is_none());
 

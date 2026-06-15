@@ -40,6 +40,18 @@ fn cli_output_strip_descriptions_flag_parses() {
 }
 
 #[test]
+fn cli_output_inline_refs_flag_parses() {
+    let cli = parse(&["--inline-refs"]).expect("parse");
+    assert!(cli.output.inline_refs);
+}
+
+#[test]
+fn cli_output_ref_modes_conflict() {
+    let err = parse(&["--keep-refs", "--inline-refs"]).expect_err("expected clap conflict");
+    assert!(err.contains("--keep-refs") || err.contains("--inline-refs"));
+}
+
+#[test]
 fn cli_values_files_flag_is_repeatable() {
     let cli = parse(&["-f", "/tmp/base.yaml", "--values", "/tmp/override.yaml"]).expect("parse");
     assert_eq!(

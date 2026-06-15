@@ -1786,27 +1786,18 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI
   emission now runs through a dedicated output pipeline that owns reference
-  flattening, description stripping, minimization, and JSON formatting while
-  preserving today's flags and output bytes. That makes the later bundled-vs-
-  flattened mode switch a single output-layer change instead of a root CLI
-  orchestration change. The output pipeline now also carries explicit
-  `ReferenceMode` and `JsonOutputFormat` values instead of boolean
-  plumbing, so the future default switch can be made by changing the output
-  mode mapping rather than rewriting transform order. Override schema loading
-  now produces explicit prepared override inputs before the final merge and
-  transform pass, moving that path closer to the target `PolicyInputs` shape
-  while preserving today's override semantics and output bytes. The output
-  pipeline has also been split by responsibility — option model, override
-  preparation, final transforms, global mirroring, description stripping, and
-  serialization — so A5's later bundled/default-output switch has focused
-  owners instead of one CLI output grab bag. CLI output args now construct
-  those typed output policies directly, leaving the top-level run path to
-  orchestrate stages rather than translate flags into output internals. The
-  reference policy is now named as `SelfContained` versus `PreserveRefs`, so
-  the default output contract no longer leaks the old flatten/export
-  implementation detail. The remaining A5 product change is the deliberate
-  switch from self-contained inline output to self-contained `$defs` output by
-  default, with flattened output retained only as an explicit export mode.
+  handling, description stripping, minimization, and JSON formatting. The
+  output pipeline carries explicit `ReferenceMode` and `JsonOutputFormat`
+  values instead of boolean plumbing, and CLI output args construct those typed
+  policies directly. `SelfContained` is now the default reference mode and
+  resolves external file/URL refs into root-level `$defs`; `PreserveRefs`
+  keeps literal refs for advanced consumers; `FullyInlinedExport` is the
+  explicit export mode for consumers that reject internal refs. Override schema
+  loading produces explicit prepared override inputs before the final merge and
+  transform pass, moving that path closer to the target `PolicyInputs` shape.
+  The remaining A5 work is deeper lowering support so provider/foreign subtrees
+  can be emitted as shared definitions directly instead of first materializing
+  as inline schema values and relying on optional minimization.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 

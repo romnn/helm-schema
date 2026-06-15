@@ -1,12 +1,11 @@
-//! Phase 2a regression coverage: `$ref`s flowing into the merged schema
-//! from an override (or from any source) get inlined as the final output
-//! pass by default, and stay as-is when the caller chooses not to run
-//! the pass.
+//! Regression coverage for output-only `$ref` handling. External refs can be
+//! re-homed into local `$defs`, fully inlined for export, or preserved
+//! literally when requested.
 //!
 //! Tests exercise the lower-level `flatten_with_retriever` API with an
 //! in-memory `Retrieve` keyed by URI — no temp dirs, no real filesystem
-//! activity. The same dereferencing engine (`jsonschema::dereference`)
-//! handles the production filesystem-backed `flatten_refs` call.
+//! activity. The same retrieval abstraction handles production
+//! filesystem-backed calls.
 
 use std::collections::HashMap;
 
@@ -69,13 +68,234 @@ fn cloud_override() -> Value {
 }
 
 #[test]
-fn override_file_refs_are_inlined_by_default() -> color_eyre::eyre::Result<()> {
+fn external_refs_can_be_bundled_into_defs() -> color_eyre::eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build();
 
     let merged = schema_override::apply_schema_override(base_schema(), cloud_override());
 
     // Relative ref `../schemas/cloud.json` from base `file:///chart/`
     // resolves to `file:///schemas/cloud.json`.
+    let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
+    let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {
+            "schema1": { "enum": [null, "azure", "minikube"] }
+        },
+        "additionalProperties": false,
+        "properties": {
+            "cloud": { "$ref": "#/$defs/schema1" }
+        },
+        "type": "object"
+    });
+
+    similar_asserts::assert_eq!(actual, expected);
+    Ok(())
+}
+
+#[test]
+fn repeated_external_refs_share_one_definition() -> color_eyre::eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "cloud": { "$ref": "../schemas/cloud.json" },
+            "provider": { "$ref": "../schemas/cloud.json" }
+        }
+    });
+    let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
+
+    let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
+
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/cloud/$ref"),
+        Some(&Value::String("#/$defs/schema1".to_string()))
+    );
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/provider/$ref"),
+        Some(&Value::String("#/$defs/schema1".to_string()))
+    );
+    similar_asserts::assert_eq!(actual.pointer("/$defs/schema1"), Some(&cloud_schema()));
+
+    Ok(())
+}
+
+#[test]
+fn bundled_definition_names_do_not_overwrite_existing_defs() -> color_eyre::eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {
+            "schema1": { "type": "number" }
+        },
+        "type": "object",
+        "properties": {
+            "cloud": { "$ref": "../schemas/cloud.json" }
+        }
+    });
+    let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
+
+    let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
+
+    similar_asserts::assert_eq!(
+        actual.pointer("/$defs/schema1"),
+        Some(&serde_json::json!({ "type": "number" }))
+    );
+    similar_asserts::assert_eq!(actual.pointer("/$defs/schema2"), Some(&cloud_schema()));
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/cloud/$ref"),
+        Some(&Value::String("#/$defs/schema2".to_string()))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn bundled_external_document_id_updates_relative_ref_base() -> color_eyre::eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "external": { "$ref": "shared.json" }
+        }
+    });
+    let shared = serde_json::json!({
+        "$id": "schemas/shared.json",
+        "type": "object",
+        "properties": {
+            "name": { "$ref": "defs.json#/$defs/name" }
+        }
+    });
+    let definitions = serde_json::json!({
+        "$defs": {
+            "name": { "type": "string" }
+        }
+    });
+    let retriever = InlineRetriever::new([
+        ("file:///chart/shared.json", shared),
+        ("file:///chart/schemas/defs.json", definitions),
+    ]);
+
+    let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
+
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/external/$ref"),
+        Some(&Value::String("#/$defs/schema1".to_string()))
+    );
+    similar_asserts::assert_eq!(
+        actual.pointer("/$defs/schema1/properties/name/$ref"),
+        Some(&Value::String("#/$defs/schema2".to_string()))
+    );
+    similar_asserts::assert_eq!(
+        actual.pointer("/$defs/schema2"),
+        Some(&serde_json::json!({ "type": "string" }))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> color_eyre::eyre::Result<()>
+{
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$id": "https://example.test/root.schema.json",
+        "$defs": {
+            "name": { "type": "string" }
+        },
+        "type": "object",
+        "properties": {
+            "name": { "$ref": "#/$defs/name" },
+            "cloud": { "$ref": "../schemas/cloud.json" }
+        }
+    });
+    let retriever =
+        InlineRetriever::new([("https://example.test/schemas/cloud.json", cloud_schema())]);
+
+    let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
+
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/name/$ref"),
+        Some(&Value::String("#/$defs/name".to_string()))
+    );
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/cloud/$ref"),
+        Some(&Value::String("#/$defs/schema1".to_string()))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn bundling_does_not_rewrite_ref_keys_inside_enum_data() -> color_eyre::eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "literal": {
+                "enum": [
+                    { "$ref": "this is data, not a schema reference" }
+                ]
+            },
+            "cloud": { "$ref": "../schemas/cloud.json" }
+        }
+    });
+    let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
+
+    let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
+
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/literal/enum/0/$ref"),
+        Some(&Value::String(
+            "this is data, not a schema reference".to_string()
+        ))
+    );
+    similar_asserts::assert_eq!(
+        actual.pointer("/properties/cloud/$ref"),
+        Some(&Value::String("#/$defs/schema1".to_string()))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn bundling_rejects_non_object_root_defs_before_writing_dangling_refs() {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": false,
+        "type": "object",
+        "properties": {
+            "cloud": { "$ref": "../schemas/cloud.json" }
+        }
+    });
+    let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
+
+    let err = flatten::bundle_with_retriever(merged, BASE_URI, retriever)
+        .expect_err("non-object $defs should be rejected");
+
+    assert!(
+        err.to_string().contains("root $defs is not an object"),
+        "unexpected error: {err}"
+    );
+}
+
+#[test]
+fn external_refs_can_be_fully_inlined_for_export() -> color_eyre::eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build();
+
+    let merged = schema_override::apply_schema_override(base_schema(), cloud_override());
     let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
     let actual =
         flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;

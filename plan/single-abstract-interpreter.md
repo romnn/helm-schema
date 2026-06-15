@@ -903,7 +903,7 @@ Current result:
 
 ### Phase 8 — bundled emission
 
-Status: **started**
+Status: **partly shipped**
 
 Goal:
 
@@ -915,20 +915,19 @@ Goal:
 Current result:
 
 - Final CLI emission now has a dedicated output pipeline for reference
-  flattening, description stripping, minimization, and JSON formatting. The
-  extraction preserves current output behavior but gives self-contained
-  reference handling and future `$defs` bundling one owner.
+  handling, description stripping, minimization, and JSON formatting.
 - The output pipeline is now split into focused modules for option modeling,
   prepared override loading, final transforms, global schema mirroring,
   description stripping, and serialization. `OutputArgs` owns conversion from
   CLI booleans to typed output policy, so the top-level CLI run path no longer
   translates output flags by hand.
-- The reference policy is now named by product contract:
-  `SelfContained` resolves file/URL refs into the output document, while
-  `PreserveRefs` keeps literal refs for advanced consumers. The remaining
-  default-output change is specifically about making self-contained `$defs`
-  bundling the default shape, not about leaking the old flattening
-  implementation detail through the CLI boundary.
+- The reference policy is now named by product contract. `SelfContained` is the
+  default and resolves external file/URL refs into root-level `$defs`;
+  `PreserveRefs` keeps literal refs for advanced consumers; `FullyInlinedExport`
+  is the explicit export mode for consumers that reject internal refs. The
+  remaining A5 work is deeper lowering support so provider/foreign subtrees can
+  be emitted as shared definitions directly instead of first materializing as
+  inline schema values.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and

@@ -1,14 +1,13 @@
 use serde_json::Value;
 
 /// Internal sibling marker used to preserve "replace this subtree"
-/// intent across override reference dereferencing.
+/// intent across override reference preparation.
 ///
 /// The override loader sets `$ref-replace` next to every `$ref` it
-/// finds *before* dereferencing. Once `$ref` is resolved and the inlined
-/// content replaces the ref node, this sibling survives and signals to
-/// the merge that the resolved content should swap into the base, not
-/// deep-merge with whatever helm-schema's inference produced for the
-/// same path. The marker is stripped from the final output.
+/// finds *before* refs are bundled or fully inlined. The sibling survives that
+/// preparation and signals to the merge that the prepared content should swap
+/// into the base, not deep-merge with whatever helm-schema's inference
+/// produced for the same path. The marker is stripped from the final output.
 pub const REPLACE_MARKER: &str = "$ref-replace";
 
 pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
@@ -16,8 +15,8 @@ pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
 }
 
 /// Walk the override and tag every object with `$ref` as
-/// "replace on merge". Run by the CLI before dereferencing so the
-/// marker rides through the dereference pass and reaches the merge.
+/// "replace on merge". Run by the CLI before reference preparation so the
+/// marker rides through bundling or dereferencing and reaches the merge.
 pub fn mark_refs_for_replacement(value: &mut Value) {
     match value {
         Value::Object(obj) => {
@@ -53,9 +52,9 @@ fn apply_override_inner(base: Value, override_schema: Value) -> Value {
     //      survive into the output where the JSON Schema spec said they
     //      shouldn't.
     //   2. `REPLACE_MARKER` left behind by `mark_refs_for_replacement`
-    //      when the CLI dereferences overrides — the `$ref` is gone by
-    //      then, but the marker carries the same intent across the
-    //      dereference pass.
+    //      when the CLI prepares override refs. Bundled refs may remain as
+    //      refs and fully inlined refs are gone, but the marker carries the
+    //      same replacement intent across both preparation modes.
     let had_replace_marker = override_obj.remove(REPLACE_MARKER).is_some();
     if override_obj.contains_key("$ref") || had_replace_marker {
         return Value::Object(override_obj);
@@ -171,10 +170,10 @@ mod tests {
     }
 
     #[test]
-    fn replace_marker_drives_subtree_replacement_after_dereference() {
+    fn replace_marker_drives_subtree_replacement_after_reference_preparation() {
         // Models the CLI's actual flow: an override carrying `$ref` is
-        // marked, dereferenced (resolving the `$ref` so only the
-        // marker plus resolved content remain), then merged.
+        // marked, prepared (resolving or re-homing the `$ref` so the
+        // marker plus prepared content remain), then merged.
         let base = serde_json::json!({
             "type": "object",
             "properties": {
@@ -184,8 +183,8 @@ mod tests {
             }
         });
 
-        // Dereferenced override: $ref is gone, content is inlined, but
-        // the replace marker survives next to the inlined fields.
+        // Prepared override: `$ref` is gone or rewritten elsewhere, but
+        // the replace marker survives next to the prepared fields.
         let ov = serde_json::json!({
             "properties": {
                 "cloud": {
