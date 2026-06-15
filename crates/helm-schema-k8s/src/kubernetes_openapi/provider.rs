@@ -18,15 +18,14 @@ use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
     K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
-    SourceProbeTraceOutcome, TracedApiPresenceOutcome,
+    ProviderSchemaSource, SourceProbeTraceOutcome, TracedApiPresenceOutcome,
 };
 use crate::schema_doc::SchemaDoc;
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
 use super::resolve_ctx::{
-    ResolveCtx, SchemaNodeLocation, descend_schema_path_expanding_leaf_with_location,
-    expand_schema_node,
+    ResolveCtx, descend_schema_path_expanding_leaf_with_location, expand_schema_node,
 };
 use super::version_chain::K8sVersionChain;
 
@@ -367,9 +366,13 @@ impl KubernetesJsonSchemaProvider {
             &mut ctx, &filename, &root_doc, &path.0,
         );
         let fragment = schema_node.map(|schema_node| {
-            let source_key =
-                provider_schema_source_key(&source_id, &version, schema_node.location());
-            ProviderSchemaFragment::new(schema_node.into_schema()).with_source_key(source_key)
+            let source = ProviderSchemaSource::kubernetes_openapi(
+                source_id.clone(),
+                version.clone(),
+                schema_node.location().filename(),
+                schema_node.location().pointer(),
+            );
+            ProviderSchemaFragment::new(schema_node.into_schema()).with_source(source)
         });
         Some((version, fragment))
     }
@@ -820,18 +823,6 @@ fn looks_like_k8s_version_dir(name: &str) -> bool {
         return false;
     };
     major.chars().all(|c| c.is_ascii_digit()) && minor.chars().all(|c| c.is_ascii_digit())
-}
-
-fn provider_schema_source_key(
-    source_id: &str,
-    version: &str,
-    location: &SchemaNodeLocation,
-) -> String {
-    format!(
-        "kubernetes-openapi:{source_id}:{version}:{}#{}",
-        location.filename(),
-        location.pointer()
-    )
 }
 
 fn default_k8s_schema_cache_dir() -> PathBuf {

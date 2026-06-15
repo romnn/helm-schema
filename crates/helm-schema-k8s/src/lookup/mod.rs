@@ -18,7 +18,7 @@ pub use chain_outcome::ChainLookupOutcome;
 pub use helm_schema_ir::ApiPresenceQuery;
 pub use provider_origin::ProviderOrigin;
 pub use provider_result::ProviderLookupResult;
-pub use provider_schema_fragment::ProviderSchemaFragment;
+pub use provider_schema_fragment::{ProviderSchemaFragment, ProviderSchemaSource};
 pub use trace::{
     LookupTrace, LookupTraceEntry, LookupTraceOutcome, LookupTraceSubject, SourceProbeTraceOutcome,
     TracedApiPresenceOutcome, TracedLookupOutcome,

@@ -944,12 +944,17 @@ Current result:
   the resolved provider-document location `(filename, JSON pointer)` for the
   leaf before expansion; the OpenAPI provider attaches that source identity to
   `ProviderSchemaFragment` and makes fragment lookup its primary trait
-  implementation. Current `$defs` sharing still groups by exact structural
+  implementation. Provider-source identity is now a typed boundary value
+  rather than a formatted string key, and generator provider evidence preserves
+  that metadata while current `$defs` sharing still groups by exact structural
   schema equality so distinct source locations with identical schema shapes
   continue to deduplicate correctly. The remaining work here is deeper
   provider-document lowering consolidation so foreign schema documents can stay
   ref-shaped throughout more of the pipeline, rather than being re-materialized
-  before the exact-sharing pass.
+  before the exact-sharing pass. Local override, CRD catalog, and chart-local
+  CRD providers still need the same leaf-source-location tracking as OpenAPI
+  before their fragments can participate fully in source-aware bundled
+  emission.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and
@@ -966,8 +971,10 @@ Current result:
   and ref-shape metadata attachable without changing lookup/cache call sites
   again. OpenAPI lazy descent now preserves the exact provider document
   location of the resolved leaf while still expanding only the returned leaf
-  schema, which is the next prerequisite for retaining `$ref` shape deeper in
-  bundled emission.
+  schema, and provider fragments carry that identity as typed data rather than
+  an encoded string. This is the next prerequisite for retaining `$ref` shape
+  deeper in bundled emission; the matching local-ref descent source-location
+  work remains for local override/catalog/chart-local providers.
 - B3 has started by moving capability probe construction and the canonical
   api-version probe table into a dedicated provider submodule. Direct
   resource-qualified capability literals now bypass that table, including core

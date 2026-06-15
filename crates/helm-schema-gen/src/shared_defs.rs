@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use helm_schema_k8s::{ProviderSchemaFragment, ProviderSchemaSource};
 use serde_json::{Map, Value};
 
 use crate::path_resolver::ResolvedPathSchema;
@@ -13,25 +14,36 @@ const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
 pub(crate) struct ShareableSchema {
     key: String,
     schema: Value,
+    source: Option<ProviderSchemaSource>,
 }
 
 impl ShareableSchema {
     #[cfg(test)]
     pub(crate) fn new(schema: Value) -> Self {
         let key = canonical_schema_key(&schema);
-        Self { key, schema }
+        Self {
+            key,
+            schema,
+            source: None,
+        }
     }
 
-    pub(crate) fn from_provider_fragment(
-        fragment: helm_schema_k8s::ProviderSchemaFragment,
-    ) -> Self {
-        let schema = fragment.into_schema();
+    pub(crate) fn from_provider_fragment(fragment: ProviderSchemaFragment) -> Self {
+        let (schema, source) = fragment.into_parts();
         let key = canonical_schema_key(&schema);
-        Self { key, schema }
+        Self {
+            key,
+            schema,
+            source,
+        }
     }
 
     pub(crate) fn schema(&self) -> &Value {
         &self.schema
+    }
+
+    pub(crate) fn source(&self) -> Option<&ProviderSchemaSource> {
+        self.source.as_ref()
     }
 }
 
@@ -125,6 +137,12 @@ impl SharedSchemaEntries {
     }
 
     fn insert(&mut self, shareable_schema: &ShareableSchema) {
+        debug_assert!(
+            shareable_schema
+                .source()
+                .is_none_or(|source| !source.filename().is_empty()),
+            "provider source metadata must name the source document"
+        );
         let entry = self
             .by_key
             .entry(shareable_schema.key.clone())
@@ -236,6 +254,7 @@ fn canonicalize_json_value(value: &Value) -> Value {
 
 #[cfg(test)]
 mod tests {
+    use helm_schema_k8s::{ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource};
     use serde_json::json;
 
     use super::*;
@@ -251,6 +270,17 @@ mod tests {
         }
     }
 
+    fn sourced_shareable_schema(schema: Value, pointer: &str) -> ShareableSchema {
+        ShareableSchema::from_provider_fragment(ProviderSchemaFragment::new(schema).with_source(
+            ProviderSchemaSource::kubernetes_openapi(
+                "default",
+                "v1.35.0",
+                "io.k8s.api.core.v1.Pod.json",
+                pointer,
+            ),
+        ))
+    }
+
     #[test]
     fn repeated_provider_subtrees_move_to_root_definitions() {
         let provider_schema = json!({
@@ -263,6 +293,71 @@ mod tests {
         let mut paths = vec![
             resolved_path("first", provider_schema.clone()),
             resolved_path("second", provider_schema.clone()),
+        ];
+
+        let definitions =
+            SharedSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+        let mut root = json!({ "type": "object", "properties": {} });
+        definitions.insert_into_root(&mut root);
+
+        assert_eq!(
+            paths[0].schema,
+            json!({ "$ref": "#/$defs/providerSchema1" })
+        );
+        assert_eq!(
+            paths[1].schema,
+            json!({ "$ref": "#/$defs/providerSchema1" })
+        );
+        assert_eq!(
+            root.pointer("/$defs/providerSchema1"),
+            Some(&provider_schema)
+        );
+    }
+
+    #[test]
+    fn provider_fragment_source_survives_shareable_lowering() {
+        let schema = json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            }
+        });
+        let shareable = sourced_shareable_schema(schema, "/definitions/Metadata");
+        let source = shareable.source().expect("provider source should survive");
+
+        assert_eq!(source.origin(), ProviderOrigin::KubernetesOpenApi);
+        assert_eq!(source.source_id(), "default");
+        assert_eq!(source.version(), Some("v1.35.0"));
+        assert_eq!(source.filename(), "io.k8s.api.core.v1.Pod.json");
+        assert_eq!(source.pointer(), "/definitions/Metadata");
+    }
+
+    #[test]
+    fn structurally_equal_provider_schemas_share_even_with_different_sources() {
+        let provider_schema = json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            },
+            "additionalProperties": false
+        });
+        let mut paths = vec![
+            ResolvedPathSchema {
+                path_segments: vec!["first".to_string()],
+                shareable_provider_schema: Some(sourced_shareable_schema(
+                    provider_schema.clone(),
+                    "/definitions/First",
+                )),
+                schema: provider_schema.clone(),
+            },
+            ResolvedPathSchema {
+                path_segments: vec!["second".to_string()],
+                shareable_provider_schema: Some(sourced_shareable_schema(
+                    provider_schema.clone(),
+                    "/definitions/Second",
+                )),
+                schema: provider_schema.clone(),
+            },
         ];
 
         let definitions =

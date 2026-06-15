@@ -1,5 +1,80 @@
 use serde_json::Value;
 
+use super::provider_origin::ProviderOrigin;
+
+/// Provider document location that produced a schema fragment.
+///
+/// This is structured metadata so later bundled-emission code can decide how
+/// to retain provider `$ref` shape without parsing a formatted string key.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ProviderSchemaSource {
+    origin: ProviderOrigin,
+    source_id: String,
+    version: Option<String>,
+    filename: String,
+    pointer: String,
+}
+
+impl ProviderSchemaSource {
+    #[must_use]
+    pub fn new(
+        origin: ProviderOrigin,
+        source_id: impl Into<String>,
+        version: Option<String>,
+        filename: impl Into<String>,
+        pointer: impl Into<String>,
+    ) -> Self {
+        Self {
+            origin,
+            source_id: source_id.into(),
+            version,
+            filename: filename.into(),
+            pointer: pointer.into(),
+        }
+    }
+
+    #[must_use]
+    pub fn kubernetes_openapi(
+        source_id: impl Into<String>,
+        version: impl Into<String>,
+        filename: impl Into<String>,
+        pointer: impl Into<String>,
+    ) -> Self {
+        Self::new(
+            ProviderOrigin::KubernetesOpenApi,
+            source_id,
+            Some(version.into()),
+            filename,
+            pointer,
+        )
+    }
+
+    #[must_use]
+    pub fn origin(&self) -> ProviderOrigin {
+        self.origin
+    }
+
+    #[must_use]
+    pub fn source_id(&self) -> &str {
+        &self.source_id
+    }
+
+    #[must_use]
+    pub fn version(&self) -> Option<&str> {
+        self.version.as_deref()
+    }
+
+    #[must_use]
+    pub fn filename(&self) -> &str {
+        &self.filename
+    }
+
+    #[must_use]
+    pub fn pointer(&self) -> &str {
+        &self.pointer
+    }
+}
+
 /// Schema fragment returned by a provider for one resource/path lookup.
 ///
 /// This is the provider-owned boundary object. It currently stores the
@@ -10,7 +85,7 @@ use serde_json::Value;
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProviderSchemaFragment {
     schema: Value,
-    source_key: Option<String>,
+    source: Option<ProviderSchemaSource>,
 }
 
 impl ProviderSchemaFragment {
@@ -18,13 +93,13 @@ impl ProviderSchemaFragment {
     pub fn new(schema: Value) -> Self {
         Self {
             schema,
-            source_key: None,
+            source: None,
         }
     }
 
     #[must_use]
-    pub fn with_source_key(mut self, source_key: impl Into<String>) -> Self {
-        self.source_key = Some(source_key.into());
+    pub fn with_source(mut self, source: ProviderSchemaSource) -> Self {
+        self.source = Some(source);
         self
     }
 
@@ -34,8 +109,8 @@ impl ProviderSchemaFragment {
     }
 
     #[must_use]
-    pub fn source_key(&self) -> Option<&str> {
-        self.source_key.as_deref()
+    pub fn source(&self) -> Option<&ProviderSchemaSource> {
+        self.source.as_ref()
     }
 
     #[must_use]
@@ -43,23 +118,28 @@ impl ProviderSchemaFragment {
         self.schema
     }
 
+    #[must_use]
+    pub fn into_parts(self) -> (Value, Option<ProviderSchemaSource>) {
+        (self.schema, self.source)
+    }
+
     /// Transform the materialized schema while preserving provider ownership.
     ///
     /// Returning `None` lets callers drop fragments that do not survive a
-    /// domain-specific projection. Callers must set `preserve_source_key` only
+    /// domain-specific projection. Callers must set `preserve_source` only
     /// when their projection is structurally known to leave the provider
     /// schema unchanged.
     pub fn try_map_schema(
         self,
         map_schema: impl FnOnce(Value) -> Option<Value>,
-        preserve_source_key: bool,
+        preserve_source: bool,
     ) -> Option<Self> {
-        let Self { schema, source_key } = self;
+        let Self { schema, source } = self;
         let mapped = map_schema(schema)?;
-        let source_key = preserve_source_key.then_some(source_key).flatten();
+        let source = preserve_source.then_some(source).flatten();
         Some(Self {
             schema: mapped,
-            source_key,
+            source,
         })
     }
 }
@@ -77,29 +157,43 @@ mod tests {
     use super::*;
 
     #[test]
-    fn unchanged_projection_preserves_source_key() {
-        let fragment = ProviderSchemaFragment::new(json!({"type": "string"}))
-            .with_source_key("source.json#/definitions/name");
+    fn unchanged_projection_preserves_source() {
+        let fragment = ProviderSchemaFragment::new(json!({"type": "string"})).with_source(
+            ProviderSchemaSource::kubernetes_openapi(
+                "default",
+                "v1.35.0",
+                "source.json",
+                "/definitions/name",
+            ),
+        );
 
         let projected = fragment
             .try_map_schema(Some, true)
             .expect("unchanged projection should survive");
 
-        assert_eq!(
-            projected.source_key(),
-            Some("source.json#/definitions/name")
-        );
+        let source = projected.source().expect("source should be preserved");
+        assert_eq!(source.origin(), ProviderOrigin::KubernetesOpenApi);
+        assert_eq!(source.source_id(), "default");
+        assert_eq!(source.version(), Some("v1.35.0"));
+        assert_eq!(source.filename(), "source.json");
+        assert_eq!(source.pointer(), "/definitions/name");
     }
 
     #[test]
-    fn changed_projection_drops_source_key() {
-        let fragment = ProviderSchemaFragment::new(json!({"type": "string"}))
-            .with_source_key("source.json#/definitions/name");
+    fn changed_projection_drops_source() {
+        let fragment = ProviderSchemaFragment::new(json!({"type": "string"})).with_source(
+            ProviderSchemaSource::kubernetes_openapi(
+                "default",
+                "v1.35.0",
+                "source.json",
+                "/definitions/name",
+            ),
+        );
 
         let projected = fragment
             .try_map_schema(|_| Some(json!({"type": ["string", "null"]})), false)
             .expect("changed projection should survive");
 
-        assert_eq!(projected.source_key(), None);
+        assert_eq!(projected.source(), None);
     }
 }
