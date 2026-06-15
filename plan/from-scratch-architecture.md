@@ -1902,7 +1902,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   chart-schema generation API now lives in a dedicated `generation` module
   that owns chart discovery, values composition, chart analysis, provider
   setup, schema generation, and required-inference application; the crate root
-  re-exports that API while keeping process-level CLI orchestration.
+  re-exports that API while keeping process-level CLI orchestration. The
+  analysis and generation facades are now split internally by responsibility:
+  analysis collection, top-level values seeding, generation options, and the
+  generation pipeline have separate owners while preserving the same public
+  API and output behavior.
 - **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
   (feeds A4 policy; unlocks B4). Current progress: chart file discovery now
   flows through a typed `FileRole` model that classifies rendered manifest

@@ -1,31 +1,13 @@
-use std::path::PathBuf;
-
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::DiagnosticSink;
 use serde_json::Value;
-use vfs::VfsPath;
 
 use crate::analysis::{ChartAnalysis, analyze_charts};
 use crate::chart;
 use crate::error::CliResult;
-use crate::provider_builder::{self, ProviderOptions};
+use crate::generation::options::{GenerateOptions, GeneratedSchema};
+use crate::provider_builder;
 use crate::required_inference;
-
-#[derive(Debug, Clone)]
-pub struct GenerateOptions {
-    pub chart_dir: VfsPath,
-    pub include_tests: bool,
-    pub include_subchart_values: bool,
-    pub values_files: Vec<PathBuf>,
-    pub infer_required: bool,
-    pub provider: ProviderOptions,
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct GeneratedSchema {
-    pub(crate) schema: Value,
-    pub(crate) subchart_value_prefixes: Vec<Vec<String>>,
-}
 
 /// Generate a values JSON schema for a full Helm chart.
 ///
