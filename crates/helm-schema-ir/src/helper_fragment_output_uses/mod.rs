@@ -12,10 +12,9 @@ use crate::fragment_scope_eval::{
     range_body_renders_mapping_entries_from_ast, range_has_destructured_variable_definition,
     range_header_text_from_source, range_iterable_binding, range_variable_name,
 };
-use crate::helper_analysis::{
-    HelperFragmentOutputUse, HelperOutputMeta, bound_helper_condition_paths,
-    merge_local_default_paths,
-};
+use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
+use crate::helper_analysis_mutation::merge_local_default_paths;
+use crate::helper_analysis_projection::bound_helper_condition_paths;
 use crate::helper_output_projection::push_helper_fragment_output;
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,

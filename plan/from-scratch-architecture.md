@@ -1673,7 +1673,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   the document value layer rather than `BoundHelperAnalysis`, and helper
   document lowering has its own contract emitter. That removes another
   intermediate helper DTO and keeps helper summaries from deciding how a
-  rendered document site should emit contract claims. Contract emission
+  rendered document site should emit contract claims. Bound-helper summary
+  data has likewise been split from compatibility projection and state
+  mutation: the summary model records observed output/dependency facts,
+  `helper_binding_projection` lowers those facts to legacy helper/fragment
+  bindings, `helper_analysis_projection` owns read-only path/meta views, and
+  `helper_analysis_mutation` owns interpreter merge/suppression operations.
+  That leaves helper summaries as data and keeps compatibility DTO decisions
+  outside the semantic model. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization

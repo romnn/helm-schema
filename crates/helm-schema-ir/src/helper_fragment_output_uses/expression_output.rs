@@ -9,7 +9,9 @@ use crate::fragment_expr_eval::{
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
 };
 use crate::fragment_scope_eval::{apply_local_set_mutations, parse_helper_assignment};
-use crate::helper_analysis::{HelperFragmentOutputUse, bound_helper_dependency_paths};
+use crate::helper_analysis::HelperFragmentOutputUse;
+use crate::helper_analysis_projection::bound_helper_dependency_paths;
+use crate::helper_binding_projection::project_fragment_binding;
 use crate::helper_output_projection::{
     HelperOutputExprContext, collect_fragment_binding_output_uses,
     collect_helper_binding_output_uses, collect_helper_binding_output_uses_from_expr,
@@ -230,7 +232,7 @@ fn collect_bound_fragment_output_assignment_uses(
             &mut rhs_seen,
         );
         top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
-        if let Some(nested_binding) = nested.into_fragment_binding() {
+        if let Some(nested_binding) = project_fragment_binding(nested) {
             binding = match binding {
                 Some(binding) => FragmentBinding::merge_all(vec![binding, nested_binding]),
                 None => Some(nested_binding),

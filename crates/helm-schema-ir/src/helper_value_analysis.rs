@@ -18,10 +18,14 @@ use crate::fragment_scope_eval::{
     apply_local_set_mutations, merge_fragment_locals, range_header_text_from_source,
     range_iterable_binding, range_variable_item_binding, range_variable_name,
 };
-use crate::helper_analysis::{
-    BoundHelperAnalysis, HelperOutputMeta, bound_helper_condition_paths,
-    bound_helper_dependency_paths, extend_type_hints, helper_dependency_meta_from_analysis,
+use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+use crate::helper_analysis_mutation::{
+    extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,
     merge_helper_output_meta_maps, merge_local_default_paths,
+};
+use crate::helper_analysis_projection::{
+    bound_helper_condition_paths, bound_helper_dependency_paths,
+    helper_dependency_meta_from_analysis,
 };
 use crate::helper_output_projection::helper_binding_output_meta;
 use crate::local_projection::{
@@ -576,15 +580,14 @@ fn collect_bound_helper_values_from_expr(
         state.seen,
     );
     if expression_kind == ValueKind::Fragment {
-        state.analysis.extend_nested_fragment_render(
+        extend_nested_fragment_render(
+            state.analysis,
             nested,
             active_output_predicates,
             expression_kind,
         );
     } else {
-        state
-            .analysis
-            .extend_nested_scalar_render(nested, active_output_predicates);
+        extend_nested_scalar_render(state.analysis, nested, active_output_predicates);
     }
     let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);

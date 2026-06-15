@@ -9,6 +9,7 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::helper_binding_projection::{project_fragment_binding, project_helper_binding};
 use crate::helper_summary::HelperSummaryCache;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
@@ -152,11 +153,9 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
                 self.params.seen,
             );
         match self.params.projection {
-            HelperAnalysisProjection::HelperBinding => analysis
-                .into_helper_binding()
+            HelperAnalysisProjection::HelperBinding => project_helper_binding(analysis)
                 .map(|binding| AbstractValue::from_helper_binding(&binding)),
-            HelperAnalysisProjection::FragmentBinding => analysis
-                .into_fragment_binding()
+            HelperAnalysisProjection::FragmentBinding => project_fragment_binding(analysis)
                 .as_ref()
                 .map(AbstractValue::from_fragment_binding),
         }

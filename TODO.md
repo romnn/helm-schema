@@ -1,0 +1,5 @@
+- use googletest style assertions
+- do a lint pass
+- compare against the original from scratch plan
+- further remove heuristics in favor of proper structural analysis 
+- update readme

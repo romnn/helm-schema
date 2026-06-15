@@ -15,9 +15,8 @@ use crate::document_hole_context::collect_document_hole_context;
 use crate::document_value_analysis::collect_document_value_analysis;
 use crate::expression_analysis::helper_bindings_for_arg;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_analysis::{
-    BoundHelperAnalysis, HelperOutputMeta, helper_output_meta_from_analysis,
-};
+use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+use crate::helper_analysis_projection::helper_output_meta_from_analysis;
 use crate::helper_inline::plan_exact_helper_inline;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_action_effect::NodeActionEffectSink;
