@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
+use crate::{ValueKind, YamlPath};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum AbstractValue {
@@ -323,6 +324,85 @@ impl AbstractValue {
                     .map(Self::from_fragment_binding)
                     .collect::<BTreeSet<_>>(),
             ),
+        }
+    }
+
+    /// Project a fragment binding for rendered-output attribution.
+    ///
+    /// `ValuesRoot` means the whole values document is available as data, not
+    /// that the output path is the whole values document. Output attribution
+    /// therefore abstains instead of inventing a root source path.
+    pub(crate) fn from_fragment_output_binding(binding: &FragmentBinding) -> Self {
+        match binding {
+            FragmentBinding::ValuesRoot => Self::Unknown,
+            FragmentBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),
+            FragmentBinding::RootContext => Self::RootContext,
+            FragmentBinding::Unknown => Self::Unknown,
+            FragmentBinding::OutputSet(paths) => Self::OutputSet(
+                paths
+                    .iter()
+                    .map(|path| (path.clone(), HelperOutputMeta::default()))
+                    .collect(),
+            ),
+            FragmentBinding::StringSet(strings) => Self::StringSet(strings.clone()),
+            FragmentBinding::PathSet(paths) => Self::PathSet(paths.clone()),
+            FragmentBinding::Dict(map) => Self::Dict(
+                map.iter()
+                    .map(|(key, value)| (key.clone(), Self::from_fragment_output_binding(value)))
+                    .collect(),
+            ),
+            FragmentBinding::List(items) => Self::List(
+                items
+                    .iter()
+                    .map(Self::from_fragment_output_binding)
+                    .collect(),
+            ),
+            FragmentBinding::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .iter()
+                    .map(|(key, value)| (key.clone(), Self::from_fragment_output_binding(value)))
+                    .collect(),
+                fallback: Box::new(Self::from_fragment_output_binding(fallback)),
+            },
+            FragmentBinding::Choice(choices) => Self::Choice(
+                choices
+                    .iter()
+                    .map(Self::from_fragment_output_binding)
+                    .collect::<BTreeSet<_>>(),
+            ),
+        }
+    }
+
+    pub(crate) fn for_output_path(
+        source_expr: String,
+        relative_path: &YamlPath,
+        meta: HelperOutputMeta,
+    ) -> Self {
+        let mut value = Self::OutputSet(BTreeMap::from([(source_expr, meta)]));
+        for segment in relative_path.0.iter().rev() {
+            value = Self::Dict(BTreeMap::from([(segment.clone(), value)]));
+        }
+        value
+    }
+
+    pub(crate) fn output_child_kind(&self) -> ValueKind {
+        match self {
+            Self::Dict(_) | Self::List(_) | Self::Overlay { .. } => ValueKind::Fragment,
+            Self::Choice(choices)
+                if choices.iter().any(|choice| {
+                    matches!(choice, Self::Dict(_) | Self::List(_) | Self::Overlay { .. })
+                }) =>
+            {
+                ValueKind::Fragment
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::RootContext
+            | Self::OutputSet(_)
+            | Self::StringSet(_)
+            | Self::PathSet(_)
+            | Self::Choice(_) => ValueKind::Scalar,
         }
     }
 

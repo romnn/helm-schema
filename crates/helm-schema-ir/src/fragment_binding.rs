@@ -2,7 +2,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
-use crate::{ValueKind, YamlPath};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum FragmentBinding {
@@ -288,14 +287,6 @@ impl FragmentBinding {
         }
     }
 
-    pub(crate) fn for_output_path(source_expr: String, relative_path: &YamlPath) -> Self {
-        let mut binding = Self::OutputSet([source_expr].into_iter().collect());
-        for segment in relative_path.0.iter().rev() {
-            binding = Self::Dict(BTreeMap::from([(segment.clone(), binding)]));
-        }
-        binding
-    }
-
     pub(crate) fn apply_to_binding(&self, rest: &[String]) -> Option<Self> {
         match self {
             Self::ValuesPath(prefix) => {
@@ -403,27 +394,6 @@ impl FragmentBinding {
                 !choices.is_empty() && choices.iter().all(Self::definitely_nonempty_iterable)
             }
             _ => false,
-        }
-    }
-
-    pub(crate) fn output_child_kind(&self) -> ValueKind {
-        match self {
-            Self::Dict(_) | Self::List(_) | Self::Overlay { .. } => ValueKind::Fragment,
-            Self::Choice(choices)
-                if choices.iter().any(|choice| {
-                    matches!(choice, Self::Dict(_) | Self::List(_) | Self::Overlay { .. })
-                }) =>
-            {
-                ValueKind::Fragment
-            }
-            Self::ValuesPath(_)
-            | Self::ValuesRoot
-            | Self::RootContext
-            | Self::Unknown
-            | Self::StringSet(_)
-            | Self::PathSet(_)
-            | Self::OutputSet(_)
-            | Self::Choice(_) => ValueKind::Scalar,
         }
     }
 }

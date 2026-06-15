@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 
+use crate::abstract_value::AbstractValue;
 use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding::HelperBinding;
@@ -16,10 +17,12 @@ pub(crate) fn project_fragment_binding(
         bindings.push(FragmentBinding::StringSet(analysis.string_output.clone()));
     }
     for output in analysis.fragment_output_uses.drain(..) {
-        bindings.push(FragmentBinding::for_output_path(
-            output.source_expr,
-            &output.relative_path,
-        ));
+        if let Some(binding) =
+            AbstractValue::for_output_path(output.source_expr, &output.relative_path, output.meta)
+                .to_fragment_binding()
+        {
+            bindings.push(binding);
+        }
     }
     for source in analysis.fragment_output {
         if !structured_sources.contains(&source)
@@ -47,11 +50,12 @@ pub(crate) fn project_helper_binding(mut analysis: BoundHelperAnalysis) -> Optio
         bindings.push(HelperBinding::StringSet(analysis.string_output.clone()));
     }
     for output in analysis.fragment_output_uses.drain(..) {
-        bindings.push(HelperBinding::for_output_path(
-            output.source_expr,
-            &output.relative_path,
-            output.meta,
-        ));
+        if let Some(binding) =
+            AbstractValue::for_output_path(output.source_expr, &output.relative_path, output.meta)
+                .to_helper_binding()
+        {
+            bindings.push(binding);
+        }
     }
     for source in analysis.fragment_output {
         if !structured_sources.contains(&source)

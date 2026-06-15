@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
+use crate::abstract_value::AbstractValue;
 use crate::expression_analysis::helper_binding_from_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
@@ -91,113 +92,15 @@ pub(crate) fn collect_fragment_binding_output_uses(
     active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
-    match binding {
-        FragmentBinding::ValuesPath(path) => {
-            push_helper_fragment_output(
-                outputs,
-                path.clone(),
-                relative_path,
-                kind,
-                HelperOutputMeta::with_predicates(
-                    active_output_predicates,
-                    defaulted_paths.contains(path),
-                ),
-            );
-        }
-        FragmentBinding::PathSet(paths) => {
-            for path in paths {
-                push_helper_fragment_output(
-                    outputs,
-                    path.clone(),
-                    relative_path,
-                    kind,
-                    HelperOutputMeta::with_predicates(
-                        active_output_predicates,
-                        defaulted_paths.contains(path),
-                    ),
-                );
-            }
-        }
-        FragmentBinding::OutputSet(paths) => {
-            for path in paths {
-                push_helper_fragment_output(
-                    outputs,
-                    path.clone(),
-                    relative_path,
-                    kind,
-                    HelperOutputMeta::with_predicates(
-                        active_output_predicates,
-                        defaulted_paths.contains(path),
-                    ),
-                );
-            }
-        }
-        FragmentBinding::Dict(entries) => {
-            for (key, value) in entries {
-                let child_path =
-                    output_path::append_relative_path(relative_path, &YamlPath(vec![key.clone()]));
-                collect_fragment_binding_output_uses(
-                    outputs,
-                    value,
-                    &child_path,
-                    value.output_child_kind(),
-                    active_output_predicates,
-                    defaulted_paths,
-                );
-            }
-        }
-        FragmentBinding::Overlay { entries, fallback } => {
-            collect_fragment_binding_output_uses(
-                outputs,
-                fallback,
-                relative_path,
-                kind,
-                active_output_predicates,
-                defaulted_paths,
-            );
-            for (key, value) in entries {
-                let child_path =
-                    output_path::append_relative_path(relative_path, &YamlPath(vec![key.clone()]));
-                collect_fragment_binding_output_uses(
-                    outputs,
-                    value,
-                    &child_path,
-                    value.output_child_kind(),
-                    active_output_predicates,
-                    defaulted_paths,
-                );
-            }
-        }
-        FragmentBinding::Choice(choices) => {
-            for choice in choices {
-                collect_fragment_binding_output_uses(
-                    outputs,
-                    choice,
-                    relative_path,
-                    kind,
-                    active_output_predicates,
-                    defaulted_paths,
-                );
-            }
-        }
-        FragmentBinding::List(items) => {
-            let item_path = output_path::sequence_item_path(relative_path);
-            for item in items {
-                collect_fragment_binding_output_uses(
-                    outputs,
-                    item,
-                    &item_path,
-                    item.output_child_kind(),
-                    active_output_predicates,
-                    defaulted_paths,
-                );
-            }
-        }
-        FragmentBinding::ValuesRoot
-        | FragmentBinding::RootContext
-        | FragmentBinding::Unknown
-        | FragmentBinding::StringSet(_) => {}
-    }
+    let value = AbstractValue::from_fragment_output_binding(binding);
+    collect_abstract_output_uses(
+        outputs,
+        &value,
+        relative_path,
+        kind,
+        active_output_predicates,
+        defaulted_paths,
+    );
 }
 
 pub(crate) fn collect_helper_binding_output_uses_from_expr(
@@ -257,50 +160,68 @@ pub(crate) fn collect_helper_binding_output_uses(
     active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
-    match binding {
-        HelperBinding::ValuesPath(path) => {
-            push_helper_fragment_output(
+    let value = AbstractValue::from_helper_binding(binding);
+    collect_abstract_output_uses(
+        outputs,
+        &value,
+        relative_path,
+        kind,
+        active_output_predicates,
+        defaulted_paths,
+    );
+}
+
+fn collect_abstract_output_uses(
+    outputs: &mut Vec<HelperFragmentOutputUse>,
+    value: &AbstractValue,
+    relative_path: &YamlPath,
+    kind: ValueKind,
+    active_output_predicates: &BTreeSet<Predicate>,
+    defaulted_paths: &BTreeSet<String>,
+) {
+    match value {
+        AbstractValue::ValuesPath(path) => {
+            push_output_path(
                 outputs,
-                path.clone(),
+                path,
                 relative_path,
                 kind,
-                HelperOutputMeta::with_predicates(
-                    active_output_predicates,
-                    defaulted_paths.contains(path),
-                ),
+                None,
+                active_output_predicates,
+                defaulted_paths,
             );
         }
-        HelperBinding::PathSet(paths) => {
+        AbstractValue::PathSet(paths) => {
             for path in paths {
-                push_helper_fragment_output(
+                push_output_path(
                     outputs,
-                    path.clone(),
+                    path,
                     relative_path,
                     kind,
-                    HelperOutputMeta::with_predicates(
-                        active_output_predicates,
-                        defaulted_paths.contains(path),
-                    ),
-                );
-            }
-        }
-        HelperBinding::OutputSet(outputs_by_path) => {
-            for (path, meta) in outputs_by_path {
-                let meta = helper_output_meta_with_predicates(
-                    HelperOutputMeta {
-                        predicates: meta.predicates.clone(),
-                        defaulted: meta.defaulted || defaulted_paths.contains(path),
-                    },
+                    None,
                     active_output_predicates,
+                    defaulted_paths,
                 );
-                push_helper_fragment_output(outputs, path.clone(), relative_path, kind, meta);
             }
         }
-        HelperBinding::Dict(entries) => {
+        AbstractValue::OutputSet(outputs_by_path) => {
+            for (path, meta) in outputs_by_path {
+                push_output_path(
+                    outputs,
+                    path,
+                    relative_path,
+                    kind,
+                    Some(meta),
+                    active_output_predicates,
+                    defaulted_paths,
+                );
+            }
+        }
+        AbstractValue::Dict(entries) => {
             for (key, value) in entries {
                 let child_path =
                     output_path::append_relative_path(relative_path, &YamlPath(vec![key.clone()]));
-                collect_helper_binding_output_uses(
+                collect_abstract_output_uses(
                     outputs,
                     value,
                     &child_path,
@@ -310,8 +231,8 @@ pub(crate) fn collect_helper_binding_output_uses(
                 );
             }
         }
-        HelperBinding::Overlay { entries, fallback } => {
-            collect_helper_binding_output_uses(
+        AbstractValue::Overlay { entries, fallback } => {
+            collect_abstract_output_uses(
                 outputs,
                 fallback,
                 relative_path,
@@ -322,7 +243,7 @@ pub(crate) fn collect_helper_binding_output_uses(
             for (key, value) in entries {
                 let child_path =
                     output_path::append_relative_path(relative_path, &YamlPath(vec![key.clone()]));
-                collect_helper_binding_output_uses(
+                collect_abstract_output_uses(
                     outputs,
                     value,
                     &child_path,
@@ -332,9 +253,9 @@ pub(crate) fn collect_helper_binding_output_uses(
                 );
             }
         }
-        HelperBinding::Choice(choices) => {
+        AbstractValue::Choice(choices) => {
             for choice in choices {
-                collect_helper_binding_output_uses(
+                collect_abstract_output_uses(
                     outputs,
                     choice,
                     relative_path,
@@ -344,10 +265,10 @@ pub(crate) fn collect_helper_binding_output_uses(
                 );
             }
         }
-        HelperBinding::List(items) => {
+        AbstractValue::List(items) => {
             let item_path = output_path::sequence_item_path(relative_path);
             for item in items {
-                collect_helper_binding_output_uses(
+                collect_abstract_output_uses(
                     outputs,
                     item,
                     &item_path,
@@ -357,8 +278,31 @@ pub(crate) fn collect_helper_binding_output_uses(
                 );
             }
         }
-        HelperBinding::RootContext | HelperBinding::Unknown | HelperBinding::StringSet(_) => {}
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RootContext
+        | AbstractValue::StringSet(_) => {}
     }
+}
+
+fn push_output_path(
+    outputs: &mut Vec<HelperFragmentOutputUse>,
+    path: &str,
+    relative_path: &YamlPath,
+    kind: ValueKind,
+    meta: Option<&HelperOutputMeta>,
+    active_output_predicates: &BTreeSet<Predicate>,
+    defaulted_paths: &BTreeSet<String>,
+) {
+    let base_meta = meta.cloned().unwrap_or_default();
+    let meta = helper_output_meta_with_predicates(
+        HelperOutputMeta {
+            predicates: base_meta.predicates,
+            defaulted: base_meta.defaulted || defaulted_paths.contains(path),
+        },
+        active_output_predicates,
+    );
+    push_helper_fragment_output(outputs, path.to_string(), relative_path, kind, meta);
 }
 
 pub(crate) fn helper_binding_output_meta(
@@ -416,10 +360,16 @@ fn collect_helper_binding_output_meta(
 mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
-    use super::helper_binding_output_meta;
+    use super::{
+        collect_fragment_binding_output_uses, collect_helper_binding_output_uses,
+        helper_binding_output_meta,
+    };
+    use crate::fragment_binding::FragmentBinding;
+    use crate::helper_analysis::HelperFragmentOutputUse;
     use crate::helper_analysis::HelperOutputMeta;
     use crate::helper_binding::HelperBinding;
     use crate::predicate::Predicate;
+    use crate::{ValueKind, YamlPath};
 
     #[test]
     fn helper_binding_output_meta_preserves_output_set_metadata() {
@@ -449,5 +399,105 @@ mod tests {
                 defaulted: true,
             })
         );
+    }
+
+    #[test]
+    fn helper_and_fragment_bindings_share_structural_output_projection() {
+        let helper_binding = HelperBinding::List(vec![
+            HelperBinding::Dict(BTreeMap::from([(
+                "name".to_string(),
+                HelperBinding::ValuesPath("containers.name".to_string()),
+            )])),
+            HelperBinding::PathSet(BTreeSet::from(["containers.image".to_string()])),
+        ]);
+        let fragment_binding = FragmentBinding::List(vec![
+            FragmentBinding::Dict(BTreeMap::from([(
+                "name".to_string(),
+                FragmentBinding::ValuesPath("containers.name".to_string()),
+            )])),
+            FragmentBinding::PathSet(BTreeSet::from(["containers.image".to_string()])),
+        ]);
+        let relative_path = YamlPath(vec!["spec".to_string(), "containers".to_string()]);
+        let predicates = BTreeSet::from([Predicate::truthy_path("containers.enabled".to_string())]);
+        let defaulted_paths = BTreeSet::from(["containers.image".to_string()]);
+
+        let mut helper_outputs = Vec::new();
+        collect_helper_binding_output_uses(
+            &mut helper_outputs,
+            &helper_binding,
+            &relative_path,
+            ValueKind::Fragment,
+            &predicates,
+            &defaulted_paths,
+        );
+
+        let mut fragment_outputs = Vec::new();
+        collect_fragment_binding_output_uses(
+            &mut fragment_outputs,
+            &fragment_binding,
+            &relative_path,
+            ValueKind::Fragment,
+            &predicates,
+            &defaulted_paths,
+        );
+
+        assert_eq!(
+            output_rows(&helper_outputs),
+            vec![
+                (
+                    "containers.name".to_string(),
+                    vec![
+                        "spec".to_string(),
+                        "containers[*]".to_string(),
+                        "name".to_string()
+                    ],
+                    ValueKind::Scalar,
+                    false,
+                ),
+                (
+                    "containers.image".to_string(),
+                    vec!["spec".to_string(), "containers[*]".to_string()],
+                    ValueKind::Scalar,
+                    true,
+                ),
+            ]
+        );
+        assert_eq!(output_rows(&fragment_outputs), output_rows(&helper_outputs));
+    }
+
+    #[test]
+    fn nested_fragment_values_root_still_abstains_from_output_projection() {
+        let fragment_binding = FragmentBinding::Dict(BTreeMap::from([(
+            "values".to_string(),
+            FragmentBinding::ValuesRoot,
+        )]));
+        let mut outputs = Vec::new();
+
+        collect_fragment_binding_output_uses(
+            &mut outputs,
+            &fragment_binding,
+            &YamlPath(Vec::new()),
+            ValueKind::Fragment,
+            &BTreeSet::new(),
+            &BTreeSet::new(),
+        );
+
+        assert!(outputs.is_empty());
+    }
+
+    fn output_rows(
+        outputs: &[HelperFragmentOutputUse],
+    ) -> Vec<(String, Vec<String>, ValueKind, bool)> {
+        outputs
+            .iter()
+            .map(|output| {
+                (
+                    output.source_expr.clone(),
+                    output.relative_path.0.clone(),
+                    output.kind,
+                    output.meta.defaulted,
+                )
+            })
+            .collect()
     }
 }

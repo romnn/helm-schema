@@ -1703,7 +1703,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   bindings, `helper_analysis_projection` owns read-only path/meta views, and
   `helper_analysis_mutation` owns interpreter merge/suppression operations.
   That leaves helper summaries as data and keeps compatibility DTO decisions
-  outside the semantic model. Contract emission
+  outside the semantic model. Helper and fragment output-use projection now
+  share one `AbstractValue` traversal too, so dict/list/overlay/choice
+  descent has one structural owner instead of parallel helper-binding and
+  fragment-binding walkers. Structured output-path construction has moved
+  into `AbstractValue` as well; the legacy helper/fragment binding lattices
+  now receive those shapes only by boundary conversion instead of owning
+  their own constructors. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
