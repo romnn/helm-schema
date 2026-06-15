@@ -379,7 +379,7 @@ impl<'a> SymbolicWalker<'a> {
         // reads are evaluated.
         self.scope
             .locals_mut()
-            .append_chart_value_defaults(&mut output_values.chart_value_defaults);
+            .append_chart_value_defaults(&mut output_values.helper.chart_value_defaults);
         if output_values.is_empty() {
             return;
         }

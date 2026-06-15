@@ -16,6 +16,7 @@ mod contract_signals;
 mod contract_sink;
 mod default_type_hints;
 mod define_body_cache;
+mod document_helper_contract;
 mod document_hole_context;
 mod document_value_analysis;
 mod eval_effect;

@@ -84,17 +84,6 @@ pub(crate) struct BoundHelperAnalysis {
     pub(crate) chart_defaults: BTreeSet<String>,
 }
 
-pub(crate) struct BoundHelperOutputProjection {
-    pub(crate) output_values: BTreeMap<String, HelperOutputMeta>,
-    pub(crate) fragment_output_values: Vec<String>,
-    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
-    pub(crate) dependency_values: BTreeMap<String, HelperOutputMeta>,
-    pub(crate) guard_values: BTreeSet<String>,
-    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    pub(crate) suppress_roots: BTreeSet<String>,
-    pub(crate) chart_defaults: BTreeSet<String>,
-}
-
 impl BoundHelperAnalysis {
     pub(crate) fn extend(&mut self, other: Self) {
         for (path, meta) in other.output {
@@ -230,37 +219,6 @@ impl BoundHelperAnalysis {
             kind,
             meta,
         });
-    }
-
-    pub(crate) fn into_output_projection(
-        self,
-        output_kind: ValueKind,
-    ) -> BoundHelperOutputProjection {
-        let mut dependency_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-        for path in self.dependency_paths {
-            dependency_values.entry(path).or_default();
-        }
-        for (path, meta) in self.dependency_meta {
-            dependency_values.entry(path).or_default().merge(meta);
-        }
-
-        let mut fragment_output_values = Vec::new();
-        if output_kind == ValueKind::Fragment {
-            fragment_output_values.extend(self.fragment_output);
-            fragment_output_values.sort();
-            fragment_output_values.dedup();
-        }
-
-        BoundHelperOutputProjection {
-            output_values: self.output,
-            fragment_output_values,
-            fragment_output_uses: self.fragment_output_uses,
-            dependency_values,
-            guard_values: self.guard_paths,
-            type_hints: self.type_hints,
-            suppress_roots: self.suppress_roots,
-            chart_defaults: self.chart_defaults,
-        }
     }
 
     pub(crate) fn into_fragment_binding(mut self) -> Option<FragmentBinding> {
@@ -569,66 +527,6 @@ mod tests {
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
 
         assert!(analysis.suppress_roots.is_empty());
-    }
-
-    #[test]
-    fn output_projection_preserves_helper_summary_fields() {
-        let mut analysis = BoundHelperAnalysis::default();
-        let meta = HelperOutputMeta {
-            predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
-            defaulted: true,
-        };
-        analysis.add_output_meta("image.tag".to_string(), meta.clone());
-        analysis.fragment_output.insert("extraEnv".to_string());
-        analysis.dependency_paths.insert("global".to_string());
-        analysis
-            .dependency_meta
-            .insert("global.image.tag".to_string(), meta.clone());
-        analysis.guard_paths.insert("service.enabled".to_string());
-        analysis
-            .type_hints
-            .entry("image.tag".to_string())
-            .or_default()
-            .insert("string".to_string());
-        analysis.suppress_roots.insert("image".to_string());
-        analysis.chart_defaults.insert("nameOverride".to_string());
-
-        let projection = analysis.into_output_projection(ValueKind::Fragment);
-
-        assert_eq!(
-            projection.output_values,
-            BTreeMap::from([("image.tag".to_string(), meta.clone())])
-        );
-        assert_eq!(
-            projection.fragment_output_values,
-            vec!["extraEnv".to_string()]
-        );
-        assert_eq!(
-            projection.dependency_values,
-            BTreeMap::from([
-                ("global".to_string(), HelperOutputMeta::default()),
-                ("global.image.tag".to_string(), meta),
-            ])
-        );
-        assert_eq!(
-            projection.guard_values,
-            BTreeSet::from(["service.enabled".to_string()])
-        );
-        assert_eq!(
-            projection.type_hints,
-            BTreeMap::from([(
-                "image.tag".to_string(),
-                BTreeSet::from(["string".to_string()])
-            )])
-        );
-        assert_eq!(
-            projection.suppress_roots,
-            BTreeSet::from(["image".to_string()])
-        );
-        assert_eq!(
-            projection.chart_defaults,
-            BTreeSet::from(["nameOverride".to_string()])
-        );
     }
 
     #[test]
