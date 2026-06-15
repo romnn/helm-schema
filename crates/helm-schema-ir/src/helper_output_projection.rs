@@ -9,7 +9,7 @@ use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
-use crate::yaml_shape::parse_yaml_key;
+use crate::yaml_syntax::parse_yaml_key;
 use crate::{ValueKind, YamlPath, output_path};
 
 #[derive(Clone, Copy)]

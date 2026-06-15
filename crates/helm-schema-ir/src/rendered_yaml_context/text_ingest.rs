@@ -1,4 +1,4 @@
-use crate::yaml_shape::Shape;
+use super::shape::Shape;
 
 #[derive(Default)]
 pub(super) struct TextIngestState {

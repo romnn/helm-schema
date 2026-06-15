@@ -2,7 +2,6 @@ use std::collections::BTreeSet;
 
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::helper_analysis::HelperOutputMeta;
 use crate::{Guard, ValueKind, YamlPath, output_path};
 
 use super::hole::DocumentHole;
@@ -31,7 +30,7 @@ pub(super) fn append_document_helper_contract_uses(
         }
         let has_rendered_descendant =
             output_path::values_path_has_descendant(value, &helper_rendered_sources);
-        let extra_guards = helper_extra_guards(value, meta);
+        let extra_guards = meta.compatibility_guards(value);
         if only_scalar_helper_outputs
             && hole.can_project_scalar_helper_to_caller_path()
             && !has_rendered_descendant
@@ -53,7 +52,7 @@ pub(super) fn append_document_helper_contract_uses(
     }
 
     for output in helper.fragment_output_uses {
-        let extra_guards = helper_extra_guards(&output.source_expr, &output.meta);
+        let extra_guards = output.meta.compatibility_guards(&output.source_expr);
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
         if hole.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
@@ -94,7 +93,7 @@ pub(super) fn append_document_helper_contract_uses(
     }
 
     for (value, meta) in helper.dependency_values {
-        let extra_guards = helper_extra_guards(&value, &meta);
+        let extra_guards = meta.compatibility_guards(&value);
         contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &extra_guards));
     }
 
@@ -116,8 +115,4 @@ pub(super) fn append_document_helper_contract_uses(
             ));
         }
     }
-}
-
-fn helper_extra_guards(source_expr: &str, meta: &HelperOutputMeta) -> Vec<Guard> {
-    meta.compatibility_guards(source_expr)
 }

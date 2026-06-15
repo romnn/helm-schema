@@ -2,15 +2,16 @@ use helm_schema_ast::DefineIndex;
 
 use crate::fragment_classification::is_fragment_expr;
 use crate::resource_identity::ResourceIdentityIndex;
-use crate::yaml_shape::Shape;
 use crate::{ResourceRef, YamlPath};
 
 mod fragment_indent;
 mod inline_mapping;
+mod shape;
 mod source_position;
 mod text_ingest;
 
 use fragment_indent::fragment_indent_width;
+use shape::Shape;
 use source_position::{
     line_indent_and_col, source_position_is_inside_block_scalar, starts_template_action_line,
 };

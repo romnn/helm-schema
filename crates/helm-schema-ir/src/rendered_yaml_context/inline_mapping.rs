@@ -1,5 +1,7 @@
 use crate::YamlPath;
-use crate::yaml_shape::{Shape, first_mapping_colon_offset, parse_yaml_key};
+use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
+
+use super::shape::Shape;
 
 use super::source_position::line_indent_and_col;
 

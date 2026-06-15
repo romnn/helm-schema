@@ -226,9 +226,9 @@ answers**, and cache state may move output only in the widening direction
 - **Syntax is lossy and parsed three times**; `HelmAst` stores control-flow
   headers as raw strings (`If { cond: String }`) and drops all spans, so
   position-aware diagnostics are impossible, every consumer re-parses action
-  text (mitigated by thread-local caches), and a 900-line
-  indentation-heuristic shape tracker (`yaml_shape.rs`) reconstructs what the
-  parse threw away — a line-shape heuristic at the core of a project whose
+  text (mitigated by thread-local caches), and the rendered YAML context still
+  uses a stateful indentation-shape tracker to reconstruct what the parse
+  threw away — a line-shape heuristic at the core of a project whose
   charter says "parsers over string heuristics".
 - **The IR is lossy, so the generator re-derives semantics**: `ValueUse`
   drops falsey admissions, openness, fragment provenance and mutations;
@@ -1259,7 +1259,7 @@ and the `ValueUse` projection never gains a production consumer.
 | `helm-schema-ast::values_comments` | facade `ValuesModel` |
 | IR evaluators (`expr_eval`, `binding`, `fragment_*`, `helper_*`, `bound_*`, walkers) | `engine::interp` (lattice + builtin table + summaries) |
 | `helper_eval.rs`, `resource_detector/locator` | identity projection over internal documents |
-| `yaml_shape.rs`, `rendered_yaml_context.rs` | structural attribution + exact/anchored/opaque contract (tracker survives only as upgrader until the budget gate passes) |
+| `rendered_yaml_context::{shape,*}`, `yaml_syntax.rs` | structural attribution + exact/anchored/opaque contract (tracker survives only as upgrader until the budget gate passes) |
 | `ValueUse` + postprocess | DTO projection of `ContractIR` (fixtures only) |
 | `helm-schema-k8s` providers/chain | `knowledge` planner/executor + sources-as-data |
 | `capability_eval.rs` + chain oracle impl | `CapabilityOracle` adapter + engine-side liveness |
@@ -1429,9 +1429,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   constraints are projected into contract claims, so downstream is untouched
   while the artifact changes underneath. Gate: the
   abstained-enrichment budget — no corpus chart loses a type enrichment vs
-  the current tool; `yaml_shape` survives as an upgrader until the gate
-  passes, then is deleted. Current progress: output lowering now flows
-  through an internal `DocumentOutput` / `DocumentHole` artifact before
+  the current tool; the rendered YAML shape tracker survives as an upgrader
+  until the gate passes, then is deleted. Current progress: output lowering
+  now flows through an internal `DocumentOutput` / `DocumentHole` artifact before
   appending contract claims. This does not change inference behavior, but it
   establishes the A3 insertion point for attaching resource identity, anchor,
   and document-path facts before DTO projection. The document hole owns the
@@ -1450,7 +1450,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Rendered document holes no longer detour through a DTO-shaped compatibility
   artifact before entering the contract graph, and the module names describe
   the current production path rather than the transitional implementation
-  history.
+  history. Document output now appends claims directly into the owning
+  `ContractIr`, so the projection path no longer builds a temporary contract
+  graph just to merge it back into the interpreter.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations
@@ -1667,7 +1669,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   source-position/block-scalar checks, inline mapping value-path detection,
   and fragment-indent interpretation each have one owner. That preserves the
   existing rendered-source fallback while isolating the pieces A3's internal
-  document projection should eventually retire or reuse. Value-path context
+  document projection should eventually retire or reuse. The stateful shape
+  tracker now also lives inside that rendered-context module family, while
+  pure YAML line syntax helpers (`parse_yaml_key`, mapping-colon lookup, and
+  block-scalar detection) live in a separate `yaml_syntax` module shared by
+  other structural consumers. Value-path context
   projection has also been split by semantic role: path/default resolution,
   local alias/output-meta projection, and condition-predicate lowering now
   have separate owners behind the same walker-facing context. Helper fragment
@@ -1708,9 +1714,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   fragment classification, and template-comment filtering each have focused
   owners behind the unchanged crate-root API. Fragment classification is now
   based on the typed template expression AST rather than substring scanning,
-  and `yaml_shape` shares that same classifier instead of maintaining a second
-  detector. The compatibility inspection DTOs have also moved out of the
-  crate root into an explicit compatibility module, so the root API now
+  and the rendered YAML shape tracker shares that same classifier instead of
+  maintaining a second detector. The compatibility inspection DTOs have also
+  moved out of the crate root into an explicit compatibility module, so the root API now
   re-exports the legacy fixture/tooling boundary instead of owning it beside
   semantic contract types. Local symbolic state has been split the same way:
   branch-outcome join policy now has its own owner, leaving the local-state

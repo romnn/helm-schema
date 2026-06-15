@@ -7,7 +7,7 @@ use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
-use crate::yaml_shape::parse_yaml_key;
+use crate::yaml_syntax::parse_yaml_key;
 
 pub(crate) fn range_variable_name(header: &str) -> Option<String> {
     let header = header

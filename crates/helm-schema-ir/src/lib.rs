@@ -72,7 +72,7 @@ mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
 mod value_path_extraction;
-mod yaml_shape;
+mod yaml_syntax;
 
 pub use capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
 pub use chart_facts::{ChartFacts, PathFact};

@@ -65,7 +65,7 @@ impl SymbolicWalker<'_> {
             return;
         }
 
-        let document_contract = {
+        {
             let guards = self.compatibility_guards();
             let projection_context = ContractUseContext::new(
                 &guards,
@@ -73,8 +73,7 @@ impl SymbolicWalker<'_> {
                 self.no_output_depth > 0,
             );
             DocumentOutput::new(hole_context, helper_inlined, output_values)
-                .into_contract_ir(&projection_context)
-        };
-        self.contract.append(document_contract);
+                .append_to_contract(&mut self.contract, &projection_context);
+        }
     }
 }

@@ -25,13 +25,11 @@ impl DocumentOutput {
         }
     }
 
-    pub(crate) fn into_contract_ir(self, context: &ContractUseContext<'_>) -> ContractIr {
-        let mut contract = ContractIr::default();
-        self.append_contract_uses(&mut contract, context);
-        contract
-    }
-
-    fn append_contract_uses(self, contract: &mut ContractIr, context: &ContractUseContext<'_>) {
+    pub(crate) fn append_to_contract(
+        self,
+        contract: &mut ContractIr,
+        context: &ContractUseContext<'_>,
+    ) {
         let hole = self.hole;
         let DocumentValueAnalysis {
             default_fallback_values,

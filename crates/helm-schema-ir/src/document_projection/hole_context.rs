@@ -1,6 +1,6 @@
 use crate::fragment_classification::is_fragment_expr;
 use crate::rendered_yaml_context::RenderedYamlContext;
-use crate::yaml_shape::first_mapping_colon_offset;
+use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{ResourceRef, ValueKind, YamlPath};
 
 pub(crate) struct DocumentHoleContext {

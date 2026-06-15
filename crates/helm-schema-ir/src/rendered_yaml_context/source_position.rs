@@ -1,4 +1,4 @@
-use crate::yaml_shape::source_line_starts_block_scalar;
+use crate::yaml_syntax::source_line_starts_block_scalar;
 
 pub(super) fn line_indent_and_col(source: &str, byte_pos: usize) -> (usize, usize) {
     let bytes = source.as_bytes();
