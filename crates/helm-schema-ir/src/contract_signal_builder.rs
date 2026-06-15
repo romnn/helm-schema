@@ -3,8 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::contract::ContractUse;
 use crate::contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
-    MetadataFieldKind, ProviderSchemaUse, RequiredInferenceSignals,
+    MetadataFieldKind, RequiredInferenceSignals,
 };
+use crate::provider_schema_use::ProviderSchemaUse;
 use crate::{ChartFacts, Guard, PathFact, ValueKind};
 
 pub(crate) fn derive_schema_signals_from_uses(uses: &[ContractUse]) -> ContractSchemaSignals {

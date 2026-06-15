@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::{GetBindingPlan, parse_get_binding};
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_expr};
+use crate::helper_binding::HelperBinding;
 
 pub(crate) struct AssignmentActionPlan {
     pub(crate) get_binding: Option<GetBindingPlan>,

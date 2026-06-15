@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::helper_binding_from_expr;
+use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_binding::HelperBinding;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };

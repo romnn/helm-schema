@@ -2,11 +2,12 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::{
     resolve_expr_to_values_path, resolved_default_fallback_paths_for_text,
 };
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
+use crate::helper_binding::HelperBinding;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };

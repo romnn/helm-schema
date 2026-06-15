@@ -1,12 +1,13 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_helper_call_analysis::{
     analyze_bound_helper_call_with_fragment_locals, analyze_bound_helper_calls_with_fragment_locals,
 };
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::BoundHelperAnalysis;
+use crate::helper_binding::HelperBinding;
 
 pub(crate) struct HelperSummaryCache {
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallsCacheKey, BoundHelperAnalysis>>,

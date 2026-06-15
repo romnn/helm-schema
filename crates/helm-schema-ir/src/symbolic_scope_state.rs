@@ -1,5 +1,6 @@
 use crate::Guard;
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
+use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
 use crate::symbolic_local_state::{SymbolicLocalState, SymbolicLocalStateSnapshot};
 

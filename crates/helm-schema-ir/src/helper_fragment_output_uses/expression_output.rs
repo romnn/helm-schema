@@ -2,15 +2,16 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
 use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
 };
 use crate::helper_analysis::HelperFragmentOutputUse;
 use crate::helper_analysis_projection::bound_helper_dependency_paths;
+use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::project_fragment_binding;
 use crate::helper_output_projection::{
     HelperOutputExprContext, collect_fragment_binding_output_uses,

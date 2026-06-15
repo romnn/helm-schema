@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::binding::FragmentBinding;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values};
+use crate::fragment_binding::FragmentBinding;
 use crate::predicate::Predicate;
 use crate::value_path_context::ValuePathContext;
 

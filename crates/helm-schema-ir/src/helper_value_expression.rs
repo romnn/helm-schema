@@ -1,12 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::ValueKind;
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::{
     resolved_default_fallback_paths_for_text, resolved_string_transform_paths_for_text,
     resolved_type_is_paths_for_text, set_default_chart_paths_for_text,
 };
 use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr,
@@ -19,6 +19,7 @@ use crate::helper_analysis_mutation::{
 use crate::helper_analysis_projection::{
     bound_helper_dependency_paths, helper_dependency_meta_from_analysis,
 };
+use crate::helper_binding::HelperBinding;
 use crate::helper_output_projection::helper_binding_output_meta;
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{

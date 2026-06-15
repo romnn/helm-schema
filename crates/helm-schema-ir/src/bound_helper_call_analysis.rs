@@ -2,10 +2,11 @@ use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_analysis_mutation::mark_suppressed_roots_for_bound_outputs;
+use crate::helper_binding::HelperBinding;
 use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };

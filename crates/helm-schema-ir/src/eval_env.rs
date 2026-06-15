@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::abstract_value::AbstractValue;
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
+use crate::helper_binding::HelperBinding;
 
 /// Abstract interpreter environment for Helm expression evaluation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

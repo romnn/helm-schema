@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::BoundHelperAnalysis;
+use crate::helper_binding::HelperBinding;
 use crate::output_path;
 
 pub(crate) fn project_fragment_binding(
@@ -94,8 +95,9 @@ mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
     use super::{project_fragment_binding, project_helper_binding};
-    use crate::binding::{FragmentBinding, HelperBinding};
+    use crate::fragment_binding::FragmentBinding;
     use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+    use crate::helper_binding::HelperBinding;
     use crate::predicate::Predicate;
     use crate::{ValueKind, YamlPath};
 

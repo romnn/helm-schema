@@ -2,10 +2,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::binding::HelperBinding;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, type_is_schema_type as eval_type_is_schema_type};
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
+use crate::helper_binding::HelperBinding;
 use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_extraction::values_path_from_expr;
 

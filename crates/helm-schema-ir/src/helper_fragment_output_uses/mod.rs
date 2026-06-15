@@ -1,12 +1,12 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 use crate::assignment_action_plan::AssignmentActionPlan;
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::document_hole_context::collect_document_hole_context;
 use crate::fragment_assignment::{apply_local_set_mutations, merge_fragment_locals};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
@@ -16,6 +16,7 @@ use crate::fragment_range_scope::{
 use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_analysis_mutation::merge_local_default_paths;
 use crate::helper_analysis_projection::bound_helper_condition_paths;
+use crate::helper_binding::HelperBinding;
 use crate::helper_output_projection::push_helper_fragment_output;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{

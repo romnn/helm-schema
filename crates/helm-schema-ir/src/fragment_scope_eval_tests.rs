@@ -2,11 +2,11 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
-use crate::binding::FragmentBinding;
 use crate::define_body_cache::DefineBodyCache;
 use crate::fragment_assignment::{
     AssignmentKind, apply_local_set_mutations, parse_helper_assignment,
 };
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_body_renders_mapping_entries_from_ast;
 use crate::helper_summary::HelperSummaryCache;

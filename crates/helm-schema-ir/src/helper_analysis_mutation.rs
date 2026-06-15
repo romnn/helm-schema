@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::binding::HelperBinding;
 use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+use crate::helper_binding::HelperBinding;
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
@@ -142,8 +142,8 @@ mod tests {
     use std::collections::{BTreeSet, HashMap};
 
     use super::mark_suppressed_roots_for_bound_outputs;
-    use crate::binding::HelperBinding;
     use crate::helper_analysis::BoundHelperAnalysis;
+    use crate::helper_binding::HelperBinding;
 
     #[test]
     fn suppresses_bound_root_when_helper_outputs_descendant_path() {

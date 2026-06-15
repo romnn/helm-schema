@@ -2,7 +2,6 @@ mod abstract_document;
 mod abstract_document_hole;
 mod abstract_value;
 mod assignment_action_plan;
-mod binding;
 mod bound_helper_call_analysis;
 mod bound_value_analysis;
 mod capability_branch;
@@ -14,6 +13,8 @@ mod contract;
 mod contract_normalization;
 mod contract_signal_builder;
 mod contract_signals;
+#[cfg(test)]
+mod contract_signals_tests;
 mod contract_sink;
 mod default_type_hints;
 mod define_body_cache;
@@ -30,6 +31,7 @@ mod expr_function_catalog;
 mod expr_pipeline_eval;
 mod expression_analysis;
 mod fragment_assignment;
+mod fragment_binding;
 mod fragment_classification;
 mod fragment_expr_eval;
 mod fragment_range_scope;
@@ -40,6 +42,7 @@ mod helper_analysis_mutation;
 mod helper_analysis_projection;
 mod helper_arg_projection;
 mod helper_aware_expr_eval;
+mod helper_binding;
 mod helper_binding_projection;
 mod helper_body_analysis;
 mod helper_discovery;
@@ -57,6 +60,7 @@ mod node_eval;
 mod output_path;
 mod predicate;
 mod printf_eval;
+mod provider_schema_use;
 mod range_action_plan;
 mod rendered_yaml_context;
 pub mod required_inference;
@@ -79,10 +83,11 @@ pub use compatibility::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
-    MetadataFieldKind, ProviderSchemaUse, RequiredInferenceSignals,
+    MetadataFieldKind, RequiredInferenceSignals,
 };
 pub use default_type_hints::extract_default_type_hints;
 pub use helper_discovery::{DefineBlock, extract_define_blocks, extract_helper_calls};
+pub use provider_schema_use::ProviderSchemaUse;
 pub use symbolic::SymbolicIrContext;
 
 #[cfg(test)]

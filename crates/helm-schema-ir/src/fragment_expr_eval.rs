@@ -3,12 +3,13 @@ use std::collections::{HashMap, HashSet};
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::define_body_cache::DefineBodyCache;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
+use crate::fragment_binding::FragmentBinding;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::{project_fragment_binding, project_helper_binding};
 use crate::helper_summary::HelperSummaryCache;
 use crate::template_expr_analysis::expr_contains_helper_call;

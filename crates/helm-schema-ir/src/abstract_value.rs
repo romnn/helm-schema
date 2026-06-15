@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_binding::HelperBinding;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum AbstractValue {

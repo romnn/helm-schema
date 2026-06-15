@@ -3,12 +3,13 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::ValueKind;
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, bindings_for_helper_arg_with_fragment_locals,
     fragment_binding_from_outer_expr, helper_binding_from_expr_with_fragment_locals,
 };
 use crate::helper_analysis::BoundHelperAnalysis;
+use crate::helper_binding::HelperBinding;
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_tree;
 use crate::helper_value_analysis::collect_bound_helper_values_from_tree;
 use crate::helper_walk_state::{FragmentOutputWalkState, HelperValuesWalkState};

@@ -1,8 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::binding::{FragmentBinding, HelperBinding};
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_binding::HelperBinding;
 
 mod alias_projection;
 mod condition_predicate;

@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::binding::{FragmentBinding, HelperBinding};
 use crate::expression_analysis::helper_binding_from_expr;
+use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
+use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
@@ -416,8 +417,8 @@ mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
     use super::helper_binding_output_meta;
-    use crate::binding::HelperBinding;
     use crate::helper_analysis::HelperOutputMeta;
+    use crate::helper_binding::HelperBinding;
     use crate::predicate::Predicate;
 
     #[test]

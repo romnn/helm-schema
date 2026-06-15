@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{Literal, TemplateExpr, parse_action_expressions};
 
-use crate::binding::FragmentBinding;
+use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 
