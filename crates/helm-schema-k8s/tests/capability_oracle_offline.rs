@@ -1,4 +1,4 @@
-//! Round-10 Finding 1: pin the offline-safety contract for
+//! Pins the offline-safety contract for
 //! `KubernetesJsonSchemaProvider::capability_has_query_at_primary_version`.
 //!
 //! When downloads are disabled, the oracle must NOT promote
@@ -13,8 +13,9 @@
 use std::fs;
 use std::sync::Arc;
 
+use helm_schema_ir::ApiPresenceQuery;
 use helm_schema_k8s::{
-    ApiPresenceQuery, K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry, MockFetcher,
+    K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry, MockFetcher,
     SourceProbeTraceOutcome, default_source_id,
 };
 
@@ -31,13 +32,10 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
     p
 }
 
-/// THE round-10 regression: offline + a cache that's been partially
-/// populated by some earlier run + the probe target absent must
-/// return `None` (uncertain), NOT `Some(false)`. The pre-round-10
-/// code returned `Some(false)` here on the basis that
-/// `cache_has_any_for_version` was true — which is wrong, because
-/// a cache with one unrelated file does not prove the rest of the
-/// bundle is empty.
+/// Offline mode plus a cache partially populated by an earlier run plus an
+/// absent probe target must return `None` (uncertain), not `Some(false)`.
+/// A cache with one unrelated file does not prove the rest of the bundle is
+/// empty.
 #[test]
 fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     let cache_dir = tmp_dir("capability_oracle_offline_partial");

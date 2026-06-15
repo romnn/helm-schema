@@ -692,13 +692,12 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
     );
 }
 
-// Round-12 Finding 1: end-to-end nested-branch composition through
-// the live Chain. Outer `if Has example.com/v1 then (Nested if Has
+// Nested-branch composition through the live Chain. Outer
+// `if Has example.com/v1 then (Nested if Has
 // other.example.com/v1 then "b" else "b_legacy") else "y"` with both guards
-// live → chain picks the deepest live literal "b" and attributes
-// MissingSchema to it.
-// This tests that the chain's commit_missing_schema path uses
-// live_literals (which recurses through Nested) for attribution.
+// live means the chain picks the deepest live literal "b" and attributes
+// MissingSchema to it. This tests that the chain's commit_missing_schema path
+// uses live_literals (which recurses through Nested) for attribution.
 #[test]
 fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
     use helm_schema_ir::{CapabilityGuard, HelperBranch};
@@ -759,10 +758,9 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
     );
 }
 
-// Round-12: same nested shape, but inner Has B is false. The chain
-// must still commit to the outer if-branch's subtree (Has A live)
-// and pick the inner else branch's literal, NOT fall back to the
-// outer else branch.
+// Same nested shape, but inner Has B is false. The chain must still commit to
+// the outer if-branch's subtree (Has A live) and pick the inner else branch's
+// literal, not fall back to the outer else branch.
 #[test]
 fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
     use helm_schema_ir::{CapabilityGuard, HelperBranch};

@@ -1262,7 +1262,7 @@ and the `ValueUse` projection never gains a production consumer.
 | `rendered_yaml_context::{shape,*}`, `yaml_syntax.rs` | structural attribution + exact/anchored/opaque contract (tracker survives only as upgrader until the budget gate passes) |
 | `ValueUse` + postprocess | DTO projection of `ContractIR` (fixtures only) |
 | `helm-schema-k8s` providers/chain | `knowledge` planner/executor + sources-as-data |
-| `capability_eval.rs` + chain oracle impl | `CapabilityOracle` adapter + engine-side liveness |
+| chain capability oracle impl | `CapabilityOracle` adapter over engine-side liveness |
 | `inference/*` | quarantined advisor module |
 | `helm-schema-gen` (lib/merge/required_inference) | `engine::resolve` + `engine::lower` + policy |
 | CLI `chart.rs` | facade chart loading (`ChartProgram`) |
@@ -1861,8 +1861,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `ResourceRef`. `CapabilityGuard` projects a typed presence predicate before
   the K8s oracle is consulted. The raw-string provider adapter has been
   removed, so branch selection and provider-chain execution share the same
-  typed capability-query boundary. The chain exposes `kube_version()` through
-  the same provider boundary.
+  typed capability-query boundary. Branch liveness evaluation has moved out
+  of `helm-schema-k8s` into the IR/engine side; k8s now only implements the
+  typed oracle against configured schema providers. The chain exposes
+  `kube_version()` through the same provider boundary.
   Capability probes now
   have a traced provider-chain entry point, and the OpenAPI provider records
   per-source cache/download probe outcomes (`Found`, authoritative absent,

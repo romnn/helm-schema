@@ -1,7 +1,8 @@
-use helm_schema_ir::{ApiPresenceQuery, HelperBranch, ProviderSchemaUse, ResourceRef, YamlPath};
+use helm_schema_ir::{
+    ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, YamlPath,
+};
 use serde_json::Value;
 
-use crate::capability_eval::{self, CapabilityOracle};
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::inference::ApiVersionInferenceOutcome;
 
@@ -258,16 +259,6 @@ impl Chain {
         }
     }
 
-    /// Pick the branch the chart would emit at runtime for the
-    /// configured primary K8s version. Delegates to the standalone
-    /// `capability_eval::select_live_branch` walker, parameterising
-    /// it with `self` as the [`CapabilityOracle`] (which queries the
-    /// provider chain's primary K8s bundle authoritatively;
-    /// upstream-first, cache is just a speed optimisation).
-    pub fn select_live_branch<'a>(&self, branches: &'a [HelperBranch]) -> Option<&'a HelperBranch> {
-        capability_eval::select_live_branch(branches, self)
-    }
-
     fn maybe_emit_fallback_version(
         &self,
         resource: &ResourceRef,
@@ -351,5 +342,9 @@ impl K8sSchemaProvider for Chain {
 impl CapabilityOracle for Chain {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {
         <Self as K8sSchemaProvider>::capability_has_query_at_primary_version(self, query)
+    }
+
+    fn kube_version(&self) -> Option<&str> {
+        <Self as K8sSchemaProvider>::kube_version(self)
     }
 }

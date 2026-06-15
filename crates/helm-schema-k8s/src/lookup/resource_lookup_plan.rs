@@ -1,6 +1,5 @@
-use helm_schema_ir::ResourceRef;
+use helm_schema_ir::{CapabilityOracle, ResourceRef, live_literals};
 
-use crate::capability_eval::{self, CapabilityOracle};
 use crate::ordered_api_versions_for_resource;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -50,7 +49,7 @@ fn candidate_api_versions<O: CapabilityOracle + ?Sized>(
     oracle: &O,
 ) -> Vec<String> {
     if !resource.api_version_branches.is_empty() {
-        let live = capability_eval::live_literals(&resource.api_version_branches, oracle);
+        let live = live_literals(&resource.api_version_branches, oracle);
         if !live.is_empty() {
             return live;
         }
@@ -67,7 +66,7 @@ fn missing_schema_attribution_api_versions<O: CapabilityOracle + ?Sized>(
     oracle: &O,
 ) -> Vec<String> {
     if !resource.api_version_branches.is_empty() {
-        let live = capability_eval::live_literals(&resource.api_version_branches, oracle);
+        let live = live_literals(&resource.api_version_branches, oracle);
         return match live.first().cloned() {
             Some(api_version) => vec![api_version],
             None if resource.api_version.is_empty()
@@ -103,10 +102,9 @@ fn resource_candidates_with_api_versions(
 
 #[cfg(test)]
 mod tests {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch};
+    use helm_schema_ir::{CapabilityGuard, HelperBranch, StaticOracle};
 
     use super::*;
-    use crate::capability_eval::StaticOracle;
 
     fn resource(
         api_version: &str,

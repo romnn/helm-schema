@@ -3,6 +3,7 @@ mod assignment_action_plan;
 mod bound_helper_call_analysis;
 mod bound_value_analysis;
 mod capability_branch;
+mod capability_liveness;
 mod chart_facts;
 mod compatibility;
 mod condition_action_plan;
@@ -81,6 +82,9 @@ mod yaml_syntax;
 
 pub use capability_branch::{
     ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
+};
+pub use capability_liveness::{
+    CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
 };
 pub use chart_facts::{ChartFacts, PathFact};
 pub use compatibility::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};

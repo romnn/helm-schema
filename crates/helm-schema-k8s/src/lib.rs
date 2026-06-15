@@ -15,7 +15,6 @@
 
 pub mod builtin_groups;
 pub mod cache;
-pub mod capability_eval;
 pub mod crds_catalog;
 pub mod diagnostic;
 pub mod fetch;
@@ -33,7 +32,6 @@ pub use cache::{
     CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, LayoutCheckOutcome, LayoutChecker, NegativeCache,
     default_source_id, source_id_for_url,
 };
-pub use capability_eval::{CapabilityOracle, StaticOracle, evaluate_guard, select_live_branch};
 pub use crds_catalog::CrdsCatalogSchemaProvider;
 pub use diagnostic::{
     Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
@@ -42,7 +40,6 @@ pub use fetch::{FetchError, HttpFetcher, MockFetcher, MockResponse, UreqFetcher}
 pub use filename::{
     candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
 };
-pub use helm_schema_ir::ApiPresenceQuery;
 pub use inference::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
 };

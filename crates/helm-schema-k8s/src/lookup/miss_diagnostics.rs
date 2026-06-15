@@ -1,6 +1,5 @@
-use helm_schema_ir::ResourceRef;
+use helm_schema_ir::{CapabilityOracle, ResourceRef};
 
-use crate::capability_eval::CapabilityOracle;
 use crate::diagnostic::Diagnostic;
 use crate::filename::candidate_filenames_for_resource;
 
