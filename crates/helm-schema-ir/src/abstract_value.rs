@@ -73,6 +73,52 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = BTreeMap::new();
+        self.collect_output_meta(&mut out);
+        out
+    }
+
+    fn collect_output_meta(&self, out: &mut BTreeMap<String, HelperOutputMeta>) {
+        match self {
+            Self::ValuesPath(path) => {
+                out.entry(path.clone()).or_default();
+            }
+            Self::PathSet(paths) => {
+                for path in paths {
+                    out.entry(path.clone()).or_default();
+                }
+            }
+            Self::OutputSet(meta_by_path) => {
+                for (path, meta) in meta_by_path {
+                    out.entry(path.clone()).or_default().merge_ref(meta);
+                }
+            }
+            Self::Dict(entries) => {
+                for value in entries.values() {
+                    value.collect_output_meta(out);
+                }
+            }
+            Self::List(items) => {
+                for value in items {
+                    value.collect_output_meta(out);
+                }
+            }
+            Self::Overlay { entries, fallback } => {
+                for value in entries.values() {
+                    value.collect_output_meta(out);
+                }
+                fallback.collect_output_meta(out);
+            }
+            Self::Choice(choices) => {
+                for choice in choices {
+                    choice.collect_output_meta(out);
+                }
+            }
+            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
+        }
+    }
+
     pub(crate) fn helper_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
@@ -694,6 +740,32 @@ mod tests {
         assert_eq!(
             value.helper_range_item(),
             Some(AbstractValue::ValuesPath("containers.name".to_string()))
+        );
+    }
+
+    #[test]
+    fn output_meta_preserves_values_paths_and_output_set_metadata() {
+        let meta = HelperOutputMeta {
+            predicates: BTreeSet::new(),
+            defaulted: true,
+        };
+        let value = AbstractValue::Overlay {
+            entries: BTreeMap::from([("name".to_string(), path("serviceAccount.name"))]),
+            fallback: Box::new(AbstractValue::OutputSet(BTreeMap::from([(
+                "global.nameOverride".to_string(),
+                meta.clone(),
+            )]))),
+        };
+
+        assert_eq!(
+            value.output_meta(),
+            BTreeMap::from([
+                (
+                    "serviceAccount.name".to_string(),
+                    HelperOutputMeta::default()
+                ),
+                ("global.nameOverride".to_string(), meta),
+            ])
         );
     }
 }

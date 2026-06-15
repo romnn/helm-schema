@@ -6,74 +6,67 @@ use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding::HelperBinding;
 use crate::output_path;
 
-pub(crate) fn project_fragment_binding(
-    mut analysis: BoundHelperAnalysis,
-) -> Option<FragmentBinding> {
-    let structured_sources = structured_fragment_sources(&analysis);
-    let rendered_sources = rendered_sources(&analysis, &structured_sources);
-
-    let mut bindings = Vec::new();
-    if !analysis.string_output.is_empty() {
-        bindings.push(FragmentBinding::StringSet(analysis.string_output.clone()));
-    }
-    for output in analysis.fragment_output_uses.drain(..) {
-        if let Some(binding) =
-            AbstractValue::for_output_path(output.source_expr, &output.relative_path, output.meta)
-                .to_fragment_binding()
-        {
-            bindings.push(binding);
-        }
-    }
-    for source in analysis.fragment_output {
-        if !structured_sources.contains(&source)
-            && !output_path::values_path_has_descendant(&source, &rendered_sources)
-        {
-            bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
-        }
-    }
-    for source in analysis.output.into_keys() {
-        if !structured_sources.contains(&source)
-            && !output_path::values_path_has_descendant(&source, &rendered_sources)
-        {
-            bindings.push(FragmentBinding::OutputSet([source].into_iter().collect()));
-        }
-    }
-    FragmentBinding::merge_all(bindings)
+pub(crate) fn project_fragment_binding(analysis: BoundHelperAnalysis) -> Option<FragmentBinding> {
+    project_binding_value(analysis, ProjectionTarget::Fragment)
+        .and_then(|value| value.to_fragment_binding())
+        .and_then(|binding| FragmentBinding::merge_all(vec![binding]))
 }
 
-pub(crate) fn project_helper_binding(mut analysis: BoundHelperAnalysis) -> Option<HelperBinding> {
+pub(crate) fn project_helper_binding(analysis: BoundHelperAnalysis) -> Option<HelperBinding> {
+    project_binding_value(analysis, ProjectionTarget::Helper)
+        .and_then(|value| value.to_helper_binding())
+}
+
+#[derive(Clone, Copy)]
+enum ProjectionTarget {
+    Helper,
+    Fragment,
+}
+
+fn project_binding_value(
+    analysis: BoundHelperAnalysis,
+    target: ProjectionTarget,
+) -> Option<AbstractValue> {
     let structured_sources = structured_fragment_sources(&analysis);
     let rendered_sources = rendered_sources(&analysis, &structured_sources);
 
-    let mut bindings = Vec::new();
+    let mut values = Vec::new();
     if !analysis.string_output.is_empty() {
-        bindings.push(HelperBinding::StringSet(analysis.string_output.clone()));
+        values.push(AbstractValue::StringSet(analysis.string_output));
     }
-    for output in analysis.fragment_output_uses.drain(..) {
-        if let Some(binding) =
-            AbstractValue::for_output_path(output.source_expr, &output.relative_path, output.meta)
-                .to_helper_binding()
-        {
-            bindings.push(binding);
-        }
+    for output in analysis.fragment_output_uses {
+        values.push(AbstractValue::for_output_path(
+            output.source_expr,
+            &output.relative_path,
+            output.meta,
+        ));
     }
     for source in analysis.fragment_output {
         if !structured_sources.contains(&source)
             && !output_path::values_path_has_descendant(&source, &rendered_sources)
         {
-            bindings.push(HelperBinding::PathSet([source].into_iter().collect()));
+            values.push(fragment_output_value(source, target));
         }
     }
     for (source, meta) in analysis.output {
         if !structured_sources.contains(&source)
             && !output_path::values_path_has_descendant(&source, &rendered_sources)
         {
-            bindings.push(HelperBinding::OutputSet(
+            values.push(AbstractValue::OutputSet(
                 [(source, meta)].into_iter().collect(),
             ));
         }
     }
-    HelperBinding::merge_all(bindings)
+    AbstractValue::merge_all(values)
+}
+
+fn fragment_output_value(source: String, target: ProjectionTarget) -> AbstractValue {
+    match target {
+        ProjectionTarget::Helper => AbstractValue::PathSet([source].into_iter().collect()),
+        ProjectionTarget::Fragment => {
+            AbstractValue::OutputSet([(source, Default::default())].into_iter().collect())
+        }
+    }
 }
 
 fn structured_fragment_sources(analysis: &BoundHelperAnalysis) -> BTreeSet<String> {
@@ -144,6 +137,23 @@ mod tests {
                 "app".to_string(),
                 FragmentBinding::OutputSet(BTreeSet::from(["podLabels".to_string()])),
             )])))
+        );
+    }
+
+    #[test]
+    fn fragment_binding_projection_merges_scalar_outputs_into_one_output_set() {
+        let mut analysis = BoundHelperAnalysis::default();
+        analysis.add_output_meta("image.repository".to_string(), HelperOutputMeta::default());
+        analysis.add_output_meta("image.tag".to_string(), HelperOutputMeta::default());
+        analysis.fragment_output.insert("extraEnv".to_string());
+
+        assert_eq!(
+            project_fragment_binding(analysis),
+            Some(FragmentBinding::OutputSet(BTreeSet::from([
+                "extraEnv".to_string(),
+                "image.repository".to_string(),
+                "image.tag".to_string(),
+            ])))
         );
     }
 }

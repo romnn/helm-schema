@@ -3,7 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::expression_analysis::helper_binding_from_expr;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_binding::HelperBinding;
@@ -112,12 +113,11 @@ pub(crate) fn collect_helper_binding_output_uses_from_expr(
         return;
     }
 
-    if let Some(binding) =
-        helper_binding_from_expr(expr, Some(context.bindings), context.current_dot)
-    {
-        collect_helper_binding_output_uses(
+    let env = EvalEnv::from_helper_context(Some(context.bindings), context.current_dot);
+    if let Some(value) = eval_expr(expr, &env).value {
+        collect_abstract_output_uses(
             outputs,
-            &binding,
+            &value,
             context.relative_path,
             context.kind,
             context.active_output_predicates,
@@ -308,52 +308,7 @@ fn push_output_path(
 pub(crate) fn helper_binding_output_meta(
     binding: &HelperBinding,
 ) -> BTreeMap<String, HelperOutputMeta> {
-    let mut out = BTreeMap::new();
-    collect_helper_binding_output_meta(binding, &mut out);
-    out
-}
-
-fn collect_helper_binding_output_meta(
-    binding: &HelperBinding,
-    out: &mut BTreeMap<String, HelperOutputMeta>,
-) {
-    match binding {
-        HelperBinding::ValuesPath(path) => {
-            out.entry(path.clone()).or_default();
-        }
-        HelperBinding::PathSet(paths) => {
-            for path in paths {
-                out.entry(path.clone()).or_default();
-            }
-        }
-        HelperBinding::OutputSet(meta_by_path) => {
-            for (path, meta) in meta_by_path {
-                out.entry(path.clone()).or_default().merge_ref(meta);
-            }
-        }
-        HelperBinding::Dict(entries) => {
-            for binding in entries.values() {
-                collect_helper_binding_output_meta(binding, out);
-            }
-        }
-        HelperBinding::List(items) => {
-            for binding in items {
-                collect_helper_binding_output_meta(binding, out);
-            }
-        }
-        HelperBinding::Overlay { entries, fallback } => {
-            for binding in entries.values() {
-                collect_helper_binding_output_meta(binding, out);
-            }
-            collect_helper_binding_output_meta(fallback, out);
-        }
-        HelperBinding::Choice(choices) => {
-            for binding in choices {
-                collect_helper_binding_output_meta(binding, out);
-            }
-        }
-        HelperBinding::RootContext | HelperBinding::Unknown | HelperBinding::StringSet(_) => {}
-    }
+    AbstractValue::from_helper_binding(binding).output_meta()
 }
 
 #[cfg(test)]

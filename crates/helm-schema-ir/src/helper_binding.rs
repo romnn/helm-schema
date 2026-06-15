@@ -28,10 +28,6 @@ impl HelperBinding {
             .unwrap_or(FragmentBinding::Unknown)
     }
 
-    pub(crate) fn paths(&self) -> BTreeSet<String> {
-        AbstractValue::from_helper_binding(self).paths()
-    }
-
     pub(crate) fn strings(&self) -> BTreeSet<String> {
         AbstractValue::from_helper_binding(self).strings()
     }
@@ -61,45 +57,6 @@ impl HelperBinding {
             0 => None,
             1 => choices.into_iter().next(),
             _ => Some(Self::Choice(choices)),
-        }
-    }
-
-    pub(crate) fn merge_all(bindings: Vec<Self>) -> Option<Self> {
-        let mut map = BTreeMap::new();
-        let mut non_dict_bindings = Vec::new();
-
-        let mut pending = bindings;
-        while let Some(binding) = pending.pop() {
-            match binding {
-                Self::Choice(choices) => {
-                    pending.extend(choices);
-                }
-                Self::Dict(entries) => {
-                    for (key, value) in entries {
-                        let merged = match map.remove(&key) {
-                            Some(existing) => Self::choice(vec![existing, value]),
-                            None => Some(value),
-                        };
-                        if let Some(merged) = merged {
-                            map.insert(key, merged);
-                        }
-                    }
-                }
-                other => {
-                    non_dict_bindings.push(other);
-                }
-            }
-        }
-
-        let fallback = Self::choice(non_dict_bindings);
-        match (map.is_empty(), fallback) {
-            (true, None) => None,
-            (false, None) => Some(Self::Dict(map)),
-            (true, Some(fallback)) => Some(fallback),
-            (false, Some(fallback)) => Some(Self::Overlay {
-                entries: map,
-                fallback: Box::new(fallback),
-            }),
         }
     }
 }

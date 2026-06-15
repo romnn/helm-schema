@@ -2,7 +2,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::expression_analysis::helper_binding_from_expr;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
@@ -17,13 +18,14 @@ pub(crate) fn direct_bound_paths_from_text_in_context(
     current_dot: Option<&HelperBinding>,
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
     for expr in parse_expr_text(text) {
         walk_expr_excluding_helper_call_args(&expr, &mut |node| {
             if expr_contains_helper_call(node) {
                 return;
             }
-            if let Some(binding) = helper_binding_from_expr(node, Some(bindings), current_dot) {
-                out.extend(binding.paths());
+            if let Some(value) = eval_expr(node, &env).value {
+                out.extend(value.paths());
             }
         });
     }

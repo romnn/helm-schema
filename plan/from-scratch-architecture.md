@@ -1712,7 +1712,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   their own constructors. Shared path/string/range-item mechanics now live on
   `AbstractValue` too, while the remaining helper-vs-fragment range policy
   differences are explicit abstract-value operations instead of duplicate DTO
-  walkers. Contract emission
+  walkers. Bound-helper analysis now lowers through that same abstract-value
+  lattice before projecting to helper or fragment compatibility bindings, and
+  helper output metadata collection is an abstract-value projection rather
+  than another helper-binding walker. Direct path and output-use collectors
+  now consume abstract evaluator results directly instead of routing through
+  helper-binding DTOs just to recover paths again. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
