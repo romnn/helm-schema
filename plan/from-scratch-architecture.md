@@ -1629,6 +1629,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `manifest_analysis` now returns a named manifest-analysis artifact instead
   of mutating caller-owned contract and schema-universe state, and the helper
   call graph has been narrowed back to a private evidence-collector detail.
+  The CLI chart stage has now been split by responsibility too: chart
+  discovery/archive extraction, manifest-file role listing, define-index/file
+  source construction, static CRD collection, composed values/comment
+  descriptions, and value-path scoping each have local owners behind the
+  unchanged `chart::...` API. Template evidence has the matching split:
+  helper call graph construction/reachability is separate from default
+  fallback/type-hint extraction, so the analysis stage consumes named evidence
+  instead of a mixed chart/helper/value module.
   The obsolete one-method `SymbolicIrGenerator` facade and the follow-on
   `generate_projection` wrapper have also been removed: tests and external
   fixture callers now construct `SymbolicIrContext` explicitly, generate a

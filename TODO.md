@@ -3,3 +3,7 @@
 - compare against the original from scratch plan
 - further remove heuristics in favor of proper structural analysis 
 - update readme
+- move tests into tests folder outside main logic
+- use indoc everywhere
+- fix CI
+- setup nice skills and agent files
