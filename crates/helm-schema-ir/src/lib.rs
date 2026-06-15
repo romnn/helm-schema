@@ -31,6 +31,8 @@ mod fragment_binding;
 mod fragment_binding_projection;
 mod fragment_classification;
 mod fragment_expr_eval;
+#[cfg(test)]
+mod fragment_expr_eval_tests;
 mod fragment_range_scope;
 #[cfg(test)]
 mod fragment_scope_eval_tests;

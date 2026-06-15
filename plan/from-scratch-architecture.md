@@ -1423,7 +1423,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   value path with root bindings, current dot, and helper-local fragment
   bindings. The residual A2 compatibility surface is therefore the
   `BoundHelperAnalysis` / `HelperFragmentOutputUse` DTO projection, not a
-  parallel helper-body interpreter.
+  parallel helper-body interpreter. Helper-output projection has been split
+  into a focused module family: abstract output-use collection, static YAML
+  output-key extraction, and regression tests are separate from the module
+  root. Fragment expression evaluator regressions also live outside the
+  production evaluator module, and the evaluator itself is split into
+  entry-point projection, helper-call resolution, and context state. That
+  keeps the remaining compatibility evaluator focused on expression
+  resolution rather than test scaffolding or helper-summary internals.
 - **A3 — internal documents + contract projection** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected into contract claims, so downstream is untouched

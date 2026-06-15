@@ -448,7 +448,7 @@ Current result:
   value-path/guard context resolution. Those compatibility responsibilities now
   live in focused modules:
   - `local_projection.rs`
-  - `helper_output_projection.rs`
+  - `helper_output_projection/`
   - `value_path_context.rs`
   This keeps `SymbolicWalker` closer to traversal/orchestration while the
   shared interpreter absorbs expression semantics.
@@ -691,7 +691,7 @@ Current result:
   abstract value lattice model `dict`, `list`, `merge`, `default`, `printf`,
   `index`, and pipelines for both helper-binding and fragment-binding
   consumers. This deletes the previous duplicated expression semantics from
-  `fragment_expr_eval.rs`.
+  `fragment_expr_eval`.
 - Pipeline `ternary` is now part of the core expression evaluator: the pipeline
   input is the condition, while the first two arguments are the value branches.
   Bitnami-style `typeIs ... | ternary .value (.value | toYaml)` helpers now
@@ -726,6 +726,9 @@ Current result:
 - The obsolete `fragment_binding_eval` module is gone. Its final
   outer-expression resolver is colocated with `fragment_expr_eval`, so
   fragment binding compatibility now has one expression-evaluation home.
+  `fragment_expr_eval` is now a module family: entry-point projection,
+  helper-call resolution, context state, and regression tests are split into
+  separate files.
 - Helper-argument binding projection is centralized in
   `helper_arg_projection`. Plain helper calls and fragment-local helper calls
   now share the same typed `dict` / merge projection, with only the
