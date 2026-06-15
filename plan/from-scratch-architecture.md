@@ -1656,7 +1656,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `kind: List` item extraction, and span collection each have one local owner.
   This keeps the current rendered-source fallback available while making the
   future abstract-document identity projection a replacement for span
-  collection rather than a rewrite of index state. Contract emission
+  collection rather than a rewrite of index state. Rendered YAML source-state
+  tracking has likewise been split into a local module family: the public
+  context remains the small walker-facing API, while text-span ingestion,
+  source-position/block-scalar checks, inline mapping value-path detection,
+  and fragment-indent interpretation each have one owner. That preserves the
+  existing rendered-source fallback while isolating the pieces A3's internal
+  document projection should eventually retire or reuse. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
