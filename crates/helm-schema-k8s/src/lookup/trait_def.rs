@@ -1,11 +1,11 @@
 use helm_schema_ir::{ProviderSchemaUse, ResourceRef, YamlPath};
 use serde_json::Value;
 
+use crate::api_presence::ApiPresenceQuery;
 use crate::diagnostic::Diagnostic;
 use crate::filename::ordered_api_versions_for_resource;
 use crate::inference::candidate::ApiVersionCandidate;
 
-use super::api_presence::ApiPresenceQuery;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome};

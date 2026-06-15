@@ -1,4 +1,5 @@
-use super::api_presence::ApiPresenceQuery;
+use crate::api_presence::ApiPresenceQuery;
+
 use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 use super::trait_def::K8sSchemaProvider;
 

@@ -1,4 +1,3 @@
-mod api_presence;
 mod api_presence_executor;
 mod api_version_inference_cache;
 mod chain;
@@ -12,7 +11,7 @@ mod resource_lookup_plan;
 mod trace;
 mod trait_def;
 
-pub use api_presence::ApiPresenceQuery;
+pub use crate::api_presence::ApiPresenceQuery;
 pub use chain::Chain;
 pub use chain_outcome::ChainLookupOutcome;
 pub use provider_origin::ProviderOrigin;

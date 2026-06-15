@@ -46,6 +46,21 @@ impl ApiPresenceQuery {
             _ => None,
         }
     }
+
+    /// Canonical Helm literal for this query.
+    ///
+    /// Resource queries intentionally use only apiVersion and kind. Other
+    /// [`ResourceRef`] fields describe schema-resolution candidates and are not
+    /// part of capability-presence identity.
+    #[must_use]
+    pub fn canonical_helm_literal(&self) -> String {
+        match self {
+            ApiPresenceQuery::Resource(resource) => {
+                format!("{}/{}", resource.api_version, resource.kind)
+            }
+            ApiPresenceQuery::GroupVersion { api_version } => api_version.clone(),
+        }
+    }
 }
 
 pub(crate) fn is_k8s_api_version_segment(segment: &str) -> bool {

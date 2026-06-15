@@ -1,6 +1,7 @@
 use helm_schema_ir::{ResourceRef, YamlPath};
 
-use super::api_presence::ApiPresenceQuery;
+use crate::api_presence::ApiPresenceQuery;
+
 use super::chain_outcome::ChainLookupOutcome;
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;

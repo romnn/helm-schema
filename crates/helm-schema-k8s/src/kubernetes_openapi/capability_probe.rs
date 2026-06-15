@@ -1,6 +1,6 @@
 use helm_schema_ir::ResourceRef;
 
-use crate::lookup::ApiPresenceQuery;
+use crate::api_presence::ApiPresenceQuery;
 
 /// Declarative probe table for `.Capabilities.APIVersions.Has "group/version"`.
 ///

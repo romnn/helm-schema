@@ -13,6 +13,7 @@
 //! The per-provider modules ([`kubernetes_openapi`], [`crds_catalog`],
 //! [`local_override`], [`local_schema_universe`]) are slim composers of the above.
 
+mod api_presence;
 pub mod builtin_groups;
 pub mod cache;
 pub mod capability_eval;
@@ -28,6 +29,7 @@ pub mod lookup;
 mod metadata_enrichment;
 mod schema_doc;
 
+pub use api_presence::ApiPresenceQuery;
 pub use builtin_groups::is_k8s_builtin_group;
 pub use cache::{
     CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, LayoutCheckOutcome, LayoutChecker, NegativeCache,
@@ -53,7 +55,7 @@ pub use local_schema_universe::{
     ChartLocalCrdSchemaProvider, LocalResourceSchema, LocalSchemaUniverse,
 };
 pub use lookup::{
-    ApiPresenceQuery, Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
+    Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
     LookupTraceOutcome, LookupTraceSubject, ProviderLookupResult, ProviderOrigin,
     SourceProbeTraceOutcome, TracedApiPresenceOutcome, TracedLookupOutcome,
 };

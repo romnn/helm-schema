@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use helm_schema_ir::{ResourceRef, YamlPath};
 use serde_json::Value;
 
+use crate::api_presence::ApiPresenceQuery;
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, default_source_id, k8s_cache_path,
     not_found_marker_exists, not_found_marker_path, write_meta_sidecar, write_not_found_marker,
@@ -17,8 +18,8 @@ use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
-    ApiPresenceQuery, K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin,
-    SourceProbeTraceOutcome, TracedApiPresenceOutcome,
+    K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin, SourceProbeTraceOutcome,
+    TracedApiPresenceOutcome,
 };
 use crate::schema_doc::SchemaDoc;
 

@@ -88,17 +88,8 @@ impl K8sSchemaProvider for FakeProvider {
 
     fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
         self.capability_answers
-            .get(&capability_query_key(query))
+            .get(&query.canonical_helm_literal())
             .copied()
-    }
-}
-
-fn capability_query_key(query: &ApiPresenceQuery) -> String {
-    match query {
-        ApiPresenceQuery::GroupVersion { api_version } => api_version.clone(),
-        ApiPresenceQuery::Resource(resource) => {
-            format!("{}/{}", resource.api_version, resource.kind)
-        }
     }
 }
 

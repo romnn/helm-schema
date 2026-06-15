@@ -1856,9 +1856,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Resource-qualified capability literals bypass the table and probe their
   kind directly, including core resources such as `v1/Secret`; only
   api-version-only literals consult the declarative table. Capability literals
-  now parse into a typed `ApiPresenceQuery`; the raw-string oracle method is a
-  compatibility adapter over the typed query, and the chain exposes
-  `kube_version()` through the same provider boundary. Capability probes now
+  now parse into a typed, shared `ApiPresenceQuery`; the raw-string oracle
+  method is a compatibility adapter over the typed query, and branch selection
+  consumes the same typed capability-query boundary instead of reparsing
+  literals at the chain adapter. The chain exposes `kube_version()` through
+  the same provider boundary. Capability probes now
   have a traced provider-chain entry point, and the OpenAPI provider records
   per-source cache/download probe outcomes (`Found`, authoritative absent,
   uncertain) before projecting the same `Option<bool>` answer as before. B3's

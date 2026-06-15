@@ -1,11 +1,11 @@
 use helm_schema_ir::{HelperBranch, ProviderSchemaUse, ResourceRef, YamlPath};
 use serde_json::Value;
 
+use crate::api_presence::ApiPresenceQuery;
 use crate::capability_eval::{self, CapabilityOracle};
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::inference::ApiVersionInferenceOutcome;
 
-use super::api_presence::ApiPresenceQuery;
 use super::api_presence_executor::ApiPresenceLookupExecutor;
 use super::api_version_inference_cache::ApiVersionInferenceCache;
 use super::chain_outcome::ChainLookupOutcome;
@@ -350,7 +350,7 @@ impl K8sSchemaProvider for Chain {
 }
 
 impl CapabilityOracle for Chain {
-    fn capability_has(&self, api: &str) -> Option<bool> {
-        <Self as K8sSchemaProvider>::capability_has_at_primary_version(self, api)
+    fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {
+        <Self as K8sSchemaProvider>::capability_has_query_at_primary_version(self, query)
     }
 }

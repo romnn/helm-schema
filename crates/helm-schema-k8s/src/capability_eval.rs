@@ -41,13 +41,12 @@
 
 use helm_schema_ir::{CapabilityGuard, HelperBranch, HelperBranchBody};
 
-/// Authoritative answer to `.Capabilities.APIVersions.Has "api"` for
-/// a specific Kubernetes version. Production implementation lives in
-/// the chain layer and consults the configured providers; tests use
-/// [`StaticOracle`] with explicit yes/no answers.
-///
-/// `api` is the literal Helm argument: `group/version`,
-/// `group/version/Kind`, or `version` for the core API.
+use crate::api_presence::ApiPresenceQuery;
+
+/// Authoritative answer to a parsed `.Capabilities.APIVersions.Has` query for
+/// a specific Kubernetes version. Production implementation lives in the chain
+/// layer and consults the configured providers; tests use [`StaticOracle`] with
+/// explicit yes/no answers.
 ///
 /// Returns:
 ///   - `Some(true)` — the api (and kind, if specified) exists in the
@@ -59,7 +58,15 @@ use helm_schema_ir::{CapabilityGuard, HelperBranch, HelperBranchBody};
 ///     `None` as "potentially live" so unknown guards never silently
 ///     drop a branch.
 pub trait CapabilityOracle {
-    fn capability_has(&self, api: &str) -> Option<bool>;
+    fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool>;
+
+    /// Compatibility adapter for callers that still hold Helm's literal
+    /// argument text. Invalid literals return `None`, which callers treat as
+    /// "potentially live".
+    fn capability_has_literal(&self, api: &str) -> Option<bool> {
+        let query = ApiPresenceQuery::parse_helm_literal(api)?;
+        self.capability_has_query(&query)
+    }
 }
 
 /// Test oracle: returns whatever was inserted for each api literal.
@@ -67,7 +74,7 @@ pub trait CapabilityOracle {
 /// real provider chain would be heavyweight (network, cache state).
 #[derive(Debug, Default, Clone)]
 pub struct StaticOracle {
-    answers: std::collections::HashMap<String, bool>,
+    answers: std::collections::BTreeMap<String, bool>,
 }
 
 impl StaticOracle {
@@ -78,14 +85,16 @@ impl StaticOracle {
 
     #[must_use]
     pub fn with(mut self, api: &str, has: bool) -> Self {
-        self.answers.insert(api.to_string(), has);
+        if let Some(query) = ApiPresenceQuery::parse_helm_literal(api) {
+            self.answers.insert(query.canonical_helm_literal(), has);
+        }
         self
     }
 }
 
 impl CapabilityOracle for StaticOracle {
-    fn capability_has(&self, api: &str) -> Option<bool> {
-        self.answers.get(api).copied()
+    fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {
+        self.answers.get(&query.canonical_helm_literal()).copied()
     }
 }
 
@@ -105,8 +114,10 @@ pub fn evaluate_guard<O: CapabilityOracle + ?Sized>(
 ) -> bool {
     match guard {
         None => true,
-        Some(CapabilityGuard::Has { api }) => oracle.capability_has(api).unwrap_or(true),
-        Some(CapabilityGuard::NotHas { api }) => oracle.capability_has(api).is_none_or(|b| !b),
+        Some(CapabilityGuard::Has { api }) => oracle.capability_has_literal(api).unwrap_or(true),
+        Some(CapabilityGuard::NotHas { api }) => {
+            oracle.capability_has_literal(api).is_none_or(|has| !has)
+        }
         Some(CapabilityGuard::Opaque { .. }) => true,
     }
 }
