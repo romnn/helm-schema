@@ -1645,7 +1645,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   path is now split further into a small output-model/entry module and a
   private evaluator that owns recursion/cycle traversal state explicitly,
   keeping literal helper interpretation as one replaceable implementation
-  rather than a mixed model/evaluator grab bag. Contract emission
+  rather than a mixed model/evaluator grab bag. The resource identity detector
+  itself is now split by responsibility too: document scanning, apiVersion
+  output analysis, and resource-state aggregation are separate local modules,
+  so future abstract-document identity projection can replace the scanner
+  without also carrying helper-call or branch-output internals. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization

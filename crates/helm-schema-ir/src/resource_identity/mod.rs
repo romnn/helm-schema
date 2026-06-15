@@ -5,9 +5,13 @@
 //! apiVersion helper-output evaluator behind one boundary makes the future
 //! abstract-document identity projection a local replacement.
 
+mod api_version;
 mod detector;
 mod helper_output;
 mod locator;
+mod state;
+#[cfg(test)]
+mod tests;
 
 pub(crate) use detector::ResourceIdentityDetector;
 pub(crate) use locator::ResourceIdentityIndex;
