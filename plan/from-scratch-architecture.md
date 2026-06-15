@@ -1662,7 +1662,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   source-position/block-scalar checks, inline mapping value-path detection,
   and fragment-indent interpretation each have one owner. That preserves the
   existing rendered-source fallback while isolating the pieces A3's internal
-  document projection should eventually retire or reuse. Contract emission
+  document projection should eventually retire or reuse. Value-path context
+  projection has also been split by semantic role: path/default resolution,
+  local alias/output-meta projection, and condition-predicate lowering now
+  have separate owners behind the same walker-facing context. Helper fragment
+  output collection has the matching split: the node runtime owns traversal,
+  branch/range state, and rendered context, while output-action expression
+  projection owns direct, local, nested helper, and assignment-derived
+  fragment output claims. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
