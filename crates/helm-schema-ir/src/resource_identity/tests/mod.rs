@@ -1,1 +1,2 @@
 mod detector;
+mod locator;

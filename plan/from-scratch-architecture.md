@@ -1649,7 +1649,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   itself is now split by responsibility too: document scanning, apiVersion
   output analysis, and resource-state aggregation are separate local modules,
   so future abstract-document identity projection can replace the scanner
-  without also carrying helper-call or branch-output internals. Contract emission
+  without also carrying helper-call or branch-output internals. The remaining
+  source-position resource locator has been split the same way: the active
+  index now owns only byte-position lookup and list-path rebasing, while
+  source-document discovery, manifest-resource detection, transparent
+  `kind: List` item extraction, and span collection each have one local owner.
+  This keeps the current rendered-source fallback available while making the
+  future abstract-document identity projection a replacement for span
+  collection rather than a rewrite of index state. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization

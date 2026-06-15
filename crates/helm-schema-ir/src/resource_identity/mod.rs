@@ -8,7 +8,11 @@
 mod api_version;
 mod detector;
 mod helper_output;
+mod list_envelope;
 mod locator;
+mod manifest_resource;
+mod source_documents;
+mod span_collection;
 mod state;
 #[cfg(test)]
 mod tests;
