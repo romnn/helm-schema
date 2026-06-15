@@ -45,11 +45,87 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn shallow_paths(&self) -> BTreeSet<String> {
+        match self {
+            Self::ValuesPath(path) => [path.clone()].into_iter().collect(),
+            Self::OutputSet(outputs) => outputs.keys().cloned().collect(),
+            Self::PathSet(paths) => paths.clone(),
+            Self::Overlay { entries, fallback } => entries
+                .values()
+                .flat_map(Self::shallow_paths)
+                .chain(fallback.shallow_paths())
+                .collect(),
+            Self::Choice(choices) => choices.iter().flat_map(Self::shallow_paths).collect(),
+            Self::Top
+            | Self::Unknown
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::Dict(_)
+            | Self::List(_) => BTreeSet::new(),
+        }
+    }
+
     pub(crate) fn strings(&self) -> BTreeSet<String> {
         match self {
             Self::StringSet(strings) => strings.clone(),
             Self::Choice(choices) => choices.iter().flat_map(Self::strings).collect(),
             _ => BTreeSet::new(),
+        }
+    }
+
+    pub(crate) fn helper_range_item(&self) -> Option<Self> {
+        match self {
+            Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
+            Self::PathSet(paths) => Some(Self::PathSet(
+                paths.iter().map(|path| item_path(path)).collect(),
+            )),
+            Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
+            Self::Dict(entries) => Self::choice(entries.values().cloned().collect()),
+            Self::List(items) => Self::choice(items.clone()),
+            Self::Overlay { entries, fallback } => {
+                let mut choices: Vec<_> = entries.values().cloned().collect();
+                if let Some(fallback_item) = fallback.helper_range_item() {
+                    choices.push(fallback_item);
+                }
+                Self::choice(choices)
+            }
+            Self::Choice(choices) => {
+                Self::choice(choices.iter().filter_map(Self::helper_range_item).collect())
+            }
+            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => None,
+        }
+    }
+
+    pub(crate) fn fragment_range_item(&self) -> Option<Self> {
+        match self {
+            Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
+            Self::PathSet(paths) => Some(Self::PathSet(
+                paths.iter().map(|path| item_path(path)).collect(),
+            )),
+            Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
+            Self::List(items) => Self::choice(items.clone()),
+            Self::Choice(choices) => Self::choice(
+                choices
+                    .iter()
+                    .filter_map(Self::fragment_range_item)
+                    .collect(),
+            ),
+            Self::Top
+            | Self::Unknown
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::Dict(_)
+            | Self::Overlay { .. } => None,
+        }
+    }
+
+    pub(crate) fn definitely_nonempty_iterable(&self) -> bool {
+        match self {
+            Self::List(items) => !items.is_empty(),
+            Self::Choice(choices) => {
+                !choices.is_empty() && choices.iter().all(Self::definitely_nonempty_iterable)
+            }
+            _ => false,
         }
     }
 
@@ -433,12 +509,12 @@ impl AbstractValue {
                     .collect::<Option<BTreeMap<_, _>>>()?,
                 fallback: Box::new(fallback.to_helper_binding()?),
             }),
-            Self::Choice(choices) => Some(HelperBinding::Choice(
+            Self::Choice(choices) => HelperBinding::choice(
                 choices
                     .iter()
                     .map(Self::to_helper_binding)
-                    .collect::<Option<BTreeSet<_>>>()?,
-            )),
+                    .collect::<Option<Vec<_>>>()?,
+            ),
         }
     }
 
@@ -482,6 +558,14 @@ impl AbstractValue {
     }
 }
 
+fn item_path(path: &str) -> String {
+    if path.is_empty() {
+        "*".to_string()
+    } else {
+        format!("{path}.*")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -492,6 +576,10 @@ mod tests {
 
     fn string(value: &str) -> AbstractValue {
         AbstractValue::StringSet(BTreeSet::from([value.to_string()]))
+    }
+
+    fn paths(values: &[&str]) -> BTreeSet<String> {
+        values.iter().map(|value| value.to_string()).collect()
     }
 
     fn join(values: Vec<AbstractValue>) -> AbstractValue {
@@ -581,6 +669,31 @@ mod tests {
                 )]),
                 fallback: Box::new(path("probe")),
             }
+        );
+    }
+
+    #[test]
+    fn shallow_paths_do_not_descend_structured_maps() {
+        let value = AbstractValue::Dict(BTreeMap::from([(
+            "metadata".to_string(),
+            AbstractValue::ValuesPath("podLabels".to_string()),
+        )]));
+
+        assert_eq!(value.shallow_paths(), BTreeSet::new());
+        assert_eq!(value.paths(), paths(&["podLabels"]));
+    }
+
+    #[test]
+    fn helper_and_fragment_range_items_keep_distinct_structural_policy() {
+        let value = AbstractValue::Dict(BTreeMap::from([(
+            "name".to_string(),
+            AbstractValue::ValuesPath("containers.name".to_string()),
+        )]));
+
+        assert_eq!(value.fragment_range_item(), None);
+        assert_eq!(
+            value.helper_range_item(),
+            Some(AbstractValue::ValuesPath("containers.name".to_string()))
         );
     }
 }

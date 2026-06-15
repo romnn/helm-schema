@@ -1709,7 +1709,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   fragment-binding walkers. Structured output-path construction has moved
   into `AbstractValue` as well; the legacy helper/fragment binding lattices
   now receive those shapes only by boundary conversion instead of owning
-  their own constructors. Contract emission
+  their own constructors. Shared path/string/range-item mechanics now live on
+  `AbstractValue` too, while the remaining helper-vs-fragment range policy
+  differences are explicit abstract-value operations instead of duplicate DTO
+  walkers. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
