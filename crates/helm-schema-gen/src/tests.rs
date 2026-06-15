@@ -219,6 +219,85 @@ impl K8sSchemaProvider for DescriptionProvider {
     }
 }
 
+#[derive(Debug)]
+struct SharedObjectProvider;
+
+impl K8sSchemaProvider for SharedObjectProvider {
+    fn schema_for_use(&self, _use_: &ProviderSchemaUse) -> Option<Value> {
+        Some(serde_json::json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            },
+            "additionalProperties": false
+        }))
+    }
+
+    fn schema_for_resource_path(&self, _resource: &ResourceRef, _path: &YamlPath) -> Option<Value> {
+        None
+    }
+
+    fn origin(&self) -> ProviderOrigin {
+        ProviderOrigin::KubernetesOpenApi
+    }
+
+    fn has_resource(&self, _resource: &ResourceRef) -> bool {
+        true
+    }
+}
+
+#[test]
+fn repeated_exact_provider_subtrees_emit_shared_definitions() {
+    let resource = ResourceRef {
+        api_version: "example.io/v1".to_string(),
+        kind: "Example".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+    let uses = vec![
+        ContractUse {
+            source_expr: "first".to_string(),
+            path: YamlPath(vec!["spec".to_string(), "first".to_string()]),
+            kind: ValueKind::Fragment,
+            guards: Vec::new(),
+            resource: Some(resource.clone()),
+        },
+        ContractUse {
+            source_expr: "second".to_string(),
+            path: YamlPath(vec!["spec".to_string(), "second".to_string()]),
+            kind: ValueKind::Fragment,
+            guards: Vec::new(),
+            resource: Some(resource),
+        },
+    ];
+    let schema_signals = schema_signals_for(uses);
+
+    let schema = generate_values_schema(ValuesSchemaInput::new(
+        &schema_signals,
+        &SharedObjectProvider,
+    ));
+
+    let expected_definition = serde_json::json!({
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" }
+        },
+        "additionalProperties": false
+    });
+    assert_eq!(
+        schema.pointer("/properties/first"),
+        Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
+    );
+    assert_eq!(
+        schema.pointer("/properties/second"),
+        Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
+    );
+    assert_eq!(
+        schema.pointer("/$defs/providerSchema1"),
+        Some(&expected_definition)
+    );
+}
+
 #[test]
 fn values_yaml_comments_override_provider_descriptions() {
     let uses = vec![ContractUse {

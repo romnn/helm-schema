@@ -1,4 +1,260 @@
 {
+  "$defs": {
+    "providerSchema1": {
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "x-kubernetes-list-type": "atomic"
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": "object"
+          },
+          "type": "array",
+          "x-kubernetes-list-type": "atomic"
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
+    },
+    "providerSchema2": {
+      "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "x-kubernetes-list-type": "atomic"
+    },
+    "providerSchema3": {
+      "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "x-kubernetes-list-type": "atomic"
+    },
+    "providerSchema4": {
+      "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
+      "items": {
+        "description": "VolumeMount describes a mounting of a Volume within a container.",
+        "properties": {
+          "mountPath": {
+            "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+            "type": "string"
+          },
+          "mountPropagation": {
+            "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10. When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified (which defaults to None).",
+            "type": "string"
+          },
+          "name": {
+            "description": "This must match the Name of a Volume.",
+            "type": "string"
+          },
+          "readOnly": {
+            "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
+            "type": "boolean"
+          },
+          "recursiveReadOnly": {
+            "description": "RecursiveReadOnly specifies whether read-only mounts should be handled recursively.\n\nIf ReadOnly is false, this field has no meaning and must be unspecified.\n\nIf ReadOnly is true, and this field is set to Disabled, the mount is not made recursively read-only.  If this field is set to IfPossible, the mount is made recursively read-only, if it is supported by the container runtime.  If this field is set to Enabled, the mount is made recursively read-only if it is supported by the container runtime, otherwise the pod will not be started and an error will be generated to indicate the reason.\n\nIf this field is set to IfPossible or Enabled, MountPropagation must be set to None (or be unspecified, which defaults to None).\n\nIf this field is not specified, it is treated as an equivalent of Disabled.",
+            "type": "string"
+          },
+          "subPath": {
+            "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+            "type": "string"
+          },
+          "subPathExpr": {
+            "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "mountPath"
+        ],
+        "type": "object"
+      },
+      "type": "array",
+      "x-kubernetes-list-map-keys": [
+        "mountPath"
+      ],
+      "x-kubernetes-list-type": "map",
+      "x-kubernetes-patch-merge-key": "mountPath",
+      "x-kubernetes-patch-strategy": "merge"
+    },
+    "providerSchema5": {
+      "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
+      "properties": {
+        "exec": {
+          "description": "ExecAction describes a \"run in container\" action.",
+          "properties": {
+            "command": {
+              "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            }
+          },
+          "type": "object"
+        },
+        "failureThreshold": {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "grpc": {
+          "description": "GRPCAction specifies an action involving a GRPC service.",
+          "properties": {
+            "port": {
+              "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
+              "format": "int32",
+              "type": "integer"
+            },
+            "service": {
+              "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "port"
+          ],
+          "type": "object"
+        },
+        "httpGet": {
+          "description": "HTTPGetAction describes an action based on HTTP Get requests.",
+          "properties": {
+            "host": {
+              "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
+              "type": "string"
+            },
+            "httpHeaders": {
+              "description": "Custom headers to set in the request. HTTP allows repeated headers.",
+              "items": {
+                "description": "HTTPHeader describes a custom header to be used in HTTP probes",
+                "properties": {
+                  "name": {
+                    "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "The header field value",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "type": "object"
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            },
+            "path": {
+              "description": "Path to access on the HTTP server.",
+              "type": "string"
+            },
+            "port": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "scheme": {
+              "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "port"
+          ],
+          "type": "object"
+        },
+        "initialDelaySeconds": {
+          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
+          "type": "integer"
+        },
+        "periodSeconds": {
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "successThreshold": {
+          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "tcpSocket": {
+          "description": "TCPSocketAction describes an action based on opening a socket",
+          "properties": {
+            "host": {
+              "description": "Optional: Host name to connect to, defaults to the pod IP.",
+              "type": "string"
+            },
+            "port": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "port"
+          ],
+          "type": "object"
+        },
+        "terminationGracePeriodSeconds": {
+          "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "timeoutSeconds": {
+          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
@@ -758,12 +1014,7 @@
       "type": "object"
     },
     "args": {
-      "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-      "items": {
-        "type": "string"
-      },
-      "type": "array",
-      "x-kubernetes-list-type": "atomic"
+      "$ref": "#/$defs/providerSchema2"
     },
     "auth": {
       "additionalProperties": false,
@@ -875,12 +1126,7 @@
       "type": "string"
     },
     "command": {
-      "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-      "items": {
-        "type": "string"
-      },
-      "type": "array",
-      "x-kubernetes-list-type": "atomic"
+      "$ref": "#/$defs/providerSchema3"
     },
     "commonAnnotations": {
       "additionalProperties": {
@@ -1100,439 +1346,13 @@
       "type": "object"
     },
     "customLivenessProbe": {
-      "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
-      "properties": {
-        "exec": {
-          "description": "ExecAction describes a \"run in container\" action.",
-          "properties": {
-            "command": {
-              "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            }
-          },
-          "type": "object"
-        },
-        "failureThreshold": {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "grpc": {
-          "description": "GRPCAction specifies an action involving a GRPC service.",
-          "properties": {
-            "port": {
-              "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
-              "format": "int32",
-              "type": "integer"
-            },
-            "service": {
-              "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "httpGet": {
-          "description": "HTTPGetAction describes an action based on HTTP Get requests.",
-          "properties": {
-            "host": {
-              "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
-              "type": "string"
-            },
-            "httpHeaders": {
-              "description": "Custom headers to set in the request. HTTP allows repeated headers.",
-              "items": {
-                "description": "HTTPHeader describes a custom header to be used in HTTP probes",
-                "properties": {
-                  "name": {
-                    "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The header field value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ],
-                "type": "object"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            },
-            "path": {
-              "description": "Path to access on the HTTP server.",
-              "type": "string"
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "scheme": {
-              "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "initialDelaySeconds": {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "successThreshold": {
-          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "tcpSocket": {
-          "description": "TCPSocketAction describes an action based on opening a socket",
-          "properties": {
-            "host": {
-              "description": "Optional: Host name to connect to, defaults to the pod IP.",
-              "type": "string"
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "terminationGracePeriodSeconds": {
-          "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "timeoutSeconds": {
-          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "type": "object"
+      "$ref": "#/$defs/providerSchema5"
     },
     "customReadinessProbe": {
-      "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
-      "properties": {
-        "exec": {
-          "description": "ExecAction describes a \"run in container\" action.",
-          "properties": {
-            "command": {
-              "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            }
-          },
-          "type": "object"
-        },
-        "failureThreshold": {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "grpc": {
-          "description": "GRPCAction specifies an action involving a GRPC service.",
-          "properties": {
-            "port": {
-              "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
-              "format": "int32",
-              "type": "integer"
-            },
-            "service": {
-              "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "httpGet": {
-          "description": "HTTPGetAction describes an action based on HTTP Get requests.",
-          "properties": {
-            "host": {
-              "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
-              "type": "string"
-            },
-            "httpHeaders": {
-              "description": "Custom headers to set in the request. HTTP allows repeated headers.",
-              "items": {
-                "description": "HTTPHeader describes a custom header to be used in HTTP probes",
-                "properties": {
-                  "name": {
-                    "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The header field value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ],
-                "type": "object"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            },
-            "path": {
-              "description": "Path to access on the HTTP server.",
-              "type": "string"
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "scheme": {
-              "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "initialDelaySeconds": {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "successThreshold": {
-          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "tcpSocket": {
-          "description": "TCPSocketAction describes an action based on opening a socket",
-          "properties": {
-            "host": {
-              "description": "Optional: Host name to connect to, defaults to the pod IP.",
-              "type": "string"
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "terminationGracePeriodSeconds": {
-          "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "timeoutSeconds": {
-          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "type": "object"
+      "$ref": "#/$defs/providerSchema5"
     },
     "customStartupProbe": {
-      "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
-      "properties": {
-        "exec": {
-          "description": "ExecAction describes a \"run in container\" action.",
-          "properties": {
-            "command": {
-              "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            }
-          },
-          "type": "object"
-        },
-        "failureThreshold": {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "grpc": {
-          "description": "GRPCAction specifies an action involving a GRPC service.",
-          "properties": {
-            "port": {
-              "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
-              "format": "int32",
-              "type": "integer"
-            },
-            "service": {
-              "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "httpGet": {
-          "description": "HTTPGetAction describes an action based on HTTP Get requests.",
-          "properties": {
-            "host": {
-              "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
-              "type": "string"
-            },
-            "httpHeaders": {
-              "description": "Custom headers to set in the request. HTTP allows repeated headers.",
-              "items": {
-                "description": "HTTPHeader describes a custom header to be used in HTTP probes",
-                "properties": {
-                  "name": {
-                    "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The header field value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ],
-                "type": "object"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            },
-            "path": {
-              "description": "Path to access on the HTTP server.",
-              "type": "string"
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "scheme": {
-              "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "initialDelaySeconds": {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "successThreshold": {
-          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "tcpSocket": {
-          "description": "TCPSocketAction describes an action based on opening a socket",
-          "properties": {
-            "host": {
-              "description": "Optional: Host name to connect to, defaults to the pod IP.",
-              "type": "string"
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        },
-        "terminationGracePeriodSeconds": {
-          "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "timeoutSeconds": {
-          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "type": "object"
+      "$ref": "#/$defs/providerSchema5"
     },
     "dataLogDir": {
       "type": "string"
@@ -1541,20 +1361,10 @@
       "additionalProperties": false,
       "properties": {
         "args": {
-          "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "x-kubernetes-list-type": "atomic"
+          "$ref": "#/$defs/providerSchema2"
         },
         "command": {
-          "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "x-kubernetes-list-type": "atomic"
+          "$ref": "#/$defs/providerSchema3"
         },
         "enabled": {
           "anyOf": [
@@ -1630,52 +1440,7 @@
       ]
     },
     "extraVolumeMounts": {
-      "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
-      "items": {
-        "description": "VolumeMount describes a mounting of a Volume within a container.",
-        "properties": {
-          "mountPath": {
-            "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-            "type": "string"
-          },
-          "mountPropagation": {
-            "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10. When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified (which defaults to None).",
-            "type": "string"
-          },
-          "name": {
-            "description": "This must match the Name of a Volume.",
-            "type": "string"
-          },
-          "readOnly": {
-            "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
-            "type": "boolean"
-          },
-          "recursiveReadOnly": {
-            "description": "RecursiveReadOnly specifies whether read-only mounts should be handled recursively.\n\nIf ReadOnly is false, this field has no meaning and must be unspecified.\n\nIf ReadOnly is true, and this field is set to Disabled, the mount is not made recursively read-only.  If this field is set to IfPossible, the mount is made recursively read-only, if it is supported by the container runtime.  If this field is set to Enabled, the mount is made recursively read-only if it is supported by the container runtime, otherwise the pod will not be started and an error will be generated to indicate the reason.\n\nIf this field is set to IfPossible or Enabled, MountPropagation must be set to None (or be unspecified, which defaults to None).\n\nIf this field is not specified, it is treated as an equivalent of Disabled.",
-            "type": "string"
-          },
-          "subPath": {
-            "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-            "type": "string"
-          },
-          "subPathExpr": {
-            "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "mountPath"
-        ],
-        "type": "object"
-      },
-      "type": "array",
-      "x-kubernetes-list-map-keys": [
-        "mountPath"
-      ],
-      "x-kubernetes-list-type": "map",
-      "x-kubernetes-patch-merge-key": "mountPath",
-      "x-kubernetes-patch-strategy": "merge"
+      "$ref": "#/$defs/providerSchema4"
     },
     "extraVolumes": {
       "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
@@ -3417,52 +3182,7 @@
       "type": "object"
     },
     "initContainers": {
-      "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
-      "items": {
-        "description": "VolumeMount describes a mounting of a Volume within a container.",
-        "properties": {
-          "mountPath": {
-            "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-            "type": "string"
-          },
-          "mountPropagation": {
-            "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10. When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified (which defaults to None).",
-            "type": "string"
-          },
-          "name": {
-            "description": "This must match the Name of a Volume.",
-            "type": "string"
-          },
-          "readOnly": {
-            "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
-            "type": "boolean"
-          },
-          "recursiveReadOnly": {
-            "description": "RecursiveReadOnly specifies whether read-only mounts should be handled recursively.\n\nIf ReadOnly is false, this field has no meaning and must be unspecified.\n\nIf ReadOnly is true, and this field is set to Disabled, the mount is not made recursively read-only.  If this field is set to IfPossible, the mount is made recursively read-only, if it is supported by the container runtime.  If this field is set to Enabled, the mount is made recursively read-only if it is supported by the container runtime, otherwise the pod will not be started and an error will be generated to indicate the reason.\n\nIf this field is set to IfPossible or Enabled, MountPropagation must be set to None (or be unspecified, which defaults to None).\n\nIf this field is not specified, it is treated as an equivalent of Disabled.",
-            "type": "string"
-          },
-          "subPath": {
-            "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-            "type": "string"
-          },
-          "subPathExpr": {
-            "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "mountPath"
-        ],
-        "type": "object"
-      },
-      "type": "array",
-      "x-kubernetes-list-map-keys": [
-        "mountPath"
-      ],
-      "x-kubernetes-list-type": "map",
-      "x-kubernetes-patch-merge-key": "mountPath",
-      "x-kubernetes-patch-strategy": "merge"
+      "$ref": "#/$defs/providerSchema4"
     },
     "initLimit": {
       "anyOf": [
@@ -4015,49 +3735,7 @@
               ]
             },
             "selector": {
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array",
-                        "x-kubernetes-list-type": "atomic"
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array",
-                  "x-kubernetes-list-type": "atomic"
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": "object"
-                }
-              },
-              "type": "object",
-              "x-kubernetes-map-type": "atomic"
+              "$ref": "#/$defs/providerSchema1"
             },
             "size": {
               "oneOf": [
@@ -4095,49 +3773,7 @@
           "type": "object"
         },
         "selector": {
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array",
-                    "x-kubernetes-list-type": "atomic"
-                  }
-                },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": "object"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": "object"
-            }
-          },
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
+          "$ref": "#/$defs/providerSchema1"
         },
         "size": {
           "oneOf": [
@@ -4672,52 +4308,7 @@
       "type": "object"
     },
     "sidecars": {
-      "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
-      "items": {
-        "description": "VolumeMount describes a mounting of a Volume within a container.",
-        "properties": {
-          "mountPath": {
-            "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-            "type": "string"
-          },
-          "mountPropagation": {
-            "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10. When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified (which defaults to None).",
-            "type": "string"
-          },
-          "name": {
-            "description": "This must match the Name of a Volume.",
-            "type": "string"
-          },
-          "readOnly": {
-            "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
-            "type": "boolean"
-          },
-          "recursiveReadOnly": {
-            "description": "RecursiveReadOnly specifies whether read-only mounts should be handled recursively.\n\nIf ReadOnly is false, this field has no meaning and must be unspecified.\n\nIf ReadOnly is true, and this field is set to Disabled, the mount is not made recursively read-only.  If this field is set to IfPossible, the mount is made recursively read-only, if it is supported by the container runtime.  If this field is set to Enabled, the mount is made recursively read-only if it is supported by the container runtime, otherwise the pod will not be started and an error will be generated to indicate the reason.\n\nIf this field is set to IfPossible or Enabled, MountPropagation must be set to None (or be unspecified, which defaults to None).\n\nIf this field is not specified, it is treated as an equivalent of Disabled.",
-            "type": "string"
-          },
-          "subPath": {
-            "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-            "type": "string"
-          },
-          "subPathExpr": {
-            "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "mountPath"
-        ],
-        "type": "object"
-      },
-      "type": "array",
-      "x-kubernetes-list-map-keys": [
-        "mountPath"
-      ],
-      "x-kubernetes-list-type": "map",
-      "x-kubernetes-patch-merge-key": "mountPath",
-      "x-kubernetes-patch-strategy": "merge"
+      "$ref": "#/$defs/providerSchema4"
     },
     "snapCount": {
       "anyOf": [

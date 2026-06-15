@@ -9,12 +9,24 @@ use helm_schema_k8s::type_schema;
 use crate::merge::merge_schema_list;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema};
+use crate::shared_defs::ShareableSchema;
 use crate::use_signals::UseSignals;
 use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
 
 pub(crate) struct ResolvedPathSchema {
     pub(crate) path_segments: Vec<String>,
     pub(crate) schema: Value,
+    pub(crate) shareable_provider_schema: Option<ShareableSchema>,
+}
+
+struct ProviderSchemaForPath {
+    schema: Value,
+    shareable_schema: Option<ShareableSchema>,
+}
+
+struct PathSchemaEvidence {
+    policy_inputs: ValuePathSchemaInputs,
+    shareable_provider_schema: Option<ShareableSchema>,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -53,15 +65,25 @@ impl<'a> PathSchemaResolver<'a> {
     fn resolve_path(&mut self, value_path: String) -> Option<ResolvedPathSchema> {
         let path_segments = self.path_caches.path_segments.get(&value_path)?.clone();
         let evidence = self.path_schema_evidence(&value_path);
-        let merged = self.resolve_policy.resolve_schema_for_value_path(evidence);
+        let shareable_provider_schema = evidence
+            .shareable_provider_schema
+            .as_ref()
+            .map(|schema| schema.schema().clone());
+        let merged = self
+            .resolve_policy
+            .resolve_schema_for_value_path(evidence.policy_inputs);
+        let shareable_provider_schema = shareable_provider_schema
+            .filter(|provider_schema| provider_schema == &merged)
+            .map(ShareableSchema::new);
 
         Some(ResolvedPathSchema {
             path_segments,
             schema: merged,
+            shareable_provider_schema,
         })
     }
 
-    fn path_schema_evidence(&mut self, value_path: &str) -> ValuePathSchemaInputs {
+    fn path_schema_evidence(&mut self, value_path: &str) -> PathSchemaEvidence {
         let contract_facts = self
             .value_path_facts
             .get(value_path)
@@ -105,27 +127,36 @@ impl<'a> PathSchemaResolver<'a> {
             .map(|path_info| path_info.schema.clone())
             .unwrap_or_else(empty_schema);
 
-        ValuePathSchemaInputs {
-            facts,
-            provider_schema,
-            values_yaml_schema,
-            guard_constraint_schema,
-            type_hint_schema,
+        PathSchemaEvidence {
+            policy_inputs: ValuePathSchemaInputs {
+                facts,
+                provider_schema: provider_schema.schema,
+                values_yaml_schema,
+                guard_constraint_schema,
+                type_hint_schema,
+            },
+            shareable_provider_schema: provider_schema.shareable_schema,
         }
     }
 
-    fn provider_schema_for_path(&mut self, value_path: &str) -> Value {
+    fn provider_schema_for_path(&mut self, value_path: &str) -> ProviderSchemaForPath {
         let provider_schemas = self
             .signals
             .provider_schemas_by_value_path
             .remove(value_path)
             .unwrap_or_default();
+        let single_provider_schema = match provider_schemas.as_slice() {
+            [schema] => Some(schema.as_ref().clone()),
+            _ => None,
+        };
         let provider_schema = if provider_schemas.len() > 1
             && provider_schemas
                 .iter()
                 .all(|schema| is_string_like_schema(schema.as_ref()))
         {
             type_schema("string")
+        } else if let Some(provider_schema) = single_provider_schema.clone() {
+            provider_schema
         } else {
             merge_schema_list(
                 provider_schemas
@@ -139,7 +170,15 @@ impl<'a> PathSchemaResolver<'a> {
             .metadata_schemas_by_value_path
             .remove(value_path)
             .map_or_else(empty_schema, merge_schema_list);
+        let shareable_schema = if is_empty_schema(&metadata_schema) {
+            single_provider_schema.map(ShareableSchema::new)
+        } else {
+            None
+        };
 
-        merge_schema_list(vec![provider_schema, metadata_schema])
+        ProviderSchemaForPath {
+            schema: merge_schema_list(vec![provider_schema, metadata_schema]),
+            shareable_schema,
+        }
     }
 }

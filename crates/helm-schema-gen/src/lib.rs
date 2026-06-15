@@ -5,6 +5,7 @@ pub mod required_inference;
 mod resolve_policy;
 mod schema_model;
 mod schema_tree;
+mod shared_defs;
 mod use_signals;
 mod values_yaml;
 
@@ -18,6 +19,7 @@ use helm_schema_k8s::K8sSchemaProvider;
 
 use path_resolver::PathSchemaResolver;
 use schema_tree::{apply_values_descriptions, insert_schema_at_path_segments, object_schema};
+use shared_defs::SharedSchemaDefinitions;
 use use_signals::{UseSignals, collect_use_signals};
 
 // ---------------------------------------------------------------------------
@@ -160,8 +162,11 @@ fn build_root_schema(
     let mut root_schema = object_schema(Map::new());
     let path_resolver =
         PathSchemaResolver::new(signals, value_path_facts, values_yaml_doc, type_hints);
+    let mut resolved_paths = path_resolver.resolve_all();
+    let shared_definitions =
+        SharedSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
 
-    for resolved_path in path_resolver.resolve_all() {
+    for resolved_path in resolved_paths {
         insert_schema_at_path_segments(
             &mut root_schema,
             &resolved_path.path_segments,
@@ -169,6 +174,7 @@ fn build_root_schema(
         );
     }
 
+    shared_definitions.insert_into_root(&mut root_schema);
     apply_values_descriptions(&mut root_schema, values_descriptions);
 
     root_schema

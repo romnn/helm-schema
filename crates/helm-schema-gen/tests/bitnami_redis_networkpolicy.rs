@@ -42,6 +42,12 @@ fn schema_from_tree_sitter() {
             "{}",
             serde_json::to_string_pretty(&schema).expect("pretty json")
         );
+        let path = std::env::temp_dir().join("helm-schema.bitnami-redis.networkpolicy.schema.json");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&schema).expect("json bytes"),
+        )
+        .expect("write schema dump");
     }
     let expected: serde_json::Value = serde_json::from_str(include_str!(
         "fixtures/bitnami_redis_networkpolicy.schema.json"

@@ -1,4 +1,13 @@
 {
+  "$defs": {
+    "providerSchema1": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+      "type": "object"
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
@@ -386,18 +395,10 @@
           ]
         },
         "ingressNSMatchLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": "object"
+          "$ref": "#/$defs/providerSchema1"
         },
         "ingressNSPodMatchLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": "object"
+          "$ref": "#/$defs/providerSchema1"
         },
         "metrics": {
           "additionalProperties": false,
@@ -406,18 +407,10 @@
               "type": "boolean"
             },
             "ingressNSMatchLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": "object"
+              "$ref": "#/$defs/providerSchema1"
             },
             "ingressNSPodMatchLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": "object"
+              "$ref": "#/$defs/providerSchema1"
             }
           },
           "type": "object"

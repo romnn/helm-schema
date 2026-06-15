@@ -928,10 +928,14 @@ Current result:
   Override schema loading now produces explicit `PolicyInputs`, with
   `PolicyInputOptions` separate from final `OutputPipelineOptions`; file/URL
   retrieval is confined to input assembly, and final output transforms reject
-  unprepared external refs. The
-  remaining A5 work is deeper lowering support so provider/foreign subtrees can
-  be emitted as shared definitions directly instead of first materializing as
-  inline schema values.
+  unprepared external refs. Generator lowering now recognizes repeated,
+  unchanged structured provider schemas after per-path resolution and emits them
+  once under root `$defs`, replacing each exact provider-owned leaf with an
+  internal `$ref`; `FullyInlinedExport` remains the explicit path for consumers
+  that require expanded schemas. The remaining work here is deeper
+  provider-document lowering consolidation so foreign schema documents can stay
+  ref-shaped throughout more of the pipeline, rather than being re-materialized
+  before the exact-sharing pass.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and

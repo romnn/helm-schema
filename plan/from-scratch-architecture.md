@@ -1797,10 +1797,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   transform pass. `PolicyInputOptions` is separate from
   `OutputPipelineOptions`, so file/URL retrieval policy is type-confined to
   input assembly; the final output transform only accepts already-prepared
-  internal refs and fails if an external `$ref` reaches it.
-  The remaining A5 work is deeper lowering support so provider/foreign subtrees
-  can be emitted as shared definitions directly instead of first materializing
-  as inline schema values and relying on optional minimization.
+  internal refs and fails if an external `$ref` reaches it. Generator lowering
+  now also recognizes repeated, unchanged structured provider schemas after
+  per-path resolution and emits them once under root `$defs`, replacing each
+  exact provider-owned leaf with an internal `$ref`; `FullyInlinedExport`
+  remains the explicit path for consumers that require expanded schemas. The
+  remaining work here is deeper provider-document lowering consolidation so
+  foreign schema documents can stay ref-shaped throughout more of the pipeline,
+  rather than being re-materialized before the exact-sharing pass.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
