@@ -26,7 +26,7 @@ pub(crate) trait NodeActionEffectSink: ContractUseSink {
     fn insert_range_domain(&mut self, variable: String, literals: Vec<String>);
 }
 
-pub(crate) fn apply_assignment_action_plan(
+pub(super) fn apply_assignment_action_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: AssignmentActionPlan,
 ) {
@@ -52,7 +52,7 @@ fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: Local
     sink.refresh_helper_output_meta(plan.variable, &plan.rhs);
 }
 
-pub(crate) fn apply_if_condition_plan(
+pub(super) fn apply_if_condition_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
@@ -77,7 +77,7 @@ pub(crate) fn apply_if_condition_plan(
     }
 }
 
-pub(crate) fn apply_with_condition_plan(
+pub(super) fn apply_with_condition_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
@@ -104,7 +104,7 @@ pub(crate) fn apply_with_condition_plan(
     sink.push_dot_binding(plan.dot_binding);
 }
 
-pub(crate) fn apply_condition_alternative_guards(
+pub(super) fn apply_condition_alternative_guards(
     sink: &mut impl NodeActionEffectSink,
     plan: &ConditionActionPlan,
 ) {
@@ -114,7 +114,7 @@ pub(crate) fn apply_condition_alternative_guards(
     sink.push_predicate_if_absent(plan.predicate.negated());
 }
 
-pub(crate) fn apply_range_action_plan(
+pub(super) fn apply_range_action_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: &RangeActionPlan,
     current_path: &YamlPath,

@@ -1628,6 +1628,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   one mixed implementation file: recursive helper/static-file inlining,
   rendered output lowering, and node/action runtime adapters each have a
   focused owner while the root keeps context construction and orchestration.
+  Node evaluation has the matching boundary now: action classification,
+  runtime/effect traits, traversal, and assignment/condition/range control
+  flow live under one `node_eval` module family instead of being split across
+  top-level interpreter modules.
   Top-level composed-values root detection is now shared by contract seeding
   and optional required-inference synthetic-path exclusion, so both consumers
   use one structural YAML mapping parser instead of parallel local copies.

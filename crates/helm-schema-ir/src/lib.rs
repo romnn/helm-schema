@@ -57,8 +57,6 @@ mod helper_value_analysis;
 mod helper_value_expression;
 mod helper_walk_state;
 mod local_projection;
-mod node_action_effect;
-mod node_action_kind;
 mod node_eval;
 mod output_path;
 mod predicate;

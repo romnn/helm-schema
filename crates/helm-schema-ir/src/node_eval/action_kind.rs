@@ -1,5 +1,5 @@
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum NodeActionKind {
+pub(super) enum NodeActionKind {
     Text,
     Suppressed,
     Assignment,
@@ -10,7 +10,7 @@ pub(crate) enum NodeActionKind {
     Descend,
 }
 
-pub(crate) fn classify_node_action(node: tree_sitter::Node<'_>) -> NodeActionKind {
+pub(super) fn classify_node_action(node: tree_sitter::Node<'_>) -> NodeActionKind {
     match node.kind() {
         "text" | "yaml_no_injection_text" => NodeActionKind::Text,
         "define_action" | "block_action" => NodeActionKind::Suppressed,
