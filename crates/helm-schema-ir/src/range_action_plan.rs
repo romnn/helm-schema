@@ -19,6 +19,32 @@ pub(crate) struct RangeActionPlan {
     pub(crate) apply_dot_binding: bool,
 }
 
+impl RangeActionPlan {
+    pub(crate) fn empty() -> Self {
+        Self {
+            header_text: None,
+            source_paths: Vec::new(),
+            literal_range: None,
+            guard_path: YamlPath(Vec::new()),
+            emit_header_use: false,
+            renders_mapping_entries: false,
+            dot_binding: None,
+            apply_dot_binding: true,
+        }
+    }
+
+    pub(crate) fn dot_binding(
+        dot_binding: Option<FragmentBinding>,
+        apply_dot_binding: bool,
+    ) -> Self {
+        Self {
+            dot_binding,
+            apply_dot_binding,
+            ..Self::empty()
+        }
+    }
+}
+
 pub(crate) fn plan_range_action(
     node: tree_sitter::Node<'_>,
     source: &str,
@@ -32,16 +58,7 @@ pub(crate) fn plan_range_action(
         && range_body_renders_scalar_sequence_items_from_source(node, source);
 
     let Some(header_text) = range_header_text_from_source(node, source) else {
-        return RangeActionPlan {
-            header_text: None,
-            source_paths: Vec::new(),
-            literal_range: None,
-            guard_path: YamlPath(Vec::new()),
-            emit_header_use: false,
-            renders_mapping_entries: false,
-            dot_binding: None,
-            apply_dot_binding: true,
-        };
+        return RangeActionPlan::empty();
     };
 
     let direct_iterable_header_path = direct_iterable_header_path(&header_text, value_path_context);

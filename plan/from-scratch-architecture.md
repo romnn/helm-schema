@@ -1675,7 +1675,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   boundary instead of being embedded in either runtime module. Branch-guard
   path extraction and exact-range-frame state are shared by the helper value
   and helper fragment-output runtimes too, so both paths use one control-flow
-  model while they continue to emit different semantic facts.
+  model while they continue to emit different semantic facts. Shared helper
+  range planning now owns the typed `range` header to iterable-binding
+  interpretation as well; the value and fragment-output runtimes only choose
+  how that range plan is projected into their respective fact models.
   Helper-to-document value projection is now owned by the document value layer
   rather than `BoundHelperAnalysis`, and helper
   document lowering has its own contract emitter. That removes another

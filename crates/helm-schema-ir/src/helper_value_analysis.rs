@@ -7,14 +7,14 @@ use crate::contract_sink::ContractUseSink;
 use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::fragment_range_scope::{
-    range_header_text_from_source, range_iterable_binding, range_variable_item_binding,
-    range_variable_name,
-};
+use crate::fragment_range_scope::range_header_text_from_source;
 use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
 use crate::helper_analysis_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
 use crate::helper_binding::HelperBinding;
 use crate::helper_range_frame::RangeFrame;
+use crate::helper_range_plan::{
+    HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
+};
 use crate::helper_runtime_guards::{branch_guard_paths, truthy_predicate_for_paths};
 use crate::helper_value_expression::collect_helper_value_expression;
 use crate::helper_walk_state::HelperValuesWalkState;
@@ -63,7 +63,7 @@ struct HelperValueRuntime<'context, 'state> {
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
     analysis: &'state mut BoundHelperAnalysis,
-    range_frames: Vec<RangeFrame<RangeIteration>>,
+    range_frames: Vec<RangeFrame<HelperRangeIteration>>,
     no_output_depth: usize,
 }
 
@@ -74,12 +74,6 @@ struct HelperValueSnapshot {
     local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     dot_stack_len: usize,
     active_output_predicates: BTreeSet<Predicate>,
-}
-
-#[derive(Clone)]
-struct RangeIteration {
-    dot_binding: Option<HelperBinding>,
-    variable_binding: Option<(String, FragmentBinding)>,
 }
 
 impl HelperValueRuntime<'_, '_> {
@@ -151,30 +145,6 @@ impl HelperValueRuntime<'_, '_> {
         *self.local_bindings = outcome.local_bindings;
         *self.local_default_paths = outcome.local_default_paths;
         *self.local_output_meta = outcome.local_output_meta;
-    }
-
-    fn empty_range_action_plan() -> RangeActionPlan {
-        RangeActionPlan {
-            header_text: None,
-            source_paths: Vec::new(),
-            literal_range: None,
-            guard_path: YamlPath(Vec::new()),
-            emit_header_use: false,
-            renders_mapping_entries: false,
-            dot_binding: None,
-            apply_dot_binding: true,
-        }
-    }
-
-    fn range_action_plan(
-        dot_binding: Option<FragmentBinding>,
-        apply_dot_binding: bool,
-    ) -> RangeActionPlan {
-        RangeActionPlan {
-            dot_binding,
-            apply_dot_binding,
-            ..Self::empty_range_action_plan()
-        }
     }
 }
 
@@ -302,7 +272,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         if let Some((variable, binding)) = iteration.variable_binding {
             self.local_bindings.insert(variable, binding);
         }
-        self.dot_stack.push(iteration.dot_binding);
+        self.dot_stack.push(iteration.helper_dot_binding);
     }
 
     fn exit_range_iteration(&mut self, _index: usize) {
@@ -382,7 +352,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     ) -> RangeActionPlan {
         let Some(header) = range_header_text_from_source(node, self.source) else {
             self.range_frames.push(RangeFrame::unknown());
-            return Self::empty_range_action_plan();
+            return RangeActionPlan::empty();
         };
         let branch_guard_paths = self.branch_guard_paths(&header);
         self.active_output_predicates
@@ -390,56 +360,22 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
 
         let current_dot_fragment = self.current_dot_fragment();
         let mut seen_range = HashSet::new();
-        let range_fragment_binding = range_iterable_binding(
+        let mut range_plan = plan_helper_range_binding(
             &header,
             self.local_bindings,
             current_dot_fragment.as_ref(),
             self.context,
             &mut seen_range,
+            NonExactRangeVariableBinding::Bind,
         );
-        let range_binding = range_fragment_binding
-            .as_ref()
-            .and_then(FragmentBinding::to_helper_binding);
-        let body_dot = range_binding.as_ref().and_then(HelperBinding::item_binding);
+        if let Some((variable, binding)) = range_plan.take_non_exact_variable_binding() {
+            self.local_bindings.insert(variable, binding);
+        }
+        self.range_frames.push(range_plan.helper_value_frame());
 
-        let exact_iterations = if let Some(FragmentBinding::List(items)) = &range_fragment_binding {
-            let range_variable = range_variable_name(&header);
-            Some(
-                items
-                    .iter()
-                    .map(|item| RangeIteration {
-                        dot_binding: item.to_helper_binding(),
-                        variable_binding: range_variable
-                            .as_ref()
-                            .map(|variable| (variable.clone(), item.clone())),
-                    })
-                    .collect::<Vec<_>>(),
-            )
-        } else {
-            let mut seen_range_variable = HashSet::new();
-            if let Some((variable, binding)) = range_variable_item_binding(
-                &header,
-                self.local_bindings,
-                current_dot_fragment.as_ref(),
-                self.context,
-                &mut seen_range_variable,
-            ) {
-                self.local_bindings.insert(variable, binding);
-            }
-            None
-        };
-
-        let apply_dot_binding = exact_iterations.is_none();
-        self.range_frames.push(RangeFrame::new(
-            range_binding
-                .as_ref()
-                .is_some_and(HelperBinding::definitely_nonempty_iterable),
-            exact_iterations,
-        ));
-
-        Self::range_action_plan(
-            body_dot.as_ref().map(HelperBinding::to_fragment_binding),
-            apply_dot_binding,
+        RangeActionPlan::dot_binding(
+            range_plan.helper_value_body_dot(),
+            range_plan.apply_dot_binding(),
         )
     }
 }

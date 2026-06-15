@@ -9,27 +9,6 @@ use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 use crate::yaml_shape::parse_yaml_key;
 
-pub(crate) fn range_variable_item_binding(
-    header: &str,
-    local_bindings: &HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<(String, FragmentBinding)> {
-    let header = header
-        .trim()
-        .strip_prefix("range ")
-        .unwrap_or_else(|| header.trim());
-    let exprs = parse_expr_text(header);
-    let [TemplateExpr::VariableDefinition { name, value }] = exprs.as_slice() else {
-        return None;
-    };
-    let binding =
-        fragment_binding_from_range_value_expr(value, local_bindings, current_dot, context, seen)?;
-    let item = FragmentBinding::item_binding(&binding)?;
-    Some((name.trim_start_matches('$').to_string(), item))
-}
-
 pub(crate) fn range_variable_name(header: &str) -> Option<String> {
     let header = header
         .trim()
