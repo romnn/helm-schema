@@ -1801,10 +1801,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   now also recognizes repeated, unchanged structured provider schemas after
   per-path resolution and emits them once under root `$defs`, replacing each
   exact provider-owned leaf with an internal `$ref`; `FullyInlinedExport`
-  remains the explicit path for consumers that require expanded schemas. The
-  remaining work here is deeper provider-document lowering consolidation so
-  foreign schema documents can stay ref-shaped throughout more of the pipeline,
-  rather than being re-materialized before the exact-sharing pass.
+  remains the explicit path for consumers that require expanded schemas.
+  Provider-owned schema evidence is now typed in the generator before
+  per-path resolution, so exact sharing consumes an explicit provider evidence
+  stream instead of reconstructing shareability from anonymous `Value` lists.
+  The remaining work here is deeper provider-document lowering consolidation
+  so foreign schema documents can stay ref-shaped throughout more of the
+  pipeline, rather than being re-materialized before the exact-sharing pass.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
@@ -1854,9 +1857,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   K8s provider's production path lookup now descends through `$ref`s lazily
   while expanding only the returned leaf schema. CRD catalog and local override
   lookup now use the same lazy local-ref descent model, and providers no longer
-  cache fully expanded per-resource documents. Explicit materialization helpers
-  still exist for tests/debug, but they compute from shared raw documents on
-  demand.
+  cache fully expanded per-resource documents. CRD catalog, local override,
+  and chart-local CRD lookup also apply Kubernetes metadata enrichment
+  path-aware: non-metadata leaf lookups descend the raw document, metadata leaf
+  lookups clone and enrich only the metadata subtree, and only explicit root
+  materialization expands the enriched full document. Explicit materialization
+  helpers still exist for tests/debug, but they compute from shared raw
+  documents on demand.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated

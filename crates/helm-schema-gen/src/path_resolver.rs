@@ -7,6 +7,7 @@ use helm_schema_ir::ContractValuePathFacts;
 use helm_schema_k8s::type_schema;
 
 use crate::merge::merge_schema_list;
+use crate::provider_schema::ProviderSchemaEvidence;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema};
 use crate::shared_defs::ShareableSchema;
@@ -64,17 +65,15 @@ impl<'a> PathSchemaResolver<'a> {
 
     fn resolve_path(&mut self, value_path: String) -> Option<ResolvedPathSchema> {
         let path_segments = self.path_caches.path_segments.get(&value_path)?.clone();
-        let evidence = self.path_schema_evidence(&value_path);
-        let shareable_provider_schema = evidence
-            .shareable_provider_schema
-            .as_ref()
-            .map(|schema| schema.schema().clone());
+        let PathSchemaEvidence {
+            policy_inputs,
+            shareable_provider_schema,
+        } = self.path_schema_evidence(&value_path);
         let merged = self
             .resolve_policy
-            .resolve_schema_for_value_path(evidence.policy_inputs);
-        let shareable_provider_schema = shareable_provider_schema
-            .filter(|provider_schema| provider_schema == &merged)
-            .map(ShareableSchema::new);
+            .resolve_schema_for_value_path(policy_inputs);
+        let shareable_provider_schema =
+            shareable_provider_schema.filter(|provider_schema| provider_schema.schema() == &merged);
 
         Some(ResolvedPathSchema {
             path_segments,
@@ -142,26 +141,26 @@ impl<'a> PathSchemaResolver<'a> {
     fn provider_schema_for_path(&mut self, value_path: &str) -> ProviderSchemaForPath {
         let provider_schemas = self
             .signals
-            .provider_schemas_by_value_path
+            .provider_evidence_by_value_path
             .remove(value_path)
             .unwrap_or_default();
-        let single_provider_schema = match provider_schemas.as_slice() {
-            [schema] => Some(schema.as_ref().clone()),
+        let single_provider_evidence = match provider_schemas.as_slice() {
+            [schema] => Some(schema.clone()),
             _ => None,
         };
         let provider_schema = if provider_schemas.len() > 1
             && provider_schemas
                 .iter()
-                .all(|schema| is_string_like_schema(schema.as_ref()))
+                .all(|schema| is_string_like_schema(schema.schema()))
         {
             type_schema("string")
-        } else if let Some(provider_schema) = single_provider_schema.clone() {
-            provider_schema
+        } else if let Some(provider_evidence) = single_provider_evidence.as_deref() {
+            provider_evidence.schema().clone()
         } else {
             merge_schema_list(
                 provider_schemas
                     .into_iter()
-                    .map(|schema| (*schema).clone())
+                    .map(|schema| schema.schema().clone())
                     .collect(),
             )
         };
@@ -171,7 +170,10 @@ impl<'a> PathSchemaResolver<'a> {
             .remove(value_path)
             .map_or_else(empty_schema, merge_schema_list);
         let shareable_schema = if is_empty_schema(&metadata_schema) {
-            single_provider_schema.map(ShareableSchema::new)
+            single_provider_evidence
+                .as_deref()
+                .map(ProviderSchemaEvidence::shareable_schema)
+                .cloned()
         } else {
             None
         };

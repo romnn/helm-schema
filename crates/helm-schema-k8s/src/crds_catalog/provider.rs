@@ -13,7 +13,9 @@ use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::local_override::{descend_schema_path_expanding_leaf, expand_local_refs};
+use crate::local_override::{
+    descend_schema_path_expanding_leaf_with_root_metadata, expand_local_refs,
+};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
@@ -264,8 +266,7 @@ impl CrdsCatalogSchemaProvider {
         root: &SchemaDoc,
         path: &YamlPath,
     ) -> Option<Value> {
-        let root = enrich_root_metadata_schema(root.root().clone());
-        descend_schema_path_expanding_leaf(&root, &path.0)
+        descend_schema_path_expanding_leaf_with_root_metadata(root.root(), &path.0)
     }
 }
 

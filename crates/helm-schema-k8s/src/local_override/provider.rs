@@ -8,7 +8,7 @@ use serde_json::Value;
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
-use crate::metadata_enrichment::enrich_root_metadata_schema;
+use crate::metadata_enrichment::{enrich_root_metadata_schema, enriched_metadata_schema};
 use crate::schema_doc::SchemaDoc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -124,8 +124,7 @@ impl LocalSchemaProvider {
         root: &SchemaDoc,
         path: &YamlPath,
     ) -> Option<Value> {
-        let root = enrich_root_metadata_schema(root.root().clone());
-        descend_schema_path_expanding_leaf(&root, &path.0)
+        descend_schema_path_expanding_leaf_with_root_metadata(root.root(), &path.0)
     }
 
     #[must_use]
@@ -256,6 +255,38 @@ fn descend_one<'a>(schema: &'a Value, seg: &str) -> Option<&'a Value> {
 pub fn descend_schema_path_expanding_leaf(root: &Value, path: &[String]) -> Option<Value> {
     let mut stack = std::collections::HashSet::new();
     let leaf = descend_schema_path_node(root, root, path, 0, &mut stack)?;
+    let mut expand_stack = std::collections::HashSet::new();
+    Some(expand_local_refs(root, &leaf, 0, &mut expand_stack))
+}
+
+/// Descends a schema path while applying Kubernetes metadata enrichment lazily.
+///
+/// Full-root enrichment is only needed for root-schema materialization. Leaf
+/// lookups under `metadata` can clone and enrich just that subtree; all other
+/// paths descend the raw document and expand only the resolved leaf.
+#[tracing::instrument(skip_all, fields(path_len = path.len()))]
+pub fn descend_schema_path_expanding_leaf_with_root_metadata(
+    root: &Value,
+    path: &[String],
+) -> Option<Value> {
+    let Some(first_segment) = path.first() else {
+        let enriched_root = enrich_root_metadata_schema(root.clone());
+        let mut stack = std::collections::HashSet::new();
+        return Some(expand_local_refs(
+            &enriched_root,
+            &enriched_root,
+            0,
+            &mut stack,
+        ));
+    };
+
+    if first_segment != "metadata" {
+        return descend_schema_path_expanding_leaf(root, path);
+    }
+
+    let metadata = enriched_metadata_schema(root);
+    let mut stack = std::collections::HashSet::new();
+    let leaf = descend_schema_path_node(root, &metadata, &path[1..], 0, &mut stack)?;
     let mut expand_stack = std::collections::HashSet::new();
     Some(expand_local_refs(root, &leaf, 0, &mut expand_stack))
 }
@@ -505,5 +536,59 @@ mod tests {
             .expect("lazy descent should contain path");
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn lazy_root_metadata_descent_enriches_only_metadata_leaf() {
+        let root = json!({
+            "type": "object",
+            "properties": {
+                "metadata": {
+                    "type": "object",
+                    "properties": {
+                        "labels": { "$ref": "#/definitions/StringMap" }
+                    }
+                },
+                "spec": {
+                    "type": "object",
+                    "properties": {
+                        "replicas": { "type": "integer" }
+                    }
+                }
+            },
+            "definitions": {
+                "StringMap": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                }
+            }
+        });
+
+        let metadata_name = descend_schema_path_expanding_leaf_with_root_metadata(
+            &root,
+            &["metadata".to_string(), "name".to_string()],
+        )
+        .expect("metadata.name should be synthesized from object metadata");
+        assert_eq!(metadata_name, json!({ "type": "string" }));
+
+        let metadata_labels = descend_schema_path_expanding_leaf_with_root_metadata(
+            &root,
+            &["metadata".to_string(), "labels".to_string()],
+        )
+        .expect("metadata.labels should resolve local refs");
+        assert_eq!(
+            metadata_labels,
+            json!({
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+            })
+        );
+
+        let spec_replicas = descend_schema_path_expanding_leaf_with_root_metadata(
+            &root,
+            &["spec".to_string(), "replicas".to_string()],
+        )
+        .expect("non-metadata path should still descend the raw document");
+        assert_eq!(spec_replicas, json!({ "type": "integer" }));
     }
 }

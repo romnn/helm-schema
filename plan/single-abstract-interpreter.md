@@ -932,18 +932,25 @@ Current result:
   unchanged structured provider schemas after per-path resolution and emits them
   once under root `$defs`, replacing each exact provider-owned leaf with an
   internal `$ref`; `FullyInlinedExport` remains the explicit path for consumers
-  that require expanded schemas. The remaining work here is deeper
-  provider-document lowering consolidation so foreign schema documents can stay
-  ref-shaped throughout more of the pipeline, rather than being re-materialized
-  before the exact-sharing pass.
+  that require expanded schemas. Provider-owned schema evidence is now typed in
+  the generator before per-path resolution, so exact sharing consumes an
+  explicit provider evidence stream instead of reconstructing shareability from
+  anonymous `Value` lists. The remaining work here is deeper provider-document
+  lowering consolidation so foreign schema documents can stay ref-shaped
+  throughout more of the pipeline, rather than being re-materialized before the
+  exact-sharing pass.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and
   expands only the returned leaf schema. CRD catalog and local override lookup
   now use the same lazy local-ref descent model, and provider state no longer
-  caches fully expanded per-resource documents. Explicit materialization helpers
-  still exist for tests/debug, but they compute on demand from shared raw
-  documents.
+  caches fully expanded per-resource documents. CRD catalog, local override,
+  and chart-local CRD lookup also apply Kubernetes metadata enrichment
+  path-aware: non-metadata leaf lookups descend the raw document, metadata leaf
+  lookups clone and enrich only the metadata subtree, and only explicit root
+  materialization expands the enriched full document. Explicit materialization
+  helpers still exist for tests/debug, but they compute on demand from shared
+  raw documents.
 - B3 has started by moving capability probe construction and the canonical
   api-version probe table into a dedicated provider submodule. Direct
   resource-qualified capability literals now bypass that table, including core

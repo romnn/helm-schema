@@ -18,6 +18,17 @@ pub(crate) fn enrich_root_metadata_schema(mut root: Value) -> Value {
     root
 }
 
+pub(crate) fn enriched_metadata_schema(root: &Value) -> Value {
+    let mut metadata = root
+        .get("properties")
+        .and_then(Value::as_object)
+        .and_then(|properties| properties.get("metadata"))
+        .cloned()
+        .unwrap_or_else(metadata_object_schema);
+    enrich_metadata_object(&mut metadata);
+    metadata
+}
+
 fn enrich_metadata_object(metadata: &mut Value) {
     let Some(obj) = metadata.as_object_mut() else {
         *metadata = metadata_object_schema();
