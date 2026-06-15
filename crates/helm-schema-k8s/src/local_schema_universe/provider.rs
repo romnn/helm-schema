@@ -3,10 +3,12 @@ use serde_json::Value;
 
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_override::{
-    descend_schema_path_expanding_leaf_with_root_metadata, expand_local_refs,
+    LocalSchemaLeaf, descend_schema_path_expanding_leaf_with_root_metadata_source,
+    expand_local_refs,
 };
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    ProviderSchemaSource,
 };
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
@@ -39,12 +41,12 @@ impl ChartLocalCrdSchemaProvider {
         self.universe.is_empty()
     }
 
-    fn schema_for_resource_path_from_doc(
+    fn schema_leaf_for_resource_path_from_doc(
         &self,
         root: &SchemaDoc,
         path: &YamlPath,
-    ) -> Option<Value> {
-        descend_schema_path_expanding_leaf_with_root_metadata(root.root(), &path.0)
+    ) -> Option<LocalSchemaLeaf> {
+        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
     }
 
     #[must_use]
@@ -63,7 +65,8 @@ impl ChartLocalCrdSchemaProvider {
 impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
         let root = self.universe.schema_doc_for_resource(resource)?;
-        self.schema_for_resource_path_from_doc(root, path)
+        self.schema_leaf_for_resource_path_from_doc(root, path)
+            .map(LocalSchemaLeaf::into_schema)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -71,15 +74,30 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
     }
 
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        let Some(root) = self.universe.schema_doc_for_resource(resource) else {
+        let Some(document) = self.universe.schema_document_for_resource(resource) else {
             return ProviderLookupResult::NotOwned;
         };
 
-        match self.schema_for_resource_path_from_doc(root, path) {
-            Some(schema) => ProviderLookupResult::Found {
-                schema: ProviderSchemaFragment::new(schema),
-                resolved_k8s_version: None,
-            },
+        match self.schema_leaf_for_resource_path_from_doc(document.schema_doc(), path) {
+            Some(leaf) => {
+                let source = leaf.pointer().map(|pointer| {
+                    ProviderSchemaSource::new(
+                        ProviderOrigin::ChartLocalCrd,
+                        document.source_id().to_string(),
+                        None,
+                        document.filename().to_string(),
+                        pointer.to_string(),
+                    )
+                });
+                let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+                if let Some(source) = source {
+                    fragment = fragment.with_source(source);
+                }
+                ProviderLookupResult::Found {
+                    schema: fragment,
+                    resolved_k8s_version: None,
+                }
+            }
             None => ProviderLookupResult::PathUnresolved,
         }
     }
@@ -160,6 +178,57 @@ mod tests {
         );
 
         assert_eq!(schema, Some(json!({"type": "integer"})));
+    }
+
+    #[test]
+    fn lookup_attaches_chart_local_provider_source() {
+        let mut universe = LocalSchemaUniverse::default();
+        universe.insert_crd_document_with_source(
+            json!({
+                "apiVersion": "apiextensions.k8s.io/v1",
+                "kind": "CustomResourceDefinition",
+                "spec": {
+                    "group": "example.com",
+                    "names": {"kind": "Widget"},
+                    "versions": [
+                        {
+                            "name": "v1",
+                            "served": true,
+                            "schema": {
+                                "openAPIV3Schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "spec": {
+                                            "type": "object",
+                                            "properties": {
+                                                "size": {"type": "integer"}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }),
+            "chart-static-crd",
+            "/chart/crds/widgets.yaml",
+        );
+        let provider = ChartLocalCrdSchemaProvider::new(universe);
+
+        let result = provider.lookup(
+            &resource("example.com/v1"),
+            &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+        );
+        let ProviderLookupResult::Found { schema, .. } = result else {
+            panic!("chart-local lookup should resolve spec.size");
+        };
+        let source = schema.source().expect("chart-local source should attach");
+
+        assert_eq!(source.origin(), ProviderOrigin::ChartLocalCrd);
+        assert_eq!(source.source_id(), "chart-static-crd");
+        assert_eq!(source.filename(), "/chart/crds/widgets.yaml");
+        assert_eq!(source.pointer(), "/properties/spec/properties/size");
     }
 
     #[test]

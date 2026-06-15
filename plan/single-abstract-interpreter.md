@@ -952,9 +952,11 @@ Current result:
   provider-document lowering consolidation so foreign schema documents can stay
   ref-shaped throughout more of the pipeline, rather than being re-materialized
   before the exact-sharing pass. Local override, CRD catalog, and chart-local
-  CRD providers still need the same leaf-source-location tracking as OpenAPI
-  before their fragments can participate fully in source-aware bundled
-  emission.
+  CRD providers now use the same source-aware local-ref descent shape:
+  resolved leaves carry typed provider-document identity when the leaf
+  corresponds to a stable source JSON Pointer, while synthetic metadata
+  enrichment deliberately stays anonymous. Source-aware bundled emission is
+  the remaining consolidation point.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and
@@ -973,8 +975,10 @@ Current result:
   location of the resolved leaf while still expanding only the returned leaf
   schema, and provider fragments carry that identity as typed data rather than
   an encoded string. This is the next prerequisite for retaining `$ref` shape
-  deeper in bundled emission; the matching local-ref descent source-location
-  work remains for local override/catalog/chart-local providers.
+  deeper in bundled emission. Local override, CRD catalog, and chart-local
+  CRD providers now report matching source locations for real document-backed
+  leaves, leaving source-aware bundled emission as the next consolidation
+  point.
 - B3 has started by moving capability probe construction and the canonical
   api-version probe table into a dedicated provider submodule. Direct
   resource-qualified capability literals now bypass that table, including core

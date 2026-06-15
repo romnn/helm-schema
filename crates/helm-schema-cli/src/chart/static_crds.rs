@@ -21,7 +21,11 @@ pub fn collect_static_crd_universe(charts: &[ChartContext]) -> CliResult<LocalSc
             for document in serde_yaml::Deserializer::from_str(&source) {
                 let document = serde_json::Value::deserialize(document)?;
                 if !document.is_null() {
-                    universe.insert_crd_document(document);
+                    universe.insert_crd_document_with_source(
+                        document,
+                        "chart-static-crd",
+                        path.as_str().to_string(),
+                    );
                 }
             }
         }

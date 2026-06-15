@@ -39,16 +39,34 @@ pub struct LocalResourceSchema {
     pub api_version: String,
     pub kind: String,
     pub schema: Value,
+    pub source_id: String,
+    pub filename: String,
 }
 
 impl LocalResourceSchema {
     #[must_use]
     pub fn new(api_version: impl Into<String>, kind: impl Into<String>, schema: Value) -> Self {
+        let api_version = api_version.into();
+        let kind = kind.into();
+        let filename = stable_resource_schema_filename(&api_version, &kind);
         Self {
-            api_version: api_version.into(),
-            kind: kind.into(),
+            api_version,
+            kind,
             schema,
+            source_id: "chart-local".to_string(),
+            filename,
         }
+    }
+
+    #[must_use]
+    pub fn with_source(
+        mut self,
+        source_id: impl Into<String>,
+        filename: impl Into<String>,
+    ) -> Self {
+        self.source_id = source_id.into();
+        self.filename = filename.into();
+        self
     }
 }
 
@@ -59,7 +77,28 @@ impl LocalResourceSchema {
 /// without changing provider resolution semantics.
 #[derive(Clone, Debug, Default)]
 pub struct LocalSchemaUniverse {
-    docs: BTreeMap<ResourceDocKey, Arc<SchemaDoc>>,
+    docs: BTreeMap<ResourceDocKey, LocalSchemaDocument>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct LocalSchemaDocument {
+    doc: Arc<SchemaDoc>,
+    source_id: String,
+    filename: String,
+}
+
+impl LocalSchemaDocument {
+    pub(crate) fn schema_doc(&self) -> &SchemaDoc {
+        Arc::as_ref(&self.doc)
+    }
+
+    pub(crate) fn source_id(&self) -> &str {
+        &self.source_id
+    }
+
+    pub(crate) fn filename(&self) -> &str {
+        &self.filename
+    }
 }
 
 impl LocalSchemaUniverse {
@@ -76,7 +115,18 @@ impl LocalSchemaUniverse {
     }
 
     pub fn insert_crd_document(&mut self, document: Value) {
-        insert_crd_versions(&mut self.docs, document);
+        insert_crd_versions(&mut self.docs, document, "chart-local", None);
+    }
+
+    pub fn insert_crd_document_with_source(
+        &mut self,
+        document: Value,
+        source_id: impl Into<String>,
+        filename: impl Into<String>,
+    ) {
+        let source_id = source_id.into();
+        let filename = filename.into();
+        insert_crd_versions(&mut self.docs, document, &source_id, Some(&filename));
     }
 
     pub fn insert_resource_schema(&mut self, resource_schema: LocalResourceSchema) {
@@ -89,9 +139,15 @@ impl LocalSchemaUniverse {
     }
 
     pub(crate) fn schema_doc_for_resource(&self, resource: &ResourceRef) -> Option<&SchemaDoc> {
-        self.docs
-            .get(&ResourceDocKey::from_resource(resource))
-            .map(Arc::as_ref)
+        self.schema_document_for_resource(resource)
+            .map(LocalSchemaDocument::schema_doc)
+    }
+
+    pub(crate) fn schema_document_for_resource(
+        &self,
+        resource: &ResourceRef,
+    ) -> Option<&LocalSchemaDocument> {
+        self.docs.get(&ResourceDocKey::from_resource(resource))
     }
 
     pub(crate) fn resource_keys(&self) -> impl Iterator<Item = &ResourceDocKey> {
@@ -99,7 +155,12 @@ impl LocalSchemaUniverse {
     }
 }
 
-fn insert_crd_versions(docs: &mut BTreeMap<ResourceDocKey, Arc<SchemaDoc>>, document: Value) {
+fn insert_crd_versions(
+    docs: &mut BTreeMap<ResourceDocKey, LocalSchemaDocument>,
+    document: Value,
+    source_id: &str,
+    source_filename: Option<&str>,
+) {
     if document.pointer("/apiVersion").and_then(Value::as_str) != Some("apiextensions.k8s.io/v1")
         && document.pointer("/apiVersion").and_then(Value::as_str)
             != Some("apiextensions.k8s.io/v1beta1")
@@ -132,7 +193,7 @@ fn insert_crd_versions(docs: &mut BTreeMap<ResourceDocKey, Arc<SchemaDoc>>, docu
             let Some(schema) = version.pointer("/schema/openAPIV3Schema").cloned() else {
                 continue;
             };
-            insert_schema_doc(docs, group, name, kind, schema);
+            insert_schema_doc(docs, group, name, kind, schema, source_id, source_filename);
         }
         return;
     }
@@ -146,32 +207,54 @@ fn insert_crd_versions(docs: &mut BTreeMap<ResourceDocKey, Arc<SchemaDoc>>, docu
     else {
         return;
     };
-    insert_schema_doc(docs, group, version, kind, schema);
+    insert_schema_doc(
+        docs,
+        group,
+        version,
+        kind,
+        schema,
+        source_id,
+        source_filename,
+    );
 }
 
 fn insert_schema_doc(
-    docs: &mut BTreeMap<ResourceDocKey, Arc<SchemaDoc>>,
+    docs: &mut BTreeMap<ResourceDocKey, LocalSchemaDocument>,
     group: &str,
     version: &str,
     kind: &str,
     schema: Value,
+    source_id: &str,
+    source_filename: Option<&str>,
 ) {
+    let api_version = format!("{group}/{version}");
+    let filename = source_filename
+        .map(str::to_string)
+        .unwrap_or_else(|| stable_resource_schema_filename(&api_version, kind));
     insert_resource_schema(
         docs,
-        LocalResourceSchema::new(format!("{group}/{version}"), kind, schema),
+        LocalResourceSchema::new(api_version, kind, schema).with_source(source_id, filename),
     );
 }
 
 fn insert_resource_schema(
-    docs: &mut BTreeMap<ResourceDocKey, Arc<SchemaDoc>>,
+    docs: &mut BTreeMap<ResourceDocKey, LocalSchemaDocument>,
     resource_schema: LocalResourceSchema,
 ) {
     let key = ResourceDocKey {
         api_version: resource_schema.api_version,
         kind: resource_schema.kind,
     };
-    docs.entry(key)
-        .or_insert_with(|| Arc::new(SchemaDoc::new(resource_schema.schema)));
+    docs.entry(key).or_insert_with(|| LocalSchemaDocument {
+        doc: Arc::new(SchemaDoc::new(resource_schema.schema)),
+        source_id: resource_schema.source_id,
+        filename: resource_schema.filename,
+    });
+}
+
+fn stable_resource_schema_filename(api_version: &str, kind: &str) -> String {
+    let api_version = api_version.replace('/', "_");
+    format!("{api_version}_{kind}.schema.json")
 }
 
 #[cfg(test)]

@@ -14,10 +14,12 @@ use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_override::{
-    descend_schema_path_expanding_leaf_with_root_metadata, expand_local_refs,
+    LocalSchemaLeaf, descend_schema_path_expanding_leaf_with_root_metadata_source,
+    expand_local_refs,
 };
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    ProviderSchemaSource,
 };
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
@@ -134,7 +136,7 @@ impl CrdsCatalogSchemaProvider {
         )
     }
 
-    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<(String, SchemaDoc)> {
+    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<LoadedCrdSchemaDoc> {
         let relative_path = relative_path_for_resource(resource)?;
         let layout = self.run_layout_check();
         if layout == LayoutCheckOutcome::ForwardIncompatible {
@@ -142,7 +144,11 @@ impl CrdsCatalogSchemaProvider {
         }
         for source in &self.mirrors.sources {
             if let Some(doc) = self.try_load_from_source(source, &relative_path) {
-                return Some((source.source_id.clone(), doc));
+                return Some(LoadedCrdSchemaDoc {
+                    source_id: source.source_id.clone(),
+                    relative_path,
+                    doc,
+                });
             }
         }
         None
@@ -253,23 +259,44 @@ impl CrdsCatalogSchemaProvider {
 
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let (_source_id, root) = self.load_schema_doc(resource)?;
+        let loaded = self.load_schema_doc(resource)?;
         let mut stack = std::collections::HashSet::new();
         Some(enrich_root_metadata_schema(expand_local_refs(
-            root.root(),
-            root.root(),
+            loaded.doc.root(),
+            loaded.doc.root(),
             0,
             &mut stack,
         )))
     }
 
-    fn schema_for_resource_path_from_doc(
+    fn schema_leaf_for_resource_path_from_doc(
         &self,
         root: &SchemaDoc,
         path: &YamlPath,
-    ) -> Option<Value> {
-        descend_schema_path_expanding_leaf_with_root_metadata(root.root(), &path.0)
+    ) -> Option<LocalSchemaLeaf> {
+        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
     }
+
+    fn source_for_leaf(
+        &self,
+        loaded: &LoadedCrdSchemaDoc,
+        leaf: &LocalSchemaLeaf,
+    ) -> Option<ProviderSchemaSource> {
+        let pointer = leaf.pointer()?;
+        Some(ProviderSchemaSource::new(
+            ProviderOrigin::DefaultCatalog,
+            loaded.source_id.clone(),
+            None,
+            loaded.relative_path.clone(),
+            pointer.to_string(),
+        ))
+    }
+}
+
+struct LoadedCrdSchemaDoc {
+    source_id: String,
+    relative_path: String,
+    doc: SchemaDoc,
 }
 
 impl Default for CrdsCatalogSchemaProvider {
@@ -283,8 +310,9 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
-        let (_source_id, root) = self.load_schema_doc(resource)?;
-        self.schema_for_resource_path_from_doc(&root, path)
+        let loaded = self.load_schema_doc(resource)?;
+        self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path)
+            .map(LocalSchemaLeaf::into_schema)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -295,14 +323,21 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return ProviderLookupResult::NotOwned;
         }
-        let Some((_source_id, root)) = self.load_schema_doc(resource) else {
+        let Some(loaded) = self.load_schema_doc(resource) else {
             return ProviderLookupResult::NotOwned;
         };
-        match self.schema_for_resource_path_from_doc(&root, path) {
-            Some(schema) => ProviderLookupResult::Found {
-                schema: ProviderSchemaFragment::new(schema),
-                resolved_k8s_version: None,
-            },
+        match self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path) {
+            Some(leaf) => {
+                let source = self.source_for_leaf(&loaded, &leaf);
+                let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+                if let Some(source) = source {
+                    fragment = fragment.with_source(source);
+                }
+                ProviderLookupResult::Found {
+                    schema: fragment,
+                    resolved_k8s_version: None,
+                }
+            }
             None => ProviderLookupResult::PathUnresolved,
         }
     }
@@ -444,4 +479,75 @@ fn default_crd_schema_cache_dir() -> PathBuf {
     PathBuf::from(".cache")
         .join("helm-schema")
         .join("crds-catalog")
+}
+
+#[cfg(test)]
+mod tests {
+    use helm_schema_ir::{ResourceRef, YamlPath};
+    use serde_json::json;
+
+    use super::*;
+    use crate::cache::default_source_id;
+
+    fn widget_resource() -> ResourceRef {
+        ResourceRef {
+            api_version: "example.com/v1".to_string(),
+            kind: "Widget".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn catalog_lookup_attaches_provider_source() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock should be after unix epoch")
+            .as_nanos();
+        let cache_dir = std::env::temp_dir().join(format!("helm-schema-crd-source-{unique}"));
+        let relative_path = "example.com/widget_v1.json";
+        let schema_path = crd_cache_path(&cache_dir, default_source_id(), relative_path);
+        std::fs::create_dir_all(
+            schema_path
+                .parent()
+                .expect("schema cache path should have parent"),
+        )
+        .expect("create crd cache test directory");
+        std::fs::write(
+            &schema_path,
+            serde_json::to_vec(&json!({
+                "type": "object",
+                "properties": {
+                    "spec": {
+                        "$ref": "#/definitions/Spec"
+                    }
+                },
+                "definitions": {
+                    "Spec": {
+                        "type": "object",
+                        "properties": {
+                            "size": { "type": "integer" }
+                        }
+                    }
+                }
+            }))
+            .expect("serialize crd cache schema"),
+        )
+        .expect("write crd cache schema");
+
+        let provider = CrdsCatalogSchemaProvider::new().with_cache_dir(cache_dir);
+        let result = provider.lookup(
+            &widget_resource(),
+            &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+        );
+        let ProviderLookupResult::Found { schema, .. } = result else {
+            panic!("catalog lookup should resolve spec.size");
+        };
+        let source = schema.source().expect("catalog source should attach");
+
+        assert_eq!(source.origin(), ProviderOrigin::DefaultCatalog);
+        assert_eq!(source.source_id(), default_source_id());
+        assert_eq!(source.filename(), relative_path);
+        assert_eq!(source.pointer(), "/definitions/Spec/properties/size");
+    }
 }

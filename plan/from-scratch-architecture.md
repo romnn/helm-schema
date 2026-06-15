@@ -1818,12 +1818,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   provider evidence preserves that metadata while current `$defs` sharing still
   groups by exact structural schema equality so distinct source locations with
   identical schema shapes continue to deduplicate correctly.
-  The remaining work here is deeper provider-document lowering consolidation
-  so foreign schema documents can stay ref-shaped throughout more of the
-  pipeline, rather than being re-materialized before the exact-sharing pass.
-  Local override, CRD catalog, and chart-local CRD providers still need the
-  same leaf-source-location tracking as OpenAPI before their fragments can
-  participate fully in source-aware bundled emission.
+  Local override, CRD catalog, and chart-local CRD providers now use the same
+  source-aware local-ref descent shape: resolved leaves carry typed
+  provider-document identity when the leaf corresponds to a stable source JSON
+  Pointer, while synthetic metadata enrichment deliberately stays anonymous.
+  The remaining work here is source-aware bundled emission itself, so foreign
+  schema documents can stay ref-shaped throughout more of the pipeline rather
+  than being re-materialized before the exact-sharing pass.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
@@ -1886,8 +1887,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   location of the resolved leaf while still expanding only the returned leaf
   schema, and provider fragments carry that identity as typed data rather than
   an encoded string. This is the next prerequisite for retaining `$ref` shape
-  deeper in bundled emission; the matching local-ref descent source-location
-  work remains for local override/catalog/chart-local providers.
+  deeper in bundled emission. Local override, CRD catalog, and chart-local
+  CRD providers now report matching source locations for real document-backed
+  leaves, leaving source-aware bundled emission as the next consolidation
+  point.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated

@@ -9,6 +9,7 @@ use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    ProviderSchemaSource,
 };
 use crate::metadata_enrichment::{enrich_root_metadata_schema, enriched_metadata_schema};
 use crate::schema_doc::SchemaDoc;
@@ -121,12 +122,27 @@ impl LocalSchemaProvider {
         LocalSchemaDocLoad::Loaded(doc)
     }
 
-    fn schema_for_resource_path_from_doc(
+    fn schema_leaf_for_resource_path_from_doc(
         &self,
         root: &SchemaDoc,
         path: &YamlPath,
-    ) -> Option<Value> {
-        descend_schema_path_expanding_leaf_with_root_metadata(root.root(), &path.0)
+    ) -> Option<LocalSchemaLeaf> {
+        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
+    }
+
+    fn source_for_leaf(
+        &self,
+        resource: &ResourceRef,
+        leaf: &LocalSchemaLeaf,
+    ) -> Option<ProviderSchemaSource> {
+        let pointer = leaf.pointer()?;
+        Some(ProviderSchemaSource::new(
+            ProviderOrigin::LocalOverride,
+            self.root_dir.display().to_string(),
+            None,
+            Self::relative_path_for_resource(resource)?,
+            pointer.to_string(),
+        ))
     }
 
     #[must_use]
@@ -154,7 +170,8 @@ enum LocalSchemaDocLoad {
 impl K8sSchemaProvider for LocalSchemaProvider {
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
         let root = self.load_schema_doc(resource)?;
-        self.schema_for_resource_path_from_doc(&root, path)
+        self.schema_leaf_for_resource_path_from_doc(&root, path)
+            .map(LocalSchemaLeaf::into_schema)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -165,11 +182,18 @@ impl K8sSchemaProvider for LocalSchemaProvider {
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         match self.load_schema_doc_result(resource) {
             LocalSchemaDocLoad::Loaded(root) => {
-                match self.schema_for_resource_path_from_doc(&root, path) {
-                    Some(schema) => ProviderLookupResult::Found {
-                        schema: ProviderSchemaFragment::new(schema),
-                        resolved_k8s_version: None,
-                    },
+                match self.schema_leaf_for_resource_path_from_doc(&root, path) {
+                    Some(leaf) => {
+                        let source = self.source_for_leaf(resource, &leaf);
+                        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+                        if let Some(source) = source {
+                            fragment = fragment.with_source(source);
+                        }
+                        ProviderLookupResult::Found {
+                            schema: fragment,
+                            resolved_k8s_version: None,
+                        }
+                    }
                     None => ProviderLookupResult::PathUnresolved,
                 }
             }
@@ -255,10 +279,54 @@ fn descend_one<'a>(schema: &'a Value, seg: &str) -> Option<&'a Value> {
 /// full expanded resource schema for every lookup.
 #[tracing::instrument(skip_all, fields(path_len = path.len()))]
 pub fn descend_schema_path_expanding_leaf(root: &Value, path: &[String]) -> Option<Value> {
+    descend_schema_path_expanding_leaf_with_source(root, path).map(LocalSchemaLeaf::into_schema)
+}
+
+/// Source-aware result of a local schema document path descent.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LocalSchemaLeaf {
+    schema: Value,
+    pointer: Option<String>,
+}
+
+impl LocalSchemaLeaf {
+    fn new(schema: Value, pointer: Option<String>) -> Self {
+        Self { schema, pointer }
+    }
+
+    #[must_use]
+    pub fn schema(&self) -> &Value {
+        &self.schema
+    }
+
+    #[must_use]
+    pub fn pointer(&self) -> Option<&str> {
+        self.pointer.as_deref()
+    }
+
+    #[must_use]
+    pub fn into_schema(self) -> Value {
+        self.schema
+    }
+}
+
+/// Source-aware form of [`descend_schema_path_expanding_leaf`].
+///
+/// `pointer` identifies the source JSON Pointer of the resolved leaf before
+/// leaf-local `$ref` expansion. It is absent when the result is synthetic or
+/// no longer corresponds to one stable provider document location.
+#[tracing::instrument(skip_all, fields(path_len = path.len()))]
+pub fn descend_schema_path_expanding_leaf_with_source(
+    root: &Value,
+    path: &[String],
+) -> Option<LocalSchemaLeaf> {
     let mut stack = std::collections::HashSet::new();
-    let leaf = descend_schema_path_node(root, root, path, 0, &mut stack)?;
+    let leaf = descend_schema_path_node(root, root, Some(String::new()), path, 0, &mut stack)?;
     let mut expand_stack = std::collections::HashSet::new();
-    Some(expand_local_refs(root, &leaf, 0, &mut expand_stack))
+    Some(LocalSchemaLeaf::new(
+        expand_local_refs(root, leaf.schema(), 0, &mut expand_stack),
+        leaf.pointer,
+    ))
 }
 
 /// Descends a schema path while applying Kubernetes metadata enrichment lazily.
@@ -271,62 +339,94 @@ pub fn descend_schema_path_expanding_leaf_with_root_metadata(
     root: &Value,
     path: &[String],
 ) -> Option<Value> {
+    descend_schema_path_expanding_leaf_with_root_metadata_source(root, path)
+        .map(LocalSchemaLeaf::into_schema)
+}
+
+/// Source-aware form of
+/// [`descend_schema_path_expanding_leaf_with_root_metadata`].
+#[tracing::instrument(skip_all, fields(path_len = path.len()))]
+pub fn descend_schema_path_expanding_leaf_with_root_metadata_source(
+    root: &Value,
+    path: &[String],
+) -> Option<LocalSchemaLeaf> {
     let Some(first_segment) = path.first() else {
         let enriched_root = enrich_root_metadata_schema(root.clone());
         let mut stack = std::collections::HashSet::new();
-        return Some(expand_local_refs(
-            &enriched_root,
-            &enriched_root,
-            0,
-            &mut stack,
+        return Some(LocalSchemaLeaf::new(
+            expand_local_refs(&enriched_root, &enriched_root, 0, &mut stack),
+            None,
         ));
     };
 
     if first_segment != "metadata" {
-        return descend_schema_path_expanding_leaf(root, path);
+        return descend_schema_path_expanding_leaf_with_source(root, path);
     }
 
     let metadata = enriched_metadata_schema(root);
     let mut stack = std::collections::HashSet::new();
-    let leaf = descend_schema_path_node(root, &metadata, &path[1..], 0, &mut stack)?;
+    let leaf = descend_schema_path_node(root, &metadata, None, &path[1..], 0, &mut stack)?;
     let mut expand_stack = std::collections::HashSet::new();
-    Some(expand_local_refs(root, &leaf, 0, &mut expand_stack))
+    Some(LocalSchemaLeaf::new(
+        expand_local_refs(root, leaf.schema(), 0, &mut expand_stack),
+        leaf.pointer,
+    ))
 }
 
 fn descend_schema_path_node(
     root: &Value,
     schema: &Value,
+    pointer: Option<String>,
     path: &[String],
     depth: usize,
     stack: &mut std::collections::HashSet<String>,
-) -> Option<Value> {
+) -> Option<LocalSchemaLeaf> {
     if depth > 64 {
-        return Some(schema.clone());
+        return Some(LocalSchemaLeaf::new(schema.clone(), pointer));
     }
 
     let Some((segment, remaining_path)) = path.split_first() else {
-        return Some(schema.clone());
+        return Some(LocalSchemaLeaf::new(schema.clone(), pointer));
     };
 
-    let next = descend_one_expanding_refs(root, schema, segment, depth, stack)?;
-    descend_schema_path_node(root, &next, remaining_path, depth + 1, stack)
+    let LocalSchemaLeaf {
+        schema: next_schema,
+        pointer: next_pointer,
+    } = descend_one_expanding_refs(root, schema, pointer, segment, depth, stack)?;
+    descend_schema_path_node(
+        root,
+        &next_schema,
+        next_pointer,
+        remaining_path,
+        depth + 1,
+        stack,
+    )
 }
 
 fn descend_one_expanding_refs(
     root: &Value,
     schema: &Value,
+    pointer: Option<String>,
     segment: &str,
     depth: usize,
     stack: &mut std::collections::HashSet<String>,
-) -> Option<Value> {
-    let schema = resolve_local_ref(root, schema, depth, stack);
+) -> Option<LocalSchemaLeaf> {
+    let resolved = resolve_local_ref_node(root, schema, pointer, depth, stack);
+    let schema = resolved.schema();
 
     for keyword in ["allOf", "anyOf", "oneOf"] {
         if let Some(branches) = schema.get(keyword).and_then(Value::as_array) {
-            for branch in branches {
-                if let Some(next) =
-                    descend_one_expanding_refs(root, branch, segment, depth + 1, stack)
-                {
+            for (index, branch) in branches.iter().enumerate() {
+                let branch_pointer =
+                    pointer_with_segments(resolved.pointer(), &[keyword, &index.to_string()]);
+                if let Some(next) = descend_one_expanding_refs(
+                    root,
+                    branch,
+                    branch_pointer,
+                    segment,
+                    depth + 1,
+                    stack,
+                ) {
                     return Some(next);
                 }
             }
@@ -337,11 +437,17 @@ fn descend_one_expanding_refs(
         .strip_suffix("[*]")
         .map_or((segment, false), |key| (key, true));
 
-    let mut next = schema
+    let mut next = if let Some(property) = schema
         .get("properties")
         .and_then(Value::as_object)
         .and_then(|properties| properties.get(key))
-        .or_else(|| {
+    {
+        LocalSchemaLeaf::new(
+            property.clone(),
+            pointer_with_segments(resolved.pointer(), &["properties", key]),
+        )
+    } else {
+        let additional_properties =
             schema
                 .get("additionalProperties")
                 .and_then(|additional_properties| {
@@ -350,52 +456,84 @@ fn descend_one_expanding_refs(
                     } else {
                         Some(additional_properties)
                     }
-                })
-        })?
-        .clone();
+                })?;
+        LocalSchemaLeaf::new(
+            additional_properties.clone(),
+            pointer_with_segments(resolved.pointer(), &["additionalProperties"]),
+        )
+    };
 
     if is_array_item {
-        next = resolve_local_ref(root, &next, depth + 1, stack);
-        next = next
-            .get("items")
-            .or_else(|| {
-                next.get("prefixItems")
-                    .and_then(Value::as_array)
-                    .and_then(|items| items.first())
-            })?
-            .clone();
+        let LocalSchemaLeaf {
+            schema: next_schema,
+            pointer: next_pointer,
+        } = next;
+        next = resolve_local_ref_node(root, &next_schema, next_pointer, depth + 1, stack);
+        if let Some(items) = next.schema().get("items") {
+            next = LocalSchemaLeaf::new(
+                items.clone(),
+                pointer_with_segments(next.pointer(), &["items"]),
+            );
+        } else {
+            let item = next
+                .schema()
+                .get("prefixItems")
+                .and_then(Value::as_array)
+                .and_then(|items| items.first())?;
+            next = LocalSchemaLeaf::new(
+                item.clone(),
+                pointer_with_segments(next.pointer(), &["prefixItems", "0"]),
+            );
+        }
     }
 
     Some(next)
 }
 
-fn resolve_local_ref(
+fn resolve_local_ref_node(
     root: &Value,
     schema: &Value,
+    pointer: Option<String>,
     depth: usize,
     stack: &mut std::collections::HashSet<String>,
-) -> Value {
+) -> LocalSchemaLeaf {
     if depth > 64 {
-        return schema.clone();
+        return LocalSchemaLeaf::new(schema.clone(), pointer);
     }
     let Some(reference) = schema.get("$ref").and_then(Value::as_str) else {
-        return schema.clone();
+        return LocalSchemaLeaf::new(schema.clone(), pointer);
     };
     if stack.contains(reference) {
-        return strip_ref(schema);
+        return LocalSchemaLeaf::new(strip_ref(schema), None);
     }
     stack.insert(reference.to_string());
 
     let resolved = if let Some(pointer) = reference.strip_prefix('#') {
-        root.pointer(pointer)
-            .map(|target| resolve_local_ref(root, target, depth + 1, stack))
-            .unwrap_or_else(|| strip_ref(schema))
+        root.pointer(pointer).map_or_else(
+            || LocalSchemaLeaf::new(strip_ref(schema), None),
+            |target| {
+                resolve_local_ref_node(root, target, Some(pointer.to_string()), depth + 1, stack)
+            },
+        )
     } else {
-        strip_ref(schema)
+        LocalSchemaLeaf::new(strip_ref(schema), None)
     };
 
     stack.remove(reference);
     resolved
+}
+
+fn pointer_with_segments(base: Option<&str>, segments: &[&str]) -> Option<String> {
+    let mut out = base?.to_string();
+    for segment in segments {
+        out.push('/');
+        out.push_str(&escape_json_pointer_segment(segment));
+    }
+    Some(out)
+}
+
+fn escape_json_pointer_segment(segment: &str) -> String {
+    segment.replace('~', "~0").replace('/', "~1")
 }
 
 pub fn expand_local_refs(
@@ -486,9 +624,19 @@ fn strip_ref(schema: &Value) -> Value {
 
 #[cfg(test)]
 mod tests {
+    use helm_schema_ir::{ResourceRef, YamlPath};
     use serde_json::json;
 
     use super::*;
+
+    fn widget_resource() -> ResourceRef {
+        ResourceRef {
+            api_version: "example.com/v1".to_string(),
+            kind: "Widget".to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }
+    }
 
     #[test]
     fn lazy_local_path_descent_matches_full_expansion_for_array_ref() {
@@ -541,6 +689,35 @@ mod tests {
     }
 
     #[test]
+    fn source_aware_local_path_descent_reports_ref_target_pointer() {
+        let root = json!({
+            "type": "object",
+            "properties": {
+                "spec": {
+                    "$ref": "#/definitions/Spec"
+                }
+            },
+            "definitions": {
+                "Spec": {
+                    "type": "object",
+                    "properties": {
+                        "size": { "type": "integer" }
+                    }
+                }
+            }
+        });
+
+        let leaf = descend_schema_path_expanding_leaf_with_source(
+            &root,
+            &["spec".to_string(), "size".to_string()],
+        )
+        .expect("lazy descent should resolve ref-backed path");
+
+        assert_eq!(leaf.schema(), &json!({ "type": "integer" }));
+        assert_eq!(leaf.pointer(), Some("/definitions/Spec/properties/size"));
+    }
+
+    #[test]
     fn lazy_root_metadata_descent_enriches_only_metadata_leaf() {
         let root = json!({
             "type": "object",
@@ -573,6 +750,13 @@ mod tests {
         .expect("metadata.name should be synthesized from object metadata");
         assert_eq!(metadata_name, json!({ "type": "string" }));
 
+        let metadata_name_leaf = descend_schema_path_expanding_leaf_with_root_metadata_source(
+            &root,
+            &["metadata".to_string(), "name".to_string()],
+        )
+        .expect("metadata.name should be synthesized from object metadata");
+        assert_eq!(metadata_name_leaf.pointer(), None);
+
         let metadata_labels = descend_schema_path_expanding_leaf_with_root_metadata(
             &root,
             &["metadata".to_string(), "labels".to_string()],
@@ -592,5 +776,55 @@ mod tests {
         )
         .expect("non-metadata path should still descend the raw document");
         assert_eq!(spec_replicas, json!({ "type": "integer" }));
+    }
+
+    #[test]
+    fn local_override_lookup_attaches_provider_source() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock should be after unix epoch")
+            .as_nanos();
+        let root_dir =
+            std::env::temp_dir().join(format!("helm-schema-local-override-source-{unique}"));
+        let group_dir = root_dir.join("example.com");
+        std::fs::create_dir_all(&group_dir).expect("create local override test directory");
+        std::fs::write(
+            group_dir.join("widget_v1.json"),
+            serde_json::to_vec(&json!({
+                "type": "object",
+                "properties": {
+                    "spec": {
+                        "$ref": "#/definitions/Spec"
+                    }
+                },
+                "definitions": {
+                    "Spec": {
+                        "type": "object",
+                        "properties": {
+                            "size": { "type": "integer" }
+                        }
+                    }
+                }
+            }))
+            .expect("serialize local override schema"),
+        )
+        .expect("write local override schema");
+
+        let provider = LocalSchemaProvider::new(&root_dir);
+        let result = provider.lookup(
+            &widget_resource(),
+            &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+        );
+        let ProviderLookupResult::Found { schema, .. } = result else {
+            panic!("local override lookup should resolve spec.size");
+        };
+        let source = schema
+            .source()
+            .expect("local override source should attach");
+
+        assert_eq!(source.origin(), ProviderOrigin::LocalOverride);
+        assert_eq!(source.source_id(), root_dir.display().to_string());
+        assert_eq!(source.filename(), "example.com/widget_v1.json");
+        assert_eq!(source.pointer(), "/definitions/Spec/properties/size");
     }
 }
