@@ -1,0 +1,334 @@
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+
+use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+
+use crate::abstract_value::AbstractValue;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::{apply_local_set_mutations_expr, eval_expr};
+use crate::printf_eval::render_printf_string_sets;
+
+fn single_expr(action: &str) -> TemplateExpr {
+    let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
+    assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+    exprs.into_iter().next().expect("expression exists")
+}
+
+fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
+    AbstractValue::Dict(
+        entries
+            .iter()
+            .map(|(key, value)| ((*key).to_string(), value.clone()))
+            .collect(),
+    )
+}
+
+#[test]
+fn string_transform_pipeline_preserves_all_printf_argument_paths() {
+    let expr = single_expr(r#"printf "%s-%s" .Values.primary.name .Values.suffix | trunc 63"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert!(
+        result.effects.string_hints.contains("primary.name"),
+        "primary.name should remain visible through printf before trunc"
+    );
+    assert!(
+        result.effects.string_hints.contains("suffix"),
+        "suffix should remain visible through printf before trunc"
+    );
+}
+
+#[test]
+fn printf_exact_rendering_only_accepts_supported_string_formats() {
+    let values = [BTreeSet::from(["x".to_string()])];
+
+    assert_eq!(
+        render_printf_string_sets("prefix-%s-%%", &values),
+        Some(BTreeSet::from(["prefix-x-%".to_string()]))
+    );
+    assert_eq!(render_printf_string_sets("%d", &values), None);
+    assert_eq!(
+        render_printf_string_sets("literal", &[BTreeSet::from(["unused".to_string()])]),
+        None
+    );
+    assert_eq!(render_printf_string_sets("%s-%s", &values), None);
+}
+
+#[test]
+fn integer_index_on_values_path_descends_array_item_wildcard() {
+    let expr = single_expr(r#"index .Values.sentinel.externalAccess.service.loadBalancerIP 0"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::ValuesPath(
+            "sentinel.externalAccess.service.loadBalancerIP.*".to_string()
+        ))
+    );
+    assert!(
+        result
+            .effects
+            .reads
+            .contains("sentinel.externalAccess.service.loadBalancerIP.*")
+    );
+}
+
+#[test]
+fn integer_index_on_known_list_stays_positional() {
+    let expr = single_expr(r#"index (list "root" "scope" "pod") 1"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::StringSet(BTreeSet::from([
+            "scope".to_string()
+        ])))
+    );
+}
+
+#[test]
+fn set_call_updates_local_key_with_assigned_literal() {
+    let expr = single_expr(r#"set $config (printf "%s" "name") "generated""#);
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "config".to_string(),
+        dict(&[
+            (
+                "name",
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            ),
+            (
+                "annotations",
+                AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+            ),
+        ]),
+    );
+
+    assert!(apply_local_set_mutations_expr(&expr, &mut env));
+
+    assert_eq!(
+        env.locals.get("config"),
+        Some(&AbstractValue::Overlay {
+            entries: BTreeMap::from([(
+                "name".to_string(),
+                AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
+            )]),
+            fallback: Box::new(dict(&[
+                (
+                    "name",
+                    AbstractValue::ValuesPath("serviceAccount.name".to_string())
+                ),
+                (
+                    "annotations",
+                    AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+                ),
+            ])),
+        })
+    );
+}
+
+#[test]
+fn set_call_inside_throwaway_assignment_updates_local_key() {
+    let expr = single_expr(r#"$_ := set $config (printf "%s" "name") "generated""#);
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "config".to_string(),
+        dict(&[(
+            "name",
+            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+        )]),
+    );
+
+    assert!(apply_local_set_mutations_expr(&expr, &mut env));
+
+    assert_eq!(
+        env.locals.get("config"),
+        Some(&AbstractValue::Overlay {
+            entries: BTreeMap::from([(
+                "name".to_string(),
+                AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
+            )]),
+            fallback: Box::new(dict(&[(
+                "name",
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            )])),
+        })
+    );
+}
+
+#[test]
+fn set_call_preserves_assigned_value_path() {
+    let expr = single_expr(r#"$_ := set $config "name" .Values.generatedName"#);
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "config".to_string(),
+        dict(&[(
+            "name",
+            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+        )]),
+    );
+
+    assert!(apply_local_set_mutations_expr(&expr, &mut env));
+
+    let result = eval_expr(&single_expr(r#"$config.name"#), &env);
+    assert_eq!(
+        result.effects.reads,
+        BTreeSet::from(["generatedName".to_string()])
+    );
+}
+
+#[test]
+fn selector_on_local_dict_records_only_selected_child_reads() {
+    let expr = single_expr(r#"$config.annotations"#);
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "config".to_string(),
+        dict(&[
+            (
+                "name",
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            ),
+            (
+                "annotations",
+                AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+            ),
+        ]),
+    );
+
+    let result = eval_expr(&expr, &env);
+
+    assert_eq!(
+        result.effects.reads,
+        BTreeSet::from(["serviceAccount.annotations".to_string()])
+    );
+}
+
+#[test]
+fn unsupported_printf_format_preserves_string_hint_without_exact_string() {
+    let expr = single_expr(r#"printf "%d" .Values.count"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert!(
+        result.effects.string_hints.contains("count"),
+        "unsupported printf formats still prove scalar string-context use"
+    );
+    assert!(
+        result
+            .value
+            .as_ref()
+            .map(AbstractValue::strings)
+            .unwrap_or_default()
+            .is_empty(),
+        "unsupported printf formats must not synthesize exact strings"
+    );
+}
+
+#[test]
+fn pipeline_ternary_returns_value_branches_not_condition() {
+    let expr = single_expr(
+        r#"typeIs "string" .Values.config | ternary .Values.config (.Values.config | toYaml)"#,
+    );
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::ValuesPath("config".to_string()))
+    );
+}
+
+#[test]
+fn base64_pipeline_preserves_source_path() {
+    let expr = single_expr(r#".Values.auth.password | toString | b64enc"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::ValuesPath("auth.password".to_string()))
+    );
+}
+
+#[test]
+fn uniq_pipeline_preserves_local_list_items() {
+    let expr = single_expr(r#"$pullSecrets | uniq"#);
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "pullSecrets".to_string(),
+        AbstractValue::List(vec![AbstractValue::ValuesPath(
+            "image.pullSecrets.*".to_string(),
+        )]),
+    );
+    let result = eval_expr(&expr, &env);
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::List(vec![AbstractValue::ValuesPath(
+            "image.pullSecrets.*".to_string(),
+        )]))
+    );
+}
+
+#[test]
+fn split_list_preserves_equal_length_segment_positions() {
+    let expr = single_expr(r#"splitList "." "auth.password""#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::List(vec![
+            AbstractValue::StringSet(BTreeSet::from(["auth".to_string()])),
+            AbstractValue::StringSet(BTreeSet::from(["password".to_string()])),
+        ]))
+    );
+}
+
+#[test]
+fn split_list_keeps_mixed_length_path_candidates_atomic() {
+    let expr = single_expr(r#"splitList "." (coalesce "auth.password" "global.auth.password")"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert_eq!(
+        result.value,
+        Some(AbstractValue::List(vec![AbstractValue::StringSet(
+            BTreeSet::from([
+                "auth.password".to_string(),
+                "global.auth.password".to_string(),
+            ])
+        )]))
+    );
+}
+
+#[test]
+fn first_and_reverse_preserve_list_structure() {
+    let first = eval_expr(&single_expr(r#"first (list "a" "b")"#), &EvalEnv::default());
+    assert_eq!(
+        first.value,
+        Some(AbstractValue::StringSet(BTreeSet::from(["a".to_string()])))
+    );
+
+    let reverse = eval_expr(
+        &single_expr(r#"reverse (list "a" "b")"#),
+        &EvalEnv::default(),
+    );
+    assert_eq!(
+        reverse.value,
+        Some(AbstractValue::List(vec![
+            AbstractValue::StringSet(BTreeSet::from(["b".to_string()])),
+            AbstractValue::StringSet(BTreeSet::from(["a".to_string()])),
+        ]))
+    );
+}
+
+#[test]
+fn helper_argument_fields_resolve_from_dot_root() {
+    let expr = single_expr(r#"default "generated" .config.name"#);
+    let env = EvalEnv::from_root_fields(HashMap::from([(
+        "config".to_string(),
+        AbstractValue::ValuesPath("serviceAccount".to_string()),
+    )]));
+
+    let result = eval_expr(&expr, &env);
+
+    assert!(
+        result.effects.defaults.contains("serviceAccount.name"),
+        "default should attach to the values path reached through .config.name"
+    );
+}

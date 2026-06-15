@@ -22,7 +22,10 @@ mod document_hole_context;
 mod document_value_analysis;
 mod eval_effect;
 mod eval_env;
+mod expr_call_eval;
 mod expr_eval;
+#[cfg(test)]
+mod expr_eval_tests;
 mod expr_function_catalog;
 mod expression_analysis;
 mod fragment_classification;

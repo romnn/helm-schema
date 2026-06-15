@@ -1705,7 +1705,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   mechanics. Expression evaluation has also shed two non-evaluator concerns:
   Helm function classification lives in a function catalog, and exact
   supported-`printf` rendering lives behind a small renderer module reused by
-  helper-aware expression evaluation.
+  helper-aware expression evaluation. The expression dispatcher is now
+  separated from Helm call and pipeline semantics as well: `expr_eval` owns
+  AST dispatch and local mutation entry points, while `expr_call_eval` owns
+  the structural semantics for `default`, `dict`, `list`, `set`, `index`,
+  merge/coalesce, string transforms, and pipelines. Local-state and
+  expression-evaluator regression tests now live outside their production
+  modules, so those files expose only runtime mechanics.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI
