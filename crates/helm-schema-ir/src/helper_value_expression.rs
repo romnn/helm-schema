@@ -7,6 +7,7 @@ use crate::expression_analysis::{
 };
 use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr,
@@ -20,6 +21,7 @@ use crate::helper_analysis_projection::{
     bound_helper_dependency_paths, helper_dependency_meta_from_analysis,
 };
 use crate::helper_binding::HelperBinding;
+use crate::helper_binding_projection::{helper_strings, helper_to_fragment_binding};
 use crate::helper_output_projection::helper_binding_output_meta;
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
@@ -49,7 +51,7 @@ pub(crate) fn collect_helper_value_expression(
         return;
     }
 
-    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
+    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations(
         text,
@@ -143,7 +145,7 @@ fn string_outputs_from_text(
     seen: &mut HashSet<String>,
 ) -> BTreeSet<String> {
     let mut strings = BTreeSet::new();
-    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
+    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     for expr in parse_expr_text(text) {
         if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
             &expr,
@@ -153,7 +155,7 @@ fn string_outputs_from_text(
             context,
             seen,
         ) {
-            strings.extend(binding.strings());
+            strings.extend(helper_strings(&binding));
             continue;
         }
         if let Some(binding) = fragment_binding_from_expr(
@@ -163,7 +165,7 @@ fn string_outputs_from_text(
             context,
             seen,
         ) {
-            strings.extend(binding.strings());
+            strings.extend(fragment_strings(&binding));
         }
     }
     strings
@@ -189,7 +191,7 @@ fn collect_assignment_bound_helper_values(
         resolved_string_transform_paths_for_text(rhs, Some(bindings), current_dot),
     );
 
-    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
+    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations(
         text,

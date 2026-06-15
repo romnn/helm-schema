@@ -5,6 +5,7 @@ use helm_schema_ast::TemplateExpr;
 use crate::expression_analysis::resolved_default_fallback_paths_for_text;
 use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
 use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
@@ -246,7 +247,7 @@ fn collect_bound_fragment_output_assignment_uses(
             FragmentBinding::Dict(_) | FragmentBinding::Overlay { .. }
         )
     {
-        let current_item_paths = FragmentBinding::paths(current_dot_fragment);
+        let current_item_paths = fragment_source_paths(current_dot_fragment);
         let mut internal_item_paths = current_item_paths;
         internal_item_paths.extend(top_level_helper_dependency_paths);
         if !internal_item_paths.is_empty() {
@@ -299,7 +300,7 @@ fn local_output_uses_from_text(
                     }
                     local_bindings
                         .get(var)
-                        .and_then(|binding| binding.apply_to_binding(path))
+                        .and_then(|binding| select_fragment_binding(binding, path))
                 }
                 _ => None,
             };

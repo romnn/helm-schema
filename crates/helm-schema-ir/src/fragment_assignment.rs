@@ -5,6 +5,7 @@ use helm_schema_ast::TemplateExpr;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::apply_local_set_mutations_expr;
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 
@@ -143,7 +144,7 @@ fn local_set_mutation_target_and_keys(
             else {
                 return;
             };
-            let keys = FragmentBinding::strings(&key_binding);
+            let keys = fragment_strings(&key_binding);
             if !keys.is_empty() {
                 out.push((var.clone(), keys));
             }

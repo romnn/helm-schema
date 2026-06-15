@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
 use crate::helper_analysis::HelperOutputMeta;
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
 use crate::template_expr_cache::parse_expr_text;
@@ -30,14 +30,14 @@ impl ValuePathContext<'_> {
             TemplateExpr::Variable(var) if !var.is_empty() => self
                 .template_bindings
                 .get(var)
-                .map(FragmentBinding::paths)
+                .map(fragment_source_paths)
                 .unwrap_or_default(),
             TemplateExpr::Selector { operand, path } => match operand.as_ref() {
                 TemplateExpr::Variable(var) if !var.is_empty() => self
                     .template_bindings
                     .get(var)
-                    .and_then(|binding| binding.apply_to_binding(path))
-                    .map(|binding| FragmentBinding::paths(&binding))
+                    .and_then(|binding| select_fragment_binding(binding, path))
+                    .map(|binding| fragment_source_paths(&binding))
                     .unwrap_or_default(),
                 _ => BTreeSet::new(),
             },
@@ -79,10 +79,10 @@ impl ValuePathContext<'_> {
                 let Some(binding) = self.template_bindings.get(var) else {
                     return BTreeMap::new();
                 };
-                let Some(bound) = binding.apply_to_binding(path) else {
+                let Some(bound) = select_fragment_binding(binding, path) else {
                     return BTreeMap::new();
                 };
-                let selected_paths = FragmentBinding::paths(&bound);
+                let selected_paths = fragment_source_paths(&bound);
                 self.template_output_meta
                     .get(var)
                     .into_iter()

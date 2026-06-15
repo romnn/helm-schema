@@ -28,6 +28,7 @@ mod expr_pipeline_eval;
 mod expression_analysis;
 mod fragment_assignment;
 mod fragment_binding;
+mod fragment_binding_projection;
 mod fragment_classification;
 mod fragment_expr_eval;
 mod fragment_range_scope;

@@ -7,6 +7,7 @@ use crate::contract_sink::ContractUseSink;
 use crate::document_projection::collect_document_hole_context;
 use crate::fragment_assignment::{apply_local_set_mutations, merge_fragment_locals};
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::{fragment_source_paths, fragment_to_helper_binding};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
@@ -169,7 +170,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
         };
 
         let meta = HelperOutputMeta::with_predicates(&self.active_output_predicates, false);
-        for source_expr in FragmentBinding::paths(range_binding) {
+        for source_expr in fragment_source_paths(range_binding) {
             push_helper_fragment_output(
                 self.outputs,
                 source_expr,
@@ -222,7 +223,7 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
     fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
         self.dot_fragment_stack.push(binding.clone());
         self.dot_stack
-            .push(binding.and_then(|binding| binding.to_helper_binding()));
+            .push(binding.and_then(|binding| fragment_to_helper_binding(&binding)));
     }
 
     fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}

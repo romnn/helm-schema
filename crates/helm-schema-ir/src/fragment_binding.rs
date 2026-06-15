@@ -1,8 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::abstract_value::AbstractValue;
-use crate::helper_binding::HelperBinding;
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum FragmentBinding {
     ValuesPath(String),
@@ -22,26 +19,6 @@ pub(crate) enum FragmentBinding {
 }
 
 impl FragmentBinding {
-    pub(crate) fn to_current_dot_helper_binding(&self) -> Option<HelperBinding> {
-        match self {
-            Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
-            Self::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
-            Self::RootContext => Some(HelperBinding::RootContext),
-            Self::Unknown
-            | Self::Dict(_)
-            | Self::List(_)
-            | Self::Overlay { .. }
-            | Self::StringSet(_)
-            | Self::PathSet(_)
-            | Self::OutputSet(_)
-            | Self::Choice(_) => None,
-        }
-    }
-
-    pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
-        AbstractValue::from_fragment_binding(self).to_helper_binding()
-    }
-
     pub(crate) fn choice(bindings: Vec<Self>) -> Option<Self> {
         let mut flat = BTreeSet::new();
         for binding in bindings {
@@ -57,18 +34,6 @@ impl FragmentBinding {
             1 => flat.into_iter().next(),
             _ => Some(Self::Choice(flat)),
         }
-    }
-
-    pub(crate) fn paths(&self) -> BTreeSet<String> {
-        AbstractValue::from_fragment_output_binding(self).shallow_paths()
-    }
-
-    pub(crate) fn rendered_paths(&self) -> BTreeSet<String> {
-        AbstractValue::from_fragment_output_binding(self).paths()
-    }
-
-    pub(crate) fn strings(&self) -> BTreeSet<String> {
-        AbstractValue::from_fragment_binding(self).strings()
     }
 
     pub(crate) fn union(left: Option<Self>, right: Option<Self>) -> Option<Self> {
@@ -223,51 +188,5 @@ impl FragmentBinding {
                     .collect(),
             ),
         }
-    }
-
-    pub(crate) fn apply_to_binding(&self, rest: &[String]) -> Option<Self> {
-        AbstractValue::from_fragment_binding(self)
-            .apply_to_path(rest)
-            .and_then(|value| value.to_fragment_binding())
-    }
-
-    pub(crate) fn item_binding(&self) -> Option<Self> {
-        AbstractValue::from_fragment_binding(self)
-            .fragment_range_item()
-            .and_then(|value| value.to_fragment_binding())
-    }
-
-    pub(crate) fn definitely_nonempty_iterable(&self) -> bool {
-        AbstractValue::from_fragment_binding(self).definitely_nonempty_iterable()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
-
-    use super::FragmentBinding;
-
-    #[test]
-    fn values_root_abstains_from_fragment_path_extraction() {
-        assert_eq!(FragmentBinding::ValuesRoot.paths(), BTreeSet::new());
-        assert_eq!(
-            FragmentBinding::ValuesRoot.rendered_paths(),
-            BTreeSet::new()
-        );
-    }
-
-    #[test]
-    fn fragment_paths_stay_shallow_while_rendered_paths_descend_structures() {
-        let binding = FragmentBinding::Dict(BTreeMap::from([(
-            "metadata".to_string(),
-            FragmentBinding::ValuesPath("podLabels".to_string()),
-        )]));
-
-        assert_eq!(binding.paths(), BTreeSet::new());
-        assert_eq!(
-            binding.rendered_paths(),
-            BTreeSet::from(["podLabels".to_string()])
-        );
     }
 }

@@ -5,6 +5,9 @@ use helm_schema_ast::TemplateExpr;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::{
+    fragment_rendered_paths, fragment_source_paths, select_fragment_binding,
+};
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
 use crate::template_expr_analysis::{
@@ -36,14 +39,14 @@ pub(crate) fn local_bound_paths_from_text(
     text: &str,
     locals: &HashMap<String, FragmentBinding>,
 ) -> BTreeSet<String> {
-    local_paths_from_text(text, locals, FragmentBinding::paths)
+    local_paths_from_text(text, locals, fragment_source_paths)
 }
 
 pub(crate) fn local_rendered_paths_from_text(
     text: &str,
     locals: &HashMap<String, FragmentBinding>,
 ) -> BTreeSet<String> {
-    local_paths_from_text(text, locals, FragmentBinding::rendered_paths)
+    local_paths_from_text(text, locals, fragment_rendered_paths)
 }
 
 fn local_paths_from_text(
@@ -67,7 +70,7 @@ fn local_paths_from_text(
                     return;
                 }
                 if let Some(binding) = locals.get(var)
-                    && let Some(bound) = binding.apply_to_binding(path)
+                    && let Some(bound) = select_fragment_binding(binding, path)
                 {
                     out.extend(extract_paths(&bound));
                 }
@@ -135,10 +138,10 @@ fn local_output_meta_from_expr(
             let Some(binding) = local_bindings.get(var) else {
                 return BTreeMap::new();
             };
-            let Some(bound) = binding.apply_to_binding(path) else {
+            let Some(bound) = select_fragment_binding(binding, path) else {
                 return BTreeMap::new();
             };
-            let selected_paths = FragmentBinding::paths(&bound);
+            let selected_paths = fragment_source_paths(&bound);
             local_output_meta
                 .get(var)
                 .into_iter()

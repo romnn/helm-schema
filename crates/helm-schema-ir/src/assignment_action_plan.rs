@@ -5,6 +5,7 @@ use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_expr};
 use crate::helper_binding::HelperBinding;
+use crate::helper_binding_projection::helper_to_fragment_binding;
 
 pub(crate) struct AssignmentActionPlan {
     pub(crate) get_binding: Option<GetBindingPlan>,
@@ -28,9 +29,9 @@ pub(crate) fn plan_assignment_action(
     let local_assignment = parse_helper_assignment(text).map(|assignment| {
         let mut locals = template_bindings.clone();
         for (key, value) in root_bindings {
-            locals.insert(key.clone(), value.to_fragment_binding());
+            locals.insert(key.clone(), helper_to_fragment_binding(value));
         }
-        let current_dot = current_dot_binding.map(HelperBinding::to_fragment_binding);
+        let current_dot = current_dot_binding.map(helper_to_fragment_binding);
         let mut seen = HashSet::new();
         let fragment_binding = fragment_binding_from_expr(
             &assignment.rhs_expr,

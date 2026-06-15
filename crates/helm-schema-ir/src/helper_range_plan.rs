@@ -1,9 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::{
+    fragment_definitely_nonempty_iterable, fragment_item_binding, fragment_to_helper_binding,
+};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{range_iterable_binding, range_variable_name};
 use crate::helper_binding::HelperBinding;
+use crate::helper_binding_projection::{
+    helper_definitely_nonempty_iterable, helper_item_binding, helper_to_fragment_binding,
+};
 use crate::helper_range_frame::RangeFrame;
 
 pub(crate) struct HelperRangeBindingPlan {
@@ -38,7 +44,7 @@ pub(crate) fn plan_helper_range_binding(
         range_iterable_binding(header, local_bindings, current_dot_fragment, context, seen);
     let range_helper_binding = range_fragment_binding
         .as_ref()
-        .and_then(FragmentBinding::to_helper_binding);
+        .and_then(fragment_to_helper_binding);
 
     let exact_iterations = if let Some(FragmentBinding::List(items)) = &range_fragment_binding {
         let range_variable = range_variable_name(header);
@@ -46,7 +52,7 @@ pub(crate) fn plan_helper_range_binding(
             items
                 .iter()
                 .map(|item| HelperRangeIteration {
-                    helper_dot_binding: item.to_helper_binding(),
+                    helper_dot_binding: fragment_to_helper_binding(item),
                     fragment_dot_binding: Some(item.clone()),
                     variable_binding: range_variable
                         .as_ref()
@@ -67,7 +73,7 @@ pub(crate) fn plan_helper_range_binding(
         range_variable_name(header).and_then(|variable| {
             range_fragment_binding
                 .as_ref()
-                .and_then(FragmentBinding::item_binding)
+                .and_then(fragment_item_binding)
                 .map(|binding| (variable, binding))
         })
     } else {
@@ -98,21 +104,21 @@ impl HelperRangeBindingPlan {
     pub(crate) fn helper_value_body_dot(&self) -> Option<FragmentBinding> {
         self.range_helper_binding
             .as_ref()
-            .and_then(HelperBinding::item_binding)
-            .map(|binding| binding.to_fragment_binding())
+            .and_then(helper_item_binding)
+            .map(|binding| helper_to_fragment_binding(&binding))
     }
 
     pub(crate) fn fragment_output_body_dot(&self) -> Option<FragmentBinding> {
         self.range_fragment_binding
             .as_ref()
-            .and_then(FragmentBinding::item_binding)
+            .and_then(fragment_item_binding)
     }
 
     pub(crate) fn helper_value_frame(&self) -> RangeFrame<HelperRangeIteration> {
         RangeFrame::new(
             self.range_helper_binding
                 .as_ref()
-                .is_some_and(HelperBinding::definitely_nonempty_iterable),
+                .is_some_and(helper_definitely_nonempty_iterable),
             self.exact_iterations.clone(),
         )
     }
@@ -121,7 +127,7 @@ impl HelperRangeBindingPlan {
         RangeFrame::new(
             self.range_fragment_binding
                 .as_ref()
-                .is_some_and(FragmentBinding::definitely_nonempty_iterable),
+                .is_some_and(fragment_definitely_nonempty_iterable),
             self.exact_iterations.clone(),
         )
     }

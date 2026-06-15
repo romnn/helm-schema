@@ -3,6 +3,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::{Literal, TemplateExpr, parse_action_expressions};
 
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 
@@ -127,7 +128,7 @@ fn collect_files_get_paths<F>(
         && let Some(path_arg) = args.first()
         && let Some(binding) = resolve_fragment_binding(path_arg)
     {
-        out.extend(FragmentBinding::strings(&binding));
+        out.extend(fragment_strings(&binding));
     }
 
     match expr {

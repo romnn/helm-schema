@@ -1717,7 +1717,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   helper output metadata collection is an abstract-value projection rather
   than another helper-binding walker. Direct path and output-use collectors
   now consume abstract evaluator results directly instead of routing through
-  helper-binding DTOs just to recover paths again. Contract emission
+  helper-binding DTOs just to recover paths again. Fragment binding projection
+  has also moved out of the DTO into a dedicated abstract-value-backed
+  projection module, so `FragmentBinding` is reduced to normalized data plus
+  mutation helpers. Helper binding projection helpers have moved the same way,
+  leaving `HelperBinding` as data plus choice normalization rather than a
+  second home for string/range/fragment conversion behavior. Contract emission
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization

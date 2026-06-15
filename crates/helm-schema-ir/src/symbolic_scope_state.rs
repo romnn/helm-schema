@@ -1,5 +1,6 @@
 use crate::Guard;
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_to_current_dot_helper_binding;
 use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
 use crate::symbolic_local_state::{SymbolicLocalState, SymbolicLocalStateSnapshot};
@@ -79,7 +80,7 @@ impl SymbolicScopeState {
         self.dot_stack
             .last()
             .and_then(|binding| binding.as_ref())
-            .and_then(FragmentBinding::to_current_dot_helper_binding)
+            .and_then(fragment_to_current_dot_helper_binding)
     }
 
     pub(crate) fn current_dot_fragment(&self) -> Option<FragmentBinding> {

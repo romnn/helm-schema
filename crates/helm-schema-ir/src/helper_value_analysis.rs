@@ -6,11 +6,13 @@ use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_to_helper_binding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_header_text_from_source;
 use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
 use crate::helper_analysis_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
 use crate::helper_binding::HelperBinding;
+use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
@@ -81,7 +83,7 @@ impl HelperValueRuntime<'_, '_> {
     }
 
     fn current_dot_fragment(&self) -> Option<FragmentBinding> {
-        self.current_dot().map(HelperBinding::to_fragment_binding)
+        self.current_dot().map(helper_to_fragment_binding)
     }
 
     fn collect_expression(&mut self, text: &str) {
@@ -179,7 +181,7 @@ impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
 
     fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
         self.dot_stack
-            .push(binding.and_then(|binding| binding.to_helper_binding()));
+            .push(binding.and_then(|binding| fragment_to_helper_binding(&binding)));
     }
 
     fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}
@@ -327,7 +329,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
-        let current_dot_fragment = current_dot.as_ref().map(HelperBinding::to_fragment_binding);
+        let current_dot_fragment = current_dot.as_ref().map(helper_to_fragment_binding);
         let body_dot = computed_with_body_fragment_binding(
             header,
             self.bindings,

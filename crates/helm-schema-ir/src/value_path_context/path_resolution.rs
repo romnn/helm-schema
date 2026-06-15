@@ -6,8 +6,10 @@ use crate::expression_analysis::{
     resolve_expr_to_values_path, resolved_default_fallback_paths_for_text,
 };
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_source_paths;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
 use crate::helper_binding::HelperBinding;
+use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
@@ -33,7 +35,7 @@ pub(crate) fn computed_with_body_fragment_binding(
 
     let mut locals = template_bindings.clone();
     for (key, value) in root_bindings {
-        locals.insert(key.clone(), value.to_fragment_binding());
+        locals.insert(key.clone(), helper_to_fragment_binding(value));
     }
 
     fragment_binding_from_outer_expr(
@@ -132,7 +134,7 @@ impl ValuePathContext<'_> {
 
         let mut locals = self.template_bindings.clone();
         for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), value.to_fragment_binding());
+            locals.insert(key.clone(), helper_to_fragment_binding(value));
         }
 
         let outer_binding = fragment_binding_from_outer_expr(
@@ -147,7 +149,7 @@ impl ValuePathContext<'_> {
         outer_binding
             .into_iter()
             .chain(fragment_binding)
-            .flat_map(|binding| FragmentBinding::paths(&binding))
+            .flat_map(|binding| fragment_source_paths(&binding))
             .filter(|path| !path.trim().is_empty())
             .collect()
     }
@@ -194,7 +196,7 @@ impl ValuePathContext<'_> {
     pub(super) fn resolved_values_paths_in_expr_tree(&self, text: &str) -> BTreeSet<String> {
         let mut locals = self.template_bindings.clone();
         for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), value.to_fragment_binding());
+            locals.insert(key.clone(), helper_to_fragment_binding(value));
         }
 
         let mut paths = BTreeSet::new();
@@ -215,7 +217,7 @@ impl ValuePathContext<'_> {
                     outer_binding
                         .into_iter()
                         .chain(fragment_binding)
-                        .flat_map(|binding| FragmentBinding::paths(&binding))
+                        .flat_map(|binding| fragment_source_paths(&binding))
                         .filter(|path| !path.trim().is_empty()),
                 );
             });

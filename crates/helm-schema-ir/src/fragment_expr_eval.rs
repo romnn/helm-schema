@@ -7,10 +7,13 @@ use crate::define_body_cache::DefineBodyCache;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding_projection::fragment_to_helper_binding;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::helper_binding::HelperBinding;
-use crate::helper_binding_projection::{project_fragment_binding, project_helper_binding};
+use crate::helper_binding_projection::{
+    helper_to_fragment_binding, project_fragment_binding, project_helper_binding,
+};
 use crate::helper_summary::HelperSummaryCache;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::template_expr_cache::parse_expr_text;
@@ -62,14 +65,7 @@ pub(crate) fn fragment_binding_from_outer_expr(
         return Some(FragmentBinding::Dict(
             bindings
                 .iter()
-                .map(|(key, binding)| {
-                    (
-                        key.clone(),
-                        AbstractValue::from_helper_binding(binding)
-                            .to_fragment_binding()
-                            .unwrap_or(FragmentBinding::Unknown),
-                    )
-                })
+                .map(|(key, binding)| (key.clone(), helper_to_fragment_binding(binding)))
                 .collect(),
         ));
     }
@@ -191,7 +187,7 @@ pub(crate) fn fragment_binding_from_expr(
     seen: &mut HashSet<String>,
 ) -> Option<FragmentBinding> {
     let env = EvalEnv::from_fragment_context(locals, current_dot);
-    let current_dot_helper = current_dot.and_then(FragmentBinding::to_helper_binding);
+    let current_dot_helper = current_dot.and_then(fragment_to_helper_binding);
     eval_expr_with_bound_helpers(
         expr,
         &env,
@@ -215,7 +211,7 @@ pub(crate) fn fragment_binding_from_text_with_helper_context(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Option<FragmentBinding> {
-    let current_dot_fragment = current_dot.map(HelperBinding::to_fragment_binding);
+    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     let mut bindings = Vec::new();
     for expr in parse_expr_text(text) {
         if !expr_contains_helper_call(&expr)
@@ -238,7 +234,7 @@ pub(crate) fn fragment_binding_from_text_with_helper_context(
             context,
             seen,
         ) {
-            bindings.push(binding.to_fragment_binding());
+            bindings.push(helper_to_fragment_binding(&binding));
             continue;
         }
         if let Some(binding) = fragment_binding_from_expr(

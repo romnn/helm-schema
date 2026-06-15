@@ -6,6 +6,26 @@ use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding::HelperBinding;
 use crate::output_path;
 
+pub(crate) fn helper_to_fragment_binding(binding: &HelperBinding) -> FragmentBinding {
+    AbstractValue::from_helper_binding(binding)
+        .to_fragment_binding()
+        .unwrap_or(FragmentBinding::Unknown)
+}
+
+pub(crate) fn helper_strings(binding: &HelperBinding) -> BTreeSet<String> {
+    AbstractValue::from_helper_binding(binding).strings()
+}
+
+pub(crate) fn helper_item_binding(binding: &HelperBinding) -> Option<HelperBinding> {
+    AbstractValue::from_helper_binding(binding)
+        .helper_range_item()
+        .and_then(|value| value.to_helper_binding())
+}
+
+pub(crate) fn helper_definitely_nonempty_iterable(binding: &HelperBinding) -> bool {
+    AbstractValue::from_helper_binding(binding).definitely_nonempty_iterable()
+}
+
 pub(crate) fn project_fragment_binding(analysis: BoundHelperAnalysis) -> Option<FragmentBinding> {
     project_binding_value(analysis, ProjectionTarget::Fragment)
         .and_then(|value| value.to_fragment_binding())
