@@ -11,9 +11,9 @@ mod resource_lookup_plan;
 mod trace;
 mod trait_def;
 
-pub use crate::api_presence::ApiPresenceQuery;
 pub use chain::Chain;
 pub use chain_outcome::ChainLookupOutcome;
+pub use helm_schema_ir::ApiPresenceQuery;
 pub use provider_origin::ProviderOrigin;
 pub use provider_result::ProviderLookupResult;
 pub use trace::{

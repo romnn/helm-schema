@@ -1,7 +1,6 @@
-use helm_schema_ir::{ProviderSchemaUse, ResourceRef, YamlPath};
+use helm_schema_ir::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::api_presence::ApiPresenceQuery;
 use crate::diagnostic::Diagnostic;
 use crate::filename::ordered_api_versions_for_resource;
 use crate::inference::candidate::ApiVersionCandidate;
@@ -161,13 +160,5 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         let mut trace = LookupTrace::new_api_presence(query);
         trace.record_api_presence_provider(self.origin(), answer);
         TracedApiPresenceOutcome { answer, trace }
-    }
-
-    /// Compatibility adapter for current callers that still carry the raw Helm
-    /// literal. New code should prefer
-    /// [`Self::capability_has_query_at_primary_version`].
-    fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
-        let query = ApiPresenceQuery::parse_helm_literal(api)?;
-        self.capability_has_query_at_primary_version(&query)
     }
 }

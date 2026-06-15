@@ -39,9 +39,9 @@
 //!     `if Has X` gates around whole document bodies, not just
 //!     `apiVersion:` selection).
 
-use helm_schema_ir::{CapabilityGuard, HelperBranch, HelperBranchBody};
-
-use crate::api_presence::ApiPresenceQuery;
+use helm_schema_ir::{
+    ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
+};
 
 /// Authoritative answer to a parsed `.Capabilities.APIVersions.Has` query for
 /// a specific Kubernetes version. Production implementation lives in the chain
@@ -59,14 +59,6 @@ use crate::api_presence::ApiPresenceQuery;
 ///     drop a branch.
 pub trait CapabilityOracle {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool>;
-
-    /// Compatibility adapter for callers that still hold Helm's literal
-    /// argument text. Invalid literals return `None`, which callers treat as
-    /// "potentially live".
-    fn capability_has_literal(&self, api: &str) -> Option<bool> {
-        let query = ApiPresenceQuery::parse_helm_literal(api)?;
-        self.capability_has_query(&query)
-    }
 }
 
 /// Test oracle: returns whatever was inserted for each api literal.
@@ -114,11 +106,15 @@ pub fn evaluate_guard<O: CapabilityOracle + ?Sized>(
 ) -> bool {
     match guard {
         None => true,
-        Some(CapabilityGuard::Has { api }) => oracle.capability_has_literal(api).unwrap_or(true),
-        Some(CapabilityGuard::NotHas { api }) => {
-            oracle.capability_has_literal(api).is_none_or(|has| !has)
-        }
-        Some(CapabilityGuard::Opaque { .. }) => true,
+        Some(guard) => match guard.presence_predicate() {
+            Some(CapabilityPresencePredicate::Has(query)) => {
+                oracle.capability_has_query(&query).unwrap_or(true)
+            }
+            Some(CapabilityPresencePredicate::NotHas(query)) => {
+                oracle.capability_has_query(&query).is_none_or(|has| !has)
+            }
+            None => true,
+        },
     }
 }
 

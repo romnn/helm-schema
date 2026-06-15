@@ -1,7 +1,6 @@
-use helm_schema_ir::{HelperBranch, ProviderSchemaUse, ResourceRef, YamlPath};
+use helm_schema_ir::{ApiPresenceQuery, HelperBranch, ProviderSchemaUse, ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::api_presence::ApiPresenceQuery;
 use crate::capability_eval::{self, CapabilityOracle};
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::inference::ApiVersionInferenceOutcome;

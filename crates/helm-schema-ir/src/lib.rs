@@ -79,7 +79,9 @@ mod value_path_context;
 mod value_path_extraction;
 mod yaml_syntax;
 
-pub use capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
+pub use capability_branch::{
+    ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
+};
 pub use chart_facts::{ChartFacts, PathFact};
 pub use compatibility::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 pub use contract::{ContractIr, ContractProjection, ContractUse};

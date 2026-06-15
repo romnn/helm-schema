@@ -13,7 +13,6 @@
 //! The per-provider modules ([`kubernetes_openapi`], [`crds_catalog`],
 //! [`local_override`], [`local_schema_universe`]) are slim composers of the above.
 
-mod api_presence;
 pub mod builtin_groups;
 pub mod cache;
 pub mod capability_eval;
@@ -29,7 +28,6 @@ pub mod lookup;
 mod metadata_enrichment;
 mod schema_doc;
 
-pub use api_presence::ApiPresenceQuery;
 pub use builtin_groups::is_k8s_builtin_group;
 pub use cache::{
     CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, LayoutCheckOutcome, LayoutChecker, NegativeCache,
@@ -44,6 +42,7 @@ pub use fetch::{FetchError, HttpFetcher, MockFetcher, MockResponse, UreqFetcher}
 pub use filename::{
     candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
 };
+pub use helm_schema_ir::ApiPresenceQuery;
 pub use inference::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
 };

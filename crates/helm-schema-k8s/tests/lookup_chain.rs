@@ -2,10 +2,10 @@
 //! PathUnresolved silence, and the "MissingSchema only from chain"
 //! invariant.
 
-use helm_schema_ir::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
+use helm_schema_ir::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{
-    ApiPresenceQuery, Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry,
-    LookupTraceOutcome, ProviderLookupResult, ProviderOrigin,
+    Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry, LookupTraceOutcome,
+    ProviderLookupResult, ProviderOrigin,
 };
 use serde_json::Value;
 

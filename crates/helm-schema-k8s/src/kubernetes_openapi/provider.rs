@@ -3,10 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_ir::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::api_presence::ApiPresenceQuery;
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, default_source_id, k8s_cache_path,
     not_found_marker_exists, not_found_marker_path, write_meta_sidecar, write_not_found_marker,
@@ -56,7 +55,7 @@ pub struct KubernetesJsonSchemaProvider {
 
 /// Tri-state outcome for the capability-oracle probe path. See
 /// [`KubernetesJsonSchemaProvider::probe_at`] for the per-source
-/// semantics and [`KubernetesJsonSchemaProvider::capability_has_at_primary_version`]
+/// semantics and [`KubernetesJsonSchemaProvider::capability_has_query_at_primary_version`]
 /// for how the per-source outcomes aggregate into the final
 /// `Option<bool>` answer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -465,12 +464,6 @@ impl KubernetesJsonSchemaProvider {
         };
         trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, answer);
         TracedApiPresenceOutcome { answer, trace }
-    }
-
-    #[must_use]
-    pub fn capability_has_at_primary_version(&self, api: &str) -> Option<bool> {
-        let query = ApiPresenceQuery::parse_helm_literal(api)?;
-        self.capability_has_query_at_primary_version(&query)
     }
 
     /// Single-probe upstream-first lookup with tri-state outcome. The

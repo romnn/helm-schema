@@ -1,5 +1,5 @@
 //! Round-10 Finding 1: pin the offline-safety contract for
-//! `KubernetesJsonSchemaProvider::capability_has_at_primary_version`.
+//! `KubernetesJsonSchemaProvider::capability_has_query_at_primary_version`.
 //!
 //! When downloads are disabled, the oracle must NOT promote
 //! "cache exists for this version but doesn't contain the probe target"
@@ -61,7 +61,9 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     .with_allow_download(false)
     .with_fetcher(Arc::new(MockFetcher::new()));
 
-    let answer = provider.capability_has_at_primary_version("autoscaling/v2");
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+    let answer = provider.capability_has_query_at_primary_version(&query);
     assert_eq!(
         answer, None,
         "offline + partial cache + probe target absent must return None (uncertain); \
@@ -71,7 +73,8 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     // Sanity-check: the planted ConfigMap IS discoverable as
     // `Has "v1"` (the canonical probe kind for the core v1 api
     // version is ConfigMap), so the cache layout itself is right.
-    let positive = provider.capability_has_at_primary_version("v1");
+    let query = ApiPresenceQuery::parse_helm_literal("v1").expect("parse api presence query");
+    let positive = provider.capability_has_query_at_primary_version(&query);
     assert_eq!(
         positive,
         Some(true),
@@ -140,7 +143,9 @@ fn offline_empty_cache_returns_none() {
     .with_allow_download(false)
     .with_fetcher(Arc::new(MockFetcher::new()));
 
-    let answer = provider.capability_has_at_primary_version("autoscaling/v2");
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+    let answer = provider.capability_has_query_at_primary_version(&query);
     assert_eq!(
         answer, None,
         "offline + empty cache must return None; got {answer:?}"
@@ -166,7 +171,9 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
     .with_fetcher(mock.clone());
 
     // First probe: the fetcher is consulted, returns 404 → authoritative absent.
-    let first = provider.capability_has_at_primary_version("autoscaling/v2");
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+    let first = provider.capability_has_query_at_primary_version(&query);
     assert_eq!(
         first,
         Some(false),
@@ -178,7 +185,7 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
     // The fetcher's call count would prove no second request was
     // made, but the MockFetcher in this codebase doesn't expose that
     // — the contract here is "returns the same authoritative answer".
-    let second = provider.capability_has_at_primary_version("autoscaling/v2");
+    let second = provider.capability_has_query_at_primary_version(&query);
     assert_eq!(
         second,
         Some(false),
@@ -244,7 +251,9 @@ fn online_200_returns_true_and_caches() {
     .with_allow_download(true)
     .with_fetcher(mock);
 
-    let answer = provider.capability_has_at_primary_version("autoscaling/v2");
+    let query =
+        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
+    let answer = provider.capability_has_query_at_primary_version(&query);
     assert_eq!(
         answer,
         Some(true),

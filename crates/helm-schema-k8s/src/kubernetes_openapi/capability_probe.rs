@@ -1,6 +1,4 @@
-use helm_schema_ir::ResourceRef;
-
-use crate::api_presence::ApiPresenceQuery;
+use helm_schema_ir::{ApiPresenceQuery, ResourceRef};
 
 /// Declarative probe table for `.Capabilities.APIVersions.Has "group/version"`.
 ///
@@ -28,7 +26,12 @@ impl CapabilityProbeTable {
     /// live.
     pub(super) fn build_probe(self, query: &ApiPresenceQuery) -> Option<ResourceRef> {
         match query {
-            ApiPresenceQuery::Resource(resource) => Some(resource.clone()),
+            ApiPresenceQuery::Resource { api_version, kind } => Some(ResourceRef {
+                api_version: api_version.clone(),
+                kind: kind.clone(),
+                api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
+            }),
             ApiPresenceQuery::GroupVersion { api_version } => Some(ResourceRef {
                 api_version: api_version.clone(),
                 kind: self.canonical_kind(api_version)?.to_string(),

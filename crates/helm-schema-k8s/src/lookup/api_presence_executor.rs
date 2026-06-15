@@ -1,4 +1,4 @@
-use crate::api_presence::ApiPresenceQuery;
+use helm_schema_ir::ApiPresenceQuery;
 
 use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 use super::trait_def::K8sSchemaProvider;
