@@ -1696,7 +1696,16 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   owners behind the unchanged crate-root API. Fragment classification is now
   based on the typed template expression AST rather than substring scanning,
   and `yaml_shape` shares that same classifier instead of maintaining a second
-  detector.
+  detector. The compatibility inspection DTOs have also moved out of the
+  crate root into an explicit compatibility module, so the root API now
+  re-exports the legacy fixture/tooling boundary instead of owning it beside
+  semantic contract types. Local symbolic state has been split the same way:
+  branch-outcome join policy now has its own owner, leaving the local-state
+  module focused on source-order assignment, shadowing, and scope restore
+  mechanics. Expression evaluation has also shed two non-evaluator concerns:
+  Helm function classification lives in a function catalog, and exact
+  supported-`printf` rendering lives behind a small renderer module reused by
+  helper-aware expression evaluation.
 - **A5 — bundled emission**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
   goldens once (deliberate, documented change). Current progress: final CLI

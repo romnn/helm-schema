@@ -5,6 +5,11 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
+pub(crate) use crate::expr_function_catalog::{
+    is_provenance_preserving_function, is_string_transform_function, pipeline_preserves_current,
+    transform_source_arg, type_is_schema_type,
+};
+pub(crate) use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
 use crate::template_expr_analysis::is_merge_function;
 
 pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
@@ -485,105 +490,6 @@ fn eval_printf(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
-pub(crate) fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
-    match args.first()?.deparen() {
-        TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) => {
-            Some(format.as_str())
-        }
-        _ => None,
-    }
-}
-
-pub(crate) fn render_printf_string_sets(
-    format: &str,
-    arg_strings: &[BTreeSet<String>],
-) -> Option<BTreeSet<String>> {
-    let parts = parse_supported_printf_format(format)?;
-    let substitutions = parts
-        .iter()
-        .filter(|part| matches!(part, PrintfPart::Substitution))
-        .count();
-    if substitutions != arg_strings.len() {
-        return None;
-    }
-
-    let mut rendered: BTreeSet<String> = [String::new()].into_iter().collect();
-    let mut arg_index = 0usize;
-    for part in parts {
-        match part {
-            PrintfPart::Literal(literal) => {
-                rendered = rendered
-                    .into_iter()
-                    .map(|mut current| {
-                        current.push_str(literal);
-                        current
-                    })
-                    .collect();
-            }
-            PrintfPart::Substitution => {
-                let strings = arg_strings.get(arg_index)?;
-                if strings.is_empty() {
-                    return None;
-                }
-                let mut next = BTreeSet::new();
-                for current in &rendered {
-                    for value in strings {
-                        let mut rendered_value = current.clone();
-                        rendered_value.push_str(value);
-                        next.insert(rendered_value);
-                    }
-                }
-                rendered = next;
-                arg_index += 1;
-            }
-        }
-    }
-    Some(rendered)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PrintfPart<'a> {
-    Literal(&'a str),
-    Substitution,
-}
-
-fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
-    let mut parts = Vec::new();
-    let mut literal_start = 0usize;
-    let bytes = format.as_bytes();
-    let mut index = 0usize;
-    while index < bytes.len() {
-        if bytes[index] != b'%' {
-            index += 1;
-            continue;
-        }
-
-        if literal_start < index {
-            parts.push(PrintfPart::Literal(format.get(literal_start..index)?));
-        }
-
-        match *bytes.get(index + 1)? {
-            b'%' => {
-                parts.push(PrintfPart::Literal("%"));
-                index += 2;
-                literal_start = index;
-            }
-            b's' => {
-                parts.push(PrintfPart::Substitution);
-                index += 2;
-                literal_start = index;
-            }
-            _ => return None,
-        }
-    }
-
-    if literal_start < format.len() {
-        parts.push(PrintfPart::Literal(format.get(literal_start..)?));
-    }
-
-    Some(parts)
-}
-
 fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     let Some(first_stage) = stages.first() else {
         return EvalResult::none();
@@ -716,79 +622,6 @@ pub(crate) fn path_segment_options(
             }
         }
     }
-}
-
-pub(crate) fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
-    let TemplateExpr::Literal(Literal::String(type_name) | Literal::RawString(type_name)) =
-        expr?.deparen()
-    else {
-        return None;
-    };
-    let schema_type = match type_name.as_str() {
-        "bool" | "boolean" => "boolean",
-        "float64" | "number" => "number",
-        "int" | "int64" | "integer" => "integer",
-        "list" | "slice" | "array" => "array",
-        "map" | "dict" | "object" => "object",
-        "string" => "string",
-        _ => return None,
-    };
-    Some(schema_type.to_string())
-}
-
-pub(crate) fn is_string_transform_function(function: &str) -> bool {
-    matches!(
-        function,
-        "quote"
-            | "squote"
-            | "b64enc"
-            | "b64dec"
-            | "toString"
-            | "trunc"
-            | "trim"
-            | "trimAll"
-            | "trimPrefix"
-            | "trimSuffix"
-            | "replace"
-    )
-}
-
-pub(crate) fn is_provenance_preserving_function(function: &str) -> bool {
-    matches!(
-        function,
-        "toYaml"
-            | "fromYaml"
-            | "deepCopy"
-            | "tpl"
-            | "indent"
-            | "nindent"
-            | "printf"
-            | "int"
-            | "uniq"
-    )
-}
-
-pub(crate) fn transform_source_arg<'a>(
-    function: &str,
-    args: &'a [TemplateExpr],
-) -> Option<&'a TemplateExpr> {
-    match function {
-        function if is_string_transform_function(function) => match function {
-            "indent" | "nindent" | "trim" | "trimAll" | "trimPrefix" | "trimSuffix" | "trunc"
-            | "replace" => args.last(),
-            _ => args.first(),
-        },
-        function if is_provenance_preserving_function(function) => match function {
-            "indent" | "nindent" => args.last(),
-            "printf" => None,
-            _ => args.first(),
-        },
-        _ => None,
-    }
-}
-
-pub(crate) fn pipeline_preserves_current(function: &str) -> bool {
-    is_string_transform_function(function) || is_provenance_preserving_function(function)
 }
 
 #[cfg(test)]
