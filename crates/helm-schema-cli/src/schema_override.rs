@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 /// Internal sibling marker used to preserve "replace this subtree"
-/// intent across the override pre-flatten pass.
+/// intent across override reference dereferencing.
 ///
 /// The override loader sets `$ref-replace` next to every `$ref` it
 /// finds *before* dereferencing. Once `$ref` is resolved and the inlined
@@ -16,7 +16,7 @@ pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
 }
 
 /// Walk the override and tag every object with `$ref` as
-/// "replace on merge". Run by the CLI before pre-flattening so the
+/// "replace on merge". Run by the CLI before dereferencing so the
 /// marker rides through the dereference pass and reaches the merge.
 pub fn mark_refs_for_replacement(value: &mut Value) {
     match value {
@@ -53,7 +53,7 @@ fn apply_override_inner(base: Value, override_schema: Value) -> Value {
     //      survive into the output where the JSON Schema spec said they
     //      shouldn't.
     //   2. `REPLACE_MARKER` left behind by `mark_refs_for_replacement`
-    //      when the CLI pre-flattens overrides — the `$ref` is gone by
+    //      when the CLI dereferences overrides — the `$ref` is gone by
     //      then, but the marker carries the same intent across the
     //      dereference pass.
     let had_replace_marker = override_obj.remove(REPLACE_MARKER).is_some();
@@ -171,9 +171,9 @@ mod tests {
     }
 
     #[test]
-    fn replace_marker_drives_subtree_replacement_after_pre_flatten() {
+    fn replace_marker_drives_subtree_replacement_after_dereference() {
         // Models the CLI's actual flow: an override carrying `$ref` is
-        // marked, pre-flattened (dereferencing the `$ref` so only the
+        // marked, dereferenced (resolving the `$ref` so only the
         // marker plus resolved content remain), then merged.
         let base = serde_json::json!({
             "type": "object",
@@ -184,7 +184,7 @@ mod tests {
             }
         });
 
-        // Pre-flattened override: $ref is gone, content is inlined, but
+        // Dereferenced override: $ref is gone, content is inlined, but
         // the replace marker survives next to the inlined fields.
         let ov = serde_json::json!({
             "properties": {

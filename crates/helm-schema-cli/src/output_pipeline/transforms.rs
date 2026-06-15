@@ -15,7 +15,7 @@ use crate::schema_override;
     fields(
         override_count = override_schemas.len(),
         subchart_count = subchart_value_prefixes.len(),
-        reference_handling = ?options.reference_handling,
+        reference_mode = ?options.reference_mode,
         strip_descriptions = options.strip_descriptions,
         minimize = options.minimize,
     )
@@ -39,7 +39,7 @@ pub(crate) fn apply_schema_output_pipeline(
 #[tracing::instrument(
     skip_all,
     fields(
-        reference_handling = ?options.reference_handling,
+        reference_mode = ?options.reference_mode,
         strip_descriptions = options.strip_descriptions,
         minimize = options.minimize,
     )
@@ -49,7 +49,7 @@ fn apply_output_transforms(
     base_dir: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    if options.reference_handling.flatten() {
+    if options.reference_mode.dereference() {
         schema = flatten::flatten_refs(
             schema,
             base_dir,
@@ -78,7 +78,7 @@ mod tests {
     use serde_json::Value;
 
     use crate::output_pipeline::{
-        OutputPipelineOptions, ReferenceHandling, apply_schema_output_pipeline,
+        OutputPipelineOptions, ReferenceMode, apply_schema_output_pipeline,
     };
 
     fn test_temp_dir(name: &str) -> PathBuf {
@@ -89,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn reference_handling_preserves_refs_when_requested() {
+    fn reference_mode_preserves_refs_when_requested() {
         let schema = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "properties": {
@@ -106,7 +106,7 @@ mod tests {
             &[],
             std::path::Path::new("/does/not/matter"),
             &OutputPipelineOptions {
-                reference_handling: ReferenceHandling::PreserveRefs,
+                reference_mode: ReferenceMode::PreserveRefs,
                 allow_net: false,
                 strip_descriptions: false,
                 minimize: false,
@@ -124,8 +124,8 @@ mod tests {
     }
 
     #[test]
-    fn reference_handling_flattened_export_resolves_file_refs() {
-        let temp_dir = test_temp_dir("flattened-export");
+    fn self_contained_reference_mode_resolves_file_refs() {
+        let temp_dir = test_temp_dir("self-contained");
         fs::create_dir_all(&temp_dir).expect("create temp dir");
         let shared_schema_path = temp_dir.join("shared.json");
         fs::write(
@@ -156,7 +156,7 @@ mod tests {
             &[],
             &temp_dir,
             &OutputPipelineOptions {
-                reference_handling: ReferenceHandling::FlattenedExport,
+                reference_mode: ReferenceMode::SelfContained,
                 allow_net: false,
                 strip_descriptions: false,
                 minimize: false,
@@ -169,7 +169,7 @@ mod tests {
                 .pointer("/properties/fromRef/type")
                 .and_then(Value::as_str),
             Some("string"),
-            "flattened export mode should inline file refs"
+            "self-contained mode should inline file refs"
         );
         assert!(output.pointer("/properties/fromRef/$ref").is_none());
 

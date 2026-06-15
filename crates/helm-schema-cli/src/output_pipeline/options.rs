@@ -4,34 +4,34 @@
 /// feed information back into template analysis.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OutputPipelineOptions {
-    pub(crate) reference_handling: ReferenceHandling,
+    pub(crate) reference_mode: ReferenceMode,
     pub(crate) allow_net: bool,
     pub(crate) strip_descriptions: bool,
     pub(crate) minimize: bool,
 }
 
-/// How final output should handle JSON Schema `$ref` nodes.
+/// How final output should handle JSON Schema references.
 ///
-/// This is an output concern only. It controls whether the final schema stays
-/// as a bundled document with references or is exported as a fully flattened
-/// document for consumers that cannot resolve references themselves.
+/// This is an output concern only. It controls whether file/URL references are
+/// resolved into a self-contained schema or preserved literally for consumers
+/// that want to manage references themselves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ReferenceHandling {
+pub(crate) enum ReferenceMode {
+    SelfContained,
     PreserveRefs,
-    FlattenedExport,
 }
 
-impl ReferenceHandling {
+impl ReferenceMode {
     pub(crate) fn from_keep_refs(keep_refs: bool) -> Self {
         if keep_refs {
             Self::PreserveRefs
         } else {
-            Self::FlattenedExport
+            Self::SelfContained
         }
     }
 
-    pub(super) fn flatten(self) -> bool {
-        matches!(self, Self::FlattenedExport)
+    pub(super) fn dereference(self) -> bool {
+        matches!(self, Self::SelfContained)
     }
 }
 
@@ -45,5 +45,28 @@ pub(crate) enum JsonOutputFormat {
 impl JsonOutputFormat {
     pub(crate) fn from_compact(compact: bool) -> Self {
         if compact { Self::Compact } else { Self::Pretty }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ReferenceMode;
+
+    #[test]
+    fn reference_mode_defaults_to_self_contained_output() {
+        assert_eq!(
+            ReferenceMode::from_keep_refs(false),
+            ReferenceMode::SelfContained
+        );
+        assert!(ReferenceMode::SelfContained.dereference());
+    }
+
+    #[test]
+    fn keep_refs_selects_reference_preserving_output() {
+        assert_eq!(
+            ReferenceMode::from_keep_refs(true),
+            ReferenceMode::PreserveRefs
+        );
+        assert!(!ReferenceMode::PreserveRefs.dereference());
     }
 }

@@ -445,7 +445,7 @@ named types between them); they just stop being semver surfaces.
     the oracle stack before this step runs)
 
 4. emit            (pure)
-   lower(&ResolvedContract, EmitMode::Bundled | EmitMode::FlattenedExport)
+   lower(&ResolvedContract, EmitMode::Bundled | EmitMode::FullyInlinedExport)
         ──► draft-07 Value (self-contained, internal $defs by default)
    then pure passes over (Value × PolicyInputs): override merge →
    optional flatten export → strip → minify →
@@ -932,7 +932,7 @@ schema model:
   — foreign subtrees land under deterministic, collision-free `$defs` names
   (GVK-derived) and are referenced internally; shared K8s types appear once.
   No external `$ref` ever remains; no network or file dependency at
-  validation time. `EmitMode::FlattenedExport` (full inlining — today's
+  validation time. `EmitMode::FullyInlinedExport` (full inlining — today's
   default shape) remains as an explicit export for consumers that reject
   refs. This deletes the current inline-everything-then-re-deduplicate cycle
   between flatten and the minifier; `json-schema-minify` remains as optional
@@ -1068,7 +1068,7 @@ The facade is the stable product surface and the IO shell. It owns:
 - **Output passes as sequential PURE functions** over
   `(Value × PolicyInputs)`: override merge (replace-on-`$ref` markers,
   override-file-relative base URI, `--keep-refs` honored), optional
-  `FlattenedExport`, description strip, minify, **global-schema mirroring
+  fully inlined export, description strip, minify, **global-schema mirroring
   into subcharts** (a named pass), and the **postcondition**: composed
   defaults validate against the emitted schema (hard diagnostic on
   failure). Override documents and their external `$ref`s are loaded and
@@ -1266,7 +1266,7 @@ and the `ValueUse` projection never gains a production consumer.
 | `inference/*` | quarantined advisor module |
 | `helm-schema-gen` (lib/merge/required_inference) | `engine::resolve` + `engine::lower` + policy |
 | CLI `chart.rs` | facade chart loading (`ChartProgram`) |
-| CLI `schema_override.rs`, `flatten.rs`, mirroring pass | facade output passes (+ `FetchPolicy`); flatten becomes `EmitMode::FlattenedExport` |
+| CLI `schema_override.rs`, `flatten.rs`, mirroring pass | facade output passes (+ `FetchPolicy`); flatten becomes `EmitMode::FullyInlinedExport` |
 | CLI `lib.rs` pipeline | facade stage functions |
 | `json-schema-minify` | unchanged (optional pass; bundling removes its hottest input) |
 
@@ -1790,7 +1790,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   preserving today's flags and output bytes. That makes the later bundled-vs-
   flattened mode switch a single output-layer change instead of a root CLI
   orchestration change. The output pipeline now also carries explicit
-  `ReferenceHandling` and `JsonOutputFormat` values instead of boolean
+  `ReferenceMode` and `JsonOutputFormat` values instead of boolean
   plumbing, so the future default switch can be made by changing the output
   mode mapping rather than rewriting transform order. Override schema loading
   now produces explicit prepared override inputs before the final merge and
@@ -1801,11 +1801,16 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   serialization — so A5's later bundled/default-output switch has focused
   owners instead of one CLI output grab bag. CLI output args now construct
   those typed output policies directly, leaving the top-level run path to
-  orchestrate stages rather than translate flags into output internals.
+  orchestrate stages rather than translate flags into output internals. The
+  reference policy is now named as `SelfContained` versus `PreserveRefs`, so
+  the default output contract no longer leaks the old flatten/export
+  implementation detail. The remaining A5 product change is the deliberate
+  switch from self-contained inline output to self-contained `$defs` output by
+  default, with flattened output retained only as an explicit export mode.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
-- **B1 — planner/executor**: pure `plan()` + one `execute()` +
+- **B1 — planner/executor (complete)**: pure `plan()` + one `execute()` +
   `LookupTrace`; collapse both provider monoliths and the chain; diagnostics
   parity proven by projecting today's `MissingSchema` richness from the
   trace. Current progress: concrete chain resolution now has a
@@ -1873,10 +1878,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Capability probes now
   have a traced provider-chain entry point, and the OpenAPI provider records
   per-source cache/download probe outcomes (`Found`, authoritative absent,
-  uncertain) before projecting the same `Option<bool>` answer as before. B3's
-  remaining work is to feed capability trace records into the final
-  planner/executor diagnostic projection once capability diagnostics exist;
-  resource/path misses already project diagnostics from `LookupTrace`.
+  uncertain) before projecting the same `Option<bool>` answer as before.
+  For the current diagnostic surface, B3 is complete: resource/path misses
+  already project diagnostics from `LookupTrace`, and capability traces are
+  preserved for future capability-specific diagnostics instead of inventing a
+  synthetic diagnostic now.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's

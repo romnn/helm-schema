@@ -12,6 +12,6 @@ mod overrides;
 mod transforms;
 
 pub(crate) use format::write_schema_json;
-pub(crate) use options::{JsonOutputFormat, OutputPipelineOptions, ReferenceHandling};
+pub(crate) use options::{JsonOutputFormat, OutputPipelineOptions, ReferenceMode};
 pub(crate) use overrides::{PreparedOverrideSchema, load_prepared_override_schemas};
 pub(crate) use transforms::apply_schema_output_pipeline;

@@ -35,7 +35,7 @@ fn load_prepared_override_schema(
     let mut override_schema = load_json_file(path)?;
 
     // Tag every subtree that carries `$ref` with an internal "replace on
-    // merge" marker. The marker survives pre-flatten dereferencing and tells
+    // merge" marker. The marker survives dereferencing and tells
     // override merge to swap the resolved content into the base instead of
     // deep-merging it with inferred constraints for the same path.
     schema_override::mark_refs_for_replacement(&mut override_schema);
@@ -44,13 +44,13 @@ fn load_prepared_override_schema(
     Ok(PreparedOverrideSchema { schema })
 }
 
-#[tracing::instrument(skip_all, fields(reference_handling = ?options.reference_handling))]
+#[tracing::instrument(skip_all, fields(reference_mode = ?options.reference_mode))]
 fn prepare_override_schema(
     schema: Value,
     override_path: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    if !options.reference_handling.flatten() {
+    if !options.reference_mode.dereference() {
         return Ok(schema);
     }
 
@@ -78,7 +78,7 @@ mod tests {
     use serde_json::Value;
 
     use crate::output_pipeline::{
-        OutputPipelineOptions, ReferenceHandling, apply_schema_output_pipeline,
+        OutputPipelineOptions, ReferenceMode, apply_schema_output_pipeline,
         load_prepared_override_schemas,
     };
 
@@ -118,7 +118,7 @@ mod tests {
         .expect("write override schema");
 
         let options = OutputPipelineOptions {
-            reference_handling: ReferenceHandling::FlattenedExport,
+            reference_mode: ReferenceMode::SelfContained,
             allow_net: false,
             strip_descriptions: false,
             minimize: false,
@@ -144,7 +144,7 @@ mod tests {
             &serde_json::json!({
                 "enum": [null, "azure", "minikube"]
             }),
-            "prepared override refs should replace inferred constraints after pre-flattening"
+            "prepared override refs should replace inferred constraints after dereferencing"
         );
 
         fs::remove_dir_all(&temp_dir).expect("remove temp dir");
@@ -168,7 +168,7 @@ mod tests {
         .expect("write override schema");
 
         let options = OutputPipelineOptions {
-            reference_handling: ReferenceHandling::PreserveRefs,
+            reference_mode: ReferenceMode::PreserveRefs,
             allow_net: false,
             strip_descriptions: false,
             minimize: false,

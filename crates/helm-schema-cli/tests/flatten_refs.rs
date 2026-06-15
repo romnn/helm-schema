@@ -93,8 +93,8 @@ fn override_file_refs_are_inlined_by_default() -> color_eyre::eyre::Result<()> {
     Ok(())
 }
 
-/// `--keep-refs` translates to: don't call `flatten_*` at all. Verify
-/// the override-merged document keeps its literal `$ref` string.
+/// `--keep-refs` preserves references through the output pipeline. Verify the
+/// override-merged document keeps its literal `$ref` string.
 #[test]
 fn keep_refs_path_preserves_literal_ref_strings() -> color_eyre::eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build();

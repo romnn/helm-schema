@@ -916,13 +916,19 @@ Current result:
 
 - Final CLI emission now has a dedicated output pipeline for reference
   flattening, description stripping, minimization, and JSON formatting. The
-  extraction preserves current output behavior but gives bundled-vs-flattened
-  emission one owner for the later default change.
+  extraction preserves current output behavior but gives self-contained
+  reference handling and future `$defs` bundling one owner.
 - The output pipeline is now split into focused modules for option modeling,
   prepared override loading, final transforms, global schema mirroring,
   description stripping, and serialization. `OutputArgs` owns conversion from
   CLI booleans to typed output policy, so the top-level CLI run path no longer
   translates output flags by hand.
+- The reference policy is now named by product contract:
+  `SelfContained` resolves file/URL refs into the output document, while
+  `PreserveRefs` keeps literal refs for advanced consumers. The remaining
+  default-output change is specifically about making self-contained `$defs`
+  bundling the default shape, not about leaking the old flattening
+  implementation detail through the CLI boundary.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and
@@ -939,6 +945,10 @@ Current result:
   literals now parse into typed `ApiPresenceQuery` values, the chain exposes
   `kube_version()`, and normal chain lookup has a concrete `LookupTrace`
   scaffold.
+- B1 has reached the planner/executor split: concrete resource lookup and API
+  presence lookup have named executors, final-miss diagnostics project from
+  `LookupTrace`, and `Chain` is reduced to a compatibility facade over the
+  lookup orchestrator plus provider/oracle adapter impls.
 
 ## Completion criteria
 

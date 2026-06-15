@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::output_pipeline::{JsonOutputFormat, OutputPipelineOptions, ReferenceHandling};
+use crate::output_pipeline::{JsonOutputFormat, OutputPipelineOptions, ReferenceMode};
 
 #[derive(Args, Debug, Clone)]
 pub struct OutputArgs {
@@ -37,7 +37,7 @@ pub struct OutputArgs {
 impl OutputArgs {
     pub(crate) fn pipeline_options(&self, allow_net: bool) -> OutputPipelineOptions {
         OutputPipelineOptions {
-            reference_handling: ReferenceHandling::from_keep_refs(self.keep_refs),
+            reference_mode: ReferenceMode::from_keep_refs(self.keep_refs),
             allow_net,
             strip_descriptions: self.strip_descriptions,
             minimize: self.minimize,
