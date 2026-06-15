@@ -10,6 +10,7 @@ use super::chain_outcome::ChainLookupOutcome;
 use super::orchestrator::{LookupOrchestrator, LookupOrchestratorConfig};
 use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
+use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::trace::{TracedApiPresenceOutcome, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
 
@@ -73,22 +74,10 @@ impl Chain {
     /// `MissingSchema` attributed to the user-written primary
     /// `api_version` (not to any speculative candidate). Speculative
     /// per-candidate misses never reach the sink.
-    #[tracing::instrument(
-        skip_all,
-        fields(
-            kind = use_
-                .resource
-                .kind
-                .as_str(),
-            api_version = use_
-                .resource
-                .api_version
-                .as_str(),
-            path_len = use_.path.0.len(),
-        )
-    )]
     pub fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
-        self.lookup_orchestrator().schema_for_use(use_)
+        self.lookup_orchestrator()
+            .schema_fragment_for_use(use_)
+            .map(ProviderSchemaFragment::into_schema)
     }
 
     /// Resolve a single concrete `(apiVersion, kind)` against the
@@ -127,8 +116,21 @@ impl Chain {
 }
 
 impl K8sSchemaProvider for Chain {
+    fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        self.lookup_orchestrator().schema_fragment_for_use(use_)
+    }
+
     fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
-        self.schema_for_use(use_)
+        Chain::schema_for_use(self, use_)
+    }
+
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
+        self.resolve_against_chain(resource, path)
+            .into_schema_fragment()
     }
 
     fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {

@@ -7,7 +7,9 @@ use serde_json::Value;
 
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::lookup::{
+    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+};
 use crate::metadata_enrichment::{enrich_root_metadata_schema, enriched_metadata_schema};
 use crate::schema_doc::SchemaDoc;
 
@@ -165,7 +167,7 @@ impl K8sSchemaProvider for LocalSchemaProvider {
             LocalSchemaDocLoad::Loaded(root) => {
                 match self.schema_for_resource_path_from_doc(&root, path) {
                     Some(schema) => ProviderLookupResult::Found {
-                        schema,
+                        schema: ProviderSchemaFragment::new(schema),
                         resolved_k8s_version: None,
                     },
                     None => ProviderLookupResult::PathUnresolved,

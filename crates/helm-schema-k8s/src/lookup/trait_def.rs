@@ -7,6 +7,7 @@ use crate::inference::candidate::ApiVersionCandidate;
 
 use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
+use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 
 /// Provides JSON Schema fragments for Kubernetes resource fields.
@@ -17,11 +18,10 @@ use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// Schema for a specific provider-schema lookup request.
     ///
-    /// Default impl: iterate the resource's ordered apiVersion
-    /// candidates and ask `schema_for_resource_path` for each. The
-    /// `Chain` overrides this to layer fallback / inference / typed
-    /// diagnostics on top.
-    fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
+    /// Default impl: iterate the resource's ordered apiVersion candidates and
+    /// ask `schema_fragment_for_resource_path` for each. The `Chain` overrides
+    /// this to layer fallback / inference / typed diagnostics on top.
+    fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
         let resource = &use_.resource;
         for v in ordered_api_versions_for_resource(resource) {
             let candidate = ResourceRef {
@@ -30,11 +30,28 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
                 api_version_candidates: Vec::new(),
                 api_version_branches: Vec::new(),
             };
-            if let Some(schema) = self.schema_for_resource_path(&candidate, &use_.path) {
-                return Some(schema);
+            if let Some(fragment) = self.schema_fragment_for_resource_path(&candidate, &use_.path) {
+                return Some(fragment);
             }
         }
         None
+    }
+
+    /// Compatibility adapter for callers that need only the materialized JSON
+    /// Schema value.
+    fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
+        self.schema_fragment_for_use(use_)
+            .map(ProviderSchemaFragment::into_schema)
+    }
+
+    /// Provider-owned schema fragment for a specific resource type + YAML path.
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
+        self.schema_for_resource_path(resource, path)
+            .map(ProviderSchemaFragment::new)
     }
 
     /// Schema for a specific resource type + YAML path.
@@ -52,16 +69,16 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// Typed lookup: distinguish ownership, doc presence, and path
     /// presence so the chain can attribute diagnostics correctly.
     ///
-    /// Default impl synthesises one of `Found` / `NotOwned` from the
-    /// scalar `schema_for_resource_path` so older providers keep
-    /// working; new code should override.
+    /// Default impl synthesises one of `Found` / `NotOwned` from the fragment
+    /// lookup adapter so older value-only providers keep working; new code
+    /// should override.
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         if !self.has_resource(resource) {
             return ProviderLookupResult::NotOwned;
         }
-        match self.schema_for_resource_path(resource, path) {
-            Some(schema) => ProviderLookupResult::Found {
-                schema,
+        match self.schema_fragment_for_resource_path(resource, path) {
+            Some(fragment) => ProviderLookupResult::Found {
+                schema: fragment,
                 resolved_k8s_version: None,
             },
             None => ProviderLookupResult::PathUnresolved,

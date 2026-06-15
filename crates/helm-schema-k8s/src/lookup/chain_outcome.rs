@@ -1,6 +1,5 @@
-use serde_json::Value;
-
 use super::provider_origin::ProviderOrigin;
+use super::provider_schema_fragment::ProviderSchemaFragment;
 
 /// Outcome of resolving a known `(apiVersion, kind)` against the full
 /// provider chain. Missing diagnostics are projected from the corresponding
@@ -10,7 +9,7 @@ pub enum ChainLookupOutcome {
     Resolved {
         /// `None` when the resolving provider returned `PathUnresolved`
         /// (intentional silent path-coverage gap).
-        schema: Option<Value>,
+        schema: Option<ProviderSchemaFragment>,
         resolving_provider: ProviderOrigin,
         resolved_k8s_version: Option<String>,
     },
@@ -26,10 +25,16 @@ pub enum ChainLookupOutcome {
 
 impl ChainLookupOutcome {
     /// Return the resolved schema, intentionally discarding chain metadata.
-    pub(crate) fn into_schema(self) -> Option<Value> {
+    pub(crate) fn into_schema_fragment(self) -> Option<ProviderSchemaFragment> {
         match self {
             Self::Resolved { schema, .. } => schema,
             Self::MissingSchema { .. } => None,
         }
+    }
+
+    /// Return the resolved schema, intentionally discarding provider metadata.
+    pub(crate) fn into_schema(self) -> Option<serde_json::Value> {
+        self.into_schema_fragment()
+            .map(ProviderSchemaFragment::into_schema)
     }
 }

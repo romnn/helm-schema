@@ -17,8 +17,8 @@ use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
-    K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin, SourceProbeTraceOutcome,
-    TracedApiPresenceOutcome,
+    K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    SourceProbeTraceOutcome, TracedApiPresenceOutcome,
 };
 use crate::schema_doc::SchemaDoc;
 
@@ -677,7 +677,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             .unwrap_or(&resolved_k8s_version)
             .to_string();
         ProviderLookupResult::Found {
-            schema,
+            schema: ProviderSchemaFragment::new(schema),
             resolved_k8s_version: if primary == resolved_k8s_version {
                 None
             } else {

@@ -1805,6 +1805,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Provider-owned schema evidence is now typed in the generator before
   per-path resolution, so exact sharing consumes an explicit provider evidence
   stream instead of reconstructing shareability from anonymous `Value` lists.
+  Provider lookup results now carry a named `ProviderSchemaFragment` through
+  the K8s trait, provider cache, chain outcome, and generator collection
+  boundary; plain `serde_json::Value` schema methods remain compatibility
+  adapters. Generator value-kind projection transforms that fragment in place
+  before lowering it into shareable provider evidence.
   The remaining work here is deeper provider-document lowering consolidation
   so foreign schema documents can stay ref-shaped throughout more of the
   pipeline, rather than being re-materialized before the exact-sharing pass.
@@ -1863,7 +1868,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   lookups clone and enrich only the metadata subtree, and only explicit root
   materialization expands the enriched full document. Explicit materialization
   helpers still exist for tests/debug, but they compute from shared raw
-  documents on demand.
+  documents on demand. Provider lookup cache entries now store typed provider
+  fragments instead of anonymous schema values, which keeps later source-doc
+  and ref-shape metadata attachable without changing lookup/cache call sites
+  again.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated

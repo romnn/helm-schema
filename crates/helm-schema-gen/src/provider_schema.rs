@@ -1,3 +1,4 @@
+use helm_schema_k8s::ProviderSchemaFragment;
 use serde_json::Value;
 
 use crate::shared_defs::ShareableSchema;
@@ -9,9 +10,9 @@ pub(crate) struct ProviderSchemaEvidence {
 }
 
 impl ProviderSchemaEvidence {
-    pub(crate) fn new(schema: Value) -> Self {
+    pub(crate) fn new(fragment: ProviderSchemaFragment) -> Self {
         Self {
-            shareable_schema: ShareableSchema::new(schema),
+            shareable_schema: ShareableSchema::new(fragment.into_schema()),
         }
     }
 

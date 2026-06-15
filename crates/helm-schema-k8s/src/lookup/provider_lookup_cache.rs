@@ -64,7 +64,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::lookup::ProviderOrigin;
+    use crate::lookup::{ProviderOrigin, ProviderSchemaFragment};
 
     #[derive(Debug)]
     struct CountingProvider {
@@ -91,7 +91,7 @@ mod tests {
         fn lookup(&self, _resource: &ResourceRef, _path: &YamlPath) -> ProviderLookupResult {
             self.calls.fetch_add(1, Ordering::SeqCst);
             ProviderLookupResult::Found {
-                schema: json!({"type": "string"}),
+                schema: ProviderSchemaFragment::new(json!({"type": "string"})),
                 resolved_k8s_version: None,
             }
         }

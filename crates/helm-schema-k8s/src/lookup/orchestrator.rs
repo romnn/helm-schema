@@ -1,7 +1,6 @@
 use helm_schema_ir::{
     ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, YamlPath,
 };
-use serde_json::Value;
 
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::inference::ApiVersionInferenceOutcome;
@@ -12,6 +11,7 @@ use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
+use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::resource_lookup_executor::ResourceLookupExecutor;
 use super::resource_lookup_plan::ResourceLookupPlan;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
@@ -43,14 +43,31 @@ impl<'a> LookupOrchestrator<'a> {
         }
     }
 
-    pub(crate) fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            kind = use_
+                .resource
+                .kind
+                .as_str(),
+            api_version = use_
+                .resource
+                .api_version
+                .as_str(),
+            path_len = use_.path.0.len(),
+        )
+    )]
+    pub(crate) fn schema_fragment_for_use(
+        &self,
+        use_: &ProviderSchemaUse,
+    ) -> Option<ProviderSchemaFragment> {
         let resource = &use_.resource;
 
         if needs_inference(resource) {
-            return self.schema_for_resource_needing_inference(resource, &use_.path);
+            return self.schema_fragment_for_resource_needing_inference(resource, &use_.path);
         }
 
-        self.schema_for_planned_candidates(resource, &use_.path)
+        self.schema_fragment_for_planned_candidates(resource, &use_.path)
     }
 
     pub(crate) fn resolve_against_chain(
@@ -77,11 +94,11 @@ impl<'a> LookupOrchestrator<'a> {
         ApiPresenceLookupExecutor::new(self.providers).execute(query)
     }
 
-    fn schema_for_resource_needing_inference(
+    fn schema_fragment_for_resource_needing_inference(
         &self,
         resource: &ResourceRef,
         path: &YamlPath,
-    ) -> Option<Value> {
+    ) -> Option<ProviderSchemaFragment> {
         let inferred = if self.inference_enabled {
             self.inference_cache.infer(self.providers, &resource.kind)
         } else {
@@ -102,7 +119,7 @@ impl<'a> LookupOrchestrator<'a> {
                     api_version_branches: Vec::new(),
                 };
                 self.resolve_against_chain(&inferred_ref, path)
-                    .into_schema()
+                    .into_schema_fragment()
             }
             ApiVersionInferenceOutcome::Ambiguous { candidates } => {
                 self.push_diagnostic(Diagnostic::AmbiguousApiVersion {
@@ -111,17 +128,17 @@ impl<'a> LookupOrchestrator<'a> {
                 });
                 None
             }
-            ApiVersionInferenceOutcome::NoMatch => {
-                self.resolve_against_chain(resource, path).into_schema()
-            }
+            ApiVersionInferenceOutcome::NoMatch => self
+                .resolve_against_chain(resource, path)
+                .into_schema_fragment(),
         }
     }
 
-    fn schema_for_planned_candidates(
+    fn schema_fragment_for_planned_candidates(
         &self,
         resource: &ResourceRef,
         path: &YamlPath,
-    ) -> Option<Value> {
+    ) -> Option<ProviderSchemaFragment> {
         let mut any_resolved_owner = false;
         let plan = ResourceLookupPlan::for_resource(resource, self.capability_oracle);
         for candidate in plan.candidates() {

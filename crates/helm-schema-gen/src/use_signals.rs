@@ -116,8 +116,12 @@ fn lookup_provider_schema(
     resolve_policy: &ResolvePolicy,
 ) -> Option<Arc<ProviderSchemaEvidence>> {
     provider
-        .schema_for_use(provider_use)
-        .and_then(|schema| resolve_policy.provider_schema_for_value_use(schema, provider_use))
+        .schema_fragment_for_use(provider_use)
+        .and_then(|fragment| {
+            fragment.try_map_schema(|schema| {
+                resolve_policy.provider_schema_for_value_use(schema, provider_use)
+            })
+        })
         .map(ProviderSchemaEvidence::new)
         .map(Arc::new)
 }

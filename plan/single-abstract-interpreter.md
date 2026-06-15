@@ -935,10 +935,15 @@ Current result:
   that require expanded schemas. Provider-owned schema evidence is now typed in
   the generator before per-path resolution, so exact sharing consumes an
   explicit provider evidence stream instead of reconstructing shareability from
-  anonymous `Value` lists. The remaining work here is deeper provider-document
-  lowering consolidation so foreign schema documents can stay ref-shaped
-  throughout more of the pipeline, rather than being re-materialized before the
-  exact-sharing pass.
+  anonymous `Value` lists. Provider lookup results now carry a named
+  `ProviderSchemaFragment` through the K8s trait, provider cache, chain
+  outcome, and generator collection boundary; plain `serde_json::Value`
+  schema methods remain compatibility adapters. Generator value-kind
+  projection transforms that fragment in place before lowering it into
+  shareable provider evidence. The remaining work here is deeper
+  provider-document lowering consolidation so foreign schema documents can stay
+  ref-shaped throughout more of the pipeline, rather than being re-materialized
+  before the exact-sharing pass.
 - B2 has started under the provider layer: raw parsed schema documents are now
   shared through `SchemaDoc` instead of cloned out of provider caches, and the
   upstream K8s provider's production path lookup now follows `$ref`s lazily and
@@ -950,7 +955,10 @@ Current result:
   lookups clone and enrich only the metadata subtree, and only explicit root
   materialization expands the enriched full document. Explicit materialization
   helpers still exist for tests/debug, but they compute on demand from shared
-  raw documents.
+  raw documents. Provider lookup cache entries now store typed provider
+  fragments instead of anonymous schema values, which keeps later source-doc
+  and ref-shape metadata attachable without changing lookup/cache call sites
+  again.
 - B3 has started by moving capability probe construction and the canonical
   api-version probe table into a dedicated provider submodule. Direct
   resource-qualified capability literals now bypass that table, including core

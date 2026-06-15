@@ -12,7 +12,9 @@ use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, Guard, ProviderSchemaUse, ResourceRef,
     SymbolicIrContext, ValueKind, YamlPath, extract_default_type_hints,
 };
-use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin};
+use helm_schema_k8s::{
+    Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin, ProviderSchemaFragment,
+};
 
 fn provider() -> KubernetesJsonSchemaProvider {
     KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
@@ -199,11 +201,11 @@ fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
 struct DescriptionProvider;
 
 impl K8sSchemaProvider for DescriptionProvider {
-    fn schema_for_use(&self, _use_: &ProviderSchemaUse) -> Option<Value> {
-        Some(serde_json::json!({
+    fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        Some(ProviderSchemaFragment::new(serde_json::json!({
             "description": "provider description",
             "type": "string",
-        }))
+        })))
     }
 
     fn schema_for_resource_path(&self, _resource: &ResourceRef, _path: &YamlPath) -> Option<Value> {
@@ -223,14 +225,14 @@ impl K8sSchemaProvider for DescriptionProvider {
 struct SharedObjectProvider;
 
 impl K8sSchemaProvider for SharedObjectProvider {
-    fn schema_for_use(&self, _use_: &ProviderSchemaUse) -> Option<Value> {
-        Some(serde_json::json!({
+    fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        Some(ProviderSchemaFragment::new(serde_json::json!({
             "type": "object",
             "properties": {
                 "name": { "type": "string" }
             },
             "additionalProperties": false
-        }))
+        })))
     }
 
     fn schema_for_resource_path(&self, _resource: &ResourceRef, _path: &YamlPath) -> Option<Value> {

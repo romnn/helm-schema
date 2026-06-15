@@ -7,6 +7,7 @@ mod orchestrator;
 mod provider_lookup_cache;
 mod provider_origin;
 mod provider_result;
+mod provider_schema_fragment;
 mod resource_lookup_executor;
 mod resource_lookup_plan;
 mod trace;
@@ -17,6 +18,7 @@ pub use chain_outcome::ChainLookupOutcome;
 pub use helm_schema_ir::ApiPresenceQuery;
 pub use provider_origin::ProviderOrigin;
 pub use provider_result::ProviderLookupResult;
+pub use provider_schema_fragment::ProviderSchemaFragment;
 pub use trace::{
     LookupTrace, LookupTraceEntry, LookupTraceOutcome, LookupTraceSubject, SourceProbeTraceOutcome,
     TracedApiPresenceOutcome, TracedLookupOutcome,

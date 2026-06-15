@@ -13,6 +13,7 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ResourceRef, SymbolicIrContext, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
+    ProviderSchemaFragment,
 };
 use serde_json::{Value, json};
 
@@ -103,7 +104,7 @@ impl K8sSchemaProvider for FakeIngressProvider {
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         match self.schema_for_resource_path(resource, path) {
             Some(schema) => ProviderLookupResult::Found {
-                schema,
+                schema: ProviderSchemaFragment::new(schema),
                 resolved_k8s_version: None,
             },
             None if self.has_resource(resource) => ProviderLookupResult::PathUnresolved,

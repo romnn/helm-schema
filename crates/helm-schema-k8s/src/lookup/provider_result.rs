@@ -1,4 +1,4 @@
-use serde_json::Value;
+use super::provider_schema_fragment::ProviderSchemaFragment;
 
 /// Result of a single provider answering "do you own this resource,
 /// and if so, can you resolve this path?". Provider-local: emits no
@@ -13,7 +13,7 @@ pub enum ProviderLookupResult {
     /// answered via a non-primary version (Feature B); the chain uses
     /// it to emit `ResolvedFromFallbackVersion`.
     Found {
-        schema: Value,
+        schema: ProviderSchemaFragment,
         resolved_k8s_version: Option<String>,
     },
 

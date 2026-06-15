@@ -5,7 +5,7 @@
 use helm_schema_ir::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry, LookupTraceOutcome,
-    ProviderLookupResult, ProviderOrigin,
+    ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
 };
 use serde_json::Value;
 
@@ -68,7 +68,7 @@ impl K8sSchemaProvider for FakeProvider {
     fn lookup(&self, _r: &ResourceRef, _p: &YamlPath) -> ProviderLookupResult {
         match &self.behaviour {
             FakeBehaviour::Found(v) => ProviderLookupResult::Found {
-                schema: v.clone(),
+                schema: ProviderSchemaFragment::new(v.clone()),
                 resolved_k8s_version: None,
             },
             FakeBehaviour::PathUnresolved => ProviderLookupResult::PathUnresolved,
@@ -462,7 +462,7 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
         fn lookup(&self, r: &ResourceRef, _p: &YamlPath) -> ProviderLookupResult {
             if r.api_version == self.wants {
                 ProviderLookupResult::Found {
-                    schema: Value::String("hit".to_string()),
+                    schema: ProviderSchemaFragment::new(Value::String("hit".to_string())),
                     resolved_k8s_version: None,
                 }
             } else {

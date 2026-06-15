@@ -5,7 +5,9 @@ use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_override::{
     descend_schema_path_expanding_leaf_with_root_metadata, expand_local_refs,
 };
-use crate::lookup::{K8sSchemaProvider, ProviderLookupResult, ProviderOrigin};
+use crate::lookup::{
+    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+};
 use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
 
@@ -75,7 +77,7 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
 
         match self.schema_for_resource_path_from_doc(root, path) {
             Some(schema) => ProviderLookupResult::Found {
-                schema,
+                schema: ProviderSchemaFragment::new(schema),
                 resolved_k8s_version: None,
             },
             None => ProviderLookupResult::PathUnresolved,
