@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractPathSignals, MetadataFieldKind, ProviderSchemaUse};
+use helm_schema_ir::{ContractPathSignals, MetadataFieldKind, ProviderSchemaUse, ValueKind};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
 use crate::provider_schema::ProviderSchemaEvidence;
@@ -118,9 +118,10 @@ fn lookup_provider_schema(
     provider
         .schema_fragment_for_use(provider_use)
         .and_then(|fragment| {
-            fragment.try_map_schema(|schema| {
-                resolve_policy.provider_schema_for_value_use(schema, provider_use)
-            })
+            fragment.try_map_schema(
+                |schema| resolve_policy.provider_schema_for_value_use(schema, provider_use),
+                matches!(provider_use.kind, ValueKind::Fragment),
+            )
         })
         .map(ProviderSchemaEvidence::new)
         .map(Arc::new)

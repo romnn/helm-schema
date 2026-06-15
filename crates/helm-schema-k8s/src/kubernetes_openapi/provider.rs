@@ -24,7 +24,10 @@ use crate::schema_doc::SchemaDoc;
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
-use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf, expand_schema_node};
+use super::resolve_ctx::{
+    ResolveCtx, SchemaNodeLocation, descend_schema_path_expanding_leaf_with_location,
+    expand_schema_node,
+};
 use super::version_chain::K8sVersionChain;
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
@@ -351,17 +354,24 @@ impl KubernetesJsonSchemaProvider {
     }
 
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
-    fn schema_for_resource_path_uncached(
+    fn schema_fragment_for_resource_path_uncached(
         &self,
         resource: &ResourceRef,
         path: &YamlPath,
-    ) -> Option<(String, Option<Value>)> {
+    ) -> Option<(String, Option<ProviderSchemaFragment>)> {
         let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
-        let loader = self.loader_for_source(source_id, version.clone());
+        let loader = self.loader_for_source(source_id.clone(), version.clone());
         let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
         let root_doc = ctx.doc(&filename)?.clone();
-        let schema = descend_schema_path_expanding_leaf(&mut ctx, &filename, &root_doc, &path.0);
-        Some((version, schema))
+        let schema_node = descend_schema_path_expanding_leaf_with_location(
+            &mut ctx, &filename, &root_doc, &path.0,
+        );
+        let fragment = schema_node.map(|schema_node| {
+            let source_key =
+                provider_schema_source_key(&source_id, &version, schema_node.location());
+            ProviderSchemaFragment::new(schema_node.into_schema()).with_source_key(source_key)
+        });
+        Some((version, fragment))
     }
 
     /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`
@@ -646,12 +656,21 @@ impl KubernetesJsonSchemaProvider {
 }
 
 impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
-        self.schema_for_resource_path_uncached(resource, path)
-            .and_then(|(_version, schema)| schema)
+        self.schema_fragment_for_resource_path_uncached(resource, path)
+            .and_then(|(_version, fragment)| fragment)
+    }
+
+    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+        self.schema_fragment_for_resource_path(resource, path)
+            .map(ProviderSchemaFragment::into_schema)
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -664,7 +683,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             return ProviderLookupResult::NotOwned;
         }
         let Some((resolved_k8s_version, schema)) =
-            self.schema_for_resource_path_uncached(resource, path)
+            self.schema_fragment_for_resource_path_uncached(resource, path)
         else {
             return ProviderLookupResult::NotOwned;
         };
@@ -677,7 +696,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             .unwrap_or(&resolved_k8s_version)
             .to_string();
         ProviderLookupResult::Found {
-            schema: ProviderSchemaFragment::new(schema),
+            schema,
             resolved_k8s_version: if primary == resolved_k8s_version {
                 None
             } else {
@@ -801,6 +820,18 @@ fn looks_like_k8s_version_dir(name: &str) -> bool {
         return false;
     };
     major.chars().all(|c| c.is_ascii_digit()) && minor.chars().all(|c| c.is_ascii_digit())
+}
+
+fn provider_schema_source_key(
+    source_id: &str,
+    version: &str,
+    location: &SchemaNodeLocation,
+) -> String {
+    format!(
+        "kubernetes-openapi:{source_id}:{version}:{}#{}",
+        location.filename(),
+        location.pointer()
+    )
 }
 
 fn default_k8s_schema_cache_dir() -> PathBuf {

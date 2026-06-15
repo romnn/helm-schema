@@ -12,7 +12,7 @@ pub(crate) struct ProviderSchemaEvidence {
 impl ProviderSchemaEvidence {
     pub(crate) fn new(fragment: ProviderSchemaFragment) -> Self {
         Self {
-            shareable_schema: ShareableSchema::new(fragment.into_schema()),
+            shareable_schema: ShareableSchema::from_provider_fragment(fragment),
         }
     }
 

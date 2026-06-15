@@ -940,7 +940,13 @@ Current result:
   outcome, and generator collection boundary; plain `serde_json::Value`
   schema methods remain compatibility adapters. Generator value-kind
   projection transforms that fragment in place before lowering it into
-  shareable provider evidence. The remaining work here is deeper
+  shareable provider evidence. Upstream OpenAPI path descent now also reports
+  the resolved provider-document location `(filename, JSON pointer)` for the
+  leaf before expansion; the OpenAPI provider attaches that source identity to
+  `ProviderSchemaFragment` and makes fragment lookup its primary trait
+  implementation. Current `$defs` sharing still groups by exact structural
+  schema equality so distinct source locations with identical schema shapes
+  continue to deduplicate correctly. The remaining work here is deeper
   provider-document lowering consolidation so foreign schema documents can stay
   ref-shaped throughout more of the pipeline, rather than being re-materialized
   before the exact-sharing pass.
@@ -958,7 +964,10 @@ Current result:
   raw documents. Provider lookup cache entries now store typed provider
   fragments instead of anonymous schema values, which keeps later source-doc
   and ref-shape metadata attachable without changing lookup/cache call sites
-  again.
+  again. OpenAPI lazy descent now preserves the exact provider document
+  location of the resolved leaf while still expanding only the returned leaf
+  schema, which is the next prerequisite for retaining `$ref` shape deeper in
+  bundled emission.
 - B3 has started by moving capability probe construction and the canonical
   api-version probe table into a dedicated provider submodule. Direct
   resource-qualified capability literals now bypass that table, including core

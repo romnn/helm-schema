@@ -16,7 +16,16 @@ pub(crate) struct ShareableSchema {
 }
 
 impl ShareableSchema {
+    #[cfg(test)]
     pub(crate) fn new(schema: Value) -> Self {
+        let key = canonical_schema_key(&schema);
+        Self { key, schema }
+    }
+
+    pub(crate) fn from_provider_fragment(
+        fragment: helm_schema_k8s::ProviderSchemaFragment,
+    ) -> Self {
+        let schema = fragment.into_schema();
         let key = canonical_schema_key(&schema);
         Self { key, schema }
     }

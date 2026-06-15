@@ -1809,7 +1809,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   the K8s trait, provider cache, chain outcome, and generator collection
   boundary; plain `serde_json::Value` schema methods remain compatibility
   adapters. Generator value-kind projection transforms that fragment in place
-  before lowering it into shareable provider evidence.
+  before lowering it into shareable provider evidence. Upstream OpenAPI path
+  descent now also reports the resolved provider-document location
+  `(filename, JSON pointer)` for the leaf before expansion; the OpenAPI
+  provider attaches that source identity to `ProviderSchemaFragment` and makes
+  fragment lookup its primary trait implementation. Current `$defs` sharing
+  still groups by exact structural schema equality so distinct source
+  locations with identical schema shapes continue to deduplicate correctly.
   The remaining work here is deeper provider-document lowering consolidation
   so foreign schema documents can stay ref-shaped throughout more of the
   pipeline, rather than being re-materialized before the exact-sharing pass.
@@ -1871,7 +1877,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   documents on demand. Provider lookup cache entries now store typed provider
   fragments instead of anonymous schema values, which keeps later source-doc
   and ref-shape metadata attachable without changing lookup/cache call sites
-  again.
+  again. OpenAPI lazy descent now preserves the exact provider document
+  location of the resolved leaf while still expanding only the returned leaf
+  schema, which is the next prerequisite for retaining `$ref` shape deeper in
+  bundled emission.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated
