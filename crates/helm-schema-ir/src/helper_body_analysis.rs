@@ -9,10 +9,9 @@ use crate::fragment_expr_eval::{
     fragment_binding_from_outer_expr, helper_binding_from_expr_with_fragment_locals,
 };
 use crate::helper_analysis::BoundHelperAnalysis;
-use crate::helper_fragment_output_uses::{
-    FragmentOutputWalkState, collect_bound_fragment_output_uses_from_tree,
-};
-use crate::helper_value_analysis::{HelperValuesWalkState, collect_bound_helper_values_from_tree};
+use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_tree;
+use crate::helper_value_analysis::collect_bound_helper_values_from_tree;
+use crate::helper_walk_state::{FragmentOutputWalkState, HelperValuesWalkState};
 
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, HelperBinding>,

@@ -16,6 +16,7 @@ use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_analysis_mutation::merge_local_default_paths;
 use crate::helper_analysis_projection::bound_helper_condition_paths;
 use crate::helper_output_projection::push_helper_fragment_output;
+use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
 };
@@ -30,14 +31,6 @@ use crate::{ValueKind, YamlPath};
 mod expression_output;
 
 use expression_output::collect_bound_fragment_output_uses_from_expr;
-
-pub(crate) struct FragmentOutputWalkState<'context, 'state> {
-    pub(crate) local_bindings: &'state mut HashMap<String, FragmentBinding>,
-    pub(crate) local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
-    pub(crate) context: FragmentEvalContext<'context>,
-    pub(crate) seen: &'state mut HashSet<String>,
-    pub(crate) outputs: &'state mut Vec<HelperFragmentOutputUse>,
-}
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_bound_fragment_output_uses_from_tree(

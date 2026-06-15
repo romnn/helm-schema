@@ -39,6 +39,8 @@ mod helper_inline;
 mod helper_output_projection;
 mod helper_summary;
 mod helper_value_analysis;
+mod helper_value_expression;
+mod helper_walk_state;
 mod local_projection;
 mod node_action_effect;
 mod node_action_kind;

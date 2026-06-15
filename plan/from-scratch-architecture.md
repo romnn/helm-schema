@@ -1399,11 +1399,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   helper-binding-to-output-metadata projection is now centralized in
   `helper_output_projection`, and `HelperOutputMeta` owns predicate/default
   merging instead of each compatibility caller open-coding the field merge.
-  `BoundHelperAnalysis` now also owns nested scalar/fragment render projection,
-  output-action projection, and helper-summary-to-binding projection. This
-  leaves the remaining fragment/helper compatibility evaluators focused on
-  expression resolution while more of the DTO conversion layer moves behind
-  helper-summary methods. The obsolete `fragment_binding_eval` compatibility
+  The remaining fragment/helper compatibility evaluators are focused on
+  expression resolution, with helper-summary data kept separate from DTO
+  projection and state mutation. The obsolete `fragment_binding_eval` compatibility
   module has been deleted; its final outer-expression resolver now lives next
   to the rest of the shared fragment expression evaluator. The remaining A2
   cleanup has also centralized helper-argument binding projection behind a
@@ -1669,8 +1667,14 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   output collection has the matching split: the node runtime owns traversal,
   branch/range state, and rendered context, while output-action expression
   projection owns direct, local, nested helper, and assignment-derived
-  fragment output claims. Helper-to-document value projection is now owned by
-  the document value layer rather than `BoundHelperAnalysis`, and helper
+  fragment output claims. Helper value-fact collection has been split the same
+  way: the node runtime owns traversal, scope snapshots, dot/range state, and
+  branch predicates, while `helper_value_expression` owns output-action,
+  assignment, local-set, string-output, and nested-helper expression effects.
+  Shared helper walk state now lives behind one small `helper_walk_state`
+  boundary instead of being embedded in either runtime module.
+  Helper-to-document value projection is now owned by the document value layer
+  rather than `BoundHelperAnalysis`, and helper
   document lowering has its own contract emitter. That removes another
   intermediate helper DTO and keeps helper summaries from deciding how a
   rendered document site should emit contract claims. Bound-helper summary

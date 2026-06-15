@@ -18,6 +18,7 @@ use crate::helper_output_projection::{
     expression_output_use_is_keyed_map_projection, helper_output_meta_with_predicates,
     push_helper_fragment_output, static_yaml_fragment_output_path,
 };
+use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_default_paths_from_text,
     local_rendered_paths_from_text,
@@ -30,8 +31,6 @@ use crate::template_expr_analysis::{
 };
 use crate::template_expr_cache::parse_expr_text;
 use crate::{ValueKind, YamlPath};
-
-use super::FragmentOutputWalkState;
 
 struct FragmentExpressionOutputScope<'a> {
     bindings: &'a HashMap<String, HelperBinding>,
