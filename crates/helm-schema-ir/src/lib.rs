@@ -14,6 +14,8 @@ mod contract_signals;
 #[cfg(test)]
 mod contract_signals_tests;
 mod contract_sink;
+#[cfg(test)]
+mod contract_tests;
 mod default_type_hints;
 mod define_body_cache;
 mod document_projection;

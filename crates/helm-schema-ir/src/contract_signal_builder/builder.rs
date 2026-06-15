@@ -2,11 +2,16 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::contract_signals::{
-    ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
-    MetadataFieldKind, RequiredInferenceSignals,
+    ContractPathSignals, ContractSchemaSignals, RequiredInferenceSignals,
 };
 use crate::provider_schema_use::ProviderSchemaUse;
 use crate::{ChartFacts, Guard, PathFact, ValueKind};
+
+use super::classifiers::{
+    guard_constraint_from_guard, metadata_field_kind_from_yaml_path, use_is_null_tolerant,
+    use_is_positive_header, use_is_self_guarded,
+};
+use super::value_path_facts::{build_contract_value_path_facts, collect_paths_with_descendants};
 
 pub(crate) fn derive_schema_signals_from_uses(uses: &[ContractUse]) -> ContractSchemaSignals {
     let mut builder = ContractSchemaSignalBuilder::default();
@@ -33,8 +38,8 @@ struct ChartPathAccumulator {
     has_self_range_guard_render_use: bool,
 }
 
-impl ChartPathAccumulator {
-    fn new() -> Self {
+impl Default for ChartPathAccumulator {
+    fn default() -> Self {
         Self {
             has_render_use: false,
             all_render_uses_self_guarded: true,
@@ -49,8 +54,8 @@ struct NullablePathAccumulator {
     all_uses_nullable: bool,
 }
 
-impl NullablePathAccumulator {
-    fn new() -> Self {
+impl Default for NullablePathAccumulator {
+    fn default() -> Self {
         Self {
             has_render_use: false,
             all_uses_nullable: true,
@@ -185,7 +190,7 @@ impl ContractSchemaSignalBuilder {
     fn chart_accumulator(&mut self, path: &str) -> &mut ChartPathAccumulator {
         self.chart_facts_by_path
             .entry(path.to_string())
-            .or_insert_with(ChartPathAccumulator::new)
+            .or_default()
     }
 
     fn record_chart_render_use(
@@ -281,9 +286,7 @@ impl ContractSchemaSignalBuilder {
     }
 
     fn nullable_accumulator(&mut self, path: &str) -> &mut NullablePathAccumulator {
-        self.nullable_by_path
-            .entry(path.to_string())
-            .or_insert_with(NullablePathAccumulator::new)
+        self.nullable_by_path.entry(path.to_string()).or_default()
     }
 
     fn record_required_inference_signals(&mut self, contract_use: &ContractUse) {
@@ -322,132 +325,4 @@ impl ContractSchemaSignalBuilder {
                 .insert(contract_use.source_expr.clone());
         }
     }
-}
-
-fn build_contract_value_path_facts(
-    path_facts: &BTreeMap<String, PathFact>,
-    path_signals: &ContractPathSignals,
-    nullable_value_paths: &BTreeSet<String>,
-    paths_with_referenced_descendants: &BTreeSet<String>,
-) -> BTreeMap<String, ContractValuePathFacts> {
-    let mut paths = BTreeSet::new();
-    paths.extend(path_facts.keys().cloned());
-    paths.extend(path_signals.referenced_value_paths.iter().cloned());
-    paths.extend(path_signals.ranged_value_paths.iter().cloned());
-    paths.extend(path_signals.value_paths_used_as_fragment.iter().cloned());
-    paths.extend(path_signals.partial_scalar_value_paths.iter().cloned());
-    paths.extend(path_signals.guard_constraints_by_value_path.keys().cloned());
-    paths.extend(path_signals.metadata_fields_by_value_path.keys().cloned());
-    paths.extend(nullable_value_paths.iter().cloned());
-    paths.extend(paths_with_referenced_descendants.iter().cloned());
-
-    paths
-        .into_iter()
-        .map(|path| {
-            let chart_fact = path_facts.get(&path).cloned().unwrap_or_default();
-            (
-                path.clone(),
-                ContractValuePathFacts {
-                    has_referenced_descendants: paths_with_referenced_descendants.contains(&path),
-                    used_as_fragment: path_signals.value_paths_used_as_fragment.contains(&path),
-                    is_ranged_source: path_signals.ranged_value_paths.contains(&path),
-                    is_partial_scalar_value_path: path_signals
-                        .partial_scalar_value_paths
-                        .contains(&path),
-                    has_render_use: chart_fact.has_render_use,
-                    all_render_uses_self_guarded: chart_fact.all_render_uses_self_guarded,
-                    has_self_range_guard_render_use: chart_fact.has_self_range_guard_render_use,
-                    is_nullable: nullable_value_paths.contains(&path),
-                },
-            )
-        })
-        .collect()
-}
-
-fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    for path in paths {
-        let mut segments: Vec<&str> = path
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .collect();
-        while segments.len() > 1 {
-            segments.pop();
-            out.insert(segments.join("."));
-        }
-    }
-    out
-}
-
-fn use_is_positive_header(use_: &ContractUse) -> bool {
-    use_.guards.is_empty()
-        || use_.guards.iter().all(|guard| match guard {
-            Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
-                path == &use_.source_expr
-            }
-            Guard::Not { .. }
-            | Guard::Or { .. }
-            | Guard::Range { .. }
-            | Guard::With { .. }
-            | Guard::Default { .. } => false,
-        })
-}
-
-fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
-    let last = path.last()?.as_str();
-    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
-    if prev != "metadata" {
-        return None;
-    }
-
-    match last {
-        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
-        "name" => Some(MetadataFieldKind::Name),
-        "namespace" => Some(MetadataFieldKind::Namespace),
-        _ => None,
-    }
-}
-
-fn guard_constraint_from_guard(guard: &Guard) -> Option<GuardConstraint> {
-    match guard {
-        Guard::Eq { value, .. } => Some(GuardConstraint::Eq {
-            value: value.clone(),
-        }),
-        Guard::TypeIs { schema_type, .. } => Some(GuardConstraint::TypeIs {
-            schema_type: schema_type.clone(),
-        }),
-        Guard::Truthy { .. }
-        | Guard::Not { .. }
-        | Guard::Or { .. }
-        | Guard::Range { .. }
-        | Guard::With { .. }
-        | Guard::Default { .. } => None,
-    }
-}
-
-fn use_is_self_guarded(use_: &ContractUse) -> bool {
-    if use_.path.0.is_empty() {
-        return true;
-    }
-
-    use_has_matching_self_guard(use_)
-}
-
-fn use_is_null_tolerant(use_: &ContractUse) -> bool {
-    if use_.path.0.is_empty() {
-        return true;
-    }
-
-    use_has_matching_self_guard(use_)
-}
-
-fn use_has_matching_self_guard(use_: &ContractUse) -> bool {
-    use_.guards.iter().any(|guard| match guard {
-        Guard::Truthy { path }
-        | Guard::Eq { path, .. }
-        | Guard::Range { path }
-        | Guard::With { path }
-        | Guard::Default { path } => path == &use_.source_expr,
-        Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => false,
-    })
 }

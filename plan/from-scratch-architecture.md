@@ -1548,6 +1548,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   nullable-path classification, and `K8sSchemaProvider` lookups consume that
   signal bundle, while `ContractProjection` / `ValueUse` remain only explicit
   fixture/external inspection projections.
+  The contract layer is now a module family too: semantic claims, graph
+  finalization, and inspection projection have separate owners behind the
+  same public `ContractUse` / `ContractIr` / `ContractProjection` API.
   The reverse compatibility constructor has been removed, so tests and
   tooling cannot accidentally treat `ValueUse` as input to the semantic
   contract layer; hand-built evidence now uses `ContractUse` directly.
@@ -1602,6 +1605,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   nullability collectors with a single owner for core schema-generation
   evidence. The generator-facing signal DTOs live in `contract_signals`,
   while `contract_signal_builder` owns accumulation/classification policy.
+  That builder is now split by role as well: accumulation owns the builder
+  lifecycle, classifier helpers own per-claim predicates, and value-path fact
+  construction owns descendant/topology aggregation.
   That leaves `contract` to own normalized claim accumulation, projection,
   and normalization only. Descendant-path topology used during per-path
   schema resolution is now part of that same contract-owned schema signal
@@ -1733,9 +1739,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   mechanics have also been split out of the graph type: `contract_sink` owns
   interpreter-to-claim lowering and `ContractUseSink`, while
   `contract_normalization` owns the difference between DTO canonicalization
-  and semantic `ContractIr` finalization. That keeps raw DTO inspection from
-  accidentally dropping evidence while preserving one owner for production
-  finalization policy. The old `walker` grab bag has now been deleted: helper
+  and semantic `ContractIr` finalization. The contract graph, claim type, and
+  inspection projection now live in separate files too. That keeps raw DTO
+  inspection from accidentally dropping evidence while preserving one owner
+  for production finalization policy. The old `walker` grab bag has now been
+  deleted: helper
   discovery, default type hints, value-path extraction, condition guards,
   fragment classification, and template-comment filtering each have focused
   owners behind the unchanged crate-root API. Fragment classification is now

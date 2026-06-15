@@ -836,6 +836,9 @@ Current result:
 - The normalized compatibility DTO rows now sit behind a named
   `ContractProjection` artifact only when callers explicitly request fixture
   or inspection rows.
+- The contract layer is now split by role: `ContractUse` owns semantic
+  claims, `ContractIr` owns graph finalization, and `ContractProjection`
+  owns fixture/external DTO projection.
 - A dead `ValuesSchemaGenerator` trait abstraction was removed instead of
   preserving a no-op wrapper around the free generator function.
 - The generator's old arity ladder now has one explicit `ValuesSchemaInput`
@@ -856,6 +859,9 @@ Current result:
   signals, path metadata, provider lookup requests, chart facts, and
   required-inference inputs all come from one contract-layer signal builder
   instead of forcing root schema generation to pass raw slices around.
+- That signal builder is split into accumulation, classifier, and value-path
+  fact modules so per-claim predicates and descendant/topology aggregation are
+  not embedded in the builder lifecycle.
 - `ContractIr` now derives `ContractSchemaSignals` directly after semantic
   finalization. `ContractProjection` stores normalized `ContractUse` claims
   only for fixture/external inspection; `ValueUse` remains an explicit
