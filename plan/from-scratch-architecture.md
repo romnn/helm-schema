@@ -1836,7 +1836,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   through mechanics inline. API-presence/capability query execution now has
   the matching `ApiPresenceLookupExecutor`, so both knowledge-query shapes use
   named execution units that return traces while `Chain` remains the
-  compatibility and diagnostic projection boundary.
+  compatibility and diagnostic projection boundary. The high-level chain
+  orchestration now lives behind a `LookupOrchestrator`: apiVersion inference,
+  candidate iteration, success diagnostics, final-miss projection, resource
+  executor calls, and capability executor calls share one owner. `Chain` is
+  now a thin compatibility facade over that orchestrator plus the
+  `K8sSchemaProvider` / `CapabilityOracle` adapter impls.
 - **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
   expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the

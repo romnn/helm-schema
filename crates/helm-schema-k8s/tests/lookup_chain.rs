@@ -140,7 +140,7 @@ fn provider_local_path_unresolved_is_not_missing() {
     let schema = chain.schema_for_resource_path(&resource(), &YamlPath(Vec::new()));
     assert!(
         schema.is_none(),
-        "PathUnresolved → Resolved with None schema"
+        "PathUnresolved maps to Resolved with None schema"
     );
     let any_missing = diagnostics
         .snapshot()
@@ -154,7 +154,7 @@ fn provider_local_path_unresolved_is_not_missing() {
 
 #[test]
 fn chain_emits_missing_schema_only_at_chain_layer() {
-    // Every provider returns NotOwned → chain emits exactly one
+    // Every provider returns NotOwned, so the chain emits exactly one
     // MissingSchema (and none of the providers does).
     let p1 = FakeProvider::new(
         ProviderOrigin::LocalOverride,
@@ -191,7 +191,7 @@ fn chain_emits_missing_schema_only_at_chain_layer() {
 #[test]
 fn chain_local_override_unreadable_does_not_fall_through() {
     // Local claims the resource (has_resource=true) but its file is
-    // unreadable → chain emits LocalOverrideUnreadable AND returns
+    // unreadable, so the chain emits LocalOverrideUnreadable and returns
     // MissingSchema, never falling through to CRD or K8s.
     let local = FakeProvider::new(
         ProviderOrigin::LocalOverride,
@@ -247,7 +247,7 @@ fn chain_local_override_unreadable_does_not_fall_through() {
 
 #[test]
 fn chain_non_override_resource_doc_missing_falls_through() {
-    // CRD claims it but its doc is missing → chain falls through to K8s.
+    // CRD claims it but its doc is missing, so the chain falls through to K8s.
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
         true,
@@ -426,13 +426,12 @@ fn local_provider_emits_local_override_origin() {
     assert_eq!(provider.origin(), ProviderOrigin::LocalOverride);
 }
 
-// Pins Finding 4 — multi-candidate iteration in schema_for_use must
-// NOT emit MissingSchema for the speculative misses when a later
-// candidate resolves. The primary apiVersion (`policy/v1beta1`) is
-// what the user wrote in the chart; `policy/v1` is the heuristic
-// ranking added by `ordered_api_versions_for_resource`. Only the
-// success-side outcome (Found via a candidate) should be observable
-// from the sink.
+// Multi-candidate iteration in schema_for_use must not emit MissingSchema for
+// speculative misses when a later candidate resolves. The primary apiVersion
+// (`policy/v1beta1`) is what the user wrote in the chart; `policy/v1` is the
+// ordered candidate added by `ordered_api_versions_for_resource`. Only the
+// success-side outcome (Found via a candidate) should be observable from the
+// sink.
 #[test]
 fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
     let crd = FakeProvider::new(
@@ -442,7 +441,7 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
     );
     // Wrap the fake in a "knows-policy/v1beta1-only" stub: it returns
     // NotOwned for any other apiVersion. We use the surrogate API the
-    // FakeProvider already exposes — it's content-blind, so any
+    // FakeProvider already exposes. It is content-blind, so any
     // resolve_against_chain call returns Found. We need a slightly
     // smarter fake that only answers for one apiVersion.
     #[derive(Debug)]
@@ -520,12 +519,10 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
     );
 }
 
-// Pins Finding (round 6) #2/#4 — multi-branch helper preserves
-// candidates as ambiguous alternatives (empty primary + N
-// candidates). On total failure, commit_missing_schema must emit ONE
-// MissingSchema per candidate so the user sees the full set of
-// apiVersions that were tried — NOT a single
-// `MissingSchema(kind=X, api_version=)` with empty attribution.
+// Multi-branch helper output preserves candidates as ambiguous alternatives
+// (empty primary plus N candidates). On total failure, commit_missing_schema
+// must emit one MissingSchema per candidate so the user sees the full set of
+// apiVersions that were tried, not a single empty-apiVersion attribution.
 #[test]
 fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
     let p = FakeProvider::new(
@@ -575,16 +572,15 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
     );
 }
 
-// Round-8 Finding 1: when the resource carries typed
-// `api_version_branches`, the chain MUST emit ONE MissingSchema
-// attributing to the LIVE branch (the branch the chart would emit
-// at runtime for the primary K8s version), NOT one MissingSchema
-// per branch.
+// When the resource carries typed `api_version_branches`, the chain must emit
+// one MissingSchema attributed to the live branch (the branch the chart would
+// emit at runtime for the primary K8s version), not one MissingSchema per
+// branch.
 //
-// This test pins the "Has guard FALSE → else branch wins" case:
-// the provider tells the chain `Has "policy/v1"` is false for its
-// primary version, so the else branch (policy/v1beta1) is the
-// runtime-live branch and gets the attribution.
+// This test pins the "Has guard false, else branch wins" case: the provider
+// tells the chain `Has "policy/v1"` is false for its primary version, so the
+// else branch (policy/v1beta1) is the runtime-live branch and gets the
+// attribution.
 #[test]
 fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
     use helm_schema_ir::{CapabilityGuard, HelperBranch};
@@ -636,12 +632,12 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
     );
 }
 
-// Round-8 Finding 1: same shape, but the Has guard evaluates TRUE.
-// The if-branch is the runtime-live branch and gets the attribution.
-// This is the elasticsearch PSP regression: chart structurally emits
-// `apiVersion: policy/v1` in K8s 1.35 (PDB is at policy/v1), PSP
-// doesn't exist at policy/v1 — the chain surfaces this as a real bug
-// rather than silently preferring the else branch's policy/v1beta1.
+// Same shape, but the Has guard evaluates true. The if-branch is the
+// runtime-live branch and gets the attribution. This is the elasticsearch PSP
+// regression: chart structurally emits `apiVersion: policy/v1` in K8s 1.35
+// (PDB is at policy/v1), PSP does not exist at policy/v1, and the chain
+// surfaces this as a real chart bug rather than silently preferring the else
+// branch's policy/v1beta1.
 #[test]
 fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
     use helm_schema_ir::{CapabilityGuard, HelperBranch};
@@ -688,7 +684,7 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
     );
     assert_eq!(
         missing[0].1, "policy/v1",
-        "attribution must be the if-branch's literal when Has guard evaluates true — the real chart bug"
+        "attribution must be the if-branch's literal when Has guard evaluates true; the chart really emits this broken apiVersion"
     );
 }
 
@@ -815,11 +811,10 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
     );
 }
 
-// Round-7: when there is no unguarded else branch but typed branches
-// are present (e.g. only an `if X` with no else), the chain falls back
-// to the LAST decoded branch's first literal — picking the latest
-// alternative the chart author considered, rather than per-candidate
-// flooding.
+// When there is no unguarded else branch but typed branches are present (e.g.
+// only an `if X` with no else), the chain falls back to the last decoded
+// branch's first literal, picking the latest alternative the chart author
+// considered rather than per-candidate flooding.
 #[test]
 fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
     use helm_schema_ir::{CapabilityGuard, HelperBranch};
@@ -863,10 +858,9 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
     assert_eq!(missing[0].1, "policy/v1");
 }
 
-// Pins Finding (round 2) #1 — schema_for_use must NOT turn an
-// intentional `Resolved { schema: None }` (PathUnresolved) into
-// MissingSchema. A provider claimed ownership of the resource; the
-// YAML path simply has no schema constraint (e.g. ConfigMap.data.X
+// schema_for_use must not turn an intentional `Resolved { schema: None }`
+// (PathUnresolved) into MissingSchema. A provider claimed ownership of the
+// resource; the YAML path simply has no schema constraint (e.g. ConfigMap.data.X
 // where the spec doesn't constrain free-form data). Emitting
 // MissingSchema in that case floods stderr with diagnostics for
 // built-in K8s resources whose schemas legitimately don't constrain
@@ -910,7 +904,7 @@ fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
 
 // Variant of the above: multi-candidate iteration, ALL candidates
 // resolve to PathUnresolved (each via different apiVersion). No
-// MissingSchema must fire — Resolved{None} from ANY candidate is
+// MissingSchema must fire. Resolved{None} from any candidate is
 // ownership claim, and the chain must honour the silence.
 #[test]
 fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
@@ -957,9 +951,8 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
     );
 }
 
-// Pins Finding 4 — when every candidate misses, exactly ONE
-// MissingSchema fires and it carries the user-written PRIMARY
-// apiVersion, not a speculative candidate.
+// When every candidate misses, exactly one MissingSchema fires and it carries
+// the user-written primary apiVersion, not a speculative candidate.
 #[test]
 fn chain_schema_for_use_total_failure_attributes_to_primary() {
     let p = FakeProvider::new(
