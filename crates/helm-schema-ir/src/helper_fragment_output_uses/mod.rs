@@ -4,7 +4,7 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
-use crate::document_hole_context::collect_document_hole_context;
+use crate::document_projection::collect_document_hole_context;
 use crate::fragment_assignment::{apply_local_set_mutations, merge_fragment_locals};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;

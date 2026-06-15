@@ -1,5 +1,3 @@
-mod abstract_document;
-mod abstract_document_hole;
 mod abstract_value;
 mod assignment_action_plan;
 mod bound_helper_call_analysis;
@@ -18,9 +16,7 @@ mod contract_signals_tests;
 mod contract_sink;
 mod default_type_hints;
 mod define_body_cache;
-mod document_helper_contract;
-mod document_hole_context;
-mod document_value_analysis;
+mod document_projection;
 mod eval_effect;
 mod eval_env;
 mod expr_call_eval;

@@ -1,31 +1,26 @@
-use crate::abstract_document_hole::AbstractDocumentHole;
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::document_helper_contract::append_document_helper_contract_uses;
-use crate::document_hole_context::DocumentHoleContext;
-use crate::document_value_analysis::DocumentValueAnalysis;
 use crate::{Guard, ValueKind, YamlPath};
 
+use super::helper_contract::append_document_helper_contract_uses;
+use super::hole::DocumentHole;
+use super::hole_context::DocumentHoleContext;
+use super::value_analysis::DocumentValueAnalysis;
+
 /// A rendered manifest output site discovered while interpreting a template.
-///
-/// This is still a compatibility-era document artifact: it records the
-/// structural position of one rendered hole and lowers through a private
-/// document projection before producing contract uses. Keeping that projection
-/// behind a document-shaped type gives the next A4 steps a single place to
-/// attach richer contract facts before final DTO projection.
-pub(crate) struct AbstractDocumentOutput {
-    hole: AbstractDocumentHole,
+pub(crate) struct DocumentOutput {
+    hole: DocumentHole,
     analysis: DocumentValueAnalysis,
 }
 
-impl AbstractDocumentOutput {
+impl DocumentOutput {
     pub(crate) fn new(
         hole_context: DocumentHoleContext,
         helper_inlined: bool,
         analysis: DocumentValueAnalysis,
     ) -> Self {
         Self {
-            hole: AbstractDocumentHole::new(hole_context, helper_inlined),
+            hole: DocumentHole::new(hole_context, helper_inlined),
             analysis,
         }
     }

@@ -6,15 +6,15 @@ use crate::helper_analysis::{BoundHelperAnalysis, HelperFragmentOutputUse, Helpe
 use crate::value_path_context::ValuePathContext;
 
 pub(crate) struct DocumentValueAnalysis {
-    pub(crate) default_fallback_values: BTreeSet<String>,
-    pub(crate) values: BTreeSet<String>,
-    pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
-    pub(crate) bound_values: Vec<String>,
-    pub(crate) helper: DocumentHelperValueAnalysis,
+    pub(super) default_fallback_values: BTreeSet<String>,
+    pub(super) values: BTreeSet<String>,
+    pub(super) local_output_meta: BTreeMap<String, HelperOutputMeta>,
+    pub(super) bound_values: Vec<String>,
+    pub(super) helper: DocumentHelperValueAnalysis,
 }
 
 #[derive(Default)]
-pub(crate) struct DocumentHelperValueAnalysis {
+pub(super) struct DocumentHelperValueAnalysis {
     pub(crate) output_values: BTreeMap<String, HelperOutputMeta>,
     pub(crate) fragment_output_values: Vec<String>,
     pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
@@ -67,6 +67,10 @@ impl DocumentHelperValueAnalysis {
 impl DocumentValueAnalysis {
     pub(crate) fn is_empty(&self) -> bool {
         self.values.is_empty() && self.bound_values.is_empty() && self.helper.is_empty()
+    }
+
+    pub(crate) fn take_chart_value_defaults(&mut self) -> BTreeSet<String> {
+        std::mem::take(&mut self.helper.chart_value_defaults)
     }
 }
 

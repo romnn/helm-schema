@@ -1,15 +1,16 @@
 use std::collections::BTreeSet;
 
-use crate::abstract_document_hole::AbstractDocumentHole;
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::document_value_analysis::DocumentHelperValueAnalysis;
 use crate::helper_analysis::HelperOutputMeta;
 use crate::{Guard, ValueKind, YamlPath, output_path};
 
-pub(crate) fn append_document_helper_contract_uses(
+use super::hole::DocumentHole;
+use super::value_analysis::DocumentHelperValueAnalysis;
+
+pub(super) fn append_document_helper_contract_uses(
     helper: DocumentHelperValueAnalysis,
-    hole: &AbstractDocumentHole,
+    hole: &DocumentHole,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {

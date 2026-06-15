@@ -1,9 +1,10 @@
 use crate::contract::ContractUse;
 use crate::contract_sink::ContractUseContext;
-use crate::document_hole_context::DocumentHoleContext;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
-pub(crate) struct AbstractDocumentHole {
+use super::hole_context::DocumentHoleContext;
+
+pub(super) struct DocumentHole {
     path: YamlPath,
     kind: ValueKind,
     in_mapping_key: bool,
@@ -12,8 +13,8 @@ pub(crate) struct AbstractDocumentHole {
     resource: Option<ResourceRef>,
 }
 
-impl AbstractDocumentHole {
-    pub(crate) fn new(hole_context: DocumentHoleContext, helper_inlined: bool) -> Self {
+impl DocumentHole {
+    pub(super) fn new(hole_context: DocumentHoleContext, helper_inlined: bool) -> Self {
         Self {
             path: hole_context.path,
             kind: hole_context.kind,
@@ -24,15 +25,15 @@ impl AbstractDocumentHole {
         }
     }
 
-    pub(crate) fn path(&self) -> &YamlPath {
+    pub(super) fn path(&self) -> &YamlPath {
         &self.path
     }
 
-    pub(crate) fn kind(&self) -> ValueKind {
+    pub(super) fn kind(&self) -> ValueKind {
         self.kind
     }
 
-    pub(crate) fn contract_use(
+    pub(super) fn contract_use(
         &self,
         context: &ContractUseContext<'_>,
         source_expr: String,
@@ -43,7 +44,7 @@ impl AbstractDocumentHole {
         context.contract_use(source_expr, path, kind, &guards, self.resource.clone())
     }
 
-    pub(crate) fn direct_value_kind(&self) -> ValueKind {
+    pub(super) fn direct_value_kind(&self) -> ValueKind {
         if self.kind == ValueKind::Scalar && !self.entire_scalar_value && !self.path.0.is_empty() {
             ValueKind::PartialScalar
         } else {
@@ -51,7 +52,7 @@ impl AbstractDocumentHole {
         }
     }
 
-    pub(crate) fn direct_value_path(&self, source_expr: &str) -> YamlPath {
+    pub(super) fn direct_value_path(&self, source_expr: &str) -> YamlPath {
         if source_expr.ends_with(".*") && !self.in_sequence_item() {
             YamlPath(Vec::new())
         } else {
@@ -67,7 +68,7 @@ impl AbstractDocumentHole {
             .is_some_and(|segment| segment.ends_with("[*]"))
     }
 
-    pub(crate) fn can_project_scalar_helper_to_caller_path(&self) -> bool {
+    pub(super) fn can_project_scalar_helper_to_caller_path(&self) -> bool {
         !self.helper_inlined
             && !self.in_mapping_key
             && !self.path.0.is_empty()
@@ -75,14 +76,14 @@ impl AbstractDocumentHole {
             && self.entire_scalar_value
     }
 
-    pub(crate) fn can_project_fragment_helper_to_caller_path(&self) -> bool {
+    pub(super) fn can_project_fragment_helper_to_caller_path(&self) -> bool {
         !self.helper_inlined
             && !self.in_mapping_key
             && !self.path.0.is_empty()
             && self.kind == ValueKind::Fragment
     }
 
-    pub(crate) fn can_project_structured_helper_to_caller_path(&self) -> bool {
+    pub(super) fn can_project_structured_helper_to_caller_path(&self) -> bool {
         !self.helper_inlined
             && !self.in_mapping_key
             && !self.path.0.is_empty()

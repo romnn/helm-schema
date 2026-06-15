@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::abstract_document::AbstractDocumentOutput;
 use crate::contract_sink::ContractUseContext;
-use crate::document_hole_context::collect_document_hole_context;
-use crate::document_value_analysis::collect_document_value_analysis;
+use crate::document_projection::{
+    DocumentOutput, collect_document_hole_context, collect_document_value_analysis,
+};
 use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_analysis_projection::helper_output_meta_from_analysis;
 
@@ -55,11 +55,12 @@ impl SymbolicWalker<'_> {
         // Stash chart-level `set X "K" (X.K | default V)` mutations discovered
         // in any helper called from this text. Subsequent contract emissions
         // in this walker attach `Guard::Default { path }` for matching reads,
-        // Modeling that the helper's `set` has already run by the time those
-        // reads are evaluated.
+        // which models that the helper's `set` has already run by the time
+        // those reads are evaluated.
+        let mut chart_value_defaults = output_values.take_chart_value_defaults();
         self.scope
             .locals_mut()
-            .append_chart_value_defaults(&mut output_values.helper.chart_value_defaults);
+            .append_chart_value_defaults(&mut chart_value_defaults);
         if output_values.is_empty() {
             return;
         }
@@ -71,7 +72,7 @@ impl SymbolicWalker<'_> {
                 &self.scope.locals().chart_value_defaults,
                 self.no_output_depth > 0,
             );
-            AbstractDocumentOutput::new(hole_context, helper_inlined, output_values)
+            DocumentOutput::new(hole_context, helper_inlined, output_values)
                 .into_contract_ir(&projection_context)
         };
         self.contract.append(document_contract);

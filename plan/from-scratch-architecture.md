@@ -1431,27 +1431,26 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   abstained-enrichment budget — no corpus chart loses a type enrichment vs
   the current tool; `yaml_shape` survives as an upgrader until the gate
   passes, then is deleted. Current progress: output lowering now flows
-  through an internal `AbstractDocumentOutput` / `AbstractDocumentHole`
-  artifact before appending contract claims. This does not change inference
-  behavior, but it establishes the A3 insertion point for attaching resource
-  identity, anchor, and document-path facts before DTO projection. The
-  document hole now also owns the rebased rendered path and resource claim
-  used for contract projection, rather than letting the final sink infer those
-  document facts at emission time. Document output now lowers classified
-  document evidence through `ContractUseContext` into `ContractUse` claims,
-  giving A4 `ContractIR` a concrete internal projection seam.
+  through an internal `DocumentOutput` / `DocumentHole` artifact before
+  appending contract claims. This does not change inference behavior, but it
+  establishes the A3 insertion point for attaching resource identity, anchor,
+  and document-path facts before DTO projection. The document hole owns the
+  rebased rendered path and resource claim used for contract projection,
+  rather than letting the final sink infer those document facts at emission
+  time. Document output lowers classified document evidence through
+  `ContractUseContext` into `ContractUse` claims, giving A4 `ContractIR` a
+  concrete internal projection seam.
   The latest pass moves ambient compatibility guards and chart-default
   mutations into that projection context, so the document artifact now
   produces fully guarded `ContractUse` claims and the old sink no longer has
   a document/helper-specific projection API.
-  The rendered output-site helpers have also been renamed and rehomed as
-  document-hole/document-value analysis, making the A3 boundary explicit:
-  the walker asks for a document hole plus document-local value facts, and
-  `AbstractDocumentOutput` owns their lowering into contract claims.
-  Document-hole mechanics live in `abstract_document_hole`, while
-  `AbstractDocumentOutput` appends `ContractUse` claims directly through
-  `ContractUseContext`. Rendered document holes no longer detour through a
-  DTO-shaped compatibility artifact before entering the contract graph.
+  Document projection now lives behind one `document_projection` module:
+  output sites, hole detection, helper-output lowering, and values-expression
+  analysis share one boundary with only the walker-facing collectors exported.
+  Rendered document holes no longer detour through a DTO-shaped compatibility
+  artifact before entering the contract graph, and the module names describe
+  the current production path rather than the transitional implementation
+  history.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations
