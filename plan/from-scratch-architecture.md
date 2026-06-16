@@ -2000,8 +2000,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `chart_files` internals have been folded into the `analysis` and `chart`
   module families, so the crate root no longer owns chart-analysis
   implementation modules outside the facade surface.
-- **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
-  (feeds A4 policy; unlocks B4). Current progress: chart file discovery now
+- **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence
+  (complete)** (feeds A4 policy; unlocks B4). Chart file discovery now
   flows through a typed `FileRole` model that classifies rendered manifest
   templates, define-index helper sources, static CRD documents, and
   `.Files.Get` fragment sources in one deterministic pass. The old manifest,
@@ -2011,6 +2011,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Chart.yaml dependency `condition:` and `tags:` metadata is now parsed as
   structured dependency activation data during discovery, scoped through chart
   prefixes, and emitted as boolean schema evidence for those accepted values.
+  Discovery-level scoping and end-to-end boolean schema generation are both
+  covered by tests, so the phase's structural and user-facing parts are in
+  place.
 - **C3 — the crate consolidation to §5.1's layout: last**, once module
   shapes match their target homes. Under v3 this is mostly *merging*
   (ast+ir+gen → engine) rather than splitting — strictly easier.
