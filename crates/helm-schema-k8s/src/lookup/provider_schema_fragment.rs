@@ -126,17 +126,14 @@ impl ProviderSchemaFragment {
     /// Transform the materialized schema while preserving provider ownership.
     ///
     /// Returning `None` lets callers drop fragments that do not survive a
-    /// domain-specific projection. Callers must set `preserve_source` only
-    /// when their projection is structurally known to leave the provider
-    /// schema unchanged.
-    pub fn try_map_schema(
-        self,
-        map_schema: impl FnOnce(Value) -> Option<Value>,
-        preserve_source: bool,
-    ) -> Option<Self> {
+    /// domain-specific projection. Source identity survives only when the
+    /// projection is structurally exact; changed schemas are no longer the
+    /// same provider document fragment.
+    #[must_use]
+    pub fn try_map_schema(self, map_schema: impl FnOnce(&Value) -> Option<Value>) -> Option<Self> {
         let Self { schema, source } = self;
-        let mapped = map_schema(schema)?;
-        let source = preserve_source.then_some(source).flatten();
+        let mapped = map_schema(&schema)?;
+        let source = (mapped == schema).then_some(source).flatten();
         Some(Self {
             schema: mapped,
             source,
@@ -168,7 +165,7 @@ mod tests {
         );
 
         let projected = fragment
-            .try_map_schema(Some, true)
+            .try_map_schema(|schema| Some(schema.clone()))
             .expect("unchanged projection should survive");
 
         let source = projected.source().expect("source should be preserved");
@@ -177,6 +174,36 @@ mod tests {
         assert_eq!(source.version(), Some("v1.35.0"));
         assert_eq!(source.filename(), "source.json");
         assert_eq!(source.pointer(), "/definitions/name");
+    }
+
+    #[test]
+    fn structurally_equal_rebuilt_projection_preserves_source() {
+        let fragment = ProviderSchemaFragment::new(json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            }
+        }))
+        .with_source(ProviderSchemaSource::kubernetes_openapi(
+            "default",
+            "v1.35.0",
+            "source.json",
+            "/definitions/metadata",
+        ));
+
+        let projected = fragment
+            .try_map_schema(|_| {
+                Some(json!({
+                    "properties": {
+                        "name": { "type": "string" }
+                    },
+                    "type": "object"
+                }))
+            })
+            .expect("structurally equal projection should survive");
+
+        let source = projected.source().expect("source should be preserved");
+        assert_eq!(source.pointer(), "/definitions/metadata");
     }
 
     #[test]
@@ -191,7 +218,7 @@ mod tests {
         );
 
         let projected = fragment
-            .try_map_schema(|_| Some(json!({"type": ["string", "null"]})), false)
+            .try_map_schema(|_| Some(json!({"type": ["string", "null"]})))
             .expect("changed projection should survive");
 
         assert_eq!(projected.source(), None);

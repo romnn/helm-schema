@@ -119,16 +119,16 @@ struct ValuePathMergeInputs {
 impl ResolvePolicy {
     pub(crate) fn provider_schema_for_value_use(
         &self,
-        schema: Value,
+        schema: &Value,
         use_: &ProviderSchemaUse,
     ) -> Option<Value> {
         match use_.kind {
-            ValueKind::Fragment => Some(schema),
+            ValueKind::Fragment => Some(schema.clone()),
             ValueKind::PartialScalar => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
-                restrict_schema_to_scalar_collection_domain(schema)
+                restrict_schema_to_scalar_collection_domain(schema.clone())
             }
-            ValueKind::Scalar => restrict_schema_to_scalar_domain(schema),
+            ValueKind::Scalar => restrict_schema_to_scalar_domain(schema.clone()),
         }
     }
 

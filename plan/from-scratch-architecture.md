@@ -1903,6 +1903,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   leaves, shared `$defs` emission now consumes that metadata for stable
   source-aware names, and the provider trait requires fragment lookup as the
   structural contract instead of rebuilding fragments from value-only lookups.
+  Provider-fragment projection now owns source-retention itself: projections
+  that are structurally exact keep the typed provider source, while changed
+  projections become anonymous. This removes caller-side preserve/drop policy
+  flags, avoids an unconditional owned handoff before projection, and makes
+  source identity a consequence of the actual schema transformation.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated
