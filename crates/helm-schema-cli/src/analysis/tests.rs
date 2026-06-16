@@ -159,3 +159,74 @@ spec:
 
     Ok(())
 }
+
+#[test]
+fn templated_crd_template_populates_chart_local_schema_universe() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "spec:\n  size: 1\n")?;
+    test_util::write(
+        &chart_dir.join("templates/crd.yaml")?,
+        r#"apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: {{ printf "%s.example.com" "widgets" }}
+spec:
+  group: example.com
+  names:
+    kind: Widget
+    plural: widgets
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size:
+                  type: integer
+"#,
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/widget.yaml")?,
+        r#"apiVersion: example.com/v1
+kind: Widget
+metadata:
+  name: demo
+spec:
+  size: {{ .Values.spec.size }}
+"#,
+    )?;
+
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
+    let resource = ResourceRef {
+        api_version: "example.com/v1".to_string(),
+        kind: "Widget".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+
+    let schema = provider.schema_fragment_for_resource_path(
+        &resource,
+        &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+    );
+
+    assert_eq!(
+        schema.map(|fragment| fragment.into_schema()),
+        Some(json!({"type": "integer"}))
+    );
+
+    Ok(())
+}

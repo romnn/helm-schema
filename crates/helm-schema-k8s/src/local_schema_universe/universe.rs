@@ -115,7 +115,9 @@ impl LocalSchemaUniverse {
     }
 
     pub fn insert_crd_document(&mut self, document: Value) {
-        insert_crd_versions(&mut self.docs, document, "chart-local", None);
+        for resource_schema in resource_schemas_from_crd_document(document) {
+            insert_resource_schema(&mut self.docs, resource_schema);
+        }
     }
 
     pub fn insert_crd_document_with_source(
@@ -124,9 +126,11 @@ impl LocalSchemaUniverse {
         source_id: impl Into<String>,
         filename: impl Into<String>,
     ) {
-        let source_id = source_id.into();
-        let filename = filename.into();
-        insert_crd_versions(&mut self.docs, document, &source_id, Some(&filename));
+        for resource_schema in
+            resource_schemas_from_crd_document_with_source(document, source_id, filename)
+        {
+            insert_resource_schema(&mut self.docs, resource_schema);
+        }
     }
 
     pub fn insert_resource_schema(&mut self, resource_schema: LocalResourceSchema) {
@@ -155,27 +159,37 @@ impl LocalSchemaUniverse {
     }
 }
 
-fn insert_crd_versions(
-    docs: &mut BTreeMap<ResourceDocKey, LocalSchemaDocument>,
+#[must_use]
+pub fn resource_schemas_from_crd_document(document: Value) -> Vec<LocalResourceSchema> {
+    resource_schemas_from_crd_document_with_source(document, "chart-local", String::new())
+}
+
+#[must_use]
+pub fn resource_schemas_from_crd_document_with_source(
     document: Value,
-    source_id: &str,
-    source_filename: Option<&str>,
-) {
+    source_id: impl Into<String>,
+    filename: impl Into<String>,
+) -> Vec<LocalResourceSchema> {
+    let source_id = source_id.into();
+    let filename = filename.into();
+    let source_filename = (!filename.is_empty()).then_some(filename.as_str());
+    let mut resource_schemas = Vec::new();
+
     if document.pointer("/apiVersion").and_then(Value::as_str) != Some("apiextensions.k8s.io/v1")
         && document.pointer("/apiVersion").and_then(Value::as_str)
             != Some("apiextensions.k8s.io/v1beta1")
     {
-        return;
+        return resource_schemas;
     }
     if document.pointer("/kind").and_then(Value::as_str) != Some("CustomResourceDefinition") {
-        return;
+        return resource_schemas;
     }
 
     let Some(group) = document.pointer("/spec/group").and_then(Value::as_str) else {
-        return;
+        return resource_schemas;
     };
     let Some(kind) = document.pointer("/spec/names/kind").and_then(Value::as_str) else {
-        return;
+        return resource_schemas;
     };
 
     if let Some(versions) = document.pointer("/spec/versions").and_then(Value::as_array) {
@@ -193,48 +207,51 @@ fn insert_crd_versions(
             let Some(schema) = version.pointer("/schema/openAPIV3Schema").cloned() else {
                 continue;
             };
-            insert_schema_doc(docs, group, name, kind, schema, source_id, source_filename);
+            resource_schemas.push(resource_schema_for_version(
+                group,
+                name,
+                kind,
+                schema,
+                &source_id,
+                source_filename,
+            ));
         }
-        return;
+        return resource_schemas;
     }
 
     let Some(version) = document.pointer("/spec/version").and_then(Value::as_str) else {
-        return;
+        return resource_schemas;
     };
     let Some(schema) = document
         .pointer("/spec/validation/openAPIV3Schema")
         .cloned()
     else {
-        return;
+        return resource_schemas;
     };
-    insert_schema_doc(
-        docs,
+    resource_schemas.push(resource_schema_for_version(
         group,
         version,
         kind,
         schema,
-        source_id,
+        &source_id,
         source_filename,
-    );
+    ));
+    resource_schemas
 }
 
-fn insert_schema_doc(
-    docs: &mut BTreeMap<ResourceDocKey, LocalSchemaDocument>,
+fn resource_schema_for_version(
     group: &str,
     version: &str,
     kind: &str,
     schema: Value,
     source_id: &str,
     source_filename: Option<&str>,
-) {
+) -> LocalResourceSchema {
     let api_version = format!("{group}/{version}");
     let filename = source_filename
         .map(str::to_string)
         .unwrap_or_else(|| stable_resource_schema_filename(&api_version, kind));
-    insert_resource_schema(
-        docs,
-        LocalResourceSchema::new(api_version, kind, schema).with_source(source_id, filename),
-    );
+    LocalResourceSchema::new(api_version, kind, schema).with_source(source_id, filename)
 }
 
 fn insert_resource_schema(

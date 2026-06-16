@@ -49,6 +49,7 @@ pub use kubernetes_openapi::{
 pub use local_override::LocalSchemaProvider;
 pub use local_schema_universe::{
     ChartLocalCrdSchemaProvider, LocalResourceSchema, LocalSchemaUniverse,
+    resource_schemas_from_crd_document, resource_schemas_from_crd_document_with_source,
 };
 pub use lookup::{
     Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,

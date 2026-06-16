@@ -2,10 +2,10 @@ use std::io::Read;
 
 use helm_schema_ast::{DefineIndex, contains_template_action};
 use helm_schema_ir::{ContractIr, SymbolicIrContext};
-use serde::Deserialize;
-use serde_json::Value;
+use helm_schema_k8s::LocalResourceSchema;
 use vfs::VfsPath;
 
+use super::local_crd_projection::local_resource_schemas_from_template_source;
 use crate::chart;
 use crate::error::CliResult;
 
@@ -17,34 +17,34 @@ pub(crate) fn collect_manifest_contract_for_chart(
     include_tests: bool,
 ) -> CliResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
-    let mut literal_crd_documents = Vec::new();
+    let mut local_resource_schemas = Vec::new();
 
     let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
     for path in manifests {
         let TemplateManifestAnalysis {
             contract: mut manifest_contract,
-            literal_crd_documents: template_literal_crd_documents,
+            local_resource_schemas: template_local_resource_schemas,
         } = collect_manifest_contract_for_template(&path, defines, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         contract.append(manifest_contract);
-        literal_crd_documents.extend(template_literal_crd_documents);
+        local_resource_schemas.extend(template_local_resource_schemas);
     }
 
     Ok(ManifestContractAnalysis {
         contract,
-        literal_crd_documents,
+        local_resource_schemas,
     })
 }
 
 pub(crate) struct ManifestContractAnalysis {
     pub(crate) contract: ContractIr,
-    pub(crate) literal_crd_documents: Vec<Value>,
+    pub(crate) local_resource_schemas: Vec<LocalResourceSchema>,
 }
 
 struct TemplateManifestAnalysis {
     contract: ContractIr,
-    literal_crd_documents: Vec<Value>,
+    local_resource_schemas: Vec<LocalResourceSchema>,
 }
 
 #[tracing::instrument(skip_all)]
@@ -56,28 +56,13 @@ fn collect_manifest_contract_for_template(
     let mut source = String::new();
     path.open_file()?.read_to_string(&mut source)?;
     let contract = symbolic_context.generate_contract_ir(&source, defines);
-    let literal_crd_documents =
-        literal_crd_documents_from_template(&source, contains_template_action(&source)?)?;
+    let local_resource_schemas = local_resource_schemas_from_template_source(
+        &source,
+        path.as_str(),
+        contains_template_action(&source)?,
+    )?;
     Ok(TemplateManifestAnalysis {
         contract,
-        literal_crd_documents,
+        local_resource_schemas,
     })
-}
-
-fn literal_crd_documents_from_template(
-    source: &str,
-    contains_template_action: bool,
-) -> CliResult<Vec<Value>> {
-    if contains_template_action {
-        return Ok(Vec::new());
-    }
-
-    let mut documents = Vec::new();
-    for document in serde_yaml::Deserializer::from_str(source) {
-        let document = Value::deserialize(document)?;
-        if !document.is_null() {
-            documents.push(document);
-        }
-    }
-    Ok(documents)
 }

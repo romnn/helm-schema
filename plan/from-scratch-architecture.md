@@ -1954,8 +1954,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   instead of inventing a synthetic diagnostic now. Typed guard decoding,
   IR-side liveness, provider-side capability execution, and traced chain
   execution are all covered by focused tests.
-- **B4 — chart-local CRDs as a source** (static `crds/`; the
-  template-rendered projection additionally needs A3's documents). Shipped
+- **B4 — chart-local CRDs as a source (complete)**. Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's
   resolution as the enforced-constraint intersection. Current progress:
   static CRDs bundled under discovered chart and subchart `crds/` directories
@@ -1965,16 +1964,15 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   catalogs. apiVersion guessing treats this chart-local provider as an
   authoritative local source with its own origin/source attribution. The
   universe boundary now has a source-neutral `LocalResourceSchema` insertion
-  surface: static CRD manifests are one producer, and fully-literal rendered
-  CRD document projection can later populate the same artifact instead of
-  adding another provider path. The CLI's transitional chart analysis artifact
-  now owns that local schema universe next to the contract projection and other
-  compatibility signals, matching the target `Analysis { contract,
-  local_schemas }` shape while preserving today's provider lookup order.
-  Fully literal CRD manifests under `templates/` now also populate the same
-  universe after AST inspection proves the template contains no Helm actions;
-  templated CRD schemas still wait for the A3 document projection path so the
-  extractor never guesses through dynamic template code.
+  surface: static CRD manifests and template-local CRD projection both produce
+  the same artifact instead of adding parallel provider paths. The CLI's
+  chart analysis artifact now owns that local schema universe next to the
+  contract projection and other compatibility signals, matching the target
+  `Analysis { contract, local_schemas }` shape while preserving today's
+  provider lookup order. CRD manifests under `templates/` now also populate
+  the same universe when the CRD identity fields and `openAPIV3Schema` subtree
+  are structurally literal in the template AST; dynamic schema subtrees are
+  skipped rather than guessed through template execution.
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 

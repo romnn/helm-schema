@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use helm_schema_k8s::LocalSchemaUniverse;
+use helm_schema_k8s::{LocalSchemaUniverse, resource_schemas_from_crd_document_with_source};
 use serde::Deserialize;
 use tracing::instrument;
 
@@ -21,11 +21,13 @@ pub fn collect_static_crd_universe(charts: &[ChartContext]) -> CliResult<LocalSc
             for document in serde_yaml::Deserializer::from_str(&source) {
                 let document = serde_json::Value::deserialize(document)?;
                 if !document.is_null() {
-                    universe.insert_crd_document_with_source(
+                    for resource_schema in resource_schemas_from_crd_document_with_source(
                         document,
                         "chart-static-crd",
                         path.as_str().to_string(),
-                    );
+                    ) {
+                        universe.insert_resource_schema(resource_schema);
+                    }
                 }
             }
         }

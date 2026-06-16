@@ -32,11 +32,11 @@ pub(crate) fn analyze_charts(
         }
         let ManifestContractAnalysis {
             contract: manifest_contract,
-            literal_crd_documents,
+            local_resource_schemas,
         } = collect_manifest_contract_for_chart(chart, defines, &symbolic_context, include_tests)?;
         contract.append(manifest_contract);
-        for document in literal_crd_documents {
-            local_schema_universe.insert_crd_document(document);
+        for resource_schema in local_resource_schemas {
+            local_schema_universe.insert_resource_schema(resource_schema);
         }
     }
 
