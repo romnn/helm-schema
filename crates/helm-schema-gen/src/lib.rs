@@ -1,11 +1,12 @@
 mod merge;
 mod path_resolver;
 mod path_schema;
+mod provider_definitions;
+mod provider_schema;
 pub mod required_inference;
 mod resolve_policy;
 mod schema_model;
 mod schema_tree;
-mod shared_defs;
 mod use_signals;
 mod values_yaml;
 
@@ -18,8 +19,8 @@ use helm_schema_ir::{ContractSchemaSignals, ContractValuePathFacts};
 use helm_schema_k8s::K8sSchemaProvider;
 
 use path_resolver::PathSchemaResolver;
+use provider_definitions::ProviderSchemaDefinitions;
 use schema_tree::{apply_values_descriptions, insert_schema_at_path_segments, object_schema};
-use shared_defs::SharedSchemaDefinitions;
 use use_signals::{UseSignals, collect_use_signals};
 
 // ---------------------------------------------------------------------------
@@ -163,8 +164,8 @@ fn build_root_schema(
     let path_resolver =
         PathSchemaResolver::new(signals, value_path_facts, values_yaml_doc, type_hints);
     let mut resolved_paths = path_resolver.resolve_all();
-    let shared_definitions =
-        SharedSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
+    let provider_definitions =
+        ProviderSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
 
     for resolved_path in resolved_paths {
         insert_schema_at_path_segments(
@@ -174,7 +175,7 @@ fn build_root_schema(
         );
     }
 
-    shared_definitions.insert_into_root(&mut root_schema);
+    provider_definitions.insert_into_root(&mut root_schema);
     apply_values_descriptions(&mut root_schema, values_descriptions);
 
     root_schema

@@ -7,26 +7,26 @@ use helm_schema_ir::ContractValuePathFacts;
 use helm_schema_k8s::type_schema;
 
 use crate::merge::merge_schema_list;
+use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema};
-use crate::shared_defs::ShareableSchema;
 use crate::use_signals::UseSignals;
 use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
 
 pub(crate) struct ResolvedPathSchema {
     pub(crate) path_segments: Vec<String>,
     pub(crate) schema: Value,
-    pub(crate) shareable_provider_schema: Option<ShareableSchema>,
+    pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
 struct ProviderSchemaForPath {
     schema: Value,
-    shareable_schema: Option<ShareableSchema>,
+    provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
 struct PathSchemaEvidence {
     policy_inputs: ValuePathSchemaInputs,
-    shareable_provider_schema: Option<ShareableSchema>,
+    provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -66,18 +66,18 @@ impl<'a> PathSchemaResolver<'a> {
         let path_segments = self.path_caches.path_segments.get(&value_path)?.clone();
         let PathSchemaEvidence {
             policy_inputs,
-            shareable_provider_schema,
+            provider_schema_candidate,
         } = self.path_schema_evidence(&value_path);
         let merged = self
             .resolve_policy
             .resolve_schema_for_value_path(policy_inputs);
-        let shareable_provider_schema =
-            shareable_provider_schema.filter(|provider_schema| provider_schema.schema() == &merged);
+        let provider_schema_candidate = provider_schema_candidate
+            .filter(|provider_schema| provider_schema.survives_as(&merged));
 
         Some(ResolvedPathSchema {
             path_segments,
             schema: merged,
-            shareable_provider_schema,
+            provider_schema_candidate,
         })
     }
 
@@ -133,7 +133,7 @@ impl<'a> PathSchemaResolver<'a> {
                 guard_constraint_schema,
                 type_hint_schema,
             },
-            shareable_provider_schema: provider_schema.shareable_schema,
+            provider_schema_candidate: provider_schema.provider_schema_candidate,
         }
     }
 
@@ -168,7 +168,7 @@ impl<'a> PathSchemaResolver<'a> {
             .metadata_schemas_by_value_path
             .remove(value_path)
             .map_or_else(empty_schema, merge_schema_list);
-        let shareable_schema = if is_empty_schema(&metadata_schema) {
+        let provider_schema_candidate = if is_empty_schema(&metadata_schema) {
             single_provider_schema.as_deref().cloned()
         } else {
             None
@@ -176,7 +176,7 @@ impl<'a> PathSchemaResolver<'a> {
 
         ProviderSchemaForPath {
             schema: merge_schema_list(vec![provider_schema, metadata_schema]),
-            shareable_schema,
+            provider_schema_candidate,
         }
     }
 }

@@ -1,67 +1,32 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_k8s::{ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource};
+use helm_schema_k8s::{ProviderOrigin, ProviderSchemaSource};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
 use crate::path_resolver::ResolvedPathSchema;
-use crate::schema_model::schema_type;
+use crate::provider_schema::ProviderSchemaCandidate;
 
 const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
 const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 
-/// Provider schema that can be shared if it survives path resolution unchanged.
-#[derive(Debug, Clone)]
-pub(crate) struct ShareableSchema {
-    key: String,
-    schema: Value,
-    source: Option<ProviderSchemaSource>,
-}
-
-impl ShareableSchema {
-    #[cfg(test)]
-    pub(crate) fn new(schema: Value) -> Self {
-        let key = canonical_schema_key(&schema);
-        Self {
-            key,
-            schema,
-            source: None,
-        }
-    }
-
-    pub(crate) fn from_provider_fragment(fragment: ProviderSchemaFragment) -> Self {
-        let (schema, source) = fragment.into_parts();
-        let key = canonical_schema_key(&schema);
-        Self {
-            key,
-            schema,
-            source,
-        }
-    }
-
-    pub(crate) fn schema(&self) -> &Value {
-        &self.schema
-    }
-
-    pub(crate) fn source(&self) -> Option<&ProviderSchemaSource> {
-        self.source.as_ref()
-    }
-}
-
-/// Repeated provider-owned schema leaves that can be emitted as `$defs`.
+/// Repeated provider-owned schema leaves emitted as root `$defs`.
 #[derive(Debug, Default)]
-pub(crate) struct SharedSchemaDefinitions {
+pub(crate) struct ProviderSchemaDefinitions {
     definitions_by_name: BTreeMap<String, Value>,
 }
 
-impl SharedSchemaDefinitions {
+impl ProviderSchemaDefinitions {
     pub(crate) fn from_resolved_paths(
         resolved_paths: &mut [ResolvedPathSchema],
         values_descriptions: &BTreeMap<String, String>,
     ) -> Self {
         let description_paths = DescriptionPathIndex::new(values_descriptions);
-        let entries = SharedSchemaEntries::from_resolved_paths(resolved_paths, &description_paths);
+        let entries = ProviderSchemaDefinitionEntries::from_resolved_paths(
+            resolved_paths,
+            &description_paths,
+        );
         let mut ref_names_by_key = BTreeMap::new();
         let mut definitions_by_name = BTreeMap::new();
         let mut used_definition_names = BTreeSet::new();
@@ -74,13 +39,14 @@ impl SharedSchemaDefinitions {
         }
 
         for resolved_path in resolved_paths {
-            let Some(shareable_schema) = resolved_path.shareable_provider_schema.as_ref() else {
+            let Some(provider_schema_candidate) = resolved_path.provider_schema_candidate.as_ref()
+            else {
                 continue;
             };
             if description_paths.has_description_at_or_below(&resolved_path.path_segments) {
                 continue;
             }
-            let Some(name) = ref_names_by_key.get(&shareable_schema.key) else {
+            let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
                 continue;
             };
             resolved_path.schema = reference_schema(name);
@@ -113,47 +79,48 @@ impl SharedSchemaDefinitions {
 }
 
 #[derive(Debug, Default)]
-struct SharedSchemaEntries {
-    by_key: BTreeMap<String, SharedSchemaEntry>,
+struct ProviderSchemaDefinitionEntries {
+    by_key: BTreeMap<String, ProviderSchemaDefinitionEntry>,
 }
 
-impl SharedSchemaEntries {
+impl ProviderSchemaDefinitionEntries {
     fn from_resolved_paths(
         resolved_paths: &[ResolvedPathSchema],
         description_paths: &DescriptionPathIndex,
     ) -> Self {
         let mut entries = Self::default();
         for resolved_path in resolved_paths {
-            let Some(shareable_schema) = resolved_path.shareable_provider_schema.as_ref() else {
+            let Some(provider_schema_candidate) = resolved_path.provider_schema_candidate.as_ref()
+            else {
                 continue;
             };
             if description_paths.has_description_at_or_below(&resolved_path.path_segments) {
                 continue;
             }
-            if !is_provider_subtree_schema(shareable_schema.schema()) {
+            if !provider_schema_candidate.is_definition_candidate() {
                 continue;
             }
-            entries.insert(shareable_schema);
+            entries.insert(provider_schema_candidate);
         }
         entries
     }
 
-    fn insert(&mut self, shareable_schema: &ShareableSchema) {
+    fn insert(&mut self, provider_schema_candidate: &ProviderSchemaCandidate) {
         debug_assert!(
-            shareable_schema
+            provider_schema_candidate
                 .source()
                 .is_none_or(|source| !source.filename().is_empty()),
             "provider source metadata must name the source document"
         );
         let entry = self
             .by_key
-            .entry(shareable_schema.key.clone())
-            .or_insert_with(|| SharedSchemaEntry {
-                schema: shareable_schema.schema.clone(),
+            .entry(provider_schema_candidate.key().to_string())
+            .or_insert_with(|| ProviderSchemaDefinitionEntry {
+                schema: provider_schema_candidate.schema().clone(),
                 source_definition_names_by_identity: BTreeMap::new(),
                 uses: 0,
             });
-        if let Some(source) = shareable_schema.source() {
+        if let Some(source) = provider_schema_candidate.source() {
             entry.source_definition_names_by_identity.insert(
                 ProviderSourceIdentity::from(source),
                 source_definition_name(source),
@@ -162,19 +129,21 @@ impl SharedSchemaEntries {
         entry.uses += 1;
     }
 
-    fn into_repeated_entries(self) -> impl Iterator<Item = (String, SharedSchemaEntry)> {
+    fn into_repeated_entries(
+        self,
+    ) -> impl Iterator<Item = (String, ProviderSchemaDefinitionEntry)> {
         self.by_key.into_iter().filter(|(_, entry)| entry.uses > 1)
     }
 }
 
 #[derive(Debug)]
-struct SharedSchemaEntry {
+struct ProviderSchemaDefinitionEntry {
     schema: Value,
     source_definition_names_by_identity: BTreeMap<ProviderSourceIdentity, String>,
     uses: usize,
 }
 
-impl SharedSchemaEntry {
+impl ProviderSchemaDefinitionEntry {
     fn preferred_source_definition_name(&self) -> Option<&str> {
         if self.source_definition_names_by_identity.len() == 1 {
             self.source_definition_names_by_identity
@@ -218,33 +187,6 @@ fn path_segments_are_prefix(prefix: &[String], path: &[String]) -> bool {
     prefix.len() <= path.len() && prefix.iter().zip(path).all(|(left, right)| left == right)
 }
 
-fn is_provider_subtree_schema(schema: &Value) -> bool {
-    match schema_type(schema) {
-        Some("object" | "array") => return true,
-        Some(_) => return false,
-        None => {}
-    }
-
-    let Some(object) = schema.as_object() else {
-        return false;
-    };
-    if object.contains_key("properties")
-        || object.contains_key("additionalProperties")
-        || object.contains_key("patternProperties")
-        || object.contains_key("required")
-        || object.contains_key("items")
-    {
-        return true;
-    }
-
-    ["anyOf", "oneOf", "allOf"].into_iter().any(|key| {
-        object
-            .get(key)
-            .and_then(Value::as_array)
-            .is_some_and(|variants| variants.iter().any(is_provider_subtree_schema))
-    })
-}
-
 fn reference_schema(name: &str) -> Value {
     Value::Object(
         [(
@@ -257,7 +199,7 @@ fn reference_schema(name: &str) -> Value {
 }
 
 fn next_definition_name(
-    entry: &SharedSchemaEntry,
+    entry: &ProviderSchemaDefinitionEntry,
     used_names: &mut BTreeSet<String>,
     next_id: &mut usize,
 ) -> String {
@@ -345,25 +287,6 @@ fn source_fingerprint(source: &ProviderSchemaSource) -> String {
     hex.chars().take(12).collect()
 }
 
-fn canonical_schema_key(schema: &Value) -> String {
-    canonicalize_json_value(schema).to_string()
-}
-
-fn canonicalize_json_value(value: &Value) -> Value {
-    match value {
-        Value::Array(values) => Value::Array(values.iter().map(canonicalize_json_value).collect()),
-        Value::Object(object) => Value::Object(
-            object
-                .iter()
-                .map(|(key, value)| (key.clone(), canonicalize_json_value(value)))
-                .collect::<BTreeMap<_, _>>()
-                .into_iter()
-                .collect(),
-        ),
-        other => other.clone(),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use helm_schema_k8s::{ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource};
@@ -377,7 +300,7 @@ mod tests {
                 .split('.')
                 .map(std::string::ToString::to_string)
                 .collect(),
-            shareable_provider_schema: Some(ShareableSchema::new(schema.clone())),
+            provider_schema_candidate: Some(ProviderSchemaCandidate::new(schema.clone())),
             schema,
         }
     }
@@ -391,8 +314,8 @@ mod tests {
         )
     }
 
-    fn sourced_shareable_schema(schema: Value, pointer: &str) -> ShareableSchema {
-        ShareableSchema::from_provider_fragment(
+    fn sourced_provider_schema_candidate(schema: Value, pointer: &str) -> ProviderSchemaCandidate {
+        ProviderSchemaCandidate::from_provider_fragment(
             ProviderSchemaFragment::new(schema).with_source(k8s_source(pointer)),
         )
     }
@@ -403,7 +326,10 @@ mod tests {
                 .split('.')
                 .map(std::string::ToString::to_string)
                 .collect(),
-            shareable_provider_schema: Some(sourced_shareable_schema(schema.clone(), pointer)),
+            provider_schema_candidate: Some(sourced_provider_schema_candidate(
+                schema.clone(),
+                pointer,
+            )),
             schema,
         }
     }
@@ -423,7 +349,7 @@ mod tests {
         ];
 
         let definitions =
-            SharedSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
@@ -442,15 +368,15 @@ mod tests {
     }
 
     #[test]
-    fn provider_fragment_source_survives_shareable_lowering() {
+    fn provider_fragment_source_survives_candidate_lowering() {
         let schema = json!({
             "type": "object",
             "properties": {
                 "name": { "type": "string" }
             }
         });
-        let shareable = sourced_shareable_schema(schema, "/definitions/Metadata");
-        let source = shareable.source().expect("provider source should survive");
+        let candidate = sourced_provider_schema_candidate(schema, "/definitions/Metadata");
+        let source = candidate.source().expect("provider source should survive");
 
         assert_eq!(source.origin(), ProviderOrigin::KubernetesOpenApi);
         assert_eq!(source.source_id(), "default");
@@ -476,7 +402,7 @@ mod tests {
         ];
 
         let definitions =
-            SharedSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
@@ -506,7 +432,7 @@ mod tests {
         let mut paths = vec![
             ResolvedPathSchema {
                 path_segments: vec!["first".to_string()],
-                shareable_provider_schema: Some(sourced_shareable_schema(
+                provider_schema_candidate: Some(sourced_provider_schema_candidate(
                     provider_schema.clone(),
                     "/definitions/First",
                 )),
@@ -514,7 +440,7 @@ mod tests {
             },
             ResolvedPathSchema {
                 path_segments: vec!["second".to_string()],
-                shareable_provider_schema: Some(sourced_shareable_schema(
+                provider_schema_candidate: Some(sourced_provider_schema_candidate(
                     provider_schema.clone(),
                     "/definitions/Second",
                 )),
@@ -523,7 +449,7 @@ mod tests {
         ];
 
         let definitions =
-            SharedSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
@@ -550,7 +476,7 @@ mod tests {
         ];
 
         let definitions =
-            SharedSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
@@ -575,7 +501,7 @@ mod tests {
         let descriptions =
             BTreeMap::from([("first.name".to_string(), "chart-authored name".to_string())]);
 
-        let definitions = SharedSchemaDefinitions::from_resolved_paths(&mut paths, &descriptions);
+        let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &descriptions);
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 

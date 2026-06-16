@@ -257,7 +257,7 @@ impl K8sSchemaProvider for SharedObjectProvider {
 }
 
 #[test]
-fn repeated_exact_provider_subtrees_emit_shared_definitions() {
+fn repeated_exact_provider_subtrees_emit_provider_definitions() {
     let resource = ResourceRef {
         api_version: "example.io/v1".to_string(),
         kind: "Example".to_string(),

@@ -1812,7 +1812,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Provider lookup results now carry a named `ProviderSchemaFragment` through
   the K8s trait, provider cache, chain outcome, and generator collection
   boundary. Generator value-kind projection transforms that fragment in place
-  before lowering it into shareable provider evidence, and callers that need
+  before lowering it into provider-schema candidates, and callers that need
   plain JSON must explicitly materialize the fragment at the call site.
   Upstream OpenAPI path descent now also reports the resolved provider-document location
   `(filename, JSON pointer)` for the leaf before expansion; the OpenAPI
@@ -1826,15 +1826,21 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   source-aware local-ref descent shape: resolved leaves carry typed
   provider-document identity when the leaf corresponds to a stable source JSON
   Pointer, while synthetic metadata enrichment deliberately stays anonymous.
-  Shared provider `$defs` emission now uses that source identity for stable
+  Provider `$defs` emission now uses that source identity for stable
   definition names when every structurally shared fragment has the same typed
   provider source; structurally identical fragments from different sources
   still deduplicate under generic names. The provider trait boundary is now
   fragment-first as well: concrete providers return `ProviderSchemaFragment`
   directly, and lossy materialized `serde_json::Value` schemas are no longer
-  exposed as provider-trait adapters. The remaining deeper A5 refinement is to
-  keep foreign schema documents ref-shaped through more of the pipeline
-  rather than re-materializing them before the exact-sharing pass.
+  exposed as provider-trait adapters. The generator now has a dedicated
+  `ProviderSchemaCandidate` carrier for provider-owned leaves that survive
+  value-kind projection; it owns source identity, structural keying, unchanged
+  survival checks, and definition eligibility before path resolution decides
+  whether later evidence changed the schema. Provider-definition emission is a
+  separate `provider_definitions` stage over resolved paths rather than the
+  home of provider-source metadata. The remaining deeper A5 refinement is to
+  keep foreign schema documents ref-shaped through more of the pipeline rather
+  than re-materializing them before the exact-sharing pass.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
@@ -1907,13 +1913,16 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   projections become anonymous. This removes caller-side preserve/drop policy
   flags, avoids an unconditional owned handoff before projection, and makes
   source identity a consequence of the actual schema transformation. The
-  generator now carries `ShareableSchema` directly from provider-fragment
+  generator now carries `ProviderSchemaCandidate` directly from provider-fragment
   lookup into path resolution instead of wrapping it in an intermediate
-  provider-evidence DTO, and the duplicate value-only `Chain` facade has been
-  removed. Fragment lookup is the production-facing provider boundary; the
-  value-only `K8sSchemaProvider` adapters have also been deleted, so callers
-  that intentionally discard provider source/ref identity must project a
-  `ProviderSchemaFragment` explicitly at the call site.
+  provider-evidence DTO. Candidate source identity, structural keying, survival
+  checks, and provider-definition eligibility live with that carrier, while
+  `provider_definitions` owns only repeated-candidate `$defs` emission. The
+  duplicate value-only `Chain` facade has been removed. Fragment lookup is the
+  production-facing provider boundary; the value-only `K8sSchemaProvider`
+  adapters have also been deleted, so callers that intentionally discard
+  provider source/ref identity must project a `ProviderSchemaFragment`
+  explicitly at the call site.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated
