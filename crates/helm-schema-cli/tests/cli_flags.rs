@@ -176,11 +176,11 @@ fn k8s_version_fallback_auto_resolves_to_default_window() {
 // than weakening this test.
 #[test]
 fn k8s_auto_fallback_default_reaches_v1_24_from_v1_35() {
-    use helm_schema_k8s::K8sVersionChain;
     let cli = parse(&["--k8s-version-fallback=auto"]).expect("parse");
-    let window = cli.k8s.resolved_fallback_window().expect("resolve");
-    let chain = K8sVersionChain::new(cli.k8s.k8s_version.clone(), window);
-    let versions = chain.ordered();
+    let versions = cli
+        .k8s
+        .ordered_k8s_versions()
+        .expect("resolve ordered versions");
     assert!(
         versions.contains(&"v1.24.0".to_string()),
         "auto window must reach v1.24.0 from default v1.35.0; got {versions:?}"

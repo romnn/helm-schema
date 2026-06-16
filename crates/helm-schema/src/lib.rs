@@ -16,7 +16,8 @@ pub use generation::{
     generate_values_schema_for_chart_output, generate_values_schema_for_chart_with_diagnostics,
 };
 pub use helm_schema_k8s::{
-    Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
+    Diagnostic, DiagnosticKey, DiagnosticSink, K8sVersionChain, format_diagnostic_json,
+    format_diagnostic_text,
 };
 pub use output_pipeline::{
     JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, PolicyInputs, ReferenceMode,
