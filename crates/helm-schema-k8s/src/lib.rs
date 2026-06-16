@@ -53,7 +53,7 @@ pub use local_schema_universe::{
 pub use lookup::{
     Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
     LookupTraceOutcome, LookupTraceSubject, ProviderLookupResult, ProviderOrigin,
-    ProviderSchemaFragment, ProviderSchemaSource, SourceProbeTraceOutcome,
+    ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment, SourceProbeTraceOutcome,
     TracedApiPresenceOutcome, TracedLookupOutcome,
 };
 

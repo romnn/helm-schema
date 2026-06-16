@@ -151,9 +151,10 @@ impl LocalSchemaProvider {
         leaf: LocalSchemaLeaf,
     ) -> ProviderSchemaFragment {
         let source = self.source_for_leaf(resource, &leaf);
+        let source_schema = leaf.source_schema().cloned();
         let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
         if let Some(source) = source {
-            fragment = fragment.with_source(source);
+            fragment = fragment.with_optional_source_schema(source, source_schema);
         }
         fragment
     }
@@ -296,17 +297,36 @@ pub fn descend_schema_path_expanding_leaf(root: &Value, path: &[String]) -> Opti
 #[derive(Clone, Debug, PartialEq)]
 pub struct LocalSchemaLeaf {
     schema: Value,
+    source_schema: Option<Value>,
     pointer: Option<String>,
 }
 
 impl LocalSchemaLeaf {
     fn new(schema: Value, pointer: Option<String>) -> Self {
-        Self { schema, pointer }
+        Self {
+            schema,
+            source_schema: None,
+            pointer,
+        }
+    }
+
+    fn from_source_leaf(source_leaf: Self, expanded_schema: Value) -> Self {
+        let source_schema = source_leaf.pointer.is_some().then_some(source_leaf.schema);
+        Self {
+            schema: expanded_schema,
+            source_schema,
+            pointer: source_leaf.pointer,
+        }
     }
 
     #[must_use]
     pub fn schema(&self) -> &Value {
         &self.schema
+    }
+
+    #[must_use]
+    pub fn source_schema(&self) -> Option<&Value> {
+        self.source_schema.as_ref()
     }
 
     #[must_use]
@@ -333,10 +353,8 @@ pub fn descend_schema_path_expanding_leaf_with_source(
     let mut stack = std::collections::HashSet::new();
     let leaf = descend_schema_path_node(root, root, Some(String::new()), path, 0, &mut stack)?;
     let mut expand_stack = std::collections::HashSet::new();
-    Some(LocalSchemaLeaf::new(
-        expand_local_refs(root, leaf.schema(), 0, &mut expand_stack),
-        leaf.pointer,
-    ))
+    let expanded = expand_local_refs(root, leaf.schema(), 0, &mut expand_stack);
+    Some(LocalSchemaLeaf::from_source_leaf(leaf, expanded))
 }
 
 /// Descends a schema path while applying Kubernetes metadata enrichment lazily.
@@ -377,10 +395,8 @@ pub fn descend_schema_path_expanding_leaf_with_root_metadata_source(
     let mut stack = std::collections::HashSet::new();
     let leaf = descend_schema_path_node(root, &metadata, None, &path[1..], 0, &mut stack)?;
     let mut expand_stack = std::collections::HashSet::new();
-    Some(LocalSchemaLeaf::new(
-        expand_local_refs(root, leaf.schema(), 0, &mut expand_stack),
-        leaf.pointer,
-    ))
+    let expanded = expand_local_refs(root, leaf.schema(), 0, &mut expand_stack);
+    Some(LocalSchemaLeaf::from_source_leaf(leaf, expanded))
 }
 
 fn descend_schema_path_node(
@@ -402,6 +418,7 @@ fn descend_schema_path_node(
     let LocalSchemaLeaf {
         schema: next_schema,
         pointer: next_pointer,
+        ..
     } = descend_one_expanding_refs(root, schema, pointer, segment, depth, stack)?;
     descend_schema_path_node(
         root,
@@ -477,6 +494,7 @@ fn descend_one_expanding_refs(
         let LocalSchemaLeaf {
             schema: next_schema,
             pointer: next_pointer,
+            ..
         } = next;
         next = resolve_local_ref_node(root, &next_schema, next_pointer, depth + 1, stack);
         if let Some(items) = next.schema().get("items") {
@@ -724,7 +742,51 @@ mod tests {
         .expect("lazy descent should resolve ref-backed path");
 
         assert_eq!(leaf.schema(), &json!({ "type": "integer" }));
+        assert_eq!(leaf.source_schema(), Some(&json!({ "type": "integer" })));
         assert_eq!(leaf.pointer(), Some("/definitions/Spec/properties/size"));
+    }
+
+    #[test]
+    fn source_aware_local_path_descent_preserves_raw_leaf_before_expansion() {
+        let root = json!({
+            "type": "object",
+            "properties": {
+                "spec": {
+                    "$ref": "#/definitions/Spec"
+                }
+            },
+            "definitions": {
+                "Spec": {
+                    "type": "object",
+                    "properties": {
+                        "labels": { "$ref": "#/definitions/StringMap" }
+                    }
+                },
+                "StringMap": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                }
+            }
+        });
+
+        let leaf = descend_schema_path_expanding_leaf_with_source(
+            &root,
+            &["spec".to_string(), "labels".to_string()],
+        )
+        .expect("lazy descent should resolve ref-backed leaf");
+
+        assert_eq!(
+            leaf.source_schema(),
+            Some(&json!({ "$ref": "#/definitions/StringMap" }))
+        );
+        assert_eq!(
+            leaf.schema(),
+            &json!({
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+            })
+        );
+        assert_eq!(leaf.pointer(), Some("/definitions/Spec/properties/labels"));
     }
 
     #[test]

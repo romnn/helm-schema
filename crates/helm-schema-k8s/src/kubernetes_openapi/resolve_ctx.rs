@@ -90,13 +90,41 @@ impl ResolvedSchemaNode {
     }
 
     #[must_use]
+    pub fn into_schema(self) -> Value {
+        self.schema
+    }
+}
+
+/// Path lookup result with both the materialized leaf and original source leaf.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ResolvedSchemaLeaf {
+    location: SchemaNodeLocation,
+    source_schema: Value,
+    schema: Value,
+}
+
+impl ResolvedSchemaLeaf {
+    fn new(location: SchemaNodeLocation, source_schema: Value, schema: Value) -> Self {
+        Self {
+            location,
+            source_schema,
+            schema,
+        }
+    }
+
+    #[must_use]
     pub fn location(&self) -> &SchemaNodeLocation {
         &self.location
     }
 
     #[must_use]
-    pub fn into_schema(self) -> Value {
-        self.schema
+    pub fn source_schema(&self) -> &Value {
+        &self.source_schema
+    }
+
+    #[must_use]
+    pub fn schema(&self) -> &Value {
+        &self.schema
     }
 }
 
@@ -337,12 +365,13 @@ pub fn descend_schema_path_expanding_leaf_with_location<F: FnMut(&str) -> Option
     current_filename: &str,
     schema: &Value,
     path: &[String],
-) -> Option<ResolvedSchemaNode> {
+) -> Option<ResolvedSchemaLeaf> {
     let root = ResolvedSchemaNode::root(current_filename.to_string(), schema.clone());
     let leaf = descend_schema_path_node(ctx, root, path, 0)?;
     let location = leaf.location.clone();
+    let source_schema = leaf.schema.clone();
     let expanded = expand_schema_node_at(ctx, leaf, 0).into_schema();
-    Some(ResolvedSchemaNode::at(location, expanded))
+    Some(ResolvedSchemaLeaf::new(location, source_schema, expanded))
 }
 
 fn descend_schema_path_node<F: FnMut(&str) -> Option<SchemaDoc>>(
@@ -546,7 +575,8 @@ mod tests {
             &path,
         )
         .expect("lazy descent should contain path")
-        .into_schema();
+        .schema()
+        .clone();
 
         assert_eq!(actual, expected);
     }
@@ -578,11 +608,14 @@ mod tests {
                     "type": "object",
                     "properties": {
                         "env": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/StringMap"
                         }
+                    }
+                },
+                "StringMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
                     }
                 }
             }
@@ -617,8 +650,12 @@ mod tests {
             "/definitions/Container/properties/env"
         );
         assert_eq!(
-            actual.schema,
-            json!({
+            actual.source_schema(),
+            &json!({ "$ref": "#/definitions/StringMap" })
+        );
+        assert_eq!(
+            actual.schema(),
+            &json!({
                 "type": "object",
                 "additionalProperties": {
                     "type": "string"

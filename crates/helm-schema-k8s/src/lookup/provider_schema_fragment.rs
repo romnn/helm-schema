@@ -78,14 +78,45 @@ impl ProviderSchemaSource {
 /// Schema fragment returned by a provider for one resource/path lookup.
 ///
 /// This is the provider-owned boundary object. It currently stores the
-/// materialized JSON Schema fragment plus optional provider-source identity.
-/// Callers should pass this type through provider/chain layers instead of
-/// collapsing it to a plain [`Value`]. That keeps source-document and
-/// reference-shape metadata attached to the provider boundary.
+/// materialized JSON Schema fragment plus optional provider-source identity
+/// and source-leaf schema. Real providers should attach the provider-document
+/// leaf before local `$ref` expansion when they have it; compatibility callers
+/// can attach the materialized schema as the source leaf. Callers should pass
+/// this type through provider/chain layers instead of collapsing it to a plain
+/// [`Value`]. That keeps source-document and reference-shape metadata attached
+/// to the provider boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProviderSchemaFragment {
     schema: Value,
-    source: Option<ProviderSchemaSource>,
+    source_fragment: Option<ProviderSourceFragment>,
+}
+
+/// Provider-owned source leaf.
+///
+/// For real schema providers this is the raw provider-document leaf before
+/// leaf-local `$ref` expansion. Compatibility callers may use the materialized
+/// schema when no separate raw leaf is available.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ProviderSourceFragment {
+    source: ProviderSchemaSource,
+    schema: Value,
+}
+
+impl ProviderSourceFragment {
+    #[must_use]
+    pub fn new(source: ProviderSchemaSource, schema: Value) -> Self {
+        Self { source, schema }
+    }
+
+    #[must_use]
+    pub fn source(&self) -> &ProviderSchemaSource {
+        &self.source
+    }
+
+    #[must_use]
+    pub fn schema(&self) -> &Value {
+        &self.schema
+    }
 }
 
 impl ProviderSchemaFragment {
@@ -93,14 +124,36 @@ impl ProviderSchemaFragment {
     pub fn new(schema: Value) -> Self {
         Self {
             schema,
-            source: None,
+            source_fragment: None,
         }
     }
 
     #[must_use]
     pub fn with_source(mut self, source: ProviderSchemaSource) -> Self {
-        self.source = Some(source);
+        self.source_fragment = Some(ProviderSourceFragment::new(source, self.schema.clone()));
         self
+    }
+
+    #[must_use]
+    pub fn with_source_schema(
+        mut self,
+        source: ProviderSchemaSource,
+        source_schema: Value,
+    ) -> Self {
+        self.source_fragment = Some(ProviderSourceFragment::new(source, source_schema));
+        self
+    }
+
+    #[must_use]
+    pub fn with_optional_source_schema(
+        self,
+        source: ProviderSchemaSource,
+        source_schema: Option<Value>,
+    ) -> Self {
+        match source_schema {
+            Some(source_schema) => self.with_source_schema(source, source_schema),
+            None => self.with_source(source),
+        }
     }
 
     #[must_use]
@@ -110,7 +163,21 @@ impl ProviderSchemaFragment {
 
     #[must_use]
     pub fn source(&self) -> Option<&ProviderSchemaSource> {
-        self.source.as_ref()
+        self.source_fragment
+            .as_ref()
+            .map(ProviderSourceFragment::source)
+    }
+
+    #[must_use]
+    pub fn source_schema(&self) -> Option<&Value> {
+        self.source_fragment
+            .as_ref()
+            .map(ProviderSourceFragment::schema)
+    }
+
+    #[must_use]
+    pub fn source_fragment(&self) -> Option<&ProviderSourceFragment> {
+        self.source_fragment.as_ref()
     }
 
     #[must_use]
@@ -119,8 +186,8 @@ impl ProviderSchemaFragment {
     }
 
     #[must_use]
-    pub fn into_parts(self) -> (Value, Option<ProviderSchemaSource>) {
-        (self.schema, self.source)
+    pub fn into_source_parts(self) -> (Value, Option<ProviderSourceFragment>) {
+        (self.schema, self.source_fragment)
     }
 
     /// Transform the materialized schema while preserving provider ownership.
@@ -131,12 +198,15 @@ impl ProviderSchemaFragment {
     /// same provider document fragment.
     #[must_use]
     pub fn try_map_schema(self, map_schema: impl FnOnce(&Value) -> Option<Value>) -> Option<Self> {
-        let Self { schema, source } = self;
+        let Self {
+            schema,
+            source_fragment,
+        } = self;
         let mapped = map_schema(&schema)?;
-        let source = (mapped == schema).then_some(source).flatten();
+        let source_fragment = (mapped == schema).then_some(source_fragment).flatten();
         Some(Self {
             schema: mapped,
-            source,
+            source_fragment,
         })
     }
 }
@@ -155,13 +225,15 @@ mod tests {
 
     #[test]
     fn unchanged_projection_preserves_source() {
-        let fragment = ProviderSchemaFragment::new(json!({"type": "string"})).with_source(
+        let source_schema = json!({ "$ref": "#/definitions/name" });
+        let fragment = ProviderSchemaFragment::new(json!({"type": "string"})).with_source_schema(
             ProviderSchemaSource::kubernetes_openapi(
                 "default",
                 "v1.35.0",
                 "source.json",
                 "/definitions/name",
             ),
+            source_schema.clone(),
         );
 
         let projected = fragment
@@ -174,6 +246,7 @@ mod tests {
         assert_eq!(source.version(), Some("v1.35.0"));
         assert_eq!(source.filename(), "source.json");
         assert_eq!(source.pointer(), "/definitions/name");
+        assert_eq!(projected.source_schema(), Some(&source_schema));
     }
 
     #[test]
@@ -204,6 +277,15 @@ mod tests {
 
         let source = projected.source().expect("source should be preserved");
         assert_eq!(source.pointer(), "/definitions/metadata");
+        assert_eq!(
+            projected.source_schema(),
+            Some(&json!({
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" }
+                }
+            }))
+        );
     }
 
     #[test]
@@ -222,5 +304,6 @@ mod tests {
             .expect("changed projection should survive");
 
         assert_eq!(projected.source(), None);
+        assert_eq!(projected.source_schema(), None);
     }
 }

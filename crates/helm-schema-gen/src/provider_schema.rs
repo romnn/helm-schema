@@ -1,4 +1,4 @@
-use helm_schema_k8s::{ProviderSchemaFragment, ProviderSchemaSource};
+use helm_schema_k8s::{ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment};
 use serde_json::Value;
 
 use crate::schema_model::schema_type;
@@ -13,7 +13,7 @@ use crate::schema_model::schema_type;
 pub(crate) struct ProviderSchemaCandidate {
     key: String,
     schema: Value,
-    source: Option<ProviderSchemaSource>,
+    source_fragment: Option<ProviderSourceFragment>,
 }
 
 impl ProviderSchemaCandidate {
@@ -23,17 +23,17 @@ impl ProviderSchemaCandidate {
         Self {
             key,
             schema,
-            source: None,
+            source_fragment: None,
         }
     }
 
     pub(crate) fn from_provider_fragment(fragment: ProviderSchemaFragment) -> Self {
-        let (schema, source) = fragment.into_parts();
+        let (schema, source_fragment) = fragment.into_source_parts();
         let key = canonical_schema_key(&schema);
         Self {
             key,
             schema,
-            source,
+            source_fragment,
         }
     }
 
@@ -46,7 +46,16 @@ impl ProviderSchemaCandidate {
     }
 
     pub(crate) fn source(&self) -> Option<&ProviderSchemaSource> {
-        self.source.as_ref()
+        self.source_fragment
+            .as_ref()
+            .map(ProviderSourceFragment::source)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn source_schema(&self) -> Option<&Value> {
+        self.source_fragment
+            .as_ref()
+            .map(ProviderSourceFragment::schema)
     }
 
     pub(crate) fn survives_as(&self, schema: &Value) -> bool {
@@ -101,5 +110,39 @@ fn canonicalize_json_value(value: &Value) -> Value {
                 .collect(),
         ),
         other => other.clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use helm_schema_k8s::ProviderSchemaSource;
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn candidate_preserves_provider_source_leaf_schema() {
+        let source_schema = json!({ "$ref": "#/definitions/StringMap" });
+        let fragment = ProviderSchemaFragment::new(json!({
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+        }))
+        .with_source_schema(
+            ProviderSchemaSource::kubernetes_openapi(
+                "default",
+                "v1.35.0",
+                "source.json",
+                "/definitions/Container/properties/env",
+            ),
+            source_schema.clone(),
+        );
+
+        let candidate = ProviderSchemaCandidate::from_provider_fragment(fragment);
+
+        assert_eq!(
+            candidate.source().map(ProviderSchemaSource::pointer),
+            Some("/definitions/Container/properties/env")
+        );
+        assert_eq!(candidate.source_schema(), Some(&source_schema));
     }
 }

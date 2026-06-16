@@ -64,9 +64,10 @@ impl ChartLocalCrdSchemaProvider {
                 pointer.to_string(),
             )
         });
+        let source_schema = leaf.source_schema().cloned();
         let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
         if let Some(source) = source {
-            fragment = fragment.with_source(source);
+            fragment = fragment.with_optional_source_schema(source, source_schema);
         }
         fragment
     }

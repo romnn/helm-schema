@@ -372,7 +372,8 @@ impl KubernetesJsonSchemaProvider {
                 schema_node.location().filename(),
                 schema_node.location().pointer(),
             );
-            ProviderSchemaFragment::new(schema_node.into_schema()).with_source(source)
+            ProviderSchemaFragment::new(schema_node.schema().clone())
+                .with_source_schema(source, schema_node.source_schema().clone())
         });
         Some((version, fragment))
     }

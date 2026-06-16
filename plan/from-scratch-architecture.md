@@ -1839,8 +1839,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   whether later evidence changed the schema. Provider-definition emission is a
   separate `provider_definitions` stage over resolved paths rather than the
   home of provider-source metadata. The remaining deeper A5 refinement is to
-  keep foreign schema documents ref-shaped through more of the pipeline rather
-  than re-materializing them before the exact-sharing pass.
+  teach bundled emission to consume provider source fragments directly instead
+  of defining provider leaves from their already-expanded materialized schema.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
@@ -1918,11 +1918,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   provider-evidence DTO. Candidate source identity, structural keying, survival
   checks, and provider-definition eligibility live with that carrier, while
   `provider_definitions` owns only repeated-candidate `$defs` emission. The
-  duplicate value-only `Chain` facade has been removed. Fragment lookup is the
-  production-facing provider boundary; the value-only `K8sSchemaProvider`
-  adapters have also been deleted, so callers that intentionally discard
-  provider source/ref identity must project a `ProviderSchemaFragment`
-  explicitly at the call site.
+  generator handoff now also retains the provider-document leaf before
+  leaf-local `$ref` expansion, so source-ref shape is no longer lost at the
+  provider boundary. The duplicate value-only `Chain` facade has been removed.
+  Fragment lookup is the production-facing provider boundary; the value-only
+  `K8sSchemaProvider` adapters have also been deleted, so callers that
+  intentionally discard provider source/ref identity must project a
+  `ProviderSchemaFragment` explicitly at the call site.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated
