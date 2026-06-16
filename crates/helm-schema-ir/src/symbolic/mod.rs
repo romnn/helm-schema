@@ -10,6 +10,7 @@ use helm_schema_ast::DefineIndex;
 use crate::Guard;
 use crate::contract::ContractIr;
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
+use crate::document_projection::DocumentTracker;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_binding::HelperBinding;
@@ -17,7 +18,6 @@ use crate::helper_summary::HelperSummary;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
-use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::symbolic_scope_state::SymbolicScopeState;
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
@@ -75,7 +75,7 @@ struct SymbolicWalker<'a> {
     seed_predicates: Vec<Predicate>,
     seed_dot: Option<FragmentBinding>,
     no_output_depth: usize,
-    rendered_yaml: RenderedYamlContext<'a>,
+    document_tracker: DocumentTracker<'a>,
 
     inline_stack: Vec<String>,
 
@@ -99,7 +99,7 @@ impl<'a> SymbolicWalker<'a> {
             seed_predicates: Vec::new(),
             seed_dot: None,
             no_output_depth: 0,
-            rendered_yaml: RenderedYamlContext::new(source, defines),
+            document_tracker: DocumentTracker::new(source, defines),
 
             inline_stack: Vec::new(),
 
@@ -166,7 +166,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
-        self.rendered_yaml.reset_for_tree(tree);
+        self.document_tracker.reset_for_tree(tree);
         self.scope
             .reset_control(&self.seed_predicates, self.seed_dot.clone());
         self.no_output_depth = 0;

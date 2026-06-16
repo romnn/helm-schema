@@ -198,7 +198,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
 
     fn ingest_text_up_to(&mut self, _end_byte: usize) {}
 
-    fn current_rendered_path(&self) -> YamlPath {
+    fn current_document_path(&self) -> YamlPath {
         YamlPath(Vec::new())
     }
 

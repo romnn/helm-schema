@@ -14,7 +14,7 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn ingest_text_up_to(&mut self, end_byte: usize);
 
-    fn current_rendered_path(&self) -> YamlPath;
+    fn current_document_path(&self) -> YamlPath;
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot;
 

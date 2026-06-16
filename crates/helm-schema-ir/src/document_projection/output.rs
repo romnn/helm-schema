@@ -3,24 +3,24 @@ use crate::contract_sink::ContractUseContext;
 use crate::{Guard, ValueKind, YamlPath};
 
 use super::helper_contract::append_document_helper_contract_uses;
-use super::hole::DocumentHole;
-use super::hole_context::DocumentHoleContext;
+use super::site::DocumentSite;
+use super::site_context::DocumentSiteContext;
 use super::value_analysis::DocumentValueAnalysis;
 
 /// A rendered manifest output site discovered while interpreting a template.
 pub(crate) struct DocumentOutput {
-    hole: DocumentHole,
+    site: DocumentSite,
     analysis: DocumentValueAnalysis,
 }
 
 impl DocumentOutput {
     pub(crate) fn new(
-        hole_context: DocumentHoleContext,
+        site_context: DocumentSiteContext,
         helper_inlined: bool,
         analysis: DocumentValueAnalysis,
     ) -> Self {
         Self {
-            hole: DocumentHole::new(hole_context, helper_inlined),
+            site: DocumentSite::new(site_context, helper_inlined),
             analysis,
         }
     }
@@ -30,7 +30,7 @@ impl DocumentOutput {
         contract: &mut ContractIr,
         context: &ContractUseContext<'_>,
     ) {
-        let hole = self.hole;
+        let site = self.site;
         let DocumentValueAnalysis {
             default_fallback_values,
             values,
@@ -41,7 +41,7 @@ impl DocumentOutput {
 
         for value in values {
             if helper.suppress_direct_values.contains(&value) {
-                contract.push(hole.contract_use(
+                contract.push(site.contract_use(
                     context,
                     value,
                     YamlPath(Vec::new()),
@@ -62,13 +62,13 @@ impl DocumentOutput {
                 extra_guards.push(default_guard);
             }
 
-            let emit_path = hole.direct_value_path(&value);
-            let emit_kind = hole.direct_value_kind();
-            contract.push(hole.contract_use(context, value, emit_path, emit_kind, extra_guards));
+            let emit_path = site.direct_value_path(&value);
+            let emit_kind = site.direct_value_kind();
+            contract.push(site.contract_use(context, value, emit_path, emit_kind, extra_guards));
         }
 
         for value in bound_values {
-            contract.push(hole.contract_use(
+            contract.push(site.contract_use(
                 context,
                 value,
                 YamlPath(Vec::new()),
@@ -77,6 +77,6 @@ impl DocumentOutput {
             ));
         }
 
-        append_document_helper_contract_uses(helper, &hole, contract, context);
+        append_document_helper_contract_uses(helper, &site, contract, context);
     }
 }

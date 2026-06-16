@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::contract_sink::ContractUseContext;
 use crate::document_projection::{
-    DocumentOutput, collect_document_hole_context, collect_document_value_analysis,
+    DocumentOutput, collect_document_site_context, collect_document_value_analysis,
 };
 use crate::helper_summary::HelperOutputMeta;
 use crate::helper_summary_projection::helper_output_meta_from_summary;
@@ -32,9 +32,9 @@ impl SymbolicWalker<'_> {
 
         self.inline_static_file_templates_from_helper_calls(text);
 
-        let hole_context =
-            collect_document_hole_context(self.source, &self.rendered_yaml, node, text);
-        let kind = hole_context.kind;
+        let site_context =
+            collect_document_site_context(self.source, &self.document_tracker, node, text);
+        let kind = site_context.kind;
 
         let helper_inlined = self.inline_exact_helper_call(text);
 
@@ -72,7 +72,7 @@ impl SymbolicWalker<'_> {
                 &self.scope.locals().chart_value_defaults,
                 self.no_output_depth > 0,
             );
-            DocumentOutput::new(hole_context, helper_inlined, output_values)
+            DocumentOutput::new(site_context, helper_inlined, output_values)
                 .append_to_contract(&mut self.contract, &projection_context);
         }
     }

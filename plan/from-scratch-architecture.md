@@ -1259,7 +1259,7 @@ and the `ValueUse` projection never gains a production consumer.
 | `helm-schema-ast::values_comments` | facade `ValuesModel` |
 | IR evaluators (`expr_eval`, `binding`, `fragment_*`, `helper_*`, `bound_*`, walkers) | `engine::interp` (lattice + builtin table + summaries) |
 | `helper_eval.rs`, `resource_detector/locator` | identity projection over internal documents |
-| `rendered_yaml_context::{shape,*}`, `yaml_syntax.rs` | structural attribution + exact/anchored/opaque contract (tracker survives only as upgrader until the budget gate passes) |
+| `document_projection::tracker::{shape,*}`, `yaml_syntax.rs` | structural attribution + exact/anchored/opaque contract |
 | `ValueUse` + postprocess | DTO projection of `ContractIR` (fixtures only) |
 | `helm-schema-k8s` providers/chain | `knowledge` planner/executor + sources-as-data |
 | chain capability oracle impl | `CapabilityOracle` adapter over engine-side liveness |
@@ -1433,18 +1433,17 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   entry-point projection, helper-call resolution, and context state. That
   keeps the remaining compatibility evaluator focused on expression
   resolution rather than test scaffolding or helper-summary internals.
-- **A3 — internal documents + contract projection** (the riskiest step;
+- **A3 — internal documents + contract projection (complete)** (the riskiest step;
   gated): `eval_node` builds abstract documents; anchors/identities/
   constraints are projected into contract claims, so downstream is untouched
   while the artifact changes underneath. Gate: the
   abstained-enrichment budget — no corpus chart loses a type enrichment vs
-  the current tool; the rendered YAML shape tracker survives as an upgrader
-  until the gate passes, then is deleted. Current progress: output lowering
-  now flows through an internal `DocumentOutput` / `DocumentHole` artifact before
+  the current tool. Current progress: output lowering
+  now flows through an internal `DocumentOutput` / `DocumentSite` artifact before
   appending contract claims. This does not change inference behavior, but it
   establishes the A3 insertion point for attaching resource identity, anchor,
-  and document-path facts before DTO projection. The document hole owns the
-  rebased rendered path and resource claim used for contract projection,
+  and document-path facts before DTO projection. The document site owns the
+  rebased document path and resource claim used for contract projection,
   rather than letting the final sink infer those document facts at emission
   time. Document output lowers classified document evidence through
   `ContractUseContext` into `ContractUse` claims, giving A4 `ContractIR` a
@@ -1454,14 +1453,17 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   produces fully guarded `ContractUse` claims and the old sink no longer has
   a document/helper-specific projection API.
   Document projection now lives behind one `document_projection` module:
-  output sites, hole detection, helper-output lowering, and values-expression
-  analysis share one boundary with only the walker-facing collectors exported.
-  Rendered document holes no longer detour through a DTO-shaped compatibility
-  artifact before entering the contract graph, and the module names describe
-  the current production path rather than the transitional implementation
-  history. Document output now appends claims directly into the owning
-  `ContractIr`, so the projection path no longer builds a temporary contract
-  graph just to merge it back into the interpreter.
+  tracker, output sites, site detection, helper-output lowering, and
+  values-expression analysis share one boundary with only the walker-facing
+  collectors exported. The old `rendered_yaml_context` upgrader has been
+  deleted; both the main symbolic walker and the helper-fragment output
+  runtime now consume the shared `DocumentTracker`, so rendered path/resource
+  attribution is no longer a parallel module outside document projection.
+  Rendered document sites no longer detour through a DTO-shaped compatibility
+  artifact before entering the contract graph, and document output appends
+  claims directly into the owning `ContractIr`, so the projection path no
+  longer builds a temporary contract graph just to merge it back into the
+  interpreter.
 - **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations
@@ -1682,22 +1684,16 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   rather than a mixed model/evaluator grab bag. The resource identity detector
   itself is now split by responsibility too: document scanning, apiVersion
   output analysis, and resource-state aggregation are separate local modules,
-  so future abstract-document identity projection can replace the scanner
-  without also carrying helper-call or branch-output internals. The remaining
-  source-position resource locator has been split the same way: the active
-  index now owns only byte-position lookup and list-path rebasing, while
+  and the source-position resource locator is split the same way: the active
+  index owns only byte-position lookup and list-path rebasing, while
   source-document discovery, manifest-resource detection, transparent
   `kind: List` item extraction, and span collection each have one local owner.
-  This keeps the current rendered-source fallback available while making the
-  future abstract-document identity projection a replacement for span
-  collection rather than a rewrite of index state. Rendered YAML source-state
-  tracking has likewise been split into a local module family: the public
-  context remains the small walker-facing API, while text-span ingestion,
-  source-position/block-scalar checks, inline mapping value-path detection,
-  and fragment-indent interpretation each have one owner. That preserves the
-  existing rendered-source fallback while isolating the pieces A3's internal
-  document projection should eventually retire or reuse. The stateful shape
-  tracker now also lives inside that rendered-context module family, while
+  Document path/resource attribution now consumes those pieces through the
+  shared `document_projection::tracker` boundary rather than a separate
+  `rendered_yaml_context` module, so future deeper document modeling can
+  replace the tracker locally without re-threading walker or helper-fragment
+  runtimes. The stateful shape tracker now also lives inside that document
+  tracker module family, while
   pure YAML line syntax helpers (`parse_yaml_key`, mapping-colon lookup, and
   block-scalar detection) live in a separate `yaml_syntax` module shared by
   other structural consumers. Value-path context
@@ -1762,7 +1758,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   fragment classification, and template-comment filtering each have focused
   owners behind the unchanged crate-root API. Fragment classification is now
   based on the typed template expression AST rather than substring scanning,
-  and the rendered YAML shape tracker shares that same classifier instead of
+  and the document-projection tracker shares that same classifier instead of
   maintaining a second detector. The compatibility inspection DTOs have also
   moved out of the crate root into an explicit compatibility module, so the root API now
   re-exports the legacy fixture/tooling boundary instead of owning it beside

@@ -17,13 +17,9 @@ use source_position::{
 };
 use text_ingest::TextIngestState;
 
-/// Tracks source-position-dependent rendered YAML state while a template AST is
-/// walked.
-///
-/// The symbolic walker decides what a Helm expression means. This context owns
-/// the independent question of where that expression lands in rendered YAML and
-/// which Kubernetes resource span contains it.
-pub(crate) struct RenderedYamlContext<'a> {
+/// Tracks document-local path and resource attribution while the symbolic
+/// interpreter walks mixed YAML and Helm actions.
+pub(crate) struct DocumentTracker<'a> {
     source: &'a str,
     defines: &'a DefineIndex,
     shape: Shape,
@@ -32,7 +28,7 @@ pub(crate) struct RenderedYamlContext<'a> {
     text_ingest: TextIngestState,
 }
 
-impl<'a> RenderedYamlContext<'a> {
+impl<'a> DocumentTracker<'a> {
     pub(crate) fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
         Self {
             source,
@@ -114,7 +110,7 @@ impl<'a> RenderedYamlContext<'a> {
         }
 
         // Control actions do not emit YAML structure, so they must not mutate
-        // the rendered shape stack.
+        // the document path stack.
         if !matches!(node.kind(), "template_action" | "variable") {
             return;
         }

@@ -4,7 +4,7 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
-use crate::document_projection::collect_document_hole_context;
+use crate::document_projection::{DocumentTracker, collect_document_site_context};
 use crate::fragment_assignment::{apply_local_set_mutations, merge_fragment_locals};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::{fragment_source_paths, fragment_to_helper_binding};
@@ -26,7 +26,6 @@ use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::value_path_context::computed_with_body_fragment_binding;
 use crate::{ValueKind, YamlPath};
 
@@ -43,8 +42,8 @@ pub(crate) fn collect_bound_fragment_output_uses_from_tree(
     current_dot_fragment: Option<&FragmentBinding>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
-    let mut rendered_yaml = RenderedYamlContext::new(source, state.context.defines);
-    rendered_yaml.reset_for_tree(tree);
+    let mut document_tracker = DocumentTracker::new(source, state.context.defines);
+    document_tracker.reset_for_tree(tree);
     let mut runtime = FragmentOutputUseRuntime {
         source,
         bindings,
@@ -56,7 +55,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_tree(
         context: state.context,
         seen: state.seen,
         outputs: state.outputs,
-        rendered_yaml,
+        document_tracker,
         range_frames: Vec::new(),
         no_output_depth: 0,
     };
@@ -74,7 +73,7 @@ struct FragmentOutputUseRuntime<'context, 'state> {
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
     outputs: &'state mut Vec<HelperFragmentOutputUse>,
-    rendered_yaml: RenderedYamlContext<'state>,
+    document_tracker: DocumentTracker<'state>,
     range_frames: Vec<RangeFrame<HelperRangeIteration>>,
     no_output_depth: usize,
 }
@@ -237,15 +236,15 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     }
 
     fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
-        self.rendered_yaml.enter_node(node);
+        self.document_tracker.enter_node(node);
     }
 
     fn ingest_text_up_to(&mut self, end_byte: usize) {
-        self.rendered_yaml.ingest_text_up_to(end_byte);
+        self.document_tracker.ingest_text_up_to(end_byte);
     }
 
-    fn current_rendered_path(&self) -> YamlPath {
-        self.rendered_yaml.current_path()
+    fn current_document_path(&self) -> YamlPath {
+        self.document_tracker.current_path()
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
@@ -354,20 +353,20 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         let Ok(text) = node.utf8_text(self.source.as_bytes()) else {
             return;
         };
-        let hole_context =
-            collect_document_hole_context(self.source, &self.rendered_yaml, node, text);
-        if hole_context.in_mapping_key {
+        let site_context =
+            collect_document_site_context(self.source, &self.document_tracker, node, text);
+        if site_context.in_mapping_key {
             return;
         }
-        let kind = if hole_context.kind == ValueKind::Scalar
-            && !hole_context.entire_scalar_value
-            && !hole_context.path.0.is_empty()
+        let kind = if site_context.kind == ValueKind::Scalar
+            && !site_context.entire_scalar_value
+            && !site_context.path.0.is_empty()
         {
             ValueKind::PartialScalar
         } else {
-            hole_context.kind
+            site_context.kind
         };
-        self.collect_expression(text, &hole_context.path, kind);
+        self.collect_expression(text, &site_context.path, kind);
     }
 
     fn apply_assignment_side_effects(&mut self, text: &str) -> bool {

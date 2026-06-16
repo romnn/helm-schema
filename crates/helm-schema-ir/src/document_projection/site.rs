@@ -2,9 +2,9 @@ use crate::contract::ContractUse;
 use crate::contract_sink::ContractUseContext;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
-use super::hole_context::DocumentHoleContext;
+use super::site_context::DocumentSiteContext;
 
-pub(super) struct DocumentHole {
+pub(super) struct DocumentSite {
     path: YamlPath,
     kind: ValueKind,
     in_mapping_key: bool,
@@ -13,15 +13,15 @@ pub(super) struct DocumentHole {
     resource: Option<ResourceRef>,
 }
 
-impl DocumentHole {
-    pub(super) fn new(hole_context: DocumentHoleContext, helper_inlined: bool) -> Self {
+impl DocumentSite {
+    pub(super) fn new(site_context: DocumentSiteContext, helper_inlined: bool) -> Self {
         Self {
-            path: hole_context.path,
-            kind: hole_context.kind,
-            in_mapping_key: hole_context.in_mapping_key,
-            entire_scalar_value: hole_context.entire_scalar_value,
+            path: site_context.path,
+            kind: site_context.kind,
+            in_mapping_key: site_context.in_mapping_key,
+            entire_scalar_value: site_context.entire_scalar_value,
             helper_inlined,
-            resource: hole_context.resource,
+            resource: site_context.resource,
         }
     }
 

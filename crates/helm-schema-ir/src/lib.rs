@@ -64,7 +64,6 @@ mod predicate;
 mod printf_eval;
 mod provider_schema_use;
 mod range_action_plan;
-mod rendered_yaml_context;
 pub mod required_inference;
 mod resource_identity;
 mod static_file_template;

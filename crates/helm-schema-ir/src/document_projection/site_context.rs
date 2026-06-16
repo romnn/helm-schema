@@ -1,9 +1,10 @@
 use crate::fragment_classification::is_fragment_expr;
-use crate::rendered_yaml_context::RenderedYamlContext;
 use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{ResourceRef, ValueKind, YamlPath};
 
-pub(crate) struct DocumentHoleContext {
+use super::tracker::DocumentTracker;
+
+pub(crate) struct DocumentSiteContext {
     pub(crate) kind: ValueKind,
     pub(crate) in_mapping_key: bool,
     pub(crate) entire_scalar_value: bool,
@@ -11,12 +12,12 @@ pub(crate) struct DocumentHoleContext {
     pub(crate) resource: Option<ResourceRef>,
 }
 
-pub(crate) fn collect_document_hole_context(
+pub(crate) fn collect_document_site_context(
     source: &str,
-    rendered_yaml: &RenderedYamlContext<'_>,
+    tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
     text: &str,
-) -> DocumentHoleContext {
+) -> DocumentSiteContext {
     let enclosing_action_text = enclosing_action_text(source, node);
     let kind = if enclosing_action_text
         .as_deref()
@@ -28,46 +29,46 @@ pub(crate) fn collect_document_hole_context(
         ValueKind::Scalar
     };
 
-    let in_mapping_key = document_hole_is_mapping_key_part(source, node);
+    let in_mapping_key = document_site_is_mapping_key_part(source, node);
     let mut path = if in_mapping_key {
         YamlPath(Vec::new())
     } else {
-        rendered_yaml.current_path()
+        tracker.current_path()
     };
     if !in_mapping_key {
-        path = adjusted_output_path(rendered_yaml, node, text, kind, path);
+        path = adjusted_output_path(tracker, node, text, kind, path);
     }
-    if rendered_yaml.output_inside_block_scalar_at(node.start_byte()) {
+    if tracker.output_inside_block_scalar_at(node.start_byte()) {
         path = YamlPath(Vec::new());
     }
-    let path = rendered_yaml.rebase_path(path);
-    let resource = rendered_yaml.current_resource().cloned();
+    let path = tracker.rebase_path(path);
+    let resource = tracker.current_resource().cloned();
 
-    DocumentHoleContext {
+    DocumentSiteContext {
         kind,
         in_mapping_key,
-        entire_scalar_value: document_hole_is_entire_scalar_value(source, node),
+        entire_scalar_value: document_site_is_entire_scalar_value(source, node),
         path,
         resource,
     }
 }
 
 fn adjusted_output_path(
-    rendered_yaml: &RenderedYamlContext<'_>,
+    tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
     text: &str,
     kind: ValueKind,
     mut path: YamlPath,
 ) -> YamlPath {
-    let (physical_indent, _physical_col) = rendered_yaml.line_indent_and_col(node.start_byte());
-    if rendered_yaml.starts_template_action_line(node.start_byte()) {
+    let (physical_indent, _physical_col) = tracker.line_indent_and_col(node.start_byte());
+    if tracker.starts_template_action_line(node.start_byte()) {
         let mut logical_indent = physical_indent;
-        if let Some(virtual_indent) = RenderedYamlContext::fragment_indent_width(text) {
+        if let Some(virtual_indent) = DocumentTracker::fragment_indent_width(text) {
             logical_indent = virtual_indent;
         }
 
         let trailing_pending_segments =
-            rendered_yaml.trailing_pending_mapping_segments_at_or_above(logical_indent);
+            tracker.trailing_pending_mapping_segments_at_or_above(logical_indent);
         for _ in 0..trailing_pending_segments {
             path.0.pop();
         }
@@ -83,13 +84,13 @@ fn adjusted_output_path(
             path.0.pop();
         }
     }
-    if let Some(inline_path) = rendered_yaml.inline_mapping_value_path(node) {
+    if let Some(inline_path) = tracker.inline_mapping_value_path(node) {
         path = inline_path;
     }
     path
 }
 
-fn document_hole_is_mapping_key_part(source: &str, node: tree_sitter::Node<'_>) -> bool {
+fn document_site_is_mapping_key_part(source: &str, node: tree_sitter::Node<'_>) -> bool {
     let start = node.start_byte();
     let end = node.end_byte();
     let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
@@ -125,7 +126,7 @@ fn enclosing_action_text(source: &str, node: tree_sitter::Node<'_>) -> Option<St
     }
 }
 
-fn document_hole_is_entire_scalar_value(source: &str, node: tree_sitter::Node<'_>) -> bool {
+fn document_site_is_entire_scalar_value(source: &str, node: tree_sitter::Node<'_>) -> bool {
     fn normalize_value_text(value_text: &str) -> &str {
         let trimmed = value_text.trim();
         let unquoted = if trimmed.len() >= 2

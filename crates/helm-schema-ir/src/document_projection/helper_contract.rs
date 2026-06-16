@@ -4,12 +4,12 @@ use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
 use crate::{Guard, ValueKind, YamlPath, output_path};
 
-use super::hole::DocumentHole;
+use super::site::DocumentSite;
 use super::value_analysis::DocumentHelperSummary;
 
 pub(super) fn append_document_helper_contract_uses(
     helper: DocumentHelperSummary,
-    hole: &DocumentHole,
+    site: &DocumentSite,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
@@ -32,14 +32,14 @@ pub(super) fn append_document_helper_contract_uses(
             output_path::values_path_has_descendant(value, &helper_rendered_sources);
         let extra_guards = meta.compatibility_guards(value);
         if only_scalar_helper_outputs
-            && hole.can_project_scalar_helper_to_caller_path()
+            && site.can_project_scalar_helper_to_caller_path()
             && !has_rendered_descendant
         {
-            contract.push(hole.contract_use(
+            contract.push(site.contract_use(
                 context,
                 value.clone(),
-                hole.path().clone(),
-                hole.kind(),
+                site.path().clone(),
+                site.kind(),
                 extra_guards,
             ));
         } else {
@@ -55,9 +55,9 @@ pub(super) fn append_document_helper_contract_uses(
         let extra_guards = output.meta.compatibility_guards(&output.source_expr);
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
-        if hole.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
-            let emit_path = output_path::append_relative_path(hole.path(), &output.relative_path);
-            contract.push(hole.contract_use(
+        if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
+            let emit_path = output_path::append_relative_path(site.path(), &output.relative_path);
+            contract.push(site.contract_use(
                 context,
                 output.source_expr,
                 emit_path,
@@ -79,16 +79,16 @@ pub(super) fn append_document_helper_contract_uses(
         }
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&value, &helper_rendered_sources);
-        if hole.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
-            contract.push(hole.contract_use(
+        if site.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
+            contract.push(site.contract_use(
                 context,
                 value,
-                hole.path().clone(),
-                hole.kind(),
+                site.path().clone(),
+                site.kind(),
                 Vec::new(),
             ));
         } else {
-            contract.push(context.pathless_contract_use(value, hole.kind(), &[]));
+            contract.push(context.pathless_contract_use(value, site.kind(), &[]));
         }
     }
 
@@ -103,7 +103,7 @@ pub(super) fn append_document_helper_contract_uses(
 
     for (path, schema_types) in helper.type_hints {
         for schema_type in schema_types {
-            contract.push(hole.contract_use(
+            contract.push(site.contract_use(
                 context,
                 path.clone(),
                 YamlPath(Vec::new()),

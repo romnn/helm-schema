@@ -174,7 +174,7 @@ where
 {
     let entry = runtime.scope_snapshot();
 
-    let current_path = runtime.current_rendered_path();
+    let current_path = runtime.current_document_path();
     let plan = runtime.plan_range_action(node, &current_path);
     let iteration_count = runtime.range_iteration_count();
 

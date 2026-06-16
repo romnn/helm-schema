@@ -20,7 +20,7 @@ impl SymbolicWalker<'_> {
         extra_guards: &[Guard],
         resource: Option<ResourceRef>,
     ) {
-        let path = self.rendered_yaml.rebase_path(path);
+        let path = self.document_tracker.rebase_path(path);
         let guards = self.compatibility_guards();
         let context = ContractUseContext::new(
             &guards,
@@ -49,7 +49,7 @@ impl ContractUseSink for SymbolicWalker<'_> {
             path,
             kind,
             extra_guards,
-            self.rendered_yaml.current_resource().cloned(),
+            self.document_tracker.current_resource().cloned(),
         );
     }
 }
@@ -62,15 +62,15 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
-        self.rendered_yaml.enter_node(node);
+        self.document_tracker.enter_node(node);
     }
 
     fn ingest_text_up_to(&mut self, end_byte: usize) {
-        self.rendered_yaml.ingest_text_up_to(end_byte);
+        self.document_tracker.ingest_text_up_to(end_byte);
     }
 
-    fn current_rendered_path(&self) -> YamlPath {
-        self.rendered_yaml.current_path()
+    fn current_document_path(&self) -> YamlPath {
+        self.document_tracker.current_path()
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
