@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::fragment_binding::FragmentBinding;
-use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_summary::HelperOutputMeta;
 
 mod branch_join;
 

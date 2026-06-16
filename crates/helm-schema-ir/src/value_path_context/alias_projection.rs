@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
-use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_summary::HelperOutputMeta;
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
 use crate::template_expr_cache::parse_expr_text;
 

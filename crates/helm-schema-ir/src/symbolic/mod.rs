@@ -12,8 +12,8 @@ use crate::contract::ContractIr;
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding::HelperBinding;
+use crate::helper_summary::HelperSummary;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
@@ -187,13 +187,16 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn analyze_bound_helper_calls(&self, text: &str) -> BoundHelperAnalysis {
-        self.ir_context.inner.helper_summaries.analyze_bound_calls(
-            text,
-            &self.root_bindings,
-            self.current_dot_binding(),
-            &self.scope.locals().fragment_bindings,
-            self.fragment_eval_context(),
-        )
+    fn summarize_bound_helper_calls(&self, text: &str) -> HelperSummary {
+        self.ir_context
+            .inner
+            .helper_summaries
+            .summarize_bound_calls(
+                text,
+                &self.root_bindings,
+                self.current_dot_binding(),
+                &self.scope.locals().fragment_bindings,
+                self.fragment_eval_context(),
+            )
     }
 }

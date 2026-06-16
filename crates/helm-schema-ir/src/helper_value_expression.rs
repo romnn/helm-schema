@@ -13,16 +13,16 @@ use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr,
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
 };
-use crate::helper_analysis::HelperOutputMeta;
-use crate::helper_analysis_mutation::{
-    extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,
-};
-use crate::helper_analysis_projection::{
-    bound_helper_dependency_paths, helper_dependency_meta_from_analysis,
-};
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::{helper_strings, helper_to_fragment_binding};
 use crate::helper_output_projection::helper_binding_output_meta;
+use crate::helper_summary::HelperOutputMeta;
+use crate::helper_summary_mutation::{
+    extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,
+};
+use crate::helper_summary_projection::{
+    helper_dependency_meta_from_summary, helper_summary_dependency_paths,
+};
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
@@ -114,14 +114,17 @@ pub(crate) fn collect_helper_value_expression(
                 &mut string_seen,
             ));
     }
-    let nested = state.context.helper_summaries().analyze_bound_helper_calls(
-        text,
-        Some(bindings),
-        current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let nested = state
+        .context
+        .helper_summaries()
+        .summarize_bound_helper_calls(
+            text,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     if expression_kind == ValueKind::Fragment {
         extend_nested_fragment_render(
             state.analysis,
@@ -217,14 +220,17 @@ fn collect_assignment_bound_helper_values(
         state.context,
         &mut result_seen,
     );
-    let nested = state.context.helper_summaries().analyze_bound_helper_calls(
-        rhs,
-        Some(bindings),
-        current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let nested = state
+        .context
+        .helper_summaries()
+        .summarize_bound_helper_calls(
+            rhs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     state
         .analysis
         .chart_defaults
@@ -233,10 +239,10 @@ fn collect_assignment_bound_helper_values(
     state
         .analysis
         .dependency_paths
-        .extend(bound_helper_dependency_paths(&nested));
+        .extend(helper_summary_dependency_paths(&nested));
     state
         .analysis
-        .add_dependency_meta_map(helper_dependency_meta_from_analysis(&nested));
+        .add_dependency_meta_map(helper_dependency_meta_from_summary(&nested));
 
     let rhs_output_meta = rhs_output_meta(
         &local_outputs,

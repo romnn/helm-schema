@@ -8,8 +8,8 @@ use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::{
     fragment_rendered_paths, fragment_source_paths, select_fragment_binding,
 };
-use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
+use crate::helper_summary::HelperOutputMeta;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };

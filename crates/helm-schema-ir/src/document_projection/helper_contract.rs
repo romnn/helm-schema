@@ -5,10 +5,10 @@ use crate::contract_sink::ContractUseContext;
 use crate::{Guard, ValueKind, YamlPath, output_path};
 
 use super::hole::DocumentHole;
-use super::value_analysis::DocumentHelperValueAnalysis;
+use super::value_analysis::DocumentHelperSummary;
 
 pub(super) fn append_document_helper_contract_uses(
-    helper: DocumentHelperValueAnalysis,
+    helper: DocumentHelperSummary,
     hole: &DocumentHole,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,

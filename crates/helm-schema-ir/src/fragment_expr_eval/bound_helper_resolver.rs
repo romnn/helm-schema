@@ -49,7 +49,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             .params
             .context
             .helper_summaries()
-            .analyze_bound_helper_call(
+            .summarize_bound_helper_call(
                 name,
                 arg,
                 self.params.outer,

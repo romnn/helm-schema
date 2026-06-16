@@ -1,21 +1,21 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::output_path;
 
-pub(crate) fn bound_helper_dependency_paths(analysis: &BoundHelperAnalysis) -> BTreeSet<String> {
-    let mut out: BTreeSet<String> = analysis
+pub(crate) fn helper_summary_dependency_paths(summary: &HelperSummary) -> BTreeSet<String> {
+    let mut out: BTreeSet<String> = summary
         .output
         .keys()
-        .chain(analysis.dependency_paths.iter())
-        .chain(analysis.dependency_meta.keys())
-        .chain(analysis.guard_paths.iter())
-        .chain(analysis.fragment_output.iter())
-        .chain(analysis.type_hints.keys())
+        .chain(summary.dependency_paths.iter())
+        .chain(summary.dependency_meta.keys())
+        .chain(summary.guard_paths.iter())
+        .chain(summary.fragment_output.iter())
+        .chain(summary.type_hints.keys())
         .cloned()
         .collect();
     out.extend(
-        analysis
+        summary
             .fragment_output_uses
             .iter()
             .filter(|output| !output.source_expr.trim().is_empty())
@@ -25,18 +25,18 @@ pub(crate) fn bound_helper_dependency_paths(analysis: &BoundHelperAnalysis) -> B
     remove_ancestor_paths(out)
 }
 
-pub(crate) fn bound_helper_condition_paths(analysis: &BoundHelperAnalysis) -> BTreeSet<String> {
-    let mut out: BTreeSet<String> = analysis
+pub(crate) fn helper_summary_condition_paths(summary: &HelperSummary) -> BTreeSet<String> {
+    let mut out: BTreeSet<String> = summary
         .output
         .keys()
-        .chain(analysis.dependency_meta.keys())
-        .chain(analysis.guard_paths.iter())
-        .chain(analysis.fragment_output.iter())
-        .chain(analysis.type_hints.keys())
+        .chain(summary.dependency_meta.keys())
+        .chain(summary.guard_paths.iter())
+        .chain(summary.fragment_output.iter())
+        .chain(summary.type_hints.keys())
         .cloned()
         .collect();
     out.extend(
-        analysis
+        summary
             .fragment_output_uses
             .iter()
             .filter(|output| !output.source_expr.trim().is_empty())
@@ -46,11 +46,11 @@ pub(crate) fn bound_helper_condition_paths(analysis: &BoundHelperAnalysis) -> BT
     remove_ancestor_paths(out)
 }
 
-pub(crate) fn helper_output_meta_from_analysis(
-    analysis: &BoundHelperAnalysis,
+pub(crate) fn helper_output_meta_from_summary(
+    summary: &HelperSummary,
 ) -> BTreeMap<String, HelperOutputMeta> {
-    let mut out = analysis.output.clone();
-    for output in &analysis.fragment_output_uses {
+    let mut out = summary.output.clone();
+    for output in &summary.fragment_output_uses {
         if output.source_expr.trim().is_empty() {
             continue;
         }
@@ -58,7 +58,7 @@ pub(crate) fn helper_output_meta_from_analysis(
             .or_default()
             .merge_ref(&output.meta);
     }
-    for path in &analysis.fragment_output {
+    for path in &summary.fragment_output {
         if path.trim().is_empty() {
             continue;
         }
@@ -67,11 +67,11 @@ pub(crate) fn helper_output_meta_from_analysis(
     out
 }
 
-pub(crate) fn helper_dependency_meta_from_analysis(
-    analysis: &BoundHelperAnalysis,
+pub(crate) fn helper_dependency_meta_from_summary(
+    summary: &HelperSummary,
 ) -> BTreeMap<String, HelperOutputMeta> {
-    let mut out = analysis.dependency_meta.clone();
-    for (path, meta) in helper_output_meta_from_analysis(analysis) {
+    let mut out = summary.dependency_meta.clone();
+    for (path, meta) in helper_output_meta_from_summary(summary) {
         out.entry(path).or_default().merge(meta);
     }
     out

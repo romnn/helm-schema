@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::fragment_binding::FragmentBinding;
-use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
+use crate::helper_summary::HelperOutputMeta;
 use crate::{ValueKind, YamlPath};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]

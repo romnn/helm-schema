@@ -10,8 +10,6 @@ use crate::fragment_classification::is_fragment_expr;
 use crate::fragment_expr_eval::{
     fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
 };
-use crate::helper_analysis::HelperFragmentOutputUse;
-use crate::helper_analysis_projection::bound_helper_dependency_paths;
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::project_fragment_binding;
 use crate::helper_output_projection::{
@@ -20,6 +18,8 @@ use crate::helper_output_projection::{
     expression_output_use_is_keyed_map_projection, helper_output_meta_with_predicates,
     push_helper_fragment_output, static_yaml_fragment_output_path,
 };
+use crate::helper_summary::HelperFragmentOutputUse;
+use crate::helper_summary_projection::helper_summary_dependency_paths;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_text_in_context, local_default_paths_from_text,
@@ -121,14 +121,17 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         state.local_bindings,
     );
 
-    let mut nested = state.context.helper_summaries().analyze_bound_helper_calls(
-        text,
-        Some(bindings),
-        current_dot,
-        state.local_bindings,
-        state.context,
-        state.seen,
-    );
+    let mut nested = state
+        .context
+        .helper_summaries()
+        .summarize_bound_helper_calls(
+            text,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+            state.context,
+            state.seen,
+        );
     let nested_structured_sources: BTreeSet<String> = nested
         .fragment_output_uses
         .iter()
@@ -224,15 +227,18 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if text_starts_with_helper_call(rhs) {
         let mut rhs_seen = state.seen.clone();
-        let nested = state.context.helper_summaries().analyze_bound_helper_calls(
-            rhs,
-            Some(bindings),
-            current_dot,
-            state.local_bindings,
-            state.context,
-            &mut rhs_seen,
-        );
-        top_level_helper_dependency_paths = bound_helper_dependency_paths(&nested);
+        let nested = state
+            .context
+            .helper_summaries()
+            .summarize_bound_helper_calls(
+                rhs,
+                Some(bindings),
+                current_dot,
+                state.local_bindings,
+                state.context,
+                &mut rhs_seen,
+            );
+        top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
         if let Some(nested_binding) = project_fragment_binding(nested) {
             binding = match binding {
                 Some(binding) => FragmentBinding::merge_all(vec![binding, nested_binding]),

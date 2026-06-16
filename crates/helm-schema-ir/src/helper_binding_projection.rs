@@ -2,8 +2,8 @@ use std::collections::BTreeSet;
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_binding::FragmentBinding;
-use crate::helper_analysis::BoundHelperAnalysis;
 use crate::helper_binding::HelperBinding;
+use crate::helper_summary::HelperSummary;
 use crate::output_path;
 
 pub(crate) fn helper_to_fragment_binding(binding: &HelperBinding) -> FragmentBinding {
@@ -26,13 +26,13 @@ pub(crate) fn helper_definitely_nonempty_iterable(binding: &HelperBinding) -> bo
     AbstractValue::from_helper_binding(binding).definitely_nonempty_iterable()
 }
 
-pub(crate) fn project_fragment_binding(analysis: BoundHelperAnalysis) -> Option<FragmentBinding> {
+pub(crate) fn project_fragment_binding(analysis: HelperSummary) -> Option<FragmentBinding> {
     project_binding_value(analysis, ProjectionTarget::Fragment)
         .and_then(|value| value.to_fragment_binding())
         .and_then(|binding| FragmentBinding::merge_all(vec![binding]))
 }
 
-pub(crate) fn project_helper_binding(analysis: BoundHelperAnalysis) -> Option<HelperBinding> {
+pub(crate) fn project_helper_binding(analysis: HelperSummary) -> Option<HelperBinding> {
     project_binding_value(analysis, ProjectionTarget::Helper)
         .and_then(|value| value.to_helper_binding())
 }
@@ -44,7 +44,7 @@ enum ProjectionTarget {
 }
 
 fn project_binding_value(
-    analysis: BoundHelperAnalysis,
+    analysis: HelperSummary,
     target: ProjectionTarget,
 ) -> Option<AbstractValue> {
     let structured_sources = structured_fragment_sources(&analysis);
@@ -89,7 +89,7 @@ fn fragment_output_value(source: String, target: ProjectionTarget) -> AbstractVa
     }
 }
 
-fn structured_fragment_sources(analysis: &BoundHelperAnalysis) -> BTreeSet<String> {
+fn structured_fragment_sources(analysis: &HelperSummary) -> BTreeSet<String> {
     analysis
         .fragment_output_uses
         .iter()
@@ -98,7 +98,7 @@ fn structured_fragment_sources(analysis: &BoundHelperAnalysis) -> BTreeSet<Strin
 }
 
 fn rendered_sources(
-    analysis: &BoundHelperAnalysis,
+    analysis: &HelperSummary,
     structured_sources: &BTreeSet<String>,
 ) -> BTreeSet<String> {
     let mut rendered_sources = structured_sources.clone();
@@ -113,8 +113,8 @@ mod tests {
 
     use super::{project_fragment_binding, project_helper_binding};
     use crate::fragment_binding::FragmentBinding;
-    use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
     use crate::helper_binding::HelperBinding;
+    use crate::helper_summary::{HelperOutputMeta, HelperSummary};
     use crate::predicate::Predicate;
     use crate::{ValueKind, YamlPath};
 
@@ -124,7 +124,7 @@ mod tests {
             predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
             defaulted: true,
         };
-        let mut analysis = BoundHelperAnalysis::default();
+        let mut analysis = HelperSummary::default();
         analysis.add_fragment_output_use(
             "podLabels".to_string(),
             YamlPath(vec!["app".to_string()]),
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn fragment_binding_projection_preserves_structured_output_path() {
-        let mut analysis = BoundHelperAnalysis::default();
+        let mut analysis = HelperSummary::default();
         analysis.add_fragment_output_use(
             "podLabels".to_string(),
             YamlPath(vec!["app".to_string()]),
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn fragment_binding_projection_merges_scalar_outputs_into_one_output_set() {
-        let mut analysis = BoundHelperAnalysis::default();
+        let mut analysis = HelperSummary::default();
         analysis.add_output_meta("image.repository".to_string(), HelperOutputMeta::default());
         analysis.add_output_meta("image.tag".to_string(), HelperOutputMeta::default());
         analysis.fragment_output.insert("extraEnv".to_string());

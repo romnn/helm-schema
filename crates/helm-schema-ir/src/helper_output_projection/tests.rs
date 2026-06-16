@@ -5,9 +5,9 @@ use super::{
     helper_binding_output_meta,
 };
 use crate::fragment_binding::FragmentBinding;
-use crate::helper_analysis::HelperFragmentOutputUse;
-use crate::helper_analysis::HelperOutputMeta;
 use crate::helper_binding::HelperBinding;
+use crate::helper_summary::HelperFragmentOutputUse;
+use crate::helper_summary::HelperOutputMeta;
 use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
 

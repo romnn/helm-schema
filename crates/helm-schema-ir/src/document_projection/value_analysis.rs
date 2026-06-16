@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values};
-use crate::helper_analysis::{BoundHelperAnalysis, HelperFragmentOutputUse, HelperOutputMeta};
+use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::value_path_context::ValuePathContext;
 
 pub(crate) struct DocumentValueAnalysis {
@@ -10,11 +10,11 @@ pub(crate) struct DocumentValueAnalysis {
     pub(super) values: BTreeSet<String>,
     pub(super) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(super) bound_values: Vec<String>,
-    pub(super) helper: DocumentHelperValueAnalysis,
+    pub(super) helper: DocumentHelperSummary,
 }
 
 #[derive(Default)]
-pub(super) struct DocumentHelperValueAnalysis {
+pub(super) struct DocumentHelperSummary {
     pub(crate) output_values: BTreeMap<String, HelperOutputMeta>,
     pub(crate) fragment_output_values: Vec<String>,
     pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
@@ -25,32 +25,32 @@ pub(super) struct DocumentHelperValueAnalysis {
     pub(crate) chart_value_defaults: BTreeSet<String>,
 }
 
-impl DocumentHelperValueAnalysis {
-    fn from_bound_helper(bound: BoundHelperAnalysis, output_kind: ValueKind) -> Self {
+impl DocumentHelperSummary {
+    fn from_helper_summary(summary: HelperSummary, output_kind: ValueKind) -> Self {
         let mut dependency_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-        for path in bound.dependency_paths {
+        for path in summary.dependency_paths {
             dependency_values.entry(path).or_default();
         }
-        for (path, meta) in bound.dependency_meta {
+        for (path, meta) in summary.dependency_meta {
             dependency_values.entry(path).or_default().merge(meta);
         }
 
         let mut fragment_output_values = Vec::new();
         if output_kind == ValueKind::Fragment {
-            fragment_output_values.extend(bound.fragment_output);
+            fragment_output_values.extend(summary.fragment_output);
             fragment_output_values.sort();
             fragment_output_values.dedup();
         }
 
         Self {
-            output_values: bound.output,
+            output_values: summary.output,
             fragment_output_values,
-            fragment_output_uses: bound.fragment_output_uses,
+            fragment_output_uses: summary.fragment_output_uses,
             dependency_values,
-            guard_values: bound.guard_paths,
-            type_hints: bound.type_hints,
-            suppress_direct_values: bound.suppress_roots,
-            chart_value_defaults: bound.chart_defaults,
+            guard_values: summary.guard_paths,
+            type_hints: summary.type_hints,
+            suppress_direct_values: summary.suppress_roots,
+            chart_value_defaults: summary.chart_defaults,
         }
     }
 
@@ -80,7 +80,7 @@ pub(crate) fn collect_document_value_analysis(
     value_path_context: &ValuePathContext<'_>,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
-    helper_analysis: Option<BoundHelperAnalysis>,
+    helper_summary: Option<HelperSummary>,
 ) -> DocumentValueAnalysis {
     let default_fallback_values = value_path_context.resolved_default_fallback_paths(text);
     let mut values: BTreeSet<String> = value_path_context
@@ -92,8 +92,8 @@ pub(crate) fn collect_document_value_analysis(
 
     let bound_values = extract_bound_values(text, range_domains, get_bindings);
 
-    let helper = helper_analysis
-        .map(|bound| DocumentHelperValueAnalysis::from_bound_helper(bound, kind))
+    let helper = helper_summary
+        .map(|summary| DocumentHelperSummary::from_helper_summary(summary, kind))
         .unwrap_or_default();
 
     DocumentValueAnalysis {
@@ -109,34 +109,34 @@ pub(crate) fn collect_document_value_analysis(
 mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
-    use super::DocumentHelperValueAnalysis;
+    use super::DocumentHelperSummary;
     use crate::ValueKind;
-    use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
+    use crate::helper_summary::{HelperOutputMeta, HelperSummary};
     use crate::predicate::Predicate;
 
     #[test]
-    fn document_helper_analysis_preserves_bound_helper_fields() {
-        let mut analysis = BoundHelperAnalysis::default();
+    fn document_helper_summary_preserves_helper_summary_fields() {
+        let mut summary = HelperSummary::default();
         let meta = HelperOutputMeta {
             predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
             defaulted: true,
         };
-        analysis.add_output_meta("image.tag".to_string(), meta.clone());
-        analysis.fragment_output.insert("extraEnv".to_string());
-        analysis.dependency_paths.insert("global".to_string());
-        analysis
+        summary.add_output_meta("image.tag".to_string(), meta.clone());
+        summary.fragment_output.insert("extraEnv".to_string());
+        summary.dependency_paths.insert("global".to_string());
+        summary
             .dependency_meta
             .insert("global.image.tag".to_string(), meta.clone());
-        analysis.guard_paths.insert("service.enabled".to_string());
-        analysis
+        summary.guard_paths.insert("service.enabled".to_string());
+        summary
             .type_hints
             .entry("image.tag".to_string())
             .or_default()
             .insert("string".to_string());
-        analysis.suppress_roots.insert("image".to_string());
-        analysis.chart_defaults.insert("nameOverride".to_string());
+        summary.suppress_roots.insert("image".to_string());
+        summary.chart_defaults.insert("nameOverride".to_string());
 
-        let helper = DocumentHelperValueAnalysis::from_bound_helper(analysis, ValueKind::Fragment);
+        let helper = DocumentHelperSummary::from_helper_summary(summary, ValueKind::Fragment);
 
         assert_eq!(
             helper.output_values,

@@ -4,8 +4,8 @@ use crate::contract_sink::ContractUseContext;
 use crate::document_projection::{
     DocumentOutput, collect_document_hole_context, collect_document_value_analysis,
 };
-use crate::helper_analysis::HelperOutputMeta;
-use crate::helper_analysis_projection::helper_output_meta_from_analysis;
+use crate::helper_summary::HelperOutputMeta;
+use crate::helper_summary_projection::helper_output_meta_from_summary;
 
 use super::SymbolicWalker;
 
@@ -17,8 +17,8 @@ impl SymbolicWalker<'_> {
         let mut out = self
             .value_path_context()
             .local_alias_output_meta_for_text(text);
-        let analysis = self.analyze_bound_helper_calls(text);
-        for (path, meta) in helper_output_meta_from_analysis(&analysis) {
+        let analysis = self.summarize_bound_helper_calls(text);
+        for (path, meta) in helper_output_meta_from_summary(&analysis) {
             out.entry(path).or_default().merge(meta);
         }
         out
@@ -38,10 +38,10 @@ impl SymbolicWalker<'_> {
 
         let helper_inlined = self.inline_exact_helper_call(text);
 
-        let helper_analysis = if helper_inlined {
+        let helper_summary = if helper_inlined {
             None
         } else {
-            Some(self.analyze_bound_helper_calls(text))
+            Some(self.summarize_bound_helper_calls(text))
         };
         let value_path_context = self.value_path_context();
         let mut output_values = collect_document_value_analysis(
@@ -50,7 +50,7 @@ impl SymbolicWalker<'_> {
             &value_path_context,
             &self.scope.locals().range_domains,
             &self.scope.locals().get_bindings,
-            helper_analysis,
+            helper_summary,
         );
         // Stash chart-level `set X "K" (X.K | default V)` mutations discovered
         // in any helper called from this text. Subsequent contract emissions

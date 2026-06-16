@@ -1370,7 +1370,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   so helper summaries and local-alias output facts no longer carry raw guard
   path strings. A1 is complete for the compatibility walker; the next semantic
   cleanup is A2 helper-summary ownership.
-- **A2 — helper summaries under the §6.3 contract**: empty-pc summaries
+- **A2 — helper summaries under the §6.3 contract (complete)**: empty-pc summaries
   re-guarded at call sites; env-closed fingerprints; recursion ⇒ Top +
   poisoned memo. Current progress: bound helper-call context resolution and
   the compatibility helper-body passes now live behind `helper_body_analysis`,
@@ -1412,18 +1412,20 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   abstract expression evaluator. The fragment-local helper binding resolver has
   now been collapsed into the same bound-helper expression evaluator used by
   fragment binding projection: helper and fragment callers differ only by the
-  `BoundHelperAnalysis` projection they request. This reaches the intended A2
-  switchpoint for helper/body semantics: remaining binding DTOs are projection
-  outputs rather than parallel evaluators. The next broader step is A3 internal
-  documents and contract projection, while smaller A2 DTO cleanup can continue
-  opportunistically. The old flat helper-fragment output walker
+  `HelperSummary` projection they request. The helper-summary artifact itself
+  is now the owned semantic boundary: summary data, summary caching, summary
+  projection, and summary mutation live behind `helper_summary*` modules
+  instead of a parallel “analysis” surface, and document projection consumes a
+  `DocumentHelperSummary` derived from that artifact rather than a second
+  helper-analysis DTO. That closes A2's helper/body semantics migration:
+  helper summaries are projection outputs over the shared interpreter rather
+  than a parallel evaluator family. The next broader step is A3 internal
+  documents and contract projection. The old flat helper-fragment output walker
   (`helper_fragment_outputs.rs`) has now been deleted: destructured map-range
   fragment outputs are emitted by the structured helper-fragment output-use
   runtime, and helper `with` body-dot resolution uses the shared abstract
   value path with root bindings, current dot, and helper-local fragment
-  bindings. The residual A2 compatibility surface is therefore the
-  `BoundHelperAnalysis` / `HelperFragmentOutputUse` DTO projection, not a
-  parallel helper-body interpreter. Helper-output projection has been split
+  bindings. Helper-output projection has been split
   into a focused module family: abstract output-use collection, static YAML
   output-key extraction, and regression tests are separate from the module
   root. Fragment expression evaluator regressions also live outside the

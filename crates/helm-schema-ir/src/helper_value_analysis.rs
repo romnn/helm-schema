@@ -9,8 +9,6 @@ use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::fragment_to_helper_binding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_header_text_from_source;
-use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
-use crate::helper_analysis_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::helper_range_frame::RangeFrame;
@@ -18,6 +16,8 @@ use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
 };
 use crate::helper_runtime_guards::{branch_guard_paths, truthy_predicate_for_paths};
+use crate::helper_summary::{HelperOutputMeta, HelperSummary};
+use crate::helper_summary_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
 use crate::helper_value_expression::collect_helper_value_expression;
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
@@ -63,7 +63,7 @@ struct HelperValueRuntime<'context, 'state> {
     local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
-    analysis: &'state mut BoundHelperAnalysis,
+    analysis: &'state mut HelperSummary,
     range_frames: Vec<RangeFrame<HelperRangeIteration>>,
     no_output_depth: usize,
 }

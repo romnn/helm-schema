@@ -39,9 +39,6 @@ mod fragment_expr_eval_tests;
 mod fragment_range_scope;
 #[cfg(test)]
 mod fragment_scope_eval_tests;
-mod helper_analysis;
-mod helper_analysis_mutation;
-mod helper_analysis_projection;
 mod helper_arg_projection;
 mod helper_aware_expr_eval;
 mod helper_binding;
@@ -55,6 +52,8 @@ mod helper_range_frame;
 mod helper_range_plan;
 mod helper_runtime_guards;
 mod helper_summary;
+mod helper_summary_mutation;
+mod helper_summary_projection;
 mod helper_value_analysis;
 mod helper_value_expression;
 mod helper_walk_state;

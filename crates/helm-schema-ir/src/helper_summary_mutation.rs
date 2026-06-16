@@ -1,14 +1,14 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::helper_analysis::{BoundHelperAnalysis, HelperOutputMeta};
 use crate::helper_binding::HelperBinding;
+use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) fn extend_nested_scalar_render(
-    analysis: &mut BoundHelperAnalysis,
-    mut nested: BoundHelperAnalysis,
+    analysis: &mut HelperSummary,
+    mut nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
 ) {
     convert_fragment_outputs_to_dependency_outputs(&mut nested);
@@ -19,8 +19,8 @@ pub(crate) fn extend_nested_scalar_render(
 }
 
 pub(crate) fn extend_nested_fragment_render(
-    analysis: &mut BoundHelperAnalysis,
-    nested: BoundHelperAnalysis,
+    analysis: &mut HelperSummary,
+    nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
     expression_kind: ValueKind,
 ) {
@@ -55,7 +55,7 @@ pub(crate) fn extend_nested_fragment_render(
     analysis.chart_defaults.extend(nested.chart_defaults);
 }
 
-pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut BoundHelperAnalysis) {
+pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut HelperSummary) {
     let fragment_output = std::mem::take(&mut analysis.fragment_output);
     for source_expr in fragment_output {
         analysis.add_output(source_expr, &BTreeSet::new(), false);
@@ -72,7 +72,7 @@ pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut Boun
 }
 
 pub(crate) fn mark_suppressed_roots_for_bound_outputs(
-    analysis: &mut BoundHelperAnalysis,
+    analysis: &mut HelperSummary,
     bindings: &HashMap<String, HelperBinding>,
 ) {
     let rendered_sources: BTreeSet<String> = analysis
@@ -142,12 +142,12 @@ mod tests {
     use std::collections::{BTreeSet, HashMap};
 
     use super::mark_suppressed_roots_for_bound_outputs;
-    use crate::helper_analysis::BoundHelperAnalysis;
     use crate::helper_binding::HelperBinding;
+    use crate::helper_summary::HelperSummary;
 
     #[test]
     fn suppresses_bound_root_when_helper_outputs_descendant_path() {
-        let mut analysis = BoundHelperAnalysis::default();
+        let mut analysis = HelperSummary::default();
         analysis.add_output("serviceAccount.name".to_string(), &BTreeSet::new(), false);
         let bindings = HashMap::from([(
             "config".to_string(),
@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn does_not_suppress_bound_root_for_exact_root_output() {
-        let mut analysis = BoundHelperAnalysis::default();
+        let mut analysis = HelperSummary::default();
         analysis.add_output("serviceAccount".to_string(), &BTreeSet::new(), false);
         let bindings = HashMap::from([(
             "config".to_string(),

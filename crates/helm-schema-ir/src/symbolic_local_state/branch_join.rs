@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::fragment_binding::FragmentBinding;
-use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_summary::HelperOutputMeta;
 
 use super::SymbolicLocalState;
 

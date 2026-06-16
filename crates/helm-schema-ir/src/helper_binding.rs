@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::helper_analysis::HelperOutputMeta;
+use crate::helper_summary::HelperOutputMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum HelperBinding {

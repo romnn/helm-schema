@@ -13,8 +13,6 @@ use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_has_destructured_variable_definition, range_header_text_from_source,
 };
-use crate::helper_analysis::{HelperFragmentOutputUse, HelperOutputMeta};
-use crate::helper_analysis_mutation::merge_local_default_paths;
 use crate::helper_binding::HelperBinding;
 use crate::helper_output_projection::push_helper_fragment_output;
 use crate::helper_range_frame::RangeFrame;
@@ -22,6 +20,8 @@ use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
 };
 use crate::helper_runtime_guards::{branch_guard_paths, truthy_predicate_for_paths};
+use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
+use crate::helper_summary_mutation::merge_local_default_paths;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;

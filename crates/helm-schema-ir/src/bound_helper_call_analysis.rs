@@ -4,12 +4,12 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_analysis::BoundHelperAnalysis;
-use crate::helper_analysis_mutation::mark_suppressed_roots_for_bound_outputs;
 use crate::helper_binding::HelperBinding;
 use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
+use crate::helper_summary::HelperSummary;
+use crate::helper_summary_mutation::mark_suppressed_roots_for_bound_outputs;
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
 use crate::template_expr_cache::parse_expr_text;
 
@@ -21,8 +21,8 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals(
     fragment_locals: &HashMap<String, FragmentBinding>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-) -> BoundHelperAnalysis {
-    let mut analysis = BoundHelperAnalysis::default();
+) -> HelperSummary {
+    let mut analysis = HelperSummary::default();
     for expr in parse_expr_text(text) {
         walk_expr_excluding_helper_call_args(&expr, &mut |node| {
             let TemplateExpr::Call { function, args } = node else {
@@ -34,7 +34,7 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals(
             let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
                 return;
             };
-            let nested = context.helper_summaries().analyze_bound_helper_call(
+            let nested = context.helper_summaries().summarize_bound_helper_call(
                 name,
                 args.get(1),
                 bindings,
@@ -58,9 +58,9 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
     fragment_locals: &HashMap<String, FragmentBinding>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-) -> BoundHelperAnalysis {
+) -> HelperSummary {
     if !seen.insert(name.to_string()) {
-        return BoundHelperAnalysis::default();
+        return HelperSummary::default();
     }
 
     let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
