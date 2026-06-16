@@ -1932,7 +1932,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   intentionally discard provider source/ref identity must project a
   `ProviderSchemaFragment` explicitly at the call site.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
-  declarative data. Current progress: the K8s capability probe builder and
+  declarative data **(complete)**. The K8s capability probe builder and
   canonical api-version probe table now live in a dedicated
   `capability_probe` module instead of the OpenAPI provider monolith.
   Resource-qualified capability literals bypass the table and probe their
@@ -1951,10 +1951,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   have a traced provider-chain entry point, and the OpenAPI provider records
   per-source cache/download probe outcomes (`Found`, authoritative absent,
   uncertain) before projecting the same `Option<bool>` answer as before.
-  For the current diagnostic surface, B3 is complete: resource/path misses
-  already project diagnostics from `LookupTrace`, and capability traces are
-  preserved for future capability-specific diagnostics instead of inventing a
-  synthetic diagnostic now.
+  Resource/path misses already project diagnostics from `LookupTrace`, and
+  capability traces are preserved for future capability-specific diagnostics
+  instead of inventing a synthetic diagnostic now. Typed guard decoding,
+  IR-side liveness, provider-side capability execution, and traced chain
+  execution are all covered by focused tests.
 - **B4 — chart-local CRDs as a source** (static `crds/`; the
   template-rendered projection additionally needs A3's documents). Shipped
   `values.schema.json` is *not* a knowledge source — it lands in A4's
