@@ -1,5 +1,9 @@
 use helm_schema_ir::{ResourceRef, YamlPath};
-use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider};
+use helm_schema_k8s::{
+    CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider,
+    crds_catalog::debug_materialize_schema_for_resource as debug_materialize_catalog_schema,
+    local_override::debug_materialize_schema_for_resource as debug_materialize_override_schema,
+};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -26,9 +30,8 @@ fn materialize_prometheusrule() {
         api_version_branches: Vec::new(),
     };
 
-    let upstream_materialized = provider
-        .materialize_schema_for_resource(&r)
-        .expect("materialize");
+    let upstream_materialized =
+        debug_materialize_catalog_schema(&provider, &r).expect("materialize");
 
     let relative_path = "monitoring.coreos.com/prometheusrule_v1.json";
     let cached = provider.cache_dir.join("default").join(relative_path);
@@ -41,9 +44,8 @@ fn materialize_prometheusrule() {
     std::fs::copy(&cached, root_dir.join(relative_path)).expect("copy cached schema");
 
     let local_provider = LocalSchemaProvider::new(&root_dir);
-    let local_materialized = local_provider
-        .materialize_schema_for_resource(&r)
-        .expect("materialize");
+    let local_materialized =
+        debug_materialize_override_schema(&local_provider, &r).expect("materialize");
 
     similar_asserts::assert_eq!(upstream_materialized, local_materialized);
 }
@@ -102,7 +104,7 @@ fn has_resource_true_for_cached_crd() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let _ = provider.materialize_schema_for_resource(&r);
+    let _ = debug_materialize_catalog_schema(&provider, &r);
 
     assert!(
         provider.has_resource(&r),

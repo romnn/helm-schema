@@ -158,18 +158,6 @@ impl LocalSchemaProvider {
         }
         fragment
     }
-
-    #[must_use]
-    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let root = self.load_schema_doc(resource)?;
-        let mut stack = std::collections::HashSet::new();
-        Some(enrich_root_metadata_schema(expand_local_refs(
-            root.root(),
-            root.root(),
-            0,
-            &mut stack,
-        )))
-    }
 }
 
 enum LocalSchemaDocLoad {
@@ -235,6 +223,24 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         }
         out
     }
+}
+
+/// Expand the full override document for regression tests and debugging.
+///
+/// Production provider lookup stays on the fragment-first path.
+#[must_use]
+pub fn debug_materialize_schema_for_resource(
+    provider: &LocalSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<Value> {
+    let root = provider.load_schema_doc(resource)?;
+    let mut stack = std::collections::HashSet::new();
+    Some(enrich_root_metadata_schema(expand_local_refs(
+        root.root(),
+        root.root(),
+        0,
+        &mut stack,
+    )))
 }
 
 #[tracing::instrument(skip_all, fields(path_len = path.len()))]

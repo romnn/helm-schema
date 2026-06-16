@@ -24,9 +24,7 @@ use crate::schema_doc::SchemaDoc;
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
-use super::resolve_ctx::{
-    ResolveCtx, descend_schema_path_expanding_leaf_with_location, expand_schema_node,
-};
+use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf_with_location};
 use super::version_chain::K8sVersionChain;
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
@@ -340,18 +338,6 @@ impl KubernetesJsonSchemaProvider {
         }
     }
 
-    /// Materialise the entire schema for a resource (used by tests).
-    #[must_use]
-    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
-    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
-        let loader = self.loader_for_source(source_id, version.clone());
-        let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
-        let root_doc = ctx.doc(&filename)?.clone();
-        let (_, expanded) = expand_schema_node(&mut ctx, &filename, &root_doc, 0);
-        Some(expanded)
-    }
-
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
     fn schema_fragment_for_resource_path_uncached(
         &self,
@@ -657,6 +643,22 @@ impl KubernetesJsonSchemaProvider {
             .map(|s| s.source_id.clone())
             .collect()
     }
+}
+
+/// Expand the full upstream provider document for regression tests and debugging.
+///
+/// Production provider lookup stays on the fragment-first path.
+#[must_use]
+pub fn debug_materialize_schema_for_resource(
+    provider: &KubernetesJsonSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<Value> {
+    let (source_id, version, filename, root) = provider.load_resource_doc(resource)?;
+    let loader = provider.loader_for_source(source_id, version);
+    let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
+    let root_doc = ctx.doc(&filename)?.clone();
+    let (_, expanded) = super::resolve_ctx::expand_schema_node(&mut ctx, &filename, &root_doc, 0);
+    Some(expanded)
 }
 
 impl K8sSchemaProvider for KubernetesJsonSchemaProvider {

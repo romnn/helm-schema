@@ -4,7 +4,9 @@ mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{ResourceRef, SymbolicIrContext};
-use helm_schema_k8s::CrdsCatalogSchemaProvider;
+use helm_schema_k8s::{
+    CrdsCatalogSchemaProvider, crds_catalog::debug_materialize_schema_for_resource,
+};
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -144,8 +146,7 @@ fn rendered_service_monitor_validates_against_crd_schema() {
     };
 
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
-    let schema = provider
-        .materialize_schema_for_resource(&resource)
+    let schema = debug_materialize_schema_for_resource(&provider, &resource)
         .expect("load crd schema for rendered resource");
 
     let schema = match schema {

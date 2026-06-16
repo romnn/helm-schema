@@ -4,7 +4,10 @@ mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{ResourceRef, SymbolicIrContext};
-use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
+use helm_schema_k8s::{
+    Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider,
+    kubernetes_openapi::debug_materialize_schema_for_resource,
+};
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -203,8 +206,7 @@ fn rendered_hpa_validates_against_upstream_k8s_schema() {
     // Kubernetes releases, so we validate it against an upstream schema bundle where
     // autoscaling/v2beta1 is still present.
     let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
-    let schema = provider
-        .materialize_schema_for_resource(&resource)
+    let schema = debug_materialize_schema_for_resource(&provider, &resource)
         .expect("load upstream k8s schema for rendered resource");
 
     let schema = match schema {

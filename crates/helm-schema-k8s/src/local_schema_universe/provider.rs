@@ -10,7 +10,6 @@ use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
     ProviderSchemaSource,
 };
-use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
 
 use super::LocalSchemaUniverse;
@@ -71,18 +70,6 @@ impl ChartLocalCrdSchemaProvider {
         }
         fragment
     }
-
-    #[must_use]
-    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let root = self.universe.schema_doc_for_resource(resource)?;
-        let mut stack = std::collections::HashSet::new();
-        Some(enrich_root_metadata_schema(expand_local_refs(
-            root.root(),
-            root.root(),
-            0,
-            &mut stack,
-        )))
-    }
 }
 
 impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
@@ -133,6 +120,21 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
             })
             .collect()
     }
+}
+
+/// Expand the full chart-local CRD document for regression tests and debugging.
+///
+/// Production provider lookup stays on the fragment-first path.
+#[must_use]
+pub fn debug_materialize_schema_for_resource(
+    provider: &ChartLocalCrdSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<Value> {
+    let root = provider.universe.schema_doc_for_resource(resource)?;
+    let mut stack = std::collections::HashSet::new();
+    Some(crate::metadata_enrichment::enrich_root_metadata_schema(
+        expand_local_refs(root.root(), root.root(), 0, &mut stack),
+    ))
 }
 
 #[cfg(test)]

@@ -1,5 +1,7 @@
 use helm_schema_ir::{ResourceRef, YamlPath};
-use helm_schema_k8s::{K8sSchemaProvider, LocalSchemaProvider};
+use helm_schema_k8s::{
+    K8sSchemaProvider, LocalSchemaProvider, local_override::debug_materialize_schema_for_resource,
+};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -65,9 +67,7 @@ fn materialize_expands_refs() {
         api_version_branches: Vec::new(),
     };
 
-    let actual = provider
-        .materialize_schema_for_resource(&r)
-        .expect("materialize");
+    let actual = debug_materialize_schema_for_resource(&provider, &r).expect("materialize");
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/schema#",
@@ -206,7 +206,7 @@ fn returns_none_for_missing_schema() {
         api_version_branches: Vec::new(),
     };
 
-    assert!(provider.materialize_schema_for_resource(&r).is_none());
+    assert!(debug_materialize_schema_for_resource(&provider, &r).is_none());
 }
 
 // Pins Finding (round 3) #4 — `LocalSchemaProvider` (a.k.a. the
@@ -248,8 +248,7 @@ fn local_provider_accepts_builtin_k8s_resource_override() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let actual = provider
-        .materialize_schema_for_resource(&r)
+    let actual = debug_materialize_schema_for_resource(&provider, &r)
         .expect("LocalSchemaProvider must answer for built-in group overrides");
     assert_eq!(
         actual.get("title").and_then(|v| v.as_str()),

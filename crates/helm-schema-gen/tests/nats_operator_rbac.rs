@@ -4,7 +4,9 @@ mod common;
 
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{ResourceRef, SymbolicIrContext};
-use helm_schema_k8s::KubernetesJsonSchemaProvider;
+use helm_schema_k8s::{
+    KubernetesJsonSchemaProvider, kubernetes_openapi::debug_materialize_schema_for_resource,
+};
 use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
@@ -152,7 +154,7 @@ fn validate_rendered_docs(rendered_yaml: &str) {
             api_version_branches: Vec::new(),
         };
 
-        if let Some(schema) = provider.materialize_schema_for_resource(&resource) {
+        if let Some(schema) = debug_materialize_schema_for_resource(&provider, &resource) {
             let schema = match schema {
                 serde_json::Value::Object(mut obj) => {
                     let _ = obj.remove("$schema");

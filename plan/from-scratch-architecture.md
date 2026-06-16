@@ -1884,10 +1884,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   executor calls, and capability executor calls share one owner. `Chain` is
   now a thin compatibility facade over that orchestrator plus the
   `K8sSchemaProvider` / `CapabilityOracle` adapter impls.
-- **B2 — lazy `SchemaDoc`**: delete the materialized per-resource `$ref`
-  expansion (the dominant RSS lever) — before profiling the new
+- **B2 — lazy `SchemaDoc` (complete)**: delete the materialized per-resource
+  `$ref` expansion (the dominant RSS lever) — before profiling the new
   interpreter, so memory blame lands on the right layer. Also the
-  prerequisite for A5's bundling. Current progress: providers now share parsed
+  prerequisite for A5's bundling. Providers now share parsed
   raw schema documents through a named `SchemaDoc` wrapper instead of cloning
   whole `serde_json::Value` trees from raw document caches, and the upstream
   K8s provider's production path lookup now descends through `$ref`s lazily
@@ -1896,10 +1896,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   cache fully expanded per-resource documents. CRD catalog, local override,
   and chart-local CRD lookup also apply Kubernetes metadata enrichment
   path-aware: non-metadata leaf lookups descend the raw document, metadata leaf
-  lookups clone and enrich only the metadata subtree, and only explicit root
-  materialization expands the enriched full document. Explicit materialization
-  helpers still exist for tests/debug, but they compute from shared raw
-  documents on demand. Provider lookup cache entries now store typed provider
+  lookups clone and enrich only the metadata subtree. Provider lookup cache
+  entries now store typed provider
   fragments instead of anonymous schema values, which keeps later source-doc
   and ref-shape metadata attachable without changing lookup/cache call sites
   again. OpenAPI lazy descent now preserves the exact provider document
@@ -1927,7 +1925,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   their refs point inside the retained leaf and rewrites those refs to the
   final root definition location; unsafe provider-document sibling refs remain
   expanded at the output boundary. The duplicate value-only `Chain` facade has
-  been removed.
+  been removed, and providers no longer expose whole-resource materialization
+  helpers on their public surface.
   Fragment lookup is the production-facing provider boundary; the value-only
   `K8sSchemaProvider` adapters have also been deleted, so callers that
   intentionally discard provider source/ref identity must project a

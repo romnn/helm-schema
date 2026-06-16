@@ -21,7 +21,6 @@ use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
     ProviderSchemaSource,
 };
-use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
 
 use super::cross_scan::collect_other_versions;
@@ -257,18 +256,6 @@ impl CrdsCatalogSchemaProvider {
         false
     }
 
-    #[must_use]
-    pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
-        let loaded = self.load_schema_doc(resource)?;
-        let mut stack = std::collections::HashSet::new();
-        Some(enrich_root_metadata_schema(expand_local_refs(
-            loaded.doc.root(),
-            loaded.doc.root(),
-            0,
-            &mut stack,
-        )))
-    }
-
     fn schema_leaf_for_resource_path_from_doc(
         &self,
         root: &SchemaDoc,
@@ -317,6 +304,21 @@ impl Default for CrdsCatalogSchemaProvider {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Expand the full catalog document for regression tests and debugging.
+///
+/// Production provider lookup stays on the fragment-first path.
+#[must_use]
+pub fn debug_materialize_schema_for_resource(
+    provider: &CrdsCatalogSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<Value> {
+    let loaded = provider.load_schema_doc(resource)?;
+    let mut stack = std::collections::HashSet::new();
+    Some(crate::metadata_enrichment::enrich_root_metadata_schema(
+        expand_local_refs(loaded.doc.root(), loaded.doc.root(), 0, &mut stack),
+    ))
 }
 
 impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
