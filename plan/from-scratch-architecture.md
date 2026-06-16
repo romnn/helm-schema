@@ -1464,7 +1464,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   claims directly into the owning `ContractIr`, so the projection path no
   longer builds a temporary contract graph just to merge it back into the
   interpreter.
-- **A4 — `ContractIR` + resolution/lowering (phase 6 fulfilled)**: the
+- **A4 — `ContractIR` + resolution/lowering (complete)**: the
   guarded constraint graph becomes the seam; polarity-table policy extracted
   from gen's god-loop into `ResolvePolicy`; two-tier operations
   (`partialize`, `restrict_to_scalar`) as named corpus-tested functions; the
