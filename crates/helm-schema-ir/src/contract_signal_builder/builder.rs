@@ -1,17 +1,19 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use crate::contract::ContractUse;
 use crate::contract_signals::{
     ContractPathSignals, ContractSchemaSignals, RequiredInferenceSignals,
 };
 use crate::provider_schema_use::ProviderSchemaUse;
-use crate::{ChartFacts, Guard, PathFact, ValueKind};
+use crate::{Guard, ValueKind};
 
 use super::classifiers::{
     guard_constraint_from_guard, metadata_field_kind_from_yaml_path, use_is_null_tolerant,
     use_is_positive_header, use_is_self_guarded,
 };
-use super::value_path_facts::{build_contract_value_path_facts, collect_paths_with_descendants};
+use super::value_path_facts::{
+    RenderPathFacts, build_contract_value_path_facts, collect_paths_with_descendants,
+};
 
 pub(crate) fn derive_schema_signals_from_uses(uses: &[ContractUse]) -> ContractSchemaSignals {
     let mut builder = ContractSchemaSignalBuilder::default();
@@ -23,30 +25,11 @@ pub(crate) fn derive_schema_signals_from_uses(uses: &[ContractUse]) -> ContractS
 
 #[derive(Default)]
 struct ContractSchemaSignalBuilder {
-    chart_facts_by_path: BTreeMap<String, ChartPathAccumulator>,
-    chart_descendant_paths: BTreeSet<String>,
+    render_facts_by_path: BTreeMap<String, RenderPathFacts>,
     path_signals: ContractPathSignals,
     provider_schema_uses: Vec<ProviderSchemaUse>,
     nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
     required_inference_signals: RequiredInferenceSignals,
-}
-
-struct ChartPathAccumulator {
-    has_render_use: bool,
-    all_render_uses_self_guarded: bool,
-    has_fragment_render: bool,
-    has_self_range_guard_render_use: bool,
-}
-
-impl Default for ChartPathAccumulator {
-    fn default() -> Self {
-        Self {
-            has_render_use: false,
-            all_render_uses_self_guarded: true,
-            has_fragment_render: false,
-            has_self_range_guard_render_use: false,
-        }
-    }
 }
 
 struct NullablePathAccumulator {
@@ -66,30 +49,13 @@ impl Default for NullablePathAccumulator {
 impl ContractSchemaSignalBuilder {
     fn record(&mut self, contract_use: &ContractUse) {
         self.record_provider_schema_use(contract_use);
-        self.record_chart_facts(contract_use);
+        self.record_render_facts(contract_use);
         self.record_path_signals(contract_use);
         self.record_nullable_path(contract_use);
         self.record_required_inference_signals(contract_use);
     }
 
     fn finish(self) -> ContractSchemaSignals {
-        let chart_descendant_paths = self.chart_descendant_paths;
-        let path_facts: BTreeMap<String, PathFact> = self
-            .chart_facts_by_path
-            .into_iter()
-            .map(|(path, acc)| {
-                (
-                    path.clone(),
-                    PathFact {
-                        has_render_use: acc.has_render_use,
-                        all_render_uses_self_guarded: acc.all_render_uses_self_guarded,
-                        has_fragment_render: acc.has_fragment_render,
-                        descendant_accessed: chart_descendant_paths.contains(&path),
-                        has_self_range_guard_render_use: acc.has_self_range_guard_render_use,
-                    },
-                )
-            })
-            .collect();
         let paths_with_referenced_descendants =
             collect_paths_with_descendants(&self.path_signals.referenced_value_paths);
         let nullable_value_paths = self
@@ -98,14 +64,13 @@ impl ContractSchemaSignalBuilder {
             .filter_map(|(path, acc)| (acc.has_render_use && acc.all_uses_nullable).then_some(path))
             .collect();
         let value_path_facts = build_contract_value_path_facts(
-            &path_facts,
+            &self.render_facts_by_path,
             &self.path_signals,
             &nullable_value_paths,
             &paths_with_referenced_descendants,
         );
 
         ContractSchemaSignals {
-            chart_facts: ChartFacts { path_facts },
             path_signals: self.path_signals,
             provider_schema_uses: self.provider_schema_uses,
             nullable_value_paths,
@@ -121,20 +86,19 @@ impl ContractSchemaSignalBuilder {
         }
     }
 
-    fn record_chart_facts(&mut self, contract_use: &ContractUse) {
+    fn record_render_facts(&mut self, contract_use: &ContractUse) {
         if contract_use.source_expr.trim().is_empty() {
-            self.record_empty_source_chart_facts(contract_use);
+            self.record_empty_source_render_facts(contract_use);
             return;
         }
 
-        self.chart_accumulator(&contract_use.source_expr);
+        self.render_path_facts(&contract_use.source_expr);
         if !contract_use.path.0.is_empty() {
             let self_range_guarded = contract_use.guards.iter().any(
                 |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
             );
-            self.record_chart_render_use(
+            self.record_render_use(
                 &contract_use.source_expr,
-                contract_use,
                 self_range_guarded,
                 Some(use_is_self_guarded(contract_use)),
             );
@@ -145,64 +109,37 @@ impl ContractSchemaSignalBuilder {
                 if path.trim().is_empty() || path == contract_use.source_expr {
                     continue;
                 }
-                self.chart_accumulator(path);
+                self.render_path_facts(path);
                 if !contract_use.path.0.is_empty() {
-                    self.record_chart_render_use(
-                        path,
-                        contract_use,
-                        matches!(guard, Guard::Range { .. }),
-                        None,
-                    );
+                    self.record_render_use(path, matches!(guard, Guard::Range { .. }), None);
                 }
             }
         }
-
-        let mut segments: Vec<&str> = contract_use
-            .source_expr
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .collect();
-        while segments.len() > 1 {
-            segments.pop();
-            self.chart_descendant_paths.insert(segments.join("."));
-        }
     }
 
-    fn record_empty_source_chart_facts(&mut self, contract_use: &ContractUse) {
+    fn record_empty_source_render_facts(&mut self, contract_use: &ContractUse) {
         for guard in &contract_use.guards {
             for path in guard.value_paths() {
                 if path.trim().is_empty() {
                     continue;
                 }
-                self.chart_accumulator(path);
+                self.render_path_facts(path);
                 if !contract_use.path.0.is_empty() {
-                    self.record_chart_render_use(
-                        path,
-                        contract_use,
-                        matches!(guard, Guard::Range { .. }),
-                        None,
-                    );
+                    self.record_render_use(path, matches!(guard, Guard::Range { .. }), None);
                 }
             }
         }
     }
 
-    fn chart_accumulator(&mut self, path: &str) -> &mut ChartPathAccumulator {
-        self.chart_facts_by_path
+    fn render_path_facts(&mut self, path: &str) -> &mut RenderPathFacts {
+        self.render_facts_by_path
             .entry(path.to_string())
             .or_default()
     }
 
-    fn record_chart_render_use(
-        &mut self,
-        path: &str,
-        contract_use: &ContractUse,
-        range_guarded: bool,
-        self_guarded: Option<bool>,
-    ) {
-        let acc = self.chart_accumulator(path);
+    fn record_render_use(&mut self, path: &str, range_guarded: bool, self_guarded: Option<bool>) {
+        let acc = self.render_path_facts(path);
         acc.has_render_use = true;
-        acc.has_fragment_render |= contract_use.kind == ValueKind::Fragment;
         acc.has_self_range_guard_render_use |= range_guarded;
         if let Some(self_guarded) = self_guarded {
             acc.all_render_uses_self_guarded &= self_guarded;

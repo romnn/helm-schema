@@ -4,7 +4,6 @@ mod bound_helper_call_analysis;
 mod bound_value_analysis;
 mod capability_branch;
 mod capability_liveness;
-mod chart_facts;
 mod compatibility;
 mod condition_action_plan;
 mod condition_guards;
@@ -17,6 +16,7 @@ mod contract_signals_tests;
 mod contract_sink;
 #[cfg(test)]
 mod contract_tests;
+mod contract_types;
 mod default_type_hints;
 mod define_body_cache;
 mod document_projection;
@@ -86,13 +86,13 @@ pub use capability_branch::{
 pub use capability_liveness::{
     CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
 };
-pub use chart_facts::{ChartFacts, PathFact};
-pub use compatibility::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
+pub use compatibility::ValueUse;
 pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
     MetadataFieldKind, RequiredInferenceSignals,
 };
+pub use contract_types::{Guard, ResourceRef, ValueKind, YamlPath};
 pub use default_type_hints::extract_default_type_hints;
 pub use helper_discovery::{DefineBlock, extract_define_blocks, extract_helper_calls};
 pub use provider_schema_use::ProviderSchemaUse;

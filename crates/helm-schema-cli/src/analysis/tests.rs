@@ -47,11 +47,11 @@ spec:
     let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
     let path = "kid.controller.ingressClassResource.parameters";
 
-    let ir_facts = collection.contract_schema_signals.chart_facts;
-    let ir_fact = ir_facts
-        .path_facts
+    let ir_fact = collection
+        .contract_schema_signals
+        .value_path_facts
         .get(path)
-        .unwrap_or_else(|| panic!("missing IR-derived fact for {path}: {ir_facts:#?}"));
+        .unwrap_or_else(|| panic!("missing IR-derived fact for {path}"));
     assert!(
         ir_fact.all_render_uses_self_guarded,
         "IR-derived chart fact should stay self-guarded: {ir_fact:#?}"

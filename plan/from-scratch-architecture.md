@@ -1597,7 +1597,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   compatibility fallback through a named policy input rather than treating the
   fallback scan as the only source of default knowledge.
   Core schema generation now consumes a single `ContractSchemaSignals`
-  projection containing chart facts, path signals, provider-schema lookup
+  projection containing value-path facts, path signals, provider-schema lookup
   requests, and nullable-path evidence, so the generator boundary no longer
   pulls those contract facts through several independent raw-claim views.
   That projection is now derived by one contract-layer signal builder pass,
@@ -1618,6 +1618,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   compatibility-era projection. Production analysis derives those signals
   directly from the normalized `ContractIr`; `ContractProjection` remains
   only the explicit fixture/external DTO inspection boundary.
+  The obsolete public `ChartFacts` projection has been deleted as well:
+  render/self-guard evidence now lives only in `ContractValuePathFacts`, and
+  descendant topology has one contract-owned owner instead of a second
+  chart-facts map.
   CLI chart analysis is now split into explicit stage modules as well:
   `manifest_analysis` owns manifest template parsing, contract collection,
   and literal CRD extraction, while `chart_evidence` owns non-contract
@@ -1822,9 +1826,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   source-aware local-ref descent shape: resolved leaves carry typed
   provider-document identity when the leaf corresponds to a stable source JSON
   Pointer, while synthetic metadata enrichment deliberately stays anonymous.
-  The remaining work here is source-aware bundled emission itself, so foreign
-  schema documents can stay ref-shaped throughout more of the pipeline rather
-  than being re-materialized before the exact-sharing pass.
+  Shared provider `$defs` emission now uses that source identity for stable
+  definition names when every structurally shared fragment has the same typed
+  provider source; structurally identical fragments from different sources
+  still deduplicate under generic names. The remaining deeper A5 refinement is
+  to keep foreign schema documents ref-shaped through more of the pipeline
+  rather than re-materializing them before the exact-sharing pass.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
@@ -1889,8 +1896,8 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   an encoded string. This is the next prerequisite for retaining `$ref` shape
   deeper in bundled emission. Local override, CRD catalog, and chart-local
   CRD providers now report matching source locations for real document-backed
-  leaves, leaving source-aware bundled emission as the next consolidation
-  point.
+  leaves, and shared `$defs` emission now consumes that metadata for stable
+  source-aware names.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated
@@ -1943,7 +1950,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   overrides, flatten): *move, don't redesign*. Immediate payoff: hermetic
   in-process integration tests. Current progress: chart analysis now lives
   behind a dedicated CLI-internal `analysis` module that owns contract
-  collection, chart facts, local schema discovery, helper reachability, and
+  collection, contract schema signals, local schema discovery, helper reachability, and
   type-hint scoping; the CLI root is left to orchestrate config, provider
   construction, diagnostics, and writing. Schema-output assembly now also
   runs through `output_pipeline`: override loading/preparation, shared global

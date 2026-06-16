@@ -1,6 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::ChartFacts;
 use crate::provider_schema_use::ProviderSchemaUse;
 
 /// Type-level constraints declared by template guards.
@@ -66,7 +65,6 @@ pub struct RequiredInferenceSignals {
 /// re-reading raw contract claims.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
-    pub chart_facts: ChartFacts,
     pub path_signals: ContractPathSignals,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub nullable_value_paths: BTreeSet<String>,

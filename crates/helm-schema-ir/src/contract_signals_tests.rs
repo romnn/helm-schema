@@ -289,10 +289,10 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
     );
     assert!(
         signals
-            .chart_facts
-            .path_facts
+            .value_path_facts
             .get("serviceAccount.name")
             .is_some_and(|fact| fact.has_render_use && fact.all_render_uses_self_guarded),
+        "contract value-path facts should own render-use evidence",
     );
     assert!(
         signals
