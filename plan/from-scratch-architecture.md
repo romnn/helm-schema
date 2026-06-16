@@ -1979,9 +1979,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 
 ### 15.5 Workstream C — chart/facade edges (parallel filler, low risk)
 
-- **C1 — extract library logic from the CLI** (discovery, `compose_values`,
-  overrides, flatten): *move, don't redesign*. Immediate payoff: hermetic
-  in-process integration tests. Current progress: chart analysis now lives
+- **C1 — extract library logic from the CLI (complete)** (discovery,
+  `compose_values`, overrides, flatten): *move, don't redesign*. Immediate
+  payoff: hermetic in-process integration tests. Chart analysis now lives
   behind a dedicated CLI-internal `analysis` module that owns contract
   collection, contract schema signals, local schema discovery, helper reachability, and
   type-hint scoping; the CLI root is left to orchestrate config, provider
@@ -1996,7 +1996,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   analysis and generation facades are now split internally by responsibility:
   analysis collection, top-level values seeding, generation options, and the
   generation pipeline have separate owners while preserving the same public
-  API and output behavior.
+  API and output behavior. The remaining root-era `manifest_analysis` and
+  `chart_files` internals have been folded into the `analysis` and `chart`
+  module families, so the crate root no longer owns chart-analysis
+  implementation modules outside the facade surface.
 - **C2 — `FileRole` model + Chart.yaml `condition:`/`tags:` evidence**
   (feeds A4 policy; unlocks B4). Current progress: chart file discovery now
   flows through a typed `FileRole` model that classifies rendered manifest

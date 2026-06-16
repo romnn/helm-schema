@@ -6,7 +6,7 @@ use vfs::VfsPath;
 
 use super::files::files_with_role;
 use super::types::ChartContext;
-use crate::chart_files::{self, FileRole};
+use super::{FileRole, list_chart_files};
 use crate::error::CliResult;
 
 #[instrument(skip_all)]
@@ -14,7 +14,7 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
     let mut index = DefineIndex::new();
 
     for chart in charts {
-        let chart_files = chart_files::list_chart_files(&chart.chart_dir, include_tests)?;
+        let chart_files = list_chart_files(&chart.chart_dir, include_tests)?;
 
         for path in chart_files
             .iter()

@@ -218,49 +218,40 @@ mod tests {
         )?;
         test_util::write(
             &chart_dir.join("templates/_helpers.tpl")?,
-            "{{ define \"x\" }}",
+            "{{ define \"x\" }}{{ end }}\n",
         )?;
-        test_util::write(&chart_dir.join("templates/tests/pod.yaml")?, "kind: Pod\n")?;
         test_util::write(
-            &chart_dir.join("crds/widgets.yaml")?,
+            &chart_dir.join("templates/tests/test-job.yaml")?,
+            "kind: Job\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("crds/example.yaml")?,
             "kind: CustomResourceDefinition\n",
         )?;
-        test_util::write(
-            &chart_dir.join("files/extra.tpl")?,
-            "name: {{ .Values.name }}\n",
-        )?;
-        test_util::write(&chart_dir.join("files/readme.txt")?, "ignored\n")?;
+        test_util::write(&chart_dir.join("files/config.yaml")?, "answer: 42\n")?;
 
-        let without_tests = list_chart_files(&chart_dir, false)?;
+        let files_without_tests = list_chart_files(&chart_dir, false)?;
         assert_eq!(
-            role_paths(&without_tests, FileRole::ManifestTemplate),
-            vec!["deployment.yaml".to_string()]
+            role_paths(&files_without_tests, FileRole::ManifestTemplate),
+            vec!["deployment.yaml"]
         );
         assert_eq!(
-            role_paths(&without_tests, FileRole::DefineIndexTemplate),
-            vec!["_helpers.tpl".to_string(), "deployment.yaml".to_string()]
+            role_paths(&files_without_tests, FileRole::DefineIndexTemplate),
+            vec!["_helpers.tpl", "deployment.yaml"]
         );
         assert_eq!(
-            role_paths(&without_tests, FileRole::StaticCrd),
-            vec!["widgets.yaml".to_string()]
+            role_paths(&files_without_tests, FileRole::StaticCrd),
+            vec!["example.yaml"]
         );
         assert_eq!(
-            role_paths(&without_tests, FileRole::FilesGetSource),
-            vec!["extra.tpl".to_string()]
+            role_paths(&files_without_tests, FileRole::FilesGetSource),
+            vec!["config.yaml"]
         );
 
-        let with_tests = list_chart_files(&chart_dir, true)?;
+        let files_with_tests = list_chart_files(&chart_dir, true)?;
         assert_eq!(
-            role_paths(&with_tests, FileRole::ManifestTemplate),
-            vec!["deployment.yaml".to_string(), "pod.yaml".to_string()]
-        );
-        assert_eq!(
-            role_paths(&with_tests, FileRole::DefineIndexTemplate),
-            vec![
-                "_helpers.tpl".to_string(),
-                "deployment.yaml".to_string(),
-                "pod.yaml".to_string()
-            ]
+            role_paths(&files_with_tests, FileRole::ManifestTemplate),
+            vec!["deployment.yaml", "test-job.yaml"]
         );
 
         Ok(())

@@ -1,4 +1,5 @@
 mod collection;
+mod manifest_contract;
 #[cfg(test)]
 mod tests;
 mod values_seed;

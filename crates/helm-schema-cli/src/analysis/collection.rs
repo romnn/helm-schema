@@ -2,11 +2,11 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractIr, ContractSchemaSignals, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 
+use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
 use super::values_seed::seed_top_level_values_yaml_keys;
 use crate::chart;
 use crate::chart_evidence::{ChartTemplateEvidence, collect_chart_template_evidence};
 use crate::error::CliResult;
-use crate::manifest_analysis::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
 
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {

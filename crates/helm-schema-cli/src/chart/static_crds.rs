@@ -4,9 +4,9 @@ use helm_schema_k8s::LocalSchemaUniverse;
 use serde::Deserialize;
 use tracing::instrument;
 
+use super::FileRole;
 use super::files::files_with_role;
 use super::types::ChartContext;
-use crate::chart_files::FileRole;
 use crate::error::CliResult;
 
 #[instrument(skip_all)]
