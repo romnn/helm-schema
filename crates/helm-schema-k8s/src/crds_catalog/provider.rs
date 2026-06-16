@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
@@ -443,6 +443,31 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
     }
 }
 
+impl helm_schema_core::ResourceSchemaOracle for CrdsCatalogSchemaProvider {
+    fn schema_fragment_for_use(
+        &self,
+        use_: &helm_schema_core::ProviderSchemaUse,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        <Self as K8sSchemaProvider>::schema_fragment_for_use(self, use_)
+    }
+
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &helm_schema_core::ResourceRef,
+        path: &helm_schema_core::YamlPath,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        <Self as K8sSchemaProvider>::schema_fragment_for_resource_path(self, resource, path)
+    }
+
+    fn origin(&self) -> helm_schema_core::ProviderOrigin {
+        <Self as K8sSchemaProvider>::origin(self)
+    }
+
+    fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
+        <Self as K8sSchemaProvider>::has_resource(self, resource)
+    }
+}
+
 fn write_atomic(local: &Path, bytes: &[u8]) -> std::io::Result<()> {
     if let Some(parent) = local.parent() {
         fs::create_dir_all(parent)?;
@@ -512,7 +537,7 @@ fn default_crd_schema_cache_dir() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use helm_schema_ir::{ResourceRef, YamlPath};
+    use helm_schema_core::{ResourceRef, YamlPath};
     use serde_json::json;
 
     use super::*;

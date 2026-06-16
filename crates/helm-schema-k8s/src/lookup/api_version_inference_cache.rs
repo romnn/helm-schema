@@ -38,7 +38,7 @@ mod tests {
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
-    use helm_schema_ir::{ResourceRef, YamlPath};
+    use helm_schema_core::{ResourceRef, YamlPath};
 
     use super::*;
     use crate::inference::{ApiVersionCandidate, InferenceSource};

@@ -1,8 +1,12 @@
 use serde_json::{Map, Value};
 
-use helm_schema_k8s::type_schema;
-
 use crate::merge::{merge_two_schemas, union_schema_list};
+
+pub(crate) fn type_schema(ty: &str) -> Value {
+    let mut schema = serde_json::Map::new();
+    schema.insert("type".to_string(), Value::String(ty.to_string()));
+    Value::Object(schema)
+}
 
 pub(crate) fn schema_type(value: &Value) -> Option<&str> {
     value.as_object()?.get("type")?.as_str()

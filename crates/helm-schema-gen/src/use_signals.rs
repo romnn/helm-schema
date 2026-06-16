@@ -1,13 +1,14 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
+use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractPathSignals, MetadataFieldKind, ProviderSchemaUse};
-use helm_schema_k8s::{K8sSchemaProvider, type_schema};
+use helm_schema_ir::{ContractPathSignals, MetadataFieldKind};
 
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::ResolvePolicy;
+use crate::schema_model::type_schema;
 
 pub(crate) struct UseSignals {
     pub(crate) referenced_value_paths: BTreeSet<String>,
@@ -18,9 +19,9 @@ pub(crate) struct UseSignals {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ProviderSchemaLookupKey {
-    resource: helm_schema_ir::ResourceRef,
-    path: helm_schema_ir::YamlPath,
-    kind: helm_schema_ir::ValueKind,
+    resource: ResourceRef,
+    path: YamlPath,
+    kind: ValueKind,
     is_self_range_collection: bool,
 }
 
@@ -28,7 +29,7 @@ struct ProviderSchemaLookupKey {
 pub(crate) fn collect_use_signals(
     path_signals: ContractPathSignals,
     provider_schema_uses: &[ProviderSchemaUse],
-    provider: &dyn K8sSchemaProvider,
+    provider: &dyn ResourceSchemaOracle,
 ) -> UseSignals {
     let resolve_policy = ResolvePolicy::default();
     let ContractPathSignals {
@@ -111,7 +112,7 @@ pub(crate) fn collect_use_signals(
     )
 )]
 fn lookup_provider_schema(
-    provider: &dyn K8sSchemaProvider,
+    provider: &dyn ResourceSchemaOracle,
     provider_use: &ProviderSchemaUse,
     resolve_policy: &ResolvePolicy,
 ) -> Option<Arc<ProviderSchemaCandidate>> {

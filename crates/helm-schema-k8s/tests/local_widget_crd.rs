@@ -1,4 +1,4 @@
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     K8sSchemaProvider, LocalSchemaProvider, local_override::debug_materialize_schema_for_resource,
 };

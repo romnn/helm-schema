@@ -1,4 +1,4 @@
-use helm_schema_ir::{CapabilityOracle, ResourceRef};
+use helm_schema_core::{CapabilityOracle, ResourceRef};
 
 use crate::diagnostic::Diagnostic;
 use crate::filename::candidate_filenames_for_resource;
@@ -99,7 +99,7 @@ fn local_override_unreadable(trace: &LookupTrace) -> Option<Diagnostic> {
 
 #[cfg(test)]
 mod tests {
-    use helm_schema_ir::YamlPath;
+    use helm_schema_core::YamlPath;
 
     use super::*;
     use crate::lookup::ProviderLookupResult;

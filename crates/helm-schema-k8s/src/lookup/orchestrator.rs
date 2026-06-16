@@ -1,4 +1,4 @@
-use helm_schema_ir::{
+use helm_schema_core::{
     ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, YamlPath,
 };
 

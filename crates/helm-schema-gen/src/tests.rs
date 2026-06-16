@@ -8,13 +8,12 @@ use crate::{
     resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
 };
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_core::{ProviderOrigin, ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, Guard, ProviderSchemaUse, ResourceRef,
     SymbolicIrContext, ValueKind, YamlPath, extract_default_type_hints,
 };
-use helm_schema_k8s::{
-    Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider, ProviderOrigin, ProviderSchemaFragment,
-};
+use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
 fn provider() -> KubernetesJsonSchemaProvider {
     KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
@@ -200,7 +199,7 @@ fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
 #[derive(Debug)]
 struct DescriptionProvider;
 
-impl K8sSchemaProvider for DescriptionProvider {
+impl ResourceSchemaOracle for DescriptionProvider {
     fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
         Some(ProviderSchemaFragment::new(serde_json::json!({
             "description": "provider description",
@@ -228,7 +227,7 @@ impl K8sSchemaProvider for DescriptionProvider {
 #[derive(Debug)]
 struct SharedObjectProvider;
 
-impl K8sSchemaProvider for SharedObjectProvider {
+impl ResourceSchemaOracle for SharedObjectProvider {
     fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
         Some(ProviderSchemaFragment::new(serde_json::json!({
             "type": "object",

@@ -13,7 +13,7 @@
 use std::fs;
 use std::sync::Arc;
 
-use helm_schema_ir::ApiPresenceQuery;
+use helm_schema_core::ApiPresenceQuery;
 use helm_schema_k8s::{
     K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry, MockFetcher,
     SourceProbeTraceOutcome, default_source_id,

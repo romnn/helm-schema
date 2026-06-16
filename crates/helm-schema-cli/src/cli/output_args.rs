@@ -2,9 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::output_pipeline::{
-    JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferenceMode,
-};
+use helm_schema::{JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferenceMode};
 
 #[derive(Args, Debug, Clone)]
 pub struct OutputArgs {

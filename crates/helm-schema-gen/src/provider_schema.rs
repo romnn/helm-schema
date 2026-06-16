@@ -1,4 +1,4 @@
-use helm_schema_k8s::{ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment};
+use helm_schema_core::{ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment};
 use serde_json::Value;
 
 use crate::schema_model::schema_type;

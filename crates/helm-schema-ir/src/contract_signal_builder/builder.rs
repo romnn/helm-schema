@@ -4,7 +4,7 @@ use crate::contract::ContractUse;
 use crate::contract_signals::{
     ContractPathSignals, ContractSchemaSignals, RequiredInferenceSignals,
 };
-use crate::provider_schema_use::ProviderSchemaUse;
+use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
 
 use super::classifiers::{
@@ -81,7 +81,7 @@ impl ContractSchemaSignalBuilder {
     }
 
     fn record_provider_schema_use(&mut self, contract_use: &ContractUse) {
-        if let Some(provider_use) = ProviderSchemaUse::from_contract_use(contract_use) {
+        if let Some(provider_use) = from_contract_use(contract_use) {
             self.provider_schema_uses.push(provider_use);
         }
     }

@@ -4,9 +4,8 @@ use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use crate::merge::merge_schema_list;
-use crate::schema_model::empty_schema;
+use crate::schema_model::{empty_schema, type_schema};
 use crate::schema_tree::{object_schema, unknown_object_schema};
-use helm_schema_k8s::type_schema;
 
 pub(crate) struct ValuesYamlPathInfo {
     pub(crate) schema: Value,

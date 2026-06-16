@@ -2013,9 +2013,23 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Discovery-level scoping and end-to-end boolean schema generation are both
   covered by tests, so the phase's structural and user-facing parts are in
   place.
-- **C3 — the crate consolidation to §5.1's layout: last**, once module
-  shapes match their target homes. Under v3 this is mostly *merging*
-  (ast+ir+gen → engine) rather than splitting — strictly easier.
+- **C3 — crate consolidation to §5.1's layout: complete**.
+  The repository now has the intended product-facing shape:
+  `helm-schema-core` owns the engine↔knowledge seam, `helm-schema-engine`
+  fronts the pure semantic stack, `helm-schema` owns the facade/product API,
+  and `helm-schema-cli` is reduced to clap/binary glue plus compatibility
+  re-exports. The old split crates remain in the workspace as internal
+  compatibility crates, but the product path no longer consumes them
+  directly:
+  1. `helm-schema-k8s` depends on `helm-schema-core`, not
+     `helm-schema-ir`;
+  2. the facade depends on `helm-schema-engine` and `helm-schema-k8s`,
+     not directly on `ast` / `ir` / `gen`;
+  3. the CLI depends on `helm-schema` rather than owning a duplicate facade
+     implementation.
+  This finishes the topology migration without a risky code transplant into a
+  monolithic crate. Further shrinkage of the old compatibility crates is
+  cleanup work, not an open architectural phase.
 
 ### 15.6 Dependencies and sync points
 

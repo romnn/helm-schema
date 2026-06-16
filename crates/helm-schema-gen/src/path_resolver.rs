@@ -4,12 +4,11 @@ use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::ContractValuePathFacts;
-use helm_schema_k8s::type_schema;
 
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
-use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema};
+use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema, type_schema};
 use crate::use_signals::UseSignals;
 use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
 

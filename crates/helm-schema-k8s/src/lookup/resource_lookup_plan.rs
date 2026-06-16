@@ -1,4 +1,4 @@
-use helm_schema_ir::{CapabilityOracle, ResourceRef, live_literals};
+use helm_schema_core::{CapabilityOracle, ResourceRef, live_literals};
 
 use crate::ordered_api_versions_for_resource;
 
@@ -102,7 +102,7 @@ fn resource_candidates_with_api_versions(
 
 #[cfg(test)]
 mod tests {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch, StaticOracle};
+    use helm_schema_core::{CapabilityGuard, HelperBranch, StaticOracle};
 
     use super::*;
 

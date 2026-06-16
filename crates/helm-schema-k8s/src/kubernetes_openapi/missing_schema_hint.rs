@@ -1,4 +1,4 @@
-use helm_schema_ir::ResourceRef;
+use helm_schema_core::ResourceRef;
 
 fn parse_k8s_semver(version_dir: &str) -> Option<(u32, u32, u32)> {
     let v = version_dir.trim().trim_start_matches('v');

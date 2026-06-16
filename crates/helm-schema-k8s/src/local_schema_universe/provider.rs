@@ -1,4 +1,4 @@
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::inference::{ApiVersionCandidate, InferenceSource};
@@ -135,6 +135,31 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
                 origin: ProviderOrigin::ChartLocalCrd,
             })
             .collect()
+    }
+}
+
+impl helm_schema_core::ResourceSchemaOracle for ChartLocalCrdSchemaProvider {
+    fn schema_fragment_for_use(
+        &self,
+        use_: &helm_schema_core::ProviderSchemaUse,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        <Self as K8sSchemaProvider>::schema_fragment_for_use(self, use_)
+    }
+
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &helm_schema_core::ResourceRef,
+        path: &helm_schema_core::YamlPath,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        <Self as K8sSchemaProvider>::schema_fragment_for_resource_path(self, resource, path)
+    }
+
+    fn origin(&self) -> helm_schema_core::ProviderOrigin {
+        <Self as K8sSchemaProvider>::origin(self)
+    }
+
+    fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
+        <Self as K8sSchemaProvider>::has_resource(self, resource)
     }
 }
 

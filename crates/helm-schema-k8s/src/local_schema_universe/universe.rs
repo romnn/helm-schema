@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use helm_schema_ir::ResourceRef;
+use helm_schema_core::ResourceRef;
 use serde_json::Value;
 
 use crate::schema_doc::SchemaDoc;

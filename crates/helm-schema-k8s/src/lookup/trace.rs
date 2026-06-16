@@ -1,4 +1,4 @@
-use helm_schema_ir::{ApiPresenceQuery, ResourceRef, YamlPath};
+use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 
 use super::chain_outcome::ChainLookupOutcome;
 use super::provider_origin::ProviderOrigin;

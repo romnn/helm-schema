@@ -38,7 +38,7 @@ fn legacy_cache_layout_is_invalidated_in_alpha() {
         .with_diagnostic_sink(diagnostics.clone());
 
     // Trigger the layout check via any normal entry point.
-    let resource = helm_schema_ir::ResourceRef {
+    let resource = helm_schema_core::ResourceRef {
         api_version: "v1".to_string(),
         kind: "Service".to_string(),
         api_version_candidates: Vec::new(),
@@ -46,7 +46,7 @@ fn legacy_cache_layout_is_invalidated_in_alpha() {
     };
     let _ = provider.has_resource(&resource);
     let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_ir::YamlPath(Vec::new()));
+        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     // Legacy `<root>/v1.35.0/foo.json` was wiped.
     assert!(
@@ -86,7 +86,7 @@ fn cache_layout_version_marker_written_after_repopulate() {
         .with_fetcher(mock.clone())
         .with_diagnostic_sink(diagnostics.clone());
 
-    let resource = helm_schema_ir::ResourceRef {
+    let resource = helm_schema_core::ResourceRef {
         api_version: "v1".to_string(),
         kind: "Service".to_string(),
         api_version_candidates: Vec::new(),
@@ -94,7 +94,7 @@ fn cache_layout_version_marker_written_after_repopulate() {
     };
     let _ = provider.has_resource(&resource);
     let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_ir::YamlPath(Vec::new()));
+        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let marker = root.join(LAYOUT_MARKER_FILENAME);
     assert!(
@@ -127,14 +127,14 @@ fn cache_invalidation_emits_diagnostic() {
         .with_fetcher(mock)
         .with_diagnostic_sink(diagnostics.clone());
 
-    let resource = helm_schema_ir::ResourceRef {
+    let resource = helm_schema_core::ResourceRef {
         api_version: "v1".to_string(),
         kind: "Service".to_string(),
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
     let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_ir::YamlPath(Vec::new()));
+        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let snapshot = diagnostics.snapshot();
     let inv = snapshot
@@ -172,14 +172,14 @@ fn forward_incompat_cache_emits_diagnostic() {
         .with_fetcher(mock)
         .with_diagnostic_sink(diagnostics.clone());
 
-    let resource = helm_schema_ir::ResourceRef {
+    let resource = helm_schema_core::ResourceRef {
         api_version: "v1".to_string(),
         kind: "Service".to_string(),
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
     let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_ir::YamlPath(Vec::new()));
+        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let snapshot = diagnostics.snapshot();
     let payload = snapshot
@@ -235,23 +235,23 @@ fn cache_invalidation_is_per_root() {
 
     // Probe a K8s resource → triggers K8s layout check (invalidation).
     let _ = chain.schema_fragment_for_resource_path(
-        &helm_schema_ir::ResourceRef {
+        &helm_schema_core::ResourceRef {
             api_version: "v1".to_string(),
             kind: "Service".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         },
-        &helm_schema_ir::YamlPath(Vec::new()),
+        &helm_schema_core::YamlPath(Vec::new()),
     );
     // Probe a CRD resource → triggers CRD layout check (no-op).
     let _ = chain.schema_fragment_for_resource_path(
-        &helm_schema_ir::ResourceRef {
+        &helm_schema_core::ResourceRef {
             api_version: "monitoring.coreos.com/v1".to_string(),
             kind: "ServiceMonitor".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         },
-        &helm_schema_ir::YamlPath(Vec::new()),
+        &helm_schema_core::YamlPath(Vec::new()),
     );
 
     let snapshot = diagnostics.snapshot();
@@ -316,25 +316,25 @@ fn cache_forward_incompat_one_root_does_not_block_other() {
     // First, probe a K8s resource so K8s's layout check fires
     // (forward-incompat marker → diagnostic + NotOwned).
     let _ = chain.schema_fragment_for_resource_path(
-        &helm_schema_ir::ResourceRef {
+        &helm_schema_core::ResourceRef {
             api_version: "v1".to_string(),
             kind: "Service".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         },
-        &helm_schema_ir::YamlPath(Vec::new()),
+        &helm_schema_core::YamlPath(Vec::new()),
     );
 
     // Then, probe a CRD resource — K8s is forward-incompat, but CRD
     // resolution must still succeed.
     let schema = chain.schema_fragment_for_resource_path(
-        &helm_schema_ir::ResourceRef {
+        &helm_schema_core::ResourceRef {
             api_version: "monitoring.coreos.com/v1".to_string(),
             kind: "ServiceMonitor".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         },
-        &helm_schema_ir::YamlPath(Vec::new()),
+        &helm_schema_core::YamlPath(Vec::new()),
     );
     assert!(
         schema.is_some(),
@@ -404,13 +404,13 @@ fn override_dir_never_invalidated() {
 
     // Trigger the layout check by probing any CRD-shaped resource.
     let _ = chain.schema_fragment_for_resource_path(
-        &helm_schema_ir::ResourceRef {
+        &helm_schema_core::ResourceRef {
             api_version: "monitoring.coreos.com/v1".to_string(),
             kind: "ServiceMonitor".to_string(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         },
-        &helm_schema_ir::YamlPath(Vec::new()),
+        &helm_schema_core::YamlPath(Vec::new()),
     );
 
     // Override file is untouched.
@@ -450,7 +450,7 @@ fn cache_layout_version_newer_marker_refuses_mutation() {
         .with_fetcher(mock.clone())
         .with_diagnostic_sink(diagnostics.clone());
 
-    let resource = helm_schema_ir::ResourceRef {
+    let resource = helm_schema_core::ResourceRef {
         api_version: "v1".to_string(),
         kind: "Service".to_string(),
         api_version_candidates: Vec::new(),
@@ -458,7 +458,7 @@ fn cache_layout_version_newer_marker_refuses_mutation() {
     };
     let _ = provider.has_resource(&resource);
     let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_ir::YamlPath(Vec::new()));
+        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     // Marker untouched.
     let marker_value: u32 = fs::read_to_string(root.join(LAYOUT_MARKER_FILENAME))

@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_ir::{ApiPresenceQuery, ResourceRef, YamlPath};
+use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
@@ -795,6 +795,31 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             &inference_versions,
         ));
         out
+    }
+}
+
+impl helm_schema_core::ResourceSchemaOracle for KubernetesJsonSchemaProvider {
+    fn schema_fragment_for_use(
+        &self,
+        use_: &helm_schema_core::ProviderSchemaUse,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        <Self as K8sSchemaProvider>::schema_fragment_for_use(self, use_)
+    }
+
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &helm_schema_core::ResourceRef,
+        path: &helm_schema_core::YamlPath,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        <Self as K8sSchemaProvider>::schema_fragment_for_resource_path(self, resource, path)
+    }
+
+    fn origin(&self) -> helm_schema_core::ProviderOrigin {
+        <Self as K8sSchemaProvider>::origin(self)
+    }
+
+    fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
+        <Self as K8sSchemaProvider>::has_resource(self, resource)
     }
 }
 

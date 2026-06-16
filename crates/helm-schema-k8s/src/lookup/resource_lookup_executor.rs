@@ -1,4 +1,4 @@
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 
 use crate::filename::candidate_filenames_for_resource;
 

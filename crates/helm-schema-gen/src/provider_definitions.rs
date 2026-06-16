@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_k8s::{ProviderOrigin, ProviderSchemaSource};
+use helm_schema_core::{ProviderOrigin, ProviderSchemaSource};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 

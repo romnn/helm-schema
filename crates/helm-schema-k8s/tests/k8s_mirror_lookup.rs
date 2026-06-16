@@ -3,7 +3,7 @@
 use std::fs;
 use std::sync::Arc;
 
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, MockFetcher,
     source_id_for_url,

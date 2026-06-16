@@ -4,7 +4,7 @@
 //! the CRD provider's diagnostics + the chain's MissingSchema payload
 //! also derive candidate filenames from a `ResourceRef`.
 
-use helm_schema_ir::ResourceRef;
+use helm_schema_core::ResourceRef;
 
 /// Lower is better — drives `ordered_api_versions_for_resource`.
 ///

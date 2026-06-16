@@ -12,11 +12,11 @@ mod values_yaml;
 
 use std::collections::BTreeMap;
 
+use helm_schema_core::ResourceSchemaOracle;
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::{ContractSchemaSignals, ContractValuePathFacts};
-use helm_schema_k8s::K8sSchemaProvider;
 
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
@@ -35,7 +35,7 @@ use use_signals::{UseSignals, collect_use_signals};
 /// nodes that already exist from template or values evidence.
 pub struct ValuesSchemaInput<'a> {
     pub contract_schema_signals: &'a ContractSchemaSignals,
-    pub provider: &'a dyn K8sSchemaProvider,
+    pub provider: &'a dyn ResourceSchemaOracle,
     pub values_yaml: Option<&'a str>,
     pub type_hints: Option<&'a BTreeMap<String, Vec<Value>>>,
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
@@ -44,7 +44,7 @@ pub struct ValuesSchemaInput<'a> {
 impl<'a> ValuesSchemaInput<'a> {
     pub fn new(
         contract_schema_signals: &'a ContractSchemaSignals,
-        provider: &'a dyn K8sSchemaProvider,
+        provider: &'a dyn ResourceSchemaOracle,
     ) -> Self {
         Self {
             contract_schema_signals,

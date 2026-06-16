@@ -1,45 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::capability_branch::HelperBranch;
-
-/// YAML path in the rendered manifest, e.g. `["metadata", "name"]`.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct YamlPath(pub Vec<String>);
-
-/// Whether a value use produces a full scalar, part of a scalar, or a YAML fragment.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub enum ValueKind {
-    Scalar = 0,
-    PartialScalar = 1,
-    Fragment = 2,
-}
-
-/// Detected Kubernetes resource type (apiVersion + kind).
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct ResourceRef {
-    pub api_version: String,
-    pub kind: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub api_version_candidates: Vec<String>,
-    /// Typed branch structure when the apiVersion is decided by an
-    /// `if Capabilities.APIVersions.Has ... else ...` chain: either inside
-    /// a helper body or inline around the `apiVersion:` line in the
-    /// document header.
-    ///
-    /// The chain layer evaluates each branch's guard against its K8s
-    /// version cache (the actual capability oracle) and picks the
-    /// first live branch's literals for both resolution and diagnostic
-    /// attribution. Without this typed structure, mutually-exclusive
-    /// alternatives would have to be treated as peer candidates,
-    /// producing one `MissingSchema` per alternative when none resolve
-    /// because at runtime exactly one branch is taken.
-    ///
-    /// Empty means no decodable branch structure; callers fall back to
-    /// `api_version` plus `api_version_candidates`.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub api_version_branches: Vec<HelperBranch>,
-}
-
 /// A guard condition from an `if`, `with`, or `range` block.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]

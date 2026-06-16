@@ -1,4 +1,4 @@
-use helm_schema_ir::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
+use helm_schema_core::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{
     Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider,
     kubernetes_openapi::debug_materialize_schema_for_resource,

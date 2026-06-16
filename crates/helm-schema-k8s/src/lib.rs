@@ -74,7 +74,7 @@ pub fn type_schema(ty: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helm_schema_ir::ResourceRef;
+    use helm_schema_core::ResourceRef;
 
     #[test]
     fn filename_for_core_resource() {

@@ -1,11 +1,9 @@
 use serde_json::Value;
 
-use helm_schema_k8s::type_schema;
-
 use crate::merge::{merge_schema_list, union_schema_list};
 use crate::schema_model::{
     add_null_schema, empty_schema, exact_empty_object_schema, is_fixed_object_schema,
-    schema_allows_type,
+    schema_allows_type, type_schema,
 };
 
 #[derive(Debug, Clone, Copy)]

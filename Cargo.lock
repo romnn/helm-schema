@@ -612,6 +612,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "helm-schema"
+version = "0.0.1"
+dependencies = [
+ "color-eyre",
+ "flate2",
+ "helm-schema-engine",
+ "helm-schema-k8s",
+ "indoc",
+ "json-schema-minify",
+ "jsonschema",
+ "referencing",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "similar-asserts",
+ "tar",
+ "test-util",
+ "thiserror",
+ "tracing",
+ "ureq",
+ "vfs",
+]
+
+[[package]]
 name = "helm-schema-ast"
 version = "0.0.1"
 dependencies = [
@@ -634,27 +658,40 @@ dependencies = [
  "clap",
  "color-eyre",
  "flate2",
+ "helm-schema",
  "helm-schema-ast",
- "helm-schema-gen",
- "helm-schema-ir",
  "helm-schema-k8s",
  "indoc",
- "json-schema-minify",
  "jsonschema",
  "mimalloc",
- "referencing",
  "serde",
  "serde_json",
  "serde_yaml",
  "similar-asserts",
  "tar",
  "test-util",
- "thiserror",
  "tracing",
  "tracing-perfetto",
  "tracing-subscriber",
- "ureq",
  "vfs",
+]
+
+[[package]]
+name = "helm-schema-core"
+version = "0.0.1"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "helm-schema-engine"
+version = "0.0.1"
+dependencies = [
+ "helm-schema-ast",
+ "helm-schema-core",
+ "helm-schema-gen",
+ "helm-schema-ir",
 ]
 
 [[package]]
@@ -663,6 +700,7 @@ version = "0.0.1"
 dependencies = [
  "color-eyre",
  "helm-schema-ast",
+ "helm-schema-core",
  "helm-schema-ir",
  "helm-schema-k8s",
  "indoc",
@@ -684,6 +722,7 @@ version = "0.0.1"
 dependencies = [
  "color-eyre",
  "helm-schema-ast",
+ "helm-schema-core",
  "helm-schema-template-grammar",
  "indoc",
  "regex",
@@ -701,7 +740,7 @@ name = "helm-schema-k8s"
 version = "0.0.1"
 dependencies = [
  "color-eyre",
- "helm-schema-ir",
+ "helm-schema-core",
  "serde",
  "serde_json",
  "sha2",

@@ -1,4 +1,4 @@
-use helm_schema_ir::ResourceRef;
+use helm_schema_core::ResourceRef;
 
 use crate::builtin_groups::is_k8s_builtin_group;
 

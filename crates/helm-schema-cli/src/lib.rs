@@ -1,35 +1,23 @@
-mod analysis;
-mod chart;
-mod chart_evidence;
 pub mod cli;
 mod diag_emit;
-mod error;
-pub mod flatten;
-mod generation;
-mod output_pipeline;
-mod provider_builder;
-mod required_inference;
-pub mod schema_override;
-mod values_roots;
 
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
-use helm_schema_k8s::DiagnosticSink;
+use helm_schema::{
+    CliResult, DiagnosticSink, GeneratedSchema, OutputPipelineOptions, PolicyInputOptions,
+    apply_schema_output_pipeline, generate_values_schema_for_chart_output, load_policy_inputs,
+    write_schema_json,
+};
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
 
-use crate::error::CliResult;
-use crate::generation::{GeneratedSchema, generate_values_schema_for_chart_output};
-
 pub use cli::Cli;
-pub use error::CliError;
-pub use generation::{
-    GenerateOptions, generate_values_schema_for_chart,
-    generate_values_schema_for_chart_with_diagnostics,
+pub use helm_schema::{
+    CliError, GenerateOptions, ProviderOptions, flatten, generate_values_schema_for_chart,
+    generate_values_schema_for_chart_with_diagnostics, schema_override,
 };
-pub use provider_builder::ProviderOptions;
 
 /// Run the CLI.
 ///
@@ -113,12 +101,12 @@ fn run_inner(cli: Cli) -> CliResult<()> {
         mut schema,
         subchart_value_prefixes,
     } = generate_values_schema_for_chart_output(&opts, Some(&diagnostics))?;
-    let policy_input_options = cli.output.policy_input_options(!cli.k8s.offline);
-    let output_options = cli.output.pipeline_options();
-    let policy_inputs =
-        output_pipeline::load_policy_inputs(&cli.override_schema, &policy_input_options)?;
+    let policy_input_options: PolicyInputOptions =
+        cli.output.policy_input_options(!cli.k8s.offline);
+    let output_options: OutputPipelineOptions = cli.output.pipeline_options();
+    let policy_inputs = load_policy_inputs(&cli.override_schema, &policy_input_options)?;
 
-    schema = output_pipeline::apply_schema_output_pipeline(
+    schema = apply_schema_output_pipeline(
         schema,
         policy_inputs,
         &subchart_value_prefixes,
@@ -142,7 +130,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
             source: err,
         })?;
         let mut out = BufWriter::new(file);
-        output_pipeline::write_schema_json(&mut out, &schema, json_format)
+        write_schema_json(&mut out, &schema, json_format)
             .map_err(|err| write_output_error_with_path(err, &path))?;
         out.flush().map_err(|err| CliError::WriteOutput {
             path: path.clone(),
@@ -151,7 +139,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     } else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        output_pipeline::write_schema_json(&mut out, &schema, json_format)?;
+        write_schema_json(&mut out, &schema, json_format)?;
         out.flush()?;
     }
 

@@ -1,4 +1,4 @@
-use helm_schema_ir::{ApiPresenceQuery, ResourceRef};
+use helm_schema_core::{ApiPresenceQuery, ResourceRef};
 
 /// Declarative probe table for `.Capabilities.APIVersions.Has "group/version"`.
 ///

@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 
+use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::ContractIr;
-use helm_schema_k8s::{
-    Chain, CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
-};
+use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
@@ -70,7 +69,7 @@ pub fn values_yaml_to_json(values_yaml: &str) -> Value {
 
 pub fn generate_schema_with_values_yaml(
     contract: ContractIr,
-    provider: &dyn K8sSchemaProvider,
+    provider: &dyn ResourceSchemaOracle,
     values_yaml: Option<&str>,
 ) -> Value {
     let schema_signals = contract.into_schema_signals();

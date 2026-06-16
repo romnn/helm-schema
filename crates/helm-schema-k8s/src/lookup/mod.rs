@@ -16,7 +16,7 @@ mod trait_def;
 
 pub use chain::Chain;
 pub use chain_outcome::ChainLookupOutcome;
-pub use helm_schema_ir::ApiPresenceQuery;
+pub use helm_schema_core::ApiPresenceQuery;
 pub use provider_origin::ProviderOrigin;
 pub use provider_result::ProviderLookupResult;
 pub use provider_schema_fragment::{

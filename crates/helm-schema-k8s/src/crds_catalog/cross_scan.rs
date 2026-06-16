@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-use helm_schema_ir::ResourceRef;
+use helm_schema_core::ResourceRef;
 
 /// Walk every CONFIGURED `<crd_cache_root>/<source_id>/<group>/`
 /// directory and collect the version suffixes of files that match

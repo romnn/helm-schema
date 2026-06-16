@@ -1,7 +1,6 @@
 use serde_json::{Map, Value};
 
 use helm_schema_ir::{GuardConstraint, ProviderSchemaUse, ValueKind};
-use helm_schema_k8s::type_schema;
 
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
@@ -12,7 +11,7 @@ use crate::path_schema::{
 use crate::schema_model::{
     add_null_schema, empty_schema, empty_string_schema, is_empty_schema, is_fixed_object_schema,
     is_object_or_array_schema, is_open_string_map_schema, is_scalar_like_schema, is_scalar_schema,
-    schema_allows_scalar_type, schema_permits_empty_string, schema_type,
+    schema_allows_scalar_type, schema_permits_empty_string, schema_type, type_schema,
 };
 use crate::schema_tree::unknown_object_schema;
 

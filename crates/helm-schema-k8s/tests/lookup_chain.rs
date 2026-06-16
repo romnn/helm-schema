@@ -2,7 +2,7 @@
 //! PathUnresolved silence, and the "MissingSchema only from chain"
 //! invariant.
 
-use helm_schema_ir::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
+use helm_schema_core::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry, LookupTraceOutcome,
     ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
@@ -603,7 +603,7 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
 // attribution.
 #[test]
 fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::{CapabilityGuard, HelperBranch};
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -660,7 +660,7 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
 // branch's policy/v1beta1.
 #[test]
 fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::{CapabilityGuard, HelperBranch};
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -716,7 +716,7 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
 // uses live_literals (which recurses through Nested) for attribution.
 #[test]
 fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::{CapabilityGuard, HelperBranch};
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -779,7 +779,7 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
 // literal, not fall back to the outer else branch.
 #[test]
 fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::{CapabilityGuard, HelperBranch};
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -837,7 +837,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
 // considered rather than per-candidate flooding.
 #[test]
 fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
-    use helm_schema_ir::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::{CapabilityGuard, HelperBranch};
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,

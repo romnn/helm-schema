@@ -1,12 +1,13 @@
-use helm_schema_ir::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, YamlPath};
+use helm_schema_core::{
+    ApiPresenceQuery, ProviderOrigin, ProviderSchemaFragment, ProviderSchemaUse, ResourceRef,
+    YamlPath,
+};
 
 use crate::diagnostic::Diagnostic;
 use crate::filename::ordered_api_versions_for_resource;
 use crate::inference::candidate::ApiVersionCandidate;
 
-use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
-use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 
 /// Provides JSON Schema fragments for Kubernetes resource fields.

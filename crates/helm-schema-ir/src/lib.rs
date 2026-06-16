@@ -78,9 +78,6 @@ mod value_path_context;
 mod value_path_extraction;
 mod yaml_syntax;
 
-pub use capability_branch::{
-    ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
-};
 pub use capability_liveness::{
     CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
 };
@@ -90,10 +87,13 @@ pub use contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
     MetadataFieldKind, RequiredInferenceSignals,
 };
-pub use contract_types::{Guard, ResourceRef, ValueKind, YamlPath};
+pub use contract_types::Guard;
 pub use default_type_hints::extract_default_type_hints;
+pub use helm_schema_core::{
+    ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
+    ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
+};
 pub use helper_discovery::{DefineBlock, extract_define_blocks, extract_helper_calls};
-pub use provider_schema_use::ProviderSchemaUse;
 pub use symbolic::SymbolicIrContext;
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 
-use helm_schema_ir::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 
 use super::provider_result::ProviderLookupResult;
 use super::trait_def::K8sSchemaProvider;
