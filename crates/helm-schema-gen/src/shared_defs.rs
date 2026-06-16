@@ -1,13 +1,15 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_k8s::{ProviderSchemaFragment, ProviderSchemaSource};
+use helm_schema_k8s::{ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource};
 use serde_json::{Map, Value};
+use sha2::{Digest, Sha256};
 
 use crate::path_resolver::ResolvedPathSchema;
 use crate::schema_model::schema_type;
 
 const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
+const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 
 /// Provider schema that can be shared if it survives path resolution unchanged.
 #[derive(Debug, Clone)]
@@ -62,11 +64,11 @@ impl SharedSchemaDefinitions {
         let entries = SharedSchemaEntries::from_resolved_paths(resolved_paths, &description_paths);
         let mut ref_names_by_key = BTreeMap::new();
         let mut definitions_by_name = BTreeMap::new();
+        let mut used_definition_names = BTreeSet::new();
         let mut next_id = 1;
 
         for (key, entry) in entries.into_repeated_entries() {
-            let name = format!("{PROVIDER_DEFINITION_PREFIX}{next_id}");
-            next_id += 1;
+            let name = next_definition_name(&entry, &mut used_definition_names, &mut next_id);
             ref_names_by_key.insert(key, name.clone());
             definitions_by_name.insert(name, entry.schema);
         }
@@ -148,8 +150,15 @@ impl SharedSchemaEntries {
             .entry(shareable_schema.key.clone())
             .or_insert_with(|| SharedSchemaEntry {
                 schema: shareable_schema.schema.clone(),
+                source_definition_names_by_identity: BTreeMap::new(),
                 uses: 0,
             });
+        if let Some(source) = shareable_schema.source() {
+            entry.source_definition_names_by_identity.insert(
+                ProviderSourceIdentity::from(source),
+                source_definition_name(source),
+            );
+        }
         entry.uses += 1;
     }
 
@@ -161,7 +170,21 @@ impl SharedSchemaEntries {
 #[derive(Debug)]
 struct SharedSchemaEntry {
     schema: Value,
+    source_definition_names_by_identity: BTreeMap<ProviderSourceIdentity, String>,
     uses: usize,
+}
+
+impl SharedSchemaEntry {
+    fn preferred_source_definition_name(&self) -> Option<&str> {
+        if self.source_definition_names_by_identity.len() == 1 {
+            self.source_definition_names_by_identity
+                .values()
+                .next()
+                .map(String::as_str)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -233,6 +256,95 @@ fn reference_schema(name: &str) -> Value {
     )
 }
 
+fn next_definition_name(
+    entry: &SharedSchemaEntry,
+    used_names: &mut BTreeSet<String>,
+    next_id: &mut usize,
+) -> String {
+    if let Some(source_name) = entry.preferred_source_definition_name() {
+        return unique_definition_name(source_name, used_names);
+    }
+
+    loop {
+        let name = format!("{PROVIDER_DEFINITION_PREFIX}{next_id}");
+        *next_id += 1;
+        if used_names.insert(name.clone()) {
+            return name;
+        }
+    }
+}
+
+fn unique_definition_name(base_name: &str, used_names: &mut BTreeSet<String>) -> String {
+    if used_names.insert(base_name.to_string()) {
+        return base_name.to_string();
+    }
+
+    let mut suffix = 2;
+    loop {
+        let name = format!("{base_name}_{suffix}");
+        suffix += 1;
+        if used_names.insert(name.clone()) {
+            return name;
+        }
+    }
+}
+
+fn source_definition_name(source: &ProviderSchemaSource) -> String {
+    format!(
+        "{PROVIDER_SOURCE_DEFINITION_PREFIX}_{}_{}",
+        source_origin_label(source.origin()),
+        source_fingerprint(source),
+    )
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+struct ProviderSourceIdentity {
+    origin: ProviderOrigin,
+    source_id: String,
+    version: Option<String>,
+    filename: String,
+    pointer: String,
+}
+
+impl From<&ProviderSchemaSource> for ProviderSourceIdentity {
+    fn from(source: &ProviderSchemaSource) -> Self {
+        Self {
+            origin: source.origin(),
+            source_id: source.source_id().to_string(),
+            version: source.version().map(str::to_string),
+            filename: source.filename().to_string(),
+            pointer: source.pointer().to_string(),
+        }
+    }
+}
+
+fn source_origin_label(origin: ProviderOrigin) -> &'static str {
+    match origin {
+        ProviderOrigin::KubernetesOpenApi => "k8s",
+        ProviderOrigin::DefaultCatalog => "crd_catalog",
+        ProviderOrigin::ChartLocalCrd => "chart_crd",
+        ProviderOrigin::LocalOverride => "override",
+    }
+}
+
+fn source_fingerprint(source: &ProviderSchemaSource) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(source_origin_label(source.origin()).as_bytes());
+    hasher.update([0]);
+    hasher.update(source.source_id().as_bytes());
+    hasher.update([0]);
+    if let Some(version) = source.version() {
+        hasher.update(version.as_bytes());
+    }
+    hasher.update([0]);
+    hasher.update(source.filename().as_bytes());
+    hasher.update([0]);
+    hasher.update(source.pointer().as_bytes());
+
+    let hex = format!("{:x}", hasher.finalize());
+    hex.chars().take(12).collect()
+}
+
 fn canonical_schema_key(schema: &Value) -> String {
     canonicalize_json_value(schema).to_string()
 }
@@ -270,15 +382,30 @@ mod tests {
         }
     }
 
+    fn k8s_source(pointer: &str) -> ProviderSchemaSource {
+        ProviderSchemaSource::kubernetes_openapi(
+            "default",
+            "v1.35.0",
+            "io.k8s.api.core.v1.Pod.json",
+            pointer,
+        )
+    }
+
     fn sourced_shareable_schema(schema: Value, pointer: &str) -> ShareableSchema {
-        ShareableSchema::from_provider_fragment(ProviderSchemaFragment::new(schema).with_source(
-            ProviderSchemaSource::kubernetes_openapi(
-                "default",
-                "v1.35.0",
-                "io.k8s.api.core.v1.Pod.json",
-                pointer,
-            ),
-        ))
+        ShareableSchema::from_provider_fragment(
+            ProviderSchemaFragment::new(schema).with_source(k8s_source(pointer)),
+        )
+    }
+
+    fn resolved_sourced_path(path: &str, schema: Value, pointer: &str) -> ResolvedPathSchema {
+        ResolvedPathSchema {
+            path_segments: path
+                .split('.')
+                .map(std::string::ToString::to_string)
+                .collect(),
+            shareable_provider_schema: Some(sourced_shareable_schema(schema.clone(), pointer)),
+            schema,
+        }
     }
 
     #[test]
@@ -330,6 +457,41 @@ mod tests {
         assert_eq!(source.version(), Some("v1.35.0"));
         assert_eq!(source.filename(), "io.k8s.api.core.v1.Pod.json");
         assert_eq!(source.pointer(), "/definitions/Metadata");
+    }
+
+    #[test]
+    fn repeated_provider_subtrees_with_one_source_use_source_stable_definition_name() {
+        let provider_schema = json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            },
+            "additionalProperties": false
+        });
+        let source = k8s_source("/definitions/Metadata");
+        let definition_name = source_definition_name(&source);
+        let mut paths = vec![
+            resolved_sourced_path("first", provider_schema.clone(), source.pointer()),
+            resolved_sourced_path("second", provider_schema.clone(), source.pointer()),
+        ];
+
+        let definitions =
+            SharedSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+        let mut root = json!({ "type": "object", "properties": {} });
+        definitions.insert_into_root(&mut root);
+
+        assert_eq!(
+            paths[0].schema,
+            json!({ "$ref": format!("#/$defs/{definition_name}") })
+        );
+        assert_eq!(
+            paths[1].schema,
+            json!({ "$ref": format!("#/$defs/{definition_name}") })
+        );
+        assert_eq!(
+            root.pointer(&format!("/$defs/{definition_name}")),
+            Some(&provider_schema)
+        );
     }
 
     #[test]
