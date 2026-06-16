@@ -1838,9 +1838,12 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   survival checks, and definition eligibility before path resolution decides
   whether later evidence changed the schema. Provider-definition emission is a
   separate `provider_definitions` stage over resolved paths rather than the
-  home of provider-source metadata. The remaining deeper A5 refinement is to
-  teach bundled emission to consume provider source fragments directly instead
-  of defining provider leaves from their already-expanded materialized schema.
+  home of provider-source metadata. Provider-definition emission now consumes
+  provider source leaves with only leaf-internal refs directly, rewriting those
+  refs for the final root `$defs/<name>` location when every repeated use has
+  the same safe source shape. Source leaves with refs to siblings in the
+  original provider document still fall back to the expanded provider schema
+  until provider-document dependency bundling is available.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 
@@ -1920,7 +1923,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   `provider_definitions` owns only repeated-candidate `$defs` emission. The
   generator handoff now also retains the provider-document leaf before
   leaf-local `$ref` expansion, so source-ref shape is no longer lost at the
-  provider boundary. The duplicate value-only `Chain` facade has been removed.
+  provider boundary. Bundled emission now reuses retained source leaves when
+  their refs point inside the retained leaf and rewrites those refs to the
+  final root definition location; unsafe provider-document sibling refs remain
+  expanded at the output boundary. The duplicate value-only `Chain` facade has
+  been removed.
   Fragment lookup is the production-facing provider boundary; the value-only
   `K8sSchemaProvider` adapters have also been deleted, so callers that
   intentionally discard provider source/ref identity must project a

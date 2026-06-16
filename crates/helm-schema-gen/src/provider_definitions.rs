@@ -5,7 +5,9 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
 use crate::path_resolver::ResolvedPathSchema;
-use crate::provider_schema::ProviderSchemaCandidate;
+use crate::provider_schema::{
+    ProviderSchemaCandidate, canonical_schema_key, rewrite_internal_refs_for_root_definition,
+};
 
 const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
@@ -35,7 +37,8 @@ impl ProviderSchemaDefinitions {
         for (key, entry) in entries.into_repeated_entries() {
             let name = next_definition_name(&entry, &mut used_definition_names, &mut next_id);
             ref_names_by_key.insert(key, name.clone());
-            definitions_by_name.insert(name, entry.schema);
+            let definition_schema = entry.into_definition_schema(&name);
+            definitions_by_name.insert(name, definition_schema);
         }
 
         for resolved_path in resolved_paths {
@@ -117,9 +120,19 @@ impl ProviderSchemaDefinitionEntries {
             .entry(provider_schema_candidate.key().to_string())
             .or_insert_with(|| ProviderSchemaDefinitionEntry {
                 schema: provider_schema_candidate.schema().clone(),
+                internal_ref_source_schemas_by_key: BTreeMap::new(),
+                internal_ref_source_schema_uses: 0,
                 source_definition_names_by_identity: BTreeMap::new(),
                 uses: 0,
             });
+        if let Some(source_schema) =
+            provider_schema_candidate.source_schema_with_only_internal_refs()
+        {
+            entry
+                .internal_ref_source_schemas_by_key
+                .insert(canonical_schema_key(source_schema), source_schema.clone());
+            entry.internal_ref_source_schema_uses += 1;
+        }
         if let Some(source) = provider_schema_candidate.source() {
             entry.source_definition_names_by_identity.insert(
                 ProviderSourceIdentity::from(source),
@@ -139,11 +152,25 @@ impl ProviderSchemaDefinitionEntries {
 #[derive(Debug)]
 struct ProviderSchemaDefinitionEntry {
     schema: Value,
+    internal_ref_source_schemas_by_key: BTreeMap<String, Value>,
+    internal_ref_source_schema_uses: usize,
     source_definition_names_by_identity: BTreeMap<ProviderSourceIdentity, String>,
     uses: usize,
 }
 
 impl ProviderSchemaDefinitionEntry {
+    fn into_definition_schema(self, definition_name: &str) -> Value {
+        if self.internal_ref_source_schemas_by_key.len() == 1
+            && self.internal_ref_source_schema_uses == self.uses
+            && let Some((_, schema)) = self.internal_ref_source_schemas_by_key.into_iter().next()
+            && let Some(schema) =
+                rewrite_internal_refs_for_root_definition(&schema, definition_name)
+        {
+            return schema;
+        }
+        self.schema
+    }
+
     fn preferred_source_definition_name(&self) -> Option<&str> {
         if self.source_definition_names_by_identity.len() == 1 {
             self.source_definition_names_by_identity
@@ -320,6 +347,17 @@ mod tests {
         )
     }
 
+    fn sourced_provider_schema_candidate_with_source_schema(
+        schema: Value,
+        pointer: &str,
+        source_schema: Value,
+    ) -> ProviderSchemaCandidate {
+        ProviderSchemaCandidate::from_provider_fragment(
+            ProviderSchemaFragment::new(schema)
+                .with_source_schema(k8s_source(pointer), source_schema),
+        )
+    }
+
     fn resolved_sourced_path(path: &str, schema: Value, pointer: &str) -> ResolvedPathSchema {
         ResolvedPathSchema {
             path_segments: path
@@ -417,6 +455,190 @@ mod tests {
         assert_eq!(
             root.pointer(&format!("/$defs/{definition_name}")),
             Some(&provider_schema)
+        );
+    }
+
+    #[test]
+    fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
+        let provider_schema = json!({
+            "type": "object",
+            "properties": {
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                }
+            }
+        });
+        let source_schema = json!({
+            "type": "object",
+            "properties": {
+                "labels": { "$ref": "#/$defs/StringMap" }
+            },
+            "$defs": {
+                "StringMap": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                }
+            }
+        });
+        let source = k8s_source("/definitions/Metadata");
+        let definition_name = source_definition_name(&source);
+        let mut paths = vec![
+            ResolvedPathSchema {
+                path_segments: vec!["first".to_string()],
+                provider_schema_candidate: Some(
+                    sourced_provider_schema_candidate_with_source_schema(
+                        provider_schema.clone(),
+                        source.pointer(),
+                        source_schema.clone(),
+                    ),
+                ),
+                schema: provider_schema.clone(),
+            },
+            ResolvedPathSchema {
+                path_segments: vec!["second".to_string()],
+                provider_schema_candidate: Some(
+                    sourced_provider_schema_candidate_with_source_schema(
+                        provider_schema,
+                        source.pointer(),
+                        source_schema.clone(),
+                    ),
+                ),
+                schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "labels": {
+                            "type": "object",
+                            "additionalProperties": { "type": "string" }
+                        }
+                    }
+                }),
+            },
+        ];
+
+        let definitions =
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+        let mut root = json!({ "type": "object", "properties": {} });
+        definitions.insert_into_root(&mut root);
+        let expected_definition = json!({
+            "type": "object",
+            "properties": {
+                "labels": { "$ref": format!("#/$defs/{definition_name}/$defs/StringMap") }
+            },
+            "$defs": {
+                "StringMap": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                }
+            }
+        });
+
+        assert_eq!(
+            paths[0].schema,
+            json!({ "$ref": format!("#/$defs/{definition_name}") })
+        );
+        assert_eq!(
+            root.pointer(&format!("/$defs/{definition_name}")),
+            Some(&expected_definition)
+        );
+    }
+
+    #[test]
+    fn provider_subtrees_with_provider_local_source_refs_use_expanded_schema() {
+        let provider_schema = json!({
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+        });
+        let provider_local_ref_schema = json!({ "$ref": "#/definitions/StringMap" });
+        let source = k8s_source("/definitions/Container/properties/env");
+        let definition_name = source_definition_name(&source);
+        let mut paths = vec![
+            ResolvedPathSchema {
+                path_segments: vec!["first".to_string()],
+                provider_schema_candidate: Some(
+                    sourced_provider_schema_candidate_with_source_schema(
+                        provider_schema.clone(),
+                        source.pointer(),
+                        provider_local_ref_schema.clone(),
+                    ),
+                ),
+                schema: provider_schema.clone(),
+            },
+            ResolvedPathSchema {
+                path_segments: vec!["second".to_string()],
+                provider_schema_candidate: Some(
+                    sourced_provider_schema_candidate_with_source_schema(
+                        provider_schema.clone(),
+                        source.pointer(),
+                        provider_local_ref_schema,
+                    ),
+                ),
+                schema: provider_schema.clone(),
+            },
+        ];
+
+        let definitions =
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+        let mut root = json!({ "type": "object", "properties": {} });
+        definitions.insert_into_root(&mut root);
+
+        assert_eq!(
+            root.pointer(&format!("/$defs/{definition_name}")),
+            Some(&provider_schema),
+            "provider-document-local refs must not be emitted as dangling output refs"
+        );
+    }
+
+    #[test]
+    fn provider_subtrees_require_every_use_to_have_same_internal_ref_source_schema() {
+        let provider_schema = json!({
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+        });
+        let internal_ref_source_schema = json!({
+            "type": "object",
+            "$defs": {
+                "StringValue": { "type": "string" }
+            },
+            "additionalProperties": { "$ref": "#/$defs/StringValue" }
+        });
+        let provider_local_ref_schema = json!({ "$ref": "#/definitions/StringMap" });
+        let source = k8s_source("/definitions/Container/properties/env");
+        let definition_name = source_definition_name(&source);
+        let mut paths = vec![
+            ResolvedPathSchema {
+                path_segments: vec!["first".to_string()],
+                provider_schema_candidate: Some(
+                    sourced_provider_schema_candidate_with_source_schema(
+                        provider_schema.clone(),
+                        source.pointer(),
+                        internal_ref_source_schema,
+                    ),
+                ),
+                schema: provider_schema.clone(),
+            },
+            ResolvedPathSchema {
+                path_segments: vec!["second".to_string()],
+                provider_schema_candidate: Some(
+                    sourced_provider_schema_candidate_with_source_schema(
+                        provider_schema.clone(),
+                        source.pointer(),
+                        provider_local_ref_schema,
+                    ),
+                ),
+                schema: provider_schema.clone(),
+            },
+        ];
+
+        let definitions =
+            ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+        let mut root = json!({ "type": "object", "properties": {} });
+        definitions.insert_into_root(&mut root);
+
+        assert_eq!(
+            root.pointer(&format!("/$defs/{definition_name}")),
+            Some(&provider_schema),
+            "mixed self-contained and provider-document-local source leaves must fall back together"
         );
     }
 
