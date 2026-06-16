@@ -31,10 +31,4 @@ impl ChainLookupOutcome {
             Self::MissingSchema { .. } => None,
         }
     }
-
-    /// Return the resolved schema, intentionally discarding provider metadata.
-    pub(crate) fn into_schema(self) -> Option<serde_json::Value> {
-        self.into_schema_fragment()
-            .map(ProviderSchemaFragment::into_schema)
-    }
 }

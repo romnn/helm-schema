@@ -54,9 +54,13 @@ impl FakeProvider {
 }
 
 impl K8sSchemaProvider for FakeProvider {
-    fn schema_for_resource_path(&self, _r: &ResourceRef, _p: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        _r: &ResourceRef,
+        _p: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         match &self.behaviour {
-            FakeBehaviour::Found(v) => Some(v.clone()),
+            FakeBehaviour::Found(v) => Some(ProviderSchemaFragment::new(v.clone())),
             _ => None,
         }
     }
@@ -393,7 +397,11 @@ fn chain_exposes_provider_kube_version() {
     struct VersionedProvider;
 
     impl K8sSchemaProvider for VersionedProvider {
-        fn schema_for_resource_path(&self, _r: &ResourceRef, _p: &YamlPath) -> Option<Value> {
+        fn schema_fragment_for_resource_path(
+            &self,
+            _r: &ResourceRef,
+            _p: &YamlPath,
+        ) -> Option<ProviderSchemaFragment> {
             None
         }
 
@@ -449,9 +457,15 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
         wants: &'static str,
     }
     impl K8sSchemaProvider for OnlyAnswersFor {
-        fn schema_for_resource_path(&self, r: &ResourceRef, _p: &YamlPath) -> Option<Value> {
+        fn schema_fragment_for_resource_path(
+            &self,
+            r: &ResourceRef,
+            _p: &YamlPath,
+        ) -> Option<ProviderSchemaFragment> {
             if r.api_version == self.wants {
-                Some(Value::String("hit".to_string()))
+                Some(ProviderSchemaFragment::new(Value::String(
+                    "hit".to_string(),
+                )))
             } else {
                 None
             }
@@ -911,7 +925,11 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
     #[derive(Debug)]
     struct AlwaysPathUnresolved;
     impl K8sSchemaProvider for AlwaysPathUnresolved {
-        fn schema_for_resource_path(&self, _r: &ResourceRef, _p: &YamlPath) -> Option<Value> {
+        fn schema_fragment_for_resource_path(
+            &self,
+            _r: &ResourceRef,
+            _p: &YamlPath,
+        ) -> Option<ProviderSchemaFragment> {
             None
         }
         fn origin(&self) -> ProviderOrigin {

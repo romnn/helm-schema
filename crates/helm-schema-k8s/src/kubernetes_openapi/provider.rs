@@ -671,11 +671,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             .and_then(|(_version, fragment)| fragment)
     }
 
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        self.schema_fragment_for_resource_path(resource, path)
-            .map(ProviderSchemaFragment::into_schema)
-    }
-
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::KubernetesOpenApi
     }

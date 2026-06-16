@@ -208,7 +208,11 @@ impl K8sSchemaProvider for DescriptionProvider {
         })))
     }
 
-    fn schema_for_resource_path(&self, _resource: &ResourceRef, _path: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        _resource: &ResourceRef,
+        _path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         None
     }
 
@@ -235,7 +239,11 @@ impl K8sSchemaProvider for SharedObjectProvider {
         })))
     }
 
-    fn schema_for_resource_path(&self, _resource: &ResourceRef, _path: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        _resource: &ResourceRef,
+        _path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         None
     }
 

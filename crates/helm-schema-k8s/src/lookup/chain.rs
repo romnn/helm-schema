@@ -120,10 +120,6 @@ impl K8sSchemaProvider for Chain {
         self.lookup_orchestrator().schema_fragment_for_use(use_)
     }
 
-    fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
-        Chain::schema_for_use(self, use_)
-    }
-
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -131,10 +127,6 @@ impl K8sSchemaProvider for Chain {
     ) -> Option<ProviderSchemaFragment> {
         self.resolve_against_chain(resource, path)
             .into_schema_fragment()
-    }
-
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        self.resolve_against_chain(resource, path).into_schema()
     }
 
     fn origin(&self) -> ProviderOrigin {

@@ -291,6 +291,19 @@ impl CrdsCatalogSchemaProvider {
             pointer.to_string(),
         ))
     }
+
+    fn fragment_for_leaf(
+        &self,
+        loaded: &LoadedCrdSchemaDoc,
+        leaf: LocalSchemaLeaf,
+    ) -> ProviderSchemaFragment {
+        let source = self.source_for_leaf(loaded, &leaf);
+        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+        if let Some(source) = source {
+            fragment = fragment.with_source(source);
+        }
+        fragment
+    }
 }
 
 struct LoadedCrdSchemaDoc {
@@ -306,13 +319,17 @@ impl Default for CrdsCatalogSchemaProvider {
 }
 
 impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
         let loaded = self.load_schema_doc(resource)?;
         self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path)
-            .map(LocalSchemaLeaf::into_schema)
+            .map(|leaf| self.fragment_for_leaf(&loaded, leaf))
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -327,17 +344,10 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
             return ProviderLookupResult::NotOwned;
         };
         match self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path) {
-            Some(leaf) => {
-                let source = self.source_for_leaf(&loaded, &leaf);
-                let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-                if let Some(source) = source {
-                    fragment = fragment.with_source(source);
-                }
-                ProviderLookupResult::Found {
-                    schema: fragment,
-                    resolved_k8s_version: None,
-                }
-            }
+            Some(leaf) => ProviderLookupResult::Found {
+                schema: self.fragment_for_leaf(&loaded, leaf),
+                resolved_k8s_version: None,
+            },
             None => ProviderLookupResult::PathUnresolved,
         }
     }

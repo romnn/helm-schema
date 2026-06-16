@@ -145,6 +145,19 @@ impl LocalSchemaProvider {
         ))
     }
 
+    fn fragment_for_leaf(
+        &self,
+        resource: &ResourceRef,
+        leaf: LocalSchemaLeaf,
+    ) -> ProviderSchemaFragment {
+        let source = self.source_for_leaf(resource, &leaf);
+        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+        if let Some(source) = source {
+            fragment = fragment.with_source(source);
+        }
+        fragment
+    }
+
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
         let root = self.load_schema_doc(resource)?;
@@ -168,10 +181,14 @@ enum LocalSchemaDocLoad {
 }
 
 impl K8sSchemaProvider for LocalSchemaProvider {
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         let root = self.load_schema_doc(resource)?;
         self.schema_leaf_for_resource_path_from_doc(&root, path)
-            .map(LocalSchemaLeaf::into_schema)
+            .map(|leaf| self.fragment_for_leaf(resource, leaf))
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -183,17 +200,10 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         match self.load_schema_doc_result(resource) {
             LocalSchemaDocLoad::Loaded(root) => {
                 match self.schema_leaf_for_resource_path_from_doc(&root, path) {
-                    Some(leaf) => {
-                        let source = self.source_for_leaf(resource, &leaf);
-                        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-                        if let Some(source) = source {
-                            fragment = fragment.with_source(source);
-                        }
-                        ProviderLookupResult::Found {
-                            schema: fragment,
-                            resolved_k8s_version: None,
-                        }
-                    }
+                    Some(leaf) => ProviderLookupResult::Found {
+                        schema: self.fragment_for_leaf(resource, leaf),
+                        resolved_k8s_version: None,
+                    },
                     None => ProviderLookupResult::PathUnresolved,
                 }
             }

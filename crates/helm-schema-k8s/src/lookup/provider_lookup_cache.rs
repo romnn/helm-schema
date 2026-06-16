@@ -72,11 +72,11 @@ mod tests {
     }
 
     impl K8sSchemaProvider for CountingProvider {
-        fn schema_for_resource_path(
+        fn schema_fragment_for_resource_path(
             &self,
             _resource: &ResourceRef,
             _path: &YamlPath,
-        ) -> Option<serde_json::Value> {
+        ) -> Option<ProviderSchemaFragment> {
             None
         }
 

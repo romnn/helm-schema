@@ -45,22 +45,25 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     }
 
     /// Provider-owned schema fragment for a specific resource type + YAML path.
+    ///
+    /// Implementations return a fragment so source identity and future
+    /// ref-shaped metadata survive provider lookup. Use [`Self::lookup`] when
+    /// the chain needs to distinguish no ownership, missing docs, and
+    /// unresolved paths for diagnostic attribution.
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
         path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        self.schema_for_resource_path(resource, path)
-            .map(ProviderSchemaFragment::new)
-    }
+    ) -> Option<ProviderSchemaFragment>;
 
-    /// Schema for a specific resource type + YAML path.
+    /// Compatibility adapter for callers that only need materialized JSON.
     ///
-    /// Returns `None` for any provider-local failure (no ownership, no
-    /// resource doc, no path within doc). Use [`Self::lookup`] when the
-    /// chain needs to distinguish those cases for diagnostic
-    /// attribution.
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value>;
+    /// This intentionally discards provider source/ref metadata. New provider
+    /// code should implement [`Self::schema_fragment_for_resource_path`].
+    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+        self.schema_fragment_for_resource_path(resource, path)
+            .map(ProviderSchemaFragment::into_schema)
+    }
 
     /// Identifier of the layer this provider implements. Drives chain
     /// precedence and origin-specific diagnostic rules.

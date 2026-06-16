@@ -1829,7 +1829,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   Shared provider `$defs` emission now uses that source identity for stable
   definition names when every structurally shared fragment has the same typed
   provider source; structurally identical fragments from different sources
-  still deduplicate under generic names. The remaining deeper A5 refinement is
+  still deduplicate under generic names. The provider trait boundary is now
+  fragment-first as well: concrete providers return `ProviderSchemaFragment`
+  directly, while materialized `serde_json::Value` schemas are compatibility
+  adapters for callers that explicitly discard source/ref identity. The
+  remaining deeper A5 refinement is
   to keep foreign schema documents ref-shaped through more of the pipeline
   rather than re-materializing them before the exact-sharing pass.
 
@@ -1896,8 +1900,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   an encoded string. This is the next prerequisite for retaining `$ref` shape
   deeper in bundled emission. Local override, CRD catalog, and chart-local
   CRD providers now report matching source locations for real document-backed
-  leaves, and shared `$defs` emission now consumes that metadata for stable
-  source-aware names.
+  leaves, shared `$defs` emission now consumes that metadata for stable
+  source-aware names, and the provider trait requires fragment lookup as the
+  structural contract instead of rebuilding fragments from value-only lookups.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated

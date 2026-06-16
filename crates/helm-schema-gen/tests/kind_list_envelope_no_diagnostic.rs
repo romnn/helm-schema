@@ -90,21 +90,25 @@ fn kind_list_envelope_descends_into_inner_resource() {
 struct FakeIngressProvider;
 
 impl K8sSchemaProvider for FakeIngressProvider {
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
         if is_ingress_host(resource, path) {
-            Some(json!({
+            Some(ProviderSchemaFragment::new(json!({
                 "description": "inner ingress host",
                 "type": "string"
-            }))
+            })))
         } else {
             None
         }
     }
 
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        match self.schema_for_resource_path(resource, path) {
-            Some(schema) => ProviderLookupResult::Found {
-                schema: ProviderSchemaFragment::new(schema),
+        match self.schema_fragment_for_resource_path(resource, path) {
+            Some(fragment) => ProviderLookupResult::Found {
+                schema: fragment,
                 resolved_k8s_version: None,
             },
             None if self.has_resource(resource) => ProviderLookupResult::PathUnresolved,

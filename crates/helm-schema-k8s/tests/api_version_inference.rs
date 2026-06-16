@@ -262,11 +262,11 @@ fn infer_api_version_candidates_default_impl_empty() {
     #[derive(Debug)]
     struct Empty;
     impl helm_schema_k8s::K8sSchemaProvider for Empty {
-        fn schema_for_resource_path(
+        fn schema_fragment_for_resource_path(
             &self,
             _r: &helm_schema_ir::ResourceRef,
             _p: &helm_schema_ir::YamlPath,
-        ) -> Option<serde_json::Value> {
+        ) -> Option<helm_schema_k8s::ProviderSchemaFragment> {
             None
         }
         fn origin(&self) -> helm_schema_k8s::ProviderOrigin {

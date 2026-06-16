@@ -14,6 +14,7 @@ use crate::metadata_enrichment::enrich_root_metadata_schema;
 use crate::schema_doc::SchemaDoc;
 
 use super::LocalSchemaUniverse;
+use super::universe::LocalSchemaDocument;
 
 #[derive(Debug)]
 pub struct ChartLocalCrdSchemaProvider {
@@ -49,6 +50,27 @@ impl ChartLocalCrdSchemaProvider {
         descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
     }
 
+    fn fragment_for_leaf(
+        &self,
+        document: &LocalSchemaDocument,
+        leaf: LocalSchemaLeaf,
+    ) -> ProviderSchemaFragment {
+        let source = leaf.pointer().map(|pointer| {
+            ProviderSchemaSource::new(
+                ProviderOrigin::ChartLocalCrd,
+                document.source_id().to_string(),
+                None,
+                document.filename().to_string(),
+                pointer.to_string(),
+            )
+        });
+        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+        if let Some(source) = source {
+            fragment = fragment.with_source(source);
+        }
+        fragment
+    }
+
     #[must_use]
     pub fn materialize_schema_for_resource(&self, resource: &ResourceRef) -> Option<Value> {
         let root = self.universe.schema_doc_for_resource(resource)?;
@@ -63,10 +85,14 @@ impl ChartLocalCrdSchemaProvider {
 }
 
 impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        let root = self.universe.schema_doc_for_resource(resource)?;
-        self.schema_leaf_for_resource_path_from_doc(root, path)
-            .map(LocalSchemaLeaf::into_schema)
+    fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
+        let document = self.universe.schema_document_for_resource(resource)?;
+        self.schema_leaf_for_resource_path_from_doc(document.schema_doc(), path)
+            .map(|leaf| self.fragment_for_leaf(document, leaf))
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -79,25 +105,10 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
         };
 
         match self.schema_leaf_for_resource_path_from_doc(document.schema_doc(), path) {
-            Some(leaf) => {
-                let source = leaf.pointer().map(|pointer| {
-                    ProviderSchemaSource::new(
-                        ProviderOrigin::ChartLocalCrd,
-                        document.source_id().to_string(),
-                        None,
-                        document.filename().to_string(),
-                        pointer.to_string(),
-                    )
-                });
-                let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-                if let Some(source) = source {
-                    fragment = fragment.with_source(source);
-                }
-                ProviderLookupResult::Found {
-                    schema: fragment,
-                    resolved_k8s_version: None,
-                }
-            }
+            Some(leaf) => ProviderLookupResult::Found {
+                schema: self.fragment_for_leaf(document, leaf),
+                resolved_k8s_version: None,
+            },
             None => ProviderLookupResult::PathUnresolved,
         }
     }
