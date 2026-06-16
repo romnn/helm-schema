@@ -124,7 +124,9 @@ fn chain_precedence_local_over_crd_over_k8s() {
         FakeBehaviour::Found(Value::String("k8s".to_string())),
     );
     let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
-    let schema = chain.schema_for_resource_path(&resource(), &YamlPath(Vec::new()));
+    let schema = chain
+        .schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()))
+        .map(|fragment| fragment.into_schema());
     assert_eq!(
         schema,
         Some(Value::String("local".to_string())),
@@ -141,7 +143,7 @@ fn provider_local_path_unresolved_is_not_missing() {
     );
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(crd)]).with_diagnostic_sink(diagnostics.clone());
-    let schema = chain.schema_for_resource_path(&resource(), &YamlPath(Vec::new()));
+    let schema = chain.schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()));
     assert!(
         schema.is_none(),
         "PathUnresolved maps to Resolved with None schema"
@@ -179,7 +181,7 @@ fn chain_emits_missing_schema_only_at_chain_layer() {
     let chain = Chain::new(vec![Box::new(p1), Box::new(p2), Box::new(p3)])
         .with_diagnostic_sink(diagnostics.clone());
 
-    let _ = chain.schema_for_resource_path(&resource(), &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()));
 
     let missing = diagnostics
         .snapshot()
@@ -219,7 +221,7 @@ fn chain_local_override_unreadable_does_not_fall_through() {
     let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)])
         .with_diagnostic_sink(diagnostics.clone());
 
-    let schema = chain.schema_for_resource_path(&resource(), &YamlPath(Vec::new()));
+    let schema = chain.schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()));
     assert!(
         schema.is_none(),
         "override-unreadable must NOT silently use CRD/K8s schema"
@@ -266,7 +268,9 @@ fn chain_non_override_resource_doc_missing_falls_through() {
         FakeBehaviour::Found(Value::String("k8s-wins".to_string())),
     );
     let chain = Chain::new(vec![Box::new(crd), Box::new(k8s)]);
-    let schema = chain.schema_for_resource_path(&resource(), &YamlPath(Vec::new()));
+    let schema = chain
+        .schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()))
+        .map(|fragment| fragment.into_schema());
     assert_eq!(
         schema,
         Some(Value::String("k8s-wins".to_string())),
@@ -434,14 +438,14 @@ fn local_provider_emits_local_override_origin() {
     assert_eq!(provider.origin(), ProviderOrigin::LocalOverride);
 }
 
-// Multi-candidate iteration in schema_for_use must not emit MissingSchema for
+// Multi-candidate iteration in schema_fragment_for_use must not emit MissingSchema for
 // speculative misses when a later candidate resolves. The primary apiVersion
 // (`policy/v1beta1`) is what the user wrote in the chart; `policy/v1` is the
 // ordered candidate added by `ordered_api_versions_for_resource`. Only the
 // success-side outcome (Found via a candidate) should be observable from the
 // sink.
 #[test]
-fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
+fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
         true,
@@ -508,7 +512,9 @@ fn chain_schema_for_use_speculative_misses_do_not_leak_diagnostics() {
             api_version_branches: Vec::new(),
         },
     );
-    let schema = chain.schema_for_use(&use_);
+    let schema = chain
+        .schema_fragment_for_use(&use_)
+        .map(|fragment| fragment.into_schema());
     assert_eq!(
         schema,
         Some(Value::String("hit".to_string())),
@@ -555,7 +561,7 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: Vec::new(),
     };
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let missing: Vec<(String, String)> = diagnostics
         .snapshot()
@@ -622,7 +628,7 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
             HelperBranch::with_literals(None, vec!["policy/v1beta1".to_string()]),
         ],
     };
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let missing: Vec<(String, String)> = diagnostics
         .snapshot()
@@ -679,7 +685,7 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
             HelperBranch::with_literals(None, vec!["policy/v1beta1".to_string()]),
         ],
     };
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let missing: Vec<(String, String)> = diagnostics
         .snapshot()
@@ -745,7 +751,7 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
             HelperBranch::with_literals(None, vec!["y".to_string()]),
         ],
     };
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let missing: Vec<(String, String)> = diagnostics
         .snapshot()
@@ -808,7 +814,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
             HelperBranch::with_literals(None, vec!["y".to_string()]),
         ],
     };
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let missing: Vec<String> = diagnostics
         .snapshot()
@@ -852,7 +858,7 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
             vec!["policy/v1".to_string()],
         )],
     };
-    let _ = chain.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let missing: Vec<(String, String)> = diagnostics
         .snapshot()
@@ -872,7 +878,7 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
     assert_eq!(missing[0].1, "policy/v1");
 }
 
-// schema_for_use must not turn an intentional `Resolved { schema: None }`
+// schema_fragment_for_use must not turn an intentional `Resolved { schema: None }`
 // (PathUnresolved) into MissingSchema. A provider claimed ownership of the
 // resource; the YAML path simply has no schema constraint (e.g. ConfigMap.data.X
 // where the spec doesn't constrain free-form data). Emitting
@@ -880,7 +886,7 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
 // built-in K8s resources whose schemas legitimately don't constrain
 // every nested path.
 #[test]
-fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
+fn chain_schema_fragment_for_use_path_unresolved_does_not_leak_missing_schema() {
     // Provider claims ownership (has_resource=true) and returns
     // PathUnresolved (silent gap, not a missing-resource case).
     let provider = FakeProvider::new(
@@ -900,7 +906,7 @@ fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
             api_version_branches: Vec::new(),
         },
     );
-    let schema = chain.schema_for_use(&use_);
+    let schema = chain.schema_fragment_for_use(&use_);
     assert!(
         schema.is_none(),
         "PathUnresolved must surface as None schema (intentional silence)"
@@ -921,7 +927,7 @@ fn chain_schema_for_use_path_unresolved_does_not_leak_missing_schema() {
 // MissingSchema must fire. Resolved{None} from any candidate is
 // ownership claim, and the chain must honour the silence.
 #[test]
-fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
+fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
     #[derive(Debug)]
     struct AlwaysPathUnresolved;
     impl K8sSchemaProvider for AlwaysPathUnresolved {
@@ -956,7 +962,7 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
             api_version_branches: Vec::new(),
         },
     );
-    let _ = chain.schema_for_use(&use_);
+    let _ = chain.schema_fragment_for_use(&use_);
 
     let missing_count = diagnostics
         .snapshot()
@@ -972,7 +978,7 @@ fn chain_schema_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
 // When every candidate misses, exactly one MissingSchema fires and it carries
 // the user-written primary apiVersion, not a speculative candidate.
 #[test]
-fn chain_schema_for_use_total_failure_attributes_to_primary() {
+fn chain_schema_fragment_for_use_total_failure_attributes_to_primary() {
     let p = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
         false,
@@ -990,7 +996,7 @@ fn chain_schema_for_use_total_failure_attributes_to_primary() {
             api_version_branches: Vec::new(),
         },
     );
-    let _ = chain.schema_for_use(&use_);
+    let _ = chain.schema_fragment_for_use(&use_);
 
     let missing: Vec<_> = diagnostics
         .snapshot()

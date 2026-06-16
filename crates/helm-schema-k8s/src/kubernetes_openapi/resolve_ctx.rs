@@ -7,8 +7,8 @@ use crate::schema_doc::SchemaDoc;
 /// `$ref` resolution context. Holds previously-loaded documents and a
 /// stack of (filename, json-pointer) pairs to break cycles.
 ///
-/// The context is short-lived: one per top-level `schema_for_resource_path`
-/// call. The provider supplies a loader that knows how to fetch a
+/// The context is short-lived: one per top-level provider fragment lookup.
+/// The provider supplies a loader that knows how to fetch a
 /// neighboring schema file by relative filename (typically by mapping
 /// the filename through the same provider fetch/cache path the
 /// resource doc came from).

@@ -66,7 +66,7 @@ fn k8s_mirror_cache_per_source_namespaced() {
     };
 
     // First lookup → default populates.
-    let _ = provider.schema_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
     let default_path = cache_dir.join("default/v1.35.0/service-v1.json");
     assert!(default_path.exists(), "default cache namespace populated");
 

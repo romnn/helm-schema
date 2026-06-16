@@ -66,7 +66,7 @@ fn prometheusrule_leaf_schema_rules_items() {
     ]);
 
     let upstream_leaf = provider
-        .schema_for_resource_path(&r, &path)
+        .schema_fragment_for_resource_path(&r, &path)
         .expect("leaf schema");
 
     let relative_path = "monitoring.coreos.com/prometheusrule_v1.json";
@@ -81,10 +81,10 @@ fn prometheusrule_leaf_schema_rules_items() {
 
     let local_provider = LocalSchemaProvider::new(&root_dir);
     let local_leaf = local_provider
-        .schema_for_resource_path(&r, &path)
+        .schema_fragment_for_resource_path(&r, &path)
         .expect("leaf schema");
 
-    similar_asserts::assert_eq!(upstream_leaf, local_leaf);
+    similar_asserts::assert_eq!(upstream_leaf.into_schema(), local_leaf.into_schema());
 }
 
 /// `has_resource` reports whether the catalog has the resource's schema

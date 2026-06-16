@@ -1811,10 +1811,10 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   stream instead of reconstructing shareability from anonymous `Value` lists.
   Provider lookup results now carry a named `ProviderSchemaFragment` through
   the K8s trait, provider cache, chain outcome, and generator collection
-  boundary; plain `serde_json::Value` schema methods remain compatibility
-  adapters. Generator value-kind projection transforms that fragment in place
-  before lowering it into shareable provider evidence. Upstream OpenAPI path
-  descent now also reports the resolved provider-document location
+  boundary. Generator value-kind projection transforms that fragment in place
+  before lowering it into shareable provider evidence, and callers that need
+  plain JSON must explicitly materialize the fragment at the call site.
+  Upstream OpenAPI path descent now also reports the resolved provider-document location
   `(filename, JSON pointer)` for the leaf before expansion; the OpenAPI
   provider attaches that source identity to `ProviderSchemaFragment` and makes
   fragment lookup its primary trait implementation. Provider-source identity is
@@ -1831,10 +1831,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   provider source; structurally identical fragments from different sources
   still deduplicate under generic names. The provider trait boundary is now
   fragment-first as well: concrete providers return `ProviderSchemaFragment`
-  directly, while materialized `serde_json::Value` schemas are compatibility
-  adapters for callers that explicitly discard source/ref identity. The
-  remaining deeper A5 refinement is
-  to keep foreign schema documents ref-shaped through more of the pipeline
+  directly, and lossy materialized `serde_json::Value` schemas are no longer
+  exposed as provider-trait adapters. The remaining deeper A5 refinement is to
+  keep foreign schema documents ref-shaped through more of the pipeline
   rather than re-materializing them before the exact-sharing pass.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
@@ -1855,7 +1854,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   memoization lives behind `ApiVersionInferenceCache`, leaving `Chain`
   focused on execution ordering, final-miss decisions, and the current
   compatibility facade. Candidate apiVersion planning now has a named
-  `ResourceLookupPlan`, so `schema_for_use` consumes concrete resource
+  `ResourceLookupPlan`, so provider-schema lookup consumes concrete resource
   attempts instead of open-coding branch/candidate selection inline. Final
   miss attribution now has the matching `MissingSchemaAttributionPlan`; it
   uses the same typed capability-branch evaluator while preserving the
@@ -1910,10 +1909,11 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   source identity a consequence of the actual schema transformation. The
   generator now carries `ShareableSchema` directly from provider-fragment
   lookup into path resolution instead of wrapping it in an intermediate
-  provider-evidence DTO, and the duplicate value-only `Chain::schema_for_use`
-  facade has been removed. Fragment lookup is the production-facing provider
-  boundary; value-only materialization remains an explicit compatibility
-  adapter.
+  provider-evidence DTO, and the duplicate value-only `Chain` facade has been
+  removed. Fragment lookup is the production-facing provider boundary; the
+  value-only `K8sSchemaProvider` adapters have also been deleted, so callers
+  that intentionally discard provider source/ref identity must project a
+  `ProviderSchemaFragment` explicitly at the call site.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated

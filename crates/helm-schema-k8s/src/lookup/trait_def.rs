@@ -1,5 +1,4 @@
 use helm_schema_ir::{ApiPresenceQuery, ProviderSchemaUse, ResourceRef, YamlPath};
-use serde_json::Value;
 
 use crate::diagnostic::Diagnostic;
 use crate::filename::ordered_api_versions_for_resource;
@@ -37,13 +36,6 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         None
     }
 
-    /// Compatibility adapter for callers that need only the materialized JSON
-    /// Schema value.
-    fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
-        self.schema_fragment_for_use(use_)
-            .map(ProviderSchemaFragment::into_schema)
-    }
-
     /// Provider-owned schema fragment for a specific resource type + YAML path.
     ///
     /// Implementations return a fragment so source identity and future
@@ -56,15 +48,6 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         path: &YamlPath,
     ) -> Option<ProviderSchemaFragment>;
 
-    /// Compatibility adapter for callers that only need materialized JSON.
-    ///
-    /// This intentionally discards provider source/ref metadata. New provider
-    /// code should implement [`Self::schema_fragment_for_resource_path`].
-    fn schema_for_resource_path(&self, resource: &ResourceRef, path: &YamlPath) -> Option<Value> {
-        self.schema_fragment_for_resource_path(resource, path)
-            .map(ProviderSchemaFragment::into_schema)
-    }
-
     /// Identifier of the layer this provider implements. Drives chain
     /// precedence and origin-specific diagnostic rules.
     fn origin(&self) -> ProviderOrigin;
@@ -73,8 +56,8 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// presence so the chain can attribute diagnostics correctly.
     ///
     /// Default impl synthesises one of `Found` / `NotOwned` from the fragment
-    /// lookup adapter so older value-only providers keep working; new code
-    /// should override.
+    /// fragment lookup adapter so simple providers only need to implement one
+    /// structural schema-fragment boundary; richer providers should override.
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         if !self.has_resource(resource) {
             return ProviderLookupResult::NotOwned;
@@ -134,7 +117,7 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// Provider-side diagnostics the chain should commit on a final
     /// miss. Providers MUST NOT emit these themselves; the chain calls
     /// this method only after exhausting all candidates and providers,
-    /// so speculative candidate probing in [`Chain::schema_for_use`]
+    /// so speculative candidate probing in provider-schema lookup
     /// never leaks per-candidate misses.
     ///
     /// Default returns an empty list (the openapi and local-override

@@ -183,12 +183,15 @@ mod tests {
     fn resolves_served_crd_version_schema_from_universe() {
         let provider = ChartLocalCrdSchemaProvider::new(widget_universe());
 
-        let schema = provider.schema_for_resource_path(
+        let schema = provider.schema_fragment_for_resource_path(
             &resource("example.com/v1"),
             &YamlPath(vec!["spec".to_string(), "size".to_string()]),
         );
 
-        assert_eq!(schema, Some(json!({"type": "integer"})));
+        assert_eq!(
+            schema.map(ProviderSchemaFragment::into_schema),
+            Some(json!({"type": "integer"}))
+        );
     }
 
     #[test]

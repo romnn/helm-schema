@@ -185,8 +185,9 @@ fn leaf_schema() {
     ]);
 
     let schema = provider
-        .schema_for_resource_path(&r, &path)
-        .expect("leaf schema");
+        .schema_fragment_for_resource_path(&r, &path)
+        .expect("leaf schema")
+        .into_schema();
 
     let expected = serde_json::json!({"type": "string"});
     similar_asserts::assert_eq!(schema, expected);

@@ -3869,8 +3869,9 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
     };
 
     let schema = provider
-        .schema_for_use(&use_)
-        .expect("provider schema for container resources");
+        .schema_fragment_for_use(&use_)
+        .expect("provider schema for container resources")
+        .into_schema();
 
     assert!(
         schema

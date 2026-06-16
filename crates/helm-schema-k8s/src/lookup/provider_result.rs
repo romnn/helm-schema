@@ -28,7 +28,7 @@ pub enum ProviderLookupResult {
 
     /// Provider owns the resource (claimed it in `has_resource`) but
     /// its expected source file is genuinely missing — e.g. a transient
-    /// fetch error in `schema_for_resource_path` after `has_resource`
+    /// fetch error in `schema_fragment_for_resource_path` after `has_resource`
     /// returned true. Rare; the chain treats this as equivalent to
     /// `NotOwned` and moves on (since some other provider may still
     /// have it). Local overrides are the exception: see the chain's

@@ -52,7 +52,7 @@ fn inference_skipped_when_api_version_candidates_nonempty() {
     let chain = Chain::new(vec![Box::new(crd)]).with_inference_enabled(true);
     // No diagnostic sink because inference wouldn't actually emit
     // InferredApiVersion if candidates are pre-pinned.
-    let _ = chain.schema_for_use(&use_);
+    let _ = chain.schema_fragment_for_use(&use_);
     // The contract is: this should NOT trigger inference. If it did,
     // we'd see InferredApiVersion in a sink; absence here is the test.
 }
@@ -525,7 +525,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         },
         is_self_range_collection: false,
     };
-    let _ = chain.schema_for_use(&use_);
+    let _ = chain.schema_fragment_for_use(&use_);
 
     let snapshot = diagnostics.snapshot();
     let any_inferred = snapshot
@@ -565,7 +565,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         },
         is_self_range_collection: false,
     };
-    let _ = chain.schema_for_use(&use_);
+    let _ = chain.schema_fragment_for_use(&use_);
 
     let snapshot = diagnostics.snapshot();
     let inferred = snapshot.iter().find_map(|d| match d {
@@ -736,7 +736,7 @@ fn chain_caches_api_version_inference_by_kind() {
     let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
     let use_ = use_with_kind("ServiceMonitor");
 
-    let first = chain.schema_for_use(&use_);
+    let first = chain.schema_fragment_for_use(&use_);
     assert!(first.is_some(), "setup must resolve ServiceMonitor");
     let calls_after_first_lookup = mock.calls_for(service_monitor_url);
     assert!(
@@ -744,7 +744,7 @@ fn chain_caches_api_version_inference_by_kind() {
         "setup should exercise the online CRD inference/lookup path"
     );
 
-    let second = chain.schema_for_use(&use_);
+    let second = chain.schema_fragment_for_use(&use_);
     assert!(second.is_some(), "second lookup must still resolve");
     assert_eq!(
         mock.calls_for(service_monitor_url),
@@ -775,7 +775,7 @@ fn inference_emits_diagnostic_through_chain() {
         .with_inference_enabled(true)
         .with_diagnostic_sink(diagnostics.clone());
 
-    let _ = chain.schema_for_use(&use_with_kind("ServiceMonitor"));
+    let _ = chain.schema_fragment_for_use(&use_with_kind("ServiceMonitor"));
 
     let snapshot = diagnostics.snapshot();
     let inferred = snapshot

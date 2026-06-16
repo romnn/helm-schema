@@ -44,8 +44,9 @@ fn networkpolicy_leaf_schema_matchlabels() {
     ]);
 
     let leaf = provider
-        .schema_for_resource_path(&r, &path)
-        .expect("leaf schema");
+        .schema_fragment_for_resource_path(&r, &path)
+        .expect("leaf schema")
+        .into_schema();
 
     let expected: serde_json::Value = serde_json::from_str(include_str!(
         "fixtures/networkpolicy_v1_35_leaf_matchlabels.json"
@@ -82,8 +83,9 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
     };
 
     let schema = chain
-        .schema_for_use(&use_)
-        .expect("chain should resolve inferred NetworkPolicy matchLabels schema");
+        .schema_fragment_for_use(&use_)
+        .expect("chain should resolve inferred NetworkPolicy matchLabels schema")
+        .into_schema();
 
     assert_eq!(
         schema
@@ -97,7 +99,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
 /// The legacy `load_resource_doc_by_kind_scan` path is retired. The
 /// new inference path (Feature D) owns the empty-`api_version` case,
 /// and only fires when invoked through a `Chain` with inference
-/// enabled — a single provider's `schema_for_resource_path` returns
+/// enabled — a single provider's `schema_fragment_for_resource_path` returns
 /// `None` for an empty api_version.
 #[test]
 fn kind_scan_legacy_path_retired() {

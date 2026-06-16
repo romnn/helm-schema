@@ -147,12 +147,15 @@ spec:
         api_version_branches: Vec::new(),
     };
 
-    let schema = provider.schema_for_resource_path(
+    let schema = provider.schema_fragment_for_resource_path(
         &resource,
         &YamlPath(vec!["spec".to_string(), "size".to_string()]),
     );
 
-    assert_eq!(schema, Some(json!({"type": "integer"})));
+    assert_eq!(
+        schema.map(|fragment| fragment.into_schema()),
+        Some(json!({"type": "integer"}))
+    );
 
     Ok(())
 }
