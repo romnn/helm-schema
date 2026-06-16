@@ -120,18 +120,16 @@ impl ProviderSchemaDefinitionEntries {
             .entry(provider_schema_candidate.key().to_string())
             .or_insert_with(|| ProviderSchemaDefinitionEntry {
                 schema: provider_schema_candidate.schema().clone(),
-                internal_ref_source_schemas_by_key: BTreeMap::new(),
-                internal_ref_source_schema_uses: 0,
+                definition_schemas_by_key: BTreeMap::new(),
+                definition_schema_uses: 0,
                 source_definition_names_by_identity: BTreeMap::new(),
                 uses: 0,
             });
-        if let Some(source_schema) =
-            provider_schema_candidate.source_schema_with_only_internal_refs()
-        {
+        if let Some(source_schema) = provider_schema_candidate.source_definition_schema() {
             entry
-                .internal_ref_source_schemas_by_key
+                .definition_schemas_by_key
                 .insert(canonical_schema_key(source_schema), source_schema.clone());
-            entry.internal_ref_source_schema_uses += 1;
+            entry.definition_schema_uses += 1;
         }
         if let Some(source) = provider_schema_candidate.source() {
             entry.source_definition_names_by_identity.insert(
@@ -152,17 +150,17 @@ impl ProviderSchemaDefinitionEntries {
 #[derive(Debug)]
 struct ProviderSchemaDefinitionEntry {
     schema: Value,
-    internal_ref_source_schemas_by_key: BTreeMap<String, Value>,
-    internal_ref_source_schema_uses: usize,
+    definition_schemas_by_key: BTreeMap<String, Value>,
+    definition_schema_uses: usize,
     source_definition_names_by_identity: BTreeMap<ProviderSourceIdentity, String>,
     uses: usize,
 }
 
 impl ProviderSchemaDefinitionEntry {
     fn into_definition_schema(self, definition_name: &str) -> Value {
-        if self.internal_ref_source_schemas_by_key.len() == 1
-            && self.internal_ref_source_schema_uses == self.uses
-            && let Some((_, schema)) = self.internal_ref_source_schemas_by_key.into_iter().next()
+        if self.definition_schemas_by_key.len() == 1
+            && self.definition_schema_uses == self.uses
+            && let Some((_, schema)) = self.definition_schemas_by_key.into_iter().next()
             && let Some(schema) =
                 rewrite_internal_refs_for_root_definition(&schema, definition_name)
         {
@@ -358,6 +356,21 @@ mod tests {
         )
     }
 
+    fn sourced_provider_schema_candidate_with_definition_schema(
+        schema: Value,
+        pointer: &str,
+        source_schema: Value,
+        definition_schema: Value,
+    ) -> ProviderSchemaCandidate {
+        ProviderSchemaCandidate::from_provider_fragment(
+            ProviderSchemaFragment::new(schema).with_source_definition_schema(
+                k8s_source(pointer),
+                source_schema,
+                definition_schema,
+            ),
+        )
+    }
+
     fn resolved_sourced_path(path: &str, schema: Value, pointer: &str) -> ResolvedPathSchema {
         ResolvedPathSchema {
             path_segments: path
@@ -544,22 +557,32 @@ mod tests {
     }
 
     #[test]
-    fn provider_subtrees_with_provider_local_source_refs_use_expanded_schema() {
+    fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema() {
         let provider_schema = json!({
             "type": "object",
             "additionalProperties": { "type": "string" }
         });
         let provider_local_ref_schema = json!({ "$ref": "#/definitions/StringMap" });
+        let bundled_source_schema = json!({
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/StringMap" },
+            "$defs": {
+                "StringMap": {
+                    "type": "string"
+                }
+            }
+        });
         let source = k8s_source("/definitions/Container/properties/env");
         let definition_name = source_definition_name(&source);
         let mut paths = vec![
             ResolvedPathSchema {
                 path_segments: vec!["first".to_string()],
                 provider_schema_candidate: Some(
-                    sourced_provider_schema_candidate_with_source_schema(
+                    sourced_provider_schema_candidate_with_definition_schema(
                         provider_schema.clone(),
                         source.pointer(),
                         provider_local_ref_schema.clone(),
+                        bundled_source_schema.clone(),
                     ),
                 ),
                 schema: provider_schema.clone(),
@@ -567,10 +590,11 @@ mod tests {
             ResolvedPathSchema {
                 path_segments: vec!["second".to_string()],
                 provider_schema_candidate: Some(
-                    sourced_provider_schema_candidate_with_source_schema(
+                    sourced_provider_schema_candidate_with_definition_schema(
                         provider_schema.clone(),
                         source.pointer(),
                         provider_local_ref_schema,
+                        bundled_source_schema,
                     ),
                 ),
                 schema: provider_schema.clone(),
@@ -584,13 +608,22 @@ mod tests {
 
         assert_eq!(
             root.pointer(&format!("/$defs/{definition_name}")),
-            Some(&provider_schema),
-            "provider-document-local refs must not be emitted as dangling output refs"
+            Some(&json!({
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": format!("#/$defs/{definition_name}/$defs/StringMap")
+                },
+                "$defs": {
+                    "StringMap": {
+                        "type": "string"
+                    }
+                }
+            })),
         );
     }
 
     #[test]
-    fn provider_subtrees_require_every_use_to_have_same_internal_ref_source_schema() {
+    fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
         let provider_schema = json!({
             "type": "object",
             "additionalProperties": { "type": "string" }
@@ -609,9 +642,10 @@ mod tests {
             ResolvedPathSchema {
                 path_segments: vec!["first".to_string()],
                 provider_schema_candidate: Some(
-                    sourced_provider_schema_candidate_with_source_schema(
+                    sourced_provider_schema_candidate_with_definition_schema(
                         provider_schema.clone(),
                         source.pointer(),
+                        internal_ref_source_schema.clone(),
                         internal_ref_source_schema,
                     ),
                 ),

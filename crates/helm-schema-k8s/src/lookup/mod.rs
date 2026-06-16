@@ -10,6 +10,7 @@ mod provider_result;
 mod provider_schema_fragment;
 mod resource_lookup_executor;
 mod resource_lookup_plan;
+pub(crate) mod source_bundle;
 mod trace;
 mod trait_def;
 

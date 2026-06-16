@@ -93,6 +93,11 @@ impl ResolvedSchemaNode {
     pub fn into_schema(self) -> Value {
         self.schema
     }
+
+    #[must_use]
+    pub fn location(&self) -> &SchemaNodeLocation {
+        &self.location
+    }
 }
 
 /// Path lookup result with both the materialized leaf and original source leaf.
@@ -193,6 +198,14 @@ impl<F: FnMut(&str) -> Option<SchemaDoc>> ResolveCtx<F> {
                 )
             })
         }
+    }
+
+    pub(crate) fn resolve_schema_reference(
+        &mut self,
+        current_filename: &str,
+        reference: &str,
+    ) -> Option<ResolvedSchemaNode> {
+        self.resolve_ref(current_filename, reference)
     }
 }
 

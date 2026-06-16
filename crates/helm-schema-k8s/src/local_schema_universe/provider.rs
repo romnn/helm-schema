@@ -3,8 +3,8 @@ use serde_json::Value;
 
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_override::{
-    LocalSchemaLeaf, descend_schema_path_expanding_leaf_with_root_metadata_source,
-    expand_local_refs,
+    LocalSchemaLeaf, bundled_local_definition_schema,
+    descend_schema_path_expanding_leaf_with_root_metadata_source, expand_local_refs,
 };
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
@@ -65,8 +65,24 @@ impl ChartLocalCrdSchemaProvider {
         });
         let source_schema = leaf.source_schema().cloned();
         let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-        if let Some(source) = source {
-            fragment = fragment.with_optional_source_schema(source, source_schema);
+        match (source, source_schema) {
+            (Some(source), Some(source_schema)) => {
+                let definition_schema = bundled_local_definition_schema(
+                    document.schema_doc().root(),
+                    source.filename(),
+                    source.pointer(),
+                    &source_schema,
+                );
+                fragment = fragment.with_source_definition_schema(
+                    source,
+                    source_schema,
+                    definition_schema,
+                );
+            }
+            (Some(source), None) => {
+                fragment = fragment.with_source(source);
+            }
+            (None, _) => {}
         }
         fragment
     }

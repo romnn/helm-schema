@@ -51,10 +51,10 @@ impl ProviderSchemaCandidate {
             .map(ProviderSourceFragment::source)
     }
 
-    pub(crate) fn source_schema_with_only_internal_refs(&self) -> Option<&Value> {
+    pub(crate) fn source_definition_schema(&self) -> Option<&Value> {
         self.source_fragment
             .as_ref()
-            .map(ProviderSourceFragment::schema)
+            .map(ProviderSourceFragment::definition_schema)
             .filter(|schema| schema_refs_point_inside(schema))
     }
 
@@ -329,7 +329,7 @@ mod tests {
             Some("/definitions/Container/properties/env")
         );
         assert_eq!(
-            candidate.source_schema_with_only_internal_refs(),
+            candidate.source_definition_schema(),
             None,
             "source leaf refs to provider-document siblings are not self-contained at output root"
         );
@@ -370,10 +370,7 @@ mod tests {
 
         let candidate = ProviderSchemaCandidate::from_provider_fragment(fragment);
 
-        assert_eq!(
-            candidate.source_schema_with_only_internal_refs(),
-            Some(&source_schema)
-        );
+        assert_eq!(candidate.source_definition_schema(), Some(&source_schema));
     }
 
     #[test]

@@ -7,6 +7,9 @@ use serde_json::Value;
 
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
+use crate::lookup::source_bundle::{
+    SourceBundleNode, bundle_source_schema, schema_refs_point_inside,
+};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
     ProviderSchemaSource,
@@ -148,16 +151,57 @@ impl LocalSchemaProvider {
     fn fragment_for_leaf(
         &self,
         resource: &ResourceRef,
+        root: &SchemaDoc,
         leaf: LocalSchemaLeaf,
     ) -> ProviderSchemaFragment {
         let source = self.source_for_leaf(resource, &leaf);
         let source_schema = leaf.source_schema().cloned();
         let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-        if let Some(source) = source {
-            fragment = fragment.with_optional_source_schema(source, source_schema);
+        match (source, source_schema) {
+            (Some(source), Some(source_schema)) => {
+                let definition_schema = bundled_local_definition_schema(
+                    root.root(),
+                    source.filename(),
+                    source.pointer(),
+                    &source_schema,
+                );
+                fragment = fragment.with_source_definition_schema(
+                    source,
+                    source_schema,
+                    definition_schema,
+                );
+            }
+            (Some(source), None) => {
+                fragment = fragment.with_source(source);
+            }
+            (None, _) => {}
         }
         fragment
     }
+}
+
+pub(crate) fn bundled_local_definition_schema(
+    root: &Value,
+    document: &str,
+    pointer: &str,
+    source_schema: &Value,
+) -> Value {
+    if schema_refs_point_inside(source_schema, source_schema) {
+        return source_schema.clone();
+    }
+
+    bundle_source_schema(
+        SourceBundleNode::new(document, pointer, source_schema.clone()),
+        |current_location, reference| {
+            let pointer = reference.strip_prefix('#')?;
+            if source_schema.pointer(pointer).is_some() {
+                return None;
+            }
+            root.pointer(pointer)
+                .cloned()
+                .map(|schema| SourceBundleNode::new(current_location.document(), pointer, schema))
+        },
+    )
 }
 
 enum LocalSchemaDocLoad {
@@ -177,7 +221,7 @@ impl K8sSchemaProvider for LocalSchemaProvider {
     ) -> Option<ProviderSchemaFragment> {
         let root = self.load_schema_doc(resource)?;
         self.schema_leaf_for_resource_path_from_doc(&root, path)
-            .map(|leaf| self.fragment_for_leaf(resource, leaf))
+            .map(|leaf| self.fragment_for_leaf(resource, &root, leaf))
     }
 
     fn origin(&self) -> ProviderOrigin {
@@ -190,7 +234,7 @@ impl K8sSchemaProvider for LocalSchemaProvider {
             LocalSchemaDocLoad::Loaded(root) => {
                 match self.schema_leaf_for_resource_path_from_doc(&root, path) {
                     Some(leaf) => ProviderLookupResult::Found {
-                        schema: self.fragment_for_leaf(resource, leaf),
+                        schema: self.fragment_for_leaf(resource, &root, leaf),
                         resolved_k8s_version: None,
                     },
                     None => ProviderLookupResult::PathUnresolved,

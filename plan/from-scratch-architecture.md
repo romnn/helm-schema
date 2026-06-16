@@ -1784,9 +1784,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   their own `provider_schema_use` module instead of being part of the generic
   contract-signal DTO bucket, and contract-signal regression tests live
   outside the production DTO module.
-- **A5 — bundled emission**: switch the default output to the
+- **A5 — bundled emission (complete)**: switch the default output to the
   self-contained `$defs` document; keep flatten as export mode; regenerate
-  goldens once (deliberate, documented change). Current progress: final CLI
+  goldens once (deliberate, documented change). Final CLI
   emission now runs through a dedicated output pipeline that owns reference
   handling, description stripping, minimization, and JSON formatting. The
   output pipeline carries explicit `ReferenceMode` and `JsonOutputFormat`
@@ -1837,11 +1837,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   whether later evidence changed the schema. Provider-definition emission is a
   separate `provider_definitions` stage over resolved paths rather than the
   home of provider-source metadata. Provider-definition emission now consumes
-  provider source leaves with only leaf-internal refs directly, rewriting those
-  refs for the final root `$defs/<name>` location when every repeated use has
-  the same safe source shape. Source leaves with refs to siblings in the
-  original provider document still fall back to the expanded provider schema
-  until provider-document dependency bundling is available.
+  provider source leaves as self-contained bundled source fragments,
+  rewriting their internal refs for the final root `$defs/<name>` location
+  when every repeated use has the same bundled source shape. Providers now
+  bundle provider-document sibling and cross-file schema dependencies into
+  that source fragment before the generator sees it, so repeated provider
+  leaves no longer fall back to expanded materialized schemas just because
+  the original provider document kept reusable dependencies outside the leaf.
 
 ### 15.4 Workstream B — knowledge (parallel, behind `K8sSchemaProvider`)
 

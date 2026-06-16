@@ -99,13 +99,22 @@ pub struct ProviderSchemaFragment {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProviderSourceFragment {
     source: ProviderSchemaSource,
-    schema: Value,
+    source_schema: Value,
+    definition_schema: Value,
 }
 
 impl ProviderSourceFragment {
     #[must_use]
-    pub fn new(source: ProviderSchemaSource, schema: Value) -> Self {
-        Self { source, schema }
+    pub fn new(
+        source: ProviderSchemaSource,
+        source_schema: Value,
+        definition_schema: Value,
+    ) -> Self {
+        Self {
+            source,
+            source_schema,
+            definition_schema,
+        }
     }
 
     #[must_use]
@@ -114,8 +123,13 @@ impl ProviderSourceFragment {
     }
 
     #[must_use]
-    pub fn schema(&self) -> &Value {
-        &self.schema
+    pub fn source_schema(&self) -> &Value {
+        &self.source_schema
+    }
+
+    #[must_use]
+    pub fn definition_schema(&self) -> &Value {
+        &self.definition_schema
     }
 }
 
@@ -130,7 +144,11 @@ impl ProviderSchemaFragment {
 
     #[must_use]
     pub fn with_source(mut self, source: ProviderSchemaSource) -> Self {
-        self.source_fragment = Some(ProviderSourceFragment::new(source, self.schema.clone()));
+        self.source_fragment = Some(ProviderSourceFragment::new(
+            source,
+            self.schema.clone(),
+            self.schema.clone(),
+        ));
         self
     }
 
@@ -140,7 +158,26 @@ impl ProviderSchemaFragment {
         source: ProviderSchemaSource,
         source_schema: Value,
     ) -> Self {
-        self.source_fragment = Some(ProviderSourceFragment::new(source, source_schema));
+        self.source_fragment = Some(ProviderSourceFragment::new(
+            source,
+            source_schema.clone(),
+            source_schema,
+        ));
+        self
+    }
+
+    #[must_use]
+    pub fn with_source_definition_schema(
+        mut self,
+        source: ProviderSchemaSource,
+        source_schema: Value,
+        definition_schema: Value,
+    ) -> Self {
+        self.source_fragment = Some(ProviderSourceFragment::new(
+            source,
+            source_schema,
+            definition_schema,
+        ));
         self
     }
 
@@ -172,7 +209,14 @@ impl ProviderSchemaFragment {
     pub fn source_schema(&self) -> Option<&Value> {
         self.source_fragment
             .as_ref()
-            .map(ProviderSourceFragment::schema)
+            .map(ProviderSourceFragment::source_schema)
+    }
+
+    #[must_use]
+    pub fn definition_schema(&self) -> Option<&Value> {
+        self.source_fragment
+            .as_ref()
+            .map(ProviderSourceFragment::definition_schema)
     }
 
     #[must_use]
@@ -247,6 +291,7 @@ mod tests {
         assert_eq!(source.filename(), "source.json");
         assert_eq!(source.pointer(), "/definitions/name");
         assert_eq!(projected.source_schema(), Some(&source_schema));
+        assert_eq!(projected.definition_schema(), Some(&source_schema));
     }
 
     #[test]
@@ -279,6 +324,15 @@ mod tests {
         assert_eq!(source.pointer(), "/definitions/metadata");
         assert_eq!(
             projected.source_schema(),
+            Some(&json!({
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" }
+                }
+            }))
+        );
+        assert_eq!(
+            projected.definition_schema(),
             Some(&json!({
                 "type": "object",
                 "properties": {
