@@ -1,7 +1,6 @@
 use helm_schema_ir::{
     ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, YamlPath,
 };
-use serde_json::Value;
 
 use crate::diagnostic::DiagnosticSink;
 
@@ -67,17 +66,6 @@ impl Chain {
             provider_lookup_cache: &self.provider_lookup_cache,
             capability_oracle: self,
         })
-    }
-
-    /// Schema for a provider-schema lookup request: iterates the ordered api-version
-    /// candidates silently and, on total exhaustion, commits one
-    /// `MissingSchema` attributed to the user-written primary
-    /// `api_version` (not to any speculative candidate). Speculative
-    /// per-candidate misses never reach the sink.
-    pub fn schema_for_use(&self, use_: &ProviderSchemaUse) -> Option<Value> {
-        self.lookup_orchestrator()
-            .schema_fragment_for_use(use_)
-            .map(ProviderSchemaFragment::into_schema)
     }
 
     /// Resolve a single concrete `(apiVersion, kind)` against the

@@ -7,7 +7,6 @@ use helm_schema_ir::ContractValuePathFacts;
 use helm_schema_k8s::type_schema;
 
 use crate::merge::merge_schema_list;
-use crate::provider_schema::ProviderSchemaEvidence;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema};
 use crate::shared_defs::ShareableSchema;
@@ -141,10 +140,10 @@ impl<'a> PathSchemaResolver<'a> {
     fn provider_schema_for_path(&mut self, value_path: &str) -> ProviderSchemaForPath {
         let provider_schemas = self
             .signals
-            .provider_evidence_by_value_path
+            .provider_schemas_by_value_path
             .remove(value_path)
             .unwrap_or_default();
-        let single_provider_evidence = match provider_schemas.as_slice() {
+        let single_provider_schema = match provider_schemas.as_slice() {
             [schema] => Some(schema.clone()),
             _ => None,
         };
@@ -154,8 +153,8 @@ impl<'a> PathSchemaResolver<'a> {
                 .all(|schema| is_string_like_schema(schema.schema()))
         {
             type_schema("string")
-        } else if let Some(provider_evidence) = single_provider_evidence.as_deref() {
-            provider_evidence.schema().clone()
+        } else if let Some(provider_schema) = single_provider_schema.as_deref() {
+            provider_schema.schema().clone()
         } else {
             merge_schema_list(
                 provider_schemas
@@ -170,10 +169,7 @@ impl<'a> PathSchemaResolver<'a> {
             .remove(value_path)
             .map_or_else(empty_schema, merge_schema_list);
         let shareable_schema = if is_empty_schema(&metadata_schema) {
-            single_provider_evidence
-                .as_deref()
-                .map(ProviderSchemaEvidence::shareable_schema)
-                .cloned()
+            single_provider_schema.as_deref().cloned()
         } else {
             None
         };

@@ -1907,7 +1907,13 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   that are structurally exact keep the typed provider source, while changed
   projections become anonymous. This removes caller-side preserve/drop policy
   flags, avoids an unconditional owned handoff before projection, and makes
-  source identity a consequence of the actual schema transformation.
+  source identity a consequence of the actual schema transformation. The
+  generator now carries `ShareableSchema` directly from provider-fragment
+  lookup into path resolution instead of wrapping it in an intermediate
+  provider-evidence DTO, and the duplicate value-only `Chain::schema_for_use`
+  facade has been removed. Fragment lookup is the production-facing provider
+  boundary; value-only materialization remains an explicit compatibility
+  adapter.
 - **B3 — capability oracle adapter** + `kube_version()`; `ProbeTable` as
   declarative data. Current progress: the K8s capability probe builder and
   canonical api-version probe table now live in a dedicated

@@ -1,7 +1,6 @@
 mod merge;
 mod path_resolver;
 mod path_schema;
-mod provider_schema;
 pub mod required_inference;
 mod resolve_policy;
 mod schema_model;

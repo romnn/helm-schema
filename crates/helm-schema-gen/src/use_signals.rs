@@ -6,12 +6,12 @@ use serde_json::{Map, Value};
 use helm_schema_ir::{ContractPathSignals, MetadataFieldKind, ProviderSchemaUse};
 use helm_schema_k8s::{K8sSchemaProvider, type_schema};
 
-use crate::provider_schema::ProviderSchemaEvidence;
 use crate::resolve_policy::ResolvePolicy;
+use crate::shared_defs::ShareableSchema;
 
 pub(crate) struct UseSignals {
     pub(crate) referenced_value_paths: BTreeSet<String>,
-    pub(crate) provider_evidence_by_value_path: BTreeMap<String, Vec<Arc<ProviderSchemaEvidence>>>,
+    pub(crate) provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<ShareableSchema>>>,
     pub(crate) metadata_schemas_by_value_path: BTreeMap<String, Vec<Value>>,
     pub(crate) guard_constraints_by_value_path: BTreeMap<String, Vec<Value>>,
 }
@@ -37,7 +37,7 @@ pub(crate) fn collect_use_signals(
         metadata_fields_by_value_path,
         ..
     } = path_signals;
-    let mut provider_evidence_by_value_path: BTreeMap<String, Vec<Arc<ProviderSchemaEvidence>>> =
+    let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<ShareableSchema>>> =
         BTreeMap::new();
     let metadata_schemas_by_value_path = metadata_fields_by_value_path
         .into_iter()
@@ -61,10 +61,8 @@ pub(crate) fn collect_use_signals(
             (!schemas.is_empty()).then_some((path, schemas))
         })
         .collect();
-    let mut provider_schema_cache: HashMap<
-        ProviderSchemaLookupKey,
-        Option<Arc<ProviderSchemaEvidence>>,
-    > = HashMap::new();
+    let mut provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<ShareableSchema>>> =
+        HashMap::new();
 
     for provider_use in provider_schema_uses {
         let lookup_key = ProviderSchemaLookupKey {
@@ -82,7 +80,7 @@ pub(crate) fn collect_use_signals(
             }
         };
         if let Some(schema) = schema {
-            let provider_schemas = provider_evidence_by_value_path
+            let provider_schemas = provider_schemas_by_value_path
                 .entry(provider_use.value_path.clone())
                 .or_default();
             if !provider_schemas
@@ -96,7 +94,7 @@ pub(crate) fn collect_use_signals(
 
     UseSignals {
         referenced_value_paths,
-        provider_evidence_by_value_path,
+        provider_schemas_by_value_path,
         metadata_schemas_by_value_path,
         guard_constraints_by_value_path,
     }
@@ -114,7 +112,7 @@ fn lookup_provider_schema(
     provider: &dyn K8sSchemaProvider,
     provider_use: &ProviderSchemaUse,
     resolve_policy: &ResolvePolicy,
-) -> Option<Arc<ProviderSchemaEvidence>> {
+) -> Option<Arc<ShareableSchema>> {
     provider
         .schema_fragment_for_use(provider_use)
         .and_then(|fragment| {
@@ -122,7 +120,7 @@ fn lookup_provider_schema(
                 resolve_policy.provider_schema_for_value_use(schema, provider_use)
             })
         })
-        .map(ProviderSchemaEvidence::new)
+        .map(ShareableSchema::from_provider_fragment)
         .map(Arc::new)
 }
 
