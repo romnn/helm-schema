@@ -1,3 +1,5 @@
+use helm_schema_ast::TemplateHeader;
+
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
@@ -128,7 +130,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         )
     }
 
-    fn plan_if_condition(&mut self, header: &str) -> ConditionActionPlan {
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
         plan_if_condition(
             header,
@@ -138,7 +140,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         )
     }
 
-    fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
+    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
         plan_with_condition(
             header,
@@ -151,10 +153,11 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     fn plan_range_action(
         &mut self,
         node: tree_sitter::Node<'_>,
+        header: Option<&TemplateHeader>,
         current_path: &YamlPath,
     ) -> RangeActionPlan {
         let value_path_context = self.value_path_context();
-        plan_range_action(node, self.source, &value_path_context, current_path)
+        plan_range_action(node, header, self.source, &value_path_context, current_path)
     }
 }
 

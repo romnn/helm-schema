@@ -52,6 +52,7 @@ pub(crate) fn collect_loose_values_paths(
 
 /// Parse `text` as a bare Go template expression and return every top-level
 /// expression the wrapped action produces.
+#[cfg(test)]
 pub(crate) fn parse_bare_expression_text(text: &str) -> Vec<helm_schema_ast::TemplateExpr> {
     let trimmed = text.trim();
     if trimmed.is_empty() {
@@ -77,8 +78,10 @@ pub(crate) fn parse_bare_expression_text(text: &str) -> Vec<helm_schema_ast::Tem
     exprs
 }
 
+#[cfg(test)]
 const WILDCARD_PLACEHOLDER: &str = "__hsast_wildcard_marker__";
 
+#[cfg(test)]
 fn restore_wildcards_in_expr(expr: &mut helm_schema_ast::TemplateExpr) {
     use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -111,6 +114,7 @@ fn restore_wildcards_in_expr(expr: &mut helm_schema_ast::TemplateExpr) {
     }
 }
 
+#[cfg(test)]
 fn restore_segments(segments: &mut [String]) {
     for segment in segments {
         if segment == WILDCARD_PLACEHOLDER {

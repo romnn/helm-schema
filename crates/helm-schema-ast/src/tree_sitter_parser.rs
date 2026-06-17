@@ -1,6 +1,4 @@
-use crate::{
-    HelmAst, HelmParser, ParseError, TemplateExpr, TemplateHeader, parse_action_expressions,
-};
+use crate::{HelmAst, HelmParser, ParseError, TemplateHeader};
 
 /// Parser implementation backed by the tree-sitter fused Helm+YAML grammar.
 ///
@@ -203,24 +201,6 @@ fn normalize_helm_template_text(raw: &str) -> String {
     }
     s = s.strip_suffix('-').unwrap_or(s);
     s.trim().to_string()
-}
-
-fn parse_control_header(raw: String) -> TemplateHeader {
-    let wrapped = format!("{{{{ {raw} }}}}");
-    let expr = parse_action_expressions(&wrapped)
-        .into_iter()
-        .next()
-        .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
-    TemplateHeader::new(raw, expr)
-}
-
-fn parse_range_header(raw: String) -> TemplateHeader {
-    let wrapped = format!("{{{{ range {raw} }}}}{{{{ end }}}}");
-    let expr = parse_action_expressions(&wrapped)
-        .into_iter()
-        .next()
-        .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
-    TemplateHeader::new(raw, expr)
 }
 
 fn deindent_yaml_fragment(fragment: &str) -> String {
@@ -645,7 +625,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .unwrap_or("")
                 .trim()
                 .to_string();
-            let condition = parse_control_header(cond_text);
+            let condition = TemplateHeader::parse_control(cond_text);
 
             let then_blocks = children_with_field(node, "consequence");
             let else_blocks = children_with_field(node, "alternative");
@@ -669,7 +649,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                                     .unwrap_or("")
                                     .trim()
                                     .to_string();
-                                else_if_pairs.push((parse_control_header(cnd), Vec::new()));
+                                else_if_pairs
+                                    .push((TemplateHeader::parse_control(cnd), Vec::new()));
                             } else {
                                 seen_main_condition = true;
                             }
@@ -730,7 +711,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                         .to_string()
                 }
             };
-            let header = parse_range_header(header);
+            let header = TemplateHeader::parse_range(header);
 
             let body = fuse_blocks(&children_with_field(node, "body"), src, true);
             let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src, true);
@@ -748,7 +729,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .unwrap_or("")
                 .trim()
                 .to_string();
-            let header = parse_control_header(header);
+            let header = TemplateHeader::parse_control(header);
 
             let body = fuse_blocks(&children_with_field(node, "consequence"), src, true);
             let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src, true);

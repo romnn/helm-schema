@@ -3,19 +3,14 @@ use std::collections::BTreeSet;
 use helm_schema_ast::TemplateExpr;
 
 use crate::Guard;
-use crate::value_path_extraction::{collect_loose_values_paths, parse_bare_expression_text};
+use crate::value_path_extraction::collect_loose_values_paths;
 
-/// Parse a Go template condition string into structured guards.
 #[must_use]
-pub fn parse_condition(text: &str) -> Vec<Guard> {
-    let Some(top) = parse_bare_expression_text(text).into_iter().next() else {
-        return Vec::new();
-    };
-
+pub(crate) fn parse_condition_expr(top: &TemplateExpr) -> Vec<Guard> {
     let mut paths = BTreeSet::new();
-    collect_loose_values_paths(&top, &mut paths);
+    collect_loose_values_paths(top, &mut paths);
 
-    if let TemplateExpr::Call { function, args } = &top {
+    if let TemplateExpr::Call { function, args } = top {
         match function.as_str() {
             "not" => {
                 if let Some(path) = single(&paths) {
@@ -106,8 +101,19 @@ fn first_string_literal(exprs: &[TemplateExpr]) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_condition;
+    use super::parse_condition_expr;
     use crate::Guard;
+
+    fn parse_condition(text: &str) -> Vec<Guard> {
+        let wrapped = format!("{{{{ {text} }}}}");
+        let Some(top) = helm_schema_ast::parse_action_expressions(&wrapped)
+            .into_iter()
+            .next()
+        else {
+            return Vec::new();
+        };
+        parse_condition_expr(&top)
+    }
 
     #[test]
     fn truthy_simple_path() {

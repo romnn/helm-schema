@@ -20,18 +20,26 @@ pub(crate) fn direct_bound_paths_from_text_in_context(
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
 ) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
     let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    for expr in parse_expr_text(text) {
-        walk_expr_excluding_helper_call_args(&expr, &mut |node| {
-            if expr_contains_helper_call(node) {
-                return;
-            }
-            if let Some(value) = eval_expr(node, &env).value {
-                out.extend(value.paths());
-            }
-        });
-    }
+    parse_expr_text(text)
+        .iter()
+        .flat_map(|expr| direct_bound_paths_from_expr_in_context(expr, &env))
+        .collect()
+}
+
+pub(crate) fn direct_bound_paths_from_expr_in_context(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    walk_expr_excluding_helper_call_args(expr, &mut |node| {
+        if expr_contains_helper_call(node) {
+            return;
+        }
+        if let Some(value) = eval_expr(node, env).value {
+            out.extend(value.paths());
+        }
+    });
     out
 }
 
@@ -54,30 +62,46 @@ fn local_paths_from_text(
     locals: &HashMap<String, FragmentBinding>,
     extract_paths: fn(&FragmentBinding) -> BTreeSet<String>,
 ) -> BTreeSet<String> {
+    parse_expr_text(text)
+        .iter()
+        .flat_map(|expr| local_paths_from_expr(expr, locals, extract_paths))
+        .collect()
+}
+
+pub(crate) fn local_bound_paths_from_expr(
+    expr: &TemplateExpr,
+    locals: &HashMap<String, FragmentBinding>,
+) -> BTreeSet<String> {
+    local_paths_from_expr(expr, locals, fragment_source_paths)
+}
+
+fn local_paths_from_expr(
+    expr: &TemplateExpr,
+    locals: &HashMap<String, FragmentBinding>,
+    extract_paths: fn(&FragmentBinding) -> BTreeSet<String>,
+) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
-    for expr in parse_expr_text(text) {
-        walk_expr_excluding_helper_call_args(&expr, &mut |node| match node {
-            TemplateExpr::Variable(var) if !var.is_empty() => {
-                if let Some(binding) = locals.get(var) {
-                    out.extend(extract_paths(binding));
-                }
+    walk_expr_excluding_helper_call_args(expr, &mut |node| match node {
+        TemplateExpr::Variable(var) if !var.is_empty() => {
+            if let Some(binding) = locals.get(var) {
+                out.extend(extract_paths(binding));
             }
-            TemplateExpr::Selector { operand, path } => {
-                let TemplateExpr::Variable(var) = operand.as_ref() else {
-                    return;
-                };
-                if var.is_empty() {
-                    return;
-                }
-                if let Some(binding) = locals.get(var)
-                    && let Some(bound) = select_fragment_binding(binding, path)
-                {
-                    out.extend(extract_paths(&bound));
-                }
+        }
+        TemplateExpr::Selector { operand, path } => {
+            let TemplateExpr::Variable(var) = operand.as_ref() else {
+                return;
+            };
+            if var.is_empty() {
+                return;
             }
-            _ => {}
-        });
-    }
+            if let Some(binding) = locals.get(var)
+                && let Some(bound) = select_fragment_binding(binding, path)
+            {
+                out.extend(extract_paths(&bound));
+            }
+        }
+        _ => {}
+    });
     out
 }
 

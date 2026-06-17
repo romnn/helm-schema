@@ -1,28 +1,33 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
+use helm_schema_ast::TemplateExpr;
+
 use crate::bound_helper_env::BoundHelperEnv;
+use crate::eval_env::EvalEnv;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_binding::HelperBinding;
 use crate::helper_summary_projection::helper_summary_condition_paths;
 use crate::local_projection::{
-    direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
+    direct_bound_paths_from_expr_in_context, local_bound_paths_from_expr,
 };
 use crate::predicate::Predicate;
 
-pub(crate) fn branch_guard_paths(
-    text: &str,
+pub(crate) fn branch_guard_paths_for_expr(
+    raw: &str,
+    expr: &TemplateExpr,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     local_bindings: &HashMap<String, FragmentBinding>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> BTreeSet<String> {
-    let mut branch_guard_paths =
-        direct_bound_paths_from_text_in_context(text, bindings, current_dot);
-    branch_guard_paths.extend(local_bound_paths_from_text(text, local_bindings));
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
+    let mut branch_guard_paths = direct_bound_paths_from_expr_in_context(expr, &env);
+    branch_guard_paths.extend(local_bound_paths_from_expr(expr, local_bindings));
+
     let nested = BoundHelperEnv::new(bindings, current_dot, context).summarize_calls(
-        text,
+        raw,
         local_bindings,
         seen,
     );

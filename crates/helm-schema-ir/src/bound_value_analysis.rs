@@ -18,10 +18,18 @@ pub(crate) struct GetBindingPlan {
     pub(crate) binding: GetBinding,
 }
 
+#[cfg(test)]
 pub(crate) fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
     let header = header.trim();
     let exprs = parse_expr_text(header);
-    let [TemplateExpr::VariableDefinition { name, value }] = exprs.as_slice() else {
+    let [expr] = exprs.as_slice() else {
+        return None;
+    };
+    parse_literal_list_range_expr(expr)
+}
+
+pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(String, Vec<String>)> {
+    let TemplateExpr::VariableDefinition { name, value } = expr.deparen() else {
         return None;
     };
     let variable = name.trim_start_matches('$');
@@ -279,6 +287,23 @@ pub(crate) fn extract_bound_values(
             &mut out,
         );
     }
+
+    out.into_iter().collect()
+}
+
+pub(crate) fn extract_bound_values_expr(
+    expr: &TemplateExpr,
+    range_domains: &HashMap<String, Vec<String>>,
+    get_bindings: &HashMap<String, GetBinding>,
+) -> Vec<String> {
+    let mut out: BTreeSet<String> = BTreeSet::new();
+    collect_bound_values_from_expr(
+        expr,
+        &DomainConstraints::default(),
+        range_domains,
+        get_bindings,
+        &mut out,
+    );
 
     out.into_iter().collect()
 }

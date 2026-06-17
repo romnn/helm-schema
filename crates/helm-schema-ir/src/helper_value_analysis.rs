@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
+use helm_schema_ast::TemplateHeader;
+
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
@@ -8,14 +10,13 @@ use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::fragment_to_helper_binding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::fragment_range_scope::range_header_text_from_source;
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
 };
-use crate::helper_runtime_guards::{branch_guard_paths, truthy_predicate_for_paths};
+use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
 use crate::helper_value_expression::collect_helper_value_expression;
@@ -23,7 +24,7 @@ use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_path_context::computed_with_body_fragment_binding;
+use crate::value_path_context::computed_with_body_fragment_binding_expr;
 use crate::{ValueKind, YamlPath};
 
 /// Walks a helper body collecting the values and effects it contributes to
@@ -106,10 +107,11 @@ impl HelperValueRuntime<'_, '_> {
         );
     }
 
-    fn branch_guard_paths(&mut self, text: &str) -> BTreeSet<String> {
+    fn branch_guard_paths(&mut self, header: &TemplateHeader) -> BTreeSet<String> {
         let current_dot = self.current_dot().cloned();
-        let branch_guard_paths = branch_guard_paths(
-            text,
+        let branch_guard_paths = branch_guard_paths_for_expr(
+            header.raw(),
+            header.expr(),
             self.bindings,
             current_dot.as_ref(),
             self.local_bindings,
@@ -316,7 +318,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         }
     }
 
-    fn plan_if_condition(&mut self, header: &str) -> ConditionActionPlan {
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         ConditionActionPlan {
             predicate: truthy_predicate_for_paths(&branch_guard_paths),
@@ -326,12 +328,12 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         }
     }
 
-    fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan {
+    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = current_dot.as_ref().map(helper_to_fragment_binding);
-        let body_dot = computed_with_body_fragment_binding(
-            header,
+        let body_dot = computed_with_body_fragment_binding_expr(
+            header.expr(),
             self.bindings,
             self.local_bindings,
             self.context,
@@ -348,21 +350,22 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
 
     fn plan_range_action(
         &mut self,
-        node: tree_sitter::Node<'_>,
+        _node: tree_sitter::Node<'_>,
+        header: Option<&TemplateHeader>,
         _current_path: &YamlPath,
     ) -> RangeActionPlan {
-        let Some(header) = range_header_text_from_source(node, self.source) else {
+        let Some(header) = header else {
             self.range_frames.push(RangeFrame::unknown());
             return RangeActionPlan::empty();
         };
-        let branch_guard_paths = self.branch_guard_paths(&header);
+        let branch_guard_paths = self.branch_guard_paths(header);
         self.active_output_predicates
             .extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
 
         let current_dot_fragment = self.current_dot_fragment();
         let mut seen_range = HashSet::new();
         let mut range_plan = plan_helper_range_binding(
-            &header,
+            header,
             self.local_bindings,
             current_dot_fragment.as_ref(),
             self.context,

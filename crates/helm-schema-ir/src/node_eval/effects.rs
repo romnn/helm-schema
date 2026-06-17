@@ -122,7 +122,7 @@ pub(super) fn apply_range_action_plan(
     if let Some((variable, literals)) = &plan.literal_range {
         sink.insert_range_domain(variable.clone(), literals.clone());
     }
-    if plan.header_text.is_some() {
+    if plan.has_header {
         for source_path in &plan.source_paths {
             let guard = Guard::Range {
                 path: source_path.clone(),

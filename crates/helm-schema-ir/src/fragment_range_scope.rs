@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use helm_schema_ast::{HelmAst, HelmParser as _, TemplateExpr, TreeSitterParser};
+use helm_schema_ast::{HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, TreeSitterParser};
 
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_classification::is_fragment_expr;
@@ -9,35 +9,25 @@ use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 use crate::yaml_syntax::parse_yaml_key;
 
-pub(crate) fn range_variable_name(header: &str) -> Option<String> {
-    let header = header
-        .trim()
-        .strip_prefix("range ")
-        .unwrap_or_else(|| header.trim());
-    let exprs = parse_expr_text(header);
-    let [TemplateExpr::VariableDefinition { name, .. }] = exprs.as_slice() else {
+pub(crate) fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
+    let TemplateExpr::VariableDefinition { name, .. } = expr.deparen() else {
         return None;
     };
     Some(name.trim_start_matches('$').to_string())
 }
 
-pub(crate) fn range_iterable_binding(
-    header: &str,
+pub(crate) fn range_iterable_binding_expr(
+    expr: &TemplateExpr,
     local_bindings: &HashMap<String, FragmentBinding>,
     current_dot: Option<&FragmentBinding>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Option<FragmentBinding> {
-    let header = header
-        .trim()
-        .strip_prefix("range ")
-        .unwrap_or_else(|| header.trim());
-    let exprs = parse_expr_text(header);
-    let value = match exprs.as_slice() {
-        [TemplateExpr::VariableDefinition { value, .. }]
-        | [TemplateExpr::Assignment { value, .. }] => value.as_ref(),
-        [expr] => expr,
-        _ => return None,
+    let value = match expr.deparen() {
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            value.as_ref()
+        }
+        expr => expr,
     };
     fragment_binding_from_range_value_expr(value, local_bindings, current_dot, context, seen)
 }
@@ -74,6 +64,13 @@ pub(crate) fn range_header_text_from_source(
         }
     }
     None
+}
+
+pub(crate) fn range_header_from_source(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+) -> Option<TemplateHeader> {
+    range_header_text_from_source(node, source).map(TemplateHeader::parse_range)
 }
 
 pub(crate) fn range_body_emits_sequence_item_from_source(

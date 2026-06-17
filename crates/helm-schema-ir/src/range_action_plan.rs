@@ -1,15 +1,17 @@
+use helm_schema_ast::TemplateHeader;
+
 use crate::YamlPath;
-use crate::bound_value_analysis::parse_literal_list_range;
+use crate::bound_value_analysis::parse_literal_list_range_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_body_renders_scalar_sequence_items_from_source,
-    range_has_destructured_variable_definition, range_header_text_from_source,
+    range_has_destructured_variable_definition,
 };
 use crate::value_path_context::ValuePathContext;
 
 pub(crate) struct RangeActionPlan {
-    pub(crate) header_text: Option<String>,
+    pub(crate) has_header: bool,
     pub(crate) source_paths: Vec<String>,
     pub(crate) literal_range: Option<(String, Vec<String>)>,
     pub(crate) guard_path: YamlPath,
@@ -22,7 +24,7 @@ pub(crate) struct RangeActionPlan {
 impl RangeActionPlan {
     pub(crate) fn empty() -> Self {
         Self {
-            header_text: None,
+            has_header: false,
             source_paths: Vec::new(),
             literal_range: None,
             guard_path: YamlPath(Vec::new()),
@@ -47,6 +49,7 @@ impl RangeActionPlan {
 
 pub(crate) fn plan_range_action(
     node: tree_sitter::Node<'_>,
+    header: Option<&TemplateHeader>,
     source: &str,
     value_path_context: &ValuePathContext<'_>,
     current_path: &YamlPath,
@@ -57,12 +60,15 @@ pub(crate) fn plan_range_action(
     let body_renders_scalar_sequence_items = !has_variable_definition
         && range_body_renders_scalar_sequence_items_from_source(node, source);
 
-    let Some(header_text) = range_header_text_from_source(node, source) else {
+    let Some(header) = header else {
         return RangeActionPlan::empty();
     };
 
-    let direct_iterable_header_path = direct_iterable_header_path(&header_text, value_path_context);
-    let source_paths = value_path_context.resolved_values_paths(&header_text);
+    let direct_iterable_header_path = direct_iterable_header_path(header, value_path_context);
+    let source_paths = value_path_context
+        .resolved_values_paths_from_expr(header.expr())
+        .into_iter()
+        .collect();
     let guard_path = if has_variable_definition {
         YamlPath(Vec::new())
     } else if body_emits_sequence_item
@@ -86,10 +92,10 @@ pub(crate) fn plan_range_action(
             .is_some_and(|segment| !segment.ends_with("[*]"));
     let dot_binding =
         direct_iterable_header_path.map(|path| FragmentBinding::ValuesPath(format!("{path}.*")));
-    let literal_range = parse_literal_list_range(&header_text);
+    let literal_range = parse_literal_list_range_expr(header.expr());
 
     RangeActionPlan {
-        header_text: Some(header_text),
+        has_header: true,
         source_paths,
         literal_range,
         guard_path,
@@ -101,8 +107,8 @@ pub(crate) fn plan_range_action(
 }
 
 fn direct_iterable_header_path(
-    header_text: &str,
+    header: &TemplateHeader,
     value_path_context: &ValuePathContext<'_>,
 ) -> Option<String> {
-    value_path_context.single_direct_iterable_range_path(header_text)
+    value_path_context.single_direct_iterable_range_path_expr(header.expr())
 }

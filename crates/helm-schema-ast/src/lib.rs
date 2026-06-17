@@ -37,6 +37,28 @@ impl TemplateHeader {
     }
 
     #[must_use]
+    pub fn parse_control(raw: impl Into<String>) -> Self {
+        let raw = raw.into();
+        let wrapped = format!("{{{{ {raw} }}}}");
+        let expr = parse_action_expressions(&wrapped)
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
+        Self::new(raw, expr)
+    }
+
+    #[must_use]
+    pub fn parse_range(raw: impl Into<String>) -> Self {
+        let raw = raw.into();
+        let wrapped = format!("{{{{ range {raw} }}}}{{{{ end }}}}");
+        let expr = parse_action_expressions(&wrapped)
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
+        Self::new(raw, expr)
+    }
+
+    #[must_use]
     pub fn raw(&self) -> &str {
         &self.raw
     }

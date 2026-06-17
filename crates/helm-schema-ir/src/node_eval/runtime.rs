@@ -1,3 +1,5 @@
+use helm_schema_ast::TemplateHeader;
+
 use crate::YamlPath;
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::condition_action_plan::ConditionActionPlan;
@@ -58,13 +60,14 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn plan_assignment_action(&self, text: &str) -> AssignmentActionPlan;
 
-    fn plan_if_condition(&mut self, header: &str) -> ConditionActionPlan;
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
 
-    fn plan_with_condition(&mut self, header: &str) -> ConditionActionPlan;
+    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
 
     fn plan_range_action(
         &mut self,
         node: tree_sitter::Node<'_>,
+        header: Option<&TemplateHeader>,
         current_path: &YamlPath,
     ) -> RangeActionPlan;
 }

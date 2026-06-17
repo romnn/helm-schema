@@ -1,4 +1,7 @@
+use helm_schema_ast::TemplateHeader;
+
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::fragment_range_scope::range_header_from_source;
 use crate::tree_sitter_utils::children_with_field;
 
 use super::effects::{
@@ -49,7 +52,7 @@ where
 fn eval_condition_node<R, F>(runtime: &mut R, node: tree_sitter::Node<'_>, mut enter_consequence: F)
 where
     R: NodeEvalRuntime,
-    F: FnMut(&mut R, &str) -> ConditionActionPlan,
+    F: FnMut(&mut R, &TemplateHeader) -> ConditionActionPlan,
 {
     let entry = runtime.scope_snapshot();
     let else_if_pairs = else_if_pairs(node);
@@ -58,8 +61,8 @@ where
     let condition_plan = if let Some(condition) = node.child_by_field_name("condition")
         && let Ok(text) = condition.utf8_text(runtime.source().as_bytes())
     {
-        let text = text.to_string();
-        Some(enter_consequence(runtime, &text))
+        let header = TemplateHeader::parse_control(text.trim().to_string());
+        Some(enter_consequence(runtime, &header))
     } else {
         None
     };
@@ -129,7 +132,7 @@ fn eval_condition_alternative_chain<R, F>(
 ) -> R::ScopeSnapshot
 where
     R: NodeEvalRuntime,
-    F: FnMut(&mut R, &str) -> ConditionActionPlan,
+    F: FnMut(&mut R, &TemplateHeader) -> ConditionActionPlan,
 {
     let Some(((condition, option_children), tail)) = else_if_pairs.split_first() else {
         runtime.enter_local_scope();
@@ -141,13 +144,13 @@ where
     };
 
     let entry = runtime.scope_snapshot();
-    let condition_text = condition
+    let condition_header = condition
         .utf8_text(runtime.source().as_bytes())
         .ok()
-        .map(str::to_string);
-    let condition_plan = condition_text
-        .as_deref()
-        .map(|text| enter_consequence(runtime, text));
+        .map(|text| TemplateHeader::parse_control(text.trim().to_string()));
+    let condition_plan = condition_header
+        .as_ref()
+        .map(|header| enter_consequence(runtime, header));
 
     runtime.enter_local_scope();
     for child in option_children {
@@ -175,7 +178,8 @@ where
     let entry = runtime.scope_snapshot();
 
     let current_path = runtime.current_document_path();
-    let plan = runtime.plan_range_action(node, &current_path);
+    let header = range_header_from_source(node, runtime.source());
+    let plan = runtime.plan_range_action(node, header.as_ref(), &current_path);
     let iteration_count = runtime.range_iteration_count();
 
     runtime.enter_local_scope();

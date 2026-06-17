@@ -1,11 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
+use helm_schema_ast::TemplateHeader;
+
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::{
     fragment_definitely_nonempty_iterable, fragment_item_binding, fragment_to_helper_binding,
 };
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::fragment_range_scope::{range_iterable_binding, range_variable_name};
+use crate::fragment_range_scope::{range_iterable_binding_expr, range_variable_name_expr};
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::{
     helper_definitely_nonempty_iterable, helper_item_binding, helper_to_fragment_binding,
@@ -33,21 +35,26 @@ pub(crate) struct HelperRangeIteration {
 }
 
 pub(crate) fn plan_helper_range_binding(
-    header: &str,
+    header: &TemplateHeader,
     local_bindings: &HashMap<String, FragmentBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
     non_exact_variable_binding: NonExactRangeVariableBinding,
 ) -> HelperRangeBindingPlan {
-    let range_fragment_binding =
-        range_iterable_binding(header, local_bindings, current_dot_fragment, context, seen);
+    let range_fragment_binding = range_iterable_binding_expr(
+        header.expr(),
+        local_bindings,
+        current_dot_fragment,
+        context,
+        seen,
+    );
     let range_helper_binding = range_fragment_binding
         .as_ref()
         .and_then(fragment_to_helper_binding);
 
     let exact_iterations = if let Some(FragmentBinding::List(items)) = &range_fragment_binding {
-        let range_variable = range_variable_name(header);
+        let range_variable = range_variable_name_expr(header.expr());
         Some(
             items
                 .iter()
@@ -70,7 +77,7 @@ pub(crate) fn plan_helper_range_binding(
     );
     let non_exact_variable_binding = if exact_iterations.is_none() && should_bind_non_exact_variable
     {
-        range_variable_name(header).and_then(|variable| {
+        range_variable_name_expr(header.expr()).and_then(|variable| {
             range_fragment_binding
                 .as_ref()
                 .and_then(fragment_item_binding)
