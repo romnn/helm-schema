@@ -114,6 +114,16 @@ spec:
         !analysis.contract.clone().project().uses().is_empty(),
         "session contract should expose at least one use"
     );
+    assert!(
+        analysis
+            .contract
+            .clone()
+            .project()
+            .uses()
+            .iter()
+            .any(|use_| use_.provenance.is_some()),
+        "session contract uses should now retain source provenance"
+    );
     let contract_document = session.contract_document_v1()?;
     assert_eq!(contract_document.version, 1);
     assert!(
@@ -377,6 +387,11 @@ data:
 
     assert_eq!(explanation.path, "kid.enabled");
     assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
+    assert_eq!(
+        explanation.exact_uses.len(),
+        explanation.exact_use_sites.len(),
+        "provenance-aware rows should stay aligned with compatibility rows"
+    );
     assert!(
         explanation
             .exact_uses
@@ -396,6 +411,17 @@ data:
             .iter()
             .any(|hint| hint == &json!({ "type": "boolean" })),
         "expected boolean activation type hint: {explanation:#?}"
+    );
+    assert!(
+        explanation.exact_use_sites.iter().any(|use_site| {
+            use_site.provenance.as_ref().is_some_and(|provenance| {
+                provenance
+                    .template_path
+                    .contains("templates/configmap.yaml")
+                    && provenance.span.start < provenance.span.end
+            })
+        }),
+        "expected source-file provenance for the explained kid.enabled use: {explanation:#?}"
     );
 
     Ok(())

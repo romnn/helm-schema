@@ -1,6 +1,6 @@
 use crate::fragment_classification::is_fragment_expr;
 use crate::yaml_syntax::first_mapping_colon_offset;
-use crate::{ResourceRef, ValueKind, YamlPath};
+use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
 
 use super::tracker::DocumentTracker;
 
@@ -10,6 +10,7 @@ pub(crate) struct DocumentSiteContext {
     pub(crate) entire_scalar_value: bool,
     pub(crate) path: YamlPath,
     pub(crate) resource: Option<ResourceRef>,
+    pub(crate) source_span: SourceSpan,
 }
 
 pub(crate) fn collect_document_site_context(
@@ -50,6 +51,7 @@ pub(crate) fn collect_document_site_context(
         entire_scalar_value: document_site_is_entire_scalar_value(source, node),
         path,
         resource,
+        source_span: SourceSpan::new(node.start_byte(), node.end_byte()),
     }
 }
 

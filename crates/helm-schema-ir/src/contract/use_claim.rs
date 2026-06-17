@@ -1,4 +1,4 @@
-use crate::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
+use crate::{ContractProvenance, Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 /// A contract claim for one observed values path.
 ///
@@ -12,6 +12,7 @@ pub struct ContractUse {
     pub kind: ValueKind,
     pub guards: Vec<Guard>,
     pub resource: Option<ResourceRef>,
+    pub provenance: Option<ContractProvenance>,
 }
 
 impl ContractUse {
@@ -22,12 +23,24 @@ impl ContractUse {
         guards: Vec<Guard>,
         resource: Option<ResourceRef>,
     ) -> Self {
+        Self::with_provenance(source_expr, path, kind, guards, resource, None)
+    }
+
+    pub(crate) fn with_provenance(
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        guards: Vec<Guard>,
+        resource: Option<ResourceRef>,
+        provenance: Option<ContractProvenance>,
+    ) -> Self {
         Self {
             source_expr,
             path,
             kind,
             guards,
             resource,
+            provenance,
         }
     }
 

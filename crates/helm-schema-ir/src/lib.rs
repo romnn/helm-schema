@@ -62,6 +62,7 @@ mod node_eval;
 mod output_path;
 mod predicate;
 mod printf_eval;
+mod provenance;
 mod provider_schema_use;
 mod range_action_plan;
 pub mod required_inference;
@@ -94,6 +95,7 @@ pub use helm_schema_core::{
     ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
 };
 pub use helper_discovery::{DefineBlock, extract_define_blocks, extract_helper_calls};
+pub use provenance::{ContractProvenance, SourceSpan};
 pub use symbolic::SymbolicIrContext;
 
 #[cfg(test)]

@@ -50,13 +50,17 @@ impl SymbolicWalker<'_> {
 
         let mut stack = self.inline_stack.clone();
         stack.push(token);
-        let mut nested =
-            SymbolicWalker::new_with_context(src, self.defines, self.ir_context.clone())
-                .with_initial_predicates(self.scope.predicates().to_vec())
-                .with_initial_dot_binding(request.dot)
-                .with_inline_stack(stack)
-                .with_inline_helpers_in_fragments(true)
-                .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
+        let mut nested = SymbolicWalker::new_with_context(
+            src,
+            Some(request.path.as_str()),
+            self.defines,
+            self.ir_context.clone(),
+        )
+        .with_initial_predicates(self.scope.predicates().to_vec())
+        .with_initial_dot_binding(request.dot)
+        .with_inline_stack(stack)
+        .with_inline_helpers_in_fragments(true)
+        .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let contract = nested.run_contract(&tree);
         self.contract.append(contract);
     }
@@ -79,13 +83,17 @@ impl SymbolicWalker<'_> {
         );
         let mut stack = self.inline_stack.clone();
         stack.push(plan.token);
-        let mut nested =
-            SymbolicWalker::new_with_context(plan.source, self.defines, self.ir_context.clone())
-                .with_initial_predicates(self.scope.predicates().to_vec())
-                .with_inline_stack(stack)
-                .with_inline_helpers_in_fragments(true)
-                .with_helper_bindings(bindings)
-                .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
+        let mut nested = SymbolicWalker::new_with_context(
+            plan.source,
+            self.source_path,
+            self.defines,
+            self.ir_context.clone(),
+        )
+        .with_initial_predicates(self.scope.predicates().to_vec())
+        .with_inline_stack(stack)
+        .with_inline_helpers_in_fragments(true)
+        .with_helper_bindings(bindings)
+        .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let contract = nested.run_contract(&plan.tree);
         self.contract.append(contract);
         true

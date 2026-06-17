@@ -58,7 +58,7 @@ impl SymbolicIrContext {
     /// output should first call [`ContractIr::project`] and then explicitly
     /// convert the projection to compatibility DTO rows.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
-        self.generate_contract_ir_with_guards(src, defines, &[])
+        self.generate_contract_ir_with_provenance(src, None, defines, &[])
     }
 
     /// Generate the opaque contract graph, seeding the walk with external
@@ -72,12 +72,41 @@ impl SymbolicIrContext {
         defines: &DefineIndex,
         guards: &[Guard],
     ) -> ContractIr {
+        self.generate_contract_ir_with_provenance(src, None, defines, guards)
+    }
+
+    pub fn generate_contract_ir_for_source(
+        &self,
+        src: &str,
+        source_path: &str,
+        defines: &DefineIndex,
+    ) -> ContractIr {
+        self.generate_contract_ir_with_provenance(src, Some(source_path), defines, &[])
+    }
+
+    pub fn generate_contract_ir_for_source_with_guards(
+        &self,
+        src: &str,
+        source_path: &str,
+        defines: &DefineIndex,
+        guards: &[Guard],
+    ) -> ContractIr {
+        self.generate_contract_ir_with_provenance(src, Some(source_path), defines, guards)
+    }
+
+    fn generate_contract_ir_with_provenance(
+        &self,
+        src: &str,
+        source_path: Option<&str>,
+        defines: &DefineIndex,
+        guards: &[Guard],
+    ) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
             return ContractIr::default();
         };
 
         let predicates = guards.iter().cloned().map(Predicate::from).collect();
-        let mut w = SymbolicWalker::new_with_context(src, defines, self.clone())
+        let mut w = SymbolicWalker::new_with_context(src, source_path, defines, self.clone())
             .with_initial_predicates(predicates);
         w.run_contract(&tree)
     }
@@ -85,6 +114,7 @@ impl SymbolicIrContext {
 
 struct SymbolicWalker<'a> {
     source: &'a str,
+    source_path: Option<&'a str>,
     defines: &'a DefineIndex,
     ir_context: SymbolicIrContext,
     contract: ContractIr,
@@ -92,6 +122,7 @@ struct SymbolicWalker<'a> {
     seed_dot: Option<FragmentBinding>,
     no_output_depth: usize,
     document_tracker: DocumentTracker<'a>,
+    current_source_span: Option<crate::SourceSpan>,
 
     inline_stack: Vec<String>,
 
@@ -104,11 +135,13 @@ struct SymbolicWalker<'a> {
 impl<'a> SymbolicWalker<'a> {
     fn new_with_context(
         source: &'a str,
+        source_path: Option<&'a str>,
         defines: &'a DefineIndex,
         ir_context: SymbolicIrContext,
     ) -> Self {
         Self {
             source,
+            source_path,
             defines,
             ir_context,
             contract: ContractIr::default(),
@@ -116,6 +149,7 @@ impl<'a> SymbolicWalker<'a> {
             seed_dot: None,
             no_output_depth: 0,
             document_tracker: DocumentTracker::new(source, defines),
+            current_source_span: None,
 
             inline_stack: Vec::new(),
 

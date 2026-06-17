@@ -71,6 +71,8 @@ impl SymbolicWalker<'_> {
                 &guards,
                 &self.scope.locals().chart_value_defaults,
                 self.no_output_depth > 0,
+                self.source_path,
+                Some(site_context.source_span),
             );
             DocumentOutput::new(site_context, helper_inlined, output_values)
                 .append_to_contract(&mut self.contract, &projection_context);

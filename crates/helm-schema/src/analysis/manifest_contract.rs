@@ -58,7 +58,8 @@ fn collect_manifest_contract_for_template(
 ) -> CliResult<TemplateManifestAnalysis> {
     let mut source = String::new();
     path.open_file()?.read_to_string(&mut source)?;
-    let contract = symbolic_context.generate_contract_ir(&source, defines);
+    let contract =
+        symbolic_context.generate_contract_ir_for_source(&source, path.as_str(), defines);
     let local_resource_schemas = local_resource_schemas_from_template_source(
         &source,
         path.as_str(),

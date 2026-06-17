@@ -38,11 +38,20 @@ pub struct ValuePathExplanation {
     pub path: String,
     pub exact_uses: Vec<ValueUse>,
     pub descendant_uses: Vec<ValueUse>,
+    pub exact_use_sites: Vec<ExplainedValueUse>,
+    pub descendant_use_sites: Vec<ExplainedValueUse>,
     pub value_path_facts: Option<helm_schema_engine::ContractValuePathFacts>,
     pub guard_constraints: Vec<helm_schema_engine::GuardConstraint>,
     pub metadata_fields: Vec<helm_schema_engine::MetadataFieldKind>,
     pub type_hints: Vec<Value>,
     pub has_default_fallback: bool,
+}
+
+/// Provenance-aware explanation row for one values use.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExplainedValueUse {
+    pub value_use: ValueUse,
+    pub provenance: Option<helm_schema_engine::ContractProvenance>,
 }
 
 pub(crate) struct PreparedSession {
@@ -243,6 +252,12 @@ impl AnalysisSession {
             .cloned()
             .map(ValueUse::from)
             .collect();
+        let exact_use_sites = projection
+            .uses()
+            .iter()
+            .filter(|use_| use_.source_expr == normalized_path)
+            .map(explained_value_use)
+            .collect();
         let descendant_uses = projection
             .uses()
             .iter()
@@ -253,6 +268,16 @@ impl AnalysisSession {
             })
             .cloned()
             .map(ValueUse::from)
+            .collect();
+        let descendant_use_sites = projection
+            .uses()
+            .iter()
+            .filter(|use_| {
+                use_.source_expr
+                    .strip_prefix(&normalized_path)
+                    .is_some_and(|suffix| suffix.starts_with('.'))
+            })
+            .map(explained_value_use)
             .collect();
         let value_path_facts = prepared
             .contract_schema_signals
@@ -288,6 +313,8 @@ impl AnalysisSession {
             path: normalized_path,
             exact_uses,
             descendant_uses,
+            exact_use_sites,
+            descendant_use_sites,
             value_path_facts,
             guard_constraints,
             metadata_fields,
@@ -352,6 +379,13 @@ impl AnalysisSession {
         let mut guard = self.projection.lock().expect("projection mutex");
         let projection = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&projection)));
         Ok(projection)
+    }
+}
+
+fn explained_value_use(contract_use: &helm_schema_engine::ContractUse) -> ExplainedValueUse {
+    ExplainedValueUse {
+        value_use: ValueUse::from(contract_use.clone()),
+        provenance: contract_use.provenance.clone(),
     }
 }
 
