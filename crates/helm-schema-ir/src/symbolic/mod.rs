@@ -106,7 +106,7 @@ impl SymbolicIrContext {
         };
 
         let predicates = guards.iter().cloned().map(Predicate::from).collect();
-        let mut w = SymbolicWalker::new_with_context(src, source_path, defines, self.clone())
+        let mut w = SymbolicWalker::new_with_context(src, source_path, 0, defines, self.clone())
             .with_initial_predicates(predicates);
         w.run_contract(&tree)
     }
@@ -115,6 +115,7 @@ impl SymbolicIrContext {
 struct SymbolicWalker<'a> {
     source: &'a str,
     source_path: Option<&'a str>,
+    source_offset: usize,
     defines: &'a DefineIndex,
     ir_context: SymbolicIrContext,
     contract: ContractIr,
@@ -136,12 +137,14 @@ impl<'a> SymbolicWalker<'a> {
     fn new_with_context(
         source: &'a str,
         source_path: Option<&'a str>,
+        source_offset: usize,
         defines: &'a DefineIndex,
         ir_context: SymbolicIrContext,
     ) -> Self {
         Self {
             source,
             source_path,
+            source_offset,
             defines,
             ir_context,
             contract: ContractIr::default(),
@@ -173,6 +176,14 @@ impl<'a> SymbolicWalker<'a> {
     fn with_inline_stack(mut self, stack: Vec<String>) -> Self {
         self.inline_stack = stack;
         self
+    }
+
+    fn provenance_helper_chain(&self) -> Vec<String> {
+        self.inline_stack
+            .iter()
+            .filter_map(|entry| entry.strip_prefix("define:"))
+            .map(std::string::ToString::to_string)
+            .collect()
     }
 
     fn with_inline_helpers_in_fragments(mut self, enabled: bool) -> Self {

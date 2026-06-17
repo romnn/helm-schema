@@ -123,6 +123,7 @@ mod tests {
         let meta = HelperOutputMeta {
             predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
             defaulted: true,
+            provenance: Vec::new(),
         };
         let mut analysis = HelperSummary::default();
         analysis.add_fragment_output_use(

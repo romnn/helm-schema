@@ -6,6 +6,8 @@ use crate::template_expr_cache::parse_expr_text;
 
 pub(crate) struct ExactHelperInlinePlan<'a> {
     pub(crate) source: &'a str,
+    pub(crate) source_path: Option<&'a str>,
+    pub(crate) source_offset: usize,
     pub(crate) tree: tree_sitter::Tree,
     pub(crate) token: String,
     pub(crate) arg: Option<TemplateExpr>,
@@ -34,6 +36,8 @@ pub(crate) fn plan_exact_helper_inline<'a>(
     define_body_resource(defines, name)?;
 
     let source = define_bodies.source(name)?;
+    let source_path = define_bodies.source_path(name);
+    let source_offset = define_bodies.body_offset(name).unwrap_or(0);
     let token = format!("define:{name}");
     if inline_stack.iter().any(|entry| entry == &token) {
         return None;
@@ -42,6 +46,8 @@ pub(crate) fn plan_exact_helper_inline<'a>(
 
     Some(ExactHelperInlinePlan {
         source,
+        source_path,
+        source_offset,
         tree,
         token,
         arg: args.get(1).cloned(),

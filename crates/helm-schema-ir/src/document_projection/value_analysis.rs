@@ -120,6 +120,7 @@ mod tests {
         let meta = HelperOutputMeta {
             predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
             defaulted: true,
+            provenance: Vec::new(),
         };
         summary.add_output_meta("image.tag".to_string(), meta.clone());
         summary.fragment_output.insert("extraEnv".to_string());

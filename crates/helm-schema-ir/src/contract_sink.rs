@@ -14,6 +14,7 @@ pub(crate) struct ContractUseContext<'a> {
     suppress_document_path: bool,
     source_path: Option<&'a str>,
     source_span: Option<SourceSpan>,
+    helper_chain: Vec<String>,
 }
 
 impl<'a> ContractUseContext<'a> {
@@ -23,6 +24,7 @@ impl<'a> ContractUseContext<'a> {
         suppress_document_path: bool,
         source_path: Option<&'a str>,
         source_span: Option<SourceSpan>,
+        helper_chain: Vec<String>,
     ) -> Self {
         Self {
             guards,
@@ -30,16 +32,36 @@ impl<'a> ContractUseContext<'a> {
             suppress_document_path,
             source_path,
             source_span,
+            helper_chain,
         }
     }
 
     pub(crate) fn contract_use(
         &self,
         source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+        resource: Option<ResourceRef>,
+    ) -> ContractUse {
+        self.contract_use_with_extra_provenance(
+            source_expr,
+            path,
+            kind,
+            extra_guards,
+            resource,
+            &[],
+        )
+    }
+
+    pub(crate) fn contract_use_with_extra_provenance(
+        &self,
+        source_expr: String,
         mut path: YamlPath,
         mut kind: ValueKind,
         extra_guards: &[Guard],
         resource: Option<ResourceRef>,
+        extra_provenance: &[ContractProvenance],
     ) -> ContractUse {
         if self.suppress_document_path {
             path = YamlPath(Vec::new());
@@ -56,7 +78,14 @@ impl<'a> ContractUseContext<'a> {
             merge_guards(&mut guards, std::slice::from_ref(&default_guard));
         }
 
-        ContractUse::with_provenance(source_expr, path, kind, guards, resource, self.provenance())
+        ContractUse::with_provenances(
+            source_expr,
+            path,
+            kind,
+            guards,
+            resource,
+            self.provenance_sites(extra_provenance),
+        )
     }
 
     pub(crate) fn pathless_contract_use(
@@ -65,7 +94,24 @@ impl<'a> ContractUseContext<'a> {
         kind: ValueKind,
         extra_guards: &[Guard],
     ) -> ContractUse {
-        self.contract_use(source_expr, YamlPath(Vec::new()), kind, extra_guards, None)
+        self.pathless_contract_use_with_extra_provenance(source_expr, kind, extra_guards, &[])
+    }
+
+    pub(crate) fn pathless_contract_use_with_extra_provenance(
+        &self,
+        source_expr: String,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+        extra_provenance: &[ContractProvenance],
+    ) -> ContractUse {
+        self.contract_use_with_extra_provenance(
+            source_expr,
+            YamlPath(Vec::new()),
+            kind,
+            extra_guards,
+            None,
+            extra_provenance,
+        )
     }
 
     fn guards_with(&self, extra_guards: &[Guard]) -> Vec<Guard> {
@@ -74,10 +120,24 @@ impl<'a> ContractUseContext<'a> {
         guards
     }
 
-    fn provenance(&self) -> Option<ContractProvenance> {
+    fn provenance_sites(&self, extra_provenance: &[ContractProvenance]) -> Vec<ContractProvenance> {
+        let mut provenance = Vec::new();
+        if let Some(site) = self.site_provenance() {
+            provenance.push(site);
+        }
+        for extra in extra_provenance {
+            if !provenance.contains(extra) {
+                provenance.push(extra.clone());
+            }
+        }
+        provenance
+    }
+
+    fn site_provenance(&self) -> Option<ContractProvenance> {
         Some(ContractProvenance::new(
             self.source_path?,
             self.source_span?,
+            self.helper_chain.clone(),
         ))
     }
 }
@@ -114,7 +174,14 @@ mod tests {
     fn contract_use_context_attaches_chart_default_only_to_rendered_paths() {
         let guards = Vec::new();
         let chart_value_defaults = BTreeSet::from(["serviceAccount.name".to_string()]);
-        let context = ContractUseContext::new(&guards, &chart_value_defaults, false, None, None);
+        let context = ContractUseContext::new(
+            &guards,
+            &chart_value_defaults,
+            false,
+            None,
+            None,
+            Vec::new(),
+        );
 
         let rendered = context.contract_use(
             "serviceAccount.name".to_string(),
@@ -142,7 +209,14 @@ mod tests {
     fn contract_use_context_lowers_pathless_partial_scalar_to_scalar() {
         let guards = Vec::new();
         let chart_value_defaults = BTreeSet::new();
-        let context = ContractUseContext::new(&guards, &chart_value_defaults, false, None, None);
+        let context = ContractUseContext::new(
+            &guards,
+            &chart_value_defaults,
+            false,
+            None,
+            None,
+            Vec::new(),
+        );
 
         let contract_use =
             context.pathless_contract_use("image.tag".to_string(), ValueKind::PartialScalar, &[]);

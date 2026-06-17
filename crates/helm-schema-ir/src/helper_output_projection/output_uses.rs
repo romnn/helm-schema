@@ -271,6 +271,7 @@ fn push_output_path(
         HelperOutputMeta {
             predicates: base_meta.predicates,
             defaulted: base_meta.defaulted || defaulted_paths.contains(path),
+            provenance: base_meta.provenance,
         },
         active_output_predicates,
     );

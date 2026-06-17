@@ -44,6 +44,25 @@ impl DocumentSite {
         context.contract_use(source_expr, path, kind, &guards, self.resource.clone())
     }
 
+    pub(super) fn contract_use_with_extra_provenance(
+        &self,
+        context: &ContractUseContext<'_>,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        guards: Vec<Guard>,
+        extra_provenance: &[crate::ContractProvenance],
+    ) -> ContractUse {
+        context.contract_use_with_extra_provenance(
+            source_expr,
+            path,
+            kind,
+            &guards,
+            self.resource.clone(),
+            extra_provenance,
+        )
+    }
+
     pub(super) fn direct_value_kind(&self) -> ValueKind {
         if self.kind == ValueKind::Scalar && !self.entire_scalar_value && !self.path.0.is_empty() {
             ValueKind::PartialScalar

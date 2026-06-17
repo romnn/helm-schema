@@ -53,6 +53,7 @@ impl SymbolicWalker<'_> {
         let mut nested = SymbolicWalker::new_with_context(
             src,
             Some(request.path.as_str()),
+            0,
             self.defines,
             self.ir_context.clone(),
         )
@@ -85,7 +86,8 @@ impl SymbolicWalker<'_> {
         stack.push(plan.token);
         let mut nested = SymbolicWalker::new_with_context(
             plan.source,
-            self.source_path,
+            plan.source_path,
+            plan.source_offset,
             self.defines,
             self.ir_context.clone(),
         )

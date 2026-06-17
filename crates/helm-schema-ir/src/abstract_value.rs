@@ -748,6 +748,7 @@ mod tests {
         let meta = HelperOutputMeta {
             predicates: BTreeSet::new(),
             defaulted: true,
+            provenance: Vec::new(),
         };
         let value = AbstractValue::Overlay {
             entries: BTreeMap::from([("name".to_string(), path("serviceAccount.name"))]),

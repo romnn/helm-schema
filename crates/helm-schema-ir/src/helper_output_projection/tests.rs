@@ -23,6 +23,7 @@ fn helper_binding_output_meta_preserves_output_set_metadata() {
             HelperOutputMeta {
                 predicates: BTreeSet::from([Predicate::truthy_path("global.enabled".to_string())]),
                 defaulted: true,
+                provenance: Vec::new(),
             },
         )]))),
     };
@@ -35,6 +36,7 @@ fn helper_binding_output_meta_preserves_output_set_metadata() {
         Some(&HelperOutputMeta {
             predicates: BTreeSet::from([Predicate::truthy_path("global.enabled".to_string())]),
             defaulted: true,
+            provenance: Vec::new(),
         })
     );
 }

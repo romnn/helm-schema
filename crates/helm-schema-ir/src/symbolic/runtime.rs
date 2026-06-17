@@ -28,6 +28,7 @@ impl SymbolicWalker<'_> {
             self.no_output_depth > 0,
             self.source_path,
             self.current_source_span,
+            self.provenance_helper_chain(),
         );
         self.contract
             .push(context.contract_use(source_expr, path, kind, extra_guards, resource));
@@ -64,7 +65,10 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
-        self.current_source_span = Some(crate::SourceSpan::new(node.start_byte(), node.end_byte()));
+        self.current_source_span = Some(crate::SourceSpan::new(
+            self.source_offset + node.start_byte(),
+            self.source_offset + node.end_byte(),
+        ));
         self.document_tracker.enter_node(node);
     }
 

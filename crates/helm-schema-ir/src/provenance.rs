@@ -17,14 +17,20 @@ impl SourceSpan {
 pub struct ContractProvenance {
     pub template_path: String,
     pub span: SourceSpan,
+    pub helper_chain: Vec<String>,
 }
 
 impl ContractProvenance {
     #[must_use]
-    pub fn new(template_path: impl Into<String>, span: SourceSpan) -> Self {
+    pub fn new(
+        template_path: impl Into<String>,
+        span: SourceSpan,
+        helper_chain: Vec<String>,
+    ) -> Self {
         Self {
             template_path: template_path.into(),
             span,
+            helper_chain,
         }
     }
 }

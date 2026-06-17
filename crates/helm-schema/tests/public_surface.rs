@@ -121,7 +121,7 @@ spec:
             .project()
             .uses()
             .iter()
-            .any(|use_| use_.provenance.is_some()),
+            .any(|use_| !use_.provenance.is_empty()),
         "session contract uses should now retain source provenance"
     );
     let contract_document = session.contract_document_v1()?;
@@ -414,7 +414,7 @@ data:
     );
     assert!(
         explanation.exact_use_sites.iter().any(|use_site| {
-            use_site.provenance.as_ref().is_some_and(|provenance| {
+            use_site.provenance.iter().any(|provenance| {
                 provenance
                     .template_path
                     .contains("templates/configmap.yaml")
@@ -422,6 +422,69 @@ data:
             })
         }),
         "expected source-file provenance for the explained kid.enabled use: {explanation:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn analysis_session_explains_helper_origin_provenance() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "message: hello\n")?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        r#"
+{{- define "root.renderMessage" -}}
+{{ .Values.message }}
+{{- end -}}
+"#,
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/configmap.yaml")?,
+        r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: root
+data:
+  message: {{ include "root.renderMessage" . }}
+"#,
+    )?;
+
+    let session = AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    });
+
+    let explanation = session.explain("message")?;
+
+    assert!(
+        !explanation.exact_use_sites.is_empty(),
+        "expected exact uses"
+    );
+    assert!(
+        explanation.exact_use_sites.iter().any(|use_site| {
+            use_site.provenance.iter().any(|provenance| {
+                provenance.template_path.contains("templates/_helpers.tpl")
+                    && provenance.span.start < provenance.span.end
+                    && provenance.helper_chain == vec!["root.renderMessage".to_string()]
+            })
+        }),
+        "expected helper-body provenance for message: {explanation:#?}"
     );
 
     Ok(())

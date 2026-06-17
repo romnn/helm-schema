@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::SourceSpan;
 use crate::contract_sink::ContractUseContext;
 use crate::document_projection::{
     DocumentOutput, collect_document_site_context, collect_document_value_analysis,
@@ -72,7 +73,11 @@ impl SymbolicWalker<'_> {
                 &self.scope.locals().chart_value_defaults,
                 self.no_output_depth > 0,
                 self.source_path,
-                Some(site_context.source_span),
+                Some(SourceSpan::new(
+                    self.source_offset + site_context.source_span.start,
+                    self.source_offset + site_context.source_span.end,
+                )),
+                self.provenance_helper_chain(),
             );
             DocumentOutput::new(site_context, helper_inlined, output_values)
                 .append_to_contract(&mut self.contract, &projection_context);

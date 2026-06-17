@@ -9,6 +9,7 @@ pub struct DefineBlock {
     pub name: String,
     pub body: String,
     pub byte_range: std::ops::Range<usize>,
+    pub body_range: std::ops::Range<usize>,
 }
 
 /// Extract all `{{ define "name" }} ... {{ end }}` blocks from template
@@ -70,6 +71,7 @@ pub fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {
                     name: opened.name,
                     body,
                     byte_range: opened.action_start..action_match.end(),
+                    body_range: opened.body_start..action_match.start(),
                 });
             }
         }

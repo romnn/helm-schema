@@ -12,7 +12,7 @@ pub struct ContractUse {
     pub kind: ValueKind,
     pub guards: Vec<Guard>,
     pub resource: Option<ResourceRef>,
-    pub provenance: Option<ContractProvenance>,
+    pub provenance: Vec<ContractProvenance>,
 }
 
 impl ContractUse {
@@ -34,13 +34,31 @@ impl ContractUse {
         resource: Option<ResourceRef>,
         provenance: Option<ContractProvenance>,
     ) -> Self {
+        Self::with_provenances(
+            source_expr,
+            path,
+            kind,
+            guards,
+            resource,
+            provenance.into_iter(),
+        )
+    }
+
+    pub(crate) fn with_provenances(
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        guards: Vec<Guard>,
+        resource: Option<ResourceRef>,
+        provenance: impl IntoIterator<Item = ContractProvenance>,
+    ) -> Self {
         Self {
             source_expr,
             path,
             kind,
             guards,
             resource,
-            provenance,
+            provenance: provenance.into_iter().collect(),
         }
     }
 

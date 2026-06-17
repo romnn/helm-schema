@@ -21,15 +21,19 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 /// already-projected rows and need deterministic ordering without losing raw
 /// evidence such as one nullable and one non-nullable render site.
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
-    uses.sort_by(|a, b| {
-        a.source_expr
-            .cmp(&b.source_expr)
-            .then_with(|| a.path.0.cmp(&b.path.0))
-            .then_with(|| (a.kind as u8).cmp(&(b.kind as u8)))
-            .then_with(|| a.resource.cmp(&b.resource))
-            .then_with(|| a.guards.cmp(&b.guards))
-    });
-    uses.dedup();
+    uses.sort_by(contract_use_semantic_cmp);
+
+    let mut merged = Vec::with_capacity(uses.len());
+    for contract_use in std::mem::take(uses) {
+        if let Some(existing) = merged.last_mut()
+            && contract_use_semantic_cmp(existing, &contract_use).is_eq()
+        {
+            merge_contract_use_provenance(existing, contract_use.provenance);
+            continue;
+        }
+        merged.push(contract_use);
+    }
+    *uses = merged;
 }
 
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
@@ -52,12 +56,28 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
                     (None, Some(_)) => {
                         if let Some(existing) = merged.get_mut(index) {
                             existing.resource = contract_use.resource;
+                            merge_contract_use_provenance(existing, contract_use.provenance);
                         }
                         continue;
                     }
-                    (None, None) => continue,
-                    (Some(existing), Some(resource)) if existing == *resource => continue,
-                    (Some(_), None) => continue,
+                    (None, None) => {
+                        if let Some(existing) = merged.get_mut(index) {
+                            merge_contract_use_provenance(existing, contract_use.provenance);
+                        }
+                        continue;
+                    }
+                    (Some(existing), Some(resource)) if existing == *resource => {
+                        if let Some(existing) = merged.get_mut(index) {
+                            merge_contract_use_provenance(existing, contract_use.provenance);
+                        }
+                        continue;
+                    }
+                    (Some(_), None) => {
+                        if let Some(existing) = merged.get_mut(index) {
+                            merge_contract_use_provenance(existing, contract_use.provenance);
+                        }
+                        continue;
+                    }
                     (Some(_), Some(_)) => {}
                 }
             }
@@ -133,4 +153,79 @@ fn drop_values_list_envelope_duplicates(uses: &mut Vec<ContractUse>) {
             contract_use.resource.clone(),
         ))
     });
+}
+
+fn contract_use_semantic_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
+    left.source_expr
+        .cmp(&right.source_expr)
+        .then_with(|| left.path.0.cmp(&right.path.0))
+        .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
+        .then_with(|| left.resource.cmp(&right.resource))
+        .then_with(|| left.guards.cmp(&right.guards))
+}
+
+fn merge_contract_use_provenance(
+    target: &mut ContractUse,
+    incoming: Vec<crate::ContractProvenance>,
+) {
+    for provenance in incoming {
+        if !target.provenance.contains(&provenance) {
+            target.provenance.push(provenance);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{ContractProvenance, ContractUse, SourceSpan, ValueKind, YamlPath};
+
+    use super::canonicalize_contract_uses;
+
+    #[test]
+    fn canonicalization_merges_provenance_for_semantically_identical_uses() {
+        let mut uses = vec![
+            ContractUse {
+                source_expr: "image.tag".to_string(),
+                path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
+                kind: ValueKind::Scalar,
+                guards: Vec::new(),
+                resource: None,
+                provenance: vec![ContractProvenance::new(
+                    "templates/a.yaml",
+                    SourceSpan::new(10, 20),
+                    Vec::new(),
+                )],
+            },
+            ContractUse {
+                source_expr: "image.tag".to_string(),
+                path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
+                kind: ValueKind::Scalar,
+                guards: Vec::new(),
+                resource: None,
+                provenance: vec![ContractProvenance::new(
+                    "templates/b.yaml",
+                    SourceSpan::new(30, 40),
+                    vec!["helper.render".to_string()],
+                )],
+            },
+        ];
+
+        canonicalize_contract_uses(&mut uses);
+
+        assert_eq!(uses.len(), 1);
+        assert_eq!(uses[0].provenance.len(), 2);
+        assert!(
+            uses[0]
+                .provenance
+                .iter()
+                .any(|provenance| provenance.template_path == "templates/a.yaml")
+        );
+        assert!(
+            uses[0]
+                .provenance
+                .iter()
+                .any(|provenance| provenance.template_path == "templates/b.yaml"
+                    && provenance.helper_chain == vec!["helper.render".to_string()])
+        );
+    }
 }

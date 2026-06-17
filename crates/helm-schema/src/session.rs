@@ -51,7 +51,7 @@ pub struct ValuePathExplanation {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExplainedValueUse {
     pub value_use: ValueUse,
-    pub provenance: Option<helm_schema_engine::ContractProvenance>,
+    pub provenance: Vec<helm_schema_engine::ContractProvenance>,
 }
 
 pub(crate) struct PreparedSession {

@@ -99,7 +99,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         }),
-        provenance: None,
+        provenance: Vec::new(),
     }];
     let mut type_hints = BTreeMap::new();
     type_hints.insert(
@@ -398,7 +398,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             kind: ValueKind::Fragment,
             guards: Vec::new(),
             resource: Some(resource.clone()),
-            provenance: None,
+            provenance: Vec::new(),
         },
         ContractUse {
             source_expr: "second".to_string(),
@@ -406,7 +406,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             kind: ValueKind::Fragment,
             guards: Vec::new(),
             resource: Some(resource),
-            provenance: None,
+            provenance: Vec::new(),
         },
     ];
     let schema_signals = schema_signals_for(uses);
@@ -450,7 +450,7 @@ fn values_yaml_comments_override_provider_descriptions() {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         }),
-        provenance: None,
+        provenance: Vec::new(),
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let schema_signals = schema_signals_for(uses);
@@ -1080,7 +1080,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             path: "feature.enabled".to_string(),
         }],
         resource: None,
-        provenance: None,
+        provenance: Vec::new(),
     }]);
     let type_hints = BTreeMap::from([(
         "feature.host".to_string(),
@@ -1124,7 +1124,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             path: "feature.enabled".to_string(),
         }],
         resource: None,
-        provenance: None,
+        provenance: Vec::new(),
     }]);
     let type_hints = BTreeMap::from([(
         "feature.host".to_string(),
@@ -1162,7 +1162,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             ],
         }],
         resource: None,
-        provenance: None,
+        provenance: Vec::new(),
     }]);
     let type_hints = BTreeMap::from([(
         "feature.host".to_string(),
@@ -1206,7 +1206,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
                 value: "name".to_string(),
             }],
             resource: None,
-            provenance: None,
+            provenance: Vec::new(),
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -1217,7 +1217,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
                 value: "labels".to_string(),
             }],
             resource: None,
-            provenance: None,
+            provenance: Vec::new(),
         },
     ]);
 
@@ -1277,7 +1277,7 @@ fn non_boolean_truthy_guard_does_not_lower_to_if_then_overlay() {
             path: "mode".to_string(),
         }],
         resource: None,
-        provenance: None,
+        provenance: Vec::new(),
     }]);
 
     let schema = generate_values_schema(
@@ -1885,7 +1885,7 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         }),
-        provenance: None,
+        provenance: Vec::new(),
     }];
     let values_yaml = indoc! {"
         image:
@@ -4321,7 +4321,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
             path: "image.tag".into(),
         }],
         resource: None,
-        provenance: None,
+        provenance: Vec::new(),
     };
     let bare = ContractUse {
         source_expr: "image.tag".into(),
@@ -4329,7 +4329,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         kind: ValueKind::Scalar,
         guards: vec![],
         resource: None,
-        provenance: None,
+        provenance: Vec::new(),
     };
 
     let null_paths = schema_signals_for(vec![guarded, bare]).nullable_value_paths;

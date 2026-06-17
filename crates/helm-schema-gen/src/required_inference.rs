@@ -215,7 +215,7 @@ mod tests {
                 kind: ValueKind::Scalar,
                 guards: Vec::new(),
                 resource: None,
-                provenance: None,
+                provenance: Vec::new(),
             },
             ContractUse {
                 source_expr: "feature".to_string(),
@@ -225,7 +225,7 @@ mod tests {
                     path: "feature".to_string(),
                 }],
                 resource: None,
-                provenance: None,
+                provenance: Vec::new(),
             },
         ]);
         let mut schema =

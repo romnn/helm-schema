@@ -8,12 +8,13 @@ use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
-use crate::{Guard, ValueKind, YamlPath};
+use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct HelperOutputMeta {
     pub(crate) predicates: BTreeSet<Predicate>,
     pub(crate) defaulted: bool,
+    pub(crate) provenance: Vec<ContractProvenance>,
 }
 
 impl HelperOutputMeta {
@@ -21,6 +22,7 @@ impl HelperOutputMeta {
         Self {
             predicates: predicates.clone(),
             defaulted,
+            provenance: Vec::new(),
         }
     }
 
@@ -31,11 +33,25 @@ impl HelperOutputMeta {
     pub(crate) fn merge(&mut self, other: Self) {
         self.predicates.extend(other.predicates);
         self.defaulted |= other.defaulted;
+        self.merge_provenance(other.provenance);
     }
 
     pub(crate) fn merge_ref(&mut self, other: &Self) {
         self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
+        self.merge_provenance(other.provenance.iter().cloned());
+    }
+
+    pub(crate) fn add_provenance_site(&mut self, provenance: ContractProvenance) {
+        self.merge_provenance(std::iter::once(provenance));
+    }
+
+    fn merge_provenance(&mut self, incoming: impl IntoIterator<Item = ContractProvenance>) {
+        for provenance in incoming {
+            if !self.provenance.contains(&provenance) {
+                self.provenance.push(provenance);
+            }
+        }
     }
 
     pub(crate) fn compatibility_guards(&self, source_expr: &str) -> Vec<Guard> {
@@ -315,6 +331,7 @@ mod tests {
                 },
             )))]),
             defaulted: true,
+            provenance: Vec::new(),
         };
 
         assert_eq!(

@@ -164,20 +164,29 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
-    assert_eq!(
-        helper_binding_from_expr_with_fragment_locals(
-            &expr,
-            &HashMap::new(),
-            None,
-            None,
-            context,
-            &mut seen,
-        ),
-        Some(HelperBinding::OutputSet(
-            [("nameOverride".to_string(), Default::default())]
-                .into_iter()
-                .collect()
-        )),
+    let Some(HelperBinding::OutputSet(output_set)) = helper_binding_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
+    ) else {
+        panic!("expected helper projection to resolve to an output-set binding");
+    };
+
+    let meta = output_set
+        .get("nameOverride")
+        .expect("nameOverride output meta should be present");
+    assert!(meta.predicates.is_empty());
+    assert!(!meta.defaulted);
+    assert!(
+        meta.provenance.iter().any(|provenance| {
+            provenance.template_path == "<inline:0>"
+                && provenance.helper_chain == vec!["common.name".to_string()]
+                && provenance.span.start < provenance.span.end
+        }),
+        "expected helper projection to retain helper-body provenance, got {meta:?}",
     );
 }
 
