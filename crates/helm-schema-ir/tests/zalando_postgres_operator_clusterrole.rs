@@ -24,7 +24,7 @@ fn symbolic_ir_from_tree_sitter() {
         .project();
 
     let actual: serde_json::Value =
-        serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(ir))
+        serde_json::to_value(helm_schema_ir::ContractDocument::from_projection(ir))
             .expect("serialize");
 
     if std::env::var("SYMBOLIC_DUMP").is_ok() {

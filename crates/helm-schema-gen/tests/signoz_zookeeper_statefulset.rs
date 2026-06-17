@@ -36,7 +36,7 @@ fn schema_from_tree_sitter() {
         eprintln!(
             "{}",
             serde_json::to_string_pretty(
-                &serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(
+                &serde_json::to_value(helm_schema_ir::ContractDocument::from_projection(
                     projection,
                 ))
                 .expect("ir json"),

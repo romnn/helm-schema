@@ -30,7 +30,7 @@ fn symbolic_ir_from_tree_sitter() {
         .project();
 
     let actual =
-        serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(ir)).unwrap();
+        serde_json::to_value(helm_schema_ir::ContractDocument::from_projection(ir)).unwrap();
 
     if std::env::var("IR_DUMP").is_ok() {
         eprintln!(

@@ -1,0 +1,55 @@
+{
+  "uses": [
+    {
+      "guards": [
+        {
+          "path": "rbacEnabled",
+          "type": "truthy"
+        },
+        {
+          "path": "clusterScoped",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
+      },
+      "source_expr": "clusterScoped"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbacEnabled",
+          "type": "truthy"
+        },
+        {
+          "path": "clusterScoped",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "clusterScoped"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbacEnabled",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "rbacEnabled"
+    }
+  ],
+  "version": 2
+}

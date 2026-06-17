@@ -21,7 +21,7 @@ fn symbolic_ir_from_tree_sitter() {
         .project();
 
     let actual: serde_json::Value =
-        serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(ir))
+        serde_json::to_value(helm_schema_ir::ContractDocument::from_projection(ir))
             .expect("serialize");
 
     if std::env::var("SYMBOLIC_DUMP").is_ok() {
@@ -31,42 +31,9 @@ fn symbolic_ir_from_tree_sitter() {
         );
     }
 
-    let crb = serde_json::json!({
-        "api_version": "rbac.authorization.k8s.io/v1",
-        "kind": "ClusterRoleBinding"
-    });
-    let t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-
-    let expected_uses = serde_json::json!([
-        {
-            "source_expr": "clusterScoped",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("rbacEnabled"), t("clusterScoped")],
-            "resource": serde_json::json!({
-                "api_version": "rbac.authorization.k8s.io/v1",
-                "kind": "ClusterRole"
-            })
-        },
-        {
-            "source_expr": "clusterScoped",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("rbacEnabled"), t("clusterScoped")],
-            "resource": crb
-        },
-        {
-            "source_expr": "rbacEnabled",
-            "path": [],
-            "kind": "Scalar",
-            "guards": [t("rbacEnabled")],
-            "resource": null
-        }
-    ]);
-    let expected = serde_json::json!({
-        "version": 1,
-        "uses": expected_uses
-    });
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/nats_operator_rbac.ir.json"))
+            .expect("expected ir json");
 
     similar_asserts::assert_eq!(actual, expected);
 }

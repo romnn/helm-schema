@@ -1,8 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 /// A guard condition from an `if`, `with`, or `range` block.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Guard {
     /// Simple truthy check: `if .Values.X`
     Truthy { path: String },

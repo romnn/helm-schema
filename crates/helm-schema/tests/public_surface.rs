@@ -4,7 +4,10 @@ use helm_schema::generation::{
 };
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
-use helm_schema::{AnalysisSession, CliError};
+use helm_schema::{
+    AnalysisSession, CliError, contract::ContractDocument, diagnostics::DiagnosticSink,
+};
+use helm_schema_engine::Guard;
 use serde_json::json;
 use vfs::VfsPath;
 
@@ -124,20 +127,18 @@ spec:
             .any(|use_| !use_.provenance.is_empty()),
         "session contract uses should now retain source provenance"
     );
-    let contract_document = session.contract_document_v1()?;
-    assert_eq!(contract_document.version, 1);
+    let contract_document = session.contract_document()?;
+    assert_eq!(contract_document.version, 2);
     assert!(
         !contract_document.uses.is_empty(),
         "session contract document should expose canonical uses"
     );
-    let contract_document_v2 = session.contract_document_v2()?;
-    assert_eq!(contract_document_v2.version, 2);
     assert!(
-        contract_document_v2
+        contract_document
             .uses
             .iter()
             .any(|use_| !use_.provenance.is_empty()),
-        "session v2 contract document should retain source provenance"
+        "session contract document should retain source provenance"
     );
     let generated = session.generated_schema()?;
     assert_eq!(
@@ -152,7 +153,7 @@ spec:
 }
 
 #[test]
-fn contract_document_v2_is_byte_deterministic_across_100_runs() -> eyre::Result<()> {
+fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -206,10 +207,9 @@ fn contract_document_v2_is_byte_deterministic_across_100_runs() -> eyre::Result<
         },
     };
 
-    let expected = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document_v2()?)?;
+    let expected = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
     for _ in 0..100 {
-        let actual =
-            serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document_v2()?)?;
+        let actual = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
         assert_eq!(actual, expected, "contract DTO bytes must be deterministic");
     }
 
@@ -470,13 +470,13 @@ data:
         explanation
             .exact_uses
             .iter()
-            .any(|use_| use_.guards.contains(
-                &serde_json::from_value(serde_json::json!({
-                    "type": "or",
-                    "paths": ["global.kidEnabled", "kid.enabled", "tags.observability"]
-                }))
-                .expect("deserialize guard")
-            )),
+            .any(|use_| use_.guards.contains(&Guard::Or {
+                paths: vec![
+                    "global.kidEnabled".to_string(),
+                    "kid.enabled".to_string(),
+                    "tags.observability".to_string(),
+                ],
+            })),
         "expected activation guard in explanation: {explanation:#?}"
     );
     assert!(
@@ -496,6 +496,75 @@ data:
             })
         }),
         "expected source-file provenance for the explained kid.enabled use: {explanation:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        "enabled: true\nmessage: hello\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc::indoc! {r#"
+            {{- define "root.renderMessage" -}}
+            {{- if .Values.enabled -}}
+            {{ .Values.message }}
+            {{- else -}}
+            fallback
+            {{- end -}}
+            {{- end -}}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/configmap.yaml")?,
+        indoc::indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              message: {{ include "root.renderMessage" . | quote }}
+        "#},
+    )?;
+
+    let session = AnalysisSession::with_diagnostics(
+        GenerateOptions {
+            chart_dir,
+            include_tests: false,
+            include_subchart_values: true,
+            values_files: Vec::new(),
+            infer_required: false,
+            provider: ProviderOptions {
+                k8s_versions: vec!["v1.35.0".to_string()],
+                allow_net: false,
+                disable_k8s_schemas: true,
+                ..Default::default()
+            },
+        },
+        DiagnosticSink::new(),
+    );
+
+    let document = session.contract_document()?;
+    let json = serde_json::to_value(&document)?;
+    let decoded: ContractDocument = serde_json::from_value(json)?;
+
+    assert_eq!(decoded, document);
+    assert!(
+        decoded
+            .uses
+            .iter()
+            .any(|use_| !use_.provenance.is_empty() && !use_.value_use.guards.is_empty()),
+        "round-tripped v2 document should retain provenance and guards"
     );
 
     Ok(())
