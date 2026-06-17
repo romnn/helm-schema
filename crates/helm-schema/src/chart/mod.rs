@@ -16,7 +16,7 @@ pub(crate) use file_roles::{FileRole, list_chart_files};
 pub use files::list_manifest_templates;
 pub(crate) use paths::scope_values_path;
 pub use static_crds::collect_static_crd_universe;
-pub use types::ChartContext;
+pub use types::{ChartContext, ChartDependencyActivation};
 pub use values::{build_composed_values_descriptions, build_composed_values_yaml};
 pub(crate) use values_schema::{
     GENERATED_SCHEMA_MARKER_KEY, ScopedValuesSchemaConstraint,

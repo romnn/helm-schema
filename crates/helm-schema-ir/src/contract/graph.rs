@@ -2,7 +2,7 @@ use crate::contract::ContractProjection;
 use crate::contract_normalization::normalize_contract_uses;
 use crate::contract_signal_builder::derive_schema_signals_from_uses;
 use crate::contract_signals::ContractSchemaSignals;
-use crate::{ContractUse, ValueKind, YamlPath};
+use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
 /// Opaque guarded contract graph for one template interpretation.
 ///
@@ -46,6 +46,25 @@ impl ContractIr {
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
         self.uses.append(&mut other.uses);
+    }
+
+    /// Append guards to every claim in the graph without rewriting any paths.
+    ///
+    /// This is used for chart-structural activation predicates that apply to
+    /// an already-scoped batch of claims, such as dependency `condition:` /
+    /// `tags:` liveness from `Chart.yaml`.
+    pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
+        if guards.is_empty() {
+            return;
+        }
+
+        for contract_use in &mut self.uses {
+            for guard in guards {
+                if !contract_use.guards.contains(guard) {
+                    contract_use.guards.push(guard.clone());
+                }
+            }
+        }
     }
 
     /// Rewrite all referenced values paths while preserving rendered YAML paths.

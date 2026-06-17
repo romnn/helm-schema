@@ -58,11 +58,27 @@ impl SymbolicIrContext {
     /// output should first call [`ContractIr::project`] and then explicitly
     /// convert the projection to compatibility DTO rows.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
+        self.generate_contract_ir_with_guards(src, defines, &[])
+    }
+
+    /// Generate the opaque contract graph, seeding the walk with external
+    /// guards that must hold for the template's output to be live.
+    ///
+    /// Callers use this for chart-structural liveness facts such as
+    /// `Chart.yaml` dependency activation conditions and tags.
+    pub fn generate_contract_ir_with_guards(
+        &self,
+        src: &str,
+        defines: &DefineIndex,
+        guards: &[Guard],
+    ) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
             return ContractIr::default();
         };
 
-        let mut w = SymbolicWalker::new_with_context(src, defines, self.clone());
+        let predicates = guards.iter().cloned().map(Predicate::from).collect();
+        let mut w = SymbolicWalker::new_with_context(src, defines, self.clone())
+            .with_initial_predicates(predicates);
         w.run_contract(&tree)
     }
 }

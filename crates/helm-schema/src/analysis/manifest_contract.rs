@@ -2,7 +2,7 @@ use std::io::Read;
 
 use helm_schema_engine::helpers::DefineIndex;
 use helm_schema_engine::parse::contains_template_action;
-use helm_schema_engine::{ContractIr, SymbolicIrContext};
+use helm_schema_engine::{ContractIr, Guard, SymbolicIrContext};
 use helm_schema_k8s::LocalResourceSchema;
 use vfs::VfsPath;
 
@@ -19,6 +19,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
 ) -> CliResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
+    let activation_guards = chart_activation_guards(&chart.dependency_activation);
 
     let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
     for path in manifests {
@@ -28,6 +29,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
         } = collect_manifest_contract_for_template(&path, defines, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
+        manifest_contract.append_guards_to_all_uses(&activation_guards);
         contract.append(manifest_contract);
         local_resource_schemas.extend(template_local_resource_schemas);
     }
@@ -66,4 +68,27 @@ fn collect_manifest_contract_for_template(
         contract,
         local_resource_schemas,
     })
+}
+
+fn chart_activation_guards(activation: &chart::ChartDependencyActivation) -> Vec<Guard> {
+    let mut activation_paths = activation
+        .condition_paths
+        .iter()
+        .chain(activation.tag_paths.iter())
+        .filter_map(|path| {
+            let path = path.trim();
+            (!path.is_empty()).then_some(path.to_string())
+        })
+        .collect::<Vec<_>>();
+
+    activation_paths.sort();
+    activation_paths.dedup();
+
+    match activation_paths.as_slice() {
+        [] => Vec::new(),
+        [path] => vec![Guard::Truthy { path: path.clone() }],
+        _ => vec![Guard::Or {
+            paths: activation_paths,
+        }],
+    }
 }
