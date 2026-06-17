@@ -48,8 +48,9 @@ fn drop_nulls(v: &Value) -> Value {
 }
 
 fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<String> {
-    let Ok(validator) = jsonschema::validator_for(schema) else {
-        return vec!["failed to compile JSON schema".to_string()];
+    let validator = match jsonschema::validator_for(schema) {
+        Ok(validator) => validator,
+        Err(err) => return vec![format!("failed to compile JSON schema: {err}")],
     };
 
     validator

@@ -8,6 +8,7 @@ mod output_pipeline;
 mod provider_builder;
 mod required_inference;
 pub mod schema_override;
+mod session;
 mod values_roots;
 
 pub mod diagnostics {
@@ -27,6 +28,8 @@ pub mod provider {
     pub use crate::provider_builder::ProviderOptions;
     pub use helm_schema_k8s::K8sVersionChain;
 }
+
+pub use session::{Analysis, AnalysisSession};
 
 pub use error::{CliError, CliResult};
 pub use generation::{

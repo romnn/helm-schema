@@ -10,6 +10,7 @@ use crate::error::CliResult;
 
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {
+    pub(crate) contract: ContractIr,
     pub(crate) contract_schema_signals: ContractSchemaSignals,
     pub(crate) template_evidence: ChartTemplateEvidence,
     pub(crate) local_schema_universe: LocalSchemaUniverse,
@@ -44,9 +45,10 @@ pub(crate) fn analyze_charts(
 
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
-    let contract_schema_signals = contract.into_schema_signals();
+    let contract_schema_signals = contract.clone().into_schema_signals();
 
     Ok(ChartAnalysis {
+        contract,
         contract_schema_signals,
         template_evidence,
         local_schema_universe,

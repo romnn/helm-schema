@@ -5,4 +5,4 @@ mod manifest_contract;
 mod tests;
 mod values_seed;
 
-pub(crate) use collection::{ChartAnalysis, analyze_charts};
+pub(crate) use collection::analyze_charts;

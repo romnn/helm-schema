@@ -3,6 +3,7 @@ use std::path::Path;
 use json_schema_minify::{MinimizeOptions, minimize_schema};
 use serde_json::Value;
 
+use crate::chart::GENERATED_SCHEMA_MARKER_KEY;
 use crate::error::CliResult;
 use crate::flatten;
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
@@ -33,7 +34,9 @@ pub fn apply_schema_output_pipeline(
 
     mirror_global_schema_into_subcharts(&mut schema, subchart_value_prefixes);
 
-    apply_output_transforms(schema, base_dir, options)
+    schema = apply_output_transforms(schema, base_dir, options)?;
+    mark_generated_schema(&mut schema);
+    Ok(schema)
 }
 
 #[tracing::instrument(
@@ -64,6 +67,12 @@ fn apply_output_transforms(
     }
 
     Ok(schema)
+}
+
+fn mark_generated_schema(schema: &mut Value) {
+    if let Value::Object(object) = schema {
+        object.insert(GENERATED_SCHEMA_MARKER_KEY.to_string(), Value::Bool(true));
+    }
 }
 
 #[cfg(test)]
@@ -224,5 +233,33 @@ mod tests {
             "fully inlined export mode should inline prepared internal refs"
         );
         assert!(output.pointer("/properties/fromRef/$ref").is_none());
+    }
+
+    #[test]
+    fn output_pipeline_marks_final_schema_as_generated() {
+        let schema = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object"
+        });
+
+        let output = apply_schema_output_pipeline(
+            schema,
+            PolicyInputs::default(),
+            &[],
+            std::path::Path::new("/does/not/matter"),
+            &OutputPipelineOptions {
+                reference_mode: ReferenceMode::PreserveRefs,
+                strip_descriptions: false,
+                minimize: false,
+            },
+        )
+        .expect("apply output pipeline");
+
+        assert_eq!(
+            output
+                .get(crate::chart::GENERATED_SCHEMA_MARKER_KEY)
+                .and_then(Value::as_bool),
+            Some(true)
+        );
     }
 }
