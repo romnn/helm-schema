@@ -1,7 +1,10 @@
 use std::collections::BTreeSet;
 
 use crate::contract::{ContractIr, ContractUse};
-use crate::contract_signals::{ContractSchemaSignals, GuardConstraint, MetadataFieldKind};
+use crate::contract_signals::{
+    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardConstraint,
+    MetadataFieldKind,
+};
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
 fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
@@ -311,6 +314,118 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
         "contract value-path facts should bundle nullable render-use evidence",
     );
     assert_eq!(signals.provider_schema_uses.len(), 2);
+}
+
+#[test]
+fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
+    let signals = signals_for(vec![ContractUse::new(
+        "feature.host".to_string(),
+        YamlPath(vec!["spec".to_string(), "host".to_string()]),
+        ValueKind::Scalar,
+        vec![
+            Guard::With {
+                path: "feature".to_string(),
+            },
+            Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            },
+        ],
+        None,
+    )]);
+
+    assert_eq!(
+        signals.conditional_path_overlays,
+        vec![ConditionalPathOverlay {
+            target_value_path: "feature.host".to_string(),
+            guards: vec![ConditionalGuard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+        }],
+    );
+}
+
+#[test]
+fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Not {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "other.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "other".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Or {
+                paths: vec!["first.enabled".to_string(), "second.enabled".to_string()],
+            }],
+            None,
+        ),
+    ]);
+
+    assert_eq!(
+        signals.conditional_path_overlays,
+        vec![
+            ConditionalPathOverlay {
+                target_value_path: "feature.host".to_string(),
+                guards: vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                    path: "feature.enabled".to_string(),
+                }))],
+            },
+            ConditionalPathOverlay {
+                target_value_path: "other.host".to_string(),
+                guards: vec![ConditionalGuard::AnyOf(vec![
+                    ConditionalGuard::Truthy {
+                        path: "first.enabled".to_string(),
+                    },
+                    ConditionalGuard::Truthy {
+                        path: "second.enabled".to_string(),
+                    },
+                ])],
+            },
+        ],
+    );
+}
+
+#[test]
+fn contract_ir_conditional_path_overlays_skip_unguarded_or_structurally_unsupported_paths() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            Vec::new(),
+            None,
+        ),
+        ContractUse::new(
+            "other.path".to_string(),
+            YamlPath(vec!["spec".to_string(), "other".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Range {
+                path: "other.items".to_string(),
+            }],
+            None,
+        ),
+    ]);
+
+    assert!(
+        signals.conditional_path_overlays.is_empty(),
+        "unguarded or unsupported paths must stay on the wide/base path: {:?}",
+        signals.conditional_path_overlays
+    );
 }
 
 #[test]

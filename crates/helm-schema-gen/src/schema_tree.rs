@@ -44,6 +44,30 @@ pub(crate) fn insert_schema_at_path_segments(
     insert_schema_at_parts(root, path_segments, leaf);
 }
 
+pub(crate) fn ensure_schema_node_at_path_segments<'a>(
+    root: &'a mut Value,
+    path_segments: &[String],
+) -> &'a mut Value {
+    if path_segments.is_empty() {
+        return root;
+    }
+
+    ensure_object_schema(root);
+    let mut current = root;
+    for segment in path_segments {
+        ensure_object_schema(current);
+        let properties = current
+            .as_object_mut()
+            .and_then(|object| object.get_mut("properties"))
+            .and_then(Value::as_object_mut)
+            .expect("object schema must have properties");
+        current = properties
+            .entry(segment.clone())
+            .or_insert_with(|| object_schema(Map::new()));
+    }
+    current
+}
+
 pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {
     for (path, description) in descriptions {
         let path_segments: Vec<String> = path
@@ -78,6 +102,18 @@ fn apply_description_at_path_segments(
             for variant in variants {
                 apply_description_at_path_segments(variant, path_segments, description);
             }
+        }
+    }
+
+    if let Some(Value::Array(variants)) = obj.get_mut("allOf") {
+        for variant in variants {
+            apply_description_at_path_segments(variant, path_segments, description);
+        }
+    }
+
+    for key in ["then", "else"] {
+        if let Some(child) = obj.get_mut(key) {
+            apply_description_at_path_segments(child, path_segments, description);
         }
     }
 

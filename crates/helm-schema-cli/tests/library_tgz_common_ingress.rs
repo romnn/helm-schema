@@ -187,28 +187,36 @@ fn packaged_library_common_ingress_helper_propagates_schema() -> color_eyre::eyr
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    assert!(
+    let has_ingress_property = |property: &str| {
         schema
-            .pointer("/properties/ingress/properties/className")
-            .is_some(),
+            .pointer(&format!("/properties/ingress/properties/{property}"))
+            .is_some()
+            || schema
+                .get("allOf")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|entries| {
+                    entries.iter().any(|entry| {
+                        entry
+                            .pointer(&format!("/then/properties/ingress/properties/{property}"))
+                            .is_some()
+                    })
+                })
+    };
+
+    assert!(
+        has_ingress_property("className"),
         "expected packaged library helper to surface ingress.className, got {schema}",
     );
     assert!(
-        schema
-            .pointer("/properties/ingress/properties/annotations")
-            .is_some(),
+        has_ingress_property("annotations"),
         "expected packaged library helper to surface ingress.annotations, got {schema}",
     );
     assert!(
-        schema
-            .pointer("/properties/ingress/properties/hosts")
-            .is_some(),
+        has_ingress_property("hosts"),
         "expected packaged library helper to surface ingress.hosts, got {schema}",
     );
     assert!(
-        schema
-            .pointer("/properties/ingress/properties/tls")
-            .is_some(),
+        has_ingress_property("tls"),
         "expected packaged library helper to surface ingress.tls, got {schema}",
     );
     assert!(

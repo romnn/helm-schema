@@ -402,6 +402,76 @@ data:
 }
 
 #[test]
+fn dependency_activation_guards_lower_to_root_any_of_condition() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc::indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+                condition: kid.enabled, global.kidEnabled
+                tags:
+                  - observability
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("charts/child/values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/configmap.yaml")?,
+        r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Values.name }}"
+"#,
+    )?;
+
+    let schema = generate_values_schema_for_chart(&GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    })?;
+
+    assert_eq!(
+        schema.pointer("/allOf/0/if/anyOf/0/properties/global/properties/kidEnabled/const"),
+        Some(&json!(true))
+    );
+    assert_eq!(
+        schema.pointer("/allOf/0/if/anyOf/1/properties/kid/properties/enabled/const"),
+        Some(&json!(true))
+    );
+    assert_eq!(
+        schema.pointer("/allOf/0/if/anyOf/2/properties/tags/properties/observability/const"),
+        Some(&json!(true))
+    );
+    assert_eq!(
+        schema.pointer("/allOf/0/then/properties/kid/properties/name/type"),
+        Some(&json!("string")),
+        "subchart values path should be guarded by Chart.yaml activation predicates: {schema}"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn shipped_values_schema_is_enforced_as_constraint() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 

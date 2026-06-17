@@ -84,8 +84,8 @@ pub use capability_liveness::{
 pub use compatibility::{ContractDocumentV1, ValueUse};
 pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use contract_signals::{
-    ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
-    MetadataFieldKind, RequiredInferenceSignals,
+    ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
+    ContractValuePathFacts, GuardConstraint, MetadataFieldKind, RequiredInferenceSignals,
 };
 pub use contract_types::Guard;
 pub use default_type_hints::extract_default_type_hints;

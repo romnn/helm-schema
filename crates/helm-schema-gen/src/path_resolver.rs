@@ -13,9 +13,11 @@ use crate::use_signals::UseSignals;
 use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
 
 pub(crate) struct ResolvedPathSchema {
+    pub(crate) value_path: String,
     pub(crate) path_segments: Vec<String>,
     pub(crate) schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
+    pub(crate) values_yaml_has_schema_evidence: bool,
 }
 
 struct ProviderSchemaForPath {
@@ -26,6 +28,7 @@ struct ProviderSchemaForPath {
 struct PathSchemaEvidence {
     policy_inputs: ValuePathSchemaInputs,
     provider_schema_candidate: Option<ProviderSchemaCandidate>,
+    values_yaml_has_schema_evidence: bool,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -66,6 +69,7 @@ impl<'a> PathSchemaResolver<'a> {
         let PathSchemaEvidence {
             policy_inputs,
             provider_schema_candidate,
+            values_yaml_has_schema_evidence,
         } = self.path_schema_evidence(&value_path);
         let merged = self
             .resolve_policy
@@ -74,9 +78,11 @@ impl<'a> PathSchemaResolver<'a> {
             .filter(|provider_schema| provider_schema.survives_as(&merged));
 
         Some(ResolvedPathSchema {
+            value_path,
             path_segments,
             schema: merged,
             provider_schema_candidate,
+            values_yaml_has_schema_evidence,
         })
     }
 
@@ -123,6 +129,8 @@ impl<'a> PathSchemaResolver<'a> {
         let values_yaml_schema = values_yaml_info
             .map(|path_info| path_info.schema.clone())
             .unwrap_or_else(empty_schema);
+        let values_yaml_has_schema_evidence =
+            values_yaml_info.is_some_and(|path_info| !is_empty_schema(&path_info.schema));
 
         PathSchemaEvidence {
             policy_inputs: ValuePathSchemaInputs {
@@ -133,6 +141,7 @@ impl<'a> PathSchemaResolver<'a> {
                 type_hint_schema,
             },
             provider_schema_candidate: provider_schema.provider_schema_candidate,
+            values_yaml_has_schema_evidence,
         }
     }
 

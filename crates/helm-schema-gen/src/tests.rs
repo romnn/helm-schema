@@ -185,6 +185,49 @@ fn schema_property_contains_type(schema: &Value, property: &str, schema_type: &s
         .any(|variant| schema_property_contains_type(variant, property, schema_type))
 }
 
+fn property_schema_with_type_exists(schema: &Value, property: &str, schema_type: &str) -> bool {
+    if let Some(properties) = schema.get("properties").and_then(Value::as_object) {
+        if let Some(property_schema) = properties.get(property)
+            && permits_type(property_schema, schema_type)
+        {
+            return true;
+        }
+        if properties.values().any(|property_schema| {
+            property_schema_with_type_exists(property_schema, property, schema_type)
+        }) {
+            return true;
+        }
+    }
+
+    if let Some(array) = schema.get("allOf").and_then(Value::as_array)
+        && array
+            .iter()
+            .any(|entry| property_schema_with_type_exists(entry, property, schema_type))
+    {
+        return true;
+    }
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(array) = schema.get(key).and_then(Value::as_array)
+            && array
+                .iter()
+                .any(|entry| property_schema_with_type_exists(entry, property, schema_type))
+        {
+            return true;
+        }
+    }
+
+    for key in ["then", "else"] {
+        if let Some(child) = schema.get(key)
+            && property_schema_with_type_exists(child, property, schema_type)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
 fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
     assert!(
         schema_contains_open_string_map(schema),
@@ -252,6 +295,31 @@ impl ResourceSchemaOracle for SharedObjectProvider {
 
     fn has_resource(&self, _resource: &ResourceRef) -> bool {
         true
+    }
+}
+
+#[derive(Debug)]
+struct NoopProvider;
+
+impl ResourceSchemaOracle for NoopProvider {
+    fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        None
+    }
+
+    fn schema_fragment_for_resource_path(
+        &self,
+        _resource: &ResourceRef,
+        _path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
+        None
+    }
+
+    fn origin(&self) -> ProviderOrigin {
+        ProviderOrigin::KubernetesOpenApi
+    }
+
+    fn has_resource(&self, _resource: &ResourceRef) -> bool {
+        false
     }
 }
 
@@ -936,6 +1004,155 @@ fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
     assert!(
         permits_null(fullname),
         "truthy-guarded fullnameOverride should allow null, got {fullname}"
+    );
+}
+
+#[test]
+fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
+    let schema_signals = schema_signals_for(vec![ContractUse {
+        source_expr: "feature.host".to_string(),
+        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Truthy {
+            path: "feature.enabled".to_string(),
+        }],
+        resource: None,
+    }]);
+    let type_hints = BTreeMap::from([(
+        "feature.host".to_string(),
+        vec![serde_json::json!({ "type": "string" })],
+    )]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("feature:\n  enabled: false\n"))
+            .with_type_hints(&type_hints),
+    );
+
+    assert_eq!(
+        schema.pointer("/properties/feature/properties/host"),
+        Some(&serde_json::json!({})),
+        "conditionally lowered paths should keep a wide placeholder on the base path: {schema}"
+    );
+    assert_eq!(
+        schema.pointer("/properties/feature/allOf/0/if/properties/enabled/const"),
+        Some(&serde_json::json!(true)),
+        "guard should lower at the nearest common ancestor, not only at the root: {schema}"
+    );
+    assert_eq!(
+        schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
+        Some(&serde_json::json!("string")),
+        "guarded path should reappear under then-branch schema: {schema}"
+    );
+    assert!(
+        schema.get("allOf").is_none(),
+        "nested guard/target pairs should not be forced to the root schema: {schema}"
+    );
+}
+
+#[test]
+fn negated_boolean_guard_lowers_to_not_condition() {
+    let schema_signals = schema_signals_for(vec![ContractUse {
+        source_expr: "feature.host".to_string(),
+        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Not {
+            path: "feature.enabled".to_string(),
+        }],
+        resource: None,
+    }]);
+    let type_hints = BTreeMap::from([(
+        "feature.host".to_string(),
+        vec![serde_json::json!({ "type": "string" })],
+    )]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("feature:\n  enabled: false\n"))
+            .with_type_hints(&type_hints),
+    );
+
+    assert_eq!(
+        schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/const"),
+        Some(&serde_json::json!(true)),
+        "negated boolean guards should lower to JSON Schema `not`: {schema}"
+    );
+    assert_eq!(
+        schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
+        Some(&serde_json::json!("string")),
+        "negated guard should still reapply the target schema in the then branch: {schema}"
+    );
+}
+
+#[test]
+fn or_boolean_guards_lower_to_any_of_condition() {
+    let schema_signals = schema_signals_for(vec![ContractUse {
+        source_expr: "feature.host".to_string(),
+        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Or {
+            paths: vec![
+                "feature.enabled".to_string(),
+                "global.featureEnabled".to_string(),
+            ],
+        }],
+        resource: None,
+    }]);
+    let type_hints = BTreeMap::from([(
+        "feature.host".to_string(),
+        vec![serde_json::json!({ "type": "string" })],
+    )]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some(
+                "feature:\n  enabled: false\nglobal:\n  featureEnabled: false\n",
+            ))
+            .with_type_hints(&type_hints),
+    );
+
+    assert_eq!(
+        schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/const"),
+        Some(&serde_json::json!(true)),
+        "disjunctions should lower to anyOf clauses: {schema}"
+    );
+    assert_eq!(
+        schema.pointer("/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/const"),
+        Some(&serde_json::json!(true)),
+        "all boolean branches in the disjunction should be preserved: {schema}"
+    );
+    assert_eq!(
+        schema.pointer("/allOf/0/then/properties/feature/properties/host/type"),
+        Some(&serde_json::json!("string")),
+        "root-level disjunctions should still apply the guarded target schema: {schema}"
+    );
+}
+
+#[test]
+fn non_boolean_truthy_guard_does_not_lower_to_if_then_overlay() {
+    let schema_signals = schema_signals_for(vec![ContractUse {
+        source_expr: "feature.host".to_string(),
+        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Truthy {
+            path: "mode".to_string(),
+        }],
+        resource: None,
+    }]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("mode: prod\nfeature:\n  host: example\n")),
+    );
+
+    assert_eq!(
+        schema.pointer("/properties/feature/properties/host/type"),
+        Some(&serde_json::json!("string")),
+        "string-valued truthy guards are not lowered yet and should stay on the wide/base path: {schema}"
+    );
+    assert!(
+        schema.get("allOf").is_none(),
+        "non-boolean truthy guards must not emit conditionals yet: {schema}"
     );
 }
 
@@ -3037,11 +3254,8 @@ fn exact_bound_helper_with_bound_dot_arg_infers_classname_without_values_default
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    let class_name = schema
-        .pointer("/properties/ingress/properties/className")
-        .expect("className present");
     assert!(
-        permits_type(class_name, "string"),
+        property_schema_with_type_exists(&schema, "className", "string"),
         "helper body should infer ingress.className from the output path even without a values.yaml example, got {schema}"
     );
 }

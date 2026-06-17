@@ -2,6 +2,28 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::provider_schema_use::ProviderSchemaUse;
 
+/// Values-decidable guard expression that can be lowered into JSON Schema
+/// conditionals.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ConditionalGuard {
+    Truthy { path: String },
+    Eq { path: String, value: String },
+    TypeIs { path: String, schema_type: String },
+    Not(Box<ConditionalGuard>),
+    AnyOf(Vec<ConditionalGuard>),
+}
+
+/// Conditionally-scoped values path whose schema can be lowered under a
+/// values-decidable guard set.
+///
+/// Multiple entries in `guards` mean conjunction: all guards in the set must
+/// hold for the overlay to apply.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ConditionalPathOverlay {
+    pub target_value_path: String,
+    pub guards: Vec<ConditionalGuard>,
+}
+
 /// Type-level constraints declared by template guards.
 ///
 /// These are contract facts, not JSON Schema fragments. Schema lowering stays
@@ -70,6 +92,7 @@ pub struct ContractSchemaSignals {
     pub nullable_value_paths: BTreeSet<String>,
     pub paths_with_referenced_descendants: BTreeSet<String>,
     pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,
+    pub conditional_path_overlays: Vec<ConditionalPathOverlay>,
     pub required_inference_signals: RequiredInferenceSignals,
 }
 

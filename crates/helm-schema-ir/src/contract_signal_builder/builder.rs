@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 
 use crate::contract::ContractUse;
 use crate::contract_signals::{
-    ContractPathSignals, ContractSchemaSignals, RequiredInferenceSignals,
+    ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
+    RequiredInferenceSignals,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
@@ -29,12 +30,19 @@ struct ContractSchemaSignalBuilder {
     path_signals: ContractPathSignals,
     provider_schema_uses: Vec<ProviderSchemaUse>,
     nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
+    conditional_overlays_by_path: BTreeMap<String, ConditionalOverlayAccumulator>,
     required_inference_signals: RequiredInferenceSignals,
 }
 
 struct NullablePathAccumulator {
     has_render_use: bool,
     all_uses_nullable: bool,
+}
+
+#[derive(Default)]
+struct ConditionalOverlayAccumulator {
+    unique_guard_sets: Vec<Vec<ConditionalGuard>>,
+    saw_unconditional_or_unsupported: bool,
 }
 
 impl Default for NullablePathAccumulator {
@@ -52,6 +60,7 @@ impl ContractSchemaSignalBuilder {
         self.record_render_facts(contract_use);
         self.record_path_signals(contract_use);
         self.record_nullable_path(contract_use);
+        self.record_conditional_overlay(contract_use);
         self.record_required_inference_signals(contract_use);
     }
 
@@ -69,6 +78,11 @@ impl ContractSchemaSignalBuilder {
             &nullable_value_paths,
             &paths_with_referenced_descendants,
         );
+        let conditional_path_overlays = self
+            .conditional_overlays_by_path
+            .into_iter()
+            .filter_map(|(target_value_path, accumulator)| accumulator.finish(target_value_path))
+            .collect();
 
         ContractSchemaSignals {
             path_signals: self.path_signals,
@@ -76,6 +90,7 @@ impl ContractSchemaSignalBuilder {
             nullable_value_paths,
             paths_with_referenced_descendants,
             value_path_facts,
+            conditional_path_overlays,
             required_inference_signals: self.required_inference_signals,
         }
     }
@@ -226,6 +241,35 @@ impl ContractSchemaSignalBuilder {
         self.nullable_by_path.entry(path.to_string()).or_default()
     }
 
+    fn record_conditional_overlay(&mut self, contract_use: &ContractUse) {
+        if contract_use.source_expr.trim().is_empty() || contract_use.path.0.is_empty() {
+            return;
+        }
+
+        let accumulator = self
+            .conditional_overlays_by_path
+            .entry(contract_use.source_expr.clone())
+            .or_default();
+
+        let Some(guards) = lowerable_guard_set(contract_use) else {
+            accumulator.saw_unconditional_or_unsupported = true;
+            return;
+        };
+
+        if guards.is_empty() {
+            accumulator.saw_unconditional_or_unsupported = true;
+            return;
+        }
+
+        if !accumulator
+            .unique_guard_sets
+            .iter()
+            .any(|existing| existing == &guards)
+        {
+            accumulator.unique_guard_sets.push(guards);
+        }
+    }
+
     fn record_required_inference_signals(&mut self, contract_use: &ContractUse) {
         for guard in &contract_use.guards {
             match guard {
@@ -262,4 +306,72 @@ impl ContractSchemaSignalBuilder {
                 .insert(contract_use.source_expr.clone());
         }
     }
+}
+
+impl ConditionalOverlayAccumulator {
+    fn finish(self, target_value_path: String) -> Option<ConditionalPathOverlay> {
+        if self.saw_unconditional_or_unsupported || self.unique_guard_sets.len() != 1 {
+            return None;
+        }
+        let guards = self.unique_guard_sets.into_iter().next()?;
+        Some(ConditionalPathOverlay {
+            target_value_path,
+            guards,
+        })
+    }
+}
+
+fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuard>> {
+    if contract_use.guards.is_empty() || path_contains_wildcard(&contract_use.source_expr) {
+        return None;
+    }
+
+    let mut guards = Vec::new();
+    for guard in &contract_use.guards {
+        match guard {
+            Guard::With { .. } => {}
+            Guard::Truthy { path } => guards.push(ConditionalGuard::Truthy {
+                path: lowerable_guard_path(path, &contract_use.source_expr)?,
+            }),
+            Guard::Eq { path, value } => guards.push(ConditionalGuard::Eq {
+                path: lowerable_guard_path(path, &contract_use.source_expr)?,
+                value: value.clone(),
+            }),
+            Guard::TypeIs { path, schema_type } => guards.push(ConditionalGuard::TypeIs {
+                path: lowerable_guard_path(path, &contract_use.source_expr)?,
+                schema_type: schema_type.clone(),
+            }),
+            Guard::Not { path } => {
+                guards.push(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                    path: lowerable_guard_path(path, &contract_use.source_expr)?,
+                })))
+            }
+            Guard::Or { paths } => {
+                let mut any_of = paths
+                    .iter()
+                    .map(|path| {
+                        Some(ConditionalGuard::Truthy {
+                            path: lowerable_guard_path(path, &contract_use.source_expr)?,
+                        })
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                any_of.sort();
+                any_of.dedup();
+                guards.push(ConditionalGuard::AnyOf(any_of));
+            }
+            Guard::Range { .. } | Guard::Default { .. } => return None,
+        }
+    }
+
+    guards.sort();
+    guards.dedup();
+    Some(guards)
+}
+
+fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
+    (!path_contains_wildcard(path) && path != target_value_path).then(|| path.to_string())
+}
+
+fn path_contains_wildcard(path: &str) -> bool {
+    path.split('.').any(|segment| segment == "*")
 }

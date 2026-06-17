@@ -321,12 +321,14 @@ mod tests {
 
     fn resolved_path(path: &str, schema: Value) -> ResolvedPathSchema {
         ResolvedPathSchema {
+            value_path: path.to_string(),
             path_segments: path
                 .split('.')
                 .map(std::string::ToString::to_string)
                 .collect(),
             provider_schema_candidate: Some(ProviderSchemaCandidate::new(schema.clone())),
             schema,
+            values_yaml_has_schema_evidence: false,
         }
     }
 
@@ -373,6 +375,7 @@ mod tests {
 
     fn resolved_sourced_path(path: &str, schema: Value, pointer: &str) -> ResolvedPathSchema {
         ResolvedPathSchema {
+            value_path: path.to_string(),
             path_segments: path
                 .split('.')
                 .map(std::string::ToString::to_string)
@@ -382,6 +385,7 @@ mod tests {
                 pointer,
             )),
             schema,
+            values_yaml_has_schema_evidence: false,
         }
     }
 
@@ -498,6 +502,7 @@ mod tests {
         let definition_name = source_definition_name(&source);
         let mut paths = vec![
             ResolvedPathSchema {
+                value_path: "first".to_string(),
                 path_segments: vec!["first".to_string()],
                 provider_schema_candidate: Some(
                     sourced_provider_schema_candidate_with_source_schema(
@@ -507,8 +512,10 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
+                value_path: "second".to_string(),
                 path_segments: vec!["second".to_string()],
                 provider_schema_candidate: Some(
                     sourced_provider_schema_candidate_with_source_schema(
@@ -526,6 +533,7 @@ mod tests {
                         }
                     }
                 }),
+                values_yaml_has_schema_evidence: false,
             },
         ];
 
@@ -576,6 +584,7 @@ mod tests {
         let definition_name = source_definition_name(&source);
         let mut paths = vec![
             ResolvedPathSchema {
+                value_path: "first".to_string(),
                 path_segments: vec!["first".to_string()],
                 provider_schema_candidate: Some(
                     sourced_provider_schema_candidate_with_definition_schema(
@@ -586,8 +595,10 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
+                value_path: "second".to_string(),
                 path_segments: vec!["second".to_string()],
                 provider_schema_candidate: Some(
                     sourced_provider_schema_candidate_with_definition_schema(
@@ -598,6 +609,7 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
         ];
 
@@ -640,6 +652,7 @@ mod tests {
         let definition_name = source_definition_name(&source);
         let mut paths = vec![
             ResolvedPathSchema {
+                value_path: "first".to_string(),
                 path_segments: vec!["first".to_string()],
                 provider_schema_candidate: Some(
                     sourced_provider_schema_candidate_with_definition_schema(
@@ -650,8 +663,10 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
+                value_path: "second".to_string(),
                 path_segments: vec!["second".to_string()],
                 provider_schema_candidate: Some(
                     sourced_provider_schema_candidate_with_source_schema(
@@ -661,6 +676,7 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
         ];
 
@@ -687,20 +703,24 @@ mod tests {
         });
         let mut paths = vec![
             ResolvedPathSchema {
+                value_path: "first".to_string(),
                 path_segments: vec!["first".to_string()],
                 provider_schema_candidate: Some(sourced_provider_schema_candidate(
                     provider_schema.clone(),
                     "/definitions/First",
                 )),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
+                value_path: "second".to_string(),
                 path_segments: vec!["second".to_string()],
                 provider_schema_candidate: Some(sourced_provider_schema_candidate(
                     provider_schema.clone(),
                     "/definitions/Second",
                 )),
                 schema: provider_schema.clone(),
+                values_yaml_has_schema_evidence: false,
             },
         ];
 
