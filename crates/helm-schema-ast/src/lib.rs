@@ -16,7 +16,38 @@ pub enum ParseError {
 }
 
 /// Shared AST for Helm+YAML templates.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Parsed control-flow header from a Helm template node.
+///
+/// Helm control-flow remains source-preserving for rendering/inspection while
+/// also exposing a typed expression so structural consumers do not have to
+/// re-parse `if` / `with` / `range` headers from raw strings.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TemplateHeader {
+    raw: String,
+    expr: TemplateExpr,
+}
+
+impl TemplateHeader {
+    #[must_use]
+    pub fn new(raw: impl Into<String>, expr: TemplateExpr) -> Self {
+        Self {
+            raw: raw.into(),
+            expr,
+        }
+    }
+
+    #[must_use]
+    pub fn raw(&self) -> &str {
+        &self.raw
+    }
+
+    #[must_use]
+    pub fn expr(&self) -> &TemplateExpr {
+        &self.expr
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum HelmAst {
     Document {
         items: Vec<HelmAst>,
@@ -46,17 +77,17 @@ pub enum HelmAst {
     },
 
     If {
-        cond: String,
+        condition: TemplateHeader,
         then_branch: Vec<HelmAst>,
         else_branch: Vec<HelmAst>,
     },
     Range {
-        header: String,
+        header: TemplateHeader,
         body: Vec<HelmAst>,
         else_branch: Vec<HelmAst>,
     },
     With {
-        header: String,
+        header: TemplateHeader,
         body: Vec<HelmAst>,
         else_branch: Vec<HelmAst>,
     },
@@ -127,11 +158,11 @@ impl HelmAst {
                 let _ = write!(buf, "{pad}(HelmComment {text:?})");
             }
             HelmAst::If {
-                cond,
+                condition,
                 then_branch,
                 else_branch,
             } => {
-                let _ = write!(buf, "{pad}(If {cond:?}");
+                let _ = write!(buf, "{pad}(If {:?}", condition.raw(),);
                 if !then_branch.is_empty() {
                     let _ = write!(buf, "\n{pad}  (then");
                     for item in then_branch {
@@ -155,7 +186,7 @@ impl HelmAst {
                 body,
                 else_branch,
             } => {
-                let _ = write!(buf, "{pad}(Range {header:?}");
+                let _ = write!(buf, "{pad}(Range {:?}", header.raw(),);
                 if !body.is_empty() {
                     let _ = write!(buf, "\n{pad}  (body");
                     for item in body {
@@ -179,7 +210,7 @@ impl HelmAst {
                 body,
                 else_branch,
             } => {
-                let _ = write!(buf, "{pad}(With {header:?}");
+                let _ = write!(buf, "{pad}(With {:?}", header.raw(),);
                 if !body.is_empty() {
                     let _ = write!(buf, "\n{pad}  (body");
                     for item in body {

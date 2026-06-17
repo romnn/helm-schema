@@ -1,8 +1,12 @@
 use std::collections::HashSet;
 
-use helm_schema_ast::{DefineIndex, HelmAst, TemplateExpr, parse_action_expressions};
+use helm_schema_ast::{
+    DefineIndex, HelmAst, TemplateExpr, TemplateHeader, parse_action_expressions,
+};
 
-use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard};
+use crate::capability_branch::{
+    CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard, decode_guard_expr,
+};
 
 use super::{HelperOutput, MAX_RECURSION_DEPTH};
 
@@ -86,7 +90,7 @@ impl HelperOutputEvaluator {
 
         let if_node = if_node?;
         let HelmAst::If {
-            cond,
+            condition,
             then_branch,
             else_branch,
         } = if_node
@@ -95,7 +99,7 @@ impl HelperOutputEvaluator {
         };
         let mut branches: Vec<HelperBranch> = Vec::new();
         self.collect_if_branches(
-            cond,
+            condition,
             then_branch,
             else_branch,
             helpers,
@@ -118,14 +122,15 @@ impl HelperOutputEvaluator {
 
     fn collect_if_branches(
         &mut self,
-        cond: &str,
+        condition: &TemplateHeader,
         then_branch: &[HelmAst],
         else_branch: &[HelmAst],
         helpers: &DefineIndex,
         depth: usize,
         out: &mut Vec<HelperBranch>,
     ) {
-        let guard = decode_guard(cond);
+        let guard = decode_guard_expr(condition.expr(), condition.raw())
+            .unwrap_or_else(|| decode_guard(condition.raw()));
         out.push(HelperBranch {
             guard: Some(guard),
             body: self.collect_branch_body(then_branch, helpers, depth + 1),
@@ -135,14 +140,14 @@ impl HelperOutputEvaluator {
         // `{{ else if ... }}`.
         if let Some(nested_if) = lone_if_in(else_branch) {
             let HelmAst::If {
-                cond,
+                condition,
                 then_branch,
                 else_branch,
             } = nested_if
             else {
                 unreachable!("lone_if_in returns only If nodes");
             };
-            self.collect_if_branches(cond, then_branch, else_branch, helpers, depth, out);
+            self.collect_if_branches(condition, then_branch, else_branch, helpers, depth, out);
         } else if !else_branch.is_empty() {
             let body = self.collect_branch_body(else_branch, helpers, depth + 1);
             if !body.is_empty() {

@@ -8,17 +8,29 @@ pub(crate) fn decode_guard(cond: &str) -> CapabilityGuard {
     let wrapped = format!("{{{{ {trimmed} }}}}");
     let exprs = parse_action_expressions(&wrapped);
     for expr in &exprs {
-        if let Some((negated, api)) = find_capability_has(expr, false) {
-            return if negated {
-                CapabilityGuard::NotHas { api }
-            } else {
-                CapabilityGuard::Has { api }
-            };
+        if let Some(guard) = decode_guard_expr(expr, trimmed) {
+            return guard;
         }
     }
     CapabilityGuard::Opaque {
         text: cond.trim().to_string(),
     }
+}
+
+pub(crate) fn decode_guard_expr(expr: &TemplateExpr, raw: &str) -> Option<CapabilityGuard> {
+    find_capability_has(expr, false)
+        .map(|(negated, api)| {
+            if negated {
+                CapabilityGuard::NotHas { api }
+            } else {
+                CapabilityGuard::Has { api }
+            }
+        })
+        .or_else(|| {
+            matches!(expr, TemplateExpr::Unknown(_)).then(|| CapabilityGuard::Opaque {
+                text: raw.trim().to_string(),
+            })
+        })
 }
 
 fn is_capabilities_has(function: &str) -> bool {

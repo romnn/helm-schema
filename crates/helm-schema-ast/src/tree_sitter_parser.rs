@@ -1,4 +1,6 @@
-use crate::{HelmAst, HelmParser, ParseError};
+use crate::{
+    HelmAst, HelmParser, ParseError, TemplateExpr, TemplateHeader, parse_action_expressions,
+};
 
 /// Parser implementation backed by the tree-sitter fused Helm+YAML grammar.
 ///
@@ -201,6 +203,24 @@ fn normalize_helm_template_text(raw: &str) -> String {
     }
     s = s.strip_suffix('-').unwrap_or(s);
     s.trim().to_string()
+}
+
+fn parse_control_header(raw: String) -> TemplateHeader {
+    let wrapped = format!("{{{{ {raw} }}}}");
+    let expr = parse_action_expressions(&wrapped)
+        .into_iter()
+        .next()
+        .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
+    TemplateHeader::new(raw, expr)
+}
+
+fn parse_range_header(raw: String) -> TemplateHeader {
+    let wrapped = format!("{{{{ range {raw} }}}}{{{{ end }}}}");
+    let expr = parse_action_expressions(&wrapped)
+        .into_iter()
+        .next()
+        .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
+    TemplateHeader::new(raw, expr)
 }
 
 fn deindent_yaml_fragment(fragment: &str) -> String {
@@ -625,6 +645,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .unwrap_or("")
                 .trim()
                 .to_string();
+            let condition = parse_control_header(cond_text);
 
             let then_blocks = children_with_field(node, "consequence");
             let else_blocks = children_with_field(node, "alternative");
@@ -634,7 +655,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
 
             // Handle `else if` chains: tree-sitter inlines them as repeated
             // condition/option fields. We lower them into nested If nodes.
-            let mut else_if_pairs: Vec<(String, Vec<tree_sitter::Node<'_>>)> = Vec::new();
+            let mut else_if_pairs: Vec<(TemplateHeader, Vec<tree_sitter::Node<'_>>)> = Vec::new();
             let mut seen_main_condition = false;
             let mut walker = node.walk();
             if walker.goto_first_child() {
@@ -648,7 +669,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                                     .unwrap_or("")
                                     .trim()
                                     .to_string();
-                                else_if_pairs.push((cnd, Vec::new()));
+                                else_if_pairs.push((parse_control_header(cnd), Vec::new()));
                             } else {
                                 seen_main_condition = true;
                             }
@@ -670,10 +691,10 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 base_else_items
             } else {
                 let mut tail = base_else_items;
-                for (cnd, blocks) in else_if_pairs.into_iter().rev() {
+                for (condition, blocks) in else_if_pairs.into_iter().rev() {
                     let opt_items = fuse_blocks(&blocks, src, true);
                     tail = vec![HelmAst::If {
-                        cond: cnd,
+                        condition,
                         then_branch: opt_items,
                         else_branch: tail,
                     }];
@@ -682,7 +703,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
             };
 
             HelmAst::If {
-                cond: cond_text,
+                condition,
                 then_branch: then_items,
                 else_branch: else_items,
             }
@@ -709,6 +730,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                         .to_string()
                 }
             };
+            let header = parse_range_header(header);
 
             let body = fuse_blocks(&children_with_field(node, "body"), src, true);
             let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src, true);
@@ -726,6 +748,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .unwrap_or("")
                 .trim()
                 .to_string();
+            let header = parse_control_header(header);
 
             let body = fuse_blocks(&children_with_field(node, "consequence"), src, true);
             let else_branch = fuse_blocks(&children_with_field(node, "alternative"), src, true);

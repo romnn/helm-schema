@@ -1,6 +1,10 @@
-use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr, parse_action_expressions};
+use helm_schema_ast::{
+    DefineIndex, HelmAst, Literal, TemplateExpr, TemplateHeader, parse_action_expressions,
+};
 
-use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard};
+use crate::capability_branch::{
+    CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard, decode_guard_expr,
+};
 
 use super::helper_output::{HelperOutput, helper_evaluate};
 use super::state::ResourceState;
@@ -14,9 +18,10 @@ impl<'a> ApiVersionOutputDetector<'a> {
         Self { defines }
     }
 
-    pub(super) fn is_capability_guard(&self, cond: &str) -> bool {
+    pub(super) fn is_capability_guard(&self, condition: &TemplateHeader) -> bool {
         matches!(
-            decode_guard(cond),
+            decode_guard_expr(condition.expr(), condition.raw())
+                .unwrap_or_else(|| decode_guard(condition.raw())),
             CapabilityGuard::Has { .. } | CapabilityGuard::NotHas { .. }
         )
     }
@@ -32,14 +37,15 @@ impl<'a> ApiVersionOutputDetector<'a> {
 
     fn inline_branches_inner(&self, node: &HelmAst) -> Option<Vec<HelperBranch>> {
         let HelmAst::If {
-            cond,
+            condition,
             then_branch,
             else_branch,
         } = node
         else {
             return None;
         };
-        let guard = decode_guard(cond);
+        let guard = decode_guard_expr(condition.expr(), condition.raw())
+            .unwrap_or_else(|| decode_guard(condition.raw()));
         if !matches!(
             guard,
             CapabilityGuard::Has { .. } | CapabilityGuard::NotHas { .. }

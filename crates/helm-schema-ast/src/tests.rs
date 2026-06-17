@@ -1,4 +1,6 @@
-use crate::{DefineIndex, HelmParser, TreeSitterParser, contains_template_action};
+use crate::{
+    DefineIndex, HelmAst, HelmParser, TemplateExpr, TreeSitterParser, contains_template_action,
+};
 
 // ===========================================================================
 // Simple template
@@ -18,6 +20,46 @@ fn tree_sitter_ast_simple() {
     let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
     let ast = TreeSitterParser.parse(src).expect("parse");
     similar_asserts::assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
+}
+
+#[test]
+fn tree_sitter_ast_control_flow_headers_are_typed() {
+    let src =
+        "{{- if .Values.enabled }}{{- range $i, $v := include \"items\" . }}x{{- end }}{{- end }}";
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let HelmAst::Document { items } = ast else {
+        panic!("expected document root");
+    };
+    let [
+        HelmAst::If {
+            condition,
+            then_branch,
+            ..
+        },
+    ] = items.as_slice()
+    else {
+        panic!("expected one top-level if node");
+    };
+    assert_eq!(condition.raw(), ".Values.enabled");
+    assert_eq!(
+        condition.expr(),
+        &TemplateExpr::Field(vec!["Values".to_string(), "enabled".to_string()])
+    );
+
+    let [HelmAst::Range { header, .. }] = then_branch.as_slice() else {
+        panic!("expected nested range node");
+    };
+    assert_eq!(header.raw(), "$i, $v := include \"items\" .");
+    let mut saw_include = false;
+    header.expr().walk(|expr| {
+        if let TemplateExpr::Call { function, args } = expr
+            && function == "include"
+            && matches!(args.first(), Some(TemplateExpr::Literal(lit)) if lit.as_string() == Some("items"))
+        {
+            saw_include = true;
+        }
+    });
+    assert!(saw_include, "expected typed range header include call");
 }
 
 #[test]
