@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use crate::ValueUse;
+use crate::compatibility::ContractDocumentV1;
 use crate::contract::ContractUse;
 use crate::contract_normalization::canonicalize_contract_uses;
 
@@ -10,8 +9,7 @@ use crate::contract_normalization::canonicalize_contract_uses;
 /// inspection rows. Production schema generation consumes
 /// [`crate::ContractSchemaSignals`] directly from
 /// [`crate::ContractIr::into_schema_signals`].
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractProjection {
     uses: Vec<ContractUse>,
 }
@@ -43,5 +41,11 @@ impl ContractProjection {
     #[must_use]
     pub fn into_value_uses(self) -> Vec<ValueUse> {
         self.uses.into_iter().map(ValueUse::from).collect()
+    }
+
+    /// Consume the projection and export the stable versioned wire format.
+    #[must_use]
+    pub fn into_document_v1(self) -> ContractDocumentV1 {
+        ContractDocumentV1::from_projection(self)
     }
 }

@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use crate::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 
 /// A contract claim for one observed values path.
@@ -7,7 +5,7 @@ use crate::{Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
 /// This is still the migration-era claim shape, but it is owned by the
 /// contract layer. [`ValueUse`] remains the serialized fixture DTO at the
 /// inspection boundary.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractUse {
     pub source_expr: String,
     pub path: YamlPath,

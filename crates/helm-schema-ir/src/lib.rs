@@ -81,7 +81,7 @@ mod yaml_syntax;
 pub use capability_liveness::{
     CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
 };
-pub use compatibility::ValueUse;
+pub use compatibility::{ContractDocumentV1, ValueUse};
 pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use contract_signals::{
     ContractPathSignals, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,

@@ -1,710 +1,713 @@
-[
-  {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "affinity"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "affinity"
-  },
-  {
-    "guards": [
-      {
-        "path": "readinessProbe",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "readinessProbe",
-      "httpGet",
-      "port"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "configLoggingRestApi.api_port"
-  },
-  {
-    "guards": [
-      {
-        "path": "configTarget",
-        "type": "eq",
-        "value": "ConfigMap"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "configTarget"
-  },
-  {
-    "guards": [
-      {
-        "path": "controllerID.create",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "controllerID.create"
-  },
-  {
-    "guards": [
-      {
-        "path": "controllerID.create",
-        "type": "truthy"
+{
+  "version": 1,
+  "uses": [
+    {
+      "guards": [],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "affinity"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "controllerID.name",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "controllerID.name"
-  },
-  {
-    "guards": [
-      {
-        "path": "enableJsonLogging",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+      "source_expr": "affinity"
     },
-    "source_expr": "enableJsonLogging"
-  },
-  {
-    "guards": [
-      {
-        "path": "extraEnvs",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "extraEnvs"
-  },
-  {
-    "guards": [
-      {
-        "path": "extraEnvs",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "env"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "extraEnvs"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "controllerID.create",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "controllerID.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "readinessProbe",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "readinessProbe",
+        "httpGet",
+        "port"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "fullnameOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "fullnameOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "configTarget",
-        "type": "eq",
-        "value": "ConfigMap"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "configTarget",
-        "type": "eq",
-        "value": "ConfigMap"
+      "source_expr": "configLoggingRestApi.api_port"
+    },
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "eq",
+          "value": "ConfigMap"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "fullnameOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "controllerID.create",
-        "type": "truthy"
+      "source_expr": "configTarget"
+    },
+    {
+      "guards": [
+        {
+          "path": "controllerID.create",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "fullnameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+      "source_expr": "controllerID.create"
     },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "configTarget",
-        "type": "eq",
-        "value": "ConfigMap"
+    {
+      "guards": [
+        {
+          "path": "controllerID.create",
+          "type": "truthy"
+        },
+        {
+          "path": "controllerID.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "controllerID.name"
+    },
+    {
+      "guards": [
+        {
+          "path": "enableJsonLogging",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "fullnameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+      "source_expr": "enableJsonLogging"
     },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "fullnameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "fullnameOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "serviceAccountName"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "imagePullPolicy"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image.pullPolicy"
-  },
-  {
-    "guards": [],
-    "kind": "PartialScalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "image"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image.registry"
-  },
-  {
-    "guards": [],
-    "kind": "PartialScalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "image"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image.repository"
-  },
-  {
-    "guards": [],
-    "kind": "PartialScalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "image"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "image.tag"
-  },
-  {
-    "guards": [
-      {
-        "path": "imagePullSecrets",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "imagePullSecrets"
-  },
-  {
-    "guards": [
-      {
-        "path": "imagePullSecrets",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "imagePullSecrets"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
-    },
-    "source_expr": "imagePullSecrets"
-  },
-  {
-    "guards": [
-      {
-        "path": "controllerID.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "extraEnvs",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "configTarget",
-        "type": "eq",
-        "value": "ConfigMap"
+      "source_expr": "extraEnvs"
+    },
+    {
+      "guards": [
+        {
+          "path": "extraEnvs",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "env"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
       },
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+      "source_expr": "extraEnvs"
     },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "serviceAccountName"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "nodeSelector"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "controllerID.create",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "nodeSelector"
-  },
-  {
-    "guards": [
-      {
-        "path": "podAnnotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "controllerID.create",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "podAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "path": "podAnnotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "metadata",
-      "annotations"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "podAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "path": "podLabels",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "eq",
+          "value": "ConfigMap"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "podLabels"
-  },
-  {
-    "guards": [
-      {
-        "path": "podLabels",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "metadata",
-      "labels"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "eq",
+          "value": "ConfigMap"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "podLabels"
-  },
-  {
-    "guards": [
-      {
-        "path": "priorityClassName",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "controllerID.create",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "priorityClassName"
-  },
-  {
-    "guards": [
-      {
-        "path": "priorityClassName",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "priorityClassName"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "eq",
+          "value": "ConfigMap"
+        },
+        {
+          "path": "fullnameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "priorityClassName"
-  },
-  {
-    "guards": [
-      {
-        "path": "readinessProbe",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "readinessProbe"
-  },
-  {
-    "guards": [
-      {
-        "path": "readinessProbe",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "readinessProbe",
-      "initialDelaySeconds"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "readinessProbe.initialDelaySeconds"
-  },
-  {
-    "guards": [
-      {
-        "path": "readinessProbe",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "readinessProbe",
-      "periodSeconds"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "imagePullPolicy"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "image.pullPolicy"
     },
-    "source_expr": "readinessProbe.periodSeconds"
-  },
-  {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "resources"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "image.registry"
     },
-    "source_expr": "resources"
-  },
-  {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "containers[*]",
-      "securityContext"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "image.repository"
     },
-    "source_expr": "securityContext"
-  },
-  {
-    "guards": [
-      {
-        "path": "serviceAccount.name",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "serviceAccount.name"
-  },
-  {
-    "guards": [],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "template",
-      "spec",
-      "tolerations"
-    ],
-    "resource": {
-      "api_version": "apps/v1",
-      "kind": "Deployment"
+    {
+      "guards": [],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "image.tag"
     },
-    "source_expr": "tolerations"
-  }
-]
+    {
+      "guards": [
+        {
+          "path": "imagePullSecrets",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "imagePullSecrets"
+    },
+    {
+      "guards": [
+        {
+          "path": "imagePullSecrets",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "imagePullSecrets"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "imagePullSecrets"
+    },
+    {
+      "guards": [
+        {
+          "path": "controllerID.create",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "eq",
+          "value": "ConfigMap"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "nodeSelector"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nodeSelector"
+    },
+    {
+      "guards": [
+        {
+          "path": "podAnnotations",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "podAnnotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "podAnnotations",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "metadata",
+        "annotations"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "podAnnotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "podLabels",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "podLabels"
+    },
+    {
+      "guards": [
+        {
+          "path": "podLabels",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "metadata",
+        "labels"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "podLabels"
+    },
+    {
+      "guards": [
+        {
+          "path": "priorityClassName",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "priorityClassName"
+    },
+    {
+      "guards": [
+        {
+          "path": "priorityClassName",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "priorityClassName"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "priorityClassName"
+    },
+    {
+      "guards": [
+        {
+          "path": "readinessProbe",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "readinessProbe"
+    },
+    {
+      "guards": [
+        {
+          "path": "readinessProbe",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "readinessProbe",
+        "initialDelaySeconds"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "readinessProbe.initialDelaySeconds"
+    },
+    {
+      "guards": [
+        {
+          "path": "readinessProbe",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "readinessProbe",
+        "periodSeconds"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "readinessProbe.periodSeconds"
+    },
+    {
+      "guards": [],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "resources"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "resources"
+    },
+    {
+      "guards": [],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "securityContext"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "securityContext"
+    },
+    {
+      "guards": [
+        {
+          "path": "serviceAccount.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceAccount.name"
+    },
+    {
+      "guards": [],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "tolerations"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "tolerations"
+    }
+  ]
+}

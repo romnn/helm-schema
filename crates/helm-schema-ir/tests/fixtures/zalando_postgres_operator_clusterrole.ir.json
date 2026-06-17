@@ -1,237 +1,240 @@
-[
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+{
+  "version": 1,
+  "uses": [
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "configGeneral.enable_crd_registration",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "configGeneral.enable_crd_registration",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "configGeneral.enable_crd_registration"
     },
-    "source_expr": "configGeneral.enable_crd_registration"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "configGeneral.kubernetes_use_configmaps",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "configGeneral.kubernetes_use_configmaps",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "configGeneral.kubernetes_use_configmaps"
     },
-    "source_expr": "configGeneral.kubernetes_use_configmaps"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "configKubernetes.spilo_privileged",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "configKubernetes.spilo_privileged",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "configKubernetes.spilo_privileged"
     },
-    "source_expr": "configKubernetes.spilo_privileged"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "configKubernetes.storage_resize_mode",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "configKubernetes.storage_resize_mode",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "configKubernetes.storage_resize_mode"
     },
-    "source_expr": "configKubernetes.storage_resize_mode"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "enableStreams",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "enableStreams",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "enableStreams"
     },
-    "source_expr": "enableStreams"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
-      },
-      {
-        "path": "fullnameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "fullnameOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "metadata",
-      "name"
-    ],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
-      },
-      {
-        "path": "nameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
-      },
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "metadata",
-      "name"
-    ],
-    "resource": {
-      "api_version": "rbac.authorization.k8s.io/v1",
-      "kind": "ClusterRole"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "rbac.create"
-  },
-  {
-    "guards": [
-      {
-        "path": "rbac.create",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
       },
-      {
-        "path": "serviceAccount.name",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "serviceAccount.name"
-  }
-]
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "rbac.create"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "serviceAccount.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceAccount.name"
+    }
+  ]
+}

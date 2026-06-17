@@ -1,872 +1,875 @@
-[
-  {
-    "guards": [
-      {
-        "paths": [
-          "commonAnnotations",
-          "service.annotations"
-        ],
-        "type": "or"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "commonAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "paths": [
-          "commonAnnotations",
-          "service.annotations"
-        ],
-        "type": "or"
+{
+  "version": 1,
+  "uses": [
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "commonAnnotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "commonAnnotations"
     },
-    "source_expr": "commonAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "paths": [
-          "commonAnnotations",
-          "service.annotations"
-        ],
-        "type": "or"
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "commonAnnotations",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "commonAnnotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "metadata",
-      "annotations"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "commonAnnotations"
     },
-    "source_expr": "commonAnnotations"
-  },
-  {
-    "guards": [
-      {
-        "path": "commonLabels",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "commonLabels"
-  },
-  {
-    "guards": [
-      {
-        "path": "commonLabels",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "metadata",
-      "labels"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "commonLabels"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "fullnameOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "fullnameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "fullnameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "schema_type": "string",
-        "type": "type_is"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "metadata",
-      "labels",
-      "app.kubernetes.io/name"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "nameOverride",
-        "type": "default"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "selector",
-      "app.kubernetes.io/name"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "nameOverride"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "namespaceOverride"
-  },
-  {
-    "guards": [
-      {
-        "path": "namespaceOverride",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": null,
-    "source_expr": "namespaceOverride"
-  },
-  {
-    "guards": [
-      {
-        "paths": [
-          "commonAnnotations",
-          "service.annotations"
-        ],
-        "type": "or"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.annotations"
-  },
-  {
-    "guards": [
-      {
-        "paths": [
-          "commonAnnotations",
-          "service.annotations"
-        ],
-        "type": "or"
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "commonAnnotations",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "annotations"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.annotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "commonAnnotations"
     },
-    "source_expr": "service.annotations"
-  },
-  {
-    "guards": [
-      {
-        "paths": [
-          "commonAnnotations",
-          "service.annotations"
-        ],
-        "type": "or"
+    {
+      "guards": [
+        {
+          "path": "commonLabels",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.annotations",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "metadata",
-      "annotations"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "commonLabels"
     },
-    "source_expr": "service.annotations"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.clusterIP",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.clusterIP"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.clusterIP",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "commonLabels",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "labels"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "clusterIP"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "commonLabels"
     },
-    "source_expr": "service.clusterIP"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.disableBaseClientPort",
-        "type": "not"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "service.disableBaseClientPort"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "externalTrafficPolicy"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "service.externalTrafficPolicy"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.extraPorts",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.extraPorts"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.extraPorts",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "ports"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.extraPorts"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.loadBalancerIP",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.loadBalancerIP"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.loadBalancerIP",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "loadBalancerIP"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "fullnameOverride"
     },
-    "source_expr": "service.loadBalancerIP"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.loadBalancerSourceRanges",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
-    "source_expr": "service.loadBalancerSourceRanges"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.loadBalancerSourceRanges",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "loadBalancerSourceRanges"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "nameOverride"
     },
-    "source_expr": "service.loadBalancerSourceRanges"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.disableBaseClientPort",
-        "type": "not"
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.nodePorts.client",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "nameOverride"
     },
-    "source_expr": "service.nodePorts.client"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.disableBaseClientPort",
-        "type": "not"
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "selector",
+        "app.kubernetes.io/name"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.nodePorts.client",
-        "type": "truthy"
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "namespaceOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "ports[*]",
-      "nodePort"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.annotations"
     },
-    "source_expr": "service.nodePorts.client"
-  },
-  {
-    "guards": [
-      {
-        "path": "tls.client.enabled",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "service.annotations",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.nodePorts.tls",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.annotations"
     },
-    "source_expr": "service.nodePorts.tls"
-  },
-  {
-    "guards": [
-      {
-        "path": "tls.client.enabled",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "service.annotations",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "annotations"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.nodePorts.tls",
-        "type": "truthy"
+      "source_expr": "service.annotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.clusterIP",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "ports[*]",
-      "nodePort"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.clusterIP"
     },
-    "source_expr": "service.nodePorts.tls"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.disableBaseClientPort",
-        "type": "not"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "ports[*]",
-      "port"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.ports.client"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "ports[*]",
-      "port"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.ports.election"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "ports[*]",
-      "port"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.ports.follower"
-  },
-  {
-    "guards": [
-      {
-        "path": "tls.client.enabled",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "ports[*]",
-      "port"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.ports.tls"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.sessionAffinity",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.sessionAffinity"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.sessionAffinity",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "sessionAffinity"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.sessionAffinity"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.sessionAffinityConfig",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.sessionAffinityConfig"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.sessionAffinityConfig",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Fragment",
-    "path": [
-      "spec",
-      "sessionAffinityConfig"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.sessionAffinityConfig"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.clusterIP",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "service.clusterIP",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "clusterIP"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.clusterIP"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.loadBalancerIP",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "service.disableBaseClientPort",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.disableBaseClientPort"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.loadBalancerSourceRanges",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "externalTrafficPolicy"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.externalTrafficPolicy"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
-    },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "tls.client.enabled",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "service.extraPorts",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.nodePorts.tls",
-        "type": "truthy"
+      "source_expr": "service.extraPorts"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.extraPorts",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "ports"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.extraPorts"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "tls.client.enabled",
-        "type": "truthy"
+    {
+      "guards": [
+        {
+          "path": "service.loadBalancerIP",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "eq",
-        "value": "ClusterIP"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.loadBalancerIP"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.disableBaseClientPort",
-        "type": "not"
+    {
+      "guards": [
+        {
+          "path": "service.loadBalancerIP",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "loadBalancerIP"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.nodePorts.client",
-        "type": "truthy"
+      "source_expr": "service.loadBalancerIP"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.loadBalancerSourceRanges",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.loadBalancerSourceRanges"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "service.disableBaseClientPort",
-        "type": "not"
+    {
+      "guards": [
+        {
+          "path": "service.loadBalancerSourceRanges",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "loadBalancerSourceRanges"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
       },
-      {
-        "path": "service.type",
-        "type": "eq",
-        "value": "ClusterIP"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+      "source_expr": "service.loadBalancerSourceRanges"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [],
-    "kind": "Scalar",
-    "path": [
-      "spec",
-      "type"
-    ],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+    {
+      "guards": [
+        {
+          "path": "service.disableBaseClientPort",
+          "type": "not"
+        },
+        {
+          "path": "service.nodePorts.client",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.nodePorts.client"
     },
-    "source_expr": "service.type"
-  },
-  {
-    "guards": [
-      {
-        "path": "tls.client.enabled",
-        "type": "truthy"
-      }
-    ],
-    "kind": "Scalar",
-    "path": [],
-    "resource": {
-      "api_version": "v1",
-      "kind": "Service"
+    {
+      "guards": [
+        {
+          "path": "service.disableBaseClientPort",
+          "type": "not"
+        },
+        {
+          "path": "service.nodePorts.client",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "ports[*]",
+        "nodePort"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.nodePorts.client"
     },
-    "source_expr": "tls.client.enabled"
-  }
-]
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "service.nodePorts.tls",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.nodePorts.tls"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "service.nodePorts.tls",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "ports[*]",
+        "nodePort"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.nodePorts.tls"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.disableBaseClientPort",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "ports[*]",
+        "port"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.ports.client"
+    },
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "ports[*]",
+        "port"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.ports.election"
+    },
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "ports[*]",
+        "port"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.ports.follower"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "ports[*]",
+        "port"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.ports.tls"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.sessionAffinity",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.sessionAffinity"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.sessionAffinity",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "sessionAffinity"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.sessionAffinity"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.sessionAffinityConfig",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.sessionAffinityConfig"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.sessionAffinityConfig",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "sessionAffinityConfig"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.sessionAffinityConfig"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.clusterIP",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.loadBalancerIP",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.loadBalancerSourceRanges",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "service.nodePorts.tls",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "eq",
+          "value": "ClusterIP"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.disableBaseClientPort",
+          "type": "not"
+        },
+        {
+          "path": "service.nodePorts.client",
+          "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.disableBaseClientPort",
+          "type": "not"
+        },
+        {
+          "path": "service.type",
+          "type": "eq",
+          "value": "ClusterIP"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "type"
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "tls.client.enabled"
+    }
+  ]
+}

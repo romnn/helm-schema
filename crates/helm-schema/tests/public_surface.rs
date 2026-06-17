@@ -114,6 +114,12 @@ spec:
         !analysis.contract.clone().project().uses().is_empty(),
         "session contract should expose at least one use"
     );
+    let contract_document = session.contract_document_v1()?;
+    assert_eq!(contract_document.version, 1);
+    assert!(
+        !contract_document.uses.is_empty(),
+        "session contract document should expose canonical uses"
+    );
     let generated = session.generated_schema()?;
     assert_eq!(
         generated

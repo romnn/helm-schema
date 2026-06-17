@@ -1,5 +1,5 @@
 pub mod compatibility {
-    pub use helm_schema_ir::{ContractProjection, ValueUse};
+    pub use helm_schema_ir::{ContractDocumentV1, ContractProjection, ValueUse};
 }
 
 pub mod helpers {

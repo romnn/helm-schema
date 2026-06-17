@@ -18,6 +18,10 @@ pub mod diagnostics {
     };
 }
 
+pub mod contract {
+    pub use helm_schema_engine::compatibility::ContractDocumentV1;
+}
+
 pub mod output {
     pub use crate::fetch_policy::FetchPolicy;
     pub use crate::output_pipeline::{

@@ -29,7 +29,8 @@ fn symbolic_ir_from_tree_sitter() {
         .generate_contract_ir(&src, &idx)
         .project();
 
-    let actual = serde_json::to_value(&ir).unwrap();
+    let actual =
+        serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(ir)).unwrap();
 
     if std::env::var("IR_DUMP").is_ok() {
         eprintln!(

@@ -30,8 +30,13 @@ fn schema_from_tree_sitter() {
         let projection = ir.clone().project();
         eprintln!(
             "{}",
-            serde_json::to_string_pretty(&serde_json::to_value(&projection).expect("ir json"))
-                .expect("pretty ir")
+            serde_json::to_string_pretty(
+                &serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(
+                    projection,
+                ))
+                .expect("ir json"),
+            )
+            .expect("pretty ir")
         );
     }
     let provider = common::production_k8s_chain("v1.35.0");

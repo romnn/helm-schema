@@ -22,7 +22,9 @@ fn symbolic_ir_from_tree_sitter() {
         .generate_contract_ir(&src, &idx)
         .project();
 
-    let actual: serde_json::Value = serde_json::to_value(&ir).expect("serialize");
+    let actual: serde_json::Value =
+        serde_json::to_value(helm_schema_ir::ContractDocumentV1::from_projection(ir))
+            .expect("serialize");
 
     if std::env::var("SYMBOLIC_DUMP").is_ok() {
         eprintln!(
@@ -35,7 +37,7 @@ fn symbolic_ir_from_tree_sitter() {
     let _pr =
         serde_json::json!({"api_version": "monitoring.coreos.com/v1", "kind": "PrometheusRule"});
 
-    let expected: serde_json::Value = serde_json::from_str(
+    let expected_uses: serde_json::Value = serde_json::from_str(
         r#"
 [
   {
@@ -743,6 +745,10 @@ fn symbolic_ir_from_tree_sitter() {
 "#,
     )
     .expect("parse expected");
+    let expected = serde_json::json!({
+        "version": 1,
+        "uses": expected_uses
+    });
 
     similar_asserts::assert_eq!(actual, expected);
 }
