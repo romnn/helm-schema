@@ -1,5 +1,8 @@
 use helm_schema_engine::{
-    compatibility::{ContractDocumentV1, ContractProjection, ValueUse},
+    compatibility::{
+        ContractDocumentV1, ContractDocumentV2, ContractProjection, ContractProvenanceV2,
+        ContractUseV2, SourceSpanV2, ValueUse,
+    },
     helpers::extract_helper_calls,
     parse::extract_values_yaml_descriptions,
     required_inference::extract_default_fallback_paths,
@@ -43,5 +46,9 @@ fn public_engine_surface_exposes_named_parse_helper_and_compatibility_modules() 
 
     let _ = std::any::type_name::<ContractProjection>();
     let _ = std::any::type_name::<ContractDocumentV1>();
+    let _ = std::any::type_name::<ContractDocumentV2>();
+    let _ = std::any::type_name::<ContractUseV2>();
+    let _ = std::any::type_name::<ContractProvenanceV2>();
+    let _ = std::any::type_name::<SourceSpanV2>();
     let _ = std::any::type_name::<ValueUse>();
 }

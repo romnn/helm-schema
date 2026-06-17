@@ -130,6 +130,15 @@ spec:
         !contract_document.uses.is_empty(),
         "session contract document should expose canonical uses"
     );
+    let contract_document_v2 = session.contract_document_v2()?;
+    assert_eq!(contract_document_v2.version, 2);
+    assert!(
+        contract_document_v2
+            .uses
+            .iter()
+            .any(|use_| !use_.provenance.is_empty()),
+        "session v2 contract document should retain source provenance"
+    );
     let generated = session.generated_schema()?;
     assert_eq!(
         generated
@@ -138,6 +147,71 @@ spec:
             .and_then(serde_json::Value::as_str),
         Some("integer")
     );
+
+    Ok(())
+}
+
+#[test]
+fn contract_document_v2_is_byte_deterministic_across_100_runs() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc::indoc! {"
+            enabled: true
+            message: hello
+            replicas: 2
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_helpers.tpl")?,
+        indoc::indoc! {r#"
+            {{- define "root.renderMessage" -}}
+            {{- if .Values.enabled -}}
+            {{ .Values.message }}
+            {{- else -}}
+            fallback
+            {{- end -}}
+            {{- end -}}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/configmap.yaml")?,
+        indoc::indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              message: {{ include "root.renderMessage" . | quote }}
+              replicas: {{ .Values.replicas | quote }}
+        "#},
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir: chart_dir.clone(),
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    };
+
+    let expected = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document_v2()?)?;
+    for _ in 0..100 {
+        let actual =
+            serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document_v2()?)?;
+        assert_eq!(actual, expected, "contract DTO bytes must be deterministic");
+    }
 
     Ok(())
 }

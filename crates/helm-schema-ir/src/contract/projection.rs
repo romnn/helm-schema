@@ -1,5 +1,5 @@
 use crate::ValueUse;
-use crate::compatibility::ContractDocumentV1;
+use crate::compatibility::{ContractDocumentV1, ContractDocumentV2};
 use crate::contract::ContractUse;
 use crate::contract_normalization::canonicalize_contract_uses;
 
@@ -43,9 +43,19 @@ impl ContractProjection {
         self.uses.into_iter().map(ValueUse::from).collect()
     }
 
+    pub(crate) fn into_contract_uses(self) -> Vec<ContractUse> {
+        self.uses
+    }
+
     /// Consume the projection and export the stable versioned wire format.
     #[must_use]
     pub fn into_document_v1(self) -> ContractDocumentV1 {
         ContractDocumentV1::from_projection(self)
+    }
+
+    /// Consume the projection and export the provenance-aware versioned wire format.
+    #[must_use]
+    pub fn into_document_v2(self) -> ContractDocumentV2 {
+        ContractDocumentV2::from_projection(self)
     }
 }

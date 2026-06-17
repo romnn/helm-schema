@@ -2,7 +2,9 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_engine::compatibility::{ContractDocumentV1, ContractProjection, ValueUse};
+use helm_schema_engine::compatibility::{
+    ContractDocumentV1, ContractDocumentV2, ContractProjection, ValueUse,
+};
 use helm_schema_engine::{ContractIr, ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::{Map, Value};
@@ -151,13 +153,25 @@ impl AnalysisSession {
         Ok(self.prepared()?.contract.clone())
     }
 
-    /// Return the stable versioned contract export document.
+    /// Return the legacy stable versioned contract export document.
+    ///
+    /// This preserves the original fixture/tooling wire shape without source
+    /// provenance. New consumers should prefer [`Self::contract_document_v2`].
     pub fn contract_document_v1(&self) -> CliResult<ContractDocumentV1> {
         Ok(self
             .contract_projection()?
             .as_ref()
             .clone()
             .into_document_v1())
+    }
+
+    /// Return the provenance-aware stable versioned contract export document.
+    pub fn contract_document_v2(&self) -> CliResult<ContractDocumentV2> {
+        Ok(self
+            .contract_projection()?
+            .as_ref()
+            .clone()
+            .into_document_v2())
     }
 
     /// Return the chart-local schema universe extracted from the chart tree.
