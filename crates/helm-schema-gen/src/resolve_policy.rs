@@ -172,7 +172,7 @@ impl ResolvePolicy {
             guard_constraint_schema,
             type_hint_schema,
         } = input;
-        let preserve_explicit_null_default =
+        let preserve_explicit_null_default_by_contract =
             facts.preserve_explicit_null_default(&type_hint_schema, &guard_constraint_schema);
         let preserve_empty_string_fallback =
             facts.preserve_empty_string_fallback(&type_hint_schema, &guard_constraint_schema);
@@ -204,6 +204,10 @@ impl ResolvePolicy {
             type_hint_schema,
             preserve_empty_string_fallback,
         });
+        let preserve_explicit_null_default = preserve_explicit_null_default_by_contract
+            || (facts.values_yaml_is_explicit_null
+                && facts.used_as_fragment
+                && !is_empty_schema(&merged));
 
         if (preserve_explicit_null_default
             || (is_scalar_like_schema(&merged) && facts.contract_path_is_nullable))

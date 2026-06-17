@@ -141,8 +141,11 @@ fn merge_global_values(root: &mut YamlValue, global_doc: YamlValue) {
     };
 
     for (key, value) in sub_mapping {
-        let entry = mapping.entry(key).or_insert(YamlValue::Null);
-        *entry = merge_yaml_prefer_left(entry.clone(), value);
+        if let Some(existing) = mapping.get(&key).cloned() {
+            mapping.insert(key, merge_yaml_existing_prefers_left(existing, value));
+        } else {
+            mapping.insert(key, value);
+        }
     }
 }
 
@@ -189,8 +192,11 @@ fn merge_values_at_prefix(root: &mut YamlValue, prefix: &[String], sub: YamlValu
         && let YamlValue::Mapping(sub_mapping) = sub
     {
         for (key, value) in sub_mapping {
-            let entry = mapping.entry(key).or_insert(YamlValue::Null);
-            *entry = merge_yaml_prefer_left(entry.clone(), value);
+            if let Some(existing) = mapping.get(&key).cloned() {
+                mapping.insert(key, merge_yaml_existing_prefers_left(existing, value));
+            } else {
+                mapping.insert(key, value);
+            }
         }
     }
 }
@@ -216,16 +222,114 @@ fn ensure_mapping_path<'a>(root: &'a mut YamlValue, path: &[String]) -> &'a mut 
     current
 }
 
-fn merge_yaml_prefer_left(a: YamlValue, b: YamlValue) -> YamlValue {
-    match (a, b) {
-        (YamlValue::Null, right) => right,
+fn merge_yaml_existing_prefers_left(left: YamlValue, right: YamlValue) -> YamlValue {
+    match (left, right) {
         (YamlValue::Mapping(mut left), YamlValue::Mapping(right)) => {
             for (key, right_value) in right {
-                let entry = left.entry(key).or_insert(YamlValue::Null);
-                *entry = merge_yaml_prefer_left(entry.clone(), right_value);
+                if let Some(existing) = left.get(&key).cloned() {
+                    left.insert(key, merge_yaml_existing_prefers_left(existing, right_value));
+                } else {
+                    left.insert(key, right_value);
+                }
             }
             YamlValue::Mapping(left)
         }
         (left, _) => left,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_composed_values_yaml;
+    use crate::chart::ChartContext;
+    use crate::chart::discover_chart_contexts;
+    use vfs::VfsPath;
+
+    fn yaml_pointer<'a>(
+        doc: &'a serde_yaml::Value,
+        path: &[&str],
+    ) -> Option<&'a serde_yaml::Value> {
+        let mut current = doc;
+        for segment in path {
+            let map = current.as_mapping()?;
+            current = map.get(serde_yaml::Value::String((*segment).to_string()))?;
+        }
+        Some(current)
+    }
+
+    fn discover(chart_dir: &VfsPath) -> color_eyre::eyre::Result<Vec<ChartContext>> {
+        Ok(discover_chart_contexts(chart_dir)?.charts)
+    }
+
+    #[test]
+    fn composed_subchart_globals_preserve_parent_explicit_null_defaults()
+    -> color_eyre::eyre::Result<()> {
+        let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+        test_util::write(
+            &chart_dir.join("Chart.yaml")?,
+            "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("values.yaml")?,
+            "global:\n  imageRegistry:\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/Chart.yaml")?,
+            "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/values.yaml")?,
+            "global:\n  imageRegistry: docker.io\n",
+        )?;
+
+        let composed = build_composed_values_yaml(&discover(&chart_dir)?, true)?
+            .expect("composed values yaml");
+        let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
+
+        assert!(
+            yaml_pointer(&doc, &["global", "imageRegistry"])
+                .is_some_and(serde_yaml::Value::is_null),
+            "root explicit null should remain authoritative: {doc:?}"
+        );
+        assert!(
+            yaml_pointer(&doc, &["child", "global", "imageRegistry"])
+                .is_some_and(serde_yaml::Value::is_null),
+            "subchart global mirror should preserve the parent explicit null: {doc:?}"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn composed_subchart_globals_hoist_when_parent_key_is_absent() -> color_eyre::eyre::Result<()> {
+        let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+        test_util::write(
+            &chart_dir.join("Chart.yaml")?,
+            "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        )?;
+        test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+        test_util::write(
+            &chart_dir.join("charts/child/Chart.yaml")?,
+            "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        )?;
+        test_util::write(
+            &chart_dir.join("charts/child/values.yaml")?,
+            "global:\n  imageRegistry: docker.io\n",
+        )?;
+
+        let composed = build_composed_values_yaml(&discover(&chart_dir)?, true)?
+            .expect("composed values yaml");
+        let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
+
+        assert_eq!(
+            yaml_pointer(&doc, &["global", "imageRegistry"]),
+            Some(&serde_yaml::Value::String("docker.io".to_string()))
+        );
+        assert_eq!(
+            yaml_pointer(&doc, &["child", "global", "imageRegistry"]),
+            Some(&serde_yaml::Value::String("docker.io".to_string()))
+        );
+
+        Ok(())
     }
 }

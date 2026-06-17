@@ -1,6 +1,7 @@
 mod common;
 
 use color_eyre::eyre::{OptionExt as _, WrapErr as _};
+use indoc::indoc;
 
 #[test]
 fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<()> {
@@ -39,6 +40,23 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
         "signoz-signoz",
         &schema,
         50,
+    )?;
+    common::assert_generated_schema_accepts_helm_samples(
+        "signoz-signoz",
+        &schema,
+        &[
+            common::HelmValidationSample {
+                name: "default",
+                values_yaml: None,
+            },
+            common::HelmValidationSample {
+                name: "enable-otel-gateway",
+                values_yaml: Some(indoc! {"
+                    signoz-otel-gateway:
+                      enabled: true
+                "}),
+            },
+        ],
     )?;
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))

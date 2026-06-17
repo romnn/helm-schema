@@ -274,6 +274,12 @@ fn conditional_target_schema(
         return branch_schema;
     };
     if !active_by_defaults {
+        if let Some(fallback) = resolved_fallback
+            && is_placeholder_fragment_object_schema(&branch_schema)
+            && !is_placeholder_fragment_object_schema(&fallback)
+        {
+            return fallback;
+        }
         return branch_schema;
     }
 
@@ -315,6 +321,15 @@ fn resolve_overlay_target_schema(
         .into_iter()
         .find(|resolved| resolved.value_path == overlay.target_value_path)
         .map(|resolved| resolved.schema)
+}
+
+fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
+    schema.as_object().is_some_and(|object| {
+        object.get("type") == Some(&Value::String("object".to_string()))
+            && object.get("additionalProperties") == Some(&Value::Object(Map::new()))
+            && !object.contains_key("properties")
+            && !object.contains_key("required")
+    })
 }
 
 fn overlay_path_signals(overlay: &ConditionalPathOverlay) -> helm_schema_ir::ContractPathSignals {
