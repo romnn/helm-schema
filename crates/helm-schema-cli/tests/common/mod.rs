@@ -2,7 +2,7 @@ use std::io::Read;
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
-use helm_schema_engine::extract_values_yaml_descriptions;
+use helm_schema_engine::parse::extract_values_yaml_descriptions;
 use serde_json::Value;
 use vfs::VfsPath;
 

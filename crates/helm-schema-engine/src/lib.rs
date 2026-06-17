@@ -1,7 +1,19 @@
-pub use helm_schema_ast::{
-    DefineIndex, HelmAst, HelmParser, ParseError, TreeSitterParser, contains_template_action,
-    extract_values_yaml_descriptions,
-};
+pub mod compatibility {
+    pub use helm_schema_ir::{ContractProjection, ValueUse};
+}
+
+pub mod helpers {
+    pub use helm_schema_ast::DefineIndex;
+    pub use helm_schema_ir::{DefineBlock, extract_define_blocks, extract_helper_calls};
+}
+
+pub mod parse {
+    pub use helm_schema_ast::{
+        HelmAst, HelmParser, ParseError, TreeSitterParser, contains_template_action,
+        extract_values_yaml_descriptions,
+    };
+}
+
 pub use helm_schema_core::{
     ApiPresenceQuery, CapabilityGuard, CapabilityOracle, CapabilityPresencePredicate, HelperBranch,
     HelperBranchBody, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, StaticOracle,
@@ -10,10 +22,9 @@ pub use helm_schema_core::{
 };
 pub use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 pub use helm_schema_ir::{
-    ContractIr, ContractPathSignals, ContractProjection, ContractSchemaSignals, ContractUse,
-    ContractValuePathFacts, DefineBlock, Guard, GuardConstraint, MetadataFieldKind,
-    RequiredInferenceSignals, SymbolicIrContext, ValueUse, extract_default_type_hints,
-    extract_define_blocks, extract_helper_calls,
+    ContractIr, ContractPathSignals, ContractSchemaSignals, ContractUse, ContractValuePathFacts,
+    Guard, GuardConstraint, MetadataFieldKind, RequiredInferenceSignals, SymbolicIrContext,
+    extract_default_type_hints,
 };
 
 pub mod required_inference {

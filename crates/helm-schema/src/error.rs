@@ -15,7 +15,7 @@ pub enum CliError {
     Json(#[from] serde_json::Error),
 
     #[error("template parse error: {0}")]
-    TemplateParse(#[from] helm_schema_engine::ParseError),
+    TemplateParse(#[from] helm_schema_engine::parse::ParseError),
 
     #[error("no charts discovered")]
     NoChartsDiscovered,

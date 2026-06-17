@@ -1,4 +1,4 @@
-use helm_schema_engine::{HelmAst, HelmParser as _, TreeSitterParser};
+use helm_schema_engine::parse::{HelmAst, HelmParser as _, TreeSitterParser};
 use helm_schema_k8s::{LocalResourceSchema, resource_schemas_from_crd_document_with_source};
 use serde::Deserialize;
 use serde_json::Value;

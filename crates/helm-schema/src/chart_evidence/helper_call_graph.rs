@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 
-use helm_schema_engine::{DefineBlock, extract_define_blocks, extract_helper_calls};
+use helm_schema_engine::helpers::{DefineBlock, extract_define_blocks, extract_helper_calls};
 
 use crate::chart;
 use crate::error::CliResult;

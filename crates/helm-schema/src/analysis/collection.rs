@@ -1,4 +1,4 @@
-use helm_schema_engine::DefineIndex;
+use helm_schema_engine::helpers::DefineIndex;
 use helm_schema_engine::{ContractIr, ContractSchemaSignals, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 

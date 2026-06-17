@@ -1,10 +1,13 @@
 use helm_schema_engine::{
-    extract_values_yaml_descriptions, required_inference::extract_default_fallback_paths,
+    compatibility::{ContractProjection, ValueUse},
+    helpers::extract_helper_calls,
+    parse::extract_values_yaml_descriptions,
+    required_inference::extract_default_fallback_paths,
 };
 use indoc::indoc;
 
 #[test]
-fn public_engine_surface_exposes_values_comments_and_default_fallback_extractors() {
+fn public_engine_surface_exposes_named_parse_helper_and_compatibility_modules() {
     let values_yaml = indoc! {"
         # Root flag docs
         enabled: true # inline flag docs
@@ -32,4 +35,12 @@ fn public_engine_surface_exposes_values_comments_and_default_fallback_extractors
     let template = r#"{{ .Values.serviceAccount.name | default "generated-name" }}"#;
     let fallback_paths = extract_default_fallback_paths(template);
     assert_eq!(fallback_paths, ["serviceAccount.name".to_string()]);
+
+    assert_eq!(
+        extract_helper_calls(r#"{{ include "common.fullname" . }}"#),
+        vec!["common.fullname".to_string()]
+    );
+
+    let _ = std::any::type_name::<ContractProjection>();
+    let _ = std::any::type_name::<ValueUse>();
 }
