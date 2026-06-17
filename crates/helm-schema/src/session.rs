@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
+use helm_schema_engine::compatibility::{ContractProjection, ValueUse};
 use helm_schema_engine::{ContractIr, ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::{Map, Value};
@@ -10,7 +11,7 @@ use crate::analysis::analyze_charts;
 use crate::chart;
 use crate::chart_evidence::ChartTemplateEvidence;
 use crate::error::CliResult;
-use crate::generation::{GenerateOptions, GeneratedSchema};
+use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
     OutputPipelineOptions, PolicyInputOptions, PolicyInputs, apply_schema_output_pipeline,
     load_policy_inputs,
@@ -27,6 +28,19 @@ use crate::required_inference;
 pub struct Analysis {
     pub contract: ContractIr,
     pub local_schemas: LocalSchemaUniverse,
+}
+
+/// Session-level explanation for one values path.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ValuePathExplanation {
+    pub path: String,
+    pub exact_uses: Vec<ValueUse>,
+    pub descendant_uses: Vec<ValueUse>,
+    pub value_path_facts: Option<helm_schema_engine::ContractValuePathFacts>,
+    pub guard_constraints: Vec<helm_schema_engine::GuardConstraint>,
+    pub metadata_fields: Vec<helm_schema_engine::MetadataFieldKind>,
+    pub type_hints: Vec<Value>,
+    pub has_default_fallback: bool,
 }
 
 pub(crate) struct PreparedSession {
@@ -89,7 +103,9 @@ impl PreparedSession {
 pub struct AnalysisSession {
     opts: GenerateOptions,
     prepared: Mutex<Option<Arc<PreparedSession>>>,
+    resolved_contract: Mutex<Option<Arc<ResolvedContract>>>,
     generated_schema: Mutex<Option<Arc<GeneratedSchema>>>,
+    projection: Mutex<Option<Arc<ContractProjection>>>,
 }
 
 impl AnalysisSession {
@@ -98,7 +114,9 @@ impl AnalysisSession {
         Self {
             opts,
             prepared: Mutex::new(None),
+            resolved_contract: Mutex::new(None),
             generated_schema: Mutex::new(None),
+            projection: Mutex::new(None),
         }
     }
 
@@ -117,6 +135,18 @@ impl AnalysisSession {
         Ok(self.prepared()?.local_schema_universe.clone())
     }
 
+    /// Return the provider-resolved contract schema prior to optional
+    /// required-inference and final output-pipeline transforms.
+    ///
+    /// This query exposes the stage boundary the architecture document calls
+    /// `resolved_contract(policy)`: structural contract facts have already
+    /// been resolved against providers and chart-authored shipped
+    /// `values.schema.json` constraints have been intersected, but the later
+    /// heuristic `--infer-required` mutation has not yet run.
+    pub fn resolved_contract(&self) -> CliResult<ResolvedContract> {
+        Ok((*self.resolved()?).clone())
+    }
+
     /// Return the memoized generated values schema.
     pub fn generated_schema(&self) -> CliResult<GeneratedSchema> {
         {
@@ -130,7 +160,10 @@ impl AnalysisSession {
         }
 
         let prepared = self.prepared()?;
-        let generated = Arc::new(generate_schema_from_prepared(&prepared, &self.opts, None)?);
+        let resolved = self.resolved()?;
+        let generated = Arc::new(generate_schema_from_resolved_contract(
+            &resolved, &prepared, &self.opts,
+        ));
         let mut guard = self
             .generated_schema
             .lock()
@@ -171,6 +204,72 @@ impl AnalysisSession {
         self.emit(policy_inputs, output_options)
     }
 
+    /// Explain one values path using the current contract and chart evidence.
+    pub fn explain(&self, path: &str) -> CliResult<ValuePathExplanation> {
+        let normalized_path = normalize_values_path(path);
+        let projection = self.contract_projection()?;
+        let prepared = self.prepared()?;
+
+        let exact_uses = projection
+            .uses()
+            .iter()
+            .filter(|use_| use_.source_expr == normalized_path)
+            .cloned()
+            .map(ValueUse::from)
+            .collect();
+        let descendant_uses = projection
+            .uses()
+            .iter()
+            .filter(|use_| {
+                use_.source_expr
+                    .strip_prefix(&normalized_path)
+                    .is_some_and(|suffix| suffix.starts_with('.'))
+            })
+            .cloned()
+            .map(ValueUse::from)
+            .collect();
+        let value_path_facts = prepared
+            .contract_schema_signals
+            .value_path_facts
+            .get(&normalized_path)
+            .copied();
+        let guard_constraints = prepared
+            .contract_schema_signals
+            .path_signals
+            .guard_constraints_by_value_path
+            .get(&normalized_path)
+            .cloned()
+            .unwrap_or_default();
+        let metadata_fields = prepared
+            .contract_schema_signals
+            .path_signals
+            .metadata_fields_by_value_path
+            .get(&normalized_path)
+            .map(|fields| fields.iter().copied().collect())
+            .unwrap_or_default();
+        let type_hints = prepared
+            .template_evidence
+            .type_hints
+            .get(&normalized_path)
+            .cloned()
+            .unwrap_or_default();
+        let has_default_fallback = prepared
+            .template_evidence
+            .default_fallback_paths
+            .contains(&normalized_path);
+
+        Ok(ValuePathExplanation {
+            path: normalized_path,
+            exact_uses,
+            descendant_uses,
+            value_path_facts,
+            guard_constraints,
+            metadata_fields,
+            type_hints,
+            has_default_fallback,
+        })
+    }
+
     fn prepared(&self) -> CliResult<Arc<PreparedSession>> {
         {
             let guard = self.prepared.lock().expect("prepared session mutex");
@@ -188,23 +287,76 @@ impl AnalysisSession {
     fn chart_base_dir(&self) -> &Path {
         Path::new(self.opts.chart_dir.as_str())
     }
+
+    fn resolved(&self) -> CliResult<Arc<ResolvedContract>> {
+        {
+            let guard = self
+                .resolved_contract
+                .lock()
+                .expect("resolved contract mutex");
+            if let Some(resolved) = guard.as_ref() {
+                return Ok(Arc::clone(resolved));
+            }
+        }
+
+        let prepared = self.prepared()?;
+        let resolved = Arc::new(resolve_contract_from_prepared(&prepared, &self.opts, None)?);
+        let mut guard = self
+            .resolved_contract
+            .lock()
+            .expect("resolved contract mutex");
+        let resolved = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&resolved)));
+        Ok(resolved)
+    }
+
+    fn contract_projection(&self) -> CliResult<Arc<ContractProjection>> {
+        {
+            let guard = self.projection.lock().expect("projection mutex");
+            if let Some(projection) = guard.as_ref() {
+                return Ok(Arc::clone(projection));
+            }
+        }
+
+        let prepared = self.prepared()?;
+        let projection = Arc::new(prepared.contract.clone().project());
+        let mut guard = self.projection.lock().expect("projection mutex");
+        let projection = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&projection)));
+        Ok(projection)
+    }
 }
 
-pub(crate) fn generate_schema_from_prepared(
+pub(crate) fn resolve_contract_from_prepared(
     prepared: &PreparedSession,
     opts: &GenerateOptions,
     diagnostic_sink: Option<&DiagnosticSink>,
-) -> CliResult<GeneratedSchema> {
+) -> CliResult<ResolvedContract> {
     let mut provider_options = opts.provider.clone();
     provider_options.local_schema_universe = prepared.local_schema_universe.clone();
     let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
 
-    let mut schema = generate_values_schema(
+    let schema = generate_values_schema(
         ValuesSchemaInput::new(&prepared.contract_schema_signals, &provider)
             .with_values_yaml(prepared.values_yaml.as_deref())
             .with_type_hints(&prepared.template_evidence.type_hints)
             .with_values_descriptions(&prepared.values_descriptions),
     );
+    let schema = apply_shipped_values_schema_constraints(
+        schema,
+        &prepared.shipped_values_schema_constraints,
+    );
+
+    Ok(ResolvedContract {
+        schema,
+        subchart_value_prefixes: prepared.subchart_value_prefixes.clone(),
+    })
+}
+
+pub(crate) fn generate_schema_from_resolved_contract(
+    resolved: &ResolvedContract,
+    prepared: &PreparedSession,
+    opts: &GenerateOptions,
+) -> GeneratedSchema {
+    let mut schema = resolved.schema.clone();
 
     if opts.infer_required {
         required_inference::apply(
@@ -215,15 +367,21 @@ pub(crate) fn generate_schema_from_prepared(
         );
     }
 
-    schema = apply_shipped_values_schema_constraints(
+    GeneratedSchema {
         schema,
-        &prepared.shipped_values_schema_constraints,
-    );
+        subchart_value_prefixes: resolved.subchart_value_prefixes.clone(),
+    }
+}
 
-    Ok(GeneratedSchema {
-        schema,
-        subchart_value_prefixes: prepared.subchart_value_prefixes.clone(),
-    })
+pub(crate) fn generate_schema_from_prepared(
+    prepared: &PreparedSession,
+    opts: &GenerateOptions,
+    diagnostic_sink: Option<&DiagnosticSink>,
+) -> CliResult<GeneratedSchema> {
+    let resolved = resolve_contract_from_prepared(prepared, opts, diagnostic_sink)?;
+    Ok(generate_schema_from_resolved_contract(
+        &resolved, prepared, opts,
+    ))
 }
 
 fn apply_shipped_values_schema_constraints(
@@ -396,4 +554,15 @@ fn rewrite_constraint_refs(schema: &mut Value, namespace: &str) {
 
 fn namespaced_definition_name(namespace: &str, name: &str) -> String {
     format!("{namespace}.{name}")
+}
+
+fn normalize_values_path(path: &str) -> String {
+    let path = path.trim();
+    if let Some(stripped) = path.strip_prefix(".Values.") {
+        stripped.to_string()
+    } else if path == ".Values" {
+        String::new()
+    } else {
+        path.to_string()
+    }
 }

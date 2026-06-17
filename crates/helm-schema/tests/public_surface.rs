@@ -125,6 +125,82 @@ spec:
 }
 
 #[test]
+fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("values.schema.json")?,
+        r#"{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": ["safe", "fast"]
+    }
+  }
+}"#,
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/serviceaccount.yaml")?,
+        r#"
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: root
+{{- end }}
+"#,
+    )?;
+
+    let session = AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: true,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    });
+
+    let resolved = session.resolved_contract()?;
+    assert_eq!(
+        resolved.schema.pointer("/allOf/0/properties/mode/enum"),
+        Some(&json!(["safe", "fast"]))
+    );
+    assert!(
+        resolved
+            .schema
+            .pointer("/properties/serviceAccount/required")
+            .is_none(),
+        "resolved contract should stay pre-heuristic: {}",
+        resolved.schema
+    );
+
+    let generated = session.generated_schema()?;
+    assert_eq!(
+        generated
+            .schema
+            .pointer("/properties/serviceAccount/required"),
+        Some(&json!(["create"]))
+    );
+    assert_eq!(
+        generated.schema.pointer("/allOf/0/properties/mode/enum"),
+        Some(&json!(["safe", "fast"]))
+    );
+
+    Ok(())
+}
+
+#[test]
 fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -182,6 +258,88 @@ data:
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
         Some("Whether the config map is enabled")
+    );
+
+    Ok(())
+}
+
+#[test]
+fn analysis_session_explains_values_path() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc::indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+                condition: kid.enabled, global.kidEnabled
+                tags:
+                  - observability
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        "enabled: true\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/configmap.yaml")?,
+        r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+data:
+  enabled: "{{ .Values.enabled }}"
+"#,
+    )?;
+
+    let session = AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    });
+
+    let explanation = session.explain("kid.enabled")?;
+
+    assert_eq!(explanation.path, "kid.enabled");
+    assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
+    assert!(
+        explanation
+            .exact_uses
+            .iter()
+            .any(|use_| use_.guards.contains(
+                &serde_json::from_value(serde_json::json!({
+                    "type": "or",
+                    "paths": ["global.kidEnabled", "kid.enabled", "tags.observability"]
+                }))
+                .expect("deserialize guard")
+            )),
+        "expected activation guard in explanation: {explanation:#?}"
+    );
+    assert!(
+        explanation
+            .type_hints
+            .iter()
+            .any(|hint| hint == &json!({ "type": "boolean" })),
+        "expected boolean activation type hint: {explanation:#?}"
     );
 
     Ok(())
