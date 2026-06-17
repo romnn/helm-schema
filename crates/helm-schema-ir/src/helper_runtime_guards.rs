@@ -1,5 +1,6 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
+use crate::bound_helper_env::BoundHelperEnv;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_binding::HelperBinding;
@@ -20,12 +21,9 @@ pub(crate) fn branch_guard_paths(
     let mut branch_guard_paths =
         direct_bound_paths_from_text_in_context(text, bindings, current_dot);
     branch_guard_paths.extend(local_bound_paths_from_text(text, local_bindings));
-    let nested = context.helper_summaries().summarize_bound_helper_calls(
+    let nested = BoundHelperEnv::new(bindings, current_dot, context).summarize_calls(
         text,
-        Some(bindings),
-        current_dot,
         local_bindings,
-        context,
         seen,
     );
     branch_guard_paths.extend(helper_summary_condition_paths(&nested));

@@ -1,6 +1,7 @@
 mod abstract_value;
 mod assignment_action_plan;
 mod bound_helper_call_analysis;
+mod bound_helper_env;
 mod bound_value_analysis;
 mod capability_branch;
 mod capability_liveness;

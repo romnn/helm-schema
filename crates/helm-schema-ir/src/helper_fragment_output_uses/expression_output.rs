@@ -2,14 +2,11 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::expression_analysis::resolved_default_fallback_paths_for_text;
+use crate::bound_helper_env::BoundHelperEnv;
 use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
 use crate::fragment_classification::is_fragment_expr;
-use crate::fragment_expr_eval::{
-    fragment_binding_from_text_with_helper_context, helper_binding_from_expr_with_fragment_locals,
-};
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::project_fragment_binding;
 use crate::helper_output_projection::{
@@ -22,8 +19,7 @@ use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_summary_projection::helper_summary_dependency_paths;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{
-    direct_bound_paths_from_text_in_context, local_default_paths_from_text,
-    local_rendered_paths_from_text,
+    direct_bound_paths_from_text_in_context, local_rendered_paths_from_text,
 };
 use crate::output_path;
 use crate::predicate::Predicate;
@@ -85,8 +81,8 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
     let direct_outputs = direct_bound_paths_from_text_in_context(text, bindings, current_dot);
-    let fallback_paths =
-        resolved_default_fallback_paths_for_text(text, Some(bindings), current_dot);
+    let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
+    let fallback_paths = helper_env.external_default_fallback_paths(text);
     let local_outputs = local_rendered_paths_from_text(text, state.local_bindings);
     let handled_outputs: BTreeSet<String> = direct_outputs
         .iter()
@@ -111,7 +107,8 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
     }
     state.outputs.extend(direct_output_uses);
 
-    let local_fallback_paths = local_default_paths_from_text(text, state.local_default_paths);
+    let local_fallback_paths =
+        helper_env.local_default_fallback_paths(text, state.local_default_paths);
     let local_output_uses = local_output_uses_from_text(
         text,
         &output_path,
@@ -121,17 +118,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         state.local_bindings,
     );
 
-    let mut nested = state
-        .context
-        .helper_summaries()
-        .summarize_bound_helper_calls(
-            text,
-            Some(bindings),
-            current_dot,
-            state.local_bindings,
-            state.context,
-            state.seen,
-        );
+    let mut nested = helper_env.summarize_calls(text, state.local_bindings, state.seen);
     let nested_structured_sources: BTreeSet<String> = nested
         .fragment_output_uses
         .iter()
@@ -215,29 +202,14 @@ fn collect_bound_fragment_output_assignment_uses(
     current_dot_fragment: Option<&FragmentBinding>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
+    let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let mut seen_rhs = HashSet::new();
-    let mut binding = fragment_binding_from_text_with_helper_context(
-        rhs,
-        state.local_bindings,
-        Some(bindings),
-        current_dot,
-        state.context,
-        &mut seen_rhs,
-    );
+    let mut binding =
+        helper_env.fragment_binding_from_text(rhs, state.local_bindings, &mut seen_rhs);
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if text_starts_with_helper_call(rhs) {
         let mut rhs_seen = state.seen.clone();
-        let nested = state
-            .context
-            .helper_summaries()
-            .summarize_bound_helper_calls(
-                rhs,
-                Some(bindings),
-                current_dot,
-                state.local_bindings,
-                state.context,
-                &mut rhs_seen,
-            );
+        let nested = helper_env.summarize_calls(rhs, state.local_bindings, &mut rhs_seen);
         top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
         if let Some(nested_binding) = project_fragment_binding(nested) {
             binding = match binding {
@@ -269,12 +241,8 @@ fn collect_bound_fragment_output_assignment_uses(
     if let Some(binding) = binding {
         state.local_bindings.insert(var.to_string(), binding);
     }
-    let mut defaulted_paths =
-        resolved_default_fallback_paths_for_text(rhs, Some(bindings), current_dot);
-    defaulted_paths.extend(local_default_paths_from_text(
-        rhs,
-        state.local_default_paths,
-    ));
+    let mut defaulted_paths = helper_env.external_default_fallback_paths(rhs);
+    defaulted_paths.extend(helper_env.local_default_fallback_paths(rhs, state.local_default_paths));
     if defaulted_paths.is_empty() {
         state.local_default_paths.remove(var);
     } else {
@@ -332,18 +300,14 @@ fn helper_expression_output_uses_from_text(
 ) -> Vec<HelperFragmentOutputUse> {
     let mut expression_output_uses = Vec::new();
     let mut expression_seen = state.seen.clone();
+    let helper_env = BoundHelperEnv::new(scope.bindings, scope.current_dot, state.context);
     for expr in parse_expr_text(text) {
         if !expr_contains_helper_call(&expr) {
             continue;
         }
-        if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
-            &expr,
-            state.local_bindings,
-            Some(scope.bindings),
-            scope.current_dot,
-            state.context,
-            &mut expression_seen,
-        ) {
+        if let Some(binding) =
+            helper_env.helper_binding_from_expr(&expr, state.local_bindings, &mut expression_seen)
+        {
             collect_helper_binding_output_uses(
                 &mut expression_output_uses,
                 &binding,
