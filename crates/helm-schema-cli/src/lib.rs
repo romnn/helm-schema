@@ -4,13 +4,9 @@ mod diag_emit;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
-use helm_schema::CliResult;
 use helm_schema::diagnostics::DiagnosticSink;
-use helm_schema::generation::{GeneratedSchema, generate_values_schema_for_chart_output};
-use helm_schema::output::{
-    OutputPipelineOptions, PolicyInputOptions, apply_schema_output_pipeline, load_policy_inputs,
-    write_schema_json,
-};
+use helm_schema::output::{PolicyInputOptions, write_schema_json};
+use helm_schema::{AnalysisSession, CliResult};
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
@@ -101,20 +97,13 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     };
 
     let diagnostics = DiagnosticSink::new();
-    let GeneratedSchema {
-        mut schema,
-        subchart_value_prefixes,
-    } = generate_values_schema_for_chart_output(&opts, Some(&diagnostics))?;
+    let session = AnalysisSession::with_diagnostics(opts, diagnostics.clone());
     let policy_input_options: PolicyInputOptions =
         cli.output.policy_input_options(!cli.k8s.offline);
-    let output_options: OutputPipelineOptions = cli.output.pipeline_options();
-    let policy_inputs = load_policy_inputs(&cli.override_schema, &policy_input_options)?;
-
-    schema = apply_schema_output_pipeline(
-        schema,
-        policy_inputs,
-        &subchart_value_prefixes,
-        &cli.chart_dir,
+    let output_options = cli.output.pipeline_options();
+    let schema = session.emit_with_policy_paths(
+        &cli.override_schema,
+        &policy_input_options,
         &output_options,
     )?;
 

@@ -102,6 +102,7 @@ impl PreparedSession {
 /// contract extraction, and chart-local schema collection manually.
 pub struct AnalysisSession {
     opts: GenerateOptions,
+    diagnostics: DiagnosticSink,
     prepared: Mutex<Option<Arc<PreparedSession>>>,
     resolved_contract: Mutex<Option<Arc<ResolvedContract>>>,
     generated_schema: Mutex<Option<Arc<GeneratedSchema>>>,
@@ -111,8 +112,14 @@ pub struct AnalysisSession {
 impl AnalysisSession {
     #[must_use]
     pub fn new(opts: GenerateOptions) -> Self {
+        Self::with_diagnostics(opts, DiagnosticSink::new())
+    }
+
+    #[must_use]
+    pub fn with_diagnostics(opts: GenerateOptions, diagnostics: DiagnosticSink) -> Self {
         Self {
             opts,
+            diagnostics,
             prepared: Mutex::new(None),
             resolved_contract: Mutex::new(None),
             generated_schema: Mutex::new(None),
@@ -133,6 +140,11 @@ impl AnalysisSession {
     /// Return the chart-local schema universe extracted from the chart tree.
     pub fn local_schema_universe(&self) -> CliResult<LocalSchemaUniverse> {
         Ok(self.prepared()?.local_schema_universe.clone())
+    }
+
+    #[must_use]
+    pub fn diagnostics(&self) -> DiagnosticSink {
+        self.diagnostics.clone()
     }
 
     /// Return the provider-resolved contract schema prior to optional
@@ -300,7 +312,11 @@ impl AnalysisSession {
         }
 
         let prepared = self.prepared()?;
-        let resolved = Arc::new(resolve_contract_from_prepared(&prepared, &self.opts, None)?);
+        let resolved = Arc::new(resolve_contract_from_prepared(
+            &prepared,
+            &self.opts,
+            Some(&self.diagnostics),
+        )?);
         let mut guard = self
             .resolved_contract
             .lock()
@@ -372,17 +388,6 @@ pub(crate) fn generate_schema_from_resolved_contract(
         schema,
         subchart_value_prefixes: resolved.subchart_value_prefixes.clone(),
     }
-}
-
-pub(crate) fn generate_schema_from_prepared(
-    prepared: &PreparedSession,
-    opts: &GenerateOptions,
-    diagnostic_sink: Option<&DiagnosticSink>,
-) -> CliResult<GeneratedSchema> {
-    let resolved = resolve_contract_from_prepared(prepared, opts, diagnostic_sink)?;
-    Ok(generate_schema_from_resolved_contract(
-        &resolved, prepared, opts,
-    ))
 }
 
 fn apply_shipped_values_schema_constraints(

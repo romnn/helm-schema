@@ -1,5 +1,7 @@
 use color_eyre::eyre;
-use helm_schema::generation::{GenerateOptions, generate_values_schema_for_chart};
+use helm_schema::generation::{
+    GenerateOptions, generate_values_schema_for_chart, generate_values_schema_for_chart_output,
+};
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{AnalysisSession, CliError};
@@ -119,6 +121,54 @@ spec:
             .pointer("/properties/replicas/type")
             .and_then(serde_json::Value::as_str),
         Some("integer")
+    );
+
+    Ok(())
+}
+
+#[test]
+fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "replicas: 1\n")?;
+    test_util::write(
+        &chart_dir.join("templates/deployment.yaml")?,
+        r#"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: root
+spec:
+  replicas: {{ .Values.replicas }}
+"#,
+    )?;
+
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    };
+
+    let staged = generate_values_schema_for_chart_output(&opts, None)?;
+    let session = AnalysisSession::new(opts);
+    let session_generated = session.generated_schema()?;
+
+    similar_asserts::assert_eq!(staged.schema, session_generated.schema);
+    similar_asserts::assert_eq!(
+        staged.subchart_value_prefixes,
+        session_generated.subchart_value_prefixes
     );
 
     Ok(())

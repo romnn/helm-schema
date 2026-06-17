@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::error::CliResult;
 use crate::generation::options::{GenerateOptions, GeneratedSchema};
-use crate::session::{PreparedSession, generate_schema_from_prepared};
+use crate::session::AnalysisSession;
 
 /// Generate a values JSON schema for a full Helm chart.
 ///
@@ -34,6 +34,9 @@ pub fn generate_values_schema_for_chart_output(
     opts: &GenerateOptions,
     diagnostic_sink: Option<&DiagnosticSink>,
 ) -> CliResult<GeneratedSchema> {
-    let prepared = PreparedSession::from_generate_options(opts)?;
-    generate_schema_from_prepared(&prepared, opts, diagnostic_sink)
+    let session = match diagnostic_sink {
+        Some(sink) => AnalysisSession::with_diagnostics(opts.clone(), sink.clone()),
+        None => AnalysisSession::new(opts.clone()),
+    };
+    session.generated_schema()
 }
