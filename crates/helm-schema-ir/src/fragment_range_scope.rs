@@ -142,11 +142,7 @@ fn ast_directly_renders_templated_mapping_key(ast: &HelmAst, key_variable: &str)
 }
 
 fn ast_key_refs_range_key_variable(key: &HelmAst, key_variable: &str) -> bool {
-    let text = match key {
-        HelmAst::HelmExpr { text } | HelmAst::Scalar { text } => text,
-        _ => return false,
-    };
-    parse_expr_text(text).iter().any(|expr| {
+    let mut refs_variable = |expr: &TemplateExpr| {
         let mut matches_key_variable = false;
         expr.walk(|node| {
             if matches!(node, TemplateExpr::Variable(name) if name == key_variable) {
@@ -154,7 +150,13 @@ fn ast_key_refs_range_key_variable(key: &HelmAst, key_variable: &str) -> bool {
             }
         });
         matches_key_variable
-    })
+    };
+
+    match key {
+        HelmAst::HelmExpr { action } => action.exprs().iter().any(&mut refs_variable),
+        HelmAst::Scalar { text } => parse_expr_text(text).iter().any(refs_variable),
+        _ => false,
+    }
 }
 
 pub(crate) fn range_body_renders_scalar_sequence_items_from_source(

@@ -70,6 +70,31 @@ fn template_action_detection_finds_inline_output_action() {
 }
 
 #[test]
+fn tree_sitter_ast_helm_exprs_are_typed() {
+    let src = "{{ .Values.name | quote }}";
+    let ast = TreeSitterParser.parse(src).expect("parse");
+    let HelmAst::Document { items } = ast else {
+        panic!("expected document root");
+    };
+    let [HelmAst::HelmExpr { action }] = items.as_slice() else {
+        panic!("expected one top-level helm expr");
+    };
+    assert_eq!(action.raw(), ".Values.name | quote");
+    let [TemplateExpr::Pipeline(stages)] = action.exprs() else {
+        panic!("expected one parsed pipeline expression");
+    };
+    assert!(matches!(
+        stages.as_slice(),
+        [
+            TemplateExpr::Field(path),
+            TemplateExpr::Call { function, args }
+        ] if path == &vec!["Values".to_string(), "name".to_string()]
+            && function == "quote"
+            && args.is_empty()
+    ));
+}
+
+#[test]
 fn template_action_detection_accepts_literal_yaml_comments() {
     let src = "# comment\nmetadata:\n  name: demo\n";
 

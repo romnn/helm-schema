@@ -1,4 +1,4 @@
-use crate::{HelmAst, HelmParser, ParseError, TemplateHeader};
+use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateHeader};
 
 /// Parser implementation backed by the tree-sitter fused Helm+YAML grammar.
 ///
@@ -453,7 +453,7 @@ fn yaml_node_to_ast(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
         "helm_template" => {
             let text = node.utf8_text(src.as_bytes()).unwrap_or("");
             HelmAst::HelmExpr {
-                text: normalize_helm_template_text(text),
+                action: TemplateAction::parse(normalize_helm_template_text(text)),
             }
         }
         _ => {
@@ -544,7 +544,9 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                         open_key_indent.is_some_and(|k| action_indent > k);
                     if !is_yaml_value_continuation {
                         flush_pending(&mut pending, &mut out);
-                        out.push(HelmAst::HelmExpr { text: normalized });
+                        out.push(HelmAst::HelmExpr {
+                            action: TemplateAction::parse(normalized),
+                        });
                         i = j + 1;
                         continue;
                     }
@@ -600,7 +602,9 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                 pending.push_str(&src[r]);
             } else {
                 flush_pending(&mut pending, &mut out);
-                out.push(HelmAst::HelmExpr { text: normalized });
+                out.push(HelmAst::HelmExpr {
+                    action: TemplateAction::parse(normalized),
+                });
             }
         } else {
             let r = b.byte_range();

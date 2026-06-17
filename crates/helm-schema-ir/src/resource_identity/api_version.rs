@@ -1,5 +1,5 @@
 use helm_schema_ast::{
-    DefineIndex, HelmAst, Literal, TemplateExpr, TemplateHeader, parse_action_expressions,
+    DefineIndex, HelmAst, Literal, TemplateAction, TemplateExpr, TemplateHeader,
 };
 
 use crate::capability_branch::{
@@ -161,7 +161,7 @@ impl<'a> ApiVersionOutputDetector<'a> {
                     Some(HelperOutput::Literals(vec![value.to_string()]))
                 }
             }
-            HelmAst::HelmExpr { text } => self.helper_output(text),
+            HelmAst::HelmExpr { action } => self.helper_output(action),
             HelmAst::Document { items } | HelmAst::Mapping { items } => {
                 for item in items {
                     if let Some(output) = self.output(Some(item)) {
@@ -183,9 +183,9 @@ impl<'a> ApiVersionOutputDetector<'a> {
         }
     }
 
-    fn helper_output(&self, text: &str) -> Option<HelperOutput> {
+    fn helper_output(&self, action: &TemplateAction) -> Option<HelperOutput> {
         let mut combined = ResourceState::default();
-        for name in helper_call_names(text) {
+        for name in helper_call_names(action) {
             combined.record_api_version_output(helper_evaluate(&name, self.defines));
         }
         combined.into_helper_output()
@@ -199,10 +199,9 @@ pub(super) fn scalar_text(node: &HelmAst) -> Option<&str> {
     }
 }
 
-fn helper_call_names(text: &str) -> Vec<String> {
-    let action_text = format!("{{{{ {text} }}}}");
+fn helper_call_names(action: &TemplateAction) -> Vec<String> {
     let mut out = Vec::new();
-    for expr in parse_action_expressions(&action_text) {
+    for expr in action.exprs() {
         expr.walk(|node| {
             let TemplateExpr::Call { function, args } = node else {
                 return;

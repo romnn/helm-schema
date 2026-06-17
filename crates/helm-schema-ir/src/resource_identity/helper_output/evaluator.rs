@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 
-use helm_schema_ast::{
-    DefineIndex, HelmAst, TemplateExpr, TemplateHeader, parse_action_expressions,
-};
+use helm_schema_ast::{DefineIndex, HelmAst, TemplateAction, TemplateExpr, TemplateHeader};
 
 use crate::capability_branch::{
     CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard, decode_guard_expr,
@@ -67,11 +65,11 @@ impl HelperOutputEvaluator {
                     }
                     if_node = Some(node);
                 }
-                HelmAst::HelmExpr { text } => {
+                HelmAst::HelmExpr { action } => {
                     if if_node.is_some() || lone_helper_call.is_some() {
                         return None;
                     }
-                    let Some(callee) = lone_helper_call_callee(text) else {
+                    let Some(callee) = lone_helper_call_callee(action) else {
                         return None;
                     };
                     lone_helper_call = Some(callee);
@@ -189,8 +187,8 @@ impl HelperOutputEvaluator {
                         out.push(trimmed.to_string());
                     }
                 }
-                HelmAst::HelmExpr { text } => {
-                    for value in self.extract_expr_outputs(text, helpers, depth) {
+                HelmAst::HelmExpr { action } => {
+                    for value in self.extract_expr_outputs(action, helpers, depth) {
                         out.push(value);
                     }
                 }
@@ -242,16 +240,12 @@ impl HelperOutputEvaluator {
 
     fn extract_expr_outputs(
         &mut self,
-        text: &str,
+        action: &TemplateAction,
         helpers: &DefineIndex,
         depth: usize,
     ) -> Vec<String> {
-        // HelmAst::HelmExpr.text is the unwrapped interior of an action.
-        // `parse_action_expressions` expects wrapped actions.
-        let wrapped = format!("{{{{ {text} }}}}");
-        let exprs = parse_action_expressions(&wrapped);
         let mut out: Vec<String> = Vec::new();
-        for expr in &exprs {
+        for expr in action.exprs() {
             match expr.deparen() {
                 TemplateExpr::Literal(lit) => {
                     if let Some(value) = lit.as_string() {
@@ -348,13 +342,11 @@ impl HelperOutputEvaluator {
 
 /// If `text` is exactly a `template "X" ...` or `include "X" ...` action
 /// (possibly with extra args), return `"X"`. Otherwise `None`.
-fn lone_helper_call_callee(text: &str) -> Option<String> {
-    let wrapped = format!("{{{{ {text} }}}}");
-    let exprs = parse_action_expressions(&wrapped);
-    if exprs.len() != 1 {
+fn lone_helper_call_callee(action: &TemplateAction) -> Option<String> {
+    if action.exprs().len() != 1 {
         return None;
     }
-    match &exprs[0] {
+    match &action.exprs()[0] {
         TemplateExpr::Call { function, args }
             if matches!(function.as_str(), "template" | "include") =>
         {

@@ -69,6 +69,44 @@ impl TemplateHeader {
     }
 }
 
+/// Parsed Helm action/output node.
+///
+/// Like [`TemplateHeader`], this preserves the original unwrapped action text
+/// while also storing the typed top-level expressions produced by the action.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TemplateAction {
+    raw: String,
+    exprs: Vec<TemplateExpr>,
+}
+
+impl TemplateAction {
+    #[must_use]
+    pub fn new(raw: impl Into<String>, exprs: Vec<TemplateExpr>) -> Self {
+        Self {
+            raw: raw.into(),
+            exprs,
+        }
+    }
+
+    #[must_use]
+    pub fn parse(raw: impl Into<String>) -> Self {
+        let raw = raw.into();
+        let wrapped = format!("{{{{ {raw} }}}}");
+        let exprs = parse_action_expressions(&wrapped);
+        Self::new(raw, exprs)
+    }
+
+    #[must_use]
+    pub fn raw(&self) -> &str {
+        &self.raw
+    }
+
+    #[must_use]
+    pub fn exprs(&self) -> &[TemplateExpr] {
+        &self.exprs
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum HelmAst {
     Document {
@@ -92,7 +130,7 @@ pub enum HelmAst {
     },
 
     HelmExpr {
-        text: String,
+        action: TemplateAction,
     },
     HelmComment {
         text: String,
@@ -173,8 +211,8 @@ impl HelmAst {
             HelmAst::Scalar { text } => {
                 let _ = write!(buf, "{pad}(Scalar {text:?})");
             }
-            HelmAst::HelmExpr { text } => {
-                let _ = write!(buf, "{pad}(HelmExpr {text:?})");
+            HelmAst::HelmExpr { action } => {
+                let _ = write!(buf, "{pad}(HelmExpr {:?})", action.raw());
             }
             HelmAst::HelmComment { text } => {
                 let _ = write!(buf, "{pad}(HelmComment {text:?})");
