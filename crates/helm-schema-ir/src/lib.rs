@@ -85,7 +85,6 @@ pub use capability_liveness::{
 };
 pub use compatibility::{
     ContractDocument, ContractDocumentProvenance, ContractDocumentSpan, ContractDocumentUse,
-    ValueUse,
 };
 pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use contract_signals::{

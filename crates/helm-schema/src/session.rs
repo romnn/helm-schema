@@ -2,7 +2,9 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_engine::compatibility::{ContractDocument, ContractProjection, ValueUse};
+use helm_schema_engine::compatibility::{
+    ContractDocument, ContractDocumentUse, ContractProjection,
+};
 use helm_schema_engine::{ContractIr, ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::{Map, Value};
@@ -36,22 +38,13 @@ pub struct Analysis {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValuePathExplanation {
     pub path: String,
-    pub exact_uses: Vec<ValueUse>,
-    pub descendant_uses: Vec<ValueUse>,
-    pub exact_use_sites: Vec<ExplainedValueUse>,
-    pub descendant_use_sites: Vec<ExplainedValueUse>,
+    pub exact_uses: Vec<ContractDocumentUse>,
+    pub descendant_uses: Vec<ContractDocumentUse>,
     pub value_path_facts: Option<helm_schema_engine::ContractValuePathFacts>,
     pub guard_constraints: Vec<helm_schema_engine::GuardConstraint>,
     pub metadata_fields: Vec<helm_schema_engine::MetadataFieldKind>,
     pub type_hints: Vec<Value>,
     pub has_default_fallback: bool,
-}
-
-/// Provenance-aware explanation row for one values use.
-#[derive(Debug, Clone, PartialEq)]
-pub struct ExplainedValueUse {
-    pub value_use: ValueUse,
-    pub provenance: Vec<helm_schema_engine::ContractProvenance>,
 }
 
 pub(crate) struct PreparedSession {
@@ -246,13 +239,7 @@ impl AnalysisSession {
             .iter()
             .filter(|use_| use_.source_expr == normalized_path)
             .cloned()
-            .map(ValueUse::from)
-            .collect();
-        let exact_use_sites = projection
-            .uses()
-            .iter()
-            .filter(|use_| use_.source_expr == normalized_path)
-            .map(explained_value_use)
+            .map(ContractDocumentUse::from)
             .collect();
         let descendant_uses = projection
             .uses()
@@ -263,17 +250,7 @@ impl AnalysisSession {
                     .is_some_and(|suffix| suffix.starts_with('.'))
             })
             .cloned()
-            .map(ValueUse::from)
-            .collect();
-        let descendant_use_sites = projection
-            .uses()
-            .iter()
-            .filter(|use_| {
-                use_.source_expr
-                    .strip_prefix(&normalized_path)
-                    .is_some_and(|suffix| suffix.starts_with('.'))
-            })
-            .map(explained_value_use)
+            .map(ContractDocumentUse::from)
             .collect();
         let value_path_facts = prepared
             .contract_schema_signals
@@ -309,8 +286,6 @@ impl AnalysisSession {
             path: normalized_path,
             exact_uses,
             descendant_uses,
-            exact_use_sites,
-            descendant_use_sites,
             value_path_facts,
             guard_constraints,
             metadata_fields,
@@ -375,13 +350,6 @@ impl AnalysisSession {
         let mut guard = self.projection.lock().expect("projection mutex");
         let projection = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&projection)));
         Ok(projection)
-    }
-}
-
-fn explained_value_use(contract_use: &helm_schema_engine::ContractUse) -> ExplainedValueUse {
-    ExplainedValueUse {
-        value_use: ValueUse::from(contract_use.clone()),
-        provenance: contract_use.provenance.clone(),
     }
 }
 

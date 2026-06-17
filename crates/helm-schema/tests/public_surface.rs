@@ -461,11 +461,6 @@ data:
 
     assert_eq!(explanation.path, "kid.enabled");
     assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
-    assert_eq!(
-        explanation.exact_uses.len(),
-        explanation.exact_use_sites.len(),
-        "provenance-aware rows should stay aligned with compatibility rows"
-    );
     assert!(
         explanation
             .exact_uses
@@ -487,7 +482,7 @@ data:
         "expected boolean activation type hint: {explanation:#?}"
     );
     assert!(
-        explanation.exact_use_sites.iter().any(|use_site| {
+        explanation.exact_uses.iter().any(|use_site| {
             use_site.provenance.iter().any(|provenance| {
                 provenance
                     .template_path
@@ -563,8 +558,8 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
         decoded
             .uses
             .iter()
-            .any(|use_| !use_.provenance.is_empty() && !use_.value_use.guards.is_empty()),
-        "round-tripped v2 document should retain provenance and guards"
+            .any(|use_| !use_.provenance.is_empty() && !use_.guards.is_empty()),
+        "round-tripped contract document should retain provenance and guards"
     );
 
     Ok(())
@@ -615,12 +610,9 @@ data:
 
     let explanation = session.explain("message")?;
 
+    assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
     assert!(
-        !explanation.exact_use_sites.is_empty(),
-        "expected exact uses"
-    );
-    assert!(
-        explanation.exact_use_sites.iter().any(|use_site| {
+        explanation.exact_uses.iter().any(|use_site| {
             use_site.provenance.iter().any(|provenance| {
                 provenance.template_path.contains("templates/_helpers.tpl")
                     && provenance.span.start < provenance.span.end

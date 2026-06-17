@@ -1,10 +1,10 @@
-use crate::{ContractProvenance, Guard, ResourceRef, ValueKind, ValueUse, YamlPath};
+use crate::{ContractProvenance, Guard, ResourceRef, ValueKind, YamlPath};
 
 /// A contract claim for one observed values path.
 ///
 /// This is still the migration-era claim shape, but it is owned by the
-/// contract layer. [`ValueUse`] remains the serialized fixture DTO at the
-/// inspection boundary.
+/// contract layer. [`ContractDocumentUse`] is the serialized inspection DTO at
+/// the export boundary.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractUse {
     pub source_expr: String,
@@ -71,17 +71,5 @@ impl ContractUse {
             .into_iter()
             .map(|guard| guard.map_value_paths(map))
             .collect();
-    }
-}
-
-impl From<ContractUse> for ValueUse {
-    fn from(contract_use: ContractUse) -> Self {
-        Self {
-            source_expr: contract_use.source_expr,
-            path: contract_use.path,
-            kind: contract_use.kind,
-            guards: contract_use.guards,
-            resource: contract_use.resource,
-        }
     }
 }

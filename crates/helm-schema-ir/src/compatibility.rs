@@ -3,25 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::contract::ContractProjection;
 use crate::{ContractProvenance, ContractUse, Guard, ResourceRef, SourceSpan, ValueKind, YamlPath};
 
-/// Serialized inspection row for one observed `.Values.*` path.
-///
-/// The semantic interpreter produces `ContractIr` / `ContractUse` internally.
-/// `ValueUse` is kept as a stable fixture and external-tooling projection
-/// format, not as the production contract artifact.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ValueUse {
-    /// The `.Values.*` sub-path, e.g. `"metrics.enabled"`.
-    pub source_expr: String,
-    /// The YAML path where this value is placed in the rendered manifest.
-    pub path: YamlPath,
-    /// Whether this produces a scalar or a YAML fragment.
-    pub kind: ValueKind,
-    /// Guard conditions (from `if`/`with`/`range`) active when this use appears.
-    pub guards: Vec<Guard>,
-    /// The Kubernetes resource type detected in context, if any.
-    pub resource: Option<ResourceRef>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum CompatGuard {
@@ -66,16 +47,18 @@ impl From<CompatGuard> for Guard {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct ValueUseSerde {
+struct ContractDocumentUseSerde {
     source_expr: String,
     path: YamlPath,
     kind: ValueKind,
     guards: Vec<CompatGuard>,
     resource: Option<ResourceRef>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    provenance: Vec<ContractDocumentProvenance>,
 }
 
-impl From<ValueUse> for ValueUseSerde {
-    fn from(value_use: ValueUse) -> Self {
+impl From<ContractDocumentUse> for ContractDocumentUseSerde {
+    fn from(value_use: ContractDocumentUse) -> Self {
         Self {
             source_expr: value_use.source_expr,
             path: value_use.path,
@@ -86,37 +69,21 @@ impl From<ValueUse> for ValueUseSerde {
                 .map(CompatGuard::from)
                 .collect(),
             resource: value_use.resource,
+            provenance: value_use.provenance,
         }
     }
 }
 
-impl From<ValueUseSerde> for ValueUse {
-    fn from(value_use: ValueUseSerde) -> Self {
+impl From<ContractDocumentUseSerde> for ContractDocumentUse {
+    fn from(value_use: ContractDocumentUseSerde) -> Self {
         Self {
             source_expr: value_use.source_expr,
             path: value_use.path,
             kind: value_use.kind,
             guards: value_use.guards.into_iter().map(Guard::from).collect(),
             resource: value_use.resource,
+            provenance: value_use.provenance,
         }
-    }
-}
-
-impl Serialize for ValueUse {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        ValueUseSerde::from(self.clone()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for ValueUse {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        ValueUseSerde::deserialize(deserializer).map(ValueUse::from)
     }
 }
 
@@ -157,14 +124,22 @@ impl From<ContractProvenance> for ContractDocumentProvenance {
 
 /// Provenance-aware serialized inspection row for one observed `.Values.*` path.
 ///
-/// This is the Ring-2 DTO: it preserves the stable `ValueUse` projection
-/// fields while also exporting the normalized source provenance collected
-/// during interpretation.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+/// This is the Ring-2 DTO and the single exported use-row shape. The semantic
+/// interpreter produces `ContractIr` / `ContractUse` internally; this DTO is
+/// the external inspection/export boundary.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractDocumentUse {
-    #[serde(flatten)]
-    pub value_use: ValueUse,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The `.Values.*` sub-path, e.g. `"metrics.enabled"`.
+    pub source_expr: String,
+    /// The YAML path where this value is placed in the rendered manifest.
+    pub path: YamlPath,
+    /// Whether this produces a scalar or a YAML fragment.
+    pub kind: ValueKind,
+    /// Guard conditions (from `if`/`with`/`range`) active when this use appears.
+    pub guards: Vec<Guard>,
+    /// The Kubernetes resource type detected in context, if any.
+    pub resource: Option<ResourceRef>,
+    /// Source provenance sites contributing this values use.
     pub provenance: Vec<ContractDocumentProvenance>,
 }
 
@@ -180,18 +155,34 @@ impl From<ContractUse> for ContractDocumentUse {
         } = contract_use;
 
         Self {
-            value_use: ValueUse {
-                source_expr,
-                path,
-                kind,
-                guards,
-                resource,
-            },
+            source_expr,
+            path,
+            kind,
+            guards,
+            resource,
             provenance: provenance
                 .into_iter()
                 .map(ContractDocumentProvenance::from)
                 .collect(),
         }
+    }
+}
+
+impl Serialize for ContractDocumentUse {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        ContractDocumentUseSerde::from(self.clone()).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for ContractDocumentUse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        ContractDocumentUseSerde::deserialize(deserializer).map(ContractDocumentUse::from)
     }
 }
 
@@ -226,12 +217,12 @@ impl ContractDocument {
 mod tests {
     use serde_json::json;
 
-    use super::{ContractDocument, ContractDocumentUse, ValueUse};
+    use super::{ContractDocument, ContractDocumentUse};
     use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
     #[test]
     fn contract_document_serializes_stable_guard_shape_without_guard_serde_derives() {
-        let value_use = ValueUse {
+        let value_use = ContractDocumentUse {
             source_expr: "kid.enabled".to_string(),
             path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
             kind: ValueKind::Scalar,
@@ -248,14 +239,12 @@ mod tests {
                 api_version_candidates: Vec::new(),
                 api_version_branches: Vec::new(),
             }),
+            provenance: Vec::new(),
         };
 
         let actual = serde_json::to_value(ContractDocument {
             version: ContractDocument::VERSION,
-            uses: vec![ContractDocumentUse {
-                value_use: value_use.clone(),
-                provenance: Vec::new(),
-            }],
+            uses: vec![value_use.clone()],
         })
         .expect("serialize contract document");
 
@@ -281,8 +270,6 @@ mod tests {
 
         let decoded: ContractDocument =
             serde_json::from_value(actual).expect("deserialize contract document");
-        assert_eq!(decoded.uses.len(), 1);
-        assert_eq!(decoded.uses[0].value_use, value_use);
-        assert!(decoded.uses[0].provenance.is_empty());
+        assert_eq!(decoded.uses, vec![value_use]);
     }
 }

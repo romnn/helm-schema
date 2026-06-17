@@ -39,7 +39,7 @@ pub mod provider {
     pub use helm_schema_k8s::K8sVersionChain;
 }
 
-pub use session::{Analysis, AnalysisSession, ExplainedValueUse, ValuePathExplanation};
+pub use session::{Analysis, AnalysisSession, ValuePathExplanation};
 
 pub use error::{CliError, CliResult};
 pub use generation::{

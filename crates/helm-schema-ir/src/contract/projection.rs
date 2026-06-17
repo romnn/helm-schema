@@ -1,4 +1,3 @@
-use crate::ValueUse;
 use crate::compatibility::ContractDocument;
 use crate::contract::ContractUse;
 use crate::contract_normalization::canonicalize_contract_uses;
@@ -35,12 +34,6 @@ impl ContractProjection {
     #[must_use]
     pub fn uses(&self) -> &[ContractUse] {
         &self.uses
-    }
-
-    /// Consume the projection and return the compatibility DTOs.
-    #[must_use]
-    pub fn into_value_uses(self) -> Vec<ValueUse> {
-        self.uses.into_iter().map(ValueUse::from).collect()
     }
 
     pub(crate) fn into_contract_uses(self) -> Vec<ContractUse> {

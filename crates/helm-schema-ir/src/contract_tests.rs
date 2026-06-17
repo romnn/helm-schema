@@ -20,7 +20,8 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
         None,
     ));
 
-    let value_uses = contract.project().into_value_uses();
+    let value_uses = contract.project();
+    let value_uses = value_uses.uses();
 
     assert_eq!(value_uses.len(), 1);
     assert_eq!(
@@ -54,7 +55,8 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
         }),
     ));
 
-    let value_uses = contract.project().into_value_uses();
+    let value_uses = contract.project();
+    let value_uses = value_uses.uses();
 
     assert_eq!(value_uses.len(), 1);
     assert_eq!(
@@ -92,7 +94,8 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         }
     });
 
-    let value_uses = contract.project().into_value_uses();
+    let value_uses = contract.project();
+    let value_uses = value_uses.uses();
     let value_use = value_uses.first().expect("mapped value use");
 
     assert_eq!(value_use.source_expr, "subchart.serviceAccount.name");
