@@ -119,6 +119,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         type_hints,
         values_descriptions,
         &input.contract_schema_signals.conditional_path_overlays,
+        input.provider,
     );
 
     let mut out = Map::new();
@@ -166,6 +167,7 @@ fn build_root_schema(
     type_hints: &BTreeMap<String, Vec<Value>>,
     values_descriptions: &BTreeMap<String, String>,
     conditional_path_overlays: &[ConditionalPathOverlay],
+    provider: &dyn ResourceSchemaOracle,
 ) -> Value {
     let mut root_schema = object_schema(Map::new());
     let path_resolver =
@@ -174,8 +176,13 @@ fn build_root_schema(
     let provider_definitions =
         ProviderSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
 
-    let conditional_schemas =
-        collect_conditional_schemas(&resolved_paths, conditional_path_overlays);
+    let conditional_schemas = collect_conditional_schemas(
+        &resolved_paths,
+        conditional_path_overlays,
+        type_hints,
+        values_yaml_doc,
+        provider,
+    );
     let conditional_targets: std::collections::BTreeSet<&str> = conditional_schemas
         .iter()
         .map(|conditional| conditional.target_value_path.as_str())
@@ -209,6 +216,9 @@ struct ConditionalResolvedSchema {
 fn collect_conditional_schemas(
     resolved_paths: &[path_resolver::ResolvedPathSchema],
     overlays: &[ConditionalPathOverlay],
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    values_yaml_doc: &YamlValue,
+    provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
     let resolved_by_path = resolved_paths
         .iter()
@@ -218,17 +228,22 @@ fn collect_conditional_schemas(
     overlays
         .iter()
         .filter_map(|overlay| {
-            let resolved = resolved_paths
+            resolved_paths
                 .iter()
                 .find(|resolved| resolved.value_path == overlay.target_value_path)?;
-            if resolved.values_yaml_has_schema_evidence {
-                return None;
-            }
             let target_segments = split_value_path(&overlay.target_value_path);
             let ancestor_segments =
                 conditional_ancestor_segments(&target_segments, &overlay.guards);
-            let target_schema =
-                (*resolved_by_path.get(overlay.target_value_path.as_str())?).clone();
+            let target_schema = conditional_target_schema(
+                overlay,
+                type_hints,
+                values_yaml_doc,
+                provider,
+                resolved_by_path
+                    .get(overlay.target_value_path.as_str())
+                    .cloned()
+                    .cloned(),
+            );
             guards_supported_for_conditional_lowering(&overlay.guards, &resolved_by_path).then(
                 || ConditionalResolvedSchema {
                     target_value_path: overlay.target_value_path.clone(),
@@ -239,7 +254,81 @@ fn collect_conditional_schemas(
                 },
             )
         })
+        .filter(|conditional| !crate::schema_model::is_empty_schema(&conditional.target_schema))
         .collect()
+}
+
+fn conditional_target_schema(
+    overlay: &ConditionalPathOverlay,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    values_yaml_doc: &YamlValue,
+    provider: &dyn ResourceSchemaOracle,
+    resolved_fallback: Option<Value>,
+) -> Value {
+    let branch_schema = resolve_overlay_target_schema(overlay, type_hints, provider)
+        .or(resolved_fallback.clone())
+        .unwrap_or_else(crate::schema_model::empty_schema);
+
+    let Some(active_by_defaults) = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc)
+    else {
+        return branch_schema;
+    };
+    if !active_by_defaults {
+        return branch_schema;
+    }
+
+    let Some(default_value) = yaml_value_at_path(values_yaml_doc, &overlay.target_value_path)
+    else {
+        return branch_schema;
+    };
+    let Ok(default_value) = serde_json::to_value(default_value) else {
+        return branch_schema;
+    };
+    if schema_accepts_json_value(&branch_schema, &default_value) {
+        branch_schema
+    } else {
+        resolved_fallback.unwrap_or(branch_schema)
+    }
+}
+
+fn resolve_overlay_target_schema(
+    overlay: &ConditionalPathOverlay,
+    type_hints: &BTreeMap<String, Vec<Value>>,
+    provider: &dyn ResourceSchemaOracle,
+) -> Option<Value> {
+    let path_signals = overlay_path_signals(overlay);
+    let use_signals = collect_use_signals(path_signals, &overlay.provider_schema_uses, provider);
+    let value_path_facts =
+        BTreeMap::from([(overlay.target_value_path.clone(), overlay.value_path_facts)]);
+    let overlay_type_hints = type_hints
+        .get(&overlay.target_value_path)
+        .map(|hints| BTreeMap::from([(overlay.target_value_path.clone(), hints.clone())]))
+        .unwrap_or_default();
+    let path_resolver = PathSchemaResolver::new(
+        use_signals,
+        &value_path_facts,
+        &YamlValue::Null,
+        &overlay_type_hints,
+    );
+    path_resolver
+        .resolve_all()
+        .into_iter()
+        .find(|resolved| resolved.value_path == overlay.target_value_path)
+        .map(|resolved| resolved.schema)
+}
+
+fn overlay_path_signals(overlay: &ConditionalPathOverlay) -> helm_schema_ir::ContractPathSignals {
+    let metadata_fields_by_value_path = (!overlay.metadata_field_kinds.is_empty()).then(|| {
+        BTreeMap::from([(
+            overlay.target_value_path.clone(),
+            overlay.metadata_field_kinds.clone(),
+        )])
+    });
+    helm_schema_ir::ContractPathSignals {
+        referenced_value_paths: std::iter::once(overlay.target_value_path.clone()).collect(),
+        metadata_fields_by_value_path: metadata_fields_by_value_path.unwrap_or_default(),
+        ..Default::default()
+    }
 }
 
 fn conditional_ancestor_segments(
@@ -474,6 +563,72 @@ fn split_value_path(path: &str) -> Vec<String> {
         .filter(|segment| !segment.is_empty())
         .map(std::string::ToString::to_string)
         .collect()
+}
+
+fn evaluate_guard_set_on_values(
+    guards: &[ConditionalGuard],
+    values_yaml_doc: &YamlValue,
+) -> Option<bool> {
+    guards
+        .iter()
+        .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
+        .collect::<Option<Vec<_>>>()
+        .map(|results| results.into_iter().all(|result| result))
+}
+
+fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
+    match guard {
+        ConditionalGuard::Truthy { path } => Some(
+            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_bool) == Some(true),
+        ),
+        ConditionalGuard::Eq { path, value } => Some(
+            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
+                == Some(value.as_str()),
+        ),
+        ConditionalGuard::TypeIs { path, schema_type } => {
+            let Some(value) = yaml_value_at_path(values_yaml_doc, path) else {
+                return Some(false);
+            };
+            Some(matches_yaml_schema_type(value, schema_type))
+        }
+        ConditionalGuard::Not(inner) => {
+            evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
+        }
+        ConditionalGuard::AnyOf(guards) => guards
+            .iter()
+            .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
+            .collect::<Option<Vec<_>>>()
+            .map(|results| results.into_iter().any(|result| result)),
+    }
+}
+
+fn matches_yaml_schema_type(value: &YamlValue, schema_type: &str) -> bool {
+    match schema_type {
+        "array" => matches!(value, YamlValue::Sequence(_)),
+        "boolean" => value.as_bool().is_some(),
+        "integer" => value.as_i64().is_some() || value.as_u64().is_some(),
+        "number" => value.as_f64().is_some(),
+        "object" => matches!(value, YamlValue::Mapping(_)),
+        "string" => value.as_str().is_some(),
+        _ => false,
+    }
+}
+
+fn yaml_value_at_path<'a>(root: &'a YamlValue, value_path: &str) -> Option<&'a YamlValue> {
+    let mut current = root;
+    for segment in value_path.split('.').filter(|segment| !segment.is_empty()) {
+        let YamlValue::Mapping(mapping) = current else {
+            return None;
+        };
+        current = mapping.get(&YamlValue::String(segment.to_string()))?;
+    }
+    Some(current)
+}
+
+fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
+    jsonschema::validator_for(schema)
+        .map(|validator| validator.is_valid(instance))
+        .unwrap_or(false)
 }
 
 fn collect_guard_paths(guard: &ConditionalGuard, paths: &mut Vec<Vec<String>>) {

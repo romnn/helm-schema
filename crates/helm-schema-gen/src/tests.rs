@@ -217,9 +217,68 @@ fn property_schema_with_type_exists(schema: &Value, property: &str, schema_type:
         }
     }
 
+    for key in ["items", "additionalProperties"] {
+        if let Some(child) = schema.get(key)
+            && property_schema_with_type_exists(child, property, schema_type)
+        {
+            return true;
+        }
+    }
+
     for key in ["then", "else"] {
         if let Some(child) = schema.get(key)
             && property_schema_with_type_exists(child, property, schema_type)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn property_schema_contains_open_string_map(schema: &Value, property: &str) -> bool {
+    if let Some(properties) = schema.get("properties").and_then(Value::as_object) {
+        if let Some(property_schema) = properties.get(property)
+            && schema_contains_open_string_map(property_schema)
+        {
+            return true;
+        }
+        if properties.values().any(|property_schema| {
+            property_schema_contains_open_string_map(property_schema, property)
+        }) {
+            return true;
+        }
+    }
+
+    if let Some(array) = schema.get("allOf").and_then(Value::as_array)
+        && array
+            .iter()
+            .any(|entry| property_schema_contains_open_string_map(entry, property))
+    {
+        return true;
+    }
+
+    for key in ["anyOf", "oneOf"] {
+        if let Some(array) = schema.get(key).and_then(Value::as_array)
+            && array
+                .iter()
+                .any(|entry| property_schema_contains_open_string_map(entry, property))
+        {
+            return true;
+        }
+    }
+
+    for key in ["items", "additionalProperties"] {
+        if let Some(child) = schema.get(key)
+            && property_schema_contains_open_string_map(child, property)
+        {
+            return true;
+        }
+    }
+
+    for key in ["then", "else"] {
+        if let Some(child) = schema.get(key)
+            && property_schema_contains_open_string_map(child, property)
         {
             return true;
         }
@@ -1125,6 +1184,77 @@ fn or_boolean_guards_lower_to_any_of_condition() {
         schema.pointer("/allOf/0/then/properties/feature/properties/host/type"),
         Some(&serde_json::json!("string")),
         "root-level disjunctions should still apply the guarded target schema: {schema}"
+    );
+}
+
+#[test]
+fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
+    let schema_signals = schema_signals_for(vec![
+        ContractUse {
+            source_expr: "feature.value".to_string(),
+            path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Eq {
+                path: "mode".to_string(),
+                value: "name".to_string(),
+            }],
+            resource: None,
+        },
+        ContractUse {
+            source_expr: "feature.value".to_string(),
+            path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+            kind: ValueKind::Fragment,
+            guards: vec![Guard::Eq {
+                path: "mode".to_string(),
+                value: "labels".to_string(),
+            }],
+            resource: None,
+        },
+    ]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("mode: name\nfeature:\n  value: example\n")),
+    );
+
+    assert_eq!(
+        schema.pointer("/properties/feature/properties/value"),
+        Some(&serde_json::json!({})),
+        "conditionally-lowered multi-branch paths should keep a wide base placeholder: {schema}"
+    );
+
+    let branches = schema
+        .get("allOf")
+        .and_then(Value::as_array)
+        .expect("expected root conditionals for mode-switched target path");
+    let name_branch = branches
+        .iter()
+        .find(|branch| {
+            branch.pointer("/if/properties/mode/enum") == Some(&serde_json::json!(["name"]))
+        })
+        .expect("expected mode=name branch");
+    let labels_branch = branches
+        .iter()
+        .find(|branch| {
+            branch.pointer("/if/properties/mode/enum") == Some(&serde_json::json!(["labels"]))
+        })
+        .expect("expected mode=labels branch");
+
+    assert_eq!(
+        name_branch.pointer("/then/properties/feature/properties/value/type"),
+        Some(&serde_json::json!("string")),
+        "name branch should keep the metadata.name string contract: {schema}"
+    );
+    assert_eq!(
+        labels_branch.pointer("/then/properties/feature/properties/value/type"),
+        Some(&serde_json::json!("object")),
+        "labels branch should lower to an object contract: {schema}"
+    );
+    assert_eq!(
+        labels_branch
+            .pointer("/then/properties/feature/properties/value/additionalProperties/type"),
+        Some(&serde_json::json!("string")),
+        "labels branch should preserve the metadata.labels string-map shape: {schema}"
     );
 }
 
@@ -3182,39 +3312,23 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     assert!(
-        schema
-            .pointer("/properties/ingress/properties/className")
-            .is_some(),
+        property_schema_with_type_exists(&schema, "className", "string"),
         "with-bound dot helper call should propagate ingress.className, got {schema}"
     );
     assert!(
-        permits_type(
-            schema
-                .pointer("/properties/ingress/properties/className")
-                .expect("className present"),
-            "string"
-        ),
+        property_schema_with_type_exists(&schema, "className", "string"),
         "with-bound dot helper call should propagate ingress.className as string-like, got {schema}"
     );
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/annotations/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        property_schema_contains_open_string_map(&schema, "annotations"),
         "with-bound dot helper call should propagate ingress.annotations, got {schema}"
     );
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/tls/items/properties/secretName/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        property_schema_with_type_exists(&schema, "secretName", "string"),
         "with-bound dot helper call should propagate ingress.tls[*].secretName, got {schema}"
     );
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/hosts/items/properties/host/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        property_schema_with_type_exists(&schema, "host", "string"),
         "with-bound dot helper call should propagate ingress.hosts[*].host, got {schema}"
     );
     assert!(
@@ -3959,29 +4073,16 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    assert_eq!(
-        schema
-            .pointer("/properties/ingress/properties/annotations/additionalProperties/type")
-            .and_then(Value::as_str),
-        Some("string"),
+    assert!(
+        property_schema_contains_open_string_map(&schema, "annotations"),
         "realistic common.ingress helper should keep ingress.annotations open, got {schema}"
     );
     assert!(
-        permits_type(
-            schema
-                .pointer("/properties/ingress/properties/className")
-                .expect("className present"),
-            "string"
-        ),
+        property_schema_with_type_exists(&schema, "className", "string"),
         "realistic common.ingress helper should propagate ingress.className, got {schema}"
     );
     assert!(
-        permits_type(
-            schema
-                .pointer("/properties/ingress/properties/tls/items/properties/secretName")
-                .expect("secretName present"),
-            "string"
-        ),
+        property_schema_with_type_exists(&schema, "secretName", "string"),
         "realistic common.ingress helper should propagate ingress.tls[*].secretName, got {schema}"
     );
     assert!(

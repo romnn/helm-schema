@@ -177,6 +177,64 @@
     },
     "prometheus": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "podmonitor": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podmonitor"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "servicemonitor": {
+                "properties": {
+                  "targetPort": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -193,16 +251,7 @@
         "servicemonitor": {
           "additionalProperties": false,
           "properties": {
-            "targetPort": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
+            "targetPort": {}
           },
           "type": "object"
         }
@@ -233,4 +282,3 @@
   },
   "type": "object"
 }
-

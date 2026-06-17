@@ -26,6 +26,34 @@
     },
     "podPriorityClassName": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "create": {
+                "const": true
+              }
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "priority": {
+                "description": "value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.",
+                "format": "int32",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "create": {
           "type": "boolean"
@@ -33,18 +61,7 @@
         "name": {
           "type": "string"
         },
-        "priority": {
-          "anyOf": [
-            {
-              "description": "value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
+        "priority": {}
       },
       "type": "object"
     }

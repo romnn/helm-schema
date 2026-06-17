@@ -328,7 +328,6 @@ mod tests {
                 .collect(),
             provider_schema_candidate: Some(ProviderSchemaCandidate::new(schema.clone())),
             schema,
-            values_yaml_has_schema_evidence: false,
         }
     }
 
@@ -385,7 +384,6 @@ mod tests {
                 pointer,
             )),
             schema,
-            values_yaml_has_schema_evidence: false,
         }
     }
 
@@ -512,7 +510,6 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
                 value_path: "second".to_string(),
@@ -533,7 +530,6 @@ mod tests {
                         }
                     }
                 }),
-                values_yaml_has_schema_evidence: false,
             },
         ];
 
@@ -595,7 +591,6 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
                 value_path: "second".to_string(),
@@ -609,7 +604,6 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
         ];
 
@@ -663,7 +657,6 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
                 value_path: "second".to_string(),
@@ -676,7 +669,6 @@ mod tests {
                     ),
                 ),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
         ];
 
@@ -710,7 +702,6 @@ mod tests {
                     "/definitions/First",
                 )),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
             ResolvedPathSchema {
                 value_path: "second".to_string(),
@@ -720,7 +711,6 @@ mod tests {
                     "/definitions/Second",
                 )),
                 schema: provider_schema.clone(),
-                values_yaml_has_schema_evidence: false,
             },
         ];
 

@@ -22,6 +22,9 @@ pub enum ConditionalGuard {
 pub struct ConditionalPathOverlay {
     pub target_value_path: String,
     pub guards: Vec<ConditionalGuard>,
+    pub provider_schema_uses: Vec<ProviderSchemaUse>,
+    pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    pub value_path_facts: ContractValuePathFacts,
 }
 
 /// Type-level constraints declared by template guards.
@@ -101,7 +104,7 @@ pub struct ContractSchemaSignals {
 /// This bundles the contract-owned path state that schema lowering needs, so
 /// generator code does not have to reconstruct semantic facts from multiple
 /// lower-level projections.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractValuePathFacts {
     pub has_referenced_descendants: bool,
     pub used_as_fragment: bool,

@@ -2,8 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::contract::{ContractIr, ContractUse};
 use crate::contract_signals::{
-    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardConstraint,
-    MetadataFieldKind,
+    ConditionalGuard, ContractSchemaSignals, GuardConstraint, MetadataFieldKind,
 };
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
@@ -333,14 +332,31 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
         None,
     )]);
 
+    let overlay = signals
+        .conditional_path_overlays
+        .first()
+        .expect("expected conditional overlay");
     assert_eq!(
-        signals.conditional_path_overlays,
-        vec![ConditionalPathOverlay {
-            target_value_path: "feature.host".to_string(),
-            guards: vec![ConditionalGuard::Truthy {
-                path: "feature.enabled".to_string(),
-            }],
+        overlay.target_value_path, "feature.host",
+        "overlay should stay keyed by the values path being lowered"
+    );
+    assert_eq!(
+        overlay.guards,
+        vec![ConditionalGuard::Truthy {
+            path: "feature.enabled".to_string(),
         }],
+    );
+    assert!(
+        overlay.provider_schema_uses.is_empty(),
+        "non-resource scalar overlays should not invent provider lookups"
+    );
+    assert!(
+        overlay.metadata_field_kinds.is_empty(),
+        "non-metadata target should not carry metadata-field lowering hints"
+    );
+    assert_eq!(
+        overlay.value_path_facts.has_render_use, true,
+        "branch-local facts should preserve the target's render-use status"
     );
 }
 
@@ -367,27 +383,78 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ),
     ]);
 
+    assert_eq!(signals.conditional_path_overlays.len(), 2);
     assert_eq!(
-        signals.conditional_path_overlays,
-        vec![
-            ConditionalPathOverlay {
-                target_value_path: "feature.host".to_string(),
-                guards: vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                    path: "feature.enabled".to_string(),
-                }))],
+        signals.conditional_path_overlays[0].guards,
+        vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+            path: "feature.enabled".to_string(),
+        }))],
+    );
+    assert_eq!(
+        signals.conditional_path_overlays[1].guards,
+        vec![ConditionalGuard::AnyOf(vec![
+            ConditionalGuard::Truthy {
+                path: "first.enabled".to_string(),
             },
-            ConditionalPathOverlay {
-                target_value_path: "other.host".to_string(),
-                guards: vec![ConditionalGuard::AnyOf(vec![
-                    ConditionalGuard::Truthy {
-                        path: "first.enabled".to_string(),
-                    },
-                    ConditionalGuard::Truthy {
-                        path: "second.enabled".to_string(),
-                    },
-                ])],
+            ConditionalGuard::Truthy {
+                path: "second.enabled".to_string(),
             },
-        ],
+        ])],
+    );
+}
+
+#[test]
+fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_path() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "feature.value".to_string(),
+            YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Eq {
+                path: "mode".to_string(),
+                value: "name".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.value".to_string(),
+            YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+            ValueKind::Fragment,
+            vec![Guard::Eq {
+                path: "mode".to_string(),
+                value: "labels".to_string(),
+            }],
+            None,
+        ),
+    ]);
+
+    assert_eq!(
+        signals.conditional_path_overlays.len(),
+        2,
+        "multiple supported guard sets for the same values path should survive as separate overlays"
+    );
+    assert!(
+        signals.conditional_path_overlays.iter().any(|overlay| {
+            overlay.guards
+                == vec![ConditionalGuard::Eq {
+                    path: "mode".to_string(),
+                    value: "name".to_string(),
+                }]
+                && overlay.metadata_field_kinds == BTreeSet::from([MetadataFieldKind::Name])
+        }),
+        "expected a metadata.name-targeted branch overlay"
+    );
+    assert!(
+        signals.conditional_path_overlays.iter().any(|overlay| {
+            overlay.guards
+                == vec![ConditionalGuard::Eq {
+                    path: "mode".to_string(),
+                    value: "labels".to_string(),
+                }]
+                && overlay.metadata_field_kinds == BTreeSet::from([MetadataFieldKind::StringMap])
+                && overlay.value_path_facts.used_as_fragment
+        }),
+        "expected a metadata.labels fragment branch overlay"
     );
 }
 

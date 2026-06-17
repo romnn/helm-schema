@@ -1,9 +1,9 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
-    RequiredInferenceSignals,
+    ContractValuePathFacts, MetadataFieldKind, RequiredInferenceSignals,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
@@ -41,8 +41,20 @@ struct NullablePathAccumulator {
 
 #[derive(Default)]
 struct ConditionalOverlayAccumulator {
-    unique_guard_sets: Vec<Vec<ConditionalGuard>>,
+    branches_by_guards: BTreeMap<Vec<ConditionalGuard>, ConditionalOverlayBranchAccumulator>,
     saw_unconditional_or_unsupported: bool,
+}
+
+#[derive(Default)]
+struct ConditionalOverlayBranchAccumulator {
+    provider_schema_uses: Vec<ProviderSchemaUse>,
+    metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    has_render_use: bool,
+    all_render_uses_self_guarded: bool,
+    has_self_range_guard_render_use: bool,
+    all_uses_nullable: bool,
+    used_as_fragment: bool,
+    is_partial_scalar_value_path: bool,
 }
 
 impl Default for NullablePathAccumulator {
@@ -81,7 +93,13 @@ impl ContractSchemaSignalBuilder {
         let conditional_path_overlays = self
             .conditional_overlays_by_path
             .into_iter()
-            .filter_map(|(target_value_path, accumulator)| accumulator.finish(target_value_path))
+            .flat_map(|(target_value_path, accumulator)| {
+                let global_facts = value_path_facts
+                    .get(&target_value_path)
+                    .copied()
+                    .unwrap_or_default();
+                accumulator.finish(target_value_path, global_facts)
+            })
             .collect();
 
         ContractSchemaSignals {
@@ -261,13 +279,11 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        if !accumulator
-            .unique_guard_sets
-            .iter()
-            .any(|existing| existing == &guards)
-        {
-            accumulator.unique_guard_sets.push(guards);
-        }
+        let branch = accumulator
+            .branches_by_guards
+            .entry(guards)
+            .or_insert_with(ConditionalOverlayBranchAccumulator::new);
+        branch.record_use(contract_use);
     }
 
     fn record_required_inference_signals(&mut self, contract_use: &ContractUse) {
@@ -309,15 +325,78 @@ impl ContractSchemaSignalBuilder {
 }
 
 impl ConditionalOverlayAccumulator {
-    fn finish(self, target_value_path: String) -> Option<ConditionalPathOverlay> {
-        if self.saw_unconditional_or_unsupported || self.unique_guard_sets.len() != 1 {
-            return None;
+    fn finish(
+        self,
+        target_value_path: String,
+        global_facts: ContractValuePathFacts,
+    ) -> Vec<ConditionalPathOverlay> {
+        if self.saw_unconditional_or_unsupported {
+            return Vec::new();
         }
-        let guards = self.unique_guard_sets.into_iter().next()?;
-        Some(ConditionalPathOverlay {
-            target_value_path,
-            guards,
-        })
+        self.branches_by_guards
+            .into_iter()
+            .map(|(guards, branch)| {
+                let value_path_facts = branch.value_path_facts(global_facts);
+                ConditionalPathOverlay {
+                    target_value_path: target_value_path.clone(),
+                    guards,
+                    provider_schema_uses: branch.provider_schema_uses,
+                    metadata_field_kinds: branch.metadata_field_kinds,
+                    value_path_facts,
+                }
+            })
+            .collect()
+    }
+}
+
+impl ConditionalOverlayBranchAccumulator {
+    fn new() -> Self {
+        Self {
+            provider_schema_uses: Vec::new(),
+            metadata_field_kinds: BTreeSet::new(),
+            has_render_use: false,
+            all_render_uses_self_guarded: true,
+            has_self_range_guard_render_use: false,
+            all_uses_nullable: true,
+            used_as_fragment: false,
+            is_partial_scalar_value_path: false,
+        }
+    }
+
+    fn record_use(&mut self, contract_use: &ContractUse) {
+        self.has_render_use = true;
+        self.all_render_uses_self_guarded &= use_is_self_guarded(contract_use);
+        self.all_uses_nullable &= use_is_null_tolerant(contract_use);
+        self.used_as_fragment |= contract_use.kind == ValueKind::Fragment;
+        self.is_partial_scalar_value_path |= contract_use.kind == ValueKind::PartialScalar;
+
+        let has_self_range_guard = contract_use.guards.iter().any(
+            |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
+        );
+        self.has_self_range_guard_render_use |= has_self_range_guard;
+
+        if let Some(field_kind) = metadata_field_kind_from_yaml_path(&contract_use.path.0) {
+            self.metadata_field_kinds.insert(field_kind);
+        }
+
+        if let Some(provider_schema_use) = from_contract_use(contract_use)
+            && !self.provider_schema_uses.contains(&provider_schema_use)
+        {
+            self.provider_schema_uses.push(provider_schema_use);
+        }
+    }
+
+    fn value_path_facts(&self, global_facts: ContractValuePathFacts) -> ContractValuePathFacts {
+        ContractValuePathFacts {
+            has_referenced_descendants: global_facts.has_referenced_descendants,
+            used_as_fragment: self.used_as_fragment,
+            is_ranged_source: false,
+            is_partial_scalar_value_path: self.is_partial_scalar_value_path,
+            has_render_use: self.has_render_use,
+            all_render_uses_self_guarded: self.all_render_uses_self_guarded,
+            has_self_range_guard_render_use: self.has_self_range_guard_render_use,
+            is_nullable: self.has_render_use && self.all_uses_nullable,
+        }
     }
 }
 

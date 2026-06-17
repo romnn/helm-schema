@@ -5,6 +5,14 @@ use color_eyre::eyre::{OptionExt as _, WrapErr as _};
 #[test]
 fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<()> {
     let schema = common::generate_chart_schema("signoz-signoz")?;
+    if std::env::var("SCHEMA_DUMP").is_ok() {
+        let path = std::env::temp_dir().join("helm-schema.cli.chart-signoz-signoz.schema.json");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&schema).wrap_err("serialize signoz schema dump")?,
+        )
+        .wrap_err("write signoz schema dump")?;
+    }
     let values_json = common::values_yaml_as_json("signoz-signoz")?;
     common::assert_values_json_validates(&values_json, &schema);
     assert_schema_description(

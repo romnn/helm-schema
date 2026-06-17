@@ -101,6 +101,16 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
+    if std::env::var("SCHEMA_DUMP").is_ok() {
+        let path =
+            std::env::temp_dir().join("helm-schema.cli.full-fixture.disable-k8s.schema.json");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&actual).wrap_err("serialize schema dump")?,
+        )
+        .wrap_err("write schema dump")?;
+    }
+
     let expected: serde_json::Value = serde_json::from_str(include_str!(
         "fixtures/full_fixture.disable_k8s.schema.json"
     ))
