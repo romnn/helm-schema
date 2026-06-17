@@ -310,16 +310,22 @@ impl Retrieve for FsHttpRetrieve {
         let scheme = uri.scheme().as_str().to_ascii_lowercase();
         match scheme.as_str() {
             "file" => {
-                if !self.fetch_policy.allows_file() {
-                    return Err(format!(
-                        "$ref to {uri} but local file access is disabled by fetch policy"
-                    )
-                    .into());
-                }
+                let host = uri
+                    .authority()
+                    .map(|authority| authority.host())
+                    .unwrap_or("");
+                self.fetch_policy
+                    .validate_file_host(host)
+                    .map_err(|err| format!("$ref to {uri} but {err}"))?;
                 // `file://host/path/to/foo.json` — the path component is
                 // what we want. Empty host is the standard
                 // `file:///path` shape.
                 let path = uri.path().as_str();
+                if !std::path::Path::new(path).is_absolute() {
+                    return Err(
+                        format!("$ref to {uri} but file URI path is not absolute: {path}").into(),
+                    );
+                }
                 let mut file =
                     std::fs::File::open(path).map_err(|e| format!("open {path}: {e}"))?;
                 let bytes = read_to_end_capped(
@@ -333,12 +339,10 @@ impl Retrieve for FsHttpRetrieve {
                 Ok(value)
             }
             "http" | "https" => {
-                if !self.fetch_policy.allows_network() {
-                    return Err(format!(
-                        "$ref to {uri} but network access is disabled by fetch policy"
-                    )
-                    .into());
-                }
+                let host = uri.authority().map(|authority| authority.host());
+                self.fetch_policy
+                    .validate_network_host(host)
+                    .map_err(|err| format!("$ref to {uri} but {err}"))?;
                 let resp = self
                     .agent
                     .get(uri.as_str())
@@ -597,6 +601,38 @@ mod tests {
                 .contains("network access is disabled by fetch policy"),
             "unexpected denial error: {err}"
         );
+    }
+
+    #[test]
+    fn file_retrieval_rejects_non_empty_file_authority_host() {
+        let uri = uri::from_str("file://localhost/tmp/schema.json").expect("file uri");
+        let err = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
+            .retrieve(&uri)
+            .expect_err("file retrieval should reject authority host");
+        assert!(
+            err.to_string()
+                .contains("file:// authority host is not allowed by fetch policy"),
+            "unexpected file-host error: {err}"
+        );
+    }
+
+    #[test]
+    fn network_retrieval_rejects_loopback_and_link_local_hosts() {
+        for uri_text in [
+            "http://127.0.0.1/schema.json",
+            "http://[::1]/schema.json",
+            "http://localhost/schema.json",
+            "http://169.254.169.254/latest/meta-data",
+        ] {
+            let uri = uri::from_str(uri_text).expect("network uri");
+            let err = FsHttpRetrieve::new(FetchPolicy::input_assembly(true), LoadBudget::default())
+                .retrieve(&uri)
+                .expect_err("unsafe host should be rejected before network access");
+            assert!(
+                err.to_string().contains("denied by fetch policy"),
+                "unexpected network-host error for {uri_text}: {err}"
+            );
+        }
     }
 
     #[test]
