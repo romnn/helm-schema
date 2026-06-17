@@ -1,5 +1,3 @@
-use regex::Regex;
-
 /// A `{{ define "name" }} ... {{ end }}` block extracted from template
 /// source, with the body text and its byte span in the original source.
 /// `body` excludes the surrounding `{{ define }}` / `{{ end }}` actions
@@ -25,58 +23,13 @@ pub struct DefineBlock {
 /// coverage over panics on malformed templates.
 #[must_use]
 pub fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {
-    let preserved = mask_helm_comments(src);
-    let action_re = template_action_regex();
+    let Some(tree) = parse_go_template(src) else {
+        return Vec::new();
+    };
 
-    #[derive(Debug)]
-    struct OpenDefine {
-        name: String,
-        body_start: usize,
-        action_start: usize,
-        depth_when_opened: usize,
-    }
-
-    let mut depth: usize = 0;
-    let mut stack: Vec<OpenDefine> = Vec::new();
-    let mut out: Vec<DefineBlock> = Vec::new();
-
-    for cap in action_re.captures_iter(&preserved) {
-        let action_match = cap.get(0).expect("re match");
-        let inner = cap.get(1).expect("re capture group 1").as_str().trim();
-
-        if let Some(name) = parse_define_directive(inner) {
-            stack.push(OpenDefine {
-                name,
-                body_start: action_match.end(),
-                action_start: action_match.start(),
-                depth_when_opened: depth,
-            });
-            depth = depth.saturating_add(1);
-            continue;
-        }
-
-        if is_block_open_directive(inner) {
-            depth = depth.saturating_add(1);
-            continue;
-        }
-
-        if inner == "end" || inner.starts_with("end ") || inner.starts_with("end\t") {
-            depth = depth.saturating_sub(1);
-            if let Some(opened) = stack.pop_if(|open| open.depth_when_opened == depth) {
-                let body = src
-                    .get(opened.body_start..action_match.start())
-                    .unwrap_or("")
-                    .to_string();
-                out.push(DefineBlock {
-                    name: opened.name,
-                    body,
-                    byte_range: opened.action_start..action_match.end(),
-                    body_range: opened.body_start..action_match.start(),
-                });
-            }
-        }
-    }
-
+    let mut out = Vec::new();
+    collect_define_blocks(tree.root_node(), src, &mut out);
+    out.sort_by_key(|block| block.byte_range.start);
     out
 }
 
@@ -117,62 +70,138 @@ pub fn extract_helper_calls(src: &str) -> Vec<String> {
     out
 }
 
-fn helm_comment_regex() -> &'static Regex {
-    use std::sync::OnceLock;
-    static R: OnceLock<Regex> = OnceLock::new();
-    R.get_or_init(|| Regex::new(r"(?s)\{\{-?\s*/\*.*?\*/\s*-?\}\}").expect("helm comment regex"))
-}
-
-/// Replace each `{{/* ... */}}` Helm comment in `src` with spaces of
-/// the same byte length. Keeps every other byte position unchanged so
-/// callers can safely use offsets/spans derived from the masked string
-/// against the original `src`.
-fn mask_helm_comments(src: &str) -> String {
-    let re = helm_comment_regex();
-    let mut out: Vec<u8> = src.as_bytes().to_vec();
-    for m in re.find_iter(src) {
-        for byte in &mut out[m.start()..m.end()] {
-            *byte = b' ';
-        }
+fn collect_define_blocks(node: tree_sitter::Node<'_>, src: &str, out: &mut Vec<DefineBlock>) {
+    if node.kind() == "define_action"
+        && let Some(block) = define_block_from_node(node, src)
+    {
+        out.push(block);
     }
-    // Replacing bytes with ASCII spaces preserves the original UTF-8 validity.
-    String::from_utf8(out).expect("ASCII-safe replacement")
+
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        collect_define_blocks(child, src, out);
+    }
 }
 
-fn template_action_regex() -> &'static Regex {
-    use std::sync::OnceLock;
-    static R: OnceLock<Regex> = OnceLock::new();
-    R.get_or_init(|| Regex::new(r"(?s)\{\{-?(.*?)-?\}\}").expect("template action regex"))
+fn define_block_from_node(node: tree_sitter::Node<'_>, src: &str) -> Option<DefineBlock> {
+    let name = define_name(node, src)?;
+    let body_children = children_with_field(node, "body");
+    let end_action_start = find_end_action_start(node);
+
+    let body_end = end_action_start.unwrap_or_else(|| {
+        body_children
+            .last()
+            .map(tree_sitter::Node::end_byte)
+            .unwrap_or_else(|| node.end_byte())
+    });
+    let body_start = body_children
+        .first()
+        .map(tree_sitter::Node::start_byte)
+        .unwrap_or(body_end);
+    let body_range = body_start..body_end;
+    let body = src.get(body_range.clone())?.to_string();
+
+    Some(DefineBlock {
+        name,
+        body,
+        byte_range: node.start_byte()..node.end_byte(),
+        body_range,
+    })
 }
 
-fn parse_define_directive(inner: &str) -> Option<String> {
-    let rest = inner
-        .strip_prefix("define ")
-        .or_else(|| inner.strip_prefix("define\t"))?;
-    let rest = rest.trim_start();
-    let rest = rest.strip_prefix('"')?;
-    let end = rest.find('"')?;
-    let name = &rest[..end];
-    if name.is_empty() {
+fn define_name(node: tree_sitter::Node<'_>, src: &str) -> Option<String> {
+    let raw = node
+        .child_by_field_name("name")?
+        .utf8_text(src.as_bytes())
+        .ok()?
+        .trim();
+    let quoted = raw
+        .strip_prefix('"')
+        .and_then(|rest| rest.strip_suffix('"'))
+        .or_else(|| {
+            raw.strip_prefix('`')
+                .and_then(|rest| rest.strip_suffix('`'))
+        })
+        .or_else(|| {
+            raw.strip_prefix('\'')
+                .and_then(|rest| rest.strip_suffix('\''))
+        })
+        .unwrap_or(raw)
+        .trim();
+    if quoted.is_empty() {
         return None;
     }
-    Some(name.to_string())
+    Some(quoted.to_string())
 }
 
-fn is_block_open_directive(inner: &str) -> bool {
-    for prefix in [
-        "if ", "if\t", "with ", "with\t", "range ", "range\t", "block ", "block\t",
-    ] {
-        if inner.starts_with(prefix) {
-            return true;
-        }
+fn children_with_field<'a>(node: tree_sitter::Node<'a>, field: &str) -> Vec<tree_sitter::Node<'a>> {
+    let mut cursor = node.walk();
+    node.children_by_field_name(field, &mut cursor).collect()
+}
+
+fn find_end_action_start(node: tree_sitter::Node<'_>) -> Option<usize> {
+    let mut cursor = node.walk();
+    node.named_children(&mut cursor)
+        .find(|child| child.kind() == "end_action")
+        .map(|child| child.start_byte())
+}
+
+fn parse_go_template(src: &str) -> Option<tree_sitter::Tree> {
+    let language =
+        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+    let mut parser = tree_sitter::Parser::new();
+    if parser.set_language(&language).is_err() {
+        return None;
     }
-    false
+    parser.parse(src, None)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::extract_helper_calls;
+    use super::{extract_define_blocks, extract_helper_calls};
+
+    #[test]
+    fn extracts_define_blocks_with_exact_body_spans() {
+        let src = indoc::indoc! {r#"
+            {{- define "outer" -}}
+            before
+            {{- define "inner" -}}
+            inside
+            {{- end -}}
+            after
+            {{- end -}}
+        "#};
+
+        let blocks = extract_define_blocks(src);
+        assert_eq!(blocks.len(), 2);
+        assert_eq!(blocks[0].name, "outer");
+        assert_eq!(blocks[1].name, "inner");
+        assert_eq!(&src[blocks[0].body_range.clone()], blocks[0].body);
+        assert_eq!(&src[blocks[1].body_range.clone()], blocks[1].body);
+        assert!(blocks[0].body.contains("before"));
+        assert!(blocks[0].body.contains("after"));
+        assert!(blocks[0].body.contains(r#"{{- define "inner" -}}"#));
+        assert_eq!(blocks[1].body.trim(), "inside");
+    }
+
+    #[test]
+    fn extracts_define_blocks_without_comment_masking_heuristics() {
+        let src = indoc::indoc! {r#"
+            {{- define "x" -}}
+            {{/* {{ end }} should not terminate the define */}}
+            value
+            {{- end -}}
+        "#};
+
+        let blocks = extract_define_blocks(src);
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].name, "x");
+        assert!(blocks[0].body.contains("should not terminate"));
+        assert_eq!(
+            &src[blocks[0].byte_range.clone()],
+            src.get(blocks[0].byte_range.clone()).unwrap_or("")
+        );
+    }
 
     #[test]
     fn extracts_real_include_call() {
