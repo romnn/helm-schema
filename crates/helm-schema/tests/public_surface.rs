@@ -1,8 +1,8 @@
 use color_eyre::eyre;
-use helm_schema::AnalysisSession;
 use helm_schema::generation::{GenerateOptions, generate_values_schema_for_chart};
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
+use helm_schema::{AnalysisSession, CliError};
 use serde_json::json;
 use vfs::VfsPath;
 
@@ -456,6 +456,69 @@ data:
         schema.pointer("/allOf/0/properties/mode/enum").is_none(),
         "generated root schema must not be re-ingested as a shipped constraint"
     );
+
+    Ok(())
+}
+
+#[test]
+fn resolved_contract_rejects_invalid_composed_defaults() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "mode: unsafe\n")?;
+    test_util::write(
+        &chart_dir.join("values.schema.json")?,
+        r#"{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": ["safe", "fast"]
+    }
+  }
+}"#,
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/configmap.yaml")?,
+        r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: root
+data:
+  mode: "{{ .Values.mode }}"
+"#,
+    )?;
+
+    let session = AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    });
+
+    let err = session
+        .resolved_contract()
+        .expect_err("invalid shipped defaults constraint should fail postcondition");
+    match err {
+        CliError::SchemaPostconditionViolated { errors } => {
+            assert!(
+                errors.iter().any(|err| err.contains("/mode")),
+                "expected path-specific validation error, got {errors:?}"
+            );
+        }
+        other => panic!("expected schema postcondition error, got {other:?}"),
+    }
 
     Ok(())
 }

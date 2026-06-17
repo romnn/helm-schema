@@ -344,6 +344,7 @@ pub(crate) fn resolve_contract_from_prepared(
         schema,
         &prepared.shipped_values_schema_constraints,
     );
+    validate_composed_defaults_against_schema(prepared.values_yaml.as_deref(), &schema)?;
 
     Ok(ResolvedContract {
         schema,
@@ -424,6 +425,57 @@ fn apply_shipped_values_schema_constraints(
     };
     entries.extend(wrapped_constraints);
     schema
+}
+
+fn validate_composed_defaults_against_schema(
+    values_yaml: Option<&str>,
+    schema: &Value,
+) -> CliResult<()> {
+    let Some(values_yaml) = values_yaml else {
+        return Ok(());
+    };
+
+    let values_json: Value = serde_yaml::from_str(values_yaml)?;
+    let values_json = coalesced_values_json(&values_json);
+    let validator = jsonschema::validator_for(schema).map_err(|err| {
+        crate::error::CliError::SchemaPostconditionCompile {
+            reason: err.to_string(),
+        }
+    })?;
+    let errors = validator
+        .iter_errors(&values_json)
+        .map(|err| format!("{path}: {err}", path = err.instance_path()))
+        .collect::<Vec<_>>();
+
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(crate::error::CliError::SchemaPostconditionViolated { errors })
+    }
+}
+
+fn coalesced_values_json(value: &Value) -> Value {
+    match value {
+        Value::Null => Value::Null,
+        Value::Bool(_) | Value::Number(_) | Value::String(_) => value.clone(),
+        Value::Array(items) => Value::Array(
+            items
+                .iter()
+                .filter(|item| !item.is_null())
+                .map(coalesced_values_json)
+                .collect(),
+        ),
+        Value::Object(map) => {
+            let mut out = Map::new();
+            for (key, value) in map {
+                if value.is_null() {
+                    continue;
+                }
+                out.insert(key.clone(), coalesced_values_json(value));
+            }
+            Value::Object(out)
+        }
+    }
 }
 
 struct PreparedValuesSchemaConstraint {

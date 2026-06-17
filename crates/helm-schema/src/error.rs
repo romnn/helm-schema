@@ -52,6 +52,12 @@ pub enum CliError {
     #[error("$ref bundling failed: {0}")]
     RefBundling(String),
 
+    #[error("schema postcondition failed to compile generated schema: {reason}")]
+    SchemaPostconditionCompile { reason: String },
+
+    #[error("schema postcondition failed: composed default values do not validate: {errors:?}")]
+    SchemaPostconditionViolated { errors: Vec<String> },
+
     /// Mutually-exclusive CLI flags or otherwise-invalid combination
     /// detected after `clap` parsing succeeded.
     #[error("invalid CLI options: {0}")]
