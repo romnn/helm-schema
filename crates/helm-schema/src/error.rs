@@ -52,6 +52,9 @@ pub enum CliError {
     #[error("$ref bundling failed: {0}")]
     RefBundling(String),
 
+    #[error("load budget exceeded for {subject} (limit {limit_bytes} bytes)")]
+    LoadBudgetExceeded { subject: String, limit_bytes: usize },
+
     #[error("schema postcondition failed to compile generated schema: {reason}")]
     SchemaPostconditionCompile { reason: String },
 

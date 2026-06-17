@@ -1,4 +1,5 @@
 use crate::fetch_policy::FetchPolicy;
+use crate::load_budget::LoadBudget;
 
 /// Output-only schema transforms selected by CLI flags.
 ///
@@ -17,6 +18,7 @@ pub struct OutputPipelineOptions {
 pub struct PolicyInputOptions {
     pub reference_mode: ReferenceMode,
     pub fetch_policy: FetchPolicy,
+    pub load_budget: LoadBudget,
 }
 
 /// How final output should handle JSON Schema references.

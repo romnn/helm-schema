@@ -25,7 +25,6 @@
 //! in-memory map keyed by URI and avoid disk I/O entirely.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::Read;
 use std::path::Path;
 
 use jsonschema::{Retrieve, Uri};
@@ -35,6 +34,7 @@ use tracing::instrument;
 
 use crate::error::{CliError, CliResult};
 use crate::fetch_policy::FetchPolicy;
+use crate::load_budget::{LoadBudget, read_to_end_capped};
 
 /// Inline every `$ref` in `schema` against the filesystem rooted at
 /// `base_dir`.
@@ -51,9 +51,14 @@ use crate::fetch_policy::FetchPolicy;
 /// can't break, network/file refs denied by fetch policy, …). The underlying error
 /// is wrapped with enough detail for an operator to find the bad ref.
 #[instrument(skip_all)]
-pub fn flatten_refs(schema: Value, base_dir: &Path, fetch_policy: FetchPolicy) -> CliResult<Value> {
+pub fn flatten_refs(
+    schema: Value,
+    base_dir: &Path,
+    fetch_policy: FetchPolicy,
+    load_budget: LoadBudget,
+) -> CliResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
-    let retriever = FsHttpRetrieve::new(fetch_policy);
+    let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
     flatten_with_retriever(schema, &base_uri, retriever)
 }
 
@@ -76,9 +81,14 @@ pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> CliResult<Value>
 /// referenced schema is re-homed under `#/$defs/...` instead of being inlined
 /// at each use site.
 #[instrument(skip_all)]
-pub fn bundle_refs(schema: Value, base_dir: &Path, fetch_policy: FetchPolicy) -> CliResult<Value> {
+pub fn bundle_refs(
+    schema: Value,
+    base_dir: &Path,
+    fetch_policy: FetchPolicy,
+    load_budget: LoadBudget,
+) -> CliResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
-    let retriever = FsHttpRetrieve::new(fetch_policy);
+    let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
     bundle_with_retriever(schema, &base_uri, retriever)
 }
 
@@ -278,13 +288,15 @@ impl<R: Retrieve> BundleState<R> {
 /// [`FetchPolicy`].
 struct FsHttpRetrieve {
     fetch_policy: FetchPolicy,
+    load_budget: LoadBudget,
     agent: ureq::Agent,
 }
 
 impl FsHttpRetrieve {
-    fn new(fetch_policy: FetchPolicy) -> Self {
+    fn new(fetch_policy: FetchPolicy, load_budget: LoadBudget) -> Self {
         Self {
             fetch_policy,
+            load_budget,
             agent: ureq::Agent::new_with_defaults(),
         }
     }
@@ -308,7 +320,14 @@ impl Retrieve for FsHttpRetrieve {
                 // what we want. Empty host is the standard
                 // `file:///path` shape.
                 let path = uri.path().as_str();
-                let bytes = std::fs::read(path).map_err(|e| format!("read {path}: {e}"))?;
+                let mut file =
+                    std::fs::File::open(path).map_err(|e| format!("open {path}: {e}"))?;
+                let bytes = read_to_end_capped(
+                    &mut file,
+                    self.load_budget.max_schema_document_bytes,
+                    path.to_string(),
+                )
+                .map_err(|e| e.to_string())?;
                 let value: Value =
                     serde_json::from_slice(&bytes).map_err(|e| format!("parse {path}: {e}"))?;
                 Ok(value)
@@ -326,12 +345,15 @@ impl Retrieve for FsHttpRetrieve {
                     .call()
                     .map_err(|e| format!("fetch {uri}: {e}"))?;
                 let mut body = resp.into_body();
-                let mut text = String::new();
-                body.as_reader()
-                    .read_to_string(&mut text)
-                    .map_err(|e| format!("read body {uri}: {e}"))?;
+                let mut reader = body.as_reader();
+                let bytes = read_to_end_capped(
+                    &mut reader,
+                    self.load_budget.max_schema_document_bytes,
+                    uri.as_str().to_string(),
+                )
+                .map_err(|e| e.to_string())?;
                 let value: Value =
-                    serde_json::from_str(&text).map_err(|e| format!("parse {uri}: {e}"))?;
+                    serde_json::from_slice(&bytes).map_err(|e| format!("parse {uri}: {e}"))?;
                 Ok(value)
             }
             other => Err(format!("unsupported $ref scheme: {other} (uri={uri})").into()),
@@ -546,7 +568,7 @@ mod tests {
         let canonical = path.canonicalize().expect("canonicalize test schema");
         let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
 
-        let denied = FsHttpRetrieve::new(FetchPolicy::deny_all())
+        let denied = FsHttpRetrieve::new(FetchPolicy::deny_all(), LoadBudget::default())
             .retrieve(&uri)
             .expect_err("file retrieval should be denied");
         assert!(
@@ -556,7 +578,7 @@ mod tests {
             "unexpected denial error: {denied}"
         );
 
-        let allowed = FsHttpRetrieve::new(FetchPolicy::local_files_only())
+        let allowed = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
             .retrieve(&uri)
             .expect("file retrieval should succeed");
         assert_eq!(allowed, json!({ "type": "string" }));
@@ -567,7 +589,7 @@ mod tests {
     #[test]
     fn network_retrieval_respects_fetch_policy() {
         let uri = uri::from_str("https://example.com/schema.json").expect("https uri");
-        let err = FsHttpRetrieve::new(FetchPolicy::local_files_only())
+        let err = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
             .retrieve(&uri)
             .expect_err("network retrieval should be denied");
         assert!(
@@ -575,5 +597,23 @@ mod tests {
                 .contains("network access is disabled by fetch policy"),
             "unexpected denial error: {err}"
         );
+    }
+
+    #[test]
+    fn file_retrieval_respects_load_budget() {
+        let path = temp_path("file-budget");
+        fs::write(&path, r#"{"type":"string"}"#).expect("write test schema");
+        let canonical = path.canonicalize().expect("canonicalize test schema");
+        let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
+
+        let err = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::new(64, 4))
+            .retrieve(&uri)
+            .expect_err("file retrieval should exceed budget");
+        assert!(
+            err.to_string().contains("load budget exceeded"),
+            "unexpected budget error: {err}"
+        );
+
+        fs::remove_file(&path).expect("remove test schema");
     }
 }

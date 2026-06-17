@@ -13,6 +13,7 @@ use crate::chart_evidence::ChartTemplateEvidence;
 use crate::error::CliResult;
 use crate::fetch_policy::FetchPolicy;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
+use crate::load_budget::LoadBudget;
 use crate::output_pipeline::{
     OutputPipelineOptions, PolicyInputOptions, PolicyInputs, apply_schema_output_pipeline,
     load_policy_inputs,
@@ -72,6 +73,7 @@ impl PreparedSession {
         let shipped_values_schema_constraints = chart::load_shipped_values_schema_constraints(
             charts,
             FetchPolicy::input_assembly(opts.provider.allow_net),
+            LoadBudget::default(),
         )?;
 
         Ok(Self {

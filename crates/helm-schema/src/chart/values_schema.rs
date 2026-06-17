@@ -1,4 +1,3 @@
-use std::io::Read;
 use std::path::Path;
 
 use serde_json::Value;
@@ -8,6 +7,7 @@ use super::ChartContext;
 use crate::error::CliResult;
 use crate::fetch_policy::FetchPolicy;
 use crate::flatten;
+use crate::load_budget::{LoadBudget, read_to_end_capped};
 
 pub(crate) const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 
@@ -23,6 +23,7 @@ pub(crate) struct ScopedValuesSchemaConstraint {
 pub(crate) fn load_shipped_values_schema_constraints(
     charts: &[ChartContext],
     fetch_policy: FetchPolicy,
+    load_budget: LoadBudget,
 ) -> CliResult<Vec<ScopedValuesSchemaConstraint>> {
     let mut constraints = Vec::new();
 
@@ -32,8 +33,12 @@ pub(crate) fn load_shipped_values_schema_constraints(
             continue;
         }
 
-        let mut bytes = Vec::new();
-        schema_path.open_file()?.read_to_end(&mut bytes)?;
+        let mut file = schema_path.open_file()?;
+        let bytes = read_to_end_capped(
+            &mut file,
+            load_budget.max_schema_document_bytes,
+            schema_path.as_str().to_string(),
+        )?;
         let mut schema: Value = serde_json::from_slice(&bytes)?;
 
         // Avoid feeding a previous helm-schema output back into the next run as
@@ -56,7 +61,7 @@ pub(crate) fn load_shipped_values_schema_constraints(
         let physical_path = Path::new(schema_path.as_str());
         if physical_path.exists() {
             let base_dir = physical_path.parent().unwrap_or_else(|| Path::new("."));
-            schema = flatten::bundle_refs(schema, base_dir, fetch_policy)?;
+            schema = flatten::bundle_refs(schema, base_dir, fetch_policy, load_budget)?;
         }
 
         constraints.push(ScopedValuesSchemaConstraint {

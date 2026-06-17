@@ -4,6 +4,7 @@ use serde_json::Value;
 
 use crate::error::CliResult;
 use crate::flatten;
+use crate::load_budget::read_to_end_capped;
 use crate::output_pipeline::PolicyInputOptions;
 use crate::schema_override;
 
@@ -55,7 +56,7 @@ fn load_prepared_override_schema(
     path: &Path,
     options: &PolicyInputOptions,
 ) -> CliResult<PreparedOverrideSchema> {
-    let mut override_schema = load_json_file(path)?;
+    let mut override_schema = load_json_file(path, options.load_budget.max_schema_document_bytes)?;
 
     // Tag every subtree that carries `$ref` with an internal "replace on
     // merge" marker. The marker survives reference preparation and tells
@@ -75,7 +76,12 @@ fn prepare_override_schema(
 ) -> CliResult<Value> {
     if options.reference_mode.bundles_refs() {
         let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
-        return flatten::bundle_refs(schema, override_base, options.fetch_policy);
+        return flatten::bundle_refs(
+            schema,
+            override_base,
+            options.fetch_policy,
+            options.load_budget,
+        );
     }
 
     if !options.reference_mode.fully_inlines_refs() {
@@ -83,11 +89,17 @@ fn prepare_override_schema(
     }
 
     let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
-    flatten::flatten_refs(schema, override_base, options.fetch_policy)
+    flatten::flatten_refs(
+        schema,
+        override_base,
+        options.fetch_policy,
+        options.load_budget,
+    )
 }
 
-fn load_json_file(path: &Path) -> CliResult<Value> {
-    let bytes = std::fs::read(path)?;
+fn load_json_file(path: &Path, max_bytes: usize) -> CliResult<Value> {
+    let mut file = std::fs::File::open(path)?;
+    let bytes = read_to_end_capped(&mut file, max_bytes, path.display().to_string())?;
     let value: Value = serde_json::from_slice(&bytes)?;
     Ok(value)
 }
@@ -115,6 +127,7 @@ mod tests {
         PolicyInputOptions {
             reference_mode,
             fetch_policy: crate::fetch_policy::FetchPolicy::local_files_only(),
+            load_budget: crate::load_budget::LoadBudget::default(),
         }
     }
 

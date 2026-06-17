@@ -10,6 +10,7 @@ use vfs::VfsPath;
 use super::paths::scope_values_path;
 use super::types::{ChartContext, ChartDependencyActivation, ChartDiscovery};
 use crate::error::{CliError, CliResult};
+use crate::load_budget::{LoadBudget, read_to_end_capped};
 
 #[derive(Debug, Deserialize)]
 struct ChartYaml {
@@ -37,11 +38,20 @@ struct DependencyMetadata {
 
 #[instrument(skip_all)]
 pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<ChartDiscovery> {
+    discover_chart_contexts_with_budget(root_chart_dir, LoadBudget::default())
+}
+
+#[instrument(skip_all)]
+pub(crate) fn discover_chart_contexts_with_budget(
+    root_chart_dir: &VfsPath,
+    load_budget: LoadBudget,
+) -> CliResult<ChartDiscovery> {
     let mut out = Vec::new();
     discover_chart_contexts_inner(
         root_chart_dir,
         &[],
         ChartDependencyActivation::default(),
+        load_budget,
         &mut out,
     )?;
     Ok(ChartDiscovery { charts: out })
@@ -51,6 +61,7 @@ fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
     parent_prefix: &[String],
     dependency_activation: ChartDependencyActivation,
+    load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
 ) -> CliResult<()> {
     let chart_yaml = read_chart_yaml(chart_dir)?;
@@ -93,7 +104,7 @@ fn discover_chart_contexts_inner(
                 continue;
             }
 
-            extract_chart_archive(&entry)?
+            extract_chart_archive(&entry, load_budget)?
         } else {
             continue;
         };
@@ -121,7 +132,13 @@ fn discover_chart_contexts_inner(
         let mut prefix = parent_prefix.to_vec();
         prefix.push(dependency_metadata.values_key);
 
-        discover_chart_contexts_inner(&sub_dir, &prefix, dependency_metadata.activation, out)?;
+        discover_chart_contexts_inner(
+            &sub_dir,
+            &prefix,
+            dependency_metadata.activation,
+            load_budget,
+            out,
+        )?;
     }
 
     Ok(())
@@ -146,9 +163,13 @@ fn is_chart_archive(file_name: &str) -> bool {
     is_tgz || is_tar_gz
 }
 
-fn extract_chart_archive(path: &VfsPath) -> CliResult<VfsPath> {
-    let mut bytes = Vec::new();
-    path.open_file()?.read_to_end(&mut bytes)?;
+fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> CliResult<VfsPath> {
+    let mut file = path.open_file()?;
+    let bytes = read_to_end_capped(
+        &mut file,
+        load_budget.max_chart_archive_bytes,
+        path.as_str().to_string(),
+    )?;
 
     let gz = GzDecoder::new(bytes.as_slice());
     let mut archive = tar::Archive::new(gz);
