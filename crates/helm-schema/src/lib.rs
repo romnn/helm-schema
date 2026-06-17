@@ -20,8 +20,9 @@ pub mod diagnostics {
 }
 
 pub mod contract {
-    pub use helm_schema_engine::compatibility::{
-        ContractDocument, ContractDocumentProvenance, ContractDocumentSpan, ContractDocumentUse,
+    pub use helm_schema_engine::contract::{
+        ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
+        ContractDocumentUse,
     };
 }
 

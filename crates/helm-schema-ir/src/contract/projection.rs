@@ -1,5 +1,4 @@
-use crate::compatibility::ContractDocument;
-use crate::contract::ContractUse;
+use crate::contract::{ContractDocument, ContractUse};
 use crate::contract_normalization::canonicalize_contract_uses;
 
 /// Canonical inspection projection of a contract graph.

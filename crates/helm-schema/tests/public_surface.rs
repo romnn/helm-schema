@@ -5,9 +5,10 @@ use helm_schema::generation::{
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
-    AnalysisSession, CliError, contract::ContractDocument, diagnostics::DiagnosticSink,
+    AnalysisSession, CliError,
+    contract::{ContractDocument, ContractDocumentGuard},
+    diagnostics::DiagnosticSink,
 };
-use helm_schema_engine::Guard;
 use serde_json::json;
 use vfs::VfsPath;
 
@@ -465,7 +466,7 @@ data:
         explanation
             .exact_uses
             .iter()
-            .any(|use_| use_.guards.contains(&Guard::Or {
+            .any(|use_| use_.guards.contains(&ContractDocumentGuard::Or {
                 paths: vec![
                     "global.kidEnabled".to_string(),
                     "kid.enabled".to_string(),

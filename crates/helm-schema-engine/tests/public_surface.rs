@@ -1,7 +1,7 @@
 use helm_schema_engine::{
-    compatibility::{
-        ContractDocument, ContractDocumentProvenance, ContractDocumentSpan, ContractDocumentUse,
-        ContractProjection,
+    contract::{
+        ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
+        ContractDocumentUse, ContractProjection,
     },
     helpers::extract_helper_calls,
     parse::extract_values_yaml_descriptions,
@@ -10,7 +10,7 @@ use helm_schema_engine::{
 use indoc::indoc;
 
 #[test]
-fn public_engine_surface_exposes_named_parse_helper_and_compatibility_modules() {
+fn public_engine_surface_exposes_named_parse_helper_and_contract_modules() {
     let values_yaml = indoc! {"
         # Root flag docs
         enabled: true # inline flag docs
@@ -46,6 +46,7 @@ fn public_engine_surface_exposes_named_parse_helper_and_compatibility_modules() 
 
     let _ = std::any::type_name::<ContractProjection>();
     let _ = std::any::type_name::<ContractDocument>();
+    let _ = std::any::type_name::<ContractDocumentGuard>();
     let _ = std::any::type_name::<ContractDocumentUse>();
     let _ = std::any::type_name::<ContractDocumentProvenance>();
     let _ = std::any::type_name::<ContractDocumentSpan>();

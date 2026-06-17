@@ -2,9 +2,9 @@ use crate::{ContractProvenance, Guard, ResourceRef, ValueKind, YamlPath};
 
 /// A contract claim for one observed values path.
 ///
-/// This is still the migration-era claim shape, but it is owned by the
-/// contract layer. [`ContractDocumentUse`] is the serialized inspection DTO at
-/// the export boundary.
+/// This is the semantic contract claim shape owned by the contract layer.
+/// [`ContractDocumentUse`] is the serialized inspection DTO at the export
+/// boundary.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractUse {
     pub source_expr: String,

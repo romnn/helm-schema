@@ -1,7 +1,7 @@
-pub mod compatibility {
+pub mod contract {
     pub use helm_schema_ir::{
-        ContractDocument, ContractDocumentProvenance, ContractDocumentSpan, ContractDocumentUse,
-        ContractProjection,
+        ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
+        ContractDocumentUse, ContractProjection,
     };
 }
 

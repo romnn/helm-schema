@@ -5,7 +5,6 @@ mod bound_helper_env;
 mod bound_value_analysis;
 mod capability_branch;
 mod capability_liveness;
-mod compatibility;
 mod condition_action_plan;
 mod condition_guards;
 mod contract;
@@ -83,10 +82,10 @@ mod yaml_syntax;
 pub use capability_liveness::{
     CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
 };
-pub use compatibility::{
-    ContractDocument, ContractDocumentProvenance, ContractDocumentSpan, ContractDocumentUse,
+pub use contract::{
+    ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
+    ContractDocumentUse, ContractIr, ContractProjection, ContractUse,
 };
-pub use contract::{ContractIr, ContractProjection, ContractUse};
 pub use contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
     ContractValuePathFacts, GuardConstraint, MetadataFieldKind, RequiredInferenceSignals,

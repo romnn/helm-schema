@@ -2,9 +2,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_engine::compatibility::{
-    ContractDocument, ContractDocumentUse, ContractProjection,
-};
+use helm_schema_engine::contract::{ContractDocument, ContractDocumentUse, ContractProjection};
 use helm_schema_engine::{ContractIr, ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::{Map, Value};

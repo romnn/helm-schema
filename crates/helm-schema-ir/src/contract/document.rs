@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::contract::ContractProjection;
-use crate::{ContractProvenance, ContractUse, Guard, ResourceRef, SourceSpan, ValueKind, YamlPath};
+use super::{ContractProjection, ContractUse};
+use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan, ValueKind, YamlPath};
 
+/// Stable serialized guard row in the versioned contract document.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-enum CompatGuard {
+pub enum ContractDocumentGuard {
     Truthy { path: String },
     Not { path: String },
     Eq { path: String, value: String },
@@ -16,7 +17,7 @@ enum CompatGuard {
     TypeIs { path: String, schema_type: String },
 }
 
-impl From<Guard> for CompatGuard {
+impl From<Guard> for ContractDocumentGuard {
     fn from(guard: Guard) -> Self {
         match guard {
             Guard::Truthy { path } => Self::Truthy { path },
@@ -31,58 +32,19 @@ impl From<Guard> for CompatGuard {
     }
 }
 
-impl From<CompatGuard> for Guard {
-    fn from(guard: CompatGuard) -> Self {
+impl From<ContractDocumentGuard> for Guard {
+    fn from(guard: ContractDocumentGuard) -> Self {
         match guard {
-            CompatGuard::Truthy { path } => Self::Truthy { path },
-            CompatGuard::Not { path } => Self::Not { path },
-            CompatGuard::Eq { path, value } => Self::Eq { path, value },
-            CompatGuard::Or { paths } => Self::Or { paths },
-            CompatGuard::Range { path } => Self::Range { path },
-            CompatGuard::With { path } => Self::With { path },
-            CompatGuard::Default { path } => Self::Default { path },
-            CompatGuard::TypeIs { path, schema_type } => Self::TypeIs { path, schema_type },
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct ContractDocumentUseSerde {
-    source_expr: String,
-    path: YamlPath,
-    kind: ValueKind,
-    guards: Vec<CompatGuard>,
-    resource: Option<ResourceRef>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    provenance: Vec<ContractDocumentProvenance>,
-}
-
-impl From<ContractDocumentUse> for ContractDocumentUseSerde {
-    fn from(value_use: ContractDocumentUse) -> Self {
-        Self {
-            source_expr: value_use.source_expr,
-            path: value_use.path,
-            kind: value_use.kind,
-            guards: value_use
-                .guards
-                .into_iter()
-                .map(CompatGuard::from)
-                .collect(),
-            resource: value_use.resource,
-            provenance: value_use.provenance,
-        }
-    }
-}
-
-impl From<ContractDocumentUseSerde> for ContractDocumentUse {
-    fn from(value_use: ContractDocumentUseSerde) -> Self {
-        Self {
-            source_expr: value_use.source_expr,
-            path: value_use.path,
-            kind: value_use.kind,
-            guards: value_use.guards.into_iter().map(Guard::from).collect(),
-            resource: value_use.resource,
-            provenance: value_use.provenance,
+            ContractDocumentGuard::Truthy { path } => Self::Truthy { path },
+            ContractDocumentGuard::Not { path } => Self::Not { path },
+            ContractDocumentGuard::Eq { path, value } => Self::Eq { path, value },
+            ContractDocumentGuard::Or { paths } => Self::Or { paths },
+            ContractDocumentGuard::Range { path } => Self::Range { path },
+            ContractDocumentGuard::With { path } => Self::With { path },
+            ContractDocumentGuard::Default { path } => Self::Default { path },
+            ContractDocumentGuard::TypeIs { path, schema_type } => {
+                Self::TypeIs { path, schema_type }
+            }
         }
     }
 }
@@ -123,23 +85,14 @@ impl From<ContractProvenance> for ContractDocumentProvenance {
 }
 
 /// Provenance-aware serialized inspection row for one observed `.Values.*` path.
-///
-/// This is the Ring-2 DTO and the single exported use-row shape. The semantic
-/// interpreter produces `ContractIr` / `ContractUse` internally; this DTO is
-/// the external inspection/export boundary.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ContractDocumentUse {
-    /// The `.Values.*` sub-path, e.g. `"metrics.enabled"`.
     pub source_expr: String,
-    /// The YAML path where this value is placed in the rendered manifest.
     pub path: YamlPath,
-    /// Whether this produces a scalar or a YAML fragment.
     pub kind: ValueKind,
-    /// Guard conditions (from `if`/`with`/`range`) active when this use appears.
-    pub guards: Vec<Guard>,
-    /// The Kubernetes resource type detected in context, if any.
+    pub guards: Vec<ContractDocumentGuard>,
     pub resource: Option<ResourceRef>,
-    /// Source provenance sites contributing this values use.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub provenance: Vec<ContractDocumentProvenance>,
 }
 
@@ -158,7 +111,10 @@ impl From<ContractUse> for ContractDocumentUse {
             source_expr,
             path,
             kind,
-            guards,
+            guards: guards
+                .into_iter()
+                .map(ContractDocumentGuard::from)
+                .collect(),
             resource,
             provenance: provenance
                 .into_iter()
@@ -168,29 +124,7 @@ impl From<ContractUse> for ContractDocumentUse {
     }
 }
 
-impl Serialize for ContractDocumentUse {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        ContractDocumentUseSerde::from(self.clone()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for ContractDocumentUse {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        ContractDocumentUseSerde::deserialize(deserializer).map(ContractDocumentUse::from)
-    }
-}
-
 /// Versioned serialized contract document for stable inspection and tooling.
-///
-/// This is the current Ring-2 export surface. The in-memory
-/// `ContractProjection` remains the internal/canonical projection type and is
-/// intentionally free to evolve separately from this DTO.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContractDocument {
     pub version: u32,
@@ -217,16 +151,16 @@ impl ContractDocument {
 mod tests {
     use serde_json::json;
 
-    use super::{ContractDocument, ContractDocumentUse};
-    use crate::{Guard, ResourceRef, ValueKind, YamlPath};
+    use super::{ContractDocument, ContractDocumentGuard, ContractDocumentUse};
+    use crate::{ResourceRef, ValueKind, YamlPath};
 
     #[test]
-    fn contract_document_serializes_stable_guard_shape_without_guard_serde_derives() {
+    fn contract_document_serializes_stable_guard_shape() {
         let value_use = ContractDocumentUse {
             source_expr: "kid.enabled".to_string(),
             path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Or {
+            guards: vec![ContractDocumentGuard::Or {
                 paths: vec![
                     "global.kidEnabled".to_string(),
                     "kid.enabled".to_string(),
