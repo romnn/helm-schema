@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use crate::error::CliResult;
-use crate::flatten::{self, FlattenOptions};
+use crate::flatten;
 use crate::output_pipeline::PolicyInputOptions;
 use crate::schema_override;
 
@@ -75,13 +75,7 @@ fn prepare_override_schema(
 ) -> CliResult<Value> {
     if options.reference_mode.bundles_refs() {
         let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
-        return flatten::bundle_refs(
-            schema,
-            override_base,
-            &FlattenOptions {
-                allow_net: options.allow_net,
-            },
-        );
+        return flatten::bundle_refs(schema, override_base, options.fetch_policy);
     }
 
     if !options.reference_mode.fully_inlines_refs() {
@@ -89,13 +83,7 @@ fn prepare_override_schema(
     }
 
     let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
-    flatten::flatten_refs(
-        schema,
-        override_base,
-        &FlattenOptions {
-            allow_net: options.allow_net,
-        },
-    )
+    flatten::flatten_refs(schema, override_base, options.fetch_policy)
 }
 
 fn load_json_file(path: &Path) -> CliResult<Value> {
@@ -126,7 +114,7 @@ mod tests {
     fn policy_options(reference_mode: ReferenceMode) -> PolicyInputOptions {
         PolicyInputOptions {
             reference_mode,
-            allow_net: false,
+            fetch_policy: crate::fetch_policy::FetchPolicy::local_files_only(),
         }
     }
 

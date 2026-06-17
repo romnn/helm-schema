@@ -6,7 +6,8 @@ use tracing::instrument;
 
 use super::ChartContext;
 use crate::error::CliResult;
-use crate::flatten::{self, FlattenOptions};
+use crate::fetch_policy::FetchPolicy;
+use crate::flatten;
 
 pub(crate) const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 
@@ -21,7 +22,7 @@ pub(crate) struct ScopedValuesSchemaConstraint {
 #[instrument(skip_all)]
 pub(crate) fn load_shipped_values_schema_constraints(
     charts: &[ChartContext],
-    allow_net: bool,
+    fetch_policy: FetchPolicy,
 ) -> CliResult<Vec<ScopedValuesSchemaConstraint>> {
     let mut constraints = Vec::new();
 
@@ -55,7 +56,7 @@ pub(crate) fn load_shipped_values_schema_constraints(
         let physical_path = Path::new(schema_path.as_str());
         if physical_path.exists() {
             let base_dir = physical_path.parent().unwrap_or_else(|| Path::new("."));
-            schema = flatten::bundle_refs(schema, base_dir, &FlattenOptions { allow_net })?;
+            schema = flatten::bundle_refs(schema, base_dir, fetch_policy)?;
         }
 
         constraints.push(ScopedValuesSchemaConstraint {

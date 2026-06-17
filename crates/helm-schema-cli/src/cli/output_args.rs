@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::Args;
 
 use helm_schema::output::{
-    JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferenceMode,
+    FetchPolicy, JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferenceMode,
 };
 
 #[derive(Args, Debug, Clone)]
@@ -41,10 +41,10 @@ pub struct OutputArgs {
 }
 
 impl OutputArgs {
-    pub(crate) fn policy_input_options(&self, allow_net: bool) -> PolicyInputOptions {
+    pub(crate) fn policy_input_options(&self, fetch_policy: FetchPolicy) -> PolicyInputOptions {
         PolicyInputOptions {
             reference_mode: ReferenceMode::from_flags(self.keep_refs, self.inline_refs),
-            allow_net,
+            fetch_policy,
         }
     }
 

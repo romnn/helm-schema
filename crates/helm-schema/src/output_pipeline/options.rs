@@ -1,3 +1,5 @@
+use crate::fetch_policy::FetchPolicy;
+
 /// Output-only schema transforms selected by CLI flags.
 ///
 /// These transforms run after inference and override merging. They must not
@@ -14,7 +16,7 @@ pub struct OutputPipelineOptions {
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyInputOptions {
     pub reference_mode: ReferenceMode,
-    pub allow_net: bool,
+    pub fetch_policy: FetchPolicy,
 }
 
 /// How final output should handle JSON Schema references.

@@ -5,7 +5,7 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use helm_schema::diagnostics::DiagnosticSink;
-use helm_schema::output::{PolicyInputOptions, write_schema_json};
+use helm_schema::output::{FetchPolicy, PolicyInputOptions, write_schema_json};
 use helm_schema::{AnalysisSession, CliResult};
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
@@ -98,8 +98,9 @@ fn run_inner(cli: Cli) -> CliResult<()> {
 
     let diagnostics = DiagnosticSink::new();
     let session = AnalysisSession::with_diagnostics(opts, diagnostics.clone());
-    let policy_input_options: PolicyInputOptions =
-        cli.output.policy_input_options(!cli.k8s.offline);
+    let policy_input_options: PolicyInputOptions = cli
+        .output
+        .policy_input_options(FetchPolicy::input_assembly(!cli.k8s.offline));
     let output_options = cli.output.pipeline_options();
     let schema = session.emit_with_policy_paths(
         &cli.override_schema,

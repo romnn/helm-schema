@@ -2,6 +2,7 @@ mod analysis;
 mod chart;
 mod chart_evidence;
 mod error;
+mod fetch_policy;
 pub mod flatten;
 pub mod generation;
 mod output_pipeline;
@@ -18,6 +19,7 @@ pub mod diagnostics {
 }
 
 pub mod output {
+    pub use crate::fetch_policy::FetchPolicy;
     pub use crate::output_pipeline::{
         JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, PolicyInputs, ReferenceMode,
         apply_schema_output_pipeline, load_policy_inputs, write_schema_json,

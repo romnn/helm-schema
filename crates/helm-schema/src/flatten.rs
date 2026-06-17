@@ -17,7 +17,7 @@
 //!
 //! All we own is the [`Retrieve`] implementation that maps URIs back to
 //! their content — files from the chart-local filesystem and URLs over
-//! HTTP via `ureq` (gated by `--offline`).
+//! HTTP via `ureq`, both gated by an explicit fetch policy.
 //!
 //! Self-contained output mode keeps use sites as `$ref`s but re-homes
 //! external documents under root-level `$defs`. For tests, the lower-level
@@ -34,15 +34,7 @@ use serde_json::{Map, Value};
 use tracing::instrument;
 
 use crate::error::{CliError, CliResult};
-
-/// Knobs for reference preparation.
-#[derive(Debug, Clone)]
-pub struct FlattenOptions {
-    /// When true, URL `$ref`s (http/https) are fetched; when false they
-    /// produce [`CliError::RefNetworkDisabled`] rather than silently
-    /// leaving a dangling reference in the output.
-    pub allow_net: bool,
-}
+use crate::fetch_policy::FetchPolicy;
 
 /// Inline every `$ref` in `schema` against the filesystem rooted at
 /// `base_dir`.
@@ -56,12 +48,12 @@ pub struct FlattenOptions {
 ///
 /// Returns [`CliError::Referencing`] for any ref-resolution failure
 /// (file not found, JSON parse error, cycle the underlying resolver
-/// can't break, network ref under `--offline`, …). The underlying error
+/// can't break, network/file refs denied by fetch policy, …). The underlying error
 /// is wrapped with enough detail for an operator to find the bad ref.
 #[instrument(skip_all)]
-pub fn flatten_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) -> CliResult<Value> {
+pub fn flatten_refs(schema: Value, base_dir: &Path, fetch_policy: FetchPolicy) -> CliResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
-    let retriever = FsHttpRetrieve::new(options.allow_net);
+    let retriever = FsHttpRetrieve::new(fetch_policy);
     flatten_with_retriever(schema, &base_uri, retriever)
 }
 
@@ -84,9 +76,9 @@ pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> CliResult<Value>
 /// referenced schema is re-homed under `#/$defs/...` instead of being inlined
 /// at each use site.
 #[instrument(skip_all)]
-pub fn bundle_refs(schema: Value, base_dir: &Path, options: &FlattenOptions) -> CliResult<Value> {
+pub fn bundle_refs(schema: Value, base_dir: &Path, fetch_policy: FetchPolicy) -> CliResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
-    let retriever = FsHttpRetrieve::new(options.allow_net);
+    let retriever = FsHttpRetrieve::new(fetch_policy);
     bundle_with_retriever(schema, &base_uri, retriever)
 }
 
@@ -282,17 +274,17 @@ impl<R: Retrieve> BundleState<R> {
 }
 
 /// Production [`Retrieve`]: file URIs go through `std::fs`; HTTP/HTTPS
-/// URIs go through a single shared `ureq` agent (gated by
-/// `allow_net`).
+/// URIs go through a single shared `ureq` agent, both gated by an explicit
+/// [`FetchPolicy`].
 struct FsHttpRetrieve {
-    allow_net: bool,
+    fetch_policy: FetchPolicy,
     agent: ureq::Agent,
 }
 
 impl FsHttpRetrieve {
-    fn new(allow_net: bool) -> Self {
+    fn new(fetch_policy: FetchPolicy) -> Self {
         Self {
-            allow_net,
+            fetch_policy,
             agent: ureq::Agent::new_with_defaults(),
         }
     }
@@ -306,6 +298,12 @@ impl Retrieve for FsHttpRetrieve {
         let scheme = uri.scheme().as_str().to_ascii_lowercase();
         match scheme.as_str() {
             "file" => {
+                if !self.fetch_policy.allows_file() {
+                    return Err(format!(
+                        "$ref to {uri} but local file access is disabled by fetch policy"
+                    )
+                    .into());
+                }
                 // `file://host/path/to/foo.json` — the path component is
                 // what we want. Empty host is the standard
                 // `file:///path` shape.
@@ -316,9 +314,9 @@ impl Retrieve for FsHttpRetrieve {
                 Ok(value)
             }
             "http" | "https" => {
-                if !self.allow_net {
+                if !self.fetch_policy.allows_network() {
                     return Err(format!(
-                        "$ref to {uri} but network access is disabled (--offline)"
+                        "$ref to {uri} but network access is disabled by fetch policy"
                     )
                     .into());
                 }
@@ -524,3 +522,58 @@ const MAP_OF_SCHEMAS_KEYS: &[&str] = &[
 ];
 
 const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems"];
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use referencing::uri;
+    use serde_json::json;
+
+    use super::*;
+
+    fn temp_path(name: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!(
+            "helm-schema-fetch-policy-{name}-{}",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn file_retrieval_respects_fetch_policy() {
+        let path = temp_path("file");
+        fs::write(&path, r#"{"type":"string"}"#).expect("write test schema");
+        let canonical = path.canonicalize().expect("canonicalize test schema");
+        let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
+
+        let denied = FsHttpRetrieve::new(FetchPolicy::deny_all())
+            .retrieve(&uri)
+            .expect_err("file retrieval should be denied");
+        assert!(
+            denied
+                .to_string()
+                .contains("local file access is disabled by fetch policy"),
+            "unexpected denial error: {denied}"
+        );
+
+        let allowed = FsHttpRetrieve::new(FetchPolicy::local_files_only())
+            .retrieve(&uri)
+            .expect("file retrieval should succeed");
+        assert_eq!(allowed, json!({ "type": "string" }));
+
+        fs::remove_file(&path).expect("remove test schema");
+    }
+
+    #[test]
+    fn network_retrieval_respects_fetch_policy() {
+        let uri = uri::from_str("https://example.com/schema.json").expect("https uri");
+        let err = FsHttpRetrieve::new(FetchPolicy::local_files_only())
+            .retrieve(&uri)
+            .expect_err("network retrieval should be denied");
+        assert!(
+            err.to_string()
+                .contains("network access is disabled by fetch policy"),
+            "unexpected denial error: {err}"
+        );
+    }
+}

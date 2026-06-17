@@ -11,6 +11,7 @@ use crate::analysis::analyze_charts;
 use crate::chart;
 use crate::chart_evidence::ChartTemplateEvidence;
 use crate::error::CliResult;
+use crate::fetch_policy::FetchPolicy;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
     OutputPipelineOptions, PolicyInputOptions, PolicyInputs, apply_schema_output_pipeline,
@@ -68,8 +69,10 @@ impl PreparedSession {
         )?;
         let chart_analysis =
             analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
-        let shipped_values_schema_constraints =
-            chart::load_shipped_values_schema_constraints(charts, opts.provider.allow_net)?;
+        let shipped_values_schema_constraints = chart::load_shipped_values_schema_constraints(
+            charts,
+            FetchPolicy::input_assembly(opts.provider.allow_net),
+        )?;
 
         Ok(Self {
             contract: chart_analysis.contract,
