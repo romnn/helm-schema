@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use helm_schema::{DiagnosticSink, format_diagnostic_json, format_diagnostic_text};
+use helm_schema::diagnostics::{DiagnosticSink, format_diagnostic_json, format_diagnostic_text};
 
 use crate::cli::DiagFormat;
 

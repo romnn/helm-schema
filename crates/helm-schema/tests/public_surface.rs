@@ -1,5 +1,7 @@
 use color_eyre::eyre;
-use helm_schema::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::generation::{GenerateOptions, generate_values_schema_for_chart};
+use helm_schema::output::{JsonOutputFormat, ReferenceMode};
+use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use vfs::VfsPath;
 
 #[test]
@@ -25,6 +27,17 @@ data:
   enabled: "{{ .Values.enabled }}"
 "#,
     )?;
+
+    let versions = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(1)).ordered();
+    assert_eq!(versions, vec!["v1.35.0".to_string(), "v1.34.0".to_string()]);
+    assert!(matches!(
+        JsonOutputFormat::from_compact(false),
+        JsonOutputFormat::Pretty
+    ));
+    assert!(matches!(
+        ReferenceMode::from_flags(false, false),
+        ReferenceMode::SelfContained
+    ));
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
         chart_dir,

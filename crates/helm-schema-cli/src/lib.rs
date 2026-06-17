@@ -4,9 +4,11 @@ mod diag_emit;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
-use helm_schema::{
-    CliResult, DiagnosticSink, GeneratedSchema, OutputPipelineOptions, PolicyInputOptions,
-    apply_schema_output_pipeline, generate_values_schema_for_chart_output, load_policy_inputs,
+use helm_schema::CliResult;
+use helm_schema::diagnostics::DiagnosticSink;
+use helm_schema::generation::{GeneratedSchema, generate_values_schema_for_chart_output};
+use helm_schema::output::{
+    OutputPipelineOptions, PolicyInputOptions, apply_schema_output_pipeline, load_policy_inputs,
     write_schema_json,
 };
 use tracing_subscriber::Layer as _;
@@ -14,10 +16,12 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
 
 pub use cli::Cli;
-pub use helm_schema::{
-    CliError, GenerateOptions, ProviderOptions, flatten, generate_values_schema_for_chart,
-    generate_values_schema_for_chart_with_diagnostics, schema_override,
+pub use helm_schema::generation::{
+    GenerateOptions, generate_values_schema_for_chart,
+    generate_values_schema_for_chart_with_diagnostics,
 };
+pub use helm_schema::provider::ProviderOptions;
+pub use helm_schema::{CliError, flatten, schema_override};
 
 /// Run the CLI.
 ///
