@@ -53,17 +53,13 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn exit_no_output(&mut self);
 
-    fn handle_output_node(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet<'_>,
-    );
+    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, snippet: &ParsedTemplateSnippet);
 
-    fn apply_assignment_side_effects(&mut self, _snippet: &ParsedTemplateSnippet<'_>) -> bool {
+    fn apply_assignment_side_effects(&mut self, _snippet: &ParsedTemplateSnippet) -> bool {
         false
     }
 
-    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan;
+    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan;
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
 

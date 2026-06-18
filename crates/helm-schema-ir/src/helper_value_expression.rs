@@ -28,16 +28,15 @@ use crate::predicate::Predicate;
 use crate::template_expr_cache::ParsedTemplateSnippet;
 
 pub(crate) fn collect_helper_value_expression_from_snippet(
-    snippet: &ParsedTemplateSnippet<'_>,
+    snippet: &ParsedTemplateSnippet,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
-    let text = snippet.text();
     let exprs = snippet.exprs();
 
-    if let Some(assignment) = parse_helper_assignment_from_exprs(text, exprs) {
+    if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
         collect_assignment_bound_helper_values(
             &assignment.variable,
             &assignment.rhs_expr,

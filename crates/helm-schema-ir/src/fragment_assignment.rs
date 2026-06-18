@@ -2,12 +2,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::eval_env::EvalEnv;
 use crate::expr_eval::apply_local_set_mutations_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
+#[cfg(test)]
 fn strip_template_action_wrapping(line: &str) -> Option<String> {
     let after_open = line.trim_start().strip_prefix("{{")?;
     let close_at = after_open.find("}}")?;
@@ -27,18 +27,31 @@ pub(crate) enum AssignmentKind {
 pub(crate) struct ParsedHelperAssignment {
     pub(crate) variable: String,
     pub(crate) kind: AssignmentKind,
+    pub(crate) rhs_expr: TemplateExpr,
+}
+
+#[cfg(test)]
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ParsedHelperAssignmentWithRhs {
+    pub(crate) variable: String,
+    pub(crate) kind: AssignmentKind,
     pub(crate) rhs: String,
     pub(crate) rhs_expr: TemplateExpr,
 }
 
 #[cfg(test)]
-pub(crate) fn parse_helper_assignment(text: &str) -> Option<ParsedHelperAssignment> {
+pub(crate) fn parse_helper_assignment(text: &str) -> Option<ParsedHelperAssignmentWithRhs> {
     use crate::template_expr_cache::parse_expr_text;
-    parse_helper_assignment_from_exprs(text, &parse_expr_text(text))
+    let assignment = parse_helper_assignment_from_exprs(&parse_expr_text(text))?;
+    Some(ParsedHelperAssignmentWithRhs {
+        variable: assignment.variable,
+        kind: assignment.kind,
+        rhs: assignment_rhs_text(text, assignment.kind)?,
+        rhs_expr: assignment.rhs_expr,
+    })
 }
 
 pub(crate) fn parse_helper_assignment_from_exprs(
-    text: &str,
     exprs: &[TemplateExpr],
 ) -> Option<ParsedHelperAssignment> {
     let [expr] = exprs else {
@@ -46,17 +59,16 @@ pub(crate) fn parse_helper_assignment_from_exprs(
     };
     match expr {
         TemplateExpr::VariableDefinition { name, value } => {
-            parsed_assignment_from_expr(text, name, AssignmentKind::Declaration, value)
+            parsed_assignment_from_expr(name, AssignmentKind::Declaration, value)
         }
         TemplateExpr::Assignment { name, value } => {
-            parsed_assignment_from_expr(text, name, AssignmentKind::Assignment, value)
+            parsed_assignment_from_expr(name, AssignmentKind::Assignment, value)
         }
         _ => None,
     }
 }
 
 fn parsed_assignment_from_expr(
-    text: &str,
     name: &str,
     kind: AssignmentKind,
     value: &TemplateExpr,
@@ -64,11 +76,11 @@ fn parsed_assignment_from_expr(
     Some(ParsedHelperAssignment {
         variable: name.trim_start_matches('$').to_string(),
         kind,
-        rhs: assignment_rhs_text(text, kind)?,
         rhs_expr: value.clone(),
     })
 }
 
+#[cfg(test)]
 fn assignment_rhs_text(text: &str, kind: AssignmentKind) -> Option<String> {
     let owned;
     let trimmed = if text.trim_start().starts_with("{{") {
@@ -212,7 +224,7 @@ fn apply_abstract_local_set_mutations_from_exprs(
     local_bindings: &mut HashMap<String, FragmentBinding>,
     current_dot: Option<&FragmentBinding>,
 ) -> bool {
-    let mut env = EvalEnv::from_fragment_context(local_bindings, current_dot);
+    let mut env = crate::eval_env::EvalEnv::from_fragment_context(local_bindings, current_dot);
     let mut applied = false;
     for expr in exprs {
         applied |= apply_local_set_mutations_expr(&expr, &mut env);

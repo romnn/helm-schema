@@ -23,35 +23,34 @@ pub(crate) struct LocalAssignmentPlan {
 }
 
 pub(crate) fn plan_assignment_action(
-    snippet: &ParsedTemplateSnippet<'_>,
+    snippet: &ParsedTemplateSnippet,
     fragment_context: FragmentEvalContext<'_>,
     template_bindings: &HashMap<String, FragmentBinding>,
     root_bindings: &HashMap<String, HelperBinding>,
     current_dot_binding: Option<&HelperBinding>,
 ) -> AssignmentActionPlan {
-    let local_assignment =
-        parse_helper_assignment_from_exprs(snippet.text(), snippet.exprs()).map(|assignment| {
-            let mut locals = template_bindings.clone();
-            for (key, value) in root_bindings {
-                locals.insert(key.clone(), helper_to_fragment_binding(value));
-            }
-            let current_dot = current_dot_binding.map(helper_to_fragment_binding);
-            let mut seen = HashSet::new();
-            let fragment_binding = fragment_binding_from_expr(
-                &assignment.rhs_expr,
-                &locals,
-                current_dot.as_ref(),
-                fragment_context,
-                &mut seen,
-            );
+    let local_assignment = parse_helper_assignment_from_exprs(snippet.exprs()).map(|assignment| {
+        let mut locals = template_bindings.clone();
+        for (key, value) in root_bindings {
+            locals.insert(key.clone(), helper_to_fragment_binding(value));
+        }
+        let current_dot = current_dot_binding.map(helper_to_fragment_binding);
+        let mut seen = HashSet::new();
+        let fragment_binding = fragment_binding_from_expr(
+            &assignment.rhs_expr,
+            &locals,
+            current_dot.as_ref(),
+            fragment_context,
+            &mut seen,
+        );
 
-            LocalAssignmentPlan {
-                variable: assignment.variable,
-                kind: assignment.kind,
-                fragment_binding,
-                rhs_expr: assignment.rhs_expr,
-            }
-        });
+        LocalAssignmentPlan {
+            variable: assignment.variable,
+            kind: assignment.kind,
+            fragment_binding,
+            rhs_expr: assignment.rhs_expr,
+        }
+    });
 
     AssignmentActionPlan {
         get_binding: parse_get_binding_from_exprs(snippet.exprs()),

@@ -101,7 +101,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
 
     fn collect_expression(
         &mut self,
-        snippet: &ParsedTemplateSnippet<'_>,
+        snippet: &ParsedTemplateSnippet,
         relative_path: &YamlPath,
         kind: ValueKind,
     ) {
@@ -364,11 +364,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         self.no_output_depth = self.no_output_depth.saturating_sub(1);
     }
 
-    fn handle_output_node(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet<'_>,
-    ) {
+    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, snippet: &ParsedTemplateSnippet) {
         if self.no_output_depth > 0 {
             return;
         }
@@ -388,7 +384,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         self.collect_expression(snippet, &site_context.path, kind);
     }
 
-    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
+    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet) -> bool {
         let mut seen_set = HashSet::new();
         if apply_local_set_mutations_from_exprs(
             snippet.exprs(),
@@ -404,7 +400,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         true
     }
 
-    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan {
+    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan {
         AssignmentActionPlan {
             get_binding: None,
             local_assignment: None,

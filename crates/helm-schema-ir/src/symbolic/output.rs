@@ -43,7 +43,7 @@ impl SymbolicWalker<'_> {
     pub(super) fn handle_output_node(
         &mut self,
         node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet<'_>,
+        snippet: &ParsedTemplateSnippet,
     ) {
         self.inline_static_file_templates_from_helper_calls(snippet);
 

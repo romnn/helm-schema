@@ -3,21 +3,15 @@ use std::collections::HashMap;
 
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
-pub(crate) struct ParsedTemplateSnippet<'a> {
-    text: &'a str,
+pub(crate) struct ParsedTemplateSnippet {
     exprs: Vec<TemplateExpr>,
 }
 
-impl<'a> ParsedTemplateSnippet<'a> {
-    pub(crate) fn new(text: &'a str) -> Self {
+impl ParsedTemplateSnippet {
+    pub(crate) fn new(text: &str) -> Self {
         Self {
-            text,
             exprs: parse_expr_text(text),
         }
-    }
-
-    pub(crate) fn text(&self) -> &'a str {
-        self.text
     }
 
     pub(crate) fn exprs(&self) -> &[TemplateExpr] {

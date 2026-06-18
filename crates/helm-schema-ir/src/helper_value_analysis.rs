@@ -88,7 +88,7 @@ impl HelperValueRuntime<'_, '_> {
         self.current_dot().map(helper_to_fragment_binding)
     }
 
-    fn collect_expression(&mut self, snippet: &ParsedTemplateSnippet<'_>) {
+    fn collect_expression(&mut self, snippet: &ParsedTemplateSnippet) {
         let current_dot = self.current_dot().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
         let mut state = HelperValuesWalkState {
@@ -309,7 +309,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn handle_output_node(
         &mut self,
         _node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet<'_>,
+        snippet: &ParsedTemplateSnippet,
     ) {
         if self.no_output_depth > 0 {
             return;
@@ -317,12 +317,12 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         self.collect_expression(snippet);
     }
 
-    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
+    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet) -> bool {
         self.collect_expression(snippet);
         true
     }
 
-    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan {
+    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan {
         AssignmentActionPlan {
             get_binding: None,
             local_assignment: None,

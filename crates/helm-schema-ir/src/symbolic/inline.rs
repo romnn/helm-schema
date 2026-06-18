@@ -13,7 +13,7 @@ use super::SymbolicWalker;
 impl SymbolicWalker<'_> {
     pub(super) fn inline_static_file_templates_from_helper_calls(
         &mut self,
-        snippet: &ParsedTemplateSnippet<'_>,
+        snippet: &ParsedTemplateSnippet,
     ) {
         for helper_call in literal_helper_calls_from_exprs(snippet.exprs()) {
             let requests = {
@@ -70,7 +70,7 @@ impl SymbolicWalker<'_> {
         self.contract.append(contract);
     }
 
-    pub(super) fn inline_exact_helper_call(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
+    pub(super) fn inline_exact_helper_call(&mut self, snippet: &ParsedTemplateSnippet) -> bool {
         let Some(plan) = plan_exact_helper_inline_from_exprs(
             snippet.exprs(),
             self.defines,

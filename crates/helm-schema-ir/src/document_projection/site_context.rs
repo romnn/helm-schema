@@ -20,7 +20,7 @@ pub(crate) fn collect_document_site_context(
     source: &str,
     tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
-    snippet: &ParsedTemplateSnippet<'_>,
+    snippet: &ParsedTemplateSnippet,
 ) -> DocumentSiteContext {
     let output_action = analyze_output_action(source, node, snippet);
     let kind = if output_action.is_fragment {
@@ -68,7 +68,7 @@ struct OutputActionShape {
 fn analyze_output_action(
     source: &str,
     node: tree_sitter::Node<'_>,
-    snippet: &ParsedTemplateSnippet<'_>,
+    snippet: &ParsedTemplateSnippet,
 ) -> OutputActionShape {
     if node.kind() == "template_action" {
         return output_action_shape_from_exprs(snippet.exprs());

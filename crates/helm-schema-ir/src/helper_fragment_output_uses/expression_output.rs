@@ -15,7 +15,7 @@ use crate::helper_output_projection::{
     HelperOutputExprContext, collect_fragment_binding_output_uses,
     collect_helper_binding_output_uses, collect_helper_binding_output_uses_from_expr,
     expression_output_use_is_keyed_map_projection, helper_output_meta_with_predicates,
-    push_helper_fragment_output, static_yaml_fragment_output_path,
+    push_helper_fragment_output, static_yaml_fragment_output_path_from_exprs,
 };
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_summary_projection::helper_summary_dependency_paths;
@@ -42,7 +42,7 @@ struct FragmentExpressionOutputScope<'a> {
 }
 
 pub(super) fn collect_bound_fragment_output_uses_from_snippet(
-    snippet: &ParsedTemplateSnippet<'_>,
+    snippet: &ParsedTemplateSnippet,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
@@ -51,7 +51,6 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
-    let text = snippet.text();
     let exprs = snippet.exprs();
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations_from_exprs(
@@ -64,7 +63,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
         return;
     }
 
-    if let Some(assignment) = parse_helper_assignment_from_exprs(text, exprs) {
+    if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
         collect_bound_fragment_output_assignment_uses(
             &assignment.variable,
             &assignment.rhs_expr,
@@ -81,7 +80,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
     } else {
         ValueKind::Scalar
     };
-    let output_path = static_yaml_fragment_output_path(text)
+    let output_path = static_yaml_fragment_output_path_from_exprs(exprs)
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
     let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);

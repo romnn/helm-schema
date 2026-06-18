@@ -115,15 +115,11 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         self.no_output_depth = self.no_output_depth.saturating_sub(1);
     }
 
-    fn handle_output_node(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet<'_>,
-    ) {
+    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, snippet: &ParsedTemplateSnippet) {
         SymbolicWalker::handle_output_node(self, node, snippet);
     }
 
-    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan {
+    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan {
         let fragment_context = self.fragment_eval_context();
         let current_dot = self.current_dot_binding();
         plan_assignment_action(

@@ -250,7 +250,7 @@ impl<'a> SymbolicWalker<'a> {
 
     fn summarize_bound_helper_calls_in_snippet(
         &self,
-        snippet: &ParsedTemplateSnippet<'_>,
+        snippet: &ParsedTemplateSnippet,
     ) -> HelperSummary {
         self.ir_context
             .inner
