@@ -30,50 +30,53 @@ pub(super) fn append_document_helper_contract_uses(
         }
         let has_rendered_descendant =
             output_path::values_path_has_descendant(value, &helper_rendered_sources);
-        let extra_guards = meta.compatibility_guards(value);
-        if only_scalar_helper_outputs
-            && site.can_project_scalar_helper_to_caller_path()
-            && !has_rendered_descendant
-        {
-            contract.push(site.contract_use_with_extra_provenance(
-                context,
-                value.clone(),
-                site.path().clone(),
-                site.kind(),
-                extra_guards,
-                &meta.provenance,
-            ));
-        } else {
-            contract.push(context.pathless_contract_use_with_extra_provenance(
-                value.clone(),
-                ValueKind::Scalar,
-                &extra_guards,
-                &meta.provenance,
-            ));
+        for extra_guards in meta.compatibility_guard_sets(value) {
+            if only_scalar_helper_outputs
+                && site.can_project_scalar_helper_to_caller_path()
+                && !has_rendered_descendant
+            {
+                contract.push(site.contract_use_with_extra_provenance(
+                    context,
+                    value.clone(),
+                    site.path().clone(),
+                    site.kind(),
+                    extra_guards,
+                    &meta.provenance,
+                ));
+            } else {
+                contract.push(context.pathless_contract_use_with_extra_provenance(
+                    value.clone(),
+                    ValueKind::Scalar,
+                    &extra_guards,
+                    &meta.provenance,
+                ));
+            }
         }
     }
 
     for output in helper.fragment_output_uses {
-        let extra_guards = output.meta.compatibility_guards(&output.source_expr);
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
-        if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
-            let emit_path = output_path::append_relative_path(site.path(), &output.relative_path);
-            contract.push(site.contract_use_with_extra_provenance(
-                context,
-                output.source_expr,
-                emit_path,
-                output.kind,
-                extra_guards,
-                &output.meta.provenance,
-            ));
-        } else {
-            contract.push(context.pathless_contract_use_with_extra_provenance(
-                output.source_expr,
-                output.kind,
-                &extra_guards,
-                &output.meta.provenance,
-            ));
+        for extra_guards in output.meta.compatibility_guard_sets(&output.source_expr) {
+            if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
+                let emit_path =
+                    output_path::append_relative_path(site.path(), &output.relative_path);
+                contract.push(site.contract_use_with_extra_provenance(
+                    context,
+                    output.source_expr.clone(),
+                    emit_path,
+                    output.kind,
+                    extra_guards,
+                    &output.meta.provenance,
+                ));
+            } else {
+                contract.push(context.pathless_contract_use_with_extra_provenance(
+                    output.source_expr.clone(),
+                    output.kind,
+                    &extra_guards,
+                    &output.meta.provenance,
+                ));
+            }
         }
     }
 
@@ -97,13 +100,14 @@ pub(super) fn append_document_helper_contract_uses(
     }
 
     for (value, meta) in helper.dependency_values {
-        let extra_guards = meta.compatibility_guards(&value);
-        contract.push(context.pathless_contract_use_with_extra_provenance(
-            value,
-            ValueKind::Scalar,
-            &extra_guards,
-            &meta.provenance,
-        ));
+        for extra_guards in meta.compatibility_guard_sets(&value) {
+            contract.push(context.pathless_contract_use_with_extra_provenance(
+                value.clone(),
+                ValueKind::Scalar,
+                &extra_guards,
+                &meta.provenance,
+            ));
+        }
     }
 
     for value in helper.guard_values {

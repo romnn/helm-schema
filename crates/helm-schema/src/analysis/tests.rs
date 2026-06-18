@@ -76,17 +76,94 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     assert!(
         collection
             .contract_schema_signals
-            .declared_type_hints_by_value_path
+            .type_hints_by_value_path
             .get(path)
             .is_some_and(|schema_types| schema_types.contains("string")),
-        "expected structural contract type hint for {path}; contract_hints={:?}; fallback_hints={:?}; reachable={:?}",
-        collection
-            .contract_schema_signals
-            .declared_type_hints_by_value_path,
-        collection.template_evidence.type_hints,
-        collection
-            .template_evidence
-            .reachable_helpers_from_chart(&Vec::<String>::new()),
+        "expected structural contract type hint for {path}; contract_hints={:?}",
+        collection.contract_schema_signals.type_hints_by_value_path,
+    );
+
+    Ok(())
+}
+
+#[test]
+fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_guards()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("signoz-signoz");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let projection = collection.contract.clone().project();
+    let path = "clickhouse.clickhouseOperator.serviceAccount.name";
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == path)
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
+        uses.iter().any(|use_| {
+            use_.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    Guard::Truthy { path }
+                    if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                )
+            })
+        }),
+        "expected a create=true helper-backed branch for {path}; uses={uses:#?}"
+    );
+    assert!(
+        uses.iter().any(|use_| {
+            use_.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    Guard::Not { path }
+                    if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                )
+            })
+        }),
+        "expected a create=false branch for {path}; uses={uses:#?}"
+    );
+    let overlays = collection
+        .contract_schema_signals
+        .conditional_path_overlays
+        .iter()
+        .filter(|overlay| overlay.target_value_path == path)
+        .cloned()
+        .collect::<Vec<_>>();
+    assert!(
+        overlays.iter().any(|overlay| {
+            overlay.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    helm_schema_engine::ConditionalGuard::Truthy { path }
+                    if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                )
+            })
+        }),
+        "expected a create=true conditional overlay for {path}; overlays={overlays:#?}"
+    );
+    assert!(
+        overlays.iter().any(|overlay| {
+            overlay.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    helm_schema_engine::ConditionalGuard::Not(inner)
+                    if matches!(
+                        inner.as_ref(),
+                        helm_schema_engine::ConditionalGuard::Truthy { path }
+                        if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                    )
+                )
+            })
+        }),
+        "expected a create=false conditional overlay for {path}; overlays={overlays:#?}"
     );
 
     Ok(())
@@ -173,15 +250,11 @@ fn transitive_library_helper_default_flows_into_required_inference_signals()
 
     assert!(
         collection
-            .contract_schema_signals
             .required_inference_signals
             .default_fallback_paths
             .contains("app.nameOverride"),
         "transitive library helper default should become a structural contract signal, got fallback_paths={:?}; uses={name_override_uses:#?}",
-        collection
-            .contract_schema_signals
-            .required_inference_signals
-            .default_fallback_paths,
+        collection.required_inference_signals.default_fallback_paths,
     );
 
     Ok(())

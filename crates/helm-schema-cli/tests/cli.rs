@@ -33,6 +33,12 @@ fn schema_accepts_type(schema: &serde_json::Value, schema_type: &str) -> bool {
             })
 }
 
+fn schema_validates_instance(schema: &serde_json::Value, instance: &serde_json::Value) -> bool {
+    jsonschema::validator_for(schema)
+        .expect("schema validator")
+        .is_valid(instance)
+}
+
 #[test]
 fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     let cli =
@@ -439,17 +445,37 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_ey
     let schema = generate_values_schema_for_chart(&opts)
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
-    let name = schema
-        .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
-        .ok_or_else(|| eyre!("missing alertmanager.serviceAccount.name schema: {schema}"))?;
-
     assert!(
-        schema_accepts_type(name, "null"),
-        "defaulted helper serviceAccount.name should allow null without provider schemas, got {name}"
+        schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "name": "alertmanager",
+                    "serviceAccount": {
+                        "create": true,
+                        "name": null
+                    }
+                }
+            })
+        ),
+        "defaulted helper serviceAccount.name should validate null without provider schemas: {schema}"
     );
     assert!(
-        schema_accepts_type(name, "string"),
-        "reachable helper default should type serviceAccount.name as string without provider schemas, got {name}"
+        schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "name": "alertmanager",
+                    "serviceAccount": {
+                        "create": false,
+                        "name": null
+                    }
+                }
+            })
+        ),
+        "helper else-branch default should also validate null without provider schemas: {schema}"
     );
 
     Ok(())

@@ -9,6 +9,7 @@ use crate::expr_eval::{eval_expr, eval_expr_value};
 use crate::expr_function_catalog::{
     is_provenance_preserving_function, is_string_transform_function, type_is_schema_type,
 };
+use crate::literal_schema_type::expression_schema_type;
 use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
 use crate::template_expr_analysis::is_merge_function;
 
@@ -26,6 +27,9 @@ pub(crate) fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) ->
             let mut effects = fallback.effects;
             effects.merge(primary.effects);
             effects.add_default_paths(primary_paths.clone());
+            if let Some(schema_type) = expression_schema_type(&args[0]) {
+                effects.add_type_hints(primary_paths, schema_type);
+            }
             EvalResult::with_effects(
                 AbstractValue::choice(
                     [primary.value, fallback.value]

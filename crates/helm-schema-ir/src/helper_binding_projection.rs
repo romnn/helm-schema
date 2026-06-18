@@ -121,7 +121,9 @@ mod tests {
     #[test]
     fn helper_binding_projection_preserves_structured_output_metadata() {
         let meta = HelperOutputMeta {
-            predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+                "enabled".to_string(),
+            )])]),
             defaulted: true,
             provenance: Vec::new(),
         };

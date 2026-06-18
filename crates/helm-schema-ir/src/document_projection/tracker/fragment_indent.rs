@@ -1,8 +1,5 @@
 use helm_schema_ast::{Literal, TemplateExpr};
 
-#[cfg(test)]
-use crate::template_expr_cache::parse_expr_text;
-
 pub(super) fn fragment_indent_width_from_exprs(exprs: &[TemplateExpr]) -> Option<usize> {
     exprs.iter().rev().find_map(call_indent_width)
 }
@@ -22,9 +19,4 @@ fn call_indent_width(expr: &TemplateExpr) -> Option<usize> {
         TemplateExpr::Pipeline(stages) => stages.iter().rev().find_map(call_indent_width),
         _ => None,
     }
-}
-
-#[cfg(test)]
-pub(super) fn fragment_indent_width(text: &str) -> Option<usize> {
-    fragment_indent_width_from_exprs(&parse_expr_text(text))
 }

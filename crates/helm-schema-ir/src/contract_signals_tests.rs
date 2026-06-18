@@ -361,6 +361,40 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
 }
 
 #[test]
+fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boolean_guards() {
+    let signals = signals_for(vec![ContractUse::new(
+        "serviceAccount.name".to_string(),
+        YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        ValueKind::Scalar,
+        vec![
+            Guard::Truthy {
+                path: "serviceAccount.create".to_string(),
+            },
+            Guard::Default {
+                path: "serviceAccount.name".to_string(),
+            },
+        ],
+        None,
+    )]);
+
+    let overlay = signals
+        .conditional_path_overlays
+        .first()
+        .expect("expected conditional overlay");
+    assert_eq!(
+        overlay.guards,
+        vec![ConditionalGuard::Truthy {
+            path: "serviceAccount.create".to_string(),
+        }],
+        "self-default guards should not suppress an otherwise lowerable boolean branch",
+    );
+    assert!(
+        overlay.value_path_facts.is_nullable,
+        "branch-local nullability should still reflect the self-defaulted render use",
+    );
+}
+
+#[test]
 fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() {
     let signals = signals_for(vec![
         ContractUse::new(
@@ -400,6 +434,14 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
                 path: "second.enabled".to_string(),
             },
         ])],
+    );
+    assert!(
+        signals
+            .conditional_path_overlays
+            .iter()
+            .all(|overlay| overlay.preserve_base_schema),
+        "single-sided guarded branches must keep their base schema because the complementary branch is not structurally covered: {:?}",
+        signals.conditional_path_overlays
     );
 }
 
@@ -515,6 +557,113 @@ fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditio
 }
 
 #[test]
+fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_partition() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![
+                Guard::Truthy {
+                    path: "feature.enabled".to_string(),
+                },
+                Guard::Truthy {
+                    path: "app.enabled".to_string(),
+                },
+            ],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![
+                Guard::Truthy {
+                    path: "feature.enabled".to_string(),
+                },
+                Guard::Not {
+                    path: "app.enabled".to_string(),
+                },
+            ],
+            None,
+        ),
+    ]);
+
+    assert_eq!(
+        signals.conditional_path_overlays.len(),
+        2,
+        "complementary guarded branches should both survive: {:?}",
+        signals.conditional_path_overlays
+    );
+    assert!(
+        signals
+            .conditional_path_overlays
+            .iter()
+            .all(|overlay| !overlay.preserve_base_schema),
+        "a complete truthy/not partition should be allowed to replace the base schema entirely: {:?}",
+        signals.conditional_path_overlays
+    );
+}
+
+#[test]
+fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_prefix_branch() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![
+                Guard::Truthy {
+                    path: "feature.enabled".to_string(),
+                },
+                Guard::Truthy {
+                    path: "app.enabled".to_string(),
+                },
+            ],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![
+                Guard::Truthy {
+                    path: "feature.enabled".to_string(),
+                },
+                Guard::Not {
+                    path: "app.enabled".to_string(),
+                },
+            ],
+            None,
+        ),
+    ]);
+
+    assert_eq!(
+        signals.conditional_path_overlays.len(),
+        3,
+        "the broad shared branch and the complementary sub-branches should all survive: {:?}",
+        signals.conditional_path_overlays
+    );
+    assert!(
+        signals
+            .conditional_path_overlays
+            .iter()
+            .all(|overlay| !overlay.preserve_base_schema),
+        "a shared broad branch plus a truthy/not partition should still replace the base schema: {:?}",
+        signals.conditional_path_overlays
+    );
+}
+
+#[test]
 fn contract_ir_derives_schema_signals_without_projection_detour() {
     let resource = ResourceRef {
         api_version: "v1".to_string(),
@@ -566,7 +715,7 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
 
 #[test]
 fn contract_ir_required_inference_signals_are_typed_header_facts() {
-    let signals = signals_for(vec![
+    let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(
             "feature.enabled".to_string(),
             YamlPath(Vec::new()),
@@ -623,7 +772,7 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
             None,
         ),
     ])
-    .required_inference_signals;
+    .into_required_inference_signals();
 
     assert_eq!(
         signals.positive_header_paths,
@@ -645,7 +794,7 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
 
 #[test]
 fn contract_ir_required_inference_signals_ignore_pathless_scalar_non_headers() {
-    let signals = signals_for(vec![
+    let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(
             "rendered.value".to_string(),
             YamlPath(Vec::new()),
@@ -663,7 +812,7 @@ fn contract_ir_required_inference_signals_ignore_pathless_scalar_non_headers() {
             None,
         ),
     ])
-    .required_inference_signals;
+    .into_required_inference_signals();
 
     assert!(
         signals.positive_header_paths.is_empty(),

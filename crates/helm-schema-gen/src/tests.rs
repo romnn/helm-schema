@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use indoc::indoc;
 use serde_json::Value;
@@ -11,7 +11,7 @@ use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_core::{ProviderOrigin, ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, Guard, ProviderSchemaUse, ResourceRef,
-    SymbolicIrContext, ValueKind, YamlPath, extract_default_type_hints,
+    SymbolicIrContext, ValueKind, YamlPath,
 };
 use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
@@ -41,12 +41,11 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
 }
 
-fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
-    let mut hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-    for (path, schema) in extract_default_type_hints(src) {
-        hints.entry(path).or_default().push(schema);
+fn with_type_hints(mut contract: ContractIr, hints: &[(&str, &str)]) -> ContractIr {
+    for (path, schema_type) in hints {
+        contract.add_type_hint(*path, *schema_type);
     }
-    hints
+    contract
 }
 
 trait SchemaSignalSource {
@@ -99,17 +98,14 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
     )
 }
 
-fn schema_for_values_yaml_and_hints(
-    source: impl SchemaSignalSource,
-    values_yaml: Option<&str>,
-    type_hints: &BTreeMap<String, Vec<Value>>,
-) -> Value {
-    let schema_signals = source.into_schema_signals();
-    generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider())
-            .with_values_yaml(values_yaml)
-            .with_type_hints(type_hints),
-    )
+fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
+    jsonschema::validator_for(schema)
+        .expect("schema validator")
+        .is_valid(instance)
+}
+
+fn type_hints_for(source: impl SchemaSignalSource) -> BTreeMap<String, BTreeSet<String>> {
+    source.into_schema_signals().type_hints_by_value_path
 }
 
 #[test]
@@ -127,13 +123,11 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         }),
         provenance: Vec::new(),
     }];
-    let mut type_hints = BTreeMap::new();
-    type_hints.insert(
-        "image.tag".to_string(),
-        vec![serde_json::json!({ "type": "string" })],
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(uses),
+        &[("image.tag", "string")],
     );
-
-    let schema = schema_for_values_yaml_and_hints(&uses, Some("image: {}\n"), &type_hints);
+    let schema = schema_for_values_yaml(&contract, Some("image: {}\n"));
     let variants = schema
         .pointer("/properties/image/anyOf")
         .and_then(Value::as_array)
@@ -821,8 +815,7 @@ fn step2_default_prefix_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema =
-        schema_for_values_yaml_and_hints(&parse_ir(src), Some(values_yaml), &collect_hints(src));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
     let variants = name
@@ -847,8 +840,7 @@ fn step2_default_pipeline_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema =
-        schema_for_values_yaml_and_hints(&parse_ir(src), Some(values_yaml), &collect_hints(src));
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
     let variants = name
@@ -863,6 +855,18 @@ fn step2_default_pipeline_string_literal_is_nullable_string() {
     );
 }
 
+#[test]
+fn step2_default_after_intervening_required_call_no_hint() {
+    let src = indoc! {r#"
+        name: {{ .Values.name | required "name is required" | default "fallback" }}
+    "#};
+    let hints = type_hints_for(&parse_ir(src));
+    assert!(
+        hints.is_empty(),
+        "default after required must not type-hint the original values path, got {hints:?}"
+    );
+}
+
 /// Step 2 negative: `default $someVar .Values.x` with a non-literal first
 /// argument emits no type hint. Schema is unchanged.
 #[test]
@@ -872,7 +876,7 @@ fn step2_default_non_literal_first_arg_no_hint() {
         {{- $fallback := "x" -}}
         name: {{ default $fallback .Values.name }}
     "#};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     assert!(hints.is_empty(), "expected no hints, got {hints:?}");
 }
 
@@ -882,12 +886,10 @@ fn step2_default_integer_literal() {
     let src = indoc! {r"
         replicas: {{ default 5 .Values.replicas }}
     "};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     let schemas = hints.get("replicas").expect("replicas hint present");
     assert!(
-        schemas
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("integer")),
+        schemas.contains("integer"),
         "expected integer hint, got {schemas:?}"
     );
 }
@@ -1098,31 +1100,32 @@ fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
 
 #[test]
 fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
-    let schema_signals = schema_signals_for(vec![ContractUse {
-        source_expr: "feature.host".to_string(),
-        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
-        kind: ValueKind::Scalar,
-        guards: vec![Guard::Truthy {
-            path: "feature.enabled".to_string(),
-        }],
-        resource: None,
-        provenance: Vec::new(),
-    }]);
-    let type_hints = BTreeMap::from([(
-        "feature.host".to_string(),
-        vec![serde_json::json!({ "type": "string" })],
-    )]);
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &NoopProvider)
-            .with_values_yaml(Some("feature:\n  enabled: false\n"))
-            .with_type_hints(&type_hints),
+            .with_values_yaml(Some("feature:\n  enabled: false\n")),
     );
 
-    assert_eq!(
-        schema.pointer("/properties/feature/properties/host"),
-        Some(&serde_json::json!({})),
-        "conditionally lowered paths should keep a wide placeholder on the base path: {schema}"
+    let base_host = schema
+        .pointer("/properties/feature/properties/host")
+        .expect("feature.host base schema");
+    assert!(
+        permits_type(base_host, "string"),
+        "conditionally lowered paths should keep their string evidence on the base path when no complementary branch was proven: {schema}"
     );
     assert_eq!(
         schema.pointer("/properties/feature/allOf/0/if/properties/enabled/const"),
@@ -1142,25 +1145,24 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
 
 #[test]
 fn negated_boolean_guard_lowers_to_not_condition() {
-    let schema_signals = schema_signals_for(vec![ContractUse {
-        source_expr: "feature.host".to_string(),
-        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
-        kind: ValueKind::Scalar,
-        guards: vec![Guard::Not {
-            path: "feature.enabled".to_string(),
-        }],
-        resource: None,
-        provenance: Vec::new(),
-    }]);
-    let type_hints = BTreeMap::from([(
-        "feature.host".to_string(),
-        vec![serde_json::json!({ "type": "string" })],
-    )]);
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Not {
+                path: "feature.enabled".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &NoopProvider)
-            .with_values_yaml(Some("feature:\n  enabled: false\n"))
-            .with_type_hints(&type_hints),
+            .with_values_yaml(Some("feature:\n  enabled: false\n")),
     );
 
     assert_eq!(
@@ -1177,30 +1179,28 @@ fn negated_boolean_guard_lowers_to_not_condition() {
 
 #[test]
 fn or_boolean_guards_lower_to_any_of_condition() {
-    let schema_signals = schema_signals_for(vec![ContractUse {
-        source_expr: "feature.host".to_string(),
-        path: YamlPath(vec!["data".to_string(), "host".to_string()]),
-        kind: ValueKind::Scalar,
-        guards: vec![Guard::Or {
-            paths: vec![
-                "feature.enabled".to_string(),
-                "global.featureEnabled".to_string(),
-            ],
-        }],
-        resource: None,
-        provenance: Vec::new(),
-    }]);
-    let type_hints = BTreeMap::from([(
-        "feature.host".to_string(),
-        vec![serde_json::json!({ "type": "string" })],
-    )]);
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Or {
+                paths: vec![
+                    "feature.enabled".to_string(),
+                    "global.featureEnabled".to_string(),
+                ],
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
-            .with_values_yaml(Some(
-                "feature:\n  enabled: false\nglobal:\n  featureEnabled: false\n",
-            ))
-            .with_type_hints(&type_hints),
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(
+            "feature:\n  enabled: false\nglobal:\n  featureEnabled: false\n",
+        )),
     );
 
     assert_eq!(
@@ -1252,10 +1252,16 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             .with_values_yaml(Some("mode: name\nfeature:\n  value: example\n")),
     );
 
-    assert_eq!(
-        schema.pointer("/properties/feature/properties/value"),
-        Some(&serde_json::json!({})),
-        "conditionally-lowered multi-branch paths should keep a wide base placeholder: {schema}"
+    let base_value = schema
+        .pointer("/properties/feature/properties/value")
+        .expect("feature.value base schema");
+    assert!(
+        permits_type(base_value, "string"),
+        "multi-branch paths should keep their scalar evidence on the base path: {schema}"
+    );
+    assert!(
+        permits_type(base_value, "object"),
+        "multi-branch paths should also keep their object/string-map evidence on the base path: {schema}"
     );
 
     let branches = schema
@@ -1638,6 +1644,100 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
             "wrapper helper should preserve image.{property} output, got {image}; ir={ir:?}"
         );
     }
+}
+
+#[test]
+fn wrapper_helper_digest_branch_keeps_explicit_null_nullable() {
+    let helpers = indoc! {r#"
+        {{- define "common.images.image" -}}
+        {{- $registryName := .imageRoot.registry -}}
+        {{- $repositoryName := .imageRoot.repository -}}
+        {{- $separator := ":" -}}
+        {{- $termination := .imageRoot.tag | toString -}}
+        {{- if .imageRoot.digest }}
+          {{- $separator = "@" -}}
+          {{- $termination = .imageRoot.digest | toString -}}
+        {{- end -}}
+        {{- if $registryName }}
+          {{- printf "%s/%s%s%s" $registryName $repositoryName $separator $termination -}}
+        {{- else -}}
+          {{- printf "%s%s%s" $repositoryName $separator $termination -}}
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "app.image" -}}
+        {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              containers:
+                - name: app
+                  image: {{ template "app.image" . }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          registry: docker.io
+          repository: example/app
+          tag: latest
+          digest:
+        global: {}
+    "};
+
+    let mut define_index = DefineIndex::new();
+    define_index
+        .add_source(&TreeSitterParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrContext::new(&define_index).generate_contract_ir(src, &define_index);
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
+
+    let digest = schema
+        .pointer("/properties/image/properties/digest")
+        .expect("image.digest present");
+    assert!(
+        permits_type(digest, "string"),
+        "digest should keep string evidence from the helper image renderer, got {digest}; ir={ir:?}"
+    );
+    assert!(
+        permits_null(digest),
+        "digest should preserve the explicit null default through the helper-local assignment chain, got {digest}; ir={ir:?}"
+    );
+}
+
+#[test]
+fn selector_chain_and_indexed_default_do_not_leak_parent_object_as_scalar_use() {
+    let src = indoc! {r#"
+        {{- $airtypeVersion := ((.Values.appVersions).airtype).global -}}
+        {{- $apiVersion := index ((.Values.appVersions).airtype | default dict ) "api" -}}
+        {{- $appVersion := $apiVersion | default $airtypeVersion | default .Chart.AppVersion -}}
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          version: {{ $appVersion | quote }}
+    "#};
+    let ir = parse_ir(src).project();
+    let uses = ir
+        .uses()
+        .iter()
+        .map(|use_| use_.source_expr.as_str())
+        .collect::<Vec<_>>();
+
+    assert!(
+        uses.contains(&"appVersions.airtype.global"),
+        "expected descendant appVersions.airtype.global use, got {uses:?}"
+    );
+    assert!(
+        uses.contains(&"appVersions.airtype.api"),
+        "expected descendant appVersions.airtype.api use, got {uses:?}"
+    );
+    assert!(
+        !uses.contains(&"appVersions.airtype"),
+        "parent object should not be collapsed into a scalar render use, got {uses:?}"
+    );
 }
 
 /// Fragment inputs that flow into K8s label/annotation maps should keep the
@@ -3324,17 +3424,169 @@ fn helper_defaulted_root_service_account_name_allows_null() {
     "#};
 
     let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
-
     let name = schema
         .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
         .expect("alertmanager.serviceAccount.name present");
     assert!(
         schema_contains_type(name, "null"),
-        "defaulted root serviceAccount.name should allow null, got {name}"
+        "defaulted helper serviceAccount.name must stay null-tolerant, got {name}; schema={schema}"
     );
     assert!(
         schema_contains_type(name, "string"),
-        "defaulted root serviceAccount.name should stay string-like, got {name}"
+        "defaulted helper serviceAccount.name must stay string-like, got {name}; schema={schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "name": "alertmanager",
+                    "serviceAccount": {
+                        "create": true,
+                        "name": null
+                    }
+                }
+            })
+        ),
+        "create=true defaulted serviceAccount.name should validate through branch-aware schema: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "name": "alertmanager",
+                    "serviceAccount": {
+                        "create": false,
+                        "name": null
+                    }
+                }
+            })
+        ),
+        "create=false defaulted serviceAccount.name should also validate through the else branch: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "name": "alertmanager",
+                    "serviceAccount": {
+                        "create": false,
+                        "name": 7
+                    }
+                }
+            })
+        ),
+        "serviceAccount.name should not collapse to unconstrained schema on the else branch: {schema}"
+    );
+}
+
+#[test]
+fn helper_default_with_nonliteral_string_fallback_stays_nullable_string() {
+    let helpers = indoc! {r#"
+        {{- define "service.fullname" -}}
+        {{- printf "%s-%s" .Release.Name (.Values.service.name | default "svc") | trunc 63 | trimSuffix "-" -}}
+        {{- end -}}
+        {{- define "service.accountName" -}}
+        {{ default (include "service.fullname" .) .Values.serviceAccount.name }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: {{ include "service.accountName" . }}
+    "#};
+    let values_yaml = indoc! {r#"
+        service:
+          name:
+        serviceAccount:
+          name:
+    "#};
+
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let name = schema
+        .pointer("/properties/serviceAccount/properties/name")
+        .expect("serviceAccount.name present");
+    assert!(
+        schema_contains_type(name, "null"),
+        "helper default should preserve the explicit null default, got {name}"
+    );
+    assert!(
+        schema_contains_type(name, "string"),
+        "non-literal include/printf fallback should still infer string, got {name}"
+    );
+}
+
+#[test]
+fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![
+            ContractUse {
+                source_expr: "serviceAccount.name".to_string(),
+                path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+                kind: ValueKind::Scalar,
+                guards: vec![
+                    Guard::Truthy {
+                        path: "serviceAccount.create".to_string(),
+                    },
+                    Guard::Default {
+                        path: "serviceAccount.name".to_string(),
+                    },
+                ],
+                resource: None,
+                provenance: Vec::new(),
+            },
+            ContractUse {
+                source_expr: "serviceAccount.name".to_string(),
+                path: YamlPath(vec![
+                    "spec".to_string(),
+                    "template".to_string(),
+                    "spec".to_string(),
+                    "serviceAccountName".to_string(),
+                ]),
+                kind: ValueKind::Scalar,
+                guards: vec![Guard::Not {
+                    path: "serviceAccount.create".to_string(),
+                }],
+                resource: None,
+                provenance: Vec::new(),
+            },
+        ]),
+        &[("serviceAccount.name", "string")],
+    );
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider)
+            .with_values_yaml(Some("serviceAccount:\n  create: true\n  name:\n")),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAccount": {
+                    "create": true,
+                    "name": null
+                }
+            })
+        ),
+        "create=true branch should preserve null-tolerant helper default semantics: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAccount": {
+                    "create": false,
+                    "name": null
+                }
+            })
+        ),
+        "create=false branch should keep the raw string requirement and reject null: {schema}"
     );
 }
 
@@ -4297,12 +4549,10 @@ fn step2_default_negative_integer_literal() {
     let src = indoc! {r"
         replicas: {{ default -3 .Values.replicas }}
     "};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     let schemas = hints.get("replicas").expect("replicas hint present");
     assert!(
-        schemas
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("integer")),
+        schemas.contains("integer"),
         "expected integer hint for negative literal, got {schemas:?}"
     );
 }
@@ -4318,7 +4568,7 @@ fn step2_default_rooted_values_paths_recognised() {
         alias: {{ default "main" $root.Values.alertmanager.aliasOverride }}
         {{- end }}
     "#};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     assert!(
         hints.contains_key("alertmanager.nameOverride"),
         "expected hint for $.Values.alertmanager.nameOverride, got {hints:?}"
@@ -4338,7 +4588,7 @@ fn step2_default_in_yaml_comment_no_hint() {
         # example: {{ default "x" .Values.exampleName }}
         name: actual
     "#};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     assert!(
         hints.is_empty(),
         "YAML comments must not produce hints, got {hints:?}"
@@ -4353,7 +4603,7 @@ fn step2_default_in_helm_comment_no_hint() {
         {{/* default "x" .Values.exampleName */}}
         name: actual
     "#};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     assert!(
         hints.is_empty(),
         "Helm comments must not produce hints, got {hints:?}"
@@ -4369,7 +4619,7 @@ fn step2_default_in_string_literal_no_hint() {
     let src = indoc! {r#"
         docs: {{- "see: default 5 .Values.example" | quote }}
     "#};
-    let hints = collect_hints(src);
+    let hints = type_hints_for(&parse_ir(src));
     assert!(
         hints.is_empty(),
         "Go-string-literal text must not produce hints, got {hints:?}"
@@ -4432,7 +4682,12 @@ fn step2_default_in_helper_template_is_extracted() {
         {{- end -}}
         {{- end -}}
     "#};
-    let hints = collect_hints(helper_src);
+    let hints = type_hints_for(parse_ir_with_helpers(
+        r#"
+        name: {{ include "test.serviceAccountName" . }}
+        "#,
+        helper_src,
+    ));
     assert!(
         hints.contains_key("serviceAccount.name"),
         "expected hint for serviceAccount.name in helper, got {hints:?}"

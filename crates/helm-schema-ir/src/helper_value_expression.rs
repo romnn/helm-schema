@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::ValueKind;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::expression_analysis::{
-    resolved_string_transform_paths_for_exprs, resolved_type_is_paths_for_exprs,
+    resolved_string_transform_paths_for_exprs, resolved_type_hint_paths_for_exprs,
     set_default_chart_paths_for_exprs,
 };
 use crate::fragment_assignment::{
@@ -67,7 +67,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_type_is_paths_for_exprs(exprs, Some(bindings), current_dot),
+        resolved_type_hint_paths_for_exprs(exprs, Some(bindings), current_dot),
     );
     extend_type_hints(
         &mut state.analysis.type_hints,
@@ -132,14 +132,6 @@ fn collect_assignment_bound_helper_values(
     let set_default_paths =
         set_default_chart_paths_for_exprs(full_exprs, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);
-    extend_type_hints(
-        &mut state.analysis.type_hints,
-        resolved_type_is_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
-    );
-    extend_type_hints(
-        &mut state.analysis.type_hints,
-        resolved_string_transform_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
-    );
 
     let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     let mut seen_set = HashSet::new();
@@ -150,8 +142,30 @@ fn collect_assignment_bound_helper_values(
         state.context,
         &mut seen_set,
     ) {
+        let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
+        let defaulted_dependencies = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
+        state.analysis.add_dependency_meta_map(
+            defaulted_dependencies
+                .into_iter()
+                .map(|path| {
+                    (
+                        path,
+                        HelperOutputMeta::with_predicates(active_output_predicates, true),
+                    )
+                })
+                .collect(),
+        );
         return;
     }
+
+    extend_type_hints(
+        &mut state.analysis.type_hints,
+        resolved_type_hint_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
+    );
+    extend_type_hints(
+        &mut state.analysis.type_hints,
+        resolved_string_transform_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
+    );
 
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);

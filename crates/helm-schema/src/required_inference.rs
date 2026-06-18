@@ -23,7 +23,8 @@ use crate::values_roots;
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.
 ///
-/// `required_inference_signals` comes from the contract schema-signal bundle.
+/// `required_inference_signals` comes from the contract's dedicated
+/// required-inference compatibility projection.
 /// `values_yaml` is the composed values.yaml (used to re-derive explicit chart
 /// defaults — those must not be marked required).
 #[instrument(skip_all)]

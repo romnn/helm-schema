@@ -43,7 +43,6 @@ pub struct ValuesSchemaInput<'a> {
     pub contract_schema_signals: &'a ContractSchemaSignals,
     pub provider: &'a dyn ResourceSchemaOracle,
     pub values_yaml: Option<&'a str>,
-    pub type_hints: Option<&'a BTreeMap<String, Vec<Value>>>,
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
 }
 
@@ -56,18 +55,12 @@ impl<'a> ValuesSchemaInput<'a> {
             contract_schema_signals,
             provider,
             values_yaml: None,
-            type_hints: None,
             values_descriptions: None,
         }
     }
 
     pub fn with_values_yaml(mut self, values_yaml: Option<&'a str>) -> Self {
         self.values_yaml = values_yaml;
-        self
-    }
-
-    pub fn with_type_hints(mut self, type_hints: &'a BTreeMap<String, Vec<Value>>) -> Self {
-        self.type_hints = Some(type_hints);
         self
     }
 
@@ -89,18 +82,6 @@ impl<'a> ValuesSchemaInput<'a> {
 /// pipeline.
 #[tracing::instrument(skip_all)]
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
-    let empty_type_hints = BTreeMap::new();
-    let merged_type_hints = merge_type_hints(
-        &input
-            .contract_schema_signals
-            .declared_type_hints_by_value_path,
-        input.type_hints,
-    );
-    let type_hints = if merged_type_hints.is_empty() {
-        input.type_hints.unwrap_or(&empty_type_hints)
-    } else {
-        &merged_type_hints
-    };
     let empty_values_descriptions = BTreeMap::new();
     let values_descriptions = input
         .values_descriptions
@@ -113,10 +94,20 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         &input.contract_schema_signals.provider_schema_uses,
         input.provider,
     );
-    signals
-        .referenced_value_paths
-        .extend(type_hints.keys().cloned());
-    mark_type_hint_descendant_facts(&mut value_path_facts, type_hints.keys());
+    signals.referenced_value_paths.extend(
+        input
+            .contract_schema_signals
+            .type_hints_by_value_path
+            .keys()
+            .cloned(),
+    );
+    mark_type_hint_descendant_facts(
+        &mut value_path_facts,
+        input
+            .contract_schema_signals
+            .type_hints_by_value_path
+            .keys(),
+    );
 
     let values_yaml_doc = input
         .values_yaml
@@ -127,7 +118,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         signals,
         &value_path_facts,
         &values_yaml_doc,
-        type_hints,
+        &input.contract_schema_signals.type_hints_by_value_path,
         values_descriptions,
         &input.contract_schema_signals.conditional_path_overlays,
         input.provider,
@@ -149,33 +140,6 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
     Value::Object(out)
-}
-
-fn merge_type_hints(
-    declared_type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
-    external_type_hints: Option<&BTreeMap<String, Vec<Value>>>,
-) -> BTreeMap<String, Vec<Value>> {
-    let mut merged = BTreeMap::new();
-
-    for (path, schema_types) in declared_type_hints_by_value_path {
-        for schema_type in schema_types {
-            merged
-                .entry(path.clone())
-                .or_insert_with(Vec::new)
-                .push(crate::schema_model::type_schema(schema_type));
-        }
-    }
-
-    if let Some(external_type_hints) = external_type_hints {
-        for (path, schemas) in external_type_hints {
-            merged
-                .entry(path.clone())
-                .or_insert_with(Vec::new)
-                .extend(schemas.clone());
-        }
-    }
-
-    merged
 }
 
 fn mark_type_hint_descendant_facts<'a>(
@@ -202,7 +166,7 @@ fn build_root_schema(
     signals: UseSignals,
     value_path_facts: &BTreeMap<String, ContractValuePathFacts>,
     values_yaml_doc: &YamlValue,
-    type_hints: &BTreeMap<String, Vec<Value>>,
+    type_hints: &BTreeMap<String, BTreeSet<String>>,
     values_descriptions: &BTreeMap<String, String>,
     conditional_path_overlays: &[ConditionalPathOverlay],
     provider: &dyn ResourceSchemaOracle,
@@ -259,7 +223,7 @@ struct ConditionalResolvedSchema {
 fn collect_conditional_schemas(
     resolved_paths: &[path_resolver::ResolvedPathSchema],
     overlays: &[ConditionalPathOverlay],
-    type_hints: &BTreeMap<String, Vec<Value>>,
+    type_hints: &BTreeMap<String, BTreeSet<String>>,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
@@ -304,7 +268,7 @@ fn collect_conditional_schemas(
 
 fn conditional_target_schema(
     overlay: &ConditionalPathOverlay,
-    type_hints: &BTreeMap<String, Vec<Value>>,
+    type_hints: &BTreeMap<String, BTreeSet<String>>,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
     resolved_fallback: Option<Value>,
@@ -343,7 +307,7 @@ fn conditional_target_schema(
 
 fn resolve_overlay_target_schema(
     overlay: &ConditionalPathOverlay,
-    type_hints: &BTreeMap<String, Vec<Value>>,
+    type_hints: &BTreeMap<String, BTreeSet<String>>,
     provider: &dyn ResourceSchemaOracle,
 ) -> Option<Value> {
     let path_signals = overlay_path_signals(overlay);

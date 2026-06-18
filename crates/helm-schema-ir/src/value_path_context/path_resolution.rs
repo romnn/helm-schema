@@ -10,9 +10,7 @@ use crate::fragment_binding_projection::fragment_source_paths;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::helper_to_fragment_binding;
-use crate::template_expr_analysis::{
-    expr_contains_helper_call, walk_expr_excluding_helper_call_args,
-};
+use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
@@ -58,25 +56,34 @@ impl ValuePathContext<'_> {
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
 
-        walk_expr_excluding_helper_call_args(expr, &mut |node| {
+        walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
             if let Some(path) = values_path_from_expr(node) {
                 paths.insert(path);
+                return true;
             }
+            false
         });
 
         if !self.root_bindings.is_empty() {
-            walk_expr_excluding_helper_call_args(expr, &mut |node| {
+            walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
                 if let Some(path) =
                     resolve_expr_to_values_path(node, Some(self.root_bindings), None)
                 {
                     paths.insert(path);
+                    return true;
                 }
+                false
             });
         }
 
         if !self.template_bindings.is_empty() {
-            walk_expr_excluding_helper_call_args(expr, &mut |node| {
-                paths.extend(self.local_alias_paths_for_expr(node));
+            walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
+                let local_paths = self.local_alias_paths_for_expr(node);
+                if local_paths.is_empty() {
+                    return false;
+                }
+                paths.extend(local_paths);
+                true
             });
         }
 
@@ -211,9 +218,9 @@ impl ValuePathContext<'_> {
         }
 
         let mut paths = BTreeSet::new();
-        walk_expr_excluding_helper_call_args(expr, &mut |node| {
+        walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
             if expr_contains_helper_call(node) {
-                return;
+                return false;
             }
             let outer_binding = fragment_binding_from_outer_expr(
                 node,
@@ -223,15 +230,52 @@ impl ValuePathContext<'_> {
             );
             let fragment_binding =
                 self.fragment_binding_from_expr(node, self.current_dot_fragment.as_ref());
-            paths.extend(
-                outer_binding
-                    .into_iter()
-                    .chain(fragment_binding)
-                    .flat_map(|binding| fragment_source_paths(&binding))
-                    .filter(|path| !path.trim().is_empty()),
-            );
+            let resolved_paths = outer_binding
+                .into_iter()
+                .chain(fragment_binding)
+                .flat_map(|binding| fragment_source_paths(&binding))
+                .filter(|path| !path.trim().is_empty())
+                .collect::<BTreeSet<_>>();
+            let found = !resolved_paths.is_empty();
+            paths.extend(resolved_paths);
+            found
         });
         paths
+    }
+}
+
+fn walk_expr_maximal_paths_excluding_helper_call_args<F>(expr: &TemplateExpr, visit: &mut F)
+where
+    F: FnMut(&TemplateExpr) -> bool,
+{
+    if visit(expr) {
+        return;
+    }
+
+    match expr {
+        TemplateExpr::Literal(_)
+        | TemplateExpr::Field(_)
+        | TemplateExpr::Variable(_)
+        | TemplateExpr::Unknown(_) => {}
+        TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
+            walk_expr_maximal_paths_excluding_helper_call_args(operand, visit);
+        }
+        TemplateExpr::Call { function, args } => {
+            if matches!(function.as_str(), "include" | "template") {
+                return;
+            }
+            for arg in args {
+                walk_expr_maximal_paths_excluding_helper_call_args(arg, visit);
+            }
+        }
+        TemplateExpr::Pipeline(stages) => {
+            for stage in stages {
+                walk_expr_maximal_paths_excluding_helper_call_args(stage, visit);
+            }
+        }
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            walk_expr_maximal_paths_excluding_helper_call_args(value, visit);
+        }
     }
 }
 

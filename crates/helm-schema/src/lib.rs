@@ -1,6 +1,5 @@
 mod analysis;
 mod chart;
-mod chart_evidence;
 mod error;
 mod fetch_policy;
 pub mod flatten;

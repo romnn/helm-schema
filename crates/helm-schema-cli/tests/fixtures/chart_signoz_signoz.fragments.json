@@ -5,7 +5,9 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         },
         "className": {
@@ -72,7 +74,9 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         },
         "create": {
@@ -104,7 +108,14 @@
           "type": "string"
         },
         "tag": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "type": "object"
@@ -142,7 +153,9 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         },
         "className": {
@@ -256,7 +269,9 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         },
         "create": {
@@ -376,7 +391,9 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         },
         "automount": {
@@ -463,11 +480,41 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "create": {
+                "const": true
+              }
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
         }
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         },
         "create": {

@@ -10,6 +10,7 @@ use super::tracker::DocumentTracker;
 pub(crate) struct DocumentSiteContext {
     pub(crate) kind: ValueKind,
     pub(crate) in_mapping_key: bool,
+    pub(crate) in_yaml_comment: bool,
     pub(crate) entire_scalar_value: bool,
     pub(crate) path: YamlPath,
     pub(crate) resource: Option<ResourceRef>,
@@ -53,6 +54,7 @@ pub(crate) fn collect_document_site_context(
     DocumentSiteContext {
         kind,
         in_mapping_key,
+        in_yaml_comment: document_site_is_yaml_comment_part(source, node),
         entire_scalar_value: document_site_is_entire_scalar_value(source, node),
         path,
         resource,
@@ -213,4 +215,10 @@ fn document_site_is_entire_scalar_value(source: &str, node: tree_sitter::Node<'_
     }
 
     false
+}
+
+fn document_site_is_yaml_comment_part(source: &str, node: tree_sitter::Node<'_>) -> bool {
+    let start = node.start_byte();
+    let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+    source[line_start..start].trim_start().starts_with('#')
 }

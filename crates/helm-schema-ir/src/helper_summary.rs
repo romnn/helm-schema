@@ -14,22 +14,40 @@ use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct HelperOutputMeta {
-    pub(crate) predicates: BTreeSet<Predicate>,
+    pub(crate) predicates: BTreeSet<BTreeSet<Predicate>>,
     pub(crate) defaulted: bool,
     pub(crate) provenance: Vec<ContractProvenance>,
 }
 
 impl HelperOutputMeta {
     pub(crate) fn with_predicates(predicates: &BTreeSet<Predicate>, defaulted: bool) -> Self {
+        let mut predicate_branches = BTreeSet::new();
+        if !predicates.is_empty() {
+            predicate_branches.insert(predicates.clone());
+        }
         Self {
-            predicates: predicates.clone(),
+            predicates: predicate_branches,
             defaulted,
             provenance: Vec::new(),
         }
     }
 
     pub(crate) fn add_predicates(&mut self, predicates: impl IntoIterator<Item = Predicate>) {
-        self.predicates.extend(predicates);
+        let predicates = predicates.into_iter().collect::<Vec<_>>();
+        if predicates.is_empty() {
+            return;
+        }
+        if self.predicates.is_empty() {
+            self.predicates.insert(BTreeSet::new());
+        }
+        let branches = std::mem::take(&mut self.predicates);
+        self.predicates = branches
+            .into_iter()
+            .map(|mut branch| {
+                branch.extend(predicates.iter().cloned());
+                branch
+            })
+            .collect();
     }
 
     pub(crate) fn merge(&mut self, other: Self) {
@@ -56,24 +74,30 @@ impl HelperOutputMeta {
         }
     }
 
-    pub(crate) fn compatibility_guards(&self, source_expr: &str) -> Vec<Guard> {
-        let mut guards = Vec::new();
-        for predicate in &self.predicates {
-            for guard in predicate.compatibility_guards() {
-                if !guards.contains(&guard) {
-                    guards.push(guard);
+    pub(crate) fn compatibility_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
+        let predicate_branches = if self.predicates.is_empty() {
+            vec![BTreeSet::new()]
+        } else {
+            self.predicates.iter().cloned().collect::<Vec<_>>()
+        };
+        let mut guard_sets = Vec::new();
+        for predicate_branch in predicate_branches {
+            let mut guards = Predicate::compatibility_guard_stack(
+                &predicate_branch.into_iter().collect::<Vec<_>>(),
+            );
+            if self.defaulted {
+                let default_guard = Guard::Default {
+                    path: source_expr.to_string(),
+                };
+                if !guards.contains(&default_guard) {
+                    guards.push(default_guard);
                 }
             }
-        }
-        if self.defaulted {
-            let default_guard = Guard::Default {
-                path: source_expr.to_string(),
-            };
-            if !guards.contains(&default_guard) {
-                guards.push(default_guard);
+            if !guard_sets.contains(&guards) {
+                guard_sets.push(guards);
             }
         }
-        guards
+        guard_sets
     }
 }
 
@@ -402,24 +426,78 @@ mod tests {
     #[test]
     fn helper_output_meta_projects_predicates_at_compatibility_boundary() {
         let meta = HelperOutputMeta {
-            predicates: BTreeSet::from([Predicate::Not(Box::new(Predicate::Atom(
-                PredicateAtom::Truthy {
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::Not(Box::new(
+                Predicate::Atom(PredicateAtom::Truthy {
                     path: "feature.enabled".to_string(),
-                },
-            )))]),
+                }),
+            ))])]),
             defaulted: true,
             provenance: Vec::new(),
         };
 
         assert_eq!(
-            meta.compatibility_guards("serviceAccount.name"),
-            vec![
+            meta.compatibility_guard_sets("serviceAccount.name"),
+            vec![vec![
                 Guard::Not {
                     path: "feature.enabled".to_string(),
                 },
                 Guard::Default {
                     path: "serviceAccount.name".to_string(),
                 },
+            ]]
+        );
+    }
+
+    #[test]
+    fn helper_output_meta_preserves_alternative_guard_sets() {
+        let meta = HelperOutputMeta {
+            predicates: BTreeSet::from([
+                BTreeSet::from([
+                    Predicate::Atom(PredicateAtom::Truthy {
+                        path: "feature.enabled".to_string(),
+                    }),
+                    Predicate::Atom(PredicateAtom::Truthy {
+                        path: "component.enabled".to_string(),
+                    }),
+                ]),
+                BTreeSet::from([
+                    Predicate::Not(Box::new(Predicate::Atom(PredicateAtom::Truthy {
+                        path: "feature.enabled".to_string(),
+                    }))),
+                    Predicate::Atom(PredicateAtom::Truthy {
+                        path: "component.enabled".to_string(),
+                    }),
+                ]),
+            ]),
+            defaulted: true,
+            provenance: Vec::new(),
+        };
+
+        assert_eq!(
+            meta.compatibility_guard_sets("serviceAccount.name"),
+            vec![
+                vec![
+                    Guard::Truthy {
+                        path: "component.enabled".to_string(),
+                    },
+                    Guard::Truthy {
+                        path: "feature.enabled".to_string(),
+                    },
+                    Guard::Default {
+                        path: "serviceAccount.name".to_string(),
+                    },
+                ],
+                vec![
+                    Guard::Truthy {
+                        path: "component.enabled".to_string(),
+                    },
+                    Guard::Not {
+                        path: "feature.enabled".to_string(),
+                    },
+                    Guard::Default {
+                        path: "serviceAccount.name".to_string(),
+                    },
+                ],
             ]
         );
     }

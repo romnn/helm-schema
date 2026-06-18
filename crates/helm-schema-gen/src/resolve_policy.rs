@@ -33,7 +33,6 @@ pub(crate) struct ValuePathSchemaFacts {
     pub(crate) path_all_render_uses_self_guarded: bool,
     pub(crate) path_has_self_range_guard_render_use: bool,
     pub(crate) contract_path_is_nullable: bool,
-    pub(crate) has_type_hint: bool,
     pub(crate) values_yaml_has_no_schema_evidence: bool,
     pub(crate) values_yaml_is_explicit_null: bool,
     pub(crate) values_yaml_is_empty_string: bool,
@@ -48,8 +47,8 @@ impl ValuePathSchemaFacts {
         guard_constraint_schema: &Value,
     ) -> bool {
         self.values_yaml_is_explicit_null
-            && (is_scalar_like_schema(type_hint_schema)
-                || is_scalar_like_schema(guard_constraint_schema))
+            && (is_scalar_like_schema(guard_constraint_schema)
+                || (!self.path_has_render_use && is_scalar_like_schema(type_hint_schema)))
     }
 
     fn accepts_null_default(
@@ -58,7 +57,6 @@ impl ValuePathSchemaFacts {
         guard_constraint_schema: &Value,
     ) -> bool {
         self.contract_path_is_nullable
-            || self.has_type_hint
             || self.has_explicit_null_scalar_default(type_hint_schema, guard_constraint_schema)
     }
 

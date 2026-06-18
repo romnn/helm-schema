@@ -3,14 +3,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::contract::ContractUse;
 use crate::contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
-    ContractValuePathFacts, MetadataFieldKind, RequiredInferenceSignals,
+    ContractValuePathFacts, MetadataFieldKind,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
 
 use super::classifiers::{
     guard_constraint_from_guard, metadata_field_kind_from_yaml_path, use_is_null_tolerant,
-    use_is_positive_header, use_is_self_guarded,
+    use_is_self_guarded,
 };
 use super::value_path_facts::{
     RenderPathFacts, build_contract_value_path_facts, collect_paths_with_descendants,
@@ -18,13 +18,13 @@ use super::value_path_facts::{
 
 pub(crate) fn derive_schema_signals_from_uses(
     uses: &[ContractUse],
-    declared_type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
+    type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
 ) -> ContractSchemaSignals {
     let mut builder = ContractSchemaSignalBuilder::default();
     for contract_use in uses {
         builder.record(contract_use);
     }
-    builder.finish(declared_type_hints_by_value_path.clone())
+    builder.finish(type_hints_by_value_path.clone())
 }
 
 #[derive(Default)]
@@ -34,7 +34,6 @@ struct ContractSchemaSignalBuilder {
     provider_schema_uses: Vec<ProviderSchemaUse>,
     nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
     conditional_overlays_by_path: BTreeMap<String, ConditionalOverlayAccumulator>,
-    required_inference_signals: RequiredInferenceSignals,
 }
 
 struct NullablePathAccumulator {
@@ -80,15 +79,14 @@ impl ContractSchemaSignalBuilder {
         self.record_path_signals(contract_use);
         self.record_nullable_path(contract_use);
         self.record_conditional_overlay(contract_use);
-        self.record_required_inference_signals(contract_use);
     }
 
     fn finish(
         mut self,
-        declared_type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
+        type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
     ) -> ContractSchemaSignals {
         self.path_signals.referenced_value_paths.extend(
-            declared_type_hints_by_value_path
+            type_hints_by_value_path
                 .keys()
                 .filter(|path| !path.trim().is_empty())
                 .cloned(),
@@ -121,12 +119,11 @@ impl ContractSchemaSignalBuilder {
         ContractSchemaSignals {
             path_signals: self.path_signals,
             provider_schema_uses: self.provider_schema_uses,
-            declared_type_hints_by_value_path,
+            type_hints_by_value_path,
             nullable_value_paths,
             paths_with_referenced_descendants,
             value_path_facts,
             conditional_path_overlays,
-            required_inference_signals: self.required_inference_signals,
         }
     }
 
@@ -255,10 +252,16 @@ impl ContractSchemaSignalBuilder {
         let has_self_range_guard = contract_use.guards.iter().any(
             |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
         );
+        let has_pathless_self_default_guard = contract_use.path.0.is_empty()
+            && contract_use
+                .guards
+                .iter()
+                .any(|guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr));
         let info = self.nullable_accumulator(&contract_use.source_expr);
         if !contract_use.path.0.is_empty()
             || has_self_range_guard
             || contract_use.kind == ValueKind::Fragment
+            || has_pathless_self_default_guard
         {
             info.has_render_use = true;
             info.has_self_guarded_render_use |= use_is_self_guarded(contract_use);
@@ -304,43 +307,6 @@ impl ContractSchemaSignalBuilder {
             .or_insert_with(ConditionalOverlayBranchAccumulator::new);
         branch.record_use(contract_use);
     }
-
-    fn record_required_inference_signals(&mut self, contract_use: &ContractUse) {
-        for guard in &contract_use.guards {
-            match guard {
-                Guard::Not { path } => {
-                    self.required_inference_signals
-                        .conditionally_optional_paths
-                        .insert(path.clone());
-                }
-                Guard::Or { paths } => {
-                    self.required_inference_signals
-                        .conditionally_optional_paths
-                        .extend(paths.iter().cloned());
-                }
-                Guard::Default { path } => {
-                    self.required_inference_signals
-                        .default_fallback_paths
-                        .insert(path.clone());
-                }
-                Guard::Truthy { .. }
-                | Guard::Eq { .. }
-                | Guard::Range { .. }
-                | Guard::With { .. }
-                | Guard::TypeIs { .. } => {}
-            }
-        }
-
-        if contract_use.kind == ValueKind::Scalar
-            && contract_use.path.0.is_empty()
-            && !contract_use.source_expr.trim().is_empty()
-            && use_is_positive_header(contract_use)
-        {
-            self.required_inference_signals
-                .positive_header_paths
-                .insert(contract_use.source_expr.clone());
-        }
-    }
 }
 
 impl ConditionalOverlayAccumulator {
@@ -352,7 +318,8 @@ impl ConditionalOverlayAccumulator {
         if self.saw_unsupported {
             return Vec::new();
         }
-        let preserve_base_schema = self.has_unconditional_peer_use;
+        let preserve_base_schema = self.has_unconditional_peer_use
+            || !guard_sets_form_complete_boolean_partition(self.branches_by_guards.keys());
         self.branches_by_guards
             .into_iter()
             .map(|(guards, branch)| {
@@ -367,6 +334,75 @@ impl ConditionalOverlayAccumulator {
                 }
             })
             .collect()
+    }
+}
+
+fn guard_sets_form_complete_boolean_partition<'a>(
+    guard_sets: impl IntoIterator<Item = &'a Vec<ConditionalGuard>>,
+) -> bool {
+    let guard_sets = guard_sets
+        .into_iter()
+        .map(|guards| guards.iter().cloned().collect::<BTreeSet<_>>())
+        .collect::<Vec<_>>();
+    if guard_sets.len() < 2 {
+        return false;
+    }
+
+    for left_index in 0..guard_sets.len() {
+        for right_index in left_index + 1..guard_sets.len() {
+            let left = &guard_sets[left_index];
+            let right = &guard_sets[right_index];
+            let common_guards = left.intersection(right).cloned().collect::<BTreeSet<_>>();
+            let left_only = left
+                .difference(&common_guards)
+                .cloned()
+                .collect::<Vec<ConditionalGuard>>();
+            let right_only = right
+                .difference(&common_guards)
+                .cloned()
+                .collect::<Vec<ConditionalGuard>>();
+            let ([left_guard], [right_guard]) = (left_only.as_slice(), right_only.as_slice())
+            else {
+                continue;
+            };
+
+            let is_complementary_pair = match (
+                boolean_partition_guard_path(left_guard),
+                boolean_partition_guard_path(right_guard),
+            ) {
+                (Some((left_path, left_truthy)), Some((right_path, right_truthy))) => {
+                    left_path == right_path && left_truthy != right_truthy
+                }
+                _ => false,
+            };
+            if !is_complementary_pair {
+                continue;
+            }
+
+            let remaining_sets_cover_common_guard_only = guard_sets
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| *index != left_index && *index != right_index)
+                .all(|(_, guards)| guards == &common_guards);
+            if remaining_sets_cover_common_guard_only {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn boolean_partition_guard_path(guard: &ConditionalGuard) -> Option<(&str, bool)> {
+    match guard {
+        ConditionalGuard::Truthy { path } => Some((path.as_str(), true)),
+        ConditionalGuard::Not(inner) => match inner.as_ref() {
+            ConditionalGuard::Truthy { path } => Some((path.as_str(), false)),
+            _ => None,
+        },
+        ConditionalGuard::Eq { .. }
+        | ConditionalGuard::TypeIs { .. }
+        | ConditionalGuard::AnyOf(_) => None,
     }
 }
 
@@ -462,7 +498,9 @@ fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuar
                 any_of.dedup();
                 guards.push(ConditionalGuard::AnyOf(any_of));
             }
-            Guard::Range { .. } | Guard::Default { .. } => return None,
+            Guard::Range { .. } => return None,
+            Guard::Default { path } if path == &contract_use.source_expr => {}
+            Guard::Default { .. } => return None,
         }
     }
 

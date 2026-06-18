@@ -73,18 +73,6 @@ pub struct ContractPathSignals {
     pub metadata_fields_by_value_path: BTreeMap<String, BTreeSet<MetadataFieldKind>>,
 }
 
-/// Compatibility signal for the optional `required` schema post-pass.
-///
-/// The contract layer identifies which paths look like positive guard headers
-/// and which paths are ruled out by optional control flow. JSON Schema mutation
-/// remains a generator policy.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct RequiredInferenceSignals {
-    pub positive_header_paths: BTreeSet<String>,
-    pub conditionally_optional_paths: BTreeSet<String>,
-    pub default_fallback_paths: BTreeSet<String>,
-}
-
 /// Contract-derived facts consumed by core values-schema generation.
 ///
 /// This is the typed boundary between static template interpretation and JSON
@@ -95,12 +83,11 @@ pub struct RequiredInferenceSignals {
 pub struct ContractSchemaSignals {
     pub path_signals: ContractPathSignals,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
-    pub declared_type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
+    pub type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
     pub nullable_value_paths: BTreeSet<String>,
     pub paths_with_referenced_descendants: BTreeSet<String>,
     pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,
     pub conditional_path_overlays: Vec<ConditionalPathOverlay>,
-    pub required_inference_signals: RequiredInferenceSignals,
 }
 
 /// Schema-generation facts for one input values path.

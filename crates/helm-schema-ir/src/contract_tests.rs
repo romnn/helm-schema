@@ -146,14 +146,12 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
 
     let signals = contract.into_schema_signals();
     assert_eq!(
-        signals
-            .declared_type_hints_by_value_path
-            .get("subchart.image.tag"),
+        signals.type_hints_by_value_path.get("subchart.image.tag"),
         Some(&["string".to_string()].into_iter().collect())
     );
     assert_eq!(
         signals
-            .declared_type_hints_by_value_path
+            .type_hints_by_value_path
             .get("subchart.image.pullPolicy"),
         Some(&["string".to_string()].into_iter().collect())
     );

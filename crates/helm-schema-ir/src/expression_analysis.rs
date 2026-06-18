@@ -85,14 +85,6 @@ pub(crate) fn resolved_type_hint_paths_for_exprs(
     out
 }
 
-pub(crate) fn resolved_type_is_paths_for_exprs(
-    exprs: &[TemplateExpr],
-    bindings: Option<&HashMap<String, HelperBinding>>,
-    current_dot: Option<&HelperBinding>,
-) -> BTreeMap<String, BTreeSet<String>> {
-    resolved_type_hint_paths_for_exprs(exprs, bindings, current_dot)
-}
-
 pub(crate) fn resolved_string_transform_paths_for_exprs(
     exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, HelperBinding>>,

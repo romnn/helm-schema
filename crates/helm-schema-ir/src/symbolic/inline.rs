@@ -6,6 +6,7 @@ use crate::helper_inline::plan_exact_helper_inline_from_exprs;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
+use crate::{ContractUse, ValueKind, YamlPath};
 use helm_schema_ast::TemplateExpr;
 
 use super::SymbolicWalker;
@@ -71,6 +72,7 @@ impl SymbolicWalker<'_> {
     }
 
     pub(super) fn inline_exact_helper_call(&mut self, exprs: &[TemplateExpr]) -> bool {
+        let helper_summary = self.summarize_bound_helper_calls_in_exprs(exprs);
         let Some(plan) = plan_exact_helper_inline_from_exprs(
             exprs,
             self.defines,
@@ -100,8 +102,35 @@ impl SymbolicWalker<'_> {
         .with_inline_helpers_in_fragments(true)
         .with_helper_bindings(bindings)
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let contract = nested.run_contract(&plan.tree);
+        let mut contract = nested.run_contract(&plan.tree);
+        let helper_renders_output = !helper_summary.output.is_empty()
+            || !helper_summary.fragment_output.is_empty()
+            || !helper_summary.fragment_output_uses.is_empty()
+            || !helper_summary.dependency_paths.is_empty()
+            || !helper_summary.dependency_meta.is_empty()
+            || !helper_summary.guard_paths.is_empty();
+        if helper_renders_output {
+            contract.extend_type_hints(helper_summary.type_hints);
+        }
         self.contract.append(contract);
+        let outer_guards = self.compatibility_guards();
+        for (value, meta) in helper_summary.dependency_meta {
+            for extra_guards in meta.compatibility_guard_sets(&value) {
+                let mut guards = outer_guards.clone();
+                for guard in extra_guards {
+                    if !guards.contains(&guard) {
+                        guards.push(guard);
+                    }
+                }
+                self.contract.push(ContractUse::new(
+                    value.clone(),
+                    YamlPath(Vec::new()),
+                    ValueKind::Scalar,
+                    guards,
+                    None,
+                ));
+            }
+        }
         true
     }
 }

@@ -6,16 +6,36 @@ pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Opt
     use helm_schema_ast::TemplateExpr as E;
 
     let expr = expr.deparen();
-    let segments: &[String] = match expr {
-        E::Field(path) => path,
+    match expr {
+        E::Field(path) => values_path_from_segments(path),
         E::Selector { operand, path } => {
+            if let Some(base) = values_path_from_expr(operand) {
+                let suffix = path.join(".");
+                return Some(if suffix.is_empty() {
+                    base
+                } else if base.is_empty() {
+                    suffix
+                } else {
+                    format!("{base}.{suffix}")
+                });
+            }
             if !matches!(operand.as_ref(), E::Variable(_)) {
                 return None;
             }
-            path
+            values_path_from_segments(path)
         }
-        _ => return None,
-    };
+        E::Literal(_)
+        | E::Variable(_)
+        | E::Call { .. }
+        | E::Pipeline(_)
+        | E::Parenthesized(_)
+        | E::VariableDefinition { .. }
+        | E::Assignment { .. }
+        | E::Unknown(_) => None,
+    }
+}
+
+fn values_path_from_segments(segments: &[String]) -> Option<String> {
     let mut iter = segments.iter();
     let head = iter.next()?;
     if head != "Values" {
@@ -167,6 +187,14 @@ mod tests {
         assert_eq!(
             extract_values_paths("$root.Values.Y"),
             vec!["Y".to_string()]
+        );
+    }
+
+    #[test]
+    fn nested_selector_chain_keeps_full_values_descendant_path() {
+        assert_eq!(
+            extract_values_paths("((.Values.appVersions).airtype).global"),
+            vec!["appVersions.airtype.global".to_string()]
         );
     }
 

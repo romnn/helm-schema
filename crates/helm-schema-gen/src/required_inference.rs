@@ -39,8 +39,9 @@ struct RequiredInferenceInputs<'a> {
 /// by the chart and must not be inferred as user-required, even if they also
 /// appear in positive guard headers.
 ///
-/// `signals` should come from [`helm_schema_ir::ContractSchemaSignals`], not
-/// from a second pass over raw compatibility rows.
+/// `signals` should come from [`helm_schema_ir::ContractIr`]'s dedicated
+/// `into_required_inference_signals` projection, not from a second pass over
+/// raw compatibility rows.
 ///
 pub fn apply_required_inference(
     schema: &mut Value,
@@ -149,7 +150,7 @@ fn add_to_required_list(node: &mut Value, key: &str) {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeSet;
 
     use indoc::indoc;
     use serde_json::Value;
@@ -158,8 +159,8 @@ mod tests {
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::DefineIndex;
     use helm_schema_ir::{
-        ContractIr, ContractSchemaSignals, ContractUse, Guard, SymbolicIrContext, ValueKind,
-        YamlPath, extract_default_type_hints,
+        ContractIr, ContractUse, Guard, RequiredInferenceSignals, SymbolicIrContext, ValueKind,
+        YamlPath,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
@@ -167,36 +168,29 @@ mod tests {
         KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
     }
 
-    fn parse_schema_signals(src: &str) -> ContractSchemaSignals {
+    fn parse_contract(src: &str) -> ContractIr {
         let idx = DefineIndex::new();
-        SymbolicIrContext::new(&idx)
-            .generate_contract_ir(src, &idx)
-            .into_schema_signals()
+        SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
     }
 
-    fn schema_signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
-        ContractIr::from_contract_uses(uses).into_schema_signals()
+    fn contract_for(uses: Vec<ContractUse>) -> ContractIr {
+        ContractIr::from_contract_uses(uses)
     }
 
-    fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
-        let mut hints: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-        for (path, schema) in extract_default_type_hints(src) {
-            hints.entry(path).or_default().push(schema);
-        }
-        hints
+    fn required_inference_signals_for(contract: &ContractIr) -> RequiredInferenceSignals {
+        contract.clone().into_required_inference_signals()
     }
 
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
-        let hints = collect_hints(src);
-        let schema_signals = parse_schema_signals(src);
+        let contract = parse_contract(src);
+        let required_signals = required_inference_signals_for(&contract);
+        let schema_signals = contract.into_schema_signals();
         let mut schema = generate_values_schema(
-            ValuesSchemaInput::new(&schema_signals, &provider())
-                .with_values_yaml(values_yaml)
-                .with_type_hints(&hints),
+            ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
         );
         apply_required_inference(
             &mut schema,
-            &schema_signals.required_inference_signals,
+            &required_signals,
             &schema_signals.value_path_facts,
             &BTreeSet::new(),
         );
@@ -205,7 +199,7 @@ mod tests {
 
     #[test]
     fn contract_default_guard_excludes_path_without_external_fallback_scan() {
-        let schema_signals = schema_signals_for(vec![
+        let contract = contract_for(vec![
             ContractUse {
                 source_expr: "feature".to_string(),
                 path: YamlPath(Vec::new()),
@@ -225,12 +219,14 @@ mod tests {
                 provenance: Vec::new(),
             },
         ]);
+        let required_signals = required_inference_signals_for(&contract);
+        let schema_signals = contract.into_schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
         apply_required_inference(
             &mut schema,
-            &schema_signals.required_inference_signals,
+            &required_signals,
             &schema_signals.value_path_facts,
             &BTreeSet::new(),
         );
@@ -244,7 +240,7 @@ mod tests {
 
     #[test]
     fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
-        let schema_signals = schema_signals_for(vec![ContractUse {
+        let contract = contract_for(vec![ContractUse {
             source_expr: "feature".to_string(),
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
@@ -252,12 +248,14 @@ mod tests {
             resource: None,
             provenance: Vec::new(),
         }]);
+        let required_signals = required_inference_signals_for(&contract);
+        let schema_signals = contract.into_schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
         apply_required_inference(
             &mut schema,
-            &schema_signals.required_inference_signals,
+            &required_signals,
             &schema_signals.value_path_facts,
             &BTreeSet::new(),
         );
@@ -271,7 +269,7 @@ mod tests {
 
     #[test]
     fn explicit_nested_values_defaults_suppress_required_inference() {
-        let schema_signals = schema_signals_for(vec![ContractUse {
+        let contract = contract_for(vec![ContractUse {
             source_expr: "controller.kind".to_string(),
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
@@ -282,6 +280,8 @@ mod tests {
             resource: None,
             provenance: Vec::new(),
         }]);
+        let required_signals = required_inference_signals_for(&contract);
+        let schema_signals = contract.into_schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
         let explicit_default_value_paths =
@@ -289,7 +289,7 @@ mod tests {
 
         apply_required_inference(
             &mut schema,
-            &schema_signals.required_inference_signals,
+            &required_signals,
             &schema_signals.value_path_facts,
             &explicit_default_value_paths,
         );
@@ -393,6 +393,23 @@ mod tests {
         );
     }
 
+    #[test]
+    fn default_after_intervening_required_call_does_not_suppress_required() {
+        let src = indoc! {r#"
+            {{- if .Values.name }}
+            enabled: true
+            {{- end }}
+            name: {{ .Values.name | required "name is required" | default "fallback" }}
+        "#};
+        let schema = generate_with_required(src, None);
+        assert_eq!(
+            schema.get("required"),
+            Some(&serde_json::json!(["name"])),
+            "default after required should not suppress required inference, schema={}",
+            serde_json::to_string_pretty(&schema).unwrap()
+        );
+    }
+
     /// Step 3 bug-fix: `if not .Values.X` must NOT mark X as required —
     /// the condition fires when X is empty/null, so X being unset is
     /// contractual.
@@ -457,7 +474,7 @@ mod tests {
             kind: ServiceAccount
             {{- end }}
         "};
-        let schema_signals = parse_schema_signals(src);
+        let schema_signals = parse_contract(src).into_schema_signals();
         let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
         // The core path must never emit `required` — that's the
         // separation of concerns this module exists to enforce.

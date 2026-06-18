@@ -4,12 +4,18 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
+use crate::expression_analysis::resolved_type_hint_paths_for_exprs;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
+use crate::helper_summary_mutation::insert_type_hint;
+use crate::helper_summary_projection::helper_summary_dependency_paths;
+use crate::literal_schema_type::expression_schema_type;
+use crate::output_path;
 use crate::value_path_context::ValuePathContext;
 
 pub(crate) struct DocumentValueAnalysis {
     pub(super) default_fallback_values: BTreeSet<String>,
     pub(super) values: BTreeSet<String>,
+    pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(super) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(super) bound_values: Vec<String>,
     pub(super) helper: DocumentHelperSummary,
@@ -29,6 +35,8 @@ pub(super) struct DocumentHelperSummary {
 
 impl DocumentHelperSummary {
     fn from_helper_summary(summary: HelperSummary, output_kind: ValueKind) -> Self {
+        let mut suppress_direct_values = helper_summary_dependency_paths(&summary);
+        suppress_direct_values.extend(summary.suppress_roots.iter().cloned());
         let mut dependency_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         for path in summary.dependency_paths {
             dependency_values.entry(path).or_default();
@@ -51,7 +59,7 @@ impl DocumentHelperSummary {
             dependency_values,
             guard_values: summary.guard_paths,
             type_hints: summary.type_hints,
-            suppress_direct_values: summary.suppress_roots,
+            suppress_direct_values,
             chart_value_defaults: summary.chart_defaults,
         }
     }
@@ -90,8 +98,13 @@ pub(crate) fn collect_document_value_analysis_from_exprs(
         .resolved_values_paths_in_exprs(exprs)
         .into_iter()
         .collect();
+    let type_hints = collect_document_type_hints(exprs, value_path_context);
     let local_output_meta = value_path_context.local_alias_output_meta_for_exprs(exprs);
     values.extend(default_fallback_values.iter().cloned());
+    if kind == ValueKind::Scalar {
+        let all_values = values.clone();
+        values.retain(|path| !output_path::values_path_has_descendant(path, &all_values));
+    }
 
     let bound_values = extract_bound_values_from_exprs(exprs, range_domains, get_bindings);
 
@@ -102,10 +115,59 @@ pub(crate) fn collect_document_value_analysis_from_exprs(
     DocumentValueAnalysis {
         default_fallback_values,
         values,
+        type_hints,
         local_output_meta,
         bound_values,
         helper,
     }
+}
+
+fn collect_document_type_hints(
+    exprs: &[TemplateExpr],
+    value_path_context: &ValuePathContext<'_>,
+) -> BTreeMap<String, BTreeSet<String>> {
+    let mut hints = resolved_type_hint_paths_for_exprs(
+        exprs,
+        Some(value_path_context.root_bindings),
+        value_path_context.current_dot_binding.as_ref(),
+    );
+
+    for expr in exprs {
+        expr.walk(|node| match node {
+            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
+                let Some(schema_type) = expression_schema_type(&args[0]) else {
+                    return;
+                };
+                for path in value_path_context.resolve_expr_to_values_paths(&args[1]) {
+                    insert_type_hint(&mut hints, path, schema_type);
+                }
+            }
+            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
+                for window in stages.windows(2) {
+                    let Some(schema_type) = pipeline_default_expression_schema_type(&window[1])
+                    else {
+                        continue;
+                    };
+                    for path in value_path_context.resolve_expr_to_values_paths(&window[0]) {
+                        insert_type_hint(&mut hints, path, schema_type);
+                    }
+                }
+            }
+            _ => {}
+        });
+    }
+
+    hints
+}
+
+fn pipeline_default_expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    if function != "default" {
+        return None;
+    }
+    args.first().and_then(expression_schema_type)
 }
 
 #[cfg(test)]
@@ -121,7 +183,9 @@ mod tests {
     fn document_helper_summary_preserves_helper_summary_fields() {
         let mut summary = HelperSummary::default();
         let meta = HelperOutputMeta {
-            predicates: BTreeSet::from([Predicate::truthy_path("enabled".to_string())]),
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+                "enabled".to_string(),
+            )])]),
             defaulted: true,
             provenance: Vec::new(),
         };
@@ -167,7 +231,13 @@ mod tests {
         );
         assert_eq!(
             helper.suppress_direct_values,
-            BTreeSet::from(["image".to_string()])
+            BTreeSet::from([
+                "extraEnv".to_string(),
+                "global.image.tag".to_string(),
+                "image".to_string(),
+                "image.tag".to_string(),
+                "service.enabled".to_string(),
+            ])
         );
         assert_eq!(
             helper.chart_value_defaults,

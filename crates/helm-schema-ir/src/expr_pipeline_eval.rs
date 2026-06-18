@@ -8,6 +8,7 @@ use crate::expr_eval::{eval_expr, eval_expr_value};
 use crate::expr_function_catalog::{
     is_provenance_preserving_function, is_string_transform_function,
 };
+use crate::literal_schema_type::expression_schema_type;
 use crate::template_expr_analysis::is_merge_function;
 
 pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
@@ -27,6 +28,9 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
                 let mut effects = current.effects;
                 let current_paths = value_paths(&current.value);
                 effects.add_default_paths(current_paths);
+                if let Some(schema_type) = args.first().and_then(expression_schema_type) {
+                    effects.add_type_hints(value_paths(&current.value), schema_type);
+                }
                 let mut values = current.value.into_iter().collect::<Vec<_>>();
                 for arg in args {
                     let arg_result = eval_expr(arg, env);

@@ -894,6 +894,44 @@
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
   "properties": {
     "fullnameOverride": {
       "type": "string"
@@ -2791,7 +2829,12 @@
         }
       ],
       "properties": {
-        "annotations": {},
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
         "enabled": {
           "type": "boolean"
         },
@@ -2807,9 +2850,18 @@
             }
           ]
         },
-        "labels": {},
-        "metricRelabelings": {},
-        "relabelings": {},
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "metricRelabelings": {
+          "$ref": "#/$defs/providerSource_crd_catalog_4d2d66b53c70"
+        },
+        "relabelings": {
+          "$ref": "#/$defs/providerSource_crd_catalog_4d2d66b53c70"
+        },
         "scrapeTimeout": {
           "anyOf": [
             {

@@ -5,6 +5,7 @@ use crate::contract::ContractProjection;
 use crate::contract_normalization::normalize_contract_uses;
 use crate::contract_signal_builder::derive_schema_signals_from_uses;
 use crate::contract_signals::ContractSchemaSignals;
+use crate::required_inference::{RequiredInferenceSignals, derive_required_inference_signals};
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
 /// Opaque guarded contract graph for one template interpretation.
@@ -141,6 +142,14 @@ impl ContractIr {
     pub fn into_schema_signals(mut self) -> ContractSchemaSignals {
         self.normalize();
         derive_schema_signals_from_uses(&self.uses, &self.type_hints)
+    }
+
+    /// Finalize claims and derive the compatibility facts used only by the
+    /// optional `--infer-required` post-pass.
+    #[must_use]
+    pub fn into_required_inference_signals(mut self) -> RequiredInferenceSignals {
+        self.normalize();
+        derive_required_inference_signals(&self.uses)
     }
 
     fn normalize(&mut self) {

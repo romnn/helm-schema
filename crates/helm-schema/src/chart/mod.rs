@@ -10,7 +10,7 @@ mod types;
 mod values;
 mod values_schema;
 
-pub use define_index::{build_define_index, list_template_sources_for_define_index};
+pub use define_index::build_define_index;
 pub use discovery::discover_chart_contexts;
 pub(crate) use file_roles::{FileRole, list_chart_files};
 pub use files::list_manifest_templates;

@@ -48,15 +48,15 @@ impl SymbolicWalker<'_> {
 
         let site_context =
             collect_document_site_context(self.source, &self.document_tracker, node, exprs);
+        if site_context.in_yaml_comment {
+            return;
+        }
         let kind = site_context.kind;
 
-        let helper_inlined = self.inline_exact_helper_call(exprs);
+        let helper_inlined =
+            kind == crate::ValueKind::Scalar && self.inline_exact_helper_call(exprs);
 
-        let helper_summary = if helper_inlined {
-            None
-        } else {
-            Some(self.summarize_bound_helper_calls_in_exprs(exprs))
-        };
+        let helper_summary = Some(self.summarize_bound_helper_calls_in_exprs(exprs));
         let value_path_context = self.value_path_context();
         let mut output_values = collect_document_value_analysis_from_exprs(
             exprs,

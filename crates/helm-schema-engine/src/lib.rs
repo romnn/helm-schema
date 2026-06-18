@@ -31,10 +31,8 @@ pub use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlay, ContractIr, ContractPathSignals, ContractProvenance,
     ContractSchemaSignals, ContractUse, ContractValuePathFacts, Guard, GuardConstraint,
     MetadataFieldKind, RequiredInferenceSignals, SourceSpan, SymbolicIrContext,
-    extract_default_type_hints,
 };
 
 pub mod required_inference {
     pub use helm_schema_gen::required_inference::apply_required_inference;
-    pub use helm_schema_ir::required_inference::extract_default_fallback_paths;
 }

@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
 use crate::{Guard, ValueKind, YamlPath};
@@ -34,13 +36,16 @@ impl DocumentOutput {
         let DocumentValueAnalysis {
             default_fallback_values,
             values,
+            type_hints,
             local_output_meta,
             bound_values,
             helper,
         } = self.analysis;
 
         for value in values {
-            if helper.suppress_direct_values.contains(&value) {
+            if helper.suppress_direct_values.contains(&value)
+                || suppresses_direct_descendant(&helper.suppress_direct_values, &value)
+            {
                 contract.push(site.contract_use(
                     context,
                     value,
@@ -54,17 +59,26 @@ impl DocumentOutput {
             let default_guard = Guard::Default {
                 path: value.clone(),
             };
-            let mut extra_guards: Vec<Guard> = Vec::new();
-            if let Some(meta) = local_output_meta.get(&value) {
-                extra_guards.extend(meta.compatibility_guards(&value));
-            }
-            if default_fallback_values.contains(&value) && !extra_guards.contains(&default_guard) {
-                extra_guards.push(default_guard);
-            }
-
             let emit_path = site.direct_value_path(&value);
             let emit_kind = site.direct_value_kind();
-            contract.push(site.contract_use(context, value, emit_path, emit_kind, extra_guards));
+            let mut guard_sets = local_output_meta
+                .get(&value)
+                .map(|meta| meta.compatibility_guard_sets(&value))
+                .unwrap_or_else(|| vec![Vec::new()]);
+            for extra_guards in &mut guard_sets {
+                if default_fallback_values.contains(&value)
+                    && !extra_guards.contains(&default_guard)
+                {
+                    extra_guards.push(default_guard.clone());
+                }
+                contract.push(site.contract_use(
+                    context,
+                    value.clone(),
+                    emit_path.clone(),
+                    emit_kind,
+                    extra_guards.clone(),
+                ));
+            }
         }
 
         for value in bound_values {
@@ -77,6 +91,15 @@ impl DocumentOutput {
             ));
         }
 
+        contract.extend_type_hints(type_hints);
         append_document_helper_contract_uses(helper, &site, contract, context);
     }
+}
+
+fn suppresses_direct_descendant(suppressed_roots: &BTreeSet<String>, value_path: &str) -> bool {
+    suppressed_roots.iter().any(|root| {
+        value_path
+            .strip_prefix(root)
+            .is_some_and(|suffix| suffix.starts_with('.'))
+    })
 }

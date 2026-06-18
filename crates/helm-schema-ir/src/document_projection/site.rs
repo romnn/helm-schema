@@ -9,18 +9,17 @@ pub(super) struct DocumentSite {
     kind: ValueKind,
     in_mapping_key: bool,
     entire_scalar_value: bool,
-    helper_inlined: bool,
     resource: Option<ResourceRef>,
 }
 
 impl DocumentSite {
     pub(super) fn new(site_context: DocumentSiteContext, helper_inlined: bool) -> Self {
+        let _ = helper_inlined;
         Self {
             path: site_context.path,
             kind: site_context.kind,
             in_mapping_key: site_context.in_mapping_key,
             entire_scalar_value: site_context.entire_scalar_value,
-            helper_inlined,
             resource: site_context.resource,
         }
     }
@@ -88,23 +87,18 @@ impl DocumentSite {
     }
 
     pub(super) fn can_project_scalar_helper_to_caller_path(&self) -> bool {
-        !self.helper_inlined
-            && !self.in_mapping_key
+        !self.in_mapping_key
             && !self.path.0.is_empty()
             && self.kind == ValueKind::Scalar
             && self.entire_scalar_value
     }
 
     pub(super) fn can_project_fragment_helper_to_caller_path(&self) -> bool {
-        !self.helper_inlined
-            && !self.in_mapping_key
-            && !self.path.0.is_empty()
-            && self.kind == ValueKind::Fragment
+        !self.in_mapping_key && !self.path.0.is_empty() && self.kind == ValueKind::Fragment
     }
 
     pub(super) fn can_project_structured_helper_to_caller_path(&self) -> bool {
-        !self.helper_inlined
-            && !self.in_mapping_key
+        !self.in_mapping_key
             && !self.path.0.is_empty()
             && (self.kind == ValueKind::Fragment
                 || (self.kind == ValueKind::Scalar && self.entire_scalar_value))

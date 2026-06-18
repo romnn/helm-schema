@@ -5,7 +5,6 @@ use helm_schema_engine::parse::TreeSitterParser;
 use tracing::instrument;
 use vfs::VfsPath;
 
-use super::files::files_with_role;
 use super::types::ChartContext;
 use super::{FileRole, list_chart_files};
 use crate::error::CliResult;
@@ -35,14 +34,6 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
     }
 
     Ok(index)
-}
-
-#[instrument(skip_all)]
-pub fn list_template_sources_for_define_index(
-    chart_dir: &VfsPath,
-    include_tests: bool,
-) -> CliResult<Vec<VfsPath>> {
-    files_with_role(chart_dir, include_tests, FileRole::DefineIndexTemplate)
 }
 
 fn add_template_source(

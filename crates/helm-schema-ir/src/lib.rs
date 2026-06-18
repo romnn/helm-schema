@@ -17,7 +17,6 @@ mod contract_sink;
 #[cfg(test)]
 mod contract_tests;
 mod contract_types;
-mod default_type_hints;
 mod define_body_cache;
 mod document_projection;
 mod eval_effect;
@@ -57,6 +56,7 @@ mod helper_summary_projection;
 mod helper_value_analysis;
 mod helper_value_expression;
 mod helper_walk_state;
+mod literal_schema_type;
 mod local_projection;
 mod node_eval;
 mod output_path;
@@ -71,7 +71,6 @@ mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
 mod symbolic_scope_state;
-mod template_comment_filter;
 mod template_expr_analysis;
 mod template_expr_cache;
 mod tree_sitter_utils;
@@ -88,10 +87,9 @@ pub use contract::{
 };
 pub use contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
-    ContractValuePathFacts, GuardConstraint, MetadataFieldKind, RequiredInferenceSignals,
+    ContractValuePathFacts, GuardConstraint, MetadataFieldKind,
 };
 pub use contract_types::Guard;
-pub use default_type_hints::extract_default_type_hints;
 pub use helm_schema_core::{
     ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
     ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
@@ -101,6 +99,7 @@ pub use helper_discovery::{
     extract_helper_calls_from_ast_body, extract_helper_calls_from_ast_excluding_defines,
 };
 pub use provenance::{ContractProvenance, SourceSpan};
+pub use required_inference::RequiredInferenceSignals;
 pub use symbolic::SymbolicIrContext;
 
 #[cfg(test)]

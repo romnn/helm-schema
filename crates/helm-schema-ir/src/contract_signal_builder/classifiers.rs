@@ -2,20 +2,6 @@ use crate::Guard;
 use crate::contract::ContractUse;
 use crate::contract_signals::{GuardConstraint, MetadataFieldKind};
 
-pub(super) fn use_is_positive_header(use_: &ContractUse) -> bool {
-    !use_.guards.is_empty()
-        && use_.guards.iter().all(|guard| match guard {
-            Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
-                path == &use_.source_expr
-            }
-            Guard::Not { .. }
-            | Guard::Or { .. }
-            | Guard::Range { .. }
-            | Guard::With { .. }
-            | Guard::Default { .. } => false,
-        })
-}
-
 pub(super) fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
     let last = path.last()?.as_str();
     let prev = path.get(path.len().checked_sub(2)?)?.as_str();

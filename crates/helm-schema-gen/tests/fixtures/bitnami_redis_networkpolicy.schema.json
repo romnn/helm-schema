@@ -212,6 +212,214 @@
     },
     {
       "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "architecture": {
+                "enum": [
+                  "replication"
+                ]
+              }
+            },
+            "required": [
+              "architecture"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "allowExternalEgress": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "allowExternalEgress"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "allowExternal": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "allowExternal"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -435,7 +643,16 @@
         "containerPorts": {
           "additionalProperties": false,
           "properties": {
-            "redis": {}
+            "redis": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
           },
           "type": "object"
         }
@@ -448,7 +665,16 @@
         "containerPorts": {
           "additionalProperties": false,
           "properties": {
-            "http": {}
+            "http": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
           },
           "type": "object"
         },
@@ -779,7 +1005,16 @@
         "containerPorts": {
           "additionalProperties": false,
           "properties": {
-            "sentinel": {}
+            "sentinel": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
           },
           "type": "object"
         },

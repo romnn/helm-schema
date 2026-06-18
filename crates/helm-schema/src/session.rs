@@ -9,7 +9,6 @@ use serde_json::{Map, Value};
 
 use crate::analysis::analyze_charts;
 use crate::chart;
-use crate::chart_evidence::ChartTemplateEvidence;
 use crate::error::CliResult;
 use crate::fetch_policy::FetchPolicy;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
@@ -48,10 +47,8 @@ pub struct ValuePathExplanation {
 }
 
 pub(crate) struct PreparedSession {
-    pub(crate) contract: ContractIr,
-    pub(crate) contract_schema_signals: helm_schema_engine::ContractSchemaSignals,
-    pub(crate) template_evidence: ChartTemplateEvidence,
-    pub(crate) local_schema_universe: LocalSchemaUniverse,
+    pub(crate) analysis: Analysis,
+    pub(crate) required_inference_signals: helm_schema_engine::RequiredInferenceSignals,
     pub(crate) values_yaml: Option<String>,
     pub(crate) values_descriptions: BTreeMap<String, String>,
     pub(crate) subchart_value_prefixes: Vec<Vec<String>>,
@@ -79,10 +76,12 @@ impl PreparedSession {
         )?;
 
         Ok(Self {
-            contract: chart_analysis.contract,
-            contract_schema_signals: chart_analysis.contract_schema_signals,
-            template_evidence: chart_analysis.template_evidence,
-            local_schema_universe: chart_analysis.local_schema_universe,
+            analysis: Analysis {
+                contract: chart_analysis.contract,
+                schema_signals: chart_analysis.contract_schema_signals,
+                local_schemas: chart_analysis.local_schema_universe,
+            },
+            required_inference_signals: chart_analysis.required_inference_signals,
             values_yaml,
             values_descriptions,
             subchart_value_prefixes: charts
@@ -95,15 +94,11 @@ impl PreparedSession {
     }
 
     pub(crate) fn analysis(&self) -> Analysis {
-        Analysis {
-            contract: self.contract.clone(),
-            schema_signals: self.contract_schema_signals.clone(),
-            local_schemas: self.local_schema_universe.clone(),
-        }
+        self.analysis.clone()
     }
 }
 
-/// Memoized facade over the current stage pipeline.
+/// Memoized facade over chart analysis and schema lowering.
 ///
 /// The session keeps chart loading and analysis results available for later
 /// queries without forcing callers to re-run discovery, values composition,
@@ -142,7 +137,7 @@ impl AnalysisSession {
 
     /// Return the guarded contract graph for the chart tree.
     pub fn contract(&self) -> CliResult<ContractIr> {
-        Ok(self.prepared()?.contract.clone())
+        Ok(self.prepared()?.analysis.contract.clone())
     }
 
     /// Return the stable versioned contract export document.
@@ -152,7 +147,7 @@ impl AnalysisSession {
 
     /// Return the chart-local schema universe extracted from the chart tree.
     pub fn local_schema_universe(&self) -> CliResult<LocalSchemaUniverse> {
-        Ok(self.prepared()?.local_schema_universe.clone())
+        Ok(self.prepared()?.analysis.local_schemas.clone())
     }
 
     #[must_use]
@@ -254,27 +249,31 @@ impl AnalysisSession {
             .map(ContractDocumentUse::from)
             .collect();
         let value_path_facts = prepared
-            .contract_schema_signals
+            .analysis
+            .schema_signals
             .value_path_facts
             .get(&normalized_path)
             .copied();
         let guard_constraints = prepared
-            .contract_schema_signals
+            .analysis
+            .schema_signals
             .path_signals
             .guard_constraints_by_value_path
             .get(&normalized_path)
             .cloned()
             .unwrap_or_default();
         let metadata_fields = prepared
-            .contract_schema_signals
+            .analysis
+            .schema_signals
             .path_signals
             .metadata_fields_by_value_path
             .get(&normalized_path)
             .map(|fields| fields.iter().copied().collect())
             .unwrap_or_default();
-        let mut type_hints: Vec<serde_json::Value> = prepared
-            .contract_schema_signals
-            .declared_type_hints_by_value_path
+        let type_hints: Vec<serde_json::Value> = prepared
+            .analysis
+            .schema_signals
+            .type_hints_by_value_path
             .get(&normalized_path)
             .map(|schema_types| {
                 schema_types
@@ -283,15 +282,7 @@ impl AnalysisSession {
                     .collect()
             })
             .unwrap_or_default();
-        if let Some(external_hints) = prepared.template_evidence.type_hints.get(&normalized_path) {
-            for hint in external_hints {
-                if !type_hints.contains(hint) {
-                    type_hints.push(hint.clone());
-                }
-            }
-        }
         let has_default_fallback = prepared
-            .contract_schema_signals
             .required_inference_signals
             .default_fallback_paths
             .contains(&normalized_path);
@@ -360,7 +351,7 @@ impl AnalysisSession {
         }
 
         let prepared = self.prepared()?;
-        let projection = Arc::new(prepared.contract.clone().project());
+        let projection = Arc::new(prepared.analysis.contract.clone().project());
         let mut guard = self.projection.lock().expect("projection mutex");
         let projection = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&projection)));
         Ok(projection)
@@ -373,13 +364,12 @@ pub(crate) fn resolve_contract_from_prepared(
     diagnostic_sink: Option<&DiagnosticSink>,
 ) -> CliResult<ResolvedContract> {
     let mut provider_options = opts.provider.clone();
-    provider_options.local_schema_universe = prepared.local_schema_universe.clone();
+    provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
     let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&prepared.contract_schema_signals, &provider)
+        ValuesSchemaInput::new(&prepared.analysis.schema_signals, &provider)
             .with_values_yaml(prepared.values_yaml.as_deref())
-            .with_type_hints(&prepared.template_evidence.type_hints)
             .with_values_descriptions(&prepared.values_descriptions),
     );
     let schema = apply_shipped_values_schema_constraints(
@@ -404,8 +394,8 @@ pub(crate) fn generate_schema_from_resolved_contract(
     if opts.infer_required {
         required_inference::apply(
             &mut schema,
-            &prepared.contract_schema_signals.required_inference_signals,
-            &prepared.contract_schema_signals.value_path_facts,
+            &prepared.required_inference_signals,
+            &prepared.analysis.schema_signals.value_path_facts,
             prepared.values_yaml.as_deref(),
         );
     }

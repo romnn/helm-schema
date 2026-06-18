@@ -56,22 +56,47 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
                       enabled: true
                 "}),
             },
+            common::HelmValidationSample {
+                name: "otel-gateway-empty-service-account-name",
+                values_yaml: Some(indoc! {"
+                    signoz-otel-gateway:
+                      enabled: true
+                      serviceAccount:
+                        create: true
+                        name: \"\"
+                "}),
+            },
         ],
     )?;
-    let mut gateway_service_account_name = schema
-        .pointer("/properties/signoz-otel-gateway/properties/serviceAccount/properties/name")
-        .cloned()
-        .ok_or_eyre("missing signoz-otel-gateway.serviceAccount.name schema")?;
-    strip_description_annotations(&mut gateway_service_account_name);
-    similar_asserts::assert_eq!(
-        gateway_service_account_name,
-        serde_json::json!({
-            "anyOf": [
-                { "type": "null" },
-                { "type": "string" }
-            ]
-        }),
-        "serviceAccount.name is defaulted through the chart helper in both create/non-create branches and must remain nullable string-like"
+    assert!(
+        !schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz": {
+                    "serviceAccount": {
+                        "create": false,
+                        "name": 7
+                    }
+                }
+            })
+        ),
+        "signoz.serviceAccount.name must not collapse to an unconstrained schema on the false branch: {schema}"
+    );
+    assert!(
+        !schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "name": "alertmanager",
+                    "serviceAccount": {
+                        "create": false,
+                        "name": 7
+                    }
+                }
+            })
+        ),
+        "alertmanager.serviceAccount.name must stay string-like on the false branch too: {schema}"
     );
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))
@@ -112,6 +137,12 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
     }
 
     Ok(())
+}
+
+fn schema_validates_instance(schema: &serde_json::Value, instance: &serde_json::Value) -> bool {
+    jsonschema::validator_for(schema)
+        .expect("schema validator")
+        .is_valid(instance)
 }
 
 fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected: &str) {

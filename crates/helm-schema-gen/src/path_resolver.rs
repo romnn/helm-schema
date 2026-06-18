@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -33,7 +33,7 @@ pub(crate) struct PathSchemaResolver<'a> {
     signals: UseSignals,
     value_path_facts: &'a BTreeMap<String, ContractValuePathFacts>,
     path_caches: ValuePathCaches,
-    type_hints: &'a BTreeMap<String, Vec<Value>>,
+    type_hints: &'a BTreeMap<String, BTreeSet<String>>,
     resolve_policy: ResolvePolicy,
 }
 
@@ -42,7 +42,7 @@ impl<'a> PathSchemaResolver<'a> {
         signals: UseSignals,
         value_path_facts: &'a BTreeMap<String, ContractValuePathFacts>,
         values_yaml_doc: &YamlValue,
-        type_hints: &'a BTreeMap<String, Vec<Value>>,
+        type_hints: &'a BTreeMap<String, BTreeSet<String>>,
     ) -> Self {
         let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
         Self {
@@ -93,8 +93,7 @@ impl<'a> PathSchemaResolver<'a> {
         let type_hint_schema = self
             .type_hints
             .get(value_path)
-            .cloned()
-            .map_or_else(empty_schema, merge_schema_list);
+            .map_or_else(empty_schema, merge_type_hint_schemas);
         let guard_constraint_schema = self
             .signals
             .guard_constraints_by_value_path
@@ -110,7 +109,6 @@ impl<'a> PathSchemaResolver<'a> {
             path_all_render_uses_self_guarded: contract_facts.all_render_uses_self_guarded,
             path_has_self_range_guard_render_use: contract_facts.has_self_range_guard_render_use,
             contract_path_is_nullable: contract_facts.is_nullable,
-            has_type_hint: self.type_hints.contains_key(value_path),
             values_yaml_has_no_schema_evidence: values_yaml_info
                 .is_none_or(|path_info| is_empty_schema(&path_info.schema)),
             values_yaml_is_explicit_null: values_yaml_info
@@ -179,4 +177,13 @@ impl<'a> PathSchemaResolver<'a> {
             provider_schema_candidate,
         }
     }
+}
+
+fn merge_type_hint_schemas(schema_types: &BTreeSet<String>) -> Value {
+    merge_schema_list(
+        schema_types
+            .iter()
+            .map(|schema_type| type_schema(schema_type))
+            .collect(),
+    )
 }
