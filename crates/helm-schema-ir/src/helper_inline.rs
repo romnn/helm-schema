@@ -13,7 +13,6 @@ pub(crate) struct ExactHelperInlinePlan<'a> {
 }
 
 pub(crate) fn plan_exact_helper_inline_from_exprs<'a>(
-    _text: &str,
     exprs: &[TemplateExpr],
     defines: &'a DefineIndex,
     define_bodies: &'a DefineBodyCache,

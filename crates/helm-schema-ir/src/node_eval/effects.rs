@@ -19,7 +19,7 @@ pub(crate) trait NodeActionEffectSink: ContractUseSink {
 
     fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &TemplateExpr);
 
-    fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str, rhs_expr: &TemplateExpr);
+    fn refresh_helper_output_meta(&mut self, variable: String, rhs_expr: &TemplateExpr);
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
@@ -51,7 +51,7 @@ fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: Local
         }
     }
     sink.refresh_default_paths(&plan.variable, &plan.rhs_expr);
-    sink.refresh_helper_output_meta(plan.variable, &plan.rhs, &plan.rhs_expr);
+    sink.refresh_helper_output_meta(plan.variable, &plan.rhs_expr);
 }
 
 pub(super) fn apply_if_condition_plan(

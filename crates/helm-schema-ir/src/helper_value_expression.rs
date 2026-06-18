@@ -40,7 +40,6 @@ pub(crate) fn collect_helper_value_expression_from_snippet(
     if let Some(assignment) = parse_helper_assignment_from_exprs(text, exprs) {
         collect_assignment_bound_helper_values(
             &assignment.variable,
-            &assignment.rhs,
             &assignment.rhs_expr,
             exprs,
             bindings,
@@ -108,7 +107,7 @@ pub(crate) fn collect_helper_value_expression_from_snippet(
             .string_output
             .extend(helper_env.string_outputs_from_exprs(exprs, state.local_bindings, state.seen));
     }
-    let nested = helper_env.summarize_calls_in_exprs(text, exprs, state.local_bindings, state.seen);
+    let nested = helper_env.summarize_calls_in_exprs(exprs, state.local_bindings, state.seen);
     if expression_kind == ValueKind::Fragment {
         extend_nested_fragment_render(
             state.analysis,
@@ -125,7 +124,6 @@ pub(crate) fn collect_helper_value_expression_from_snippet(
 
 fn collect_assignment_bound_helper_values(
     var: &str,
-    rhs: &str,
     rhs_expr: &helm_schema_ast::TemplateExpr,
     full_exprs: &[helm_schema_ast::TemplateExpr],
     bindings: &HashMap<String, HelperBinding>,
@@ -170,8 +168,7 @@ fn collect_assignment_bound_helper_values(
         state.local_bindings,
         state.seen,
     );
-    let nested =
-        helper_env.summarize_calls_in_exprs(rhs, rhs_exprs, state.local_bindings, state.seen);
+    let nested = helper_env.summarize_calls_in_exprs(rhs_exprs, state.local_bindings, state.seen);
     state
         .analysis
         .chart_defaults

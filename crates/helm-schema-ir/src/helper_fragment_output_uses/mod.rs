@@ -130,7 +130,6 @@ impl FragmentOutputUseRuntime<'_, '_> {
     fn branch_guard_paths(&mut self, header: &TemplateHeader) -> BTreeSet<String> {
         let current_dot = self.current_dot().cloned();
         branch_guard_paths_for_expr(
-            header.raw(),
             header.expr(),
             self.bindings,
             current_dot.as_ref(),
@@ -228,7 +227,6 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
     fn refresh_helper_output_meta(
         &mut self,
         _variable: String,
-        _rhs: &str,
         _rhs_expr: &helm_schema_ast::TemplateExpr,
     ) {
     }

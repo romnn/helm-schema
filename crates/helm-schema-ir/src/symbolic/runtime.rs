@@ -195,10 +195,9 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
     fn refresh_helper_output_meta(
         &mut self,
         variable: String,
-        rhs: &str,
         rhs_expr: &helm_schema_ast::TemplateExpr,
     ) {
-        let helper_meta = self.helper_output_meta_for_exprs(rhs, std::slice::from_ref(rhs_expr));
+        let helper_meta = self.helper_output_meta_for_exprs(std::slice::from_ref(rhs_expr));
         self.scope
             .locals_mut()
             .set_output_meta(variable, helper_meta);

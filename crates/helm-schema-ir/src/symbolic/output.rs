@@ -16,7 +16,6 @@ use super::SymbolicWalker;
 impl SymbolicWalker<'_> {
     pub(super) fn helper_output_meta_for_exprs(
         &self,
-        text: &str,
         exprs: &[TemplateExpr],
     ) -> BTreeMap<String, HelperOutputMeta> {
         let mut out = self
@@ -27,7 +26,6 @@ impl SymbolicWalker<'_> {
             .inner
             .helper_summaries
             .summarize_bound_helper_calls_in_exprs(
-                text,
                 exprs,
                 Some(&self.root_bindings),
                 self.current_dot_binding().as_ref(),

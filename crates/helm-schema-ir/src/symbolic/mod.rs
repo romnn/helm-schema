@@ -256,7 +256,6 @@ impl<'a> SymbolicWalker<'a> {
             .inner
             .helper_summaries
             .summarize_bound_helper_calls_in_exprs(
-                snippet.text(),
                 snippet.exprs(),
                 Some(&self.root_bindings),
                 self.current_dot_binding().as_ref(),

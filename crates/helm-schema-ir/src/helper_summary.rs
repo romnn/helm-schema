@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::fmt::Write;
 
 use crate::bound_helper_call_analysis::{
     analyze_bound_helper_call_with_fragment_locals,
@@ -201,7 +202,7 @@ pub(crate) struct HelperSummaryCache {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct BoundHelperCallsCacheKey {
-    text: String,
+    exprs: String,
     current_dot: Option<HelperBinding>,
     root_bindings: BTreeMap<String, HelperBinding>,
     fragment_locals: BTreeMap<String, FragmentBinding>,
@@ -216,7 +217,6 @@ impl HelperSummaryCache {
 
     pub(crate) fn summarize_bound_helper_calls_in_exprs(
         &self,
-        text: &str,
         exprs: &[helm_schema_ast::TemplateExpr],
         bindings: Option<&HashMap<String, HelperBinding>>,
         current_dot: Option<&HelperBinding>,
@@ -245,7 +245,7 @@ impl HelperSummaryCache {
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
         let key = BoundHelperCallsCacheKey {
-            text: text.to_string(),
+            exprs: structural_exprs_cache_key(exprs),
             current_dot: current_dot.cloned(),
             root_bindings: root_bindings_key,
             fragment_locals: fragment_locals_key,
@@ -292,12 +292,111 @@ impl HelperSummaryCache {
     }
 }
 
+fn structural_exprs_cache_key(exprs: &[helm_schema_ast::TemplateExpr]) -> String {
+    let mut out = String::new();
+    let _ = write!(out, "n{}|", exprs.len());
+    for expr in exprs {
+        append_structural_expr_key(&mut out, expr);
+    }
+    out
+}
+
+fn append_structural_expr_key(out: &mut String, expr: &helm_schema_ast::TemplateExpr) {
+    use helm_schema_ast::{Literal, TemplateExpr};
+
+    match expr {
+        TemplateExpr::Literal(Literal::String(value)) => {
+            out.push_str("ls");
+            append_len_prefixed(out, value);
+        }
+        TemplateExpr::Literal(Literal::RawString(value)) => {
+            out.push_str("lr");
+            append_len_prefixed(out, value);
+        }
+        TemplateExpr::Literal(Literal::Int(value)) => {
+            let _ = write!(out, "li{value}|");
+        }
+        TemplateExpr::Literal(Literal::Float(value)) => {
+            let _ = write!(out, "lf{:016x}|", value.to_bits());
+        }
+        TemplateExpr::Literal(Literal::Bool(value)) => {
+            let _ = write!(out, "lb{}|", u8::from(*value));
+        }
+        TemplateExpr::Literal(Literal::Nil) => out.push_str("ln|"),
+        TemplateExpr::Field(path) => {
+            out.push_str("f[");
+            append_string_list(out, path);
+            out.push(']');
+        }
+        TemplateExpr::Selector { operand, path } => {
+            out.push_str("s(");
+            append_structural_expr_key(out, operand);
+            out.push('[');
+            append_string_list(out, path);
+            out.push_str("])");
+        }
+        TemplateExpr::Variable(variable) => {
+            out.push_str("v");
+            append_len_prefixed(out, variable);
+        }
+        TemplateExpr::Call { function, args } => {
+            out.push_str("c");
+            append_len_prefixed(out, function);
+            out.push('(');
+            for arg in args {
+                append_structural_expr_key(out, arg);
+            }
+            out.push(')');
+        }
+        TemplateExpr::Pipeline(stages) => {
+            out.push_str("p(");
+            for stage in stages {
+                append_structural_expr_key(out, stage);
+            }
+            out.push(')');
+        }
+        TemplateExpr::Parenthesized(inner) => {
+            out.push_str("q(");
+            append_structural_expr_key(out, inner);
+            out.push(')');
+        }
+        TemplateExpr::VariableDefinition { name, value } => {
+            out.push_str("vd");
+            append_len_prefixed(out, name);
+            append_structural_expr_key(out, value);
+        }
+        TemplateExpr::Assignment { name, value } => {
+            out.push_str("as");
+            append_len_prefixed(out, name);
+            append_structural_expr_key(out, value);
+        }
+        TemplateExpr::Unknown(value) => {
+            out.push_str("u");
+            append_len_prefixed(out, value);
+        }
+    }
+}
+
+fn append_string_list(out: &mut String, values: &[String]) {
+    let _ = write!(out, "{}:", values.len());
+    for value in values {
+        append_len_prefixed(out, value);
+    }
+}
+
+fn append_len_prefixed(out: &mut String, value: &str) {
+    let _ = write!(out, "{}:{value}|", value.len());
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeSet;
 
+    use helm_schema_ast::TemplateExpr;
+
     use super::{HelperOutputMeta, HelperSummary};
     use crate::predicate::{Predicate, PredicateAtom};
+    use crate::template_expr_cache::parse_expr_text;
     use crate::{Guard, ValueKind, YamlPath};
 
     #[test]
@@ -336,5 +435,17 @@ mod tests {
         );
 
         assert_eq!(summary.fragment_output_uses.len(), 1);
+    }
+
+    #[test]
+    fn structural_exprs_cache_key_is_source_spelling_independent() {
+        fn exprs(text: &str) -> Vec<TemplateExpr> {
+            parse_expr_text(text)
+        }
+
+        assert_eq!(
+            super::structural_exprs_cache_key(&exprs("include \"name\" .")),
+            super::structural_exprs_cache_key(&exprs("{{ include   \"name\" . }}"))
+        );
     }
 }

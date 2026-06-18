@@ -55,7 +55,6 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
 
     pub(crate) fn summarize_calls_in_exprs(
         &self,
-        text: &str,
         exprs: &[TemplateExpr],
         local_bindings: &HashMap<String, FragmentBinding>,
         seen: &mut HashSet<String>,
@@ -63,7 +62,6 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
         self.context
             .helper_summaries()
             .summarize_bound_helper_calls_in_exprs(
-                text,
                 exprs,
                 Some(self.bindings),
                 self.current_dot,

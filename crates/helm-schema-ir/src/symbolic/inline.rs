@@ -72,7 +72,6 @@ impl SymbolicWalker<'_> {
 
     pub(super) fn inline_exact_helper_call(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
         let Some(plan) = plan_exact_helper_inline_from_exprs(
-            snippet.text(),
             snippet.exprs(),
             self.defines,
             &self.ir_context.inner.define_bodies,

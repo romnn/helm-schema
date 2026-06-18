@@ -67,7 +67,6 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
     if let Some(assignment) = parse_helper_assignment_from_exprs(text, exprs) {
         collect_bound_fragment_output_assignment_uses(
             &assignment.variable,
-            &assignment.rhs,
             &assignment.rhs_expr,
             bindings,
             current_dot,
@@ -123,8 +122,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
         state.local_bindings,
     );
 
-    let mut nested =
-        helper_env.summarize_calls_in_exprs(text, exprs, state.local_bindings, state.seen);
+    let mut nested = helper_env.summarize_calls_in_exprs(exprs, state.local_bindings, state.seen);
     let nested_structured_sources: BTreeSet<String> = nested
         .fragment_output_uses
         .iter()
@@ -202,7 +200,6 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
 
 fn collect_bound_fragment_output_assignment_uses(
     var: &str,
-    rhs: &str,
     rhs_expr: &TemplateExpr,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
@@ -217,12 +214,8 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let mut rhs_seen = state.seen.clone();
-        let nested = helper_env.summarize_calls_in_exprs(
-            rhs,
-            rhs_exprs,
-            state.local_bindings,
-            &mut rhs_seen,
-        );
+        let nested =
+            helper_env.summarize_calls_in_exprs(rhs_exprs, state.local_bindings, &mut rhs_seen);
         top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
         if let Some(nested_binding) = project_fragment_binding(nested) {
             binding = match binding {

@@ -19,7 +19,6 @@ pub(crate) struct LocalAssignmentPlan {
     pub(crate) variable: String,
     pub(crate) kind: AssignmentKind,
     pub(crate) fragment_binding: Option<FragmentBinding>,
-    pub(crate) rhs: String,
     pub(crate) rhs_expr: TemplateExpr,
 }
 
@@ -50,7 +49,6 @@ pub(crate) fn plan_assignment_action(
                 variable: assignment.variable,
                 kind: assignment.kind,
                 fragment_binding,
-                rhs: assignment.rhs,
                 rhs_expr: assignment.rhs_expr,
             }
         });
