@@ -3,11 +3,13 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::ValueKind;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::expression_analysis::{
-    resolved_string_transform_paths_for_text, resolved_type_is_paths_for_text,
-    set_default_chart_paths_for_text,
+    resolved_string_transform_paths_for_exprs, resolved_type_is_paths_for_exprs,
+    set_default_chart_paths_for_exprs,
 };
-use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
-use crate::fragment_classification::is_fragment_expr;
+use crate::fragment_assignment::{
+    apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
+};
+use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::helper_summary::HelperOutputMeta;
@@ -19,23 +21,28 @@ use crate::helper_summary_projection::{
 };
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
-    direct_bound_paths_from_text_in_context, local_bound_paths_from_text,
-    local_output_meta_from_text, local_rendered_paths_from_text,
+    direct_bound_paths_from_exprs_in_context, local_bound_paths_from_expr,
+    local_output_meta_from_exprs, local_rendered_paths_from_exprs,
 };
 use crate::predicate::Predicate;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 
-pub(crate) fn collect_helper_value_expression(
-    text: &str,
+pub(crate) fn collect_helper_value_expression_from_snippet(
+    snippet: &ParsedTemplateSnippet<'_>,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
-    if let Some(assignment) = parse_helper_assignment(text) {
+    let text = snippet.text();
+    let exprs = snippet.exprs();
+
+    if let Some(assignment) = parse_helper_assignment_from_exprs(text, exprs) {
         collect_assignment_bound_helper_values(
             &assignment.variable,
             &assignment.rhs,
-            text,
+            &assignment.rhs_expr,
+            exprs,
             bindings,
             current_dot,
             active_output_predicates,
@@ -46,36 +53,36 @@ pub(crate) fn collect_helper_value_expression(
 
     let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     let mut seen_set = HashSet::new();
-    if apply_local_set_mutations(
-        text,
+    if apply_local_set_mutations_from_exprs(
+        exprs,
         state.local_bindings,
         current_dot_fragment.as_ref(),
         state.context,
         &mut seen_set,
     ) {
-        let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+        let set_default_paths =
+            set_default_chart_paths_for_exprs(exprs, Some(bindings), current_dot);
         state.analysis.chart_defaults.extend(set_default_paths);
         return;
     }
 
-    let direct_outputs = direct_bound_paths_from_text_in_context(text, bindings, current_dot);
-    let fallback_paths = BoundHelperEnv::new(bindings, current_dot, state.context)
-        .external_default_fallback_paths(text);
-    extend_type_hints(
-        &mut state.analysis.type_hints,
-        resolved_type_is_paths_for_text(text, Some(bindings), current_dot),
-    );
-    extend_type_hints(
-        &mut state.analysis.type_hints,
-        resolved_string_transform_paths_for_text(text, Some(bindings), current_dot),
-    );
-    let local_outputs = local_rendered_paths_from_text(text, state.local_bindings);
+    let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
+    let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
+    extend_type_hints(
+        &mut state.analysis.type_hints,
+        resolved_type_is_paths_for_exprs(exprs, Some(bindings), current_dot),
+    );
+    extend_type_hints(
+        &mut state.analysis.type_hints,
+        resolved_string_transform_paths_for_exprs(exprs, Some(bindings), current_dot),
+    );
+    let local_outputs = local_rendered_paths_from_exprs(exprs, state.local_bindings);
     let local_fallback_paths =
-        helper_env.local_default_fallback_paths(text, state.local_default_paths);
+        helper_env.local_default_fallback_paths_in_exprs(exprs, state.local_default_paths);
     let local_meta_by_path =
-        local_output_meta_from_text(text, state.local_bindings, state.local_output_meta);
-    let expression_kind = if is_fragment_expr(text) {
+        local_output_meta_from_exprs(exprs, state.local_bindings, state.local_output_meta);
+    let expression_kind = if is_fragment_exprs(exprs) {
         ValueKind::Fragment
     } else {
         ValueKind::Scalar
@@ -99,9 +106,9 @@ pub(crate) fn collect_helper_value_expression(
         state
             .analysis
             .string_output
-            .extend(helper_env.string_outputs_from_text(text, state.local_bindings, state.seen));
+            .extend(helper_env.string_outputs_from_exprs(exprs, state.local_bindings, state.seen));
     }
-    let nested = helper_env.summarize_calls(text, state.local_bindings, state.seen);
+    let nested = helper_env.summarize_calls_in_exprs(text, exprs, state.local_bindings, state.seen);
     if expression_kind == ValueKind::Fragment {
         extend_nested_fragment_render(
             state.analysis,
@@ -112,34 +119,37 @@ pub(crate) fn collect_helper_value_expression(
     } else {
         extend_nested_scalar_render(state.analysis, nested, active_output_predicates);
     }
-    let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+    let set_default_paths = set_default_chart_paths_for_exprs(exprs, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);
 }
 
 fn collect_assignment_bound_helper_values(
     var: &str,
     rhs: &str,
-    text: &str,
+    rhs_expr: &helm_schema_ast::TemplateExpr,
+    full_exprs: &[helm_schema_ast::TemplateExpr],
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
-    let set_default_paths = set_default_chart_paths_for_text(text, Some(bindings), current_dot);
+    let rhs_exprs = std::slice::from_ref(rhs_expr);
+    let set_default_paths =
+        set_default_chart_paths_for_exprs(full_exprs, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_type_is_paths_for_text(rhs, Some(bindings), current_dot),
+        resolved_type_is_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
     );
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_string_transform_paths_for_text(rhs, Some(bindings), current_dot),
+        resolved_string_transform_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
     );
 
     let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
     let mut seen_set = HashSet::new();
-    if apply_local_set_mutations(
-        text,
+    if apply_local_set_mutations_from_exprs(
+        full_exprs,
         state.local_bindings,
         current_dot_fragment.as_ref(),
         state.context,
@@ -149,15 +159,19 @@ fn collect_assignment_bound_helper_values(
     }
 
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
-    let fallback_paths = helper_env.external_default_fallback_paths(rhs);
+    let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
     let local_fallback_paths =
-        helper_env.local_default_fallback_paths(rhs, state.local_default_paths);
-    let local_outputs = local_bound_paths_from_text(rhs, state.local_bindings);
+        helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, state.local_default_paths);
+    let local_outputs = local_bound_paths_from_expr(rhs_expr, state.local_bindings);
     let local_meta_by_path =
-        local_output_meta_from_text(rhs, state.local_bindings, state.local_output_meta);
-    let result_meta_by_path =
-        helper_env.helper_binding_output_meta_from_text(rhs, state.local_bindings, state.seen);
-    let nested = helper_env.summarize_calls(rhs, state.local_bindings, state.seen);
+        local_output_meta_from_exprs(rhs_exprs, state.local_bindings, state.local_output_meta);
+    let result_meta_by_path = helper_env.helper_binding_output_meta_from_exprs(
+        rhs_exprs,
+        state.local_bindings,
+        state.seen,
+    );
+    let nested =
+        helper_env.summarize_calls_in_exprs(rhs, rhs_exprs, state.local_bindings, state.seen);
     state
         .analysis
         .chart_defaults
@@ -182,7 +196,7 @@ fn collect_assignment_bound_helper_values(
 
     let mut seen_rhs = HashSet::new();
     if let Some(binding) =
-        helper_env.fragment_binding_from_text(rhs, state.local_bindings, &mut seen_rhs)
+        helper_env.fragment_binding_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs)
     {
         state.local_bindings.insert(var.to_string(), binding);
     }

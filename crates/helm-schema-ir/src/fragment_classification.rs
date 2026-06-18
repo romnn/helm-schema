@@ -6,9 +6,12 @@ use crate::template_expr_cache::parse_expr_text;
 /// a YAML fragment rather than a single scalar.
 #[must_use]
 pub fn is_fragment_expr(text: &str) -> bool {
-    parse_expr_text(text)
-        .iter()
-        .any(expr_contains_fragment_function)
+    is_fragment_exprs(&parse_expr_text(text))
+}
+
+#[must_use]
+pub(crate) fn is_fragment_exprs(exprs: &[TemplateExpr]) -> bool {
+    exprs.iter().any(expr_contains_fragment_function)
 }
 
 fn expr_contains_fragment_function(expr: &TemplateExpr) -> bool {

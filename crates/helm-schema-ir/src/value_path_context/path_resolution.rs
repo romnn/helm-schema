@@ -3,7 +3,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::expression_analysis::{
-    resolve_expr_to_values_path, resolved_default_fallback_paths_for_text,
+    resolve_expr_to_values_path, resolved_default_fallback_paths_for_exprs,
 };
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::fragment_source_paths;
@@ -88,8 +88,8 @@ impl ValuePathContext<'_> {
 
     pub(crate) fn resolved_default_fallback_paths(&self, text: &str) -> BTreeSet<String> {
         let exprs = parse_expr_text(text);
-        let mut paths = resolved_default_fallback_paths_for_text(
-            text,
+        let mut paths = resolved_default_fallback_paths_for_exprs(
+            &exprs,
             Some(self.root_bindings),
             self.current_dot_binding.as_ref(),
         );

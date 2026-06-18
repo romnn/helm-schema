@@ -1,7 +1,5 @@
 use helm_schema_ast::TemplateExpr;
 
-use crate::template_expr_cache::parse_expr_text;
-
 pub(crate) fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
     let mut found = false;
     expr.walk(|node| {
@@ -23,14 +21,12 @@ pub(crate) fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {
     }
 }
 
-pub(crate) fn text_starts_with_helper_call(text: &str) -> bool {
-    let exprs = parse_expr_text(text);
-    matches!(exprs.as_slice(), [expr] if expr_starts_with_helper_call(expr))
+pub(crate) fn exprs_start_with_helper_call(exprs: &[TemplateExpr]) -> bool {
+    matches!(exprs, [expr] if expr_starts_with_helper_call(expr))
 }
 
-pub(crate) fn text_pipeline_merges_into_var(text: &str, var: &str) -> bool {
-    let exprs = parse_expr_text(text);
-    let [TemplateExpr::Pipeline(stages)] = exprs.as_slice() else {
+pub(crate) fn exprs_pipeline_merges_into_var(exprs: &[TemplateExpr], var: &str) -> bool {
+    let [TemplateExpr::Pipeline(stages)] = exprs else {
         return false;
     };
     stages.iter().skip(1).any(|stage| {

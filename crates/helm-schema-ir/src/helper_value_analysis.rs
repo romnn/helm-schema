@@ -19,11 +19,12 @@ use crate::helper_range_plan::{
 use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
-use crate::helper_value_expression::collect_helper_value_expression;
+use crate::helper_value_expression::collect_helper_value_expression_from_snippet;
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::value_path_context::computed_with_body_fragment_binding_expr;
 use crate::{ValueKind, YamlPath};
 
@@ -88,6 +89,7 @@ impl HelperValueRuntime<'_, '_> {
     }
 
     fn collect_expression(&mut self, text: &str) {
+        let snippet = ParsedTemplateSnippet::new(text);
         let current_dot = self.current_dot().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
         let mut state = HelperValuesWalkState {
@@ -98,8 +100,8 @@ impl HelperValueRuntime<'_, '_> {
             seen: self.seen,
             analysis: self.analysis,
         };
-        collect_helper_value_expression(
-            text,
+        collect_helper_value_expression_from_snippet(
+            &snippet,
             self.bindings,
             current_dot.as_ref(),
             &active_output_predicates,

@@ -11,11 +11,9 @@ use crate::helper_body_analysis::{
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary_mutation::mark_suppressed_roots_for_bound_outputs;
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
-use crate::template_expr_cache::parse_expr_text;
 
-#[tracing::instrument(skip_all, fields(bytes = text.len()))]
-pub(crate) fn analyze_bound_helper_calls_with_fragment_locals(
-    text: &str,
+pub(crate) fn analyze_bound_helper_calls_with_fragment_locals_in_exprs(
+    exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
     fragment_locals: &HashMap<String, FragmentBinding>,
@@ -23,7 +21,7 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals(
     seen: &mut HashSet<String>,
 ) -> HelperSummary {
     let mut analysis = HelperSummary::default();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         walk_expr_excluding_helper_call_args(&expr, &mut |node| {
             let TemplateExpr::Call { function, args } = node else {
                 return;

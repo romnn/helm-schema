@@ -2,12 +2,14 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::bound_helper_call_analysis::{
-    analyze_bound_helper_call_with_fragment_locals, analyze_bound_helper_calls_with_fragment_locals,
+    analyze_bound_helper_call_with_fragment_locals,
+    analyze_bound_helper_calls_with_fragment_locals_in_exprs,
 };
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
+use crate::template_expr_cache::parse_expr_text;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
@@ -246,9 +248,31 @@ impl HelperSummaryCache {
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> HelperSummary {
+        let exprs = parse_expr_text(text);
+        self.summarize_bound_helper_calls_in_exprs(
+            text,
+            &exprs,
+            bindings,
+            current_dot,
+            fragment_locals,
+            context,
+            seen,
+        )
+    }
+
+    pub(crate) fn summarize_bound_helper_calls_in_exprs(
+        &self,
+        text: &str,
+        exprs: &[helm_schema_ast::TemplateExpr],
+        bindings: Option<&HashMap<String, HelperBinding>>,
+        current_dot: Option<&HelperBinding>,
+        fragment_locals: &HashMap<String, FragmentBinding>,
+        context: FragmentEvalContext<'_>,
+        seen: &mut HashSet<String>,
+    ) -> HelperSummary {
         if !seen.is_empty() {
-            return analyze_bound_helper_calls_with_fragment_locals(
-                text,
+            return analyze_bound_helper_calls_with_fragment_locals_in_exprs(
+                exprs,
                 bindings,
                 current_dot,
                 fragment_locals,
@@ -277,8 +301,8 @@ impl HelperSummaryCache {
             return cached.clone();
         }
 
-        let summary = analyze_bound_helper_calls_with_fragment_locals(
-            text,
+        let summary = analyze_bound_helper_calls_with_fragment_locals_in_exprs(
+            exprs,
             bindings,
             current_dot,
             fragment_locals,

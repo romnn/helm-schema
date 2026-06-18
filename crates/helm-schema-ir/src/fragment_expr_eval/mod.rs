@@ -14,8 +14,6 @@ use crate::fragment_binding_projection::fragment_to_helper_binding;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::helper_to_fragment_binding;
-use crate::template_expr_analysis::expr_contains_helper_call;
-use crate::template_expr_cache::parse_expr_text;
 use bound_helper_resolver::{
     BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_with_bound_helpers,
 };
@@ -111,51 +109,4 @@ pub(crate) fn fragment_binding_from_expr(
         },
     )
     .and_then(|value| value.to_fragment_binding())
-}
-
-pub(crate) fn fragment_binding_from_text_with_helper_context(
-    text: &str,
-    fragment_locals: &HashMap<String, FragmentBinding>,
-    outer: Option<&HashMap<String, HelperBinding>>,
-    current_dot: Option<&HelperBinding>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<FragmentBinding> {
-    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
-    let mut bindings = Vec::new();
-    for expr in parse_expr_text(text) {
-        if !expr_contains_helper_call(&expr)
-            && let Some(binding) = fragment_binding_from_expr(
-                &expr,
-                fragment_locals,
-                current_dot_fragment.as_ref(),
-                context,
-                seen,
-            )
-        {
-            bindings.push(binding);
-            continue;
-        }
-        if let Some(binding) = helper_binding_from_expr_with_fragment_locals(
-            &expr,
-            fragment_locals,
-            outer,
-            current_dot,
-            context,
-            seen,
-        ) {
-            bindings.push(helper_to_fragment_binding(&binding));
-            continue;
-        }
-        if let Some(binding) = fragment_binding_from_expr(
-            &expr,
-            fragment_locals,
-            current_dot_fragment.as_ref(),
-            context,
-            seen,
-        ) {
-            bindings.push(binding);
-        }
-    }
-    FragmentBinding::choice(bindings)
 }

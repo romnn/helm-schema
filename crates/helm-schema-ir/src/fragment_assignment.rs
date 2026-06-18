@@ -33,8 +33,14 @@ pub(crate) struct ParsedHelperAssignment {
 }
 
 pub(crate) fn parse_helper_assignment(text: &str) -> Option<ParsedHelperAssignment> {
-    let exprs = parse_expr_text(text);
-    let [expr] = exprs.as_slice() else {
+    parse_helper_assignment_from_exprs(text, &parse_expr_text(text))
+}
+
+pub(crate) fn parse_helper_assignment_from_exprs(
+    text: &str,
+    exprs: &[TemplateExpr],
+) -> Option<ParsedHelperAssignment> {
+    let [expr] = exprs else {
         return None;
     };
     match expr {
@@ -117,15 +123,15 @@ fn shadow_fragment_binding_keys(
     }
 }
 
-fn local_set_mutation_target_and_keys(
-    text: &str,
+fn local_set_mutation_target_and_keys_from_exprs(
+    exprs: &[TemplateExpr],
     local_bindings: &HashMap<String, FragmentBinding>,
     current_dot: Option<&FragmentBinding>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Vec<(String, BTreeSet<String>)> {
     let mut out = Vec::new();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         expr.walk(|node| {
             let TemplateExpr::Call { function, args } = node else {
                 return;
@@ -160,13 +166,35 @@ pub(crate) fn apply_local_set_mutations(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
-    let abstract_applied = apply_abstract_local_set_mutations(text, local_bindings, current_dot);
+    apply_local_set_mutations_from_exprs(
+        &parse_expr_text(text),
+        local_bindings,
+        current_dot,
+        context,
+        seen,
+    )
+}
+
+pub(crate) fn apply_local_set_mutations_from_exprs(
+    exprs: &[TemplateExpr],
+    local_bindings: &mut HashMap<String, FragmentBinding>,
+    current_dot: Option<&FragmentBinding>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> bool {
+    let abstract_applied =
+        apply_abstract_local_set_mutations_from_exprs(exprs, local_bindings, current_dot);
     if abstract_applied {
         return true;
     }
 
-    let mutations =
-        local_set_mutation_target_and_keys(text, local_bindings, current_dot, context, seen);
+    let mutations = local_set_mutation_target_and_keys_from_exprs(
+        exprs,
+        local_bindings,
+        current_dot,
+        context,
+        seen,
+    );
     let has_mutation = !mutations.is_empty();
     for (var, keys) in mutations {
         if let Some(binding) = local_bindings.remove(&var) {
@@ -176,14 +204,14 @@ pub(crate) fn apply_local_set_mutations(
     has_mutation
 }
 
-fn apply_abstract_local_set_mutations(
-    text: &str,
+fn apply_abstract_local_set_mutations_from_exprs(
+    exprs: &[TemplateExpr],
     local_bindings: &mut HashMap<String, FragmentBinding>,
     current_dot: Option<&FragmentBinding>,
 ) -> bool {
     let mut env = EvalEnv::from_fragment_context(local_bindings, current_dot);
     let mut applied = false;
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         applied |= apply_local_set_mutations_expr(&expr, &mut env);
     }
     if !applied {

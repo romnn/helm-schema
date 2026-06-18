@@ -13,15 +13,14 @@ use crate::helper_summary::HelperOutputMeta;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
-use crate::template_expr_cache::parse_expr_text;
 
-pub(crate) fn direct_bound_paths_from_text_in_context(
-    text: &str,
+pub(crate) fn direct_bound_paths_from_exprs_in_context(
+    exprs: &[TemplateExpr],
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
 ) -> BTreeSet<String> {
     let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    parse_expr_text(text)
+    exprs
         .iter()
         .flat_map(|expr| direct_bound_paths_from_expr_in_context(expr, &env))
         .collect()
@@ -43,26 +42,19 @@ pub(crate) fn direct_bound_paths_from_expr_in_context(
     out
 }
 
-pub(crate) fn local_bound_paths_from_text(
-    text: &str,
+pub(crate) fn local_rendered_paths_from_exprs(
+    exprs: &[TemplateExpr],
     locals: &HashMap<String, FragmentBinding>,
 ) -> BTreeSet<String> {
-    local_paths_from_text(text, locals, fragment_source_paths)
+    local_paths_from_exprs(exprs, locals, fragment_rendered_paths)
 }
 
-pub(crate) fn local_rendered_paths_from_text(
-    text: &str,
-    locals: &HashMap<String, FragmentBinding>,
-) -> BTreeSet<String> {
-    local_paths_from_text(text, locals, fragment_rendered_paths)
-}
-
-fn local_paths_from_text(
-    text: &str,
+fn local_paths_from_exprs(
+    exprs: &[TemplateExpr],
     locals: &HashMap<String, FragmentBinding>,
     extract_paths: fn(&FragmentBinding) -> BTreeSet<String>,
 ) -> BTreeSet<String> {
-    parse_expr_text(text)
+    exprs
         .iter()
         .flat_map(|expr| local_paths_from_expr(expr, locals, extract_paths))
         .collect()
@@ -105,12 +97,12 @@ fn local_paths_from_expr(
     out
 }
 
-pub(crate) fn local_default_paths_from_text(
-    text: &str,
+pub(crate) fn local_default_paths_from_exprs(
+    exprs: &[TemplateExpr],
     local_default_paths: &HashMap<String, BTreeSet<String>>,
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         expr.walk(|node| {
             let TemplateExpr::Variable(var) = node else {
                 return;
@@ -126,13 +118,13 @@ pub(crate) fn local_default_paths_from_text(
     out
 }
 
-pub(crate) fn local_output_meta_from_text(
-    text: &str,
+pub(crate) fn local_output_meta_from_exprs(
+    exprs: &[TemplateExpr],
     local_bindings: &HashMap<String, FragmentBinding>,
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
 ) -> BTreeMap<String, HelperOutputMeta> {
     let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         walk_expr_excluding_helper_call_args(&expr, &mut |node| {
             for (path, meta) in local_output_meta_from_expr(node, local_bindings, local_output_meta)
             {

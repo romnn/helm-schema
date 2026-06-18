@@ -6,7 +6,6 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, type_is_schema_type as eval_type_is_schema_type};
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_binding::HelperBinding;
-use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_extraction::values_path_from_expr;
 
 pub(crate) fn resolve_expr_to_values_path(
@@ -47,15 +46,15 @@ pub(crate) fn helper_bindings_for_arg(
     })
 }
 
-pub(crate) fn resolved_default_fallback_paths_for_text(
-    text: &str,
+pub(crate) fn resolved_default_fallback_paths_for_exprs(
+    exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     let env = EvalEnv::from_helper_context(bindings, current_dot);
 
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         out.extend(eval_expr(&expr, &env).effects.defaults);
     }
 
@@ -71,14 +70,14 @@ pub(crate) fn resolved_default_fallback_paths_for_expr(
     eval_expr(expr, &env).effects.defaults
 }
 
-pub(crate) fn resolved_type_is_paths_for_text(
-    text: &str,
+pub(crate) fn resolved_type_is_paths_for_exprs(
+    exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
 ) -> BTreeMap<String, BTreeSet<String>> {
     let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let env = EvalEnv::from_helper_context(bindings, current_dot);
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         for (path, hints) in eval_expr(&expr, &env).effects.type_hints {
             out.entry(path).or_default().extend(hints);
         }
@@ -86,14 +85,14 @@ pub(crate) fn resolved_type_is_paths_for_text(
     out
 }
 
-pub(crate) fn resolved_string_transform_paths_for_text(
-    text: &str,
+pub(crate) fn resolved_string_transform_paths_for_exprs(
+    exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
 ) -> BTreeMap<String, BTreeSet<String>> {
     let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let env = EvalEnv::from_helper_context(bindings, current_dot);
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         for path in eval_expr(&expr, &env).effects.string_hints {
             out.entry(path).or_default().insert("string".to_string());
         }
@@ -113,8 +112,8 @@ pub(crate) fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String>
 /// values object before later template reads. A bare `set X "K" V` without a
 /// fallback does not prove that the original values input accepts null, so it
 /// intentionally does not match.
-pub(crate) fn set_default_chart_paths_for_text(
-    text: &str,
+pub(crate) fn set_default_chart_paths_for_exprs(
+    exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, HelperBinding>>,
     current_dot: Option<&HelperBinding>,
 ) -> BTreeSet<String> {
@@ -129,7 +128,7 @@ pub(crate) fn set_default_chart_paths_for_text(
     }
 
     let mut out = BTreeSet::new();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         expr.walk(|node| {
             let TemplateExpr::Call { function, args } = node else {
                 return;
@@ -163,6 +162,7 @@ pub(crate) fn set_default_chart_paths_for_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::template_expr_cache::parse_expr_text;
 
     fn expr(text: &str) -> TemplateExpr {
         let exprs = parse_expr_text(text);

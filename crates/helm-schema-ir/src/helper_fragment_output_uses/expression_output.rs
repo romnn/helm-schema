@@ -3,10 +3,12 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::bound_helper_env::BoundHelperEnv;
-use crate::fragment_assignment::{apply_local_set_mutations, parse_helper_assignment};
+use crate::fragment_assignment::{
+    apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
+};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
-use crate::fragment_classification::is_fragment_expr;
+use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::project_fragment_binding;
 use crate::helper_output_projection::{
@@ -19,15 +21,15 @@ use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_summary_projection::helper_summary_dependency_paths;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{
-    direct_bound_paths_from_text_in_context, local_rendered_paths_from_text,
+    direct_bound_paths_from_exprs_in_context, local_rendered_paths_from_exprs,
 };
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::{
-    expr_contains_helper_call, text_pipeline_merges_into_var, text_starts_with_helper_call,
+    expr_contains_helper_call, exprs_pipeline_merges_into_var, exprs_start_with_helper_call,
     walk_expr_excluding_helper_call_args,
 };
-use crate::template_expr_cache::parse_expr_text;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::{ValueKind, YamlPath};
 
 struct FragmentExpressionOutputScope<'a> {
@@ -49,9 +51,33 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
+    collect_bound_fragment_output_uses_from_snippet(
+        &ParsedTemplateSnippet::new(text),
+        bindings,
+        current_dot,
+        current_dot_fragment,
+        relative_path,
+        output_kind,
+        active_output_predicates,
+        state,
+    );
+}
+
+fn collect_bound_fragment_output_uses_from_snippet(
+    snippet: &ParsedTemplateSnippet<'_>,
+    bindings: &HashMap<String, HelperBinding>,
+    current_dot: Option<&HelperBinding>,
+    current_dot_fragment: Option<&FragmentBinding>,
+    relative_path: &YamlPath,
+    output_kind: ValueKind,
+    active_output_predicates: &BTreeSet<Predicate>,
+    state: &mut FragmentOutputWalkState<'_, '_>,
+) {
+    let text = snippet.text();
+    let exprs = snippet.exprs();
     let mut seen_set = HashSet::new();
-    if apply_local_set_mutations(
-        text,
+    if apply_local_set_mutations_from_exprs(
+        exprs,
         state.local_bindings,
         current_dot_fragment,
         state.context,
@@ -60,10 +86,11 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         return;
     }
 
-    if let Some(assignment) = parse_helper_assignment(text) {
+    if let Some(assignment) = parse_helper_assignment_from_exprs(text, exprs) {
         collect_bound_fragment_output_assignment_uses(
             &assignment.variable,
             &assignment.rhs,
+            &assignment.rhs_expr,
             bindings,
             current_dot,
             current_dot_fragment,
@@ -72,7 +99,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         return;
     }
 
-    let kind = if matches!(output_kind, ValueKind::Fragment) || is_fragment_expr(text) {
+    let kind = if matches!(output_kind, ValueKind::Fragment) || is_fragment_exprs(exprs) {
         ValueKind::Fragment
     } else {
         ValueKind::Scalar
@@ -80,10 +107,10 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
     let output_path = static_yaml_fragment_output_path(text)
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
-    let direct_outputs = direct_bound_paths_from_text_in_context(text, bindings, current_dot);
+    let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
-    let fallback_paths = helper_env.external_default_fallback_paths(text);
-    let local_outputs = local_rendered_paths_from_text(text, state.local_bindings);
+    let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
+    let local_outputs = local_rendered_paths_from_exprs(exprs, state.local_bindings);
     let handled_outputs: BTreeSet<String> = direct_outputs
         .iter()
         .chain(local_outputs.iter())
@@ -91,9 +118,9 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         .collect();
 
     let mut direct_output_uses = Vec::new();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         collect_helper_binding_output_uses_from_expr(
-            &expr,
+            expr,
             HelperOutputExprContext {
                 bindings,
                 current_dot,
@@ -108,9 +135,9 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
     state.outputs.extend(direct_output_uses);
 
     let local_fallback_paths =
-        helper_env.local_default_fallback_paths(text, state.local_default_paths);
-    let local_output_uses = local_output_uses_from_text(
-        text,
+        helper_env.local_default_fallback_paths_in_exprs(exprs, state.local_default_paths);
+    let local_output_uses = local_output_uses_from_exprs(
+        exprs,
         &output_path,
         kind,
         active_output_predicates,
@@ -118,7 +145,8 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         state.local_bindings,
     );
 
-    let mut nested = helper_env.summarize_calls(text, state.local_bindings, state.seen);
+    let mut nested =
+        helper_env.summarize_calls_in_exprs(text, exprs, state.local_bindings, state.seen);
     let nested_structured_sources: BTreeSet<String> = nested
         .fragment_output_uses
         .iter()
@@ -144,7 +172,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
         fallback_paths: &fallback_paths,
     };
     let expression_output_uses =
-        helper_expression_output_uses_from_text(text, expression_output_scope, state);
+        helper_expression_output_uses_from_exprs(exprs, expression_output_scope, state);
     let expression_descendant_sources: BTreeSet<String> = expression_output_uses
         .iter()
         .filter(|output| !output.relative_path.0.is_empty())
@@ -197,19 +225,26 @@ pub(super) fn collect_bound_fragment_output_uses_from_expr(
 fn collect_bound_fragment_output_assignment_uses(
     var: &str,
     rhs: &str,
+    rhs_expr: &TemplateExpr,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
+    let rhs_exprs = std::slice::from_ref(rhs_expr);
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let mut seen_rhs = HashSet::new();
     let mut binding =
-        helper_env.fragment_binding_from_text(rhs, state.local_bindings, &mut seen_rhs);
+        helper_env.fragment_binding_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs);
     let mut top_level_helper_dependency_paths = BTreeSet::new();
-    if text_starts_with_helper_call(rhs) {
+    if exprs_start_with_helper_call(rhs_exprs) {
         let mut rhs_seen = state.seen.clone();
-        let nested = helper_env.summarize_calls(rhs, state.local_bindings, &mut rhs_seen);
+        let nested = helper_env.summarize_calls_in_exprs(
+            rhs,
+            rhs_exprs,
+            state.local_bindings,
+            &mut rhs_seen,
+        );
         top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
         if let Some(nested_binding) = project_fragment_binding(nested) {
             binding = match binding {
@@ -218,7 +253,7 @@ fn collect_bound_fragment_output_assignment_uses(
             };
         }
     }
-    if text_pipeline_merges_into_var(rhs, var)
+    if exprs_pipeline_merges_into_var(rhs_exprs, var)
         && let Some(current_dot_fragment) = current_dot_fragment
         && matches!(
             current_dot_fragment,
@@ -241,8 +276,10 @@ fn collect_bound_fragment_output_assignment_uses(
     if let Some(binding) = binding {
         state.local_bindings.insert(var.to_string(), binding);
     }
-    let mut defaulted_paths = helper_env.external_default_fallback_paths(rhs);
-    defaulted_paths.extend(helper_env.local_default_fallback_paths(rhs, state.local_default_paths));
+    let mut defaulted_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
+    defaulted_paths.extend(
+        helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, state.local_default_paths),
+    );
     if defaulted_paths.is_empty() {
         state.local_default_paths.remove(var);
     } else {
@@ -252,8 +289,8 @@ fn collect_bound_fragment_output_assignment_uses(
     }
 }
 
-fn local_output_uses_from_text(
-    text: &str,
+fn local_output_uses_from_exprs(
+    exprs: &[TemplateExpr],
     output_path: &YamlPath,
     kind: ValueKind,
     active_output_predicates: &BTreeSet<Predicate>,
@@ -261,8 +298,8 @@ fn local_output_uses_from_text(
     local_bindings: &HashMap<String, FragmentBinding>,
 ) -> Vec<HelperFragmentOutputUse> {
     let mut local_output_uses = Vec::new();
-    for expr in parse_expr_text(text) {
-        walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+    for expr in exprs {
+        walk_expr_excluding_helper_call_args(expr, &mut |node| {
             let binding = match node {
                 TemplateExpr::Variable(var) if !var.is_empty() => local_bindings.get(var).cloned(),
                 TemplateExpr::Selector { operand, path } => {
@@ -293,20 +330,20 @@ fn local_output_uses_from_text(
     local_output_uses
 }
 
-fn helper_expression_output_uses_from_text(
-    text: &str,
+fn helper_expression_output_uses_from_exprs(
+    exprs: &[TemplateExpr],
     scope: FragmentExpressionOutputScope<'_>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) -> Vec<HelperFragmentOutputUse> {
     let mut expression_output_uses = Vec::new();
     let mut expression_seen = state.seen.clone();
     let helper_env = BoundHelperEnv::new(scope.bindings, scope.current_dot, state.context);
-    for expr in parse_expr_text(text) {
-        if !expr_contains_helper_call(&expr) {
+    for expr in exprs {
+        if !expr_contains_helper_call(expr) {
             continue;
         }
         if let Some(binding) =
-            helper_env.helper_binding_from_expr(&expr, state.local_bindings, &mut expression_seen)
+            helper_env.helper_binding_from_expr(expr, state.local_bindings, &mut expression_seen)
         {
             collect_helper_binding_output_uses(
                 &mut expression_output_uses,
