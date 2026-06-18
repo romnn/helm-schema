@@ -1,12 +1,10 @@
-use helm_schema_ast::TemplateHeader;
+use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
+use super::effects::NodeActionEffectSink;
 use crate::YamlPath;
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::range_action_plan::RangeActionPlan;
-use crate::template_expr_cache::ParsedTemplateSnippet;
-
-use super::effects::NodeActionEffectSink;
 
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     type ScopeSnapshot: Clone;
@@ -53,13 +51,13 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn exit_no_output(&mut self);
 
-    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, snippet: &ParsedTemplateSnippet);
+    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, exprs: &[TemplateExpr]);
 
-    fn apply_assignment_side_effects(&mut self, _snippet: &ParsedTemplateSnippet) -> bool {
+    fn apply_assignment_side_effects(&mut self, _exprs: &[TemplateExpr]) -> bool {
         false
     }
 
-    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan;
+    fn plan_assignment_action(&self, exprs: &[TemplateExpr]) -> AssignmentActionPlan;
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
 

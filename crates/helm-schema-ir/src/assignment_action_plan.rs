@@ -8,7 +8,6 @@ use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_expr};
 use crate::helper_binding::HelperBinding;
 use crate::helper_binding_projection::helper_to_fragment_binding;
-use crate::template_expr_cache::ParsedTemplateSnippet;
 
 pub(crate) struct AssignmentActionPlan {
     pub(crate) get_binding: Option<GetBindingPlan>,
@@ -23,13 +22,13 @@ pub(crate) struct LocalAssignmentPlan {
 }
 
 pub(crate) fn plan_assignment_action(
-    snippet: &ParsedTemplateSnippet,
+    exprs: &[TemplateExpr],
     fragment_context: FragmentEvalContext<'_>,
     template_bindings: &HashMap<String, FragmentBinding>,
     root_bindings: &HashMap<String, HelperBinding>,
     current_dot_binding: Option<&HelperBinding>,
 ) -> AssignmentActionPlan {
-    let local_assignment = parse_helper_assignment_from_exprs(snippet.exprs()).map(|assignment| {
+    let local_assignment = parse_helper_assignment_from_exprs(exprs).map(|assignment| {
         let mut locals = template_bindings.clone();
         for (key, value) in root_bindings {
             locals.insert(key.clone(), helper_to_fragment_binding(value));
@@ -53,7 +52,7 @@ pub(crate) fn plan_assignment_action(
     });
 
     AssignmentActionPlan {
-        get_binding: parse_get_binding_from_exprs(snippet.exprs()),
+        get_binding: parse_get_binding_from_exprs(exprs),
         local_assignment,
     }
 }

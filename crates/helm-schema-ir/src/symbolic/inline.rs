@@ -6,16 +6,16 @@ use crate::helper_inline::plan_exact_helper_inline_from_exprs;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
-use crate::template_expr_cache::ParsedTemplateSnippet;
+use helm_schema_ast::TemplateExpr;
 
 use super::SymbolicWalker;
 
 impl SymbolicWalker<'_> {
     pub(super) fn inline_static_file_templates_from_helper_calls(
         &mut self,
-        snippet: &ParsedTemplateSnippet,
+        exprs: &[TemplateExpr],
     ) {
-        for helper_call in literal_helper_calls_from_exprs(snippet.exprs()) {
+        for helper_call in literal_helper_calls_from_exprs(exprs) {
             let requests = {
                 let context = self.fragment_eval_context();
                 let current_dot = self.current_dot_fragment();
@@ -70,9 +70,9 @@ impl SymbolicWalker<'_> {
         self.contract.append(contract);
     }
 
-    pub(super) fn inline_exact_helper_call(&mut self, snippet: &ParsedTemplateSnippet) -> bool {
+    pub(super) fn inline_exact_helper_call(&mut self, exprs: &[TemplateExpr]) -> bool {
         let Some(plan) = plan_exact_helper_inline_from_exprs(
-            snippet.exprs(),
+            exprs,
             self.defines,
             &self.ir_context.inner.define_bodies,
             &self.inline_stack,

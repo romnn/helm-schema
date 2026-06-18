@@ -2,7 +2,7 @@ use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::fragment_classification::is_fragment_exprs;
 use crate::resource_identity::ResourceIdentityIndex;
-use crate::template_expr_cache::ParsedTemplateSnippet;
+use crate::template_expr_cache::parse_expr_text;
 use crate::{ResourceRef, YamlPath};
 
 mod fragment_indent;
@@ -154,10 +154,10 @@ impl<'a> DocumentTracker<'a> {
         let template_action_shape = if node.kind() == "template_action" {
             node.utf8_text(self.source.as_bytes())
                 .ok()
-                .map(ParsedTemplateSnippet::new)
-                .map(|snippet| TemplateActionShape {
-                    is_fragment: is_fragment_exprs(snippet.exprs()),
-                    virtual_indent: fragment_indent_width_from_exprs(snippet.exprs()),
+                .map(parse_expr_text)
+                .map(|exprs| TemplateActionShape {
+                    is_fragment: is_fragment_exprs(&exprs),
+                    virtual_indent: fragment_indent_width_from_exprs(&exprs),
                 })
         } else {
             None

@@ -19,12 +19,11 @@ use crate::helper_range_plan::{
 use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
-use crate::helper_value_expression::collect_helper_value_expression_from_snippet;
+use crate::helper_value_expression::collect_helper_value_expression_from_exprs;
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::value_path_context::computed_with_body_fragment_binding_expr;
 use crate::{ValueKind, YamlPath};
 
@@ -88,7 +87,7 @@ impl HelperValueRuntime<'_, '_> {
         self.current_dot().map(helper_to_fragment_binding)
     }
 
-    fn collect_expression(&mut self, snippet: &ParsedTemplateSnippet) {
+    fn collect_expression(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
         let current_dot = self.current_dot().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
         let mut state = HelperValuesWalkState {
@@ -99,8 +98,8 @@ impl HelperValueRuntime<'_, '_> {
             seen: self.seen,
             analysis: self.analysis,
         };
-        collect_helper_value_expression_from_snippet(
-            &snippet,
+        collect_helper_value_expression_from_exprs(
+            exprs,
             self.bindings,
             current_dot.as_ref(),
             &active_output_predicates,
@@ -309,20 +308,23 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn handle_output_node(
         &mut self,
         _node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet,
+        exprs: &[helm_schema_ast::TemplateExpr],
     ) {
         if self.no_output_depth > 0 {
             return;
         }
-        self.collect_expression(snippet);
+        self.collect_expression(exprs);
     }
 
-    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet) -> bool {
-        self.collect_expression(snippet);
+    fn apply_assignment_side_effects(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) -> bool {
+        self.collect_expression(exprs);
         true
     }
 
-    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan {
+    fn plan_assignment_action(
+        &self,
+        _exprs: &[helm_schema_ast::TemplateExpr],
+    ) -> AssignmentActionPlan {
         AssignmentActionPlan {
             get_binding: None,
             local_assignment: None,

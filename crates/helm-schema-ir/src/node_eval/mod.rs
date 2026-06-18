@@ -3,7 +3,7 @@ mod control_flow;
 mod effects;
 mod runtime;
 
-use crate::template_expr_cache::ParsedTemplateSnippet;
+use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 
 use action_kind::{NodeActionKind, classify_node_action};
@@ -36,9 +36,8 @@ where
         }
         NodeActionKind::Output => {
             if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
-                let text = text.to_string();
-                let snippet = ParsedTemplateSnippet::new(&text);
-                runtime.handle_output_node(node, &snippet);
+                let exprs = parse_expr_text(text);
+                runtime.handle_output_node(node, &exprs);
             }
         }
         NodeActionKind::Descend => {

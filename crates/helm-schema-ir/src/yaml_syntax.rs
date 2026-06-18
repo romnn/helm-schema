@@ -1,5 +1,5 @@
 use crate::fragment_classification::is_fragment_exprs;
-use crate::template_expr_cache::ParsedTemplateSnippet;
+use crate::template_expr_cache::parse_expr_text;
 
 pub(crate) struct ParsedYamlKey {
     key: String,
@@ -31,7 +31,7 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
         let rest = rest.trim_start();
         let starts_block_scalar = rest.starts_with('|') || rest.starts_with('>');
         let is_template_fragment =
-            rest.starts_with("{{") && is_fragment_exprs(ParsedTemplateSnippet::new(rest).exprs());
+            rest.starts_with("{{") && is_fragment_exprs(&parse_expr_text(rest));
         let is_block = rest.is_empty() || starts_block_scalar || is_template_fragment;
         Some(ParsedYamlKey {
             key,

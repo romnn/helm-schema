@@ -5,7 +5,7 @@ use helm_schema_ast::{HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, Tr
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_classification::is_fragment_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::template_expr_cache::{ParsedTemplateSnippet, parse_expr_text};
+use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 use crate::yaml_syntax::parse_yaml_key;
 
@@ -181,8 +181,7 @@ pub(crate) fn range_body_renders_scalar_sequence_items_from_source(
         let rest = rest.trim_start();
         saw_sequence_item = true;
 
-        let renders_fragment =
-            rest.starts_with("{{") && is_fragment_exprs(ParsedTemplateSnippet::new(rest).exprs());
+        let renders_fragment = rest.starts_with("{{") && is_fragment_exprs(&parse_expr_text(rest));
         if rest.is_empty() || parse_yaml_key(rest).is_some() || renders_fragment {
             return false;
         }

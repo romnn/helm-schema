@@ -9,7 +9,6 @@ use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime};
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
-use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
 use super::SymbolicWalker;
@@ -115,15 +114,22 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         self.no_output_depth = self.no_output_depth.saturating_sub(1);
     }
 
-    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, snippet: &ParsedTemplateSnippet) {
-        SymbolicWalker::handle_output_node(self, node, snippet);
+    fn handle_output_node(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        exprs: &[helm_schema_ast::TemplateExpr],
+    ) {
+        SymbolicWalker::handle_output_node(self, node, exprs);
     }
 
-    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet) -> AssignmentActionPlan {
+    fn plan_assignment_action(
+        &self,
+        exprs: &[helm_schema_ast::TemplateExpr],
+    ) -> AssignmentActionPlan {
         let fragment_context = self.fragment_eval_context();
         let current_dot = self.current_dot_binding();
         plan_assignment_action(
-            snippet,
+            exprs,
             fragment_context,
             &self.scope.locals().fragment_bindings,
             &self.root_bindings,

@@ -29,7 +29,6 @@ use crate::template_expr_analysis::{
     expr_contains_helper_call, exprs_pipeline_merges_into_var, exprs_start_with_helper_call,
     walk_expr_excluding_helper_call_args,
 };
-use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::{ValueKind, YamlPath};
 
 struct FragmentExpressionOutputScope<'a> {
@@ -41,8 +40,8 @@ struct FragmentExpressionOutputScope<'a> {
     fallback_paths: &'a BTreeSet<String>,
 }
 
-pub(super) fn collect_bound_fragment_output_uses_from_snippet(
-    snippet: &ParsedTemplateSnippet,
+pub(super) fn collect_bound_fragment_output_uses_from_exprs(
+    exprs: &[TemplateExpr],
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,
     current_dot_fragment: Option<&FragmentBinding>,
@@ -51,7 +50,6 @@ pub(super) fn collect_bound_fragment_output_uses_from_snippet(
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
-    let exprs = snippet.exprs();
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations_from_exprs(
         exprs,

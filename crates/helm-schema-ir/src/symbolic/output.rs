@@ -9,7 +9,6 @@ use crate::document_projection::{
 };
 use crate::helper_summary::HelperOutputMeta;
 use crate::helper_summary_projection::helper_output_meta_from_summary;
-use crate::template_expr_cache::ParsedTemplateSnippet;
 
 use super::SymbolicWalker;
 
@@ -43,24 +42,24 @@ impl SymbolicWalker<'_> {
     pub(super) fn handle_output_node(
         &mut self,
         node: tree_sitter::Node<'_>,
-        snippet: &ParsedTemplateSnippet,
+        exprs: &[TemplateExpr],
     ) {
-        self.inline_static_file_templates_from_helper_calls(snippet);
+        self.inline_static_file_templates_from_helper_calls(exprs);
 
         let site_context =
-            collect_document_site_context(self.source, &self.document_tracker, node, snippet);
+            collect_document_site_context(self.source, &self.document_tracker, node, exprs);
         let kind = site_context.kind;
 
-        let helper_inlined = self.inline_exact_helper_call(snippet);
+        let helper_inlined = self.inline_exact_helper_call(exprs);
 
         let helper_summary = if helper_inlined {
             None
         } else {
-            Some(self.summarize_bound_helper_calls_in_snippet(snippet))
+            Some(self.summarize_bound_helper_calls_in_exprs(exprs))
         };
         let value_path_context = self.value_path_context();
         let mut output_values = collect_document_value_analysis_from_exprs(
-            snippet.exprs(),
+            exprs,
             kind,
             &value_path_context,
             &self.scope.locals().range_domains,

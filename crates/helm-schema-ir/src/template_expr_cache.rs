@@ -3,22 +3,6 @@ use std::collections::HashMap;
 
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
-pub(crate) struct ParsedTemplateSnippet {
-    exprs: Vec<TemplateExpr>,
-}
-
-impl ParsedTemplateSnippet {
-    pub(crate) fn new(text: &str) -> Self {
-        Self {
-            exprs: parse_expr_text(text),
-        }
-    }
-
-    pub(crate) fn exprs(&self) -> &[TemplateExpr] {
-        &self.exprs
-    }
-}
-
 thread_local! {
     static TEMPLATE_EXPR_CACHE: RefCell<HashMap<String, Vec<TemplateExpr>>> =
         RefCell::new(HashMap::new());

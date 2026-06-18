@@ -2,7 +2,7 @@ use helm_schema_ast::TemplateHeader;
 
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_range_scope::range_header_from_source;
-use crate::template_expr_cache::ParsedTemplateSnippet;
+use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 
 use super::effects::{
@@ -16,10 +16,9 @@ where
     R: NodeEvalRuntime,
 {
     if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
-        let text = text.to_string();
-        let snippet = ParsedTemplateSnippet::new(&text);
-        if !runtime.apply_assignment_side_effects(&snippet) {
-            let plan = runtime.plan_assignment_action(&snippet);
+        let exprs = parse_expr_text(text);
+        if !runtime.apply_assignment_side_effects(&exprs) {
+            let plan = runtime.plan_assignment_action(&exprs);
             apply_assignment_action_plan(runtime, plan);
         }
     }

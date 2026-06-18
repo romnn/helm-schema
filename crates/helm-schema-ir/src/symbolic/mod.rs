@@ -19,7 +19,6 @@ use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
 use crate::symbolic_scope_state::SymbolicScopeState;
-use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 
@@ -248,15 +247,15 @@ impl<'a> SymbolicWalker<'a> {
         self.scope.current_dot_fragment()
     }
 
-    fn summarize_bound_helper_calls_in_snippet(
+    fn summarize_bound_helper_calls_in_exprs(
         &self,
-        snippet: &ParsedTemplateSnippet,
+        exprs: &[helm_schema_ast::TemplateExpr],
     ) -> HelperSummary {
         self.ir_context
             .inner
             .helper_summaries
             .summarize_bound_helper_calls_in_exprs(
-                snippet.exprs(),
+                exprs,
                 Some(&self.root_bindings),
                 self.current_dot_binding().as_ref(),
                 &self.scope.locals().fragment_bindings,

@@ -1,7 +1,7 @@
 use helm_schema_ast::TemplateExpr;
 
 use crate::fragment_classification::is_fragment_exprs;
-use crate::template_expr_cache::ParsedTemplateSnippet;
+use crate::template_expr_cache::parse_expr_text;
 use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
 
@@ -20,9 +20,9 @@ pub(crate) fn collect_document_site_context(
     source: &str,
     tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
-    snippet: &ParsedTemplateSnippet,
+    exprs: &[TemplateExpr],
 ) -> DocumentSiteContext {
-    let output_action = analyze_output_action(source, node, snippet);
+    let output_action = analyze_output_action(source, node, exprs);
     let kind = if output_action.is_fragment {
         ValueKind::Fragment
     } else {
@@ -68,17 +68,17 @@ struct OutputActionShape {
 fn analyze_output_action(
     source: &str,
     node: tree_sitter::Node<'_>,
-    snippet: &ParsedTemplateSnippet,
+    exprs: &[TemplateExpr],
 ) -> OutputActionShape {
     if node.kind() == "template_action" {
-        return output_action_shape_from_exprs(snippet.exprs());
+        return output_action_shape_from_exprs(exprs);
     }
 
     if let Some(text) = enclosing_action_text(source, node) {
-        return output_action_shape_from_exprs(ParsedTemplateSnippet::new(&text).exprs());
+        return output_action_shape_from_exprs(&parse_expr_text(&text));
     }
 
-    output_action_shape_from_exprs(snippet.exprs())
+    output_action_shape_from_exprs(exprs)
 }
 
 fn output_action_shape_from_exprs(exprs: &[TemplateExpr]) -> OutputActionShape {
