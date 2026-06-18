@@ -144,8 +144,8 @@ fn collect_value_facts(
     analysis: &mut HelperSummary,
 ) {
     let (Some(src), Some(tree)) = (
-        context.define_bodies.structured_source(name),
-        context.define_bodies.structured_tree(name),
+        context.define_bodies.source(name),
+        context.define_bodies.tree(name),
     ) else {
         return;
     };
@@ -179,8 +179,8 @@ fn collect_fragment_output_uses(
     analysis: &mut HelperSummary,
 ) {
     let (Some(src), Some(tree)) = (
-        context.define_bodies.structured_source(name),
-        context.define_bodies.structured_tree(name),
+        context.define_bodies.source(name),
+        context.define_bodies.tree(name),
     ) else {
         return;
     };

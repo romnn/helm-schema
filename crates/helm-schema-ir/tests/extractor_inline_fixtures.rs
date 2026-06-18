@@ -315,6 +315,40 @@ fn scalar_helper_output_assigned_to_local_keeps_value_source() {
 }
 
 #[test]
+fn helper_analysis_ignores_nested_define_bodies_but_keeps_outer_output() {
+    let helpers = indoc! {r#"
+        {{- define "test.outer" -}}
+        {{- define "test.inner" -}}
+        {{- .Values.shouldNotLeak -}}
+        {{- end -}}
+        {{- .Values.actual -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          value: {{ include "test.outer" . | quote }}
+    "#};
+
+    let ir = generate(template, helpers);
+    let value_sources: std::collections::BTreeSet<&str> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "value".to_string()])
+        .map(|use_| use_.source_expr.as_str())
+        .collect();
+
+    assert!(
+        value_sources.contains("actual"),
+        "outer helper output should survive nested helper definitions: {ir:#?}"
+    );
+    assert!(
+        !value_sources.contains("shouldNotLeak"),
+        "nested define bodies must stay suppressed during outer helper analysis: {ir:#?}"
+    );
+}
+
+#[test]
 fn split_path_helper_resolves_dynamic_values_indexing() {
     let helpers = indoc! {r#"
         {{- define "test.getValueFromKey" -}}

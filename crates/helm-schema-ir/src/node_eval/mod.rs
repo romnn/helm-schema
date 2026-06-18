@@ -46,28 +46,13 @@ pub(crate) fn eval_template_body<R>(runtime: &mut R, node: tree_sitter::Node<'_>
 where
     R: NodeEvalRuntime,
 {
-    if !eval_nested_template_bodies(runtime, node) {
-        eval_node(runtime, node);
-    }
-}
-
-fn eval_nested_template_bodies<R>(runtime: &mut R, node: tree_sitter::Node<'_>) -> bool
-where
-    R: NodeEvalRuntime,
-{
     if matches!(node.kind(), "define_action" | "block_action") {
         for child in children_with_field(node, "body") {
             eval_node(runtime, child);
         }
-        return true;
+    } else {
+        eval_node(runtime, node);
     }
-
-    let mut cursor = node.walk();
-    let mut found_body = false;
-    for child in node.named_children(&mut cursor) {
-        found_body |= eval_nested_template_bodies(runtime, child);
-    }
-    found_body
 }
 
 pub(super) fn eval_children<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
