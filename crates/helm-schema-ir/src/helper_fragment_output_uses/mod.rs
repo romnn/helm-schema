@@ -7,7 +7,7 @@ use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::document_projection::{DocumentTracker, collect_document_site_context};
-use crate::fragment_assignment::{apply_local_set_mutations, merge_fragment_locals};
+use crate::fragment_assignment::{apply_local_set_mutations_from_exprs, merge_fragment_locals};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::{fragment_source_paths, fragment_to_helper_binding};
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -28,12 +28,13 @@ use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::value_path_context::computed_with_body_fragment_binding_expr;
 use crate::{ValueKind, YamlPath};
 
 mod expression_output;
 
-use expression_output::collect_bound_fragment_output_uses_from_expr;
+use expression_output::collect_bound_fragment_output_uses_from_snippet;
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_bound_fragment_output_uses_from_tree(
@@ -98,7 +99,12 @@ impl FragmentOutputUseRuntime<'_, '_> {
         self.dot_fragment_stack.last().and_then(Option::as_ref)
     }
 
-    fn collect_expression(&mut self, text: &str, relative_path: &YamlPath, kind: ValueKind) {
+    fn collect_expression(
+        &mut self,
+        snippet: &ParsedTemplateSnippet<'_>,
+        relative_path: &YamlPath,
+        kind: ValueKind,
+    ) {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
@@ -109,8 +115,8 @@ impl FragmentOutputUseRuntime<'_, '_> {
             seen: self.seen,
             outputs: self.outputs,
         };
-        collect_bound_fragment_output_uses_from_expr(
-            text,
+        collect_bound_fragment_output_uses_from_snippet(
+            snippet,
             self.bindings,
             current_dot.as_ref(),
             current_dot_fragment.as_ref(),
@@ -212,9 +218,21 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
         self.declare_fragment_binding(variable, binding);
     }
 
-    fn refresh_default_paths(&mut self, _variable: &str, _rhs: &str) {}
+    fn refresh_default_paths(
+        &mut self,
+        _variable: &str,
+        _rhs: &str,
+        _rhs_expr: &helm_schema_ast::TemplateExpr,
+    ) {
+    }
 
-    fn refresh_helper_output_meta(&mut self, _variable: String, _rhs: &str) {}
+    fn refresh_helper_output_meta(
+        &mut self,
+        _variable: String,
+        _rhs: &str,
+        _rhs_expr: &helm_schema_ast::TemplateExpr,
+    ) {
+    }
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         if !predicate.is_trivial() {
@@ -349,15 +367,20 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         self.no_output_depth = self.no_output_depth.saturating_sub(1);
     }
 
-    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
+    fn handle_output_node(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        snippet: &ParsedTemplateSnippet<'_>,
+    ) {
         if self.no_output_depth > 0 {
             return;
         }
-        let Ok(text) = node.utf8_text(self.source.as_bytes()) else {
-            return;
-        };
-        let site_context =
-            collect_document_site_context(self.source, &self.document_tracker, node, text);
+        let site_context = collect_document_site_context(
+            self.source,
+            &self.document_tracker,
+            node,
+            snippet.text(),
+        );
         if site_context.in_mapping_key {
             return;
         }
@@ -369,13 +392,13 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         } else {
             site_context.kind
         };
-        self.collect_expression(text, &site_context.path, kind);
+        self.collect_expression(snippet, &site_context.path, kind);
     }
 
-    fn apply_assignment_side_effects(&mut self, text: &str) -> bool {
+    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
         let mut seen_set = HashSet::new();
-        if apply_local_set_mutations(
-            text,
+        if apply_local_set_mutations_from_exprs(
+            snippet.exprs(),
             self.local_bindings,
             self.current_dot_fragment().cloned().as_ref(),
             self.context,
@@ -384,11 +407,11 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             return true;
         }
 
-        self.collect_expression(text, &YamlPath(Vec::new()), ValueKind::Scalar);
+        self.collect_expression(snippet, &YamlPath(Vec::new()), ValueKind::Scalar);
         true
     }
 
-    fn plan_assignment_action(&self, _text: &str) -> AssignmentActionPlan {
+    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan {
         AssignmentActionPlan {
             get_binding: None,
             local_assignment: None,

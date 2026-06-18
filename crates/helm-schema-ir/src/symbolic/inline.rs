@@ -2,16 +2,20 @@ use std::collections::HashSet;
 
 use crate::define_body_cache::parse_go_template;
 use crate::expression_analysis::helper_bindings_for_arg;
-use crate::helper_inline::plan_exact_helper_inline;
+use crate::helper_inline::plan_exact_helper_inline_from_exprs;
 use crate::static_file_template::{
-    StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls,
+    StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
+use crate::template_expr_cache::ParsedTemplateSnippet;
 
 use super::SymbolicWalker;
 
 impl SymbolicWalker<'_> {
-    pub(super) fn inline_static_file_templates_from_helper_calls(&mut self, text: &str) {
-        for helper_call in literal_helper_calls(text) {
+    pub(super) fn inline_static_file_templates_from_helper_calls(
+        &mut self,
+        snippet: &ParsedTemplateSnippet<'_>,
+    ) {
+        for helper_call in literal_helper_calls_from_exprs(snippet.exprs()) {
             let requests = {
                 let context = self.fragment_eval_context();
                 let current_dot = self.current_dot_fragment();
@@ -66,9 +70,10 @@ impl SymbolicWalker<'_> {
         self.contract.append(contract);
     }
 
-    pub(super) fn inline_exact_helper_call(&mut self, text: &str) -> bool {
-        let Some(plan) = plan_exact_helper_inline(
-            text,
+    pub(super) fn inline_exact_helper_call(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
+        let Some(plan) = plan_exact_helper_inline_from_exprs(
+            snippet.text(),
+            snippet.exprs(),
             self.defines,
             &self.ir_context.inner.define_bodies,
             &self.inline_stack,

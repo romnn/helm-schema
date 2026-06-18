@@ -1,3 +1,5 @@
+use helm_schema_ast::TemplateExpr;
+
 use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
@@ -15,9 +17,9 @@ pub(crate) trait NodeActionEffectSink: ContractUseSink {
 
     fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
 
-    fn refresh_default_paths(&mut self, variable: &str, rhs: &str);
+    fn refresh_default_paths(&mut self, variable: &str, rhs: &str, rhs_expr: &TemplateExpr);
 
-    fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str);
+    fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str, rhs_expr: &TemplateExpr);
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
@@ -48,8 +50,8 @@ fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: Local
             sink.assign_fragment_binding(plan.variable.clone(), plan.fragment_binding);
         }
     }
-    sink.refresh_default_paths(&plan.variable, &plan.rhs);
-    sink.refresh_helper_output_meta(plan.variable, &plan.rhs);
+    sink.refresh_default_paths(&plan.variable, &plan.rhs, &plan.rhs_expr);
+    sink.refresh_helper_output_meta(plan.variable, &plan.rhs, &plan.rhs_expr);
 }
 
 pub(super) fn apply_if_condition_plan(

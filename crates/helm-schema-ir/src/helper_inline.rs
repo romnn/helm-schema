@@ -2,7 +2,6 @@ use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr};
 
 use crate::define_body_cache::DefineBodyCache;
 use crate::resource_identity::ResourceIdentityDetector;
-use crate::template_expr_cache::parse_expr_text;
 
 pub(crate) struct ExactHelperInlinePlan<'a> {
     pub(crate) source: &'a str,
@@ -13,13 +12,13 @@ pub(crate) struct ExactHelperInlinePlan<'a> {
     pub(crate) arg: Option<TemplateExpr>,
 }
 
-pub(crate) fn plan_exact_helper_inline<'a>(
-    text: &str,
+pub(crate) fn plan_exact_helper_inline_from_exprs<'a>(
+    _text: &str,
+    exprs: &[TemplateExpr],
     defines: &'a DefineIndex,
     define_bodies: &'a DefineBodyCache,
     inline_stack: &[String],
 ) -> Option<ExactHelperInlinePlan<'a>> {
-    let exprs = parse_expr_text(text);
     if exprs.len() != 1 {
         return None;
     }

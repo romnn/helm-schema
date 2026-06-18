@@ -9,7 +9,6 @@ use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_binding::HelperBinding;
 use crate::predicate::Predicate;
-use crate::template_expr_cache::parse_expr_text;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
@@ -213,51 +212,6 @@ impl HelperSummaryCache {
         Self {
             bound_helper_calls: RefCell::new(BTreeMap::new()),
         }
-    }
-
-    pub(crate) fn summarize_bound_calls(
-        &self,
-        text: &str,
-        root_bindings: &HashMap<String, HelperBinding>,
-        current_dot: Option<HelperBinding>,
-        fragment_locals: &HashMap<String, FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-    ) -> HelperSummary {
-        let mut seen = HashSet::new();
-        self.summarize_bound_helper_calls(
-            text,
-            if root_bindings.is_empty() {
-                None
-            } else {
-                Some(root_bindings)
-            },
-            current_dot.as_ref(),
-            fragment_locals,
-            context,
-            &mut seen,
-        )
-    }
-
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    pub(crate) fn summarize_bound_helper_calls(
-        &self,
-        text: &str,
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        fragment_locals: &HashMap<String, FragmentBinding>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> HelperSummary {
-        let exprs = parse_expr_text(text);
-        self.summarize_bound_helper_calls_in_exprs(
-            text,
-            &exprs,
-            bindings,
-            current_dot,
-            fragment_locals,
-            context,
-            seen,
-        )
     }
 
     pub(crate) fn summarize_bound_helper_calls_in_exprs(

@@ -5,18 +5,17 @@ use helm_schema_ast::TemplateExpr;
 use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
 use crate::helper_summary::HelperOutputMeta;
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
-use crate::template_expr_cache::parse_expr_text;
 
 use super::ValuePathContext;
 
 impl ValuePathContext<'_> {
-    pub(crate) fn local_alias_output_meta_for_text(
+    pub(crate) fn local_alias_output_meta_for_exprs(
         &self,
-        text: &str,
+        exprs: &[TemplateExpr],
     ) -> BTreeMap<String, HelperOutputMeta> {
         let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-        for expr in parse_expr_text(text) {
-            walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+        for expr in exprs {
+            walk_expr_excluding_helper_call_args(expr, &mut |node| {
                 for (path, meta) in self.local_alias_output_meta_for_expr(node) {
                     out.entry(path).or_default().merge(meta);
                 }

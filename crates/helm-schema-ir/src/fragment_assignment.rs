@@ -7,7 +7,6 @@ use crate::expr_eval::apply_local_set_mutations_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::template_expr_cache::parse_expr_text;
 
 fn strip_template_action_wrapping(line: &str) -> Option<String> {
     let after_open = line.trim_start().strip_prefix("{{")?;
@@ -32,7 +31,9 @@ pub(crate) struct ParsedHelperAssignment {
     pub(crate) rhs_expr: TemplateExpr,
 }
 
+#[cfg(test)]
 pub(crate) fn parse_helper_assignment(text: &str) -> Option<ParsedHelperAssignment> {
+    use crate::template_expr_cache::parse_expr_text;
     parse_helper_assignment_from_exprs(text, &parse_expr_text(text))
 }
 
@@ -159,6 +160,7 @@ fn local_set_mutation_target_and_keys_from_exprs(
     out
 }
 
+#[cfg(test)]
 pub(crate) fn apply_local_set_mutations(
     text: &str,
     local_bindings: &mut HashMap<String, FragmentBinding>,
@@ -166,6 +168,7 @@ pub(crate) fn apply_local_set_mutations(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
+    use crate::template_expr_cache::parse_expr_text;
     apply_local_set_mutations_from_exprs(
         &parse_expr_text(text),
         local_bindings,

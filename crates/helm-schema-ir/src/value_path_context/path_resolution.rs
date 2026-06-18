@@ -13,7 +13,6 @@ use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
 };
-use crate::template_expr_cache::parse_expr_text;
 use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
@@ -48,10 +47,9 @@ pub(crate) fn computed_with_body_fragment_binding_expr(
 }
 
 impl ValuePathContext<'_> {
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    pub(crate) fn resolved_values_paths(&self, text: &str) -> Vec<String> {
+    pub(crate) fn resolved_values_paths_in_exprs(&self, exprs: &[TemplateExpr]) -> Vec<String> {
         let mut paths = BTreeSet::new();
-        for expr in parse_expr_text(text) {
+        for expr in exprs {
             paths.extend(self.resolved_values_paths_from_expr(&expr));
         }
         paths.into_iter().collect()
@@ -86,18 +84,20 @@ impl ValuePathContext<'_> {
         paths
     }
 
-    pub(crate) fn resolved_default_fallback_paths(&self, text: &str) -> BTreeSet<String> {
-        let exprs = parse_expr_text(text);
+    pub(crate) fn resolved_default_fallback_paths_in_exprs(
+        &self,
+        exprs: &[TemplateExpr],
+    ) -> BTreeSet<String> {
         let mut paths = resolved_default_fallback_paths_for_exprs(
-            &exprs,
+            exprs,
             Some(self.root_bindings),
             self.current_dot_binding.as_ref(),
         );
-        for expr in &exprs {
+        for expr in exprs {
             paths.extend(self.resolved_default_fallback_paths_for_expr(expr));
         }
         if !self.template_default_paths.is_empty() {
-            for expr in &exprs {
+            for expr in exprs {
                 expr.walk(|node| {
                     paths.extend(self.local_alias_default_paths_for_expr(node));
                 });

@@ -3,6 +3,7 @@ mod control_flow;
 mod effects;
 mod runtime;
 
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::tree_sitter_utils::children_with_field;
 
 use action_kind::{NodeActionKind, classify_node_action};
@@ -34,7 +35,11 @@ where
             control_flow::eval_range_node(runtime, node);
         }
         NodeActionKind::Output => {
-            runtime.handle_output_node(node);
+            if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
+                let text = text.to_string();
+                let snippet = ParsedTemplateSnippet::new(&text);
+                runtime.handle_output_node(node, &snippet);
+            }
         }
         NodeActionKind::Descend => {
             eval_children(runtime, node);

@@ -5,7 +5,6 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::template_expr_cache::parse_expr_text;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct StaticFileTemplate {
@@ -19,10 +18,9 @@ pub(crate) struct LiteralHelperCall {
     pub(crate) arg: Option<TemplateExpr>,
 }
 
-#[tracing::instrument(skip_all, fields(bytes = text.len()))]
-pub(crate) fn literal_helper_calls(text: &str) -> Vec<LiteralHelperCall> {
+pub(crate) fn literal_helper_calls_from_exprs(exprs: &[TemplateExpr]) -> Vec<LiteralHelperCall> {
     let mut out = Vec::new();
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         expr.walk(|node| {
             let TemplateExpr::Call { function, args } = node else {
                 return;

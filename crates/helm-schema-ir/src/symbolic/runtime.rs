@@ -9,6 +9,7 @@ use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime};
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
 use super::SymbolicWalker;
@@ -114,15 +115,19 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         self.no_output_depth = self.no_output_depth.saturating_sub(1);
     }
 
-    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
-        SymbolicWalker::handle_output_node(self, node);
+    fn handle_output_node(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        snippet: &ParsedTemplateSnippet<'_>,
+    ) {
+        SymbolicWalker::handle_output_node(self, node, snippet);
     }
 
-    fn plan_assignment_action(&self, text: &str) -> AssignmentActionPlan {
+    fn plan_assignment_action(&self, snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan {
         let fragment_context = self.fragment_eval_context();
         let current_dot = self.current_dot_binding();
         plan_assignment_action(
-            text,
+            snippet,
             fragment_context,
             &self.scope.locals().fragment_bindings,
             &self.root_bindings,
@@ -178,17 +183,30 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
             .assign_fragment_binding(variable, binding);
     }
 
-    fn refresh_default_paths(&mut self, variable: &str, rhs: &str) {
+    fn refresh_default_paths(
+        &mut self,
+        variable: &str,
+        _rhs: &str,
+        rhs_expr: &helm_schema_ast::TemplateExpr,
+    ) {
         let default_paths = self
             .value_path_context()
-            .resolved_default_fallback_paths(rhs);
+            .resolved_default_fallback_paths_in_exprs(std::slice::from_ref(rhs_expr));
         self.scope
             .locals_mut()
             .set_default_paths(variable, default_paths);
     }
 
-    fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str) {
-        let helper_meta = self.helper_output_meta_for_text(rhs);
+    fn refresh_helper_output_meta(
+        &mut self,
+        variable: String,
+        rhs: &str,
+        rhs_expr: &helm_schema_ast::TemplateExpr,
+    ) {
+        let snippet = ParsedTemplateSnippet::new(rhs);
+        debug_assert_eq!(snippet.exprs().len(), 1);
+        debug_assert_eq!(snippet.exprs().first(), Some(rhs_expr));
+        let helper_meta = self.helper_output_meta_for_snippet(&snippet);
         self.scope
             .locals_mut()
             .set_output_meta(variable, helper_meta);

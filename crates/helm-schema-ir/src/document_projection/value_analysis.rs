@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use helm_schema_ast::TemplateExpr;
+
 use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values};
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
@@ -74,20 +76,22 @@ impl DocumentValueAnalysis {
     }
 }
 
-pub(crate) fn collect_document_value_analysis(
+pub(crate) fn collect_document_value_analysis_from_exprs(
     text: &str,
+    exprs: &[TemplateExpr],
     kind: ValueKind,
     value_path_context: &ValuePathContext<'_>,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
     helper_summary: Option<HelperSummary>,
 ) -> DocumentValueAnalysis {
-    let default_fallback_values = value_path_context.resolved_default_fallback_paths(text);
+    let default_fallback_values =
+        value_path_context.resolved_default_fallback_paths_in_exprs(exprs);
     let mut values: BTreeSet<String> = value_path_context
-        .resolved_values_paths(text)
+        .resolved_values_paths_in_exprs(exprs)
         .into_iter()
         .collect();
-    let local_output_meta = value_path_context.local_alias_output_meta_for_text(text);
+    let local_output_meta = value_path_context.local_alias_output_meta_for_exprs(exprs);
     values.extend(default_fallback_values.iter().cloned());
 
     let bound_values = extract_bound_values(text, range_domains, get_bindings);

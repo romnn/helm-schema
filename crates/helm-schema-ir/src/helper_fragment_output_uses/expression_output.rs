@@ -41,29 +41,7 @@ struct FragmentExpressionOutputScope<'a> {
     fallback_paths: &'a BTreeSet<String>,
 }
 
-pub(super) fn collect_bound_fragment_output_uses_from_expr(
-    text: &str,
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
-    current_dot_fragment: Option<&FragmentBinding>,
-    relative_path: &YamlPath,
-    output_kind: ValueKind,
-    active_output_predicates: &BTreeSet<Predicate>,
-    state: &mut FragmentOutputWalkState<'_, '_>,
-) {
-    collect_bound_fragment_output_uses_from_snippet(
-        &ParsedTemplateSnippet::new(text),
-        bindings,
-        current_dot,
-        current_dot_fragment,
-        relative_path,
-        output_kind,
-        active_output_predicates,
-        state,
-    );
-}
-
-fn collect_bound_fragment_output_uses_from_snippet(
+pub(super) fn collect_bound_fragment_output_uses_from_snippet(
     snippet: &ParsedTemplateSnippet<'_>,
     bindings: &HashMap<String, HelperBinding>,
     current_dot: Option<&HelperBinding>,

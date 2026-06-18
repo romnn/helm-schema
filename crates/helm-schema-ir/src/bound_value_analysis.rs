@@ -40,9 +40,13 @@ pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(Stri
     Some((variable.to_string(), values))
 }
 
+#[cfg(test)]
 pub(crate) fn parse_get_binding(text: &str) -> Option<GetBindingPlan> {
-    let exprs = parse_expr_text(text);
-    let [expr] = exprs.as_slice() else {
+    parse_get_binding_from_exprs(&parse_expr_text(text))
+}
+
+pub(crate) fn parse_get_binding_from_exprs(exprs: &[TemplateExpr]) -> Option<GetBindingPlan> {
+    let [expr] = exprs else {
         return None;
     };
     match expr {

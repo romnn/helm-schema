@@ -2,7 +2,7 @@ mod inline;
 mod output;
 mod runtime;
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::DefineIndex;
@@ -19,6 +19,7 @@ use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
 use crate::symbolic_scope_state::SymbolicScopeState;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::template_expr_cache::clear_template_expr_cache;
 use crate::value_path_context::ValuePathContext;
 
@@ -247,17 +248,21 @@ impl<'a> SymbolicWalker<'a> {
         self.scope.current_dot_fragment()
     }
 
-    #[tracing::instrument(skip_all, fields(bytes = text.len()))]
-    fn summarize_bound_helper_calls(&self, text: &str) -> HelperSummary {
+    fn summarize_bound_helper_calls_in_snippet(
+        &self,
+        snippet: &ParsedTemplateSnippet<'_>,
+    ) -> HelperSummary {
         self.ir_context
             .inner
             .helper_summaries
-            .summarize_bound_calls(
-                text,
-                &self.root_bindings,
-                self.current_dot_binding(),
+            .summarize_bound_helper_calls_in_exprs(
+                snippet.text(),
+                snippet.exprs(),
+                Some(&self.root_bindings),
+                self.current_dot_binding().as_ref(),
                 &self.scope.locals().fragment_bindings,
                 self.fragment_eval_context(),
+                &mut HashSet::new(),
             )
     }
 }

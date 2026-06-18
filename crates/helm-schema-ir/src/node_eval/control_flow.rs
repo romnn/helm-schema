@@ -2,6 +2,7 @@ use helm_schema_ast::TemplateHeader;
 
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_range_scope::range_header_from_source;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::tree_sitter_utils::children_with_field;
 
 use super::effects::{
@@ -16,8 +17,9 @@ where
 {
     if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
         let text = text.to_string();
-        if !runtime.apply_assignment_side_effects(&text) {
-            let plan = runtime.plan_assignment_action(&text);
+        let snippet = ParsedTemplateSnippet::new(&text);
+        if !runtime.apply_assignment_side_effects(&snippet) {
+            let plan = runtime.plan_assignment_action(&snippet);
             apply_assignment_action_plan(runtime, plan);
         }
     }

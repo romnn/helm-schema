@@ -88,8 +88,7 @@ impl HelperValueRuntime<'_, '_> {
         self.current_dot().map(helper_to_fragment_binding)
     }
 
-    fn collect_expression(&mut self, text: &str) {
-        let snippet = ParsedTemplateSnippet::new(text);
+    fn collect_expression(&mut self, snippet: &ParsedTemplateSnippet<'_>) {
         let current_dot = self.current_dot().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
         let mut state = HelperValuesWalkState {
@@ -173,9 +172,21 @@ impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
 
     fn assign_fragment_binding(&mut self, _variable: String, _binding: Option<FragmentBinding>) {}
 
-    fn refresh_default_paths(&mut self, _variable: &str, _rhs: &str) {}
+    fn refresh_default_paths(
+        &mut self,
+        _variable: &str,
+        _rhs: &str,
+        _rhs_expr: &helm_schema_ast::TemplateExpr,
+    ) {
+    }
 
-    fn refresh_helper_output_meta(&mut self, _variable: String, _rhs: &str) {}
+    fn refresh_helper_output_meta(
+        &mut self,
+        _variable: String,
+        _rhs: &str,
+        _rhs_expr: &helm_schema_ast::TemplateExpr,
+    ) {
+    }
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         if !predicate.is_trivial() {
@@ -298,22 +309,23 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         self.no_output_depth = self.no_output_depth.saturating_sub(1);
     }
 
-    fn handle_output_node(&mut self, node: tree_sitter::Node<'_>) {
+    fn handle_output_node(
+        &mut self,
+        _node: tree_sitter::Node<'_>,
+        snippet: &ParsedTemplateSnippet<'_>,
+    ) {
         if self.no_output_depth > 0 {
             return;
         }
-        if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
-            let text = text.to_string();
-            self.collect_expression(&text);
-        }
+        self.collect_expression(snippet);
     }
 
-    fn apply_assignment_side_effects(&mut self, text: &str) -> bool {
-        self.collect_expression(text);
+    fn apply_assignment_side_effects(&mut self, snippet: &ParsedTemplateSnippet<'_>) -> bool {
+        self.collect_expression(snippet);
         true
     }
 
-    fn plan_assignment_action(&self, _text: &str) -> AssignmentActionPlan {
+    fn plan_assignment_action(&self, _snippet: &ParsedTemplateSnippet<'_>) -> AssignmentActionPlan {
         AssignmentActionPlan {
             get_binding: None,
             local_assignment: None,
