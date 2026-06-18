@@ -140,11 +140,11 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
 }
 
 #[test]
-fn unused_helper_in_used_library_does_not_suppress_required() -> color_eyre::eyre::Result<()> {
+fn unused_helper_in_used_library_does_not_perturb_infer_required() -> color_eyre::eyre::Result<()> {
     // Same wrapper as above; this time exercise the --infer-required
     // axis. The unused helper has `default 5 .Values.replicas`, which
     // is also a fallback-path signal. With helper-granular scoping,
-    // that fallback should NOT exclude app.replicas from required.
+    // that fallback should NOT change the app chart's own result.
 
     let _guard = test_util::builder().with_tracing(false).build();
 
@@ -162,9 +162,10 @@ fn unused_helper_in_used_library_does_not_suppress_required() -> color_eyre::eyr
     test_util::write(&chart_dir.join("charts/app/Chart.yaml")?, APP_CHART_YAML)?;
     test_util::write(&chart_dir.join("charts/app/values.yaml")?, APP_VALUES_YAML)?;
 
-    // App with an UNCONDITIONAL `if .Values.replicas` — the canonical
-    // Step-3 "required" signal. The app does NOT include
-    // `common.unusedReplicas`, so its default shouldn't absolve.
+    // App with a guard-only `if .Values.replicas`. Under the current
+    // stricter semantics this remains optional. The app does NOT
+    // include `common.unusedReplicas`, so the unused helper must not
+    // perturb that result either.
     let app_template_with_if = "\
 {{- if .Values.replicas }}
 apiVersion: v1
@@ -214,10 +215,9 @@ data:
         .unwrap_or_default();
 
     assert!(
-        app_required.contains(&"replicas".to_string()),
-        "app's `if .Values.replicas` should mark replicas required even though \
-         a never-included sibling helper has a `default 5 .Values.replicas`; \
-         got app.required = {app_required:?}",
+        app_required.is_empty(),
+        "unused helper in a used library must not perturb the app chart's \
+         infer-required result; got app.required = {app_required:?}",
     );
 
     Ok(())

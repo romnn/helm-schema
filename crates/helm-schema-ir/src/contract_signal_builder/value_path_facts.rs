@@ -5,6 +5,7 @@ use crate::contract_signals::{ContractPathSignals, ContractValuePathFacts};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct RenderPathFacts {
     pub has_render_use: bool,
+    pub has_self_guarded_render_use: bool,
     pub all_render_uses_self_guarded: bool,
     pub has_self_range_guard_render_use: bool,
 }
@@ -13,6 +14,7 @@ impl Default for RenderPathFacts {
     fn default() -> Self {
         Self {
             has_render_use: false,
+            has_self_guarded_render_use: false,
             all_render_uses_self_guarded: true,
             has_self_range_guard_render_use: false,
         }
@@ -50,6 +52,7 @@ pub(super) fn build_contract_value_path_facts(
                         .partial_scalar_value_paths
                         .contains(&path),
                     has_render_use: render_fact.has_render_use,
+                    has_self_guarded_render_use: render_fact.has_self_guarded_render_use,
                     all_render_uses_self_guarded: render_fact.all_render_uses_self_guarded,
                     has_self_range_guard_render_use: render_fact.has_self_range_guard_render_use,
                     is_nullable: nullable_value_paths.contains(&path),

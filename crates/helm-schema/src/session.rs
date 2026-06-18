@@ -405,6 +405,7 @@ pub(crate) fn generate_schema_from_resolved_contract(
         required_inference::apply(
             &mut schema,
             &prepared.contract_schema_signals.required_inference_signals,
+            &prepared.contract_schema_signals.value_path_facts,
             prepared.values_yaml.as_deref(),
         );
     }

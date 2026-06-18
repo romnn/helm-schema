@@ -188,6 +188,39 @@ fn transitive_library_helper_default_flows_into_required_inference_signals()
 }
 
 #[test]
+fn cert_manager_fullname_override_records_self_guarded_render_evidence()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("cert-manager");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let path = "fullnameOverride";
+    let projection = collection.contract.project();
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == path)
+        .cloned()
+        .collect::<Vec<_>>();
+    let facts = collection
+        .contract_schema_signals
+        .value_path_facts
+        .get(path)
+        .unwrap_or_else(|| panic!("missing facts for {path}; uses={uses:#?}"));
+
+    assert!(
+        facts.has_self_guarded_render_use,
+        "helper override path should carry at least one self-guarded render use; facts={facts:#?}; uses={uses:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn dependency_activation_guards_subchart_contract_uses() -> color_eyre::eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 

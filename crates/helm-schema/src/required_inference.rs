@@ -14,7 +14,7 @@
 //!
 //! Nothing in the core schema-generation pipeline depends on anything here.
 
-use helm_schema_engine::RequiredInferenceSignals;
+use helm_schema_engine::{ContractValuePathFacts, RequiredInferenceSignals};
 use serde_json::Value;
 use tracing::instrument;
 
@@ -24,18 +24,20 @@ use crate::values_roots;
 /// parent objects of paths the chart references unconditionally.
 ///
 /// `required_inference_signals` comes from the contract schema-signal bundle.
-/// `values_yaml` is the composed values.yaml (used to re-derive top-level
-/// seeded keys — those must not be marked required).
+/// `values_yaml` is the composed values.yaml (used to re-derive explicit chart
+/// defaults — those must not be marked required).
 #[instrument(skip_all)]
 pub(crate) fn apply(
     schema: &mut Value,
     required_inference_signals: &RequiredInferenceSignals,
+    value_path_facts: &std::collections::BTreeMap<String, ContractValuePathFacts>,
     values_yaml: Option<&str>,
 ) {
-    let synthetic_value_paths = values_roots::top_level_value_paths(values_yaml);
+    let explicit_value_paths = values_roots::explicit_value_paths(values_yaml);
     helm_schema_engine::required_inference::apply_required_inference(
         schema,
         required_inference_signals,
-        &synthetic_value_paths,
+        value_path_facts,
+        &explicit_value_paths,
     );
 }

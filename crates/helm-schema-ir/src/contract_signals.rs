@@ -115,6 +115,7 @@ pub struct ContractValuePathFacts {
     pub is_ranged_source: bool,
     pub is_partial_scalar_value_path: bool,
     pub has_render_use: bool,
+    pub has_self_guarded_render_use: bool,
     pub all_render_uses_self_guarded: bool,
     pub has_self_range_guard_render_use: bool,
     pub is_nullable: bool,

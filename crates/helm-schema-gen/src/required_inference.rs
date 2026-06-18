@@ -18,7 +18,7 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_ir::RequiredInferenceSignals;
+use helm_schema_ir::{ContractValuePathFacts, RequiredInferenceSignals};
 use serde_json::Value;
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -26,17 +26,18 @@ struct RequiredInferencePolicy;
 
 struct RequiredInferenceInputs<'a> {
     signals: &'a RequiredInferenceSignals,
-    synthetic_value_paths: &'a BTreeSet<String>,
+    value_path_facts: &'a std::collections::BTreeMap<String, ContractValuePathFacts>,
+    explicit_default_value_paths: &'a BTreeSet<String>,
 }
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally and
 /// never accesses via a `default` fallback.
 ///
-/// `synthetic_value_paths` should contain any paths injected by the
-/// caller that look syntactically identical to header references but
-/// aren't real template references (e.g. CLI-seeded top-level
-/// `values.yaml` keys).
+/// `explicit_default_value_paths` should contain any values paths explicitly
+/// present in the composed chart defaults. Those paths are already satisfied
+/// by the chart and must not be inferred as user-required, even if they also
+/// appear in positive guard headers.
 ///
 /// `signals` should come from [`helm_schema_ir::ContractSchemaSignals`], not
 /// from a second pass over raw compatibility rows.
@@ -44,32 +45,34 @@ struct RequiredInferenceInputs<'a> {
 pub fn apply_required_inference(
     schema: &mut Value,
     signals: &RequiredInferenceSignals,
-    synthetic_value_paths: &BTreeSet<String>,
+    value_path_facts: &std::collections::BTreeMap<String, ContractValuePathFacts>,
+    explicit_default_value_paths: &BTreeSet<String>,
 ) {
     let paths = RequiredInferencePolicy.required_paths(RequiredInferenceInputs {
         signals,
-        synthetic_value_paths,
+        value_path_facts,
+        explicit_default_value_paths,
     });
     for path in paths {
         add_path_to_required(schema, &path);
     }
 }
 
-/// Identify paths checked unconditionally at the top of a template and never
-/// accessed via a `default` expression.
+/// Identify paths checked in positive header positions, lacking explicit chart
+/// defaults, and also consumed by at least one non-self-guarded render use.
 ///
-/// Known precision loss: an empty-body `{{ if not .Values.X }}{{ end }}`
-/// can still be marked required because the compatibility header projection
-/// has no body-side optionality signal to exclude it. In practice `if not`
-/// blocks usually contain content; the failure mode is rare. A proper fix
-/// would record header polarity directly in the contract graph.
+/// This remains heuristic because Helm truthiness does not by itself imply
+/// user-requiredness. The extra render-use eligibility check filters out
+/// common feature-toggle and helper-override patterns like:
+/// `if .Values.fullnameOverride }}{{ .Values.fullnameOverride }}{{ else }}...`.
 impl RequiredInferencePolicy {
     fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
         let mut required: BTreeSet<String> = BTreeSet::new();
         for path in &input.signals.positive_header_paths {
             if input.signals.default_fallback_paths.contains(path)
                 || input.signals.conditionally_optional_paths.contains(path)
-                || input.synthetic_value_paths.contains(path)
+                || input.explicit_default_value_paths.contains(path)
+                || !path_has_non_self_guarded_render_use(path, input.value_path_facts)
             {
                 continue;
             }
@@ -77,6 +80,17 @@ impl RequiredInferencePolicy {
         }
         required
     }
+}
+
+fn path_has_non_self_guarded_render_use(
+    path: &str,
+    value_path_facts: &std::collections::BTreeMap<String, ContractValuePathFacts>,
+) -> bool {
+    value_path_facts.get(path).is_some_and(|facts| {
+        facts.has_render_use
+            && !facts.has_self_guarded_render_use
+            && !facts.all_render_uses_self_guarded
+    })
 }
 
 /// Locate `path`'s parent object schema and add the leaf segment to its
@@ -183,6 +197,7 @@ mod tests {
         apply_required_inference(
             &mut schema,
             &schema_signals.required_inference_signals,
+            &schema_signals.value_path_facts,
             &BTreeSet::new(),
         );
         schema
@@ -216,6 +231,7 @@ mod tests {
         apply_required_inference(
             &mut schema,
             &schema_signals.required_inference_signals,
+            &schema_signals.value_path_facts,
             &BTreeSet::new(),
         );
 
@@ -242,6 +258,7 @@ mod tests {
         apply_required_inference(
             &mut schema,
             &schema_signals.required_inference_signals,
+            &schema_signals.value_path_facts,
             &BTreeSet::new(),
         );
 
@@ -252,10 +269,42 @@ mod tests {
         );
     }
 
-    /// Step 3: with `--infer-required`, an unconditional `if .Values.X` makes X
-    /// `required` on its parent object.
     #[test]
-    fn step3_infer_required_if_block_marks_required() {
+    fn explicit_nested_values_defaults_suppress_required_inference() {
+        let schema_signals = schema_signals_for(vec![ContractUse {
+            source_expr: "controller.kind".to_string(),
+            path: YamlPath(Vec::new()),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Eq {
+                path: "controller.kind".to_string(),
+                value: "Deployment".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]);
+        let mut schema =
+            generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
+        let explicit_default_value_paths =
+            BTreeSet::from(["controller.kind".to_string(), "controller".to_string()]);
+
+        apply_required_inference(
+            &mut schema,
+            &schema_signals.required_inference_signals,
+            &schema_signals.value_path_facts,
+            &explicit_default_value_paths,
+        );
+
+        assert!(
+            schema.get("required").is_none(),
+            "explicit nested chart defaults should suppress required inference, schema={}",
+            serde_json::to_string_pretty(&schema).unwrap()
+        );
+    }
+
+    /// Guard-only feature toggles are not strong enough evidence for
+    /// user-requiredness: omission is a legitimate "branch disabled" choice.
+    #[test]
+    fn step3_guard_only_if_block_does_not_mark_required() {
         let src = indoc! {r"
             {{- if .Values.serviceAccount.create }}
             apiVersion: v1
@@ -266,18 +315,10 @@ mod tests {
         "};
         let schema = generate_with_required(src, None);
 
-        let sa = schema
-            .pointer("/properties/serviceAccount")
-            .expect("serviceAccount present");
-        let required = sa
-            .get("required")
-            .and_then(Value::as_array)
-            .expect("serviceAccount must declare a required list");
-        let names: Vec<&str> = required.iter().filter_map(Value::as_str).collect();
-        assert_eq!(names, vec!["create"]);
         assert!(
             schema.get("required").is_none(),
-            "root schema should not declare serviceAccount required"
+            "guard-only feature toggles should not become required, schema={}",
+            serde_json::to_string_pretty(&schema).unwrap()
         );
     }
 
@@ -383,6 +424,24 @@ mod tests {
         assert!(
             schema.get("required").is_none(),
             "primary and fallback are an `or` pair; neither should be required, schema={}",
+            serde_json::to_string_pretty(&schema).unwrap()
+        );
+    }
+
+    #[test]
+    fn self_guarded_helper_override_does_not_mark_required() {
+        let src = indoc! {r"
+            metadata:
+              name: {{- if .Values.fullnameOverride -}}
+                {{ .Values.fullnameOverride }}
+              {{- else -}}
+                generated
+              {{- end -}}
+        "};
+        let schema = generate_with_required(src, None);
+        assert!(
+            schema.get("required").is_none(),
+            "self-guarded helper override branches should not become required, schema={}",
             serde_json::to_string_pretty(&schema).unwrap()
         );
     }

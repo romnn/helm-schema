@@ -1,15 +1,14 @@
-//! Regression test for the sibling-chart false-negative under
+//! Regression test for sibling-chart isolation under
 //! `--infer-required`.
 //!
 //! Previously, library subcharts broadcast their `default <expr>
 //! .Values.X` extracts across every chart prefix in the discovery —
 //! including sibling app charts that never `include` any of the
 //! library's helpers. With `--infer-required`, this silently
-//! suppressed required-inference for unrelated paths: an app chart's
-//! unconditional `if .Values.nameOverride` should mark `nameOverride`
-//! required, but the library's `default .Chart.Name .Values.nameOverride`
-//! (in a completely unused subchart) caused the app's prefix-scoped
-//! `<app>.nameOverride` to be excluded.
+//! polluted unrelated paths. Under the current stricter semantics, a
+//! guard-only `if .Values.nameOverride` no longer marks the path
+//! required at all, but an unused library still must not affect the
+//! sibling app's result.
 //!
 //! Fix: library extracts are scoped only to the prefixes of charts that
 //! actually `include` the library's helpers. Detected by a substring
@@ -58,10 +57,10 @@ name: app
 version: 0.1.0
 ";
 
-// App template has an UNCONDITIONAL `if .Values.nameOverride` — that's
-// the canonical Step-3 \"this path is required\" signal. The app does
-// NOT include the library's helper, so the library's default should
-// not absolve it.
+// App template has a guard-only `if .Values.nameOverride`. Under the
+// current stricter semantics this stays optional. The app does NOT
+// include the library's helper, so the library's default must not
+// affect the sibling app either way.
 const APP_TEMPLATE: &str = "\
 {{- if .Values.nameOverride }}
 apiVersion: v1
@@ -74,7 +73,7 @@ metadata:
 const APP_VALUES_YAML: &str = "{}\n";
 
 #[test]
-fn library_fallback_does_not_leak_to_sibling_chart_required() -> color_eyre::eyre::Result<()> {
+fn library_fallback_does_not_leak_to_sibling_chart() -> color_eyre::eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build();
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
@@ -127,11 +126,9 @@ fn library_fallback_does_not_leak_to_sibling_chart_required() -> color_eyre::eyr
         .unwrap_or_default();
 
     assert!(
-        app_required.contains(&"nameOverride".to_string()),
-        "app chart's unconditional `if .Values.nameOverride` should mark \
-         `nameOverride` required even though an unused sibling library \
-         has a `default <expr> .Values.nameOverride` helper; got \
-         app.required = {app_required:?}",
+        app_required.is_empty(),
+        "unused sibling libraries must not perturb the app chart's \
+         infer-required result; got app.required = {app_required:?}",
     );
 
     Ok(())

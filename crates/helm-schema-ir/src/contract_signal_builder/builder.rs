@@ -39,6 +39,7 @@ struct ContractSchemaSignalBuilder {
 
 struct NullablePathAccumulator {
     has_render_use: bool,
+    has_self_guarded_render_use: bool,
     all_uses_nullable: bool,
 }
 
@@ -54,6 +55,7 @@ struct ConditionalOverlayBranchAccumulator {
     provider_schema_uses: Vec<ProviderSchemaUse>,
     metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     has_render_use: bool,
+    has_self_guarded_render_use: bool,
     all_render_uses_self_guarded: bool,
     has_self_range_guard_render_use: bool,
     all_uses_nullable: bool,
@@ -65,6 +67,7 @@ impl Default for NullablePathAccumulator {
     fn default() -> Self {
         Self {
             has_render_use: false,
+            has_self_guarded_render_use: false,
             all_uses_nullable: true,
         }
     }
@@ -189,6 +192,7 @@ impl ContractSchemaSignalBuilder {
         acc.has_render_use = true;
         acc.has_self_range_guard_render_use |= range_guarded;
         if let Some(self_guarded) = self_guarded {
+            acc.has_self_guarded_render_use |= self_guarded;
             acc.all_render_uses_self_guarded &= self_guarded;
         }
     }
@@ -257,6 +261,7 @@ impl ContractSchemaSignalBuilder {
             || contract_use.kind == ValueKind::Fragment
         {
             info.has_render_use = true;
+            info.has_self_guarded_render_use |= use_is_self_guarded(contract_use);
         }
         info.all_uses_nullable &= use_is_null_tolerant(contract_use);
 
@@ -371,6 +376,7 @@ impl ConditionalOverlayBranchAccumulator {
             provider_schema_uses: Vec::new(),
             metadata_field_kinds: BTreeSet::new(),
             has_render_use: false,
+            has_self_guarded_render_use: false,
             all_render_uses_self_guarded: true,
             has_self_range_guard_render_use: false,
             all_uses_nullable: true,
@@ -381,6 +387,7 @@ impl ConditionalOverlayBranchAccumulator {
 
     fn record_use(&mut self, contract_use: &ContractUse) {
         self.has_render_use = true;
+        self.has_self_guarded_render_use |= use_is_self_guarded(contract_use);
         self.all_render_uses_self_guarded &= use_is_self_guarded(contract_use);
         self.all_uses_nullable &= use_is_null_tolerant(contract_use);
         self.used_as_fragment |= contract_use.kind == ValueKind::Fragment;
@@ -409,6 +416,7 @@ impl ConditionalOverlayBranchAccumulator {
             is_ranged_source: false,
             is_partial_scalar_value_path: self.is_partial_scalar_value_path,
             has_render_use: self.has_render_use,
+            has_self_guarded_render_use: self.has_self_guarded_render_use,
             all_render_uses_self_guarded: self.all_render_uses_self_guarded,
             has_self_range_guard_render_use: self.has_self_range_guard_render_use,
             is_nullable: self.has_render_use && self.all_uses_nullable,

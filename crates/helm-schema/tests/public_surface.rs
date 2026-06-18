@@ -327,11 +327,13 @@ metadata:
     );
 
     let generated = session.generated_schema()?;
-    assert_eq!(
+    assert!(
         generated
             .schema
-            .pointer("/properties/serviceAccount/required"),
-        Some(&json!(["create"]))
+            .pointer("/properties/serviceAccount/required")
+            .is_none(),
+        "guard-only toggles stay optional even under --infer-required: {}",
+        generated.schema
     );
     assert_eq!(
         generated.schema.pointer("/allOf/0/properties/mode/enum"),
