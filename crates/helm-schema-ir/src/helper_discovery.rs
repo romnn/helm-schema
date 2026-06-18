@@ -70,6 +70,130 @@ pub fn extract_helper_calls(src: &str) -> Vec<String> {
     out
 }
 
+#[must_use]
+pub fn extract_helper_calls_from_ast(ast: &helm_schema_ast::HelmAst) -> Vec<String> {
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut out: Vec<String> = Vec::new();
+    collect_helper_calls_in_ast(ast, true, &mut seen, &mut out);
+    out
+}
+
+#[must_use]
+pub fn extract_helper_calls_from_ast_body(nodes: &[helm_schema_ast::HelmAst]) -> Vec<String> {
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut out: Vec<String> = Vec::new();
+    for node in nodes {
+        collect_helper_calls_in_ast(node, true, &mut seen, &mut out);
+    }
+    out
+}
+
+#[must_use]
+pub fn extract_helper_calls_from_ast_excluding_defines(
+    ast: &helm_schema_ast::HelmAst,
+) -> Vec<String> {
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut out: Vec<String> = Vec::new();
+    collect_helper_calls_in_ast(ast, false, &mut seen, &mut out);
+    out
+}
+
+fn collect_helper_calls_in_ast(
+    node: &helm_schema_ast::HelmAst,
+    descend_into_defines: bool,
+    seen: &mut std::collections::HashSet<String>,
+    out: &mut Vec<String>,
+) {
+    use helm_schema_ast::{HelmAst, TemplateExpr};
+
+    let mut collect_from_expr = |top: &TemplateExpr| {
+        top.walk(|expr| {
+            let TemplateExpr::Call { function, args } = expr else {
+                return;
+            };
+            if function != "include" && function != "template" {
+                return;
+            }
+            let Some(TemplateExpr::Literal(lit)) = args.first() else {
+                return;
+            };
+            let Some(name) = lit.as_string() else {
+                return;
+            };
+            if seen.insert(name.to_string()) {
+                out.push(name.to_string());
+            }
+        });
+    };
+
+    if !descend_into_defines && matches!(node, HelmAst::Define { .. }) {
+        return;
+    }
+
+    match node {
+        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
+            for item in items {
+                collect_helper_calls_in_ast(item, descend_into_defines, seen, out);
+            }
+        }
+        HelmAst::Pair { key, value } => {
+            collect_helper_calls_in_ast(key, descend_into_defines, seen, out);
+            if let Some(value) = value.as_deref() {
+                collect_helper_calls_in_ast(value, descend_into_defines, seen, out);
+            }
+        }
+        HelmAst::If {
+            condition,
+            then_branch,
+            else_branch,
+        } => {
+            collect_from_expr(condition.expr());
+            for item in then_branch {
+                collect_helper_calls_in_ast(item, descend_into_defines, seen, out);
+            }
+            for item in else_branch {
+                collect_helper_calls_in_ast(item, descend_into_defines, seen, out);
+            }
+        }
+        HelmAst::Range {
+            header,
+            body,
+            else_branch,
+            ..
+        }
+        | HelmAst::With {
+            header,
+            body,
+            else_branch,
+            ..
+        } => {
+            collect_from_expr(header.expr());
+            for item in body {
+                collect_helper_calls_in_ast(item, descend_into_defines, seen, out);
+            }
+            for item in else_branch {
+                collect_helper_calls_in_ast(item, descend_into_defines, seen, out);
+            }
+        }
+        HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
+            for item in body {
+                collect_helper_calls_in_ast(item, descend_into_defines, seen, out);
+            }
+        }
+        HelmAst::HelmExpr { action } => {
+            for expr in action.exprs() {
+                collect_from_expr(expr);
+            }
+        }
+        HelmAst::Scalar { text } => {
+            for expr in helm_schema_ast::parse_action_expressions(text) {
+                collect_from_expr(&expr);
+            }
+        }
+        HelmAst::HelmComment { .. } => {}
+    }
+}
+
 fn collect_define_blocks(node: tree_sitter::Node<'_>, src: &str, out: &mut Vec<DefineBlock>) {
     if node.kind() == "define_action"
         && let Some(block) = define_block_from_node(node, src)
@@ -158,7 +282,11 @@ fn parse_go_template(src: &str) -> Option<tree_sitter::Tree> {
 
 #[cfg(test)]
 mod tests {
-    use super::{extract_define_blocks, extract_helper_calls};
+    use super::{
+        extract_define_blocks, extract_helper_calls, extract_helper_calls_from_ast_body,
+        extract_helper_calls_from_ast_excluding_defines,
+    };
+    use helm_schema_ast::{HelmParser, TreeSitterParser};
 
     #[test]
     fn extracts_define_blocks_with_exact_body_spans() {
@@ -261,5 +389,60 @@ mod tests {
     fn extracts_helper_inside_range_destructure_header() {
         let src = r#"{{ range $i, $v := include "src" . }}{{ end }}"#;
         assert_eq!(extract_helper_calls(src), vec!["src".to_string()]);
+    }
+
+    #[test]
+    fn ast_extraction_can_skip_define_bodies_for_chart_direct_calls() {
+        let src = indoc::indoc! {r#"
+            {{ include "direct" . }}
+            {{- define "helper" -}}
+            {{ include "nested" . }}
+            {{- end -}}
+        "#};
+        let ast = TreeSitterParser.parse(src).expect("parse");
+
+        assert_eq!(
+            extract_helper_calls_from_ast_excluding_defines(&ast),
+            vec!["direct".to_string()]
+        );
+    }
+
+    #[test]
+    fn ast_body_extraction_visits_helper_body_headers_and_actions() {
+        let src = indoc::indoc! {r#"
+            {{- define "helper" -}}
+            {{- if include "guard" . -}}
+            {{ include "body" . }}
+            {{- end -}}
+            {{- end -}}
+        "#};
+        let ast = TreeSitterParser.parse(src).expect("parse");
+        let helm_schema_ast::HelmAst::Document { items } = ast else {
+            panic!("expected document root");
+        };
+        let [helm_schema_ast::HelmAst::Define { body, .. }] = items.as_slice() else {
+            panic!("expected one define");
+        };
+
+        assert_eq!(
+            extract_helper_calls_from_ast_body(body),
+            vec!["guard".to_string(), "body".to_string()]
+        );
+    }
+
+    #[test]
+    fn ast_extraction_finds_helper_calls_embedded_inside_scalar_text() {
+        let src = indoc::indoc! {r#"
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: {{ include "helper.name" . }}-suffix
+        "#};
+        let ast = TreeSitterParser.parse(src).expect("parse");
+
+        assert_eq!(
+            extract_helper_calls_from_ast_excluding_defines(&ast),
+            vec!["helper.name".to_string()]
+        );
     }
 }

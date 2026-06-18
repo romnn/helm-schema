@@ -170,6 +170,135 @@ impl HelmAst {
         buf
     }
 
+    /// Visit every top-level template expression structurally embedded in this
+    /// AST node: standalone Helm actions plus control-flow headers.
+    pub fn walk_template_expr_roots(&self, visit: &mut impl FnMut(&TemplateExpr)) {
+        match self {
+            HelmAst::Document { items }
+            | HelmAst::Mapping { items }
+            | HelmAst::Sequence { items } => {
+                for item in items {
+                    item.walk_template_expr_roots(visit);
+                }
+            }
+            HelmAst::Pair { key, value } => {
+                key.walk_template_expr_roots(visit);
+                if let Some(value) = value.as_deref() {
+                    value.walk_template_expr_roots(visit);
+                }
+            }
+            HelmAst::HelmExpr { action } => {
+                for expr in action.exprs() {
+                    visit(expr);
+                }
+            }
+            HelmAst::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                visit(condition.expr());
+                for item in then_branch {
+                    item.walk_template_expr_roots(visit);
+                }
+                for item in else_branch {
+                    item.walk_template_expr_roots(visit);
+                }
+            }
+            HelmAst::Range {
+                header,
+                body,
+                else_branch,
+            }
+            | HelmAst::With {
+                header,
+                body,
+                else_branch,
+            } => {
+                visit(header.expr());
+                for item in body {
+                    item.walk_template_expr_roots(visit);
+                }
+                for item in else_branch {
+                    item.walk_template_expr_roots(visit);
+                }
+            }
+            HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
+                for item in body {
+                    item.walk_template_expr_roots(visit);
+                }
+            }
+            HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
+        }
+    }
+
+    /// Visit every typed template expression reachable from this AST node,
+    /// including actions embedded inside scalar text fragments.
+    pub fn walk_template_exprs(&self, visit: &mut impl FnMut(&TemplateExpr)) {
+        match self {
+            HelmAst::Document { items }
+            | HelmAst::Mapping { items }
+            | HelmAst::Sequence { items } => {
+                for item in items {
+                    item.walk_template_exprs(visit);
+                }
+            }
+            HelmAst::Pair { key, value } => {
+                key.walk_template_exprs(visit);
+                if let Some(value) = value.as_deref() {
+                    value.walk_template_exprs(visit);
+                }
+            }
+            HelmAst::Scalar { text } => {
+                for expr in parse_action_expressions(text) {
+                    visit(&expr);
+                }
+            }
+            HelmAst::HelmExpr { action } => {
+                for expr in action.exprs() {
+                    visit(expr);
+                }
+            }
+            HelmAst::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                visit(condition.expr());
+                for item in then_branch {
+                    item.walk_template_exprs(visit);
+                }
+                for item in else_branch {
+                    item.walk_template_exprs(visit);
+                }
+            }
+            HelmAst::Range {
+                header,
+                body,
+                else_branch,
+            }
+            | HelmAst::With {
+                header,
+                body,
+                else_branch,
+            } => {
+                visit(header.expr());
+                for item in body {
+                    item.walk_template_exprs(visit);
+                }
+                for item in else_branch {
+                    item.walk_template_exprs(visit);
+                }
+            }
+            HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
+                for item in body {
+                    item.walk_template_exprs(visit);
+                }
+            }
+            HelmAst::HelmComment { .. } => {}
+        }
+    }
+
     #[allow(clippy::too_many_lines)]
     fn write_sexpr(&self, buf: &mut String, indent: usize) {
         let pad = "  ".repeat(indent);

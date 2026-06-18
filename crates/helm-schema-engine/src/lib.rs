@@ -7,7 +7,10 @@ pub mod contract {
 
 pub mod helpers {
     pub use helm_schema_ast::DefineIndex;
-    pub use helm_schema_ir::{DefineBlock, extract_define_blocks, extract_helper_calls};
+    pub use helm_schema_ir::{
+        DefineBlock, extract_define_blocks, extract_helper_calls, extract_helper_calls_from_ast,
+        extract_helper_calls_from_ast_body, extract_helper_calls_from_ast_excluding_defines,
+    };
 }
 
 pub mod parse {

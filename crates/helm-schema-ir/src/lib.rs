@@ -96,7 +96,10 @@ pub use helm_schema_core::{
     ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
     ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
 };
-pub use helper_discovery::{DefineBlock, extract_define_blocks, extract_helper_calls};
+pub use helper_discovery::{
+    DefineBlock, extract_define_blocks, extract_helper_calls, extract_helper_calls_from_ast,
+    extract_helper_calls_from_ast_body, extract_helper_calls_from_ast_excluding_defines,
+};
 pub use provenance::{ContractProvenance, SourceSpan};
 pub use symbolic::SymbolicIrContext;
 
