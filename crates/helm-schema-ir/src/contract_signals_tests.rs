@@ -459,7 +459,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
 }
 
 #[test]
-fn contract_ir_conditional_path_overlays_skip_unguarded_or_structurally_unsupported_paths() {
+fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditional_base_uses() {
     let signals = signals_for(vec![
         ContractUse::new(
             "feature.host".to_string(),
@@ -488,9 +488,28 @@ fn contract_ir_conditional_path_overlays_skip_unguarded_or_structurally_unsuppor
         ),
     ]);
 
+    assert_eq!(
+        signals.conditional_path_overlays.len(),
+        1,
+        "supported guarded branches should survive even when the path also has an unconditional base use: {:?}",
+        signals.conditional_path_overlays
+    );
+    assert_eq!(
+        signals.conditional_path_overlays[0].guards,
+        vec![ConditionalGuard::Truthy {
+            path: "feature.enabled".to_string(),
+        }],
+    );
     assert!(
-        signals.conditional_path_overlays.is_empty(),
-        "unguarded or unsupported paths must stay on the wide/base path: {:?}",
+        signals.conditional_path_overlays[0].preserve_base_schema,
+        "unguarded peers should request base-schema preservation"
+    );
+    assert!(
+        !signals
+            .conditional_path_overlays
+            .iter()
+            .any(|overlay| overlay.target_value_path == "other.path"),
+        "unsupported range-guarded paths must still stay on the wide/base path: {:?}",
         signals.conditional_path_overlays
     );
 }
@@ -552,7 +571,9 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
             "feature.enabled".to_string(),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
-            Vec::new(),
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
             None,
         ),
         ContractUse::new(
@@ -619,5 +640,34 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
     assert_eq!(
         signals.default_fallback_paths,
         BTreeSet::from(["defaulted".to_string()])
+    );
+}
+
+#[test]
+fn contract_ir_required_inference_signals_ignore_pathless_scalar_non_headers() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "rendered.value".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            Vec::new(),
+            None,
+        ),
+        ContractUse::new(
+            "helper.dependency".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            vec![Guard::With {
+                path: "helper.scope".to_string(),
+            }],
+            None,
+        ),
+    ])
+    .required_inference_signals;
+
+    assert!(
+        signals.positive_header_paths.is_empty(),
+        "plain pathless scalar uses must not be treated as positive header facts: {:?}",
+        signals.positive_header_paths
     );
 }

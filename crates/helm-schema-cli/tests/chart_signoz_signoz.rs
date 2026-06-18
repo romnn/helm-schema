@@ -58,6 +58,21 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
             },
         ],
     )?;
+    let mut gateway_service_account_name = schema
+        .pointer("/properties/signoz-otel-gateway/properties/serviceAccount/properties/name")
+        .cloned()
+        .ok_or_eyre("missing signoz-otel-gateway.serviceAccount.name schema")?;
+    strip_description_annotations(&mut gateway_service_account_name);
+    similar_asserts::assert_eq!(
+        gateway_service_account_name,
+        serde_json::json!({
+            "anyOf": [
+                { "type": "null" },
+                { "type": "string" }
+            ]
+        }),
+        "serviceAccount.name is defaulted through the chart helper in both create/non-create branches and must remain nullable string-like"
+    );
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))
             .wrap_err("parse signoz fixture")?;

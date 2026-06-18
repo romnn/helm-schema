@@ -28,6 +28,20 @@ pub(crate) fn analyze_charts(
     let symbolic_context = SymbolicIrContext::new(defines);
 
     for chart in charts {
+        for path in chart
+            .dependency_activation
+            .condition_paths
+            .iter()
+            .chain(chart.dependency_activation.tag_paths.iter())
+        {
+            let path = path.trim();
+            if !path.is_empty() {
+                contract.add_type_hint(path.to_string(), "boolean");
+            }
+        }
+    }
+
+    for chart in charts {
         if chart.is_library {
             continue;
         }

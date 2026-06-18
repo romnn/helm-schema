@@ -134,3 +134,34 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
     assert!(value_uses[0].guards.is_empty());
     assert!(value_uses[0].resource.is_none());
 }
+
+#[test]
+fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation() {
+    let mut contract = ContractIr::default();
+    contract.add_type_hint("image.tag", "string");
+    contract.add_type_hint("image.tag", "string");
+    contract.add_type_hint("image.pullPolicy", "string");
+
+    contract.map_value_paths(|path| format!("subchart.{path}"));
+
+    let signals = contract.into_schema_signals();
+    assert_eq!(
+        signals
+            .declared_type_hints_by_value_path
+            .get("subchart.image.tag"),
+        Some(&["string".to_string()].into_iter().collect())
+    );
+    assert_eq!(
+        signals
+            .declared_type_hints_by_value_path
+            .get("subchart.image.pullPolicy"),
+        Some(&["string".to_string()].into_iter().collect())
+    );
+    assert!(
+        signals
+            .value_path_facts
+            .get("subchart.image")
+            .is_some_and(|facts| facts.has_referenced_descendants),
+        "declared type hints should still mark ancestor object paths as having referenced descendants"
+    );
+}

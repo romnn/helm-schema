@@ -11,6 +11,7 @@ mod use_signals;
 mod values_yaml;
 
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 use helm_schema_core::ResourceSchemaOracle;
 use serde_json::{Map, Value};
@@ -89,7 +90,17 @@ impl<'a> ValuesSchemaInput<'a> {
 #[tracing::instrument(skip_all)]
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     let empty_type_hints = BTreeMap::new();
-    let type_hints = input.type_hints.unwrap_or(&empty_type_hints);
+    let merged_type_hints = merge_type_hints(
+        &input
+            .contract_schema_signals
+            .declared_type_hints_by_value_path,
+        input.type_hints,
+    );
+    let type_hints = if merged_type_hints.is_empty() {
+        input.type_hints.unwrap_or(&empty_type_hints)
+    } else {
+        &merged_type_hints
+    };
     let empty_values_descriptions = BTreeMap::new();
     let values_descriptions = input
         .values_descriptions
@@ -140,6 +151,33 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     Value::Object(out)
 }
 
+fn merge_type_hints(
+    declared_type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
+    external_type_hints: Option<&BTreeMap<String, Vec<Value>>>,
+) -> BTreeMap<String, Vec<Value>> {
+    let mut merged = BTreeMap::new();
+
+    for (path, schema_types) in declared_type_hints_by_value_path {
+        for schema_type in schema_types {
+            merged
+                .entry(path.clone())
+                .or_insert_with(Vec::new)
+                .push(crate::schema_model::type_schema(schema_type));
+        }
+    }
+
+    if let Some(external_type_hints) = external_type_hints {
+        for (path, schemas) in external_type_hints {
+            merged
+                .entry(path.clone())
+                .or_insert_with(Vec::new)
+                .extend(schemas.clone());
+        }
+    }
+
+    merged
+}
+
 fn mark_type_hint_descendant_facts<'a>(
     value_path_facts: &mut BTreeMap<String, ContractValuePathFacts>,
     paths: impl IntoIterator<Item = &'a String>,
@@ -183,16 +221,20 @@ fn build_root_schema(
         values_yaml_doc,
         provider,
     );
-    let conditional_targets: std::collections::BTreeSet<&str> = conditional_schemas
+    let conditional_targets = conditional_schemas
         .iter()
-        .map(|conditional| conditional.target_value_path.as_str())
-        .collect();
+        .map(|conditional| {
+            (
+                conditional.target_value_path.as_str(),
+                conditional.preserve_base_schema,
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
 
     for resolved_path in resolved_paths {
-        let schema = if conditional_targets.contains(resolved_path.value_path.as_str()) {
-            crate::schema_model::empty_schema()
-        } else {
-            resolved_path.schema
+        let schema = match conditional_targets.get(resolved_path.value_path.as_str()) {
+            Some(true) | None => resolved_path.schema,
+            Some(false) => crate::schema_model::empty_schema(),
         };
         insert_schema_at_path_segments(&mut root_schema, &resolved_path.path_segments, schema);
     }
@@ -211,6 +253,7 @@ struct ConditionalResolvedSchema {
     relative_target_segments: Vec<String>,
     guards: Vec<ConditionalGuard>,
     target_schema: Value,
+    preserve_base_schema: bool,
 }
 
 fn collect_conditional_schemas(
@@ -251,6 +294,7 @@ fn collect_conditional_schemas(
                     ancestor_segments,
                     guards: overlay.guards.clone(),
                     target_schema,
+                    preserve_base_schema: overlay.preserve_base_schema,
                 },
             )
         })

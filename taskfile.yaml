@@ -119,7 +119,17 @@ tasks:
   test:
     desc: "test cargo workspace"
     cmds:
-      - cargo nextest run --workspace --all-targets {{.CLI_ARGS}}
+      - cargo nextest run --workspace --all-targets --no-tests "warn" {{.CLI_ARGS}}
+
+  test:fc:
+    desc: "test cargo workspace for all combinations of features"
+    cmds:
+      - cargo fc nextest run --workspace --all-targets --no-tests "warn" {{.CLI_ARGS}}
+
+  test:doc:
+    desc: "run doctests in cargo workspace"
+    cmds:
+      - cargo test --doc --workspace {{.CLI_ARGS}}
 
   bench:chart:
     desc: "benchmark release helm-schema on one chart"
@@ -172,11 +182,6 @@ tasks:
         task bench:chart --
         CHART={{.LUUP3_DIR}}/deployment/charts/temporal
         OUTPUT=/tmp/helm-schema-bench-temporal.json
-
-  test:fc:
-    desc: "test cargo workspace for all combinations of features"
-    cmds:
-      - cargo fc test --all-targets {{.CLI_ARGS}}
 
   lint:
     desc: "lint cargo workspace"

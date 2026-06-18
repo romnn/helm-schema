@@ -16,12 +16,15 @@ use super::value_path_facts::{
     RenderPathFacts, build_contract_value_path_facts, collect_paths_with_descendants,
 };
 
-pub(crate) fn derive_schema_signals_from_uses(uses: &[ContractUse]) -> ContractSchemaSignals {
+pub(crate) fn derive_schema_signals_from_uses(
+    uses: &[ContractUse],
+    declared_type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
+) -> ContractSchemaSignals {
     let mut builder = ContractSchemaSignalBuilder::default();
     for contract_use in uses {
         builder.record(contract_use);
     }
-    builder.finish()
+    builder.finish(declared_type_hints_by_value_path.clone())
 }
 
 #[derive(Default)]
@@ -42,7 +45,8 @@ struct NullablePathAccumulator {
 #[derive(Default)]
 struct ConditionalOverlayAccumulator {
     branches_by_guards: BTreeMap<Vec<ConditionalGuard>, ConditionalOverlayBranchAccumulator>,
-    saw_unconditional_or_unsupported: bool,
+    has_unconditional_peer_use: bool,
+    saw_unsupported: bool,
 }
 
 #[derive(Default)]
@@ -76,7 +80,16 @@ impl ContractSchemaSignalBuilder {
         self.record_required_inference_signals(contract_use);
     }
 
-    fn finish(self) -> ContractSchemaSignals {
+    fn finish(
+        mut self,
+        declared_type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
+    ) -> ContractSchemaSignals {
+        self.path_signals.referenced_value_paths.extend(
+            declared_type_hints_by_value_path
+                .keys()
+                .filter(|path| !path.trim().is_empty())
+                .cloned(),
+        );
         let paths_with_referenced_descendants =
             collect_paths_with_descendants(&self.path_signals.referenced_value_paths);
         let nullable_value_paths = self
@@ -105,6 +118,7 @@ impl ContractSchemaSignalBuilder {
         ContractSchemaSignals {
             path_signals: self.path_signals,
             provider_schema_uses: self.provider_schema_uses,
+            declared_type_hints_by_value_path,
             nullable_value_paths,
             paths_with_referenced_descendants,
             value_path_facts,
@@ -269,15 +283,15 @@ impl ContractSchemaSignalBuilder {
             .entry(contract_use.source_expr.clone())
             .or_default();
 
-        let Some(guards) = lowerable_guard_set(contract_use) else {
-            accumulator.saw_unconditional_or_unsupported = true;
-            return;
-        };
-
-        if guards.is_empty() {
-            accumulator.saw_unconditional_or_unsupported = true;
+        if contract_use.guards.is_empty() {
+            accumulator.has_unconditional_peer_use = true;
             return;
         }
+
+        let Some(guards) = lowerable_guard_set(contract_use) else {
+            accumulator.saw_unsupported = true;
+            return;
+        };
 
         let branch = accumulator
             .branches_by_guards
@@ -330,9 +344,10 @@ impl ConditionalOverlayAccumulator {
         target_value_path: String,
         global_facts: ContractValuePathFacts,
     ) -> Vec<ConditionalPathOverlay> {
-        if self.saw_unconditional_or_unsupported {
+        if self.saw_unsupported {
             return Vec::new();
         }
+        let preserve_base_schema = self.has_unconditional_peer_use;
         self.branches_by_guards
             .into_iter()
             .map(|(guards, branch)| {
@@ -343,6 +358,7 @@ impl ConditionalOverlayAccumulator {
                     provider_schema_uses: branch.provider_schema_uses,
                     metadata_field_kinds: branch.metadata_field_kinds,
                     value_path_facts,
+                    preserve_base_schema,
                 }
             })
             .collect()
@@ -401,7 +417,7 @@ impl ConditionalOverlayBranchAccumulator {
 }
 
 fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuard>> {
-    if contract_use.guards.is_empty() || path_contains_wildcard(&contract_use.source_expr) {
+    if path_contains_wildcard(&contract_use.source_expr) {
         return None;
     }
 

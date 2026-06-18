@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::{Guard, ValueKind, YamlPath, output_path};
+use crate::{ValueKind, output_path};
 
 use super::site::DocumentSite;
 use super::value_analysis::DocumentHelperSummary;
@@ -110,18 +110,5 @@ pub(super) fn append_document_helper_contract_uses(
         contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &[]));
     }
 
-    for (path, schema_types) in helper.type_hints {
-        for schema_type in schema_types {
-            contract.push(site.contract_use(
-                context,
-                path.clone(),
-                YamlPath(Vec::new()),
-                ValueKind::Scalar,
-                vec![Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type,
-                }],
-            ));
-        }
-    }
+    contract.extend_type_hints(helper.type_hints);
 }

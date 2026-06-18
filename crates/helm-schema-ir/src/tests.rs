@@ -125,3 +125,40 @@ metadata:
         }]
     );
 }
+
+#[test]
+fn transitive_scalar_helper_default_projects_default_guard() {
+    let helpers = r#"
+{{- define "liba.fullname" -}}
+{{- include "libb.name" . -}}
+{{- end -}}
+
+{{- define "libb.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+"#;
+    let src = r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "liba.fullname" . }}
+"#;
+    let mut idx = DefineIndex::new();
+    idx.add_source(&TreeSitterParser, helpers)
+        .expect("helpers parse");
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &idx)
+        .project();
+
+    assert!(
+        ir.uses().iter().any(|use_| {
+            use_.source_expr == "nameOverride"
+                && use_.path == YamlPath(vec!["metadata".to_string(), "name".to_string()])
+                && use_.guards.contains(&Guard::Default {
+                    path: "nameOverride".to_string(),
+                })
+        }),
+        "expected transitive helper default to survive into rendered contract use, got {:?}",
+        ir.uses()
+    );
+}

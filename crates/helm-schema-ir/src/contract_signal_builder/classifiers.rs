@@ -3,8 +3,8 @@ use crate::contract::ContractUse;
 use crate::contract_signals::{GuardConstraint, MetadataFieldKind};
 
 pub(super) fn use_is_positive_header(use_: &ContractUse) -> bool {
-    use_.guards.is_empty()
-        || use_.guards.iter().all(|guard| match guard {
+    !use_.guards.is_empty()
+        && use_.guards.iter().all(|guard| match guard {
             Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
                 path == &use_.source_expr
             }

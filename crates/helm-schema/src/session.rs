@@ -24,11 +24,13 @@ use crate::required_inference;
 /// Public analysis artifact produced by [`AnalysisSession`].
 ///
 /// This is the current stable facade-level view of chart-local analysis:
-/// the guarded contract graph plus the chart-local schema universe extracted
-/// from sources such as static and template-rendered CRDs.
+/// the guarded contract graph, the typed schema-lowering signals derived from
+/// that contract, and the chart-local schema universe extracted from sources
+/// such as static and template-rendered CRDs.
 #[derive(Debug, Clone)]
 pub struct Analysis {
     pub contract: ContractIr,
+    pub schema_signals: helm_schema_engine::ContractSchemaSignals,
     pub local_schemas: LocalSchemaUniverse,
 }
 
@@ -95,6 +97,7 @@ impl PreparedSession {
     pub(crate) fn analysis(&self) -> Analysis {
         Analysis {
             contract: self.contract.clone(),
+            schema_signals: self.contract_schema_signals.clone(),
             local_schemas: self.local_schema_universe.clone(),
         }
     }
@@ -269,14 +272,27 @@ impl AnalysisSession {
             .get(&normalized_path)
             .map(|fields| fields.iter().copied().collect())
             .unwrap_or_default();
-        let type_hints = prepared
-            .template_evidence
-            .type_hints
+        let mut type_hints: Vec<serde_json::Value> = prepared
+            .contract_schema_signals
+            .declared_type_hints_by_value_path
             .get(&normalized_path)
-            .cloned()
+            .map(|schema_types| {
+                schema_types
+                    .iter()
+                    .map(|schema_type| serde_json::json!({ "type": schema_type }))
+                    .collect()
+            })
             .unwrap_or_default();
+        if let Some(external_hints) = prepared.template_evidence.type_hints.get(&normalized_path) {
+            for hint in external_hints {
+                if !type_hints.contains(hint) {
+                    type_hints.push(hint.clone());
+                }
+            }
+        }
         let has_default_fallback = prepared
-            .template_evidence
+            .contract_schema_signals
+            .required_inference_signals
             .default_fallback_paths
             .contains(&normalized_path);
 
@@ -390,7 +406,6 @@ pub(crate) fn generate_schema_from_resolved_contract(
             &mut schema,
             &prepared.contract_schema_signals.required_inference_signals,
             prepared.values_yaml.as_deref(),
-            &prepared.template_evidence.default_fallback_paths,
         );
     }
 

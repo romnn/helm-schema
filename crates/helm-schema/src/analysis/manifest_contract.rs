@@ -72,6 +72,18 @@ fn collect_manifest_contract_for_template(
 }
 
 fn chart_activation_guards(activation: &chart::ChartDependencyActivation) -> Vec<Guard> {
+    let activation_paths = chart_activation_paths(activation);
+
+    match activation_paths.as_slice() {
+        [] => Vec::new(),
+        [path] => vec![Guard::Truthy { path: path.clone() }],
+        _ => vec![Guard::Or {
+            paths: activation_paths,
+        }],
+    }
+}
+
+fn chart_activation_paths(activation: &chart::ChartDependencyActivation) -> Vec<String> {
     let mut activation_paths = activation
         .condition_paths
         .iter()
@@ -84,12 +96,5 @@ fn chart_activation_guards(activation: &chart::ChartDependencyActivation) -> Vec
 
     activation_paths.sort();
     activation_paths.dedup();
-
-    match activation_paths.as_slice() {
-        [] => Vec::new(),
-        [path] => vec![Guard::Truthy { path: path.clone() }],
-        _ => vec![Guard::Or {
-            paths: activation_paths,
-        }],
-    }
+    activation_paths
 }

@@ -26,27 +26,19 @@ fn production_chain_provider() -> Chain {
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 
-fn parse_ir(src: &str) -> Vec<ContractUse> {
+fn parse_ir(src: &str) -> ContractIr {
     let idx = DefineIndex::new();
-    SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
-        .project()
-        .uses()
-        .to_vec()
+    SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
 }
 
-fn parse_ir_with_helpers(src: &str, helpers: &str) -> Vec<ContractUse> {
+fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     let mut idx = DefineIndex::new();
     if !helpers.trim().is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
         idx.add_source(&TreeSitterParser, helpers)
             .expect("helpers parse");
     }
-    SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
-        .project()
-        .uses()
-        .to_vec()
+    SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
 }
 
 fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
@@ -57,28 +49,62 @@ fn collect_hints(src: &str) -> BTreeMap<String, Vec<Value>> {
     hints
 }
 
-fn schema_signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
-    ContractIr::from_contract_uses(uses).into_schema_signals()
+trait SchemaSignalSource {
+    fn into_schema_signals(self) -> ContractSchemaSignals;
 }
 
-fn schema_for(uses: &[ContractUse]) -> Value {
-    let schema_signals = schema_signals_for(uses.to_vec());
+impl SchemaSignalSource for Vec<ContractUse> {
+    fn into_schema_signals(self) -> ContractSchemaSignals {
+        ContractIr::from_contract_uses(self).into_schema_signals()
+    }
+}
+
+impl SchemaSignalSource for &[ContractUse] {
+    fn into_schema_signals(self) -> ContractSchemaSignals {
+        ContractIr::from_contract_uses(self.to_vec()).into_schema_signals()
+    }
+}
+
+impl SchemaSignalSource for &Vec<ContractUse> {
+    fn into_schema_signals(self) -> ContractSchemaSignals {
+        self.as_slice().into_schema_signals()
+    }
+}
+
+impl SchemaSignalSource for &ContractIr {
+    fn into_schema_signals(self) -> ContractSchemaSignals {
+        self.clone().into_schema_signals()
+    }
+}
+
+impl SchemaSignalSource for ContractIr {
+    fn into_schema_signals(self) -> ContractSchemaSignals {
+        ContractIr::into_schema_signals(self)
+    }
+}
+
+fn schema_signals_for(source: impl SchemaSignalSource) -> ContractSchemaSignals {
+    source.into_schema_signals()
+}
+
+fn schema_for(source: impl SchemaSignalSource) -> Value {
+    let schema_signals = source.into_schema_signals();
     generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()))
 }
 
-fn schema_for_values_yaml(uses: &[ContractUse], values_yaml: Option<&str>) -> Value {
-    let schema_signals = schema_signals_for(uses.to_vec());
+fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&str>) -> Value {
+    let schema_signals = source.into_schema_signals();
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
     )
 }
 
 fn schema_for_values_yaml_and_hints(
-    uses: &[ContractUse],
+    source: impl SchemaSignalSource,
     values_yaml: Option<&str>,
     type_hints: &BTreeMap<String, Vec<Value>>,
 ) -> Value {
-    let schema_signals = schema_signals_for(uses.to_vec());
+    let schema_signals = source.into_schema_signals();
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider())
             .with_values_yaml(values_yaml)
@@ -1264,6 +1290,59 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             .pointer("/then/properties/feature/properties/value/additionalProperties/type"),
         Some(&serde_json::json!("string")),
         "labels branch should preserve the metadata.labels string-map shape: {schema}"
+    );
+}
+
+#[test]
+fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
+    let schema_signals = schema_signals_for(vec![
+        ContractUse {
+            source_expr: "feature.value".to_string(),
+            path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: Vec::new(),
+            resource: None,
+            provenance: Vec::new(),
+        },
+        ContractUse {
+            source_expr: "feature.value".to_string(),
+            path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+            kind: ValueKind::Fragment,
+            guards: vec![Guard::Eq {
+                path: "mode".to_string(),
+                value: "labels".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        },
+    ]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("mode: name\nfeature:\n  value: example\n")),
+    );
+
+    let base_value_schema = schema
+        .pointer("/properties/feature/properties/value")
+        .expect("feature.value base schema");
+    assert!(
+        schema_contains_type(base_value_schema, "string"),
+        "the unconditional base string contract should remain on the main path: {schema}"
+    );
+    assert!(
+        schema_contains_open_string_map(base_value_schema),
+        "the guarded fragment branch should also stay visible on the base path when both variants exist: {schema}"
+    );
+    assert_eq!(
+        schema.pointer("/allOf/0/then/properties/feature/properties/value/type"),
+        Some(&serde_json::json!("object")),
+        "the guarded branch should still reapply the fragment/object schema: {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/allOf/0/then/properties/feature/properties/value/additionalProperties/type"),
+        Some(&serde_json::json!("string")),
+        "the guarded object branch should preserve metadata.labels string-map shape: {schema}"
     );
 }
 

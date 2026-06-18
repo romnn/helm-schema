@@ -8,10 +8,6 @@
 //! Why this is heuristic:
 //!   - "unconditionally referenced" relies on contract-level header-use
 //!     projection, which can misfire on empty-body `if not`/`if or` blocks.
-//!   - "never accessed via default" still accepts a compatibility fallback
-//!     [`helm_schema_ir::required_inference::extract_default_fallback_paths`]
-//!     side channel from the CLI for helper text that is not yet fully
-//!     represented as contract guards.
 //!
 //! The schemadiff tool already strips `required` arrays from both
 //! sides before diffing — the only place this feature's output is
@@ -31,7 +27,6 @@ struct RequiredInferencePolicy;
 struct RequiredInferenceInputs<'a> {
     signals: &'a RequiredInferenceSignals,
     synthetic_value_paths: &'a BTreeSet<String>,
-    external_default_fallback_paths: &'a BTreeSet<String>,
 }
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
@@ -46,20 +41,14 @@ struct RequiredInferenceInputs<'a> {
 /// `signals` should come from [`helm_schema_ir::ContractSchemaSignals`], not
 /// from a second pass over raw compatibility rows.
 ///
-/// `default_fallback_paths` should contain every path that has any
-/// `default <expr> .Values.X` fallback in the template — typically
-/// derived from [`helm_schema_ir::required_inference::extract_default_fallback_paths`]
-/// applied to chart templates with appropriate prefix scoping.
 pub fn apply_required_inference(
     schema: &mut Value,
     signals: &RequiredInferenceSignals,
     synthetic_value_paths: &BTreeSet<String>,
-    default_fallback_paths: &BTreeSet<String>,
 ) {
     let paths = RequiredInferencePolicy.required_paths(RequiredInferenceInputs {
         signals,
         synthetic_value_paths,
-        external_default_fallback_paths: default_fallback_paths,
     });
     for path in paths {
         add_path_to_required(schema, &path);
@@ -78,8 +67,7 @@ impl RequiredInferencePolicy {
     fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
         let mut required: BTreeSet<String> = BTreeSet::new();
         for path in &input.signals.positive_header_paths {
-            if input.external_default_fallback_paths.contains(path)
-                || input.signals.default_fallback_paths.contains(path)
+            if input.signals.default_fallback_paths.contains(path)
                 || input.signals.conditionally_optional_paths.contains(path)
                 || input.synthetic_value_paths.contains(path)
             {
@@ -155,7 +143,6 @@ mod tests {
     use super::apply_required_inference;
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::DefineIndex;
-    use helm_schema_ir::required_inference::extract_default_fallback_paths;
     use helm_schema_ir::{
         ContractIr, ContractSchemaSignals, ContractUse, Guard, SymbolicIrContext, ValueKind,
         YamlPath, extract_default_type_hints,
@@ -185,10 +172,6 @@ mod tests {
         hints
     }
 
-    fn collect_fallbacks(src: &str) -> BTreeSet<String> {
-        extract_default_fallback_paths(src).into_iter().collect()
-    }
-
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let hints = collect_hints(src);
         let schema_signals = parse_schema_signals(src);
@@ -201,7 +184,6 @@ mod tests {
             &mut schema,
             &schema_signals.required_inference_signals,
             &BTreeSet::new(),
-            &collect_fallbacks(src),
         );
         schema
     }
@@ -235,12 +217,37 @@ mod tests {
             &mut schema,
             &schema_signals.required_inference_signals,
             &BTreeSet::new(),
-            &BTreeSet::new(),
         );
 
         assert!(
             schema.get("required").is_none(),
             "contract default guards should suppress required inference without a text fallback scan, schema={}",
+            serde_json::to_string_pretty(&schema).unwrap()
+        );
+    }
+
+    #[test]
+    fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
+        let schema_signals = schema_signals_for(vec![ContractUse {
+            source_expr: "feature".to_string(),
+            path: YamlPath(Vec::new()),
+            kind: ValueKind::Scalar,
+            guards: Vec::new(),
+            resource: None,
+            provenance: Vec::new(),
+        }]);
+        let mut schema =
+            generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
+
+        apply_required_inference(
+            &mut schema,
+            &schema_signals.required_inference_signals,
+            &BTreeSet::new(),
+        );
+
+        assert!(
+            schema.get("required").is_none(),
+            "plain pathless scalar uses are not enough to infer required, schema={}",
             serde_json::to_string_pretty(&schema).unwrap()
         );
     }
@@ -301,11 +308,6 @@ mod tests {
             name: {{ default .Chart.Name .Values.nameOverride }}
             {{- end }}
         "};
-        let fallbacks = collect_fallbacks(src);
-        assert!(
-            fallbacks.contains("nameOverride"),
-            "fallback extractor must catch non-literal default, got {fallbacks:?}"
-        );
         let schema = generate_with_required(src, None);
         assert!(
             schema.get("required").is_none(),
@@ -324,11 +326,6 @@ mod tests {
             name: {{ default "two words" .Values.nameOverride }}
             {{- end }}
         "#};
-        let fallbacks = collect_fallbacks(src);
-        assert!(
-            fallbacks.contains("nameOverride"),
-            "fallback extractor must catch quoted-string-with-spaces literal, got {fallbacks:?}"
-        );
         let schema = generate_with_required(src, None);
         assert!(
             schema.get("required").is_none(),
@@ -347,11 +344,6 @@ mod tests {
             name: {{ default (printf "%s-%s" .Release.Name "x") .Values.fullnameOverride }}
             {{- end }}
         "#};
-        let fallbacks = collect_fallbacks(src);
-        assert!(
-            fallbacks.contains("fullnameOverride"),
-            "fallback extractor must catch parenthesized default, got {fallbacks:?}"
-        );
         let schema = generate_with_required(src, None);
         assert!(
             schema.get("required").is_none(),

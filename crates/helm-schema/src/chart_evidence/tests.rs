@@ -39,11 +39,5 @@ metadata:
         "reachable helper default should produce a scoped type hint: {:?}",
         evidence.type_hints
     );
-    assert!(
-        evidence.default_fallback_paths.contains("kid.name"),
-        "reachable helper default should produce a scoped fallback path: {:?}",
-        evidence.default_fallback_paths
-    );
-
     Ok(())
 }

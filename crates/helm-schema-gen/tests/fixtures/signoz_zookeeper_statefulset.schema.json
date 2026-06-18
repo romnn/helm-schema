@@ -283,6 +283,44 @@
   "allOf": [
     {
       "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "disableBaseClientPort": {
+                  "const": true
+                }
+              },
+              "required": [
+                "disableBaseClientPort"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "containerPorts": {
+            "properties": {
+              "client": {
+                "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+                "format": "int32",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {

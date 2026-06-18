@@ -61,8 +61,8 @@ spec:
 }
 
 #[test]
-fn signoz_root_service_account_helper_is_reachable_for_type_hints() -> color_eyre::eyre::Result<()>
-{
+fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signals()
+-> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -71,19 +71,117 @@ fn signoz_root_service_account_helper_is_reachable_for_type_hints() -> color_eyr
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
     let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
-    let path = "alertmanager.serviceAccount.name";
+    let path = "clickhouse.zookeeper.nameOverride";
 
     assert!(
-        collection.template_evidence.type_hints.contains_key(path),
-        "expected type hint for {path}; reachable={:?}; hints={:?}",
+        collection
+            .contract_schema_signals
+            .declared_type_hints_by_value_path
+            .get(path)
+            .is_some_and(|schema_types| schema_types.contains("string")),
+        "expected structural contract type hint for {path}; contract_hints={:?}; fallback_hints={:?}; reachable={:?}",
+        collection
+            .contract_schema_signals
+            .declared_type_hints_by_value_path,
+        collection.template_evidence.type_hints,
         collection
             .template_evidence
             .reachable_helpers_from_chart(&Vec::<String>::new()),
+    );
+
+    Ok(())
+}
+
+#[test]
+fn transitive_library_helper_default_flows_into_required_inference_signals()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc::indoc! {"
+            apiVersion: v2
+            name: wrapper
+            version: 0.1.0
+            dependencies:
+              - name: liba
+                version: 0.1.0
+              - name: libb
+                version: 0.1.0
+              - name: app
+                version: 0.1.0
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "app: {}\n")?;
+
+    test_util::write(
+        &chart_dir.join("charts/liba/Chart.yaml")?,
+        "apiVersion: v2\nname: liba\nversion: 0.1.0\ntype: library\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/liba/templates/_helpers.tpl")?,
+        indoc::indoc! {r#"
+            {{- define "liba.fullname" -}}
+            {{- include "libb.name" . -}}
+            {{- end -}}
+        "#},
+    )?;
+
+    test_util::write(
+        &chart_dir.join("charts/libb/Chart.yaml")?,
+        "apiVersion: v2\nname: libb\nversion: 0.1.0\ntype: library\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/libb/templates/_helpers.tpl")?,
+        indoc::indoc! {r#"
+            {{- define "libb.name" -}}
+            {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+        "#},
+    )?;
+
+    test_util::write(
+        &chart_dir.join("charts/app/Chart.yaml")?,
+        "apiVersion: v2\nname: app\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/app/values.yaml")?,
+        "nameOverride: ~\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/app/templates/cm.yaml")?,
+        indoc::indoc! {r#"
+            {{- if .Values.nameOverride }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {{ include "liba.fullname" . }}
+            {{- end }}
+        "#},
+    )?;
+
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let projection = collection.contract.clone().project();
+    let name_override_uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == "app.nameOverride")
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
         collection
-            .template_evidence
-            .type_hints
-            .keys()
-            .collect::<Vec<_>>()
+            .contract_schema_signals
+            .required_inference_signals
+            .default_fallback_paths
+            .contains("app.nameOverride"),
+        "transitive library helper default should become a structural contract signal, got fallback_paths={:?}; uses={name_override_uses:#?}",
+        collection
+            .contract_schema_signals
+            .required_inference_signals
+            .default_fallback_paths,
     );
 
     Ok(())

@@ -25,6 +25,9 @@ pub struct ConditionalPathOverlay {
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     pub value_path_facts: ContractValuePathFacts,
+    /// Keep the unconditional/base schema for this path alongside the guarded
+    /// overlay because the contract also observed an unguarded use.
+    pub preserve_base_schema: bool,
 }
 
 /// Type-level constraints declared by template guards.
@@ -92,6 +95,7 @@ pub struct RequiredInferenceSignals {
 pub struct ContractSchemaSignals {
     pub path_signals: ContractPathSignals,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
+    pub declared_type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
     pub nullable_value_paths: BTreeSet<String>,
     pub paths_with_referenced_descendants: BTreeSet<String>,
     pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,

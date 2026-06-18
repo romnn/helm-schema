@@ -9,11 +9,12 @@
 //! So `X` must NOT be marked required under `--infer-required`.
 //!
 //! Before the fix:
-//!   1. CLI skipped library charts entirely for hint/fallback extraction, so
-//!      the consumer's `nameOverride` use looked like an unconditional header.
-//!   2. The type-hint extractor only recognised LITERAL defaults
-//!      (`default "x"`), not `default .Chart.Name`, so `nameOverride` wasn't
-//!      flagged as "has a fallback".
+//!   1. cross-chart helper bodies were cached under colliding logical paths
+//!      like `templates/_helpers.tpl`, so sibling library helpers could
+//!      overwrite each other in the structural helper-body cache.
+//!   2. when that happened, the consumer's `nameOverride` use looked like an
+//!      unconditional header because the rendered helper body was never
+//!      structurally analyzed.
 //!
 //! Driver: the real Temporal chart's `common-0.1.0` library subchart, whose
 //! `_name.tpl` uses `default .Chart.Name .Values.nameOverride`. Recreated
@@ -58,9 +59,8 @@ type: library
 ";
 
 // The non-literal-default helper. `default .Chart.Name .Values.nameOverride`
-// makes `nameOverride` null-tolerant in the consumer's scope, but the
-// fallback is a function/identifier expression, not a literal — only the
-// broader `extract_default_fallback_paths` extractor catches it.
+// makes `nameOverride` null-tolerant in the consumer's scope, and that
+// default should now flow through the structural contract directly.
 const LIBRARY_NAME_HELPER: &str = "\
 {{- define \"common.name\" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" -}}
