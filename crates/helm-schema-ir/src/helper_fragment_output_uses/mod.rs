@@ -221,7 +221,6 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
     fn refresh_default_paths(
         &mut self,
         _variable: &str,
-        _rhs: &str,
         _rhs_expr: &helm_schema_ast::TemplateExpr,
     ) {
     }
@@ -375,12 +374,8 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         if self.no_output_depth > 0 {
             return;
         }
-        let site_context = collect_document_site_context(
-            self.source,
-            &self.document_tracker,
-            node,
-            snippet.text(),
-        );
+        let site_context =
+            collect_document_site_context(self.source, &self.document_tracker, node, snippet);
         if site_context.in_mapping_key {
             return;
         }

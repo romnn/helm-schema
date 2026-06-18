@@ -1,10 +1,12 @@
 use helm_schema_ast::TemplateExpr;
 
+#[cfg(test)]
 use crate::template_expr_cache::parse_expr_text;
 
 /// Return true when a Helm expression structurally calls a function that emits
 /// a YAML fragment rather than a single scalar.
 #[must_use]
+#[cfg(test)]
 pub fn is_fragment_expr(text: &str) -> bool {
     is_fragment_exprs(&parse_expr_text(text))
 }

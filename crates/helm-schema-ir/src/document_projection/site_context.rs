@@ -1,4 +1,7 @@
-use crate::fragment_classification::is_fragment_expr;
+use helm_schema_ast::TemplateExpr;
+
+use crate::fragment_classification::is_fragment_exprs;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
 
@@ -17,14 +20,10 @@ pub(crate) fn collect_document_site_context(
     source: &str,
     tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
-    text: &str,
+    snippet: &ParsedTemplateSnippet<'_>,
 ) -> DocumentSiteContext {
-    let enclosing_action_text = enclosing_action_text(source, node);
-    let kind = if enclosing_action_text
-        .as_deref()
-        .is_some_and(is_fragment_expr)
-        || is_fragment_expr(text)
-    {
+    let output_action = analyze_output_action(source, node, snippet);
+    let kind = if output_action.is_fragment {
         ValueKind::Fragment
     } else {
         ValueKind::Scalar
@@ -37,7 +36,13 @@ pub(crate) fn collect_document_site_context(
         tracker.current_path()
     };
     if !in_mapping_key {
-        path = adjusted_output_path(tracker, node, text, kind, path);
+        path = adjusted_output_path(
+            tracker,
+            node,
+            kind,
+            path,
+            output_action.fragment_indent_width,
+        );
     }
     if tracker.output_inside_block_scalar_at(node.start_byte()) {
         path = YamlPath(Vec::new());
@@ -55,17 +60,45 @@ pub(crate) fn collect_document_site_context(
     }
 }
 
+struct OutputActionShape {
+    is_fragment: bool,
+    fragment_indent_width: Option<usize>,
+}
+
+fn analyze_output_action(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    snippet: &ParsedTemplateSnippet<'_>,
+) -> OutputActionShape {
+    if node.kind() == "template_action" {
+        return output_action_shape_from_exprs(snippet.exprs());
+    }
+
+    if let Some(text) = enclosing_action_text(source, node) {
+        return output_action_shape_from_exprs(ParsedTemplateSnippet::new(&text).exprs());
+    }
+
+    output_action_shape_from_exprs(snippet.exprs())
+}
+
+fn output_action_shape_from_exprs(exprs: &[TemplateExpr]) -> OutputActionShape {
+    OutputActionShape {
+        is_fragment: is_fragment_exprs(exprs),
+        fragment_indent_width: DocumentTracker::fragment_indent_width_for_exprs(exprs),
+    }
+}
+
 fn adjusted_output_path(
     tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
-    text: &str,
     kind: ValueKind,
     mut path: YamlPath,
+    fragment_indent_width: Option<usize>,
 ) -> YamlPath {
     let (physical_indent, _physical_col) = tracker.line_indent_and_col(node.start_byte());
     if tracker.starts_template_action_line(node.start_byte()) {
         let mut logical_indent = physical_indent;
-        if let Some(virtual_indent) = DocumentTracker::fragment_indent_width(text) {
+        if let Some(virtual_indent) = fragment_indent_width {
             logical_indent = virtual_indent;
         }
 

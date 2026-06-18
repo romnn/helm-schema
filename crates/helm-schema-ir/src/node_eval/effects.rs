@@ -17,7 +17,7 @@ pub(crate) trait NodeActionEffectSink: ContractUseSink {
 
     fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
 
-    fn refresh_default_paths(&mut self, variable: &str, rhs: &str, rhs_expr: &TemplateExpr);
+    fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &TemplateExpr);
 
     fn refresh_helper_output_meta(&mut self, variable: String, rhs: &str, rhs_expr: &TemplateExpr);
 
@@ -50,7 +50,7 @@ fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: Local
             sink.assign_fragment_binding(plan.variable.clone(), plan.fragment_binding);
         }
     }
-    sink.refresh_default_paths(&plan.variable, &plan.rhs, &plan.rhs_expr);
+    sink.refresh_default_paths(&plan.variable, &plan.rhs_expr);
     sink.refresh_helper_output_meta(plan.variable, &plan.rhs, &plan.rhs_expr);
 }
 

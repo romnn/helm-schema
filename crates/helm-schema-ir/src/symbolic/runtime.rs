@@ -183,12 +183,7 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
             .assign_fragment_binding(variable, binding);
     }
 
-    fn refresh_default_paths(
-        &mut self,
-        variable: &str,
-        _rhs: &str,
-        rhs_expr: &helm_schema_ast::TemplateExpr,
-    ) {
+    fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &helm_schema_ast::TemplateExpr) {
         let default_paths = self
             .value_path_context()
             .resolved_default_fallback_paths_in_exprs(std::slice::from_ref(rhs_expr));
@@ -203,10 +198,7 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         rhs: &str,
         rhs_expr: &helm_schema_ast::TemplateExpr,
     ) {
-        let snippet = ParsedTemplateSnippet::new(rhs);
-        debug_assert_eq!(snippet.exprs().len(), 1);
-        debug_assert_eq!(snippet.exprs().first(), Some(rhs_expr));
-        let helper_meta = self.helper_output_meta_for_snippet(&snippet);
+        let helper_meta = self.helper_output_meta_for_exprs(rhs, std::slice::from_ref(rhs_expr));
         self.scope
             .locals_mut()
             .set_output_meta(variable, helper_meta);

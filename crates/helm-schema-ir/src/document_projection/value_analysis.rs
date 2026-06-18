@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::TemplateExpr;
 
 use crate::ValueKind;
-use crate::bound_value_analysis::{GetBinding, extract_bound_values};
+use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::value_path_context::ValuePathContext;
 
@@ -77,7 +77,6 @@ impl DocumentValueAnalysis {
 }
 
 pub(crate) fn collect_document_value_analysis_from_exprs(
-    text: &str,
     exprs: &[TemplateExpr],
     kind: ValueKind,
     value_path_context: &ValuePathContext<'_>,
@@ -94,7 +93,7 @@ pub(crate) fn collect_document_value_analysis_from_exprs(
     let local_output_meta = value_path_context.local_alias_output_meta_for_exprs(exprs);
     values.extend(default_fallback_values.iter().cloned());
 
-    let bound_values = extract_bound_values(text, range_domains, get_bindings);
+    let bound_values = extract_bound_values_from_exprs(exprs, range_domains, get_bindings);
 
     let helper = helper_summary
         .map(|summary| DocumentHelperSummary::from_helper_summary(summary, kind))

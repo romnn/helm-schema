@@ -175,7 +175,6 @@ impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
     fn refresh_default_paths(
         &mut self,
         _variable: &str,
-        _rhs: &str,
         _rhs_expr: &helm_schema_ast::TemplateExpr,
     ) {
     }

@@ -3,6 +3,7 @@ use std::collections::{BTreeSet, HashMap};
 use helm_schema_ast::TemplateExpr;
 
 use crate::fragment_assignment::AssignmentKind;
+#[cfg(test)]
 use crate::template_expr_cache::parse_expr_text;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -275,16 +276,25 @@ fn eq_domain_constraints(args: &[TemplateExpr], truthy: bool) -> Option<DomainCo
     })
 }
 
+#[cfg(test)]
 pub(crate) fn extract_bound_values(
     text: &str,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
+    extract_bound_values_from_exprs(&parse_expr_text(text), range_domains, get_bindings)
+}
+
+pub(crate) fn extract_bound_values_from_exprs(
+    exprs: &[TemplateExpr],
+    range_domains: &HashMap<String, Vec<String>>,
+    get_bindings: &HashMap<String, GetBinding>,
+) -> Vec<String> {
     let mut out: BTreeSet<String> = BTreeSet::new();
 
-    for expr in parse_expr_text(text) {
+    for expr in exprs {
         collect_bound_values_from_expr(
-            &expr,
+            expr,
             &DomainConstraints::default(),
             range_domains,
             get_bindings,
@@ -300,16 +310,7 @@ pub(crate) fn extract_bound_values_expr(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
-    let mut out: BTreeSet<String> = BTreeSet::new();
-    collect_bound_values_from_expr(
-        expr,
-        &DomainConstraints::default(),
-        range_domains,
-        get_bindings,
-        &mut out,
-    );
-
-    out.into_iter().collect()
+    extract_bound_values_from_exprs(std::slice::from_ref(expr), range_domains, get_bindings)
 }
 
 fn collect_bound_values_from_expr(

@@ -1,4 +1,6 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
+
+use helm_schema_ast::TemplateExpr;
 
 use crate::SourceSpan;
 use crate::contract_sink::ContractUseContext;
@@ -12,14 +14,27 @@ use crate::template_expr_cache::ParsedTemplateSnippet;
 use super::SymbolicWalker;
 
 impl SymbolicWalker<'_> {
-    pub(super) fn helper_output_meta_for_snippet(
+    pub(super) fn helper_output_meta_for_exprs(
         &self,
-        snippet: &ParsedTemplateSnippet<'_>,
+        text: &str,
+        exprs: &[TemplateExpr],
     ) -> BTreeMap<String, HelperOutputMeta> {
         let mut out = self
             .value_path_context()
-            .local_alias_output_meta_for_exprs(snippet.exprs());
-        let analysis = self.summarize_bound_helper_calls_in_snippet(snippet);
+            .local_alias_output_meta_for_exprs(exprs);
+        let analysis = self
+            .ir_context
+            .inner
+            .helper_summaries
+            .summarize_bound_helper_calls_in_exprs(
+                text,
+                exprs,
+                Some(&self.root_bindings),
+                self.current_dot_binding().as_ref(),
+                &self.scope.locals().fragment_bindings,
+                self.fragment_eval_context(),
+                &mut HashSet::new(),
+            );
         for (path, meta) in helper_output_meta_from_summary(&analysis) {
             out.entry(path).or_default().merge(meta);
         }
@@ -32,11 +47,10 @@ impl SymbolicWalker<'_> {
         node: tree_sitter::Node<'_>,
         snippet: &ParsedTemplateSnippet<'_>,
     ) {
-        let text = snippet.text();
         self.inline_static_file_templates_from_helper_calls(snippet);
 
         let site_context =
-            collect_document_site_context(self.source, &self.document_tracker, node, text);
+            collect_document_site_context(self.source, &self.document_tracker, node, snippet);
         let kind = site_context.kind;
 
         let helper_inlined = self.inline_exact_helper_call(snippet);
@@ -48,7 +62,6 @@ impl SymbolicWalker<'_> {
         };
         let value_path_context = self.value_path_context();
         let mut output_values = collect_document_value_analysis_from_exprs(
-            text,
             snippet.exprs(),
             kind,
             &value_path_context,

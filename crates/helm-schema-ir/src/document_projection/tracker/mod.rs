@@ -1,7 +1,8 @@
-use helm_schema_ast::DefineIndex;
+use helm_schema_ast::{DefineIndex, TemplateExpr};
 
-use crate::fragment_classification::is_fragment_expr;
+use crate::fragment_classification::is_fragment_exprs;
 use crate::resource_identity::ResourceIdentityIndex;
+use crate::template_expr_cache::ParsedTemplateSnippet;
 use crate::{ResourceRef, YamlPath};
 
 mod fragment_indent;
@@ -10,7 +11,7 @@ mod shape;
 mod source_position;
 mod text_ingest;
 
-use fragment_indent::fragment_indent_width;
+use fragment_indent::fragment_indent_width_from_exprs;
 use shape::Shape;
 use source_position::{
     line_indent_and_col, source_position_is_inside_block_scalar, starts_template_action_line,
@@ -96,8 +97,8 @@ impl<'a> DocumentTracker<'a> {
         starts_template_action_line(self.source, byte_pos)
     }
 
-    pub(crate) fn fragment_indent_width(text: &str) -> Option<usize> {
-        fragment_indent_width(text)
+    pub(crate) fn fragment_indent_width_for_exprs(exprs: &[TemplateExpr]) -> Option<usize> {
+        fragment_indent_width_from_exprs(exprs)
     }
 
     fn source_position_is_inside_block_scalar(&self, byte_pos: usize, indent: usize) -> bool {
@@ -105,6 +106,12 @@ impl<'a> DocumentTracker<'a> {
     }
 
     fn sync_action_for_node(&mut self, node: tree_sitter::Node<'_>) {
+        #[derive(Clone, Copy)]
+        struct TemplateActionShape {
+            is_fragment: bool,
+            virtual_indent: Option<usize>,
+        }
+
         if matches!(node.kind(), "text" | "yaml_no_injection_text") {
             return;
         }
@@ -144,25 +151,30 @@ impl<'a> DocumentTracker<'a> {
             self.source_position_is_inside_block_scalar(pos, physical_indent);
         self.output_inside_block_scalar = shape_inside_block_scalar || source_inside_block_scalar;
 
-        let allow_clear_pending = if node.kind() == "template_action" {
-            if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
-                !is_fragment_expr(text)
-            } else {
-                true
-            }
+        let template_action_shape = if node.kind() == "template_action" {
+            node.utf8_text(self.source.as_bytes())
+                .ok()
+                .map(ParsedTemplateSnippet::new)
+                .map(|snippet| TemplateActionShape {
+                    is_fragment: is_fragment_exprs(snippet.exprs()),
+                    virtual_indent: fragment_indent_width_from_exprs(snippet.exprs()),
+                })
         } else {
-            false
+            None
         };
+        let allow_clear_pending = template_action_shape
+            .as_ref()
+            .is_none_or(|shape| !shape.is_fragment);
 
-        let (indent, col) = if node.kind() == "template_action" && !allow_clear_pending {
-            if let Ok(text) = node.utf8_text(self.source.as_bytes())
-                && let Some(virtual_indent) = fragment_indent_width(text)
-                && virtual_indent > physical_indent
-            {
-                (virtual_indent, virtual_indent)
-            } else {
-                (physical_indent, physical_col)
-            }
+        let (indent, col) = if let Some(virtual_indent) = template_action_shape
+            .and_then(|shape| {
+                (!allow_clear_pending)
+                    .then_some(shape.virtual_indent)
+                    .flatten()
+            })
+            .filter(|virtual_indent| *virtual_indent > physical_indent)
+        {
+            (virtual_indent, virtual_indent)
         } else {
             (physical_indent, physical_col)
         };
