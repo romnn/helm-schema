@@ -2,42 +2,38 @@
 
 mod common;
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ResourceRef, SymbolicIrContext};
+use helm_schema_ir::ResourceRef;
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider,
     kubernetes_openapi::debug_materialize_schema_for_resource,
 };
 use serde::Deserialize;
-use std::path::Path;
-use std::process::Command;
 
-const TEMPLATE_PATH: &str = "charts/surveyor/templates/hpa.yaml";
-const VALUES_PATH: &str = "charts/surveyor/values.yaml";
-
-fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
-    let mut idx = DefineIndex::new();
-    idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
-    )
-    .expect("helpers");
-    idx
-}
+const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
+    template_path: "charts/surveyor/templates/hpa.yaml",
+    values_path: "charts/surveyor/values.yaml",
+    expected_fixture: include_str!("fixtures/surveyor_hpa.schema.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &["charts/surveyor/templates/_helpers.tpl"],
+        helper_template_dirs: &[],
+        file_sources: &[],
+    },
+    provider: common::ProviderKind::K8s("v1.24.0"),
+    dump_stem: "surveyor.hpa",
+};
 
 #[test]
 fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let src = test_util::read_testdata(CASE.template_path);
+    let values_yaml = test_util::read_testdata(CASE.values_path);
+    let idx =
+        common::build_define_index_strict(&helm_schema_ast::TreeSitterParser, CASE.define_sources);
+    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
 
     let diagnostics = DiagnosticSink::new();
-
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_allow_download(true)
         .with_diagnostic_sink(diagnostics.clone());
-
     let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
 
     let _schema = common::generate_schema_with_values_yaml(ir, &chain, Some(&values_yaml));
@@ -73,31 +69,17 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     );
 }
 
-fn helm_template_render_hpa(chart_dir: &Path) -> Result<String, String> {
-    let mut cmd = Command::new("helm");
-    cmd.arg("template")
-        .arg("test-release")
-        .arg(chart_dir)
-        .arg("--show-only")
-        .arg("templates/hpa.yaml")
-        .arg("--set")
-        .arg("autoscaling.enabled=true")
-        .arg("--kube-version")
-        .arg("1.24.0");
-
-    let output = cmd
-        .output()
-        .map_err(|e| format!("failed to run helm: {e}"))?;
-
-    if output.status.success() {
-        String::from_utf8(output.stdout).map_err(|e| format!("helm output is not valid UTF-8: {e}"))
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        Err(format!(
-            "helm template failed:\nstderr: {stderr}\nstdout: {stdout}"
-        ))
-    }
+fn helm_template_render_hpa(chart_dir: &std::path::Path) -> Result<String, String> {
+    common::helm_template_render_with_args(
+        chart_dir,
+        Some("templates/hpa.yaml"),
+        &[
+            "--set",
+            "autoscaling.enabled=true",
+            "--kube-version",
+            "1.24.0",
+        ],
+    )
 }
 
 fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
@@ -113,41 +95,8 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn schema_from_tree_sitter() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    // The Surveyor chart template hardcodes autoscaling/v2beta1, and it also uses
-    // v2beta1-only metric fields like `targetAverageUtilization`.
-    //
-    // Upstream Kubernetes removed autoscaling/v2beta1 for HorizontalPodAutoscaler in newer
-    // releases, so we must validate/generate against an upstream schema bundle that still
-    // contains that apiVersion.
-    let provider = common::production_k8s_chain("v1.24.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
-
-    let actual: serde_json::Value = schema;
-
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
-        let path = std::env::temp_dir().join("helm-schema.surveyor.hpa.schema.json");
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&actual).expect("json bytes"),
-        )
-        .expect("write schema dump");
-    }
-
-    let expected: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/surveyor_hpa.schema.json"))
-            .expect("expected schema json");
-
-    similar_asserts::assert_eq!(actual, expected);
+    common::assert_schema_fixture_strict_helpers(&CASE);
 }
 
 #[test]
@@ -162,27 +111,12 @@ fn helm_template_renders_successfully() {
 
 #[test]
 fn schema_validates_values_yaml() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    // See comment in `schema_from_tree_sitter`.
-    let provider = common::production_k8s_chain("v1.24.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
-
-    let errors = common::validate_values_yaml(&values_yaml, &schema);
-    assert!(
-        errors.is_empty(),
-        "values.yaml failed schema validation with {} error(s):\n{}",
-        errors.len(),
-        errors.join("\n")
-    );
+    common::assert_values_yaml_validates_strict_helpers(&CASE);
 }
 
 #[test]
 fn rendered_hpa_validates_against_upstream_k8s_schema() {
     let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
-
     let rendered_yaml = helm_template_render_hpa(&chart_dir).expect("helm template");
     let docs = parse_yaml_documents(&rendered_yaml);
     assert!(!docs.is_empty(), "rendered YAML contained no documents");
@@ -208,9 +142,6 @@ fn rendered_hpa_validates_against_upstream_k8s_schema() {
         api_version_branches: Vec::new(),
     };
 
-    // The Surveyor chart template hardcodes autoscaling/v2beta1, which was removed from newer
-    // Kubernetes releases, so we validate it against an upstream schema bundle where
-    // autoscaling/v2beta1 is still present.
     let provider = KubernetesJsonSchemaProvider::new("v1.24.0").with_allow_download(true);
     let schema = debug_materialize_schema_for_resource(&provider, &resource)
         .expect("load upstream k8s schema for rendered resource");

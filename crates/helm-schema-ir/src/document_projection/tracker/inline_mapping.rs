@@ -24,12 +24,8 @@ pub(super) fn inline_mapping_value_path(
     }
 
     let key = parse_yaml_key(line.trim_start())?.into_key();
-    let mut path = shape.current_path();
     let (indent, _column) = line_indent_and_col(source, start);
-    let trailing_pending_segments = shape.trailing_pending_mapping_segments_at_or_above(indent);
-    for _ in 0..trailing_pending_segments {
-        path.0.pop();
-    }
+    let mut path = shape.path_at_mapping_entry_indent(indent);
     if path.0.last().is_none_or(|segment| segment != &key) {
         path.0.push(key);
     }

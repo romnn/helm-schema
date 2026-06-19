@@ -1,48 +1,19 @@
 #![recursion_limit = "512"]
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::SymbolicIrContext;
+mod common;
 
-const TEMPLATE_PATH: &str = "charts/surveyor/templates/serviceMonitor.yaml";
-
-fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
-    let mut idx = DefineIndex::new();
-    idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
-    )
-    .expect("helpers");
-    idx
-}
+const CASE: common::IrCorpusCase<'static> = common::IrCorpusCase {
+    template_path: "charts/surveyor/templates/serviceMonitor.yaml",
+    expected_fixture: include_str!("fixtures/surveyor_service_monitor.ir.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &["charts/surveyor/templates/_helpers.tpl"],
+        helper_template_dirs: &[],
+        file_sources: &[],
+    },
+    dump_env: "SYMBOLIC_DUMP",
+};
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn symbolic_ir_from_tree_sitter() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
-
-    let actual: serde_json::Value =
-        serde_json::to_value(helm_schema_ir::ContractDocument::from_projection(ir))
-            .expect("serialize");
-
-    if std::env::var("SYMBOLIC_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
-    }
-
-    let _sm =
-        serde_json::json!({"api_version": "monitoring.coreos.com/v1", "kind": "ServiceMonitor"});
-    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let _w = |p: &str| serde_json::json!({"type": "with", "path": p});
-
-    let expected: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/surveyor_service_monitor.ir.json"))
-            .expect("expected ir json");
-
-    similar_asserts::assert_eq!(actual, expected);
+    common::assert_ir_fixture(CASE);
 }

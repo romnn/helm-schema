@@ -83,14 +83,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn current_document_path_at_mapping_entry_indent(&self, indent: usize) -> YamlPath {
-        let mut path = self.document_tracker.current_path();
-        let trailing_pending_segments = self
-            .document_tracker
-            .trailing_pending_mapping_segments_at_or_above(indent);
-        for _ in 0..trailing_pending_segments {
-            path.0.pop();
-        }
-        path
+        self.document_tracker.path_at_mapping_entry_indent(indent)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {

@@ -1,4 +1,14 @@
-use helm_schema_ast::{DefineIndex, HelmParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ir::{ContractDocument, SymbolicIrContext};
+use serde_json::Value;
+
+#[derive(Clone, Copy)]
+pub struct IrCorpusCase<'a> {
+    pub template_path: &'a str,
+    pub expected_fixture: &'a str,
+    pub define_sources: test_util::DefineSourceSpec<'a>,
+    pub dump_env: &'a str,
+}
 
 pub fn build_define_index(
     parser: &dyn HelmParser,
@@ -14,4 +24,28 @@ pub fn build_define_index(
         idx.add_file_source(&name, &source);
     }
     idx
+}
+
+pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
+    let src = test_util::read_testdata(case.template_path);
+    let idx = build_define_index(&TreeSitterParser, case.define_sources);
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(&src, &idx)
+        .project();
+
+    let actual = serde_json::to_value(ContractDocument::from_projection(ir)).expect("serialize");
+    if std::env::var(case.dump_env).is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&actual).expect("pretty json")
+        );
+    }
+    actual
+}
+
+pub fn assert_ir_fixture(case: IrCorpusCase<'_>) {
+    let actual = render_ir_case(case);
+    let expected: Value = serde_json::from_str(case.expected_fixture).expect("expected ir json");
+
+    similar_asserts::assert_eq!(actual, expected);
 }

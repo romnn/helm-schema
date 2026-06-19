@@ -13,15 +13,49 @@ pub fn build_define_index(
     parser: &dyn HelmParser,
     spec: test_util::DefineSourceSpec<'_>,
 ) -> DefineIndex {
+    build_define_index_with_mode(parser, spec, false)
+}
+
+pub fn build_define_index_strict(
+    parser: &dyn HelmParser,
+    spec: test_util::DefineSourceSpec<'_>,
+) -> DefineIndex {
+    build_define_index_with_mode(parser, spec, true)
+}
+
+fn build_define_index_with_mode(
+    parser: &dyn HelmParser,
+    spec: test_util::DefineSourceSpec<'_>,
+    strict_helper_parse: bool,
+) -> DefineIndex {
     let loaded = spec.load();
     let mut idx = DefineIndex::new();
     for source in loaded.helper_templates {
-        let _ = idx.add_source(parser, &source);
+        let result = idx.add_source(parser, &source);
+        if strict_helper_parse {
+            result.expect("helper source should parse");
+        }
     }
     for (name, source) in loaded.file_sources {
         idx.add_file_source(&name, &source);
     }
     idx
+}
+
+#[derive(Clone, Copy)]
+pub enum ProviderKind<'a> {
+    K8s(&'a str),
+    CrdK8s(&'a str),
+}
+
+#[derive(Clone, Copy)]
+pub struct SchemaCorpusCase<'a> {
+    pub template_path: &'a str,
+    pub values_path: &'a str,
+    pub expected_fixture: &'a str,
+    pub define_sources: test_util::DefineSourceSpec<'a>,
+    pub provider: ProviderKind<'a>,
+    pub dump_stem: &'a str,
 }
 
 /// Production-like K8s provider path for chart-level generator tests.
@@ -94,6 +128,99 @@ pub fn generate_schema_with_values_yaml(
     )
 }
 
+pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> Value {
+    let values_yaml = test_util::read_testdata(case.values_path);
+    render_schema_case_with_values(case, &values_yaml)
+}
+
+pub fn render_schema_case_strict_helpers(case: &SchemaCorpusCase<'_>) -> Value {
+    let values_yaml = test_util::read_testdata(case.values_path);
+    render_schema_case_with_values_strict_helpers(case, &values_yaml)
+}
+
+pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: &str) -> Value {
+    render_schema_case_with_values_and_mode(case, values_yaml, false)
+}
+
+pub fn render_schema_case_with_values_strict_helpers(
+    case: &SchemaCorpusCase<'_>,
+    values_yaml: &str,
+) -> Value {
+    render_schema_case_with_values_and_mode(case, values_yaml, true)
+}
+
+fn render_schema_case_with_values_and_mode(
+    case: &SchemaCorpusCase<'_>,
+    values_yaml: &str,
+    strict_helper_parse: bool,
+) -> Value {
+    let src = test_util::read_testdata(case.template_path);
+    let idx = build_define_index_with_mode(
+        &helm_schema_ast::TreeSitterParser,
+        case.define_sources,
+        strict_helper_parse,
+    );
+    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let provider = match case.provider {
+        ProviderKind::K8s(version) => production_k8s_chain(version),
+        ProviderKind::CrdK8s(version) => production_crd_k8s_chain(version),
+    };
+    let schema = generate_schema_with_values_yaml(ir, &provider, Some(values_yaml));
+
+    if std::env::var("SCHEMA_DUMP").is_ok() {
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&schema).expect("pretty json")
+        );
+        let path = std::env::temp_dir().join(format!("helm-schema.{}.schema.json", case.dump_stem));
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&schema).expect("json bytes"),
+        )
+        .expect("write schema dump");
+    }
+
+    schema
+}
+
+pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) {
+    let actual = render_schema_case(case);
+    let expected: Value =
+        serde_json::from_str(case.expected_fixture).expect("expected schema json");
+    similar_asserts::assert_eq!(actual, expected);
+}
+
+pub fn assert_schema_fixture_strict_helpers(case: &SchemaCorpusCase<'_>) {
+    let actual = render_schema_case_strict_helpers(case);
+    let expected: Value =
+        serde_json::from_str(case.expected_fixture).expect("expected schema json");
+    similar_asserts::assert_eq!(actual, expected);
+}
+
+pub fn assert_values_yaml_validates(case: &SchemaCorpusCase<'_>) {
+    let values_yaml = test_util::read_testdata(case.values_path);
+    let schema = render_schema_case_with_values(case, &values_yaml);
+    let errors = validate_values_yaml(&values_yaml, &schema);
+    assert!(
+        errors.is_empty(),
+        "values.yaml failed schema validation with {} error(s):\n{}",
+        errors.len(),
+        errors.join("\n")
+    );
+}
+
+pub fn assert_values_yaml_validates_strict_helpers(case: &SchemaCorpusCase<'_>) {
+    let values_yaml = test_util::read_testdata(case.values_path);
+    let schema = render_schema_case_with_values_strict_helpers(case, &values_yaml);
+    let errors = validate_values_yaml(&values_yaml, &schema);
+    assert!(
+        errors.is_empty(),
+        "values.yaml failed schema validation with {} error(s):\n{}",
+        errors.len(),
+        errors.join("\n")
+    );
+}
+
 fn drop_nulls(v: &Value) -> Value {
     match v {
         Value::Null => Value::Null,
@@ -152,11 +279,22 @@ pub fn validate_values_yaml(values_yaml: &str, schema: &Value) -> Vec<String> {
 /// Returns `Ok(rendered_yaml)` on success, or `Err(stderr)` on failure.
 /// If `helm` is not installed or the chart can't be rendered, returns an error.
 pub fn helm_template_render(chart_dir: &Path, show_only: Option<&str>) -> Result<String, String> {
+    helm_template_render_with_args(chart_dir, show_only, &[])
+}
+
+pub fn helm_template_render_with_args(
+    chart_dir: &Path,
+    show_only: Option<&str>,
+    extra_args: &[&str],
+) -> Result<String, String> {
     let mut cmd = Command::new("helm");
     cmd.arg("template").arg("test-release").arg(chart_dir);
 
     if let Some(template) = show_only {
         cmd.arg("--show-only").arg(template);
+    }
+    for arg in extra_args {
+        cmd.arg(arg);
     }
 
     let output = cmd

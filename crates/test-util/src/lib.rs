@@ -18,6 +18,7 @@ pub mod prelude {
 #[derive(Debug, Clone, Copy)]
 pub struct DefineSourceSpec<'a> {
     pub helper_templates: &'a [&'a str],
+    pub helper_template_dirs: &'a [(&'a str, &'a str)],
     pub file_sources: &'a [(&'a str, &'a str)],
 }
 
@@ -35,6 +36,11 @@ impl DefineSourceSpec<'_> {
                 .helper_templates
                 .iter()
                 .map(|path| read_testdata(path))
+                .chain(
+                    self.helper_template_dirs
+                        .iter()
+                        .flat_map(|(dir, extension)| read_testdata_dir(dir, extension)),
+                )
                 .collect(),
             file_sources: self
                 .file_sources

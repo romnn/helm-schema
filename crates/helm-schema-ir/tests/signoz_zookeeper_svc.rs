@@ -1,53 +1,24 @@
 #![recursion_limit = "1024"]
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::SymbolicIrContext;
+mod common;
 
-const TEMPLATE_PATH: &str =
-    "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/svc.yaml";
-const HELPERS_PATH: &str =
-    "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl";
-const COMMON_TEMPLATES_DIR: &str =
-    "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates";
-
-fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
-    let mut idx = DefineIndex::new();
-    idx.add_source(parser, &test_util::read_testdata(HELPERS_PATH))
-        .expect("helpers");
-    for src in test_util::read_testdata_dir(COMMON_TEMPLATES_DIR, "tpl") {
-        let _ = idx.add_source(parser, &src);
-    }
-    idx
-}
+const CASE: common::IrCorpusCase<'static> = common::IrCorpusCase {
+    template_path: "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/svc.yaml",
+    expected_fixture: include_str!("fixtures/signoz_zookeeper_svc.ir.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &[
+            "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl",
+        ],
+        helper_template_dirs: &[(
+            "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates",
+            "tpl",
+        )],
+        file_sources: &[],
+    },
+    dump_env: "SYMBOLIC_DUMP",
+};
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn symbolic_ir_from_tree_sitter() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
-        .project();
-
-    let actual: serde_json::Value =
-        serde_json::to_value(helm_schema_ir::ContractDocument::from_projection(ir))
-            .expect("serialize");
-
-    if std::env::var("IR_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
-    }
-
-    let _svc = serde_json::json!({"api_version": "v1", "kind": "Service"});
-    let _t = |p: &str| serde_json::json!({"type": "truthy", "path": p});
-    let _n = |p: &str| serde_json::json!({"type": "not", "path": p});
-    let _o = |a: &str, b: &str| serde_json::json!({"type": "or", "paths": [a, b]});
-
-    let expected: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/signoz_zookeeper_svc.ir.json"))
-            .expect("expected ir json");
-
-    similar_asserts::assert_eq!(actual, expected);
+    common::assert_ir_fixture(CASE);
 }

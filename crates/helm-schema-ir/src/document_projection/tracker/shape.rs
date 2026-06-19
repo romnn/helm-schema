@@ -82,6 +82,14 @@ impl Shape {
         YamlPath(out)
     }
 
+    pub(crate) fn path_at_mapping_entry_indent(&self, logical_indent: usize) -> YamlPath {
+        let mut path = self.current_path();
+        for _ in 0..self.trailing_pending_mapping_segments_at_or_above(logical_indent) {
+            path.0.pop();
+        }
+        path
+    }
+
     pub(crate) fn sync_action_position(
         &mut self,
         indent: usize,

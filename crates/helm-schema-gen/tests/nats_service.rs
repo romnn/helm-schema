@@ -2,51 +2,27 @@
 
 mod common;
 
-use helm_schema_ast::TreeSitterParser;
-use helm_schema_ir::SymbolicIrContext;
-
-const TEMPLATE_PATH: &str = "charts/nats/templates/service.yaml";
-const VALUES_PATH: &str = "charts/nats/values.yaml";
-const NATS_DEFINE_SOURCES: test_util::DefineSourceSpec<'static> = test_util::DefineSourceSpec {
-    helper_templates: &[
-        "charts/nats/templates/_helpers.tpl",
-        "charts/nats/templates/_jsonpatch.tpl",
-        "charts/nats/templates/_tplYaml.tpl",
-        "charts/nats/templates/_toPrettyRawJson.tpl",
-    ],
-    file_sources: &[("files/service.yaml", "charts/nats/files/service.yaml")],
+const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
+    template_path: "charts/nats/templates/service.yaml",
+    values_path: "charts/nats/values.yaml",
+    expected_fixture: include_str!("fixtures/nats_service.schema.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &[
+            "charts/nats/templates/_helpers.tpl",
+            "charts/nats/templates/_jsonpatch.tpl",
+            "charts/nats/templates/_tplYaml.tpl",
+            "charts/nats/templates/_toPrettyRawJson.tpl",
+        ],
+        helper_template_dirs: &[],
+        file_sources: &[("files/service.yaml", "charts/nats/files/service.yaml")],
+    },
+    provider: common::ProviderKind::K8s("v1.35.0"),
+    dump_stem: "nats-service",
 };
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn schema_from_tree_sitter() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = common::build_define_index(&TreeSitterParser, NATS_DEFINE_SOURCES);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
-
-    let actual: serde_json::Value = schema;
-
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
-        let path = std::env::temp_dir().join("helm-schema.nats-service.schema.json");
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&actual).expect("json bytes"),
-        )
-        .expect("write schema dump");
-    }
-
-    let expected: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/nats_service.schema.json"))
-            .expect("expected schema json");
-
-    similar_asserts::assert_eq!(actual, expected);
+    common::assert_schema_fixture(&CASE);
 }
 
 #[test]
@@ -61,30 +37,12 @@ fn helm_template_renders_successfully() {
 
 #[test]
 fn schema_validates_values_yaml() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = common::build_define_index(&TreeSitterParser, NATS_DEFINE_SOURCES);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
-
-    let errors = common::validate_values_yaml(&values_yaml, &schema);
-    assert!(
-        errors.is_empty(),
-        "values.yaml failed schema validation with {} error(s):\n{}",
-        errors.len(),
-        errors.join("\n")
-    );
+    common::assert_values_yaml_validates(&CASE);
 }
 
 #[test]
 fn schema_keeps_live_service_name_paths_typed() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = common::build_define_index(&TreeSitterParser, NATS_DEFINE_SOURCES);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
+    let schema = common::render_schema_case(&CASE);
 
     assert!(
         !common::schema_accepts_instance(

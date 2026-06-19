@@ -2,58 +2,27 @@
 
 mod common;
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::SymbolicIrContext;
-
-const TEMPLATE_PATH: &str =
-    "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/templates/secrets.yaml";
-const VALUES_PATH: &str =
-    "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/values.yaml";
-const HELPERS_PATH: &str =
-    "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/templates/_helpers.tpl";
-const COMMON_TEMPLATES_DIR: &str =
-    "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/charts/common/templates";
-
-fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
-    let mut idx = DefineIndex::new();
-    let _ = idx.add_source(parser, &test_util::read_testdata(HELPERS_PATH));
-    for src in test_util::read_testdata_dir(COMMON_TEMPLATES_DIR, "tpl") {
-        let _ = idx.add_source(parser, &src);
-    }
-    idx
-}
+const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
+    template_path: "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/templates/secrets.yaml",
+    values_path: "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/values.yaml",
+    expected_fixture: include_str!("fixtures/signoz_postgresql_secrets.schema.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &[
+            "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/templates/_helpers.tpl",
+        ],
+        helper_template_dirs: &[(
+            "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/charts/common/templates",
+            "tpl",
+        )],
+        file_sources: &[],
+    },
+    provider: common::ProviderKind::K8s("v1.35.0"),
+    dump_stem: "signoz-postgresql-secrets",
+};
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn schema_from_tree_sitter() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
-
-    let actual: serde_json::Value = schema;
-
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
-        let path = std::env::temp_dir().join("helm-schema.signoz-postgresql-secrets.schema.json");
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&actual).expect("json bytes"),
-        )
-        .expect("write schema dump");
-    }
-
-    let expected: serde_json::Value = serde_json::from_str(include_str!(
-        "fixtures/signoz_postgresql_secrets.schema.json"
-    ))
-    .expect("expected schema json");
-
-    similar_asserts::assert_eq!(actual, expected);
+    common::assert_schema_fixture(&CASE);
 }
 
 #[test]
@@ -69,18 +38,5 @@ fn helm_template_renders_successfully() {
 
 #[test]
 fn schema_validates_values_yaml() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let provider = common::production_k8s_chain("v1.35.0");
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
-
-    let errors = common::validate_values_yaml(&values_yaml, &schema);
-    assert!(
-        errors.is_empty(),
-        "values.yaml failed schema validation with {} error(s):\n{}",
-        errors.len(),
-        errors.join("\n")
-    );
+    common::assert_values_yaml_validates(&CASE);
 }

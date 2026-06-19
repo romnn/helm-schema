@@ -31,23 +31,11 @@ pub(crate) fn collect_document_site_context(
     };
 
     let in_mapping_key = document_site_is_mapping_key_part(source, node);
-    let mut path = if in_mapping_key {
+    let path = if in_mapping_key {
         YamlPath(Vec::new())
     } else {
-        tracker.current_path()
+        adjusted_output_path(tracker, node, kind, output_action.fragment_indent_width)
     };
-    if !in_mapping_key {
-        path = adjusted_output_path(
-            tracker,
-            node,
-            kind,
-            path,
-            output_action.fragment_indent_width,
-        );
-    }
-    if tracker.output_inside_block_scalar_at(node.start_byte()) {
-        path = YamlPath(Vec::new());
-    }
     let path = tracker.rebase_path(path);
     let resource = tracker.current_resource().cloned();
 
@@ -94,37 +82,9 @@ fn adjusted_output_path(
     tracker: &DocumentTracker<'_>,
     node: tree_sitter::Node<'_>,
     kind: ValueKind,
-    mut path: YamlPath,
     fragment_indent_width: Option<usize>,
 ) -> YamlPath {
-    let (physical_indent, _physical_col) = tracker.line_indent_and_col(node.start_byte());
-    if tracker.starts_template_action_line(node.start_byte()) {
-        let mut logical_indent = physical_indent;
-        if let Some(virtual_indent) = fragment_indent_width {
-            logical_indent = virtual_indent;
-        }
-
-        let trailing_pending_segments =
-            tracker.trailing_pending_mapping_segments_at_or_above(logical_indent);
-        for _ in 0..trailing_pending_segments {
-            path.0.pop();
-        }
-    }
-
-    if kind == ValueKind::Fragment {
-        if let Some(last) = path.0.last_mut()
-            && let Some(stripped) = last.strip_suffix("[*]")
-        {
-            *last = stripped.to_string();
-        }
-        if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
-            path.0.pop();
-        }
-    }
-    if let Some(inline_path) = tracker.inline_mapping_value_path(node) {
-        path = inline_path;
-    }
-    path
+    tracker.output_site_path(node, kind, fragment_indent_width)
 }
 
 fn document_site_is_mapping_key_part(source: &str, node: tree_sitter::Node<'_>) -> bool {

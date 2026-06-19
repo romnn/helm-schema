@@ -3,7 +3,7 @@ use helm_schema_ast::{DefineIndex, TemplateExpr};
 use crate::fragment_classification::is_fragment_exprs;
 use crate::resource_identity::ResourceIdentityIndex;
 use crate::template_expr_cache::parse_expr_text;
-use crate::{ResourceRef, YamlPath};
+use crate::{ResourceRef, ValueKind, YamlPath};
 
 mod fragment_indent;
 mod inline_mapping;
@@ -58,17 +58,16 @@ impl<'a> DocumentTracker<'a> {
         self.shape.current_path()
     }
 
+    pub(crate) fn path_at_mapping_entry_indent(&self, indent: usize) -> YamlPath {
+        self.shape.path_at_mapping_entry_indent(indent)
+    }
+
     pub(crate) fn current_resource(&self) -> Option<&ResourceRef> {
         self.resource_identity.current_resource()
     }
 
     pub(crate) fn rebase_path(&self, path: YamlPath) -> YamlPath {
         self.resource_identity.rebase_path(path)
-    }
-
-    pub(crate) fn trailing_pending_mapping_segments_at_or_above(&self, indent: usize) -> usize {
-        self.shape
-            .trailing_pending_mapping_segments_at_or_above(indent)
     }
 
     pub(crate) fn output_inside_block_scalar_at(&self, byte_pos: usize) -> bool {
@@ -95,6 +94,42 @@ impl<'a> DocumentTracker<'a> {
 
     pub(crate) fn starts_template_action_line(&self, byte_pos: usize) -> bool {
         starts_template_action_line(self.source, byte_pos)
+    }
+
+    pub(crate) fn output_site_path(
+        &self,
+        node: tree_sitter::Node<'_>,
+        kind: ValueKind,
+        fragment_indent_width: Option<usize>,
+    ) -> YamlPath {
+        if self.output_inside_block_scalar_at(node.start_byte()) {
+            return YamlPath(Vec::new());
+        }
+
+        let (physical_indent, _physical_col) = self.line_indent_and_col(node.start_byte());
+        let mut path = if self.starts_template_action_line(node.start_byte()) {
+            let logical_indent = fragment_indent_width.unwrap_or(physical_indent);
+            self.path_at_mapping_entry_indent(logical_indent)
+        } else {
+            self.current_path()
+        };
+
+        if kind == ValueKind::Fragment {
+            if let Some(last) = path.0.last_mut()
+                && let Some(stripped) = last.strip_suffix("[*]")
+            {
+                *last = stripped.to_string();
+            }
+            if matches!(path.0.last().map(std::string::String::as_str), Some("")) {
+                path.0.pop();
+            }
+        }
+
+        if let Some(inline_path) = self.inline_mapping_value_path(node) {
+            path = inline_path;
+        }
+
+        path
     }
 
     pub(crate) fn fragment_indent_width_for_exprs(exprs: &[TemplateExpr]) -> Option<usize> {

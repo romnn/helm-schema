@@ -2,65 +2,48 @@
 
 mod common;
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ResourceRef, SymbolicIrContext};
+use helm_schema_ir::ResourceRef;
 use helm_schema_k8s::{
     KubernetesJsonSchemaProvider, kubernetes_openapi::debug_materialize_schema_for_resource,
 };
 use serde::Deserialize;
-use std::path::Path;
-use std::process::Command;
 
-const TEMPLATE_PATH: &str = "charts/surveyor/templates/configmap.yaml";
-const VALUES_PATH: &str = "charts/surveyor/values.yaml";
+const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
+    template_path: "charts/surveyor/templates/configmap.yaml",
+    values_path: "charts/surveyor/values.yaml",
+    expected_fixture: include_str!("fixtures/surveyor_configmap.schema.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &["charts/surveyor/templates/_helpers.tpl"],
+        helper_template_dirs: &[],
+        file_sources: &[],
+    },
+    provider: common::ProviderKind::K8s("v1.35.0"),
+    dump_stem: "surveyor.configmap",
+};
 
-fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
-    let mut idx = DefineIndex::new();
-    idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
+fn helm_template_render_configmap(chart_dir: &std::path::Path) -> Result<String, String> {
+    common::helm_template_render_with_args(
+        chart_dir,
+        Some("templates/configmap.yaml"),
+        &[
+            "--set",
+            "config.jetstream.enabled=true",
+            "--set",
+            "config.jetstream.accounts[0].name=test",
+            "--set",
+            "config.jetstream.accounts[0].username=username",
+            "--set",
+            "config.jetstream.accounts[0].password=password",
+            "--set",
+            "config.jetstream.accounts[0].tls.secret.name=test-user-tls",
+            "--set",
+            "config.jetstream.accounts[0].tls.ca=ca.crt",
+            "--set",
+            "config.jetstream.accounts[0].tls.cert=tls.crt",
+            "--set",
+            "config.jetstream.accounts[0].tls.key=tls.key",
+        ],
     )
-    .expect("helpers");
-    idx
-}
-
-fn helm_template_render_configmap(chart_dir: &Path) -> Result<String, String> {
-    let mut cmd = Command::new("helm");
-    cmd.arg("template")
-        .arg("test-release")
-        .arg(chart_dir)
-        .arg("--show-only")
-        .arg("templates/configmap.yaml")
-        .arg("--set")
-        .arg("config.jetstream.enabled=true")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].name=test")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].username=username")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].password=password")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].tls.secret.name=test-user-tls")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].tls.ca=ca.crt")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].tls.cert=tls.crt")
-        .arg("--set")
-        .arg("config.jetstream.accounts[0].tls.key=tls.key");
-
-    let output = cmd
-        .output()
-        .map_err(|e| format!("failed to run helm: {e}"))?;
-
-    if output.status.success() {
-        String::from_utf8(output.stdout).map_err(|e| format!("helm output is not valid UTF-8: {e}"))
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        Err(format!(
-            "helm template failed:\nstderr: {stderr}\nstdout: {stdout}"
-        ))
-    }
 }
 
 fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
@@ -76,16 +59,7 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn schema_from_tree_sitter() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let provider = common::production_k8s_chain("v1.35.0");
-
-    // Provide a values.yaml signal that includes jetstream accounts so we can infer
-    // account object shapes more precisely.
     let values_signal = indoc::formatdoc! {r#"
         nameOverride: ""
         fullnameOverride: ""
@@ -102,29 +76,13 @@ fn schema_from_tree_sitter() {
                   key: tls.key
     "#};
 
-    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_signal));
-
-    let actual: serde_json::Value = schema;
-
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
-        let path = std::env::temp_dir().join("helm-schema.surveyor.configmap.schema.json");
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&actual).expect("json bytes"),
-        )
-        .expect("write schema dump");
-    }
-
+    let actual = common::render_schema_case_with_values_strict_helpers(&CASE, &values_signal);
     let expected: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/surveyor_configmap.schema.json"))
-            .expect("expected schema json");
+        serde_json::from_str(CASE.expected_fixture).expect("expected schema json");
 
     similar_asserts::assert_eq!(actual, expected);
 
+    let values_yaml = test_util::read_testdata(CASE.values_path);
     let errors = common::validate_values_yaml(&values_yaml, &actual);
     assert!(
         errors.is_empty(),
@@ -147,7 +105,6 @@ fn helm_template_renders_successfully() {
 #[test]
 fn rendered_configmap_validates_against_upstream_k8s_schema() {
     let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
-
     let rendered_yaml = helm_template_render_configmap(&chart_dir).expect("helm template");
     let docs = parse_yaml_documents(&rendered_yaml);
     assert!(!docs.is_empty(), "rendered YAML contained no documents");
