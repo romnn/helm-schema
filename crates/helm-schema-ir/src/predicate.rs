@@ -36,6 +36,12 @@ impl From<Guard> for Predicate {
                     .map(|path| Self::Atom(PredicateAtom::Truthy { path }))
                     .collect(),
             ),
+            Guard::AnyOf { alternatives } => Self::Or(
+                alternatives
+                    .into_iter()
+                    .map(|alternative| Self::all(alternative.into_iter().map(Self::from).collect()))
+                    .collect(),
+            ),
             Guard::Range { path } => Self::Atom(PredicateAtom::Range { path }),
             Guard::With { path } => Self::Atom(PredicateAtom::With { path }),
             Guard::Default { path } => Self::Atom(PredicateAtom::Default { path }),
@@ -76,28 +82,12 @@ impl Predicate {
         match self {
             Self::True | Self::False => Vec::new(),
             Self::Atom(atom) => atom.compatibility_guards(),
-            Self::Not(inner) => match inner.as_ref() {
-                Self::Atom(PredicateAtom::Truthy { path }) => {
-                    vec![Guard::Not { path: path.clone() }]
-                }
-                _ => Vec::new(),
-            },
+            Self::Not(inner) => negated_compatibility_guards(inner),
             Self::And(predicates) => predicates
                 .iter()
                 .flat_map(Self::compatibility_guards)
                 .collect(),
-            Self::Or(predicates) => {
-                let paths: Option<Vec<String>> = predicates
-                    .iter()
-                    .map(|predicate| match predicate {
-                        Self::Atom(PredicateAtom::Truthy { path }) => Some(path.clone()),
-                        _ => None,
-                    })
-                    .collect();
-                paths
-                    .map(|paths| vec![Guard::Or { paths }])
-                    .unwrap_or_default()
-            }
+            Self::Or(predicates) => or_compatibility_guards(predicates),
         }
     }
 
@@ -112,6 +102,49 @@ impl Predicate {
         }
         guards
     }
+}
+
+fn negated_compatibility_guards(inner: &Predicate) -> Vec<Guard> {
+    match inner {
+        Predicate::Atom(PredicateAtom::Truthy { path }) => vec![Guard::Not { path: path.clone() }],
+        Predicate::Atom(PredicateAtom::Eq { path, value }) => vec![Guard::NotEq {
+            path: path.clone(),
+            value: value.clone(),
+        }],
+        Predicate::Atom(PredicateAtom::NotEq { path, value }) => vec![Guard::Eq {
+            path: path.clone(),
+            value: value.clone(),
+        }],
+        Predicate::Not(inner) => inner.compatibility_guards(),
+        _ => Vec::new(),
+    }
+}
+
+fn or_compatibility_guards(predicates: &[Predicate]) -> Vec<Guard> {
+    let alternatives = predicates
+        .iter()
+        .map(Predicate::compatibility_guards)
+        .collect::<Vec<_>>();
+
+    if alternatives.iter().any(Vec::is_empty) {
+        return Vec::new();
+    }
+
+    if let Some(paths) = truthy_or_paths(&alternatives) {
+        return vec![Guard::Or { paths }];
+    }
+
+    vec![Guard::AnyOf { alternatives }]
+}
+
+fn truthy_or_paths(alternatives: &[Vec<Guard>]) -> Option<Vec<String>> {
+    alternatives
+        .iter()
+        .map(|alternative| match alternative.as_slice() {
+            [Guard::Truthy { path }] => Some(path.clone()),
+            _ => None,
+        })
+        .collect()
 }
 
 impl PredicateAtom {
@@ -190,13 +223,19 @@ mod tests {
     }
 
     #[test]
-    fn unsupported_negated_predicate_abstains_from_flat_guard_projection() {
+    fn negated_eq_predicate_projects_to_not_eq_guard() {
         let predicate = Predicate::Not(Box::new(Predicate::from(Guard::Eq {
             path: "mode".to_string(),
             value: GuardValue::string("prod"),
         })));
 
-        assert_eq!(predicate.compatibility_guards(), Vec::new());
+        assert_eq!(
+            predicate.compatibility_guards(),
+            vec![Guard::NotEq {
+                path: "mode".to_string(),
+                value: GuardValue::string("prod"),
+            }]
+        );
     }
 
     #[test]
@@ -216,7 +255,7 @@ mod tests {
     }
 
     #[test]
-    fn unsupported_or_predicate_abstains_from_flat_guard_projection() {
+    fn mixed_or_predicate_projects_to_structural_any_of_guard() {
         let predicate = Predicate::Or(vec![
             Predicate::from(Guard::Truthy {
                 path: "first".to_string(),
@@ -227,7 +266,20 @@ mod tests {
             }),
         ]);
 
-        assert_eq!(predicate.compatibility_guards(), Vec::new());
+        assert_eq!(
+            predicate.compatibility_guards(),
+            vec![Guard::AnyOf {
+                alternatives: vec![
+                    vec![Guard::Truthy {
+                        path: "first".to_string(),
+                    }],
+                    vec![Guard::Eq {
+                        path: "mode".to_string(),
+                        value: GuardValue::string("prod"),
+                    }],
+                ],
+            }]
+        );
     }
 
     #[test]

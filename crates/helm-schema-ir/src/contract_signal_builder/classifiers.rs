@@ -30,6 +30,7 @@ pub(super) fn guard_constraint_from_guard(guard: &Guard) -> Option<GuardConstrai
         | Guard::NotEq { .. }
         | Guard::Absent { .. }
         | Guard::Or { .. }
+        | Guard::AnyOf { .. }
         | Guard::Range { .. }
         | Guard::With { .. }
         | Guard::Default { .. } => None,
@@ -63,6 +64,7 @@ fn use_has_matching_self_guard(use_: &ContractUse) -> bool {
         | Guard::NotEq { .. }
         | Guard::Absent { .. }
         | Guard::Or { .. }
+        | Guard::AnyOf { .. }
         | Guard::TypeIs { .. } => false,
     })
 }

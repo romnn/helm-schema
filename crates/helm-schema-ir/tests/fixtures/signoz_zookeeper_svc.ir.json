@@ -431,8 +431,23 @@
     {
       "guards": [
         {
-          "path": "service.type",
-          "type": "truthy"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         }
       ],
       "kind": "Scalar",
@@ -584,8 +599,23 @@
           "type": "not"
         },
         {
-          "path": "service.type",
-          "type": "truthy"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         },
         {
           "path": "service.nodePorts.client",
@@ -607,8 +637,23 @@
           "type": "not"
         },
         {
-          "path": "service.type",
-          "type": "truthy"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         },
         {
           "path": "service.nodePorts.client",
@@ -634,8 +679,23 @@
           "type": "truthy"
         },
         {
-          "path": "service.type",
-          "type": "truthy"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         },
         {
           "path": "service.nodePorts.tls",
@@ -657,8 +717,23 @@
           "type": "truthy"
         },
         {
-          "path": "service.type",
-          "type": "truthy"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         },
         {
           "path": "service.nodePorts.tls",
@@ -844,8 +919,13 @@
     {
       "guards": [
         {
-          "path": "service.type",
+          "path": "tls.client.enabled",
           "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "eq",
+          "value": "ClusterIP"
         }
       ],
       "kind": "Scalar",
@@ -863,8 +943,23 @@
           "type": "truthy"
         },
         {
-          "path": "service.type",
-          "type": "truthy"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         }
       ],
       "kind": "Scalar",
@@ -878,8 +973,8 @@
     {
       "guards": [
         {
-          "path": "tls.client.enabled",
-          "type": "truthy"
+          "path": "service.disableBaseClientPort",
+          "type": "not"
         },
         {
           "path": "service.type",
@@ -902,28 +997,23 @@
           "type": "not"
         },
         {
-          "path": "service.type",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "ClusterIP"
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         }
       ],
       "kind": "Scalar",
@@ -940,6 +1030,36 @@
           "path": "service.type",
           "type": "eq",
           "value": "LoadBalancer"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "alternatives": [
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "LoadBalancer"
+              }
+            ],
+            [
+              {
+                "path": "service.type",
+                "type": "eq",
+                "value": "NodePort"
+              }
+            ]
+          ],
+          "type": "any_of"
         }
       ],
       "kind": "Scalar",

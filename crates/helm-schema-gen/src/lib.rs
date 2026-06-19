@@ -429,6 +429,9 @@ fn guards_supported_for_conditional_lowering(
                 std::slice::from_ref(inner),
                 resolved_by_path,
             ),
+            ConditionalGuard::AllOf(guards) => {
+                guards_supported_for_conditional_lowering(guards, resolved_by_path)
+            }
             ConditionalGuard::AnyOf(guards) => {
                 guards_supported_for_conditional_lowering(guards, resolved_by_path)
             }
@@ -573,6 +576,25 @@ fn build_single_condition_fragment(
             .into_iter()
             .collect(),
         )),
+        ConditionalGuard::AllOf(guards) => {
+            let mut clauses = guards
+                .iter()
+                .filter_map(|guard| {
+                    build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
+                })
+                .collect::<Vec<_>>();
+            if clauses.is_empty() {
+                None
+            } else if clauses.len() == 1 {
+                clauses.pop()
+            } else {
+                Some(Value::Object(
+                    [("allOf".to_string(), Value::Array(clauses))]
+                        .into_iter()
+                        .collect(),
+                ))
+            }
+        }
         ConditionalGuard::AnyOf(guards) => {
             let mut clauses = guards
                 .iter()
@@ -792,6 +814,11 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
         }
+        ConditionalGuard::AllOf(guards) => guards
+            .iter()
+            .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
+            .collect::<Option<Vec<_>>>()
+            .map(|results| results.into_iter().all(|result| result)),
         ConditionalGuard::AnyOf(guards) => guards
             .iter()
             .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
@@ -874,6 +901,11 @@ fn collect_guard_paths(guard: &ConditionalGuard, paths: &mut Vec<Vec<String>>) {
         | ConditionalGuard::Absent { path }
         | ConditionalGuard::TypeIs { path, .. } => paths.push(split_value_path(path)),
         ConditionalGuard::Not(inner) => collect_guard_paths(inner, paths),
+        ConditionalGuard::AllOf(guards) => {
+            for guard in guards {
+                collect_guard_paths(guard, paths);
+            }
+        }
         ConditionalGuard::AnyOf(guards) => {
             for guard in guards {
                 collect_guard_paths(guard, paths);

@@ -425,17 +425,59 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             }],
             None,
         ),
+        ContractUse::new(
+            "image.tag".to_string(),
+            YamlPath(vec!["spec".to_string(), "image".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::AnyOf {
+                alternatives: vec![
+                    vec![
+                        Guard::Truthy {
+                            path: "image.enabled".to_string(),
+                        },
+                        Guard::Eq {
+                            path: "image.mode".to_string(),
+                            value: GuardValue::string("managed"),
+                        },
+                    ],
+                    vec![Guard::Not {
+                        path: "global.imageDisabled".to_string(),
+                    }],
+                ],
+            }],
+            None,
+        ),
     ]);
 
-    assert_eq!(signals.conditional_path_overlays.len(), 3);
+    assert_eq!(signals.conditional_path_overlays.len(), 4);
+    let feature_overlay = signals
+        .conditional_path_overlays
+        .iter()
+        .find(|overlay| overlay.target_value_path == "feature.host")
+        .expect("feature.host overlay");
+    let other_overlay = signals
+        .conditional_path_overlays
+        .iter()
+        .find(|overlay| overlay.target_value_path == "other.host")
+        .expect("other.host overlay");
+    let preset_overlay = signals
+        .conditional_path_overlays
+        .iter()
+        .find(|overlay| overlay.target_value_path == "preset.resources")
+        .expect("preset.resources overlay");
+    let image_overlay = signals
+        .conditional_path_overlays
+        .iter()
+        .find(|overlay| overlay.target_value_path == "image.tag")
+        .expect("image.tag overlay");
     assert_eq!(
-        signals.conditional_path_overlays[0].guards,
+        feature_overlay.guards,
         vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }))],
     );
     assert_eq!(
-        signals.conditional_path_overlays[1].guards,
+        other_overlay.guards,
         vec![ConditionalGuard::AnyOf(vec![
             ConditionalGuard::Truthy {
                 path: "first.enabled".to_string(),
@@ -446,11 +488,28 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ])],
     );
     assert_eq!(
-        signals.conditional_path_overlays[2].guards,
+        preset_overlay.guards,
         vec![ConditionalGuard::NotEq {
             path: "resourcesPreset".to_string(),
             value: GuardValue::string("none"),
         }],
+    );
+    assert_eq!(
+        image_overlay.guards,
+        vec![ConditionalGuard::AnyOf(vec![
+            ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                path: "global.imageDisabled".to_string(),
+            })),
+            ConditionalGuard::AllOf(vec![
+                ConditionalGuard::Truthy {
+                    path: "image.enabled".to_string(),
+                },
+                ConditionalGuard::Eq {
+                    path: "image.mode".to_string(),
+                    value: GuardValue::string("managed"),
+                },
+            ]),
+        ])],
     );
     assert!(
         signals

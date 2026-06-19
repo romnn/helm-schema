@@ -13,6 +13,7 @@ pub enum ConditionalGuard {
     Absent { path: String },
     TypeIs { path: String, schema_type: String },
     Not(Box<ConditionalGuard>),
+    AllOf(Vec<ConditionalGuard>),
     AnyOf(Vec<ConditionalGuard>),
 }
 

@@ -1453,6 +1453,80 @@ fn or_boolean_guards_lower_to_any_of_condition() {
 }
 
 #[test]
+fn structural_any_of_guards_preserve_conjunctive_branches() {
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::AnyOf {
+                alternatives: vec![
+                    vec![
+                        Guard::Truthy {
+                            path: "feature.enabled".to_string(),
+                        },
+                        Guard::Eq {
+                            path: "feature.mode".to_string(),
+                            value: GuardValue::string("prod"),
+                        },
+                    ],
+                    vec![Guard::Eq {
+                        path: "global.mode".to_string(),
+                        value: GuardValue::string("prod"),
+                    }],
+                ],
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.enabled", "boolean"), ("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
+    let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &NoopProvider));
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "enabled": true,
+                    "mode": "prod",
+                    "host": 7
+                }
+            })
+        ),
+        "conjunctive alternative should activate only when all branch guards match: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "enabled": true,
+                    "mode": "dev",
+                    "host": 7
+                }
+            })
+        ),
+        "enabled=true alone must not activate the guarded host schema when mode differs: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "global": {
+                    "mode": "prod"
+                },
+                "feature": {
+                    "host": 7
+                }
+            })
+        ),
+        "second alternative should still activate the guarded host schema: {schema}"
+    );
+}
+
+#[test]
 fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
     let schema_signals = schema_signals_for(vec![
         ContractUse {

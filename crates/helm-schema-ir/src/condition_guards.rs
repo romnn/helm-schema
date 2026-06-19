@@ -46,17 +46,8 @@ fn parse_structural_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
             single_loose_path(arg).map(|path| vec![Guard::Not { path }])
         }
         "or" => {
-            let mut paths = BTreeSet::new();
-            for arg in args {
-                collect_loose_values_paths(arg, &mut paths);
-            }
-            match paths.len() {
-                0 => None,
-                1 => single(&paths).map(|path| vec![Guard::Truthy { path }]),
-                _ => Some(vec![Guard::Or {
-                    paths: paths.into_iter().collect(),
-                }]),
-            }
+            let alternatives = parse_or_alternatives(args)?;
+            Some(or_guard_from_alternatives(alternatives))
         }
         "eq" => {
             let [left, right] = args.as_slice() else {
@@ -83,6 +74,45 @@ fn parse_structural_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
         }
         _ => None,
     }
+}
+
+fn parse_or_alternatives(args: &[TemplateExpr]) -> Option<Vec<Vec<Guard>>> {
+    let mut alternatives = Vec::new();
+    for arg in args {
+        let guards = parse_structural_condition_expr(arg)
+            .or_else(|| single_loose_path(arg).map(|path| vec![Guard::Truthy { path }]))?;
+        alternatives.push(guards);
+    }
+    (!alternatives.is_empty()).then_some(alternatives)
+}
+
+fn or_guard_from_alternatives(mut alternatives: Vec<Vec<Guard>>) -> Vec<Guard> {
+    for alternative in &mut alternatives {
+        alternative.sort();
+        alternative.dedup();
+    }
+    alternatives.sort();
+    alternatives.dedup();
+
+    if alternatives.len() == 1 {
+        return alternatives.pop().unwrap_or_default();
+    }
+
+    if let Some(paths) = truthy_or_paths(&alternatives) {
+        return vec![Guard::Or { paths }];
+    }
+
+    vec![Guard::AnyOf { alternatives }]
+}
+
+fn truthy_or_paths(alternatives: &[Vec<Guard>]) -> Option<Vec<String>> {
+    alternatives
+        .iter()
+        .map(|alternative| match alternative.as_slice() {
+            [Guard::Truthy { path }] => Some(path.clone()),
+            _ => None,
+        })
+        .collect()
 }
 
 fn parse_negated_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
@@ -272,6 +302,43 @@ mod tests {
             parse_condition("or (has .Values.A 1) (has .Values.B 2)"),
             vec![Guard::Or {
                 paths: vec!["A".into(), "B".into()],
+            }],
+        );
+    }
+
+    #[test]
+    fn or_with_equality_preserves_typed_alternative() {
+        assert_eq!(
+            parse_condition(r#"or (eq .Values.mode "prod") .Values.enabled"#),
+            vec![Guard::AnyOf {
+                alternatives: vec![
+                    vec![Guard::Truthy {
+                        path: "enabled".into(),
+                    }],
+                    vec![Guard::Eq {
+                        path: "mode".into(),
+                        value: GuardValue::string("prod"),
+                    }],
+                ],
+            }],
+        );
+    }
+
+    #[test]
+    fn or_with_nested_and_preserves_conjunctive_alternative() {
+        assert_eq!(
+            parse_condition(r#"or (and .Values.a .Values.b) (eq .Values.mode "prod")"#),
+            vec![Guard::AnyOf {
+                alternatives: vec![
+                    vec![
+                        Guard::Truthy { path: "a".into() },
+                        Guard::Truthy { path: "b".into() },
+                    ],
+                    vec![Guard::Eq {
+                        path: "mode".into(),
+                        value: GuardValue::string("prod"),
+                    }],
+                ],
             }],
         );
     }

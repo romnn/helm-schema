@@ -82,6 +82,17 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
             Guard::Or {
                 paths: vec!["pod.enabled".to_string(), "global.enabled".to_string()],
             },
+            Guard::AnyOf {
+                alternatives: vec![
+                    vec![Guard::Truthy {
+                        path: "serviceAccount.create".to_string(),
+                    }],
+                    vec![Guard::Eq {
+                        path: "serviceAccount.mode".to_string(),
+                        value: crate::GuardValue::string("managed"),
+                    }],
+                ],
+            },
         ],
         None,
     ));
@@ -113,6 +124,17 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
                 paths: vec![
                     "subchart.pod.enabled".to_string(),
                     "global.enabled".to_string()
+                ],
+            },
+            Guard::AnyOf {
+                alternatives: vec![
+                    vec![Guard::Truthy {
+                        path: "subchart.serviceAccount.create".to_string(),
+                    }],
+                    vec![Guard::Eq {
+                        path: "subchart.serviceAccount.mode".to_string(),
+                        value: crate::GuardValue::string("managed"),
+                    }],
                 ],
             },
         ]

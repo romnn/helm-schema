@@ -397,53 +397,88 @@ fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuar
 
     let mut guards = Vec::new();
     for guard in &contract_use.guards {
-        match guard {
-            Guard::With { .. } => {}
-            Guard::Truthy { path } => guards.push(ConditionalGuard::Truthy {
-                path: lowerable_guard_path(path, &contract_use.source_expr)?,
-            }),
-            Guard::Eq { path, value } => guards.push(ConditionalGuard::Eq {
-                path: lowerable_guard_path(path, &contract_use.source_expr)?,
-                value: value.clone(),
-            }),
-            Guard::NotEq { path, value } => guards.push(ConditionalGuard::NotEq {
-                path: lowerable_guard_path(path, &contract_use.source_expr)?,
-                value: value.clone(),
-            }),
-            Guard::Absent { path } => guards.push(ConditionalGuard::Absent {
-                path: lowerable_guard_path(path, &contract_use.source_expr)?,
-            }),
-            Guard::TypeIs { path, schema_type } => guards.push(ConditionalGuard::TypeIs {
-                path: lowerable_guard_path(path, &contract_use.source_expr)?,
-                schema_type: schema_type.clone(),
-            }),
-            Guard::Not { path } => {
-                guards.push(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                    path: lowerable_guard_path(path, &contract_use.source_expr)?,
-                })))
-            }
-            Guard::Or { paths } => {
-                let mut any_of = paths
-                    .iter()
-                    .map(|path| {
-                        Some(ConditionalGuard::Truthy {
-                            path: lowerable_guard_path(path, &contract_use.source_expr)?,
-                        })
-                    })
-                    .collect::<Option<Vec<_>>>()?;
-                any_of.sort();
-                any_of.dedup();
-                guards.push(ConditionalGuard::AnyOf(any_of));
-            }
-            Guard::Range { .. } => return None,
-            Guard::Default { path } if path == &contract_use.source_expr => {}
-            Guard::Default { .. } => return None,
-        }
+        extend_lowerable_guard(guard, &contract_use.source_expr, &mut guards)?;
     }
 
     guards.sort();
     guards.dedup();
     Some(guards)
+}
+
+fn lowerable_guard_alternative(
+    alternative: &[Guard],
+    target_value_path: &str,
+) -> Option<ConditionalGuard> {
+    let mut guards = Vec::new();
+    for guard in alternative {
+        extend_lowerable_guard(guard, target_value_path, &mut guards)?;
+    }
+    guards.sort();
+    guards.dedup();
+    match guards.as_slice() {
+        [] => None,
+        [guard] => Some(guard.clone()),
+        _ => Some(ConditionalGuard::AllOf(guards)),
+    }
+}
+
+fn extend_lowerable_guard(
+    guard: &Guard,
+    target_value_path: &str,
+    guards: &mut Vec<ConditionalGuard>,
+) -> Option<()> {
+    match guard {
+        Guard::With { .. } => {}
+        Guard::Truthy { path } => guards.push(ConditionalGuard::Truthy {
+            path: lowerable_guard_path(path, target_value_path)?,
+        }),
+        Guard::Eq { path, value } => guards.push(ConditionalGuard::Eq {
+            path: lowerable_guard_path(path, target_value_path)?,
+            value: value.clone(),
+        }),
+        Guard::NotEq { path, value } => guards.push(ConditionalGuard::NotEq {
+            path: lowerable_guard_path(path, target_value_path)?,
+            value: value.clone(),
+        }),
+        Guard::Absent { path } => guards.push(ConditionalGuard::Absent {
+            path: lowerable_guard_path(path, target_value_path)?,
+        }),
+        Guard::TypeIs { path, schema_type } => guards.push(ConditionalGuard::TypeIs {
+            path: lowerable_guard_path(path, target_value_path)?,
+            schema_type: schema_type.clone(),
+        }),
+        Guard::Not { path } => {
+            guards.push(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                path: lowerable_guard_path(path, target_value_path)?,
+            })));
+        }
+        Guard::Or { paths } => {
+            let mut any_of = paths
+                .iter()
+                .map(|path| {
+                    Some(ConditionalGuard::Truthy {
+                        path: lowerable_guard_path(path, target_value_path)?,
+                    })
+                })
+                .collect::<Option<Vec<_>>>()?;
+            any_of.sort();
+            any_of.dedup();
+            guards.push(ConditionalGuard::AnyOf(any_of));
+        }
+        Guard::AnyOf { alternatives } => {
+            let mut any_of = alternatives
+                .iter()
+                .map(|alternative| lowerable_guard_alternative(alternative, target_value_path))
+                .collect::<Option<Vec<_>>>()?;
+            any_of.sort();
+            any_of.dedup();
+            guards.push(ConditionalGuard::AnyOf(any_of));
+        }
+        Guard::Range { .. } => return None,
+        Guard::Default { path } if path == target_value_path => {}
+        Guard::Default { .. } => return None,
+    }
+    Some(())
 }
 
 fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {

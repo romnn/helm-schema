@@ -274,6 +274,48 @@
     {
       "guards": [
         {
+          "path": "configTarget",
+          "type": "not_eq",
+          "value": "ConfigMap"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "not_eq",
+          "value": "ConfigMap"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 845,
+            "start": 478
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
           "path": "fullnameOverride",
           "type": "truthy"
         }
@@ -495,6 +537,43 @@
         {
           "path": "configTarget",
           "type": "eq",
+          "value": "ConfigMap"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 845,
+            "start": 478
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "configTarget",
+          "type": "not_eq",
           "value": "ConfigMap"
         },
         {

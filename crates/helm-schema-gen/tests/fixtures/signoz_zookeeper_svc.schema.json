@@ -112,6 +112,47 @@
       "allOf": [
         {
           "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "LoadBalancer"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "NodePort"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "externalTrafficPolicy": {
+                "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
             "not": {
               "properties": {
                 "disableBaseClientPort": {
@@ -186,10 +227,7 @@
         "disableBaseClientPort": {
           "type": "boolean"
         },
-        "externalTrafficPolicy": {
-          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
-          "type": "string"
-        },
+        "externalTrafficPolicy": {},
         "extraPorts": {
           "description": "The list of ports that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
           "items": {

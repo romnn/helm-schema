@@ -103,6 +103,12 @@ pub enum Guard {
     Absent { path: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
+    /// Disjunction whose arms may each contain a conjunction of typed guards.
+    ///
+    /// This preserves structural forms such as
+    /// `or (and .Values.A .Values.B) (eq .Values.mode "prod")` without
+    /// degrading them into truthiness checks for every mentioned path.
+    AnyOf { alternatives: Vec<Vec<Guard>> },
     /// Body of `range .Values.X` / `range .foo` block. The referenced path is
     /// being iterated as a collection, not interpreted as a boolean-valued
     /// scalar. This should not contribute a boolean type hint downstream.
@@ -145,6 +151,10 @@ impl Guard {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
+            Guard::AnyOf { alternatives } => alternatives
+                .iter()
+                .flat_map(|alternative| alternative.iter().flat_map(Guard::value_paths))
+                .collect(),
         }
     }
 
@@ -168,6 +178,17 @@ impl Guard {
             Guard::Absent { path } => Guard::Absent { path: map(&path) },
             Guard::Or { paths } => Guard::Or {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
+            },
+            Guard::AnyOf { alternatives } => Guard::AnyOf {
+                alternatives: alternatives
+                    .into_iter()
+                    .map(|alternative| {
+                        alternative
+                            .into_iter()
+                            .map(|guard| guard.map_value_paths(map))
+                            .collect()
+                    })
+                    .collect(),
             },
             Guard::Range { path } => Guard::Range { path: map(&path) },
             Guard::With { path } => Guard::With { path: map(&path) },

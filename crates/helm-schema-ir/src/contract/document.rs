@@ -7,16 +7,42 @@ use crate::{ContractProvenance, Guard, GuardValue, ResourceRef, SourceSpan, Valu
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ContractDocumentGuard {
-    Truthy { path: String },
-    Not { path: String },
-    Eq { path: String, value: GuardValue },
-    NotEq { path: String, value: GuardValue },
-    Absent { path: String },
-    Or { paths: Vec<String> },
-    Range { path: String },
-    With { path: String },
-    Default { path: String },
-    TypeIs { path: String, schema_type: String },
+    Truthy {
+        path: String,
+    },
+    Not {
+        path: String,
+    },
+    Eq {
+        path: String,
+        value: GuardValue,
+    },
+    NotEq {
+        path: String,
+        value: GuardValue,
+    },
+    Absent {
+        path: String,
+    },
+    Or {
+        paths: Vec<String>,
+    },
+    AnyOf {
+        alternatives: Vec<Vec<ContractDocumentGuard>>,
+    },
+    Range {
+        path: String,
+    },
+    With {
+        path: String,
+    },
+    Default {
+        path: String,
+    },
+    TypeIs {
+        path: String,
+        schema_type: String,
+    },
 }
 
 impl From<Guard> for ContractDocumentGuard {
@@ -28,6 +54,17 @@ impl From<Guard> for ContractDocumentGuard {
             Guard::NotEq { path, value } => Self::NotEq { path, value },
             Guard::Absent { path } => Self::Absent { path },
             Guard::Or { paths } => Self::Or { paths },
+            Guard::AnyOf { alternatives } => Self::AnyOf {
+                alternatives: alternatives
+                    .into_iter()
+                    .map(|alternative| {
+                        alternative
+                            .into_iter()
+                            .map(ContractDocumentGuard::from)
+                            .collect()
+                    })
+                    .collect(),
+            },
             Guard::Range { path } => Self::Range { path },
             Guard::With { path } => Self::With { path },
             Guard::Default { path } => Self::Default { path },
@@ -45,6 +82,12 @@ impl From<ContractDocumentGuard> for Guard {
             ContractDocumentGuard::NotEq { path, value } => Self::NotEq { path, value },
             ContractDocumentGuard::Absent { path } => Self::Absent { path },
             ContractDocumentGuard::Or { paths } => Self::Or { paths },
+            ContractDocumentGuard::AnyOf { alternatives } => Self::AnyOf {
+                alternatives: alternatives
+                    .into_iter()
+                    .map(|alternative| alternative.into_iter().map(Guard::from).collect())
+                    .collect(),
+            },
             ContractDocumentGuard::Range { path } => Self::Range { path },
             ContractDocumentGuard::With { path } => Self::With { path },
             ContractDocumentGuard::Default { path } => Self::Default { path },
@@ -166,13 +209,26 @@ mod tests {
             source_expr: "kid.enabled".to_string(),
             path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![ContractDocumentGuard::Or {
-                paths: vec![
-                    "global.kidEnabled".to_string(),
-                    "kid.enabled".to_string(),
-                    "tags.observability".to_string(),
-                ],
-            }],
+            guards: vec![
+                ContractDocumentGuard::Or {
+                    paths: vec![
+                        "global.kidEnabled".to_string(),
+                        "kid.enabled".to_string(),
+                        "tags.observability".to_string(),
+                    ],
+                },
+                ContractDocumentGuard::AnyOf {
+                    alternatives: vec![
+                        vec![ContractDocumentGuard::Truthy {
+                            path: "kid.enabled".to_string(),
+                        }],
+                        vec![ContractDocumentGuard::Eq {
+                            path: "kid.mode".to_string(),
+                            value: crate::GuardValue::string("prod"),
+                        }],
+                    ],
+                },
+            ],
             resource: Some(ResourceRef {
                 api_version: "v1".to_string(),
                 kind: "ConfigMap".to_string(),
@@ -199,6 +255,16 @@ mod tests {
                     "guards": [{
                         "type": "or",
                         "paths": ["global.kidEnabled", "kid.enabled", "tags.observability"]
+                    }, {
+                        "type": "any_of",
+                        "alternatives": [[{
+                            "type": "truthy",
+                            "path": "kid.enabled"
+                        }], [{
+                            "type": "eq",
+                            "path": "kid.mode",
+                            "value": "prod"
+                        }]]
                     }],
                     "resource": {
                         "api_version": "v1",
