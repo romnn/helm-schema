@@ -44,11 +44,16 @@ spec:
 
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let path = "kid.controller.ingressClassResource.parameters";
 
     let ir_fact = collection
-        .contract_schema_signals
+        .contract_schema_signals()
         .evidence_for(path)
         .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing IR-derived fact for {path}"));
@@ -70,17 +75,22 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
     assert!(
         collection
-            .contract_schema_signals
+            .contract_schema_signals()
             .evidence_for(path)
             .is_some_and(|evidence| evidence.type_hints.contains("string")),
         "expected structural contract type hint for {path}; contract_hints={:?}",
         collection
-            .contract_schema_signals
+            .contract_schema_signals()
             .schema_evidence_by_value_path(),
     );
 
@@ -97,7 +107,12 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let projection = collection.contract.clone().project();
     let path = "clickhouse.clickhouseOperator.serviceAccount.name";
     let uses = projection
@@ -132,7 +147,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         "expected a create=false branch for {path}; uses={uses:#?}"
     );
     let overlays = collection
-        .contract_schema_signals
+        .contract_schema_signals()
         .conditional_path_overlays()
         .iter()
         .filter(|overlay| overlay.target_value_path == path)
@@ -180,7 +195,12 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let projection = collection.contract.clone().project();
     let path = "signoz.serviceAccount.name";
     let uses = projection
@@ -229,7 +249,12 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
     let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, values_yaml.as_deref())?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
+    )?;
     let projection = collection.contract.clone().project();
     let path = "signoz-otel-gateway.serviceAccount.name";
     let uses = projection
@@ -253,12 +278,12 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
     );
     assert!(
         collection
-            .contract_schema_signals
+            .contract_schema_signals()
             .evidence_for(path)
             .is_some_and(|evidence| evidence.facts.is_nullable),
         "helper-defaulted subchart path should be globally nullable; facts={:#?}; uses={uses:#?}",
         collection
-            .contract_schema_signals
+            .contract_schema_signals()
             .evidence_for(path)
             .map(|evidence| evidence.facts),
     );
@@ -276,7 +301,12 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
     let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, values_yaml.as_deref())?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
+    )?;
     let projection = collection.contract.clone().project();
     let path = "clickhouse.securityContext";
     let uses = projection
@@ -288,12 +318,12 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
 
     assert!(
         collection
-            .contract_schema_signals
+            .contract_schema_signals()
             .evidence_for(path)
             .is_some_and(|evidence| evidence.facts.used_as_fragment),
         "fragment-valued securityContext should not be pruned as a scalar parent; facts={:#?}; uses={uses:#?}",
         collection
-            .contract_schema_signals
+            .contract_schema_signals()
             .evidence_for(path)
             .map(|evidence| evidence.facts),
     );
@@ -371,7 +401,12 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let projection = collection.contract.clone().project();
     let name_override_uses = projection
         .uses()
@@ -380,8 +415,8 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
         .cloned()
         .collect::<Vec<_>>();
 
-    let evidence = collection
-        .contract_schema_signals
+    let schema_signals = collection.contract_schema_signals();
+    let evidence = schema_signals
         .evidence_for("app.nameOverride")
         .unwrap_or_else(|| {
             panic!("missing schema evidence for app.nameOverride; uses={name_override_uses:#?}")
@@ -404,17 +439,22 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let path = "fullnameOverride";
-    let projection = collection.contract.project();
+    let projection = collection.contract.clone().project();
     let uses = projection
         .uses()
         .iter()
         .filter(|use_| use_.source_expr == path)
         .cloned()
         .collect::<Vec<_>>();
-    let facts = collection
-        .contract_schema_signals
+    let schema_signals = collection.contract_schema_signals();
+    let facts = schema_signals
         .evidence_for(path)
         .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing facts for {path}; uses={uses:#?}"));
@@ -468,7 +508,12 @@ data:
 
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let projection = collection.contract.project();
     let uses = projection
         .uses()
@@ -586,7 +631,12 @@ spec:
 
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef {
         api_version: "example.com/v1".to_string(),
@@ -657,7 +707,12 @@ spec:
 
     let discovery = chart::discover_chart_contexts(&chart_dir)?;
     let defines = chart::build_define_index(&discovery.charts, false)?;
-    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef {
         api_version: "example.com/v1".to_string(),

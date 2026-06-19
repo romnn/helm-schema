@@ -1,12 +1,12 @@
-use helm_schema_engine::ContractIr;
+use std::collections::BTreeSet;
 
-use crate::values_roots;
+use helm_schema_engine::ContractIr;
 
 pub(super) fn seed_top_level_values_yaml_keys(
     contract: &mut ContractIr,
-    values_yaml: Option<&str>,
+    top_level_value_paths: &BTreeSet<String>,
 ) {
-    for path in values_roots::top_level_value_paths(values_yaml) {
-        contract.push_pathless_scalar(path);
+    for path in top_level_value_paths {
+        contract.push_pathless_scalar(path.clone());
     }
 }

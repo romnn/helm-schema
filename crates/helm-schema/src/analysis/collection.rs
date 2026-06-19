@@ -1,5 +1,7 @@
+use std::collections::BTreeSet;
+
 use helm_schema_engine::helpers::DefineIndex;
-use helm_schema_engine::{ContractIr, ContractSchemaSignals, SymbolicIrContext};
+use helm_schema_engine::{ContractIr, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
@@ -10,8 +12,14 @@ use crate::error::CliResult;
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {
     pub(crate) contract: ContractIr,
-    pub(crate) contract_schema_signals: ContractSchemaSignals,
     pub(crate) local_schema_universe: LocalSchemaUniverse,
+}
+
+impl ChartAnalysis {
+    #[cfg(test)]
+    pub(crate) fn contract_schema_signals(&self) -> helm_schema_engine::ContractSchemaSignals {
+        self.contract.clone().into_schema_signals()
+    }
 }
 
 #[tracing::instrument(skip_all)]
@@ -19,7 +27,7 @@ pub(crate) fn analyze_charts(
     charts: &[chart::ChartContext],
     defines: &DefineIndex,
     include_tests: bool,
-    values_yaml: Option<&str>,
+    top_level_value_paths: &BTreeSet<String>,
 ) -> CliResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_schema_universe = chart::collect_static_crd_universe(charts)?;
@@ -53,13 +61,10 @@ pub(crate) fn analyze_charts(
         }
     }
 
-    seed_top_level_values_yaml_keys(&mut contract, values_yaml);
-
-    let contract_schema_signals = contract.clone().into_schema_signals();
+    seed_top_level_values_yaml_keys(&mut contract, top_level_value_paths);
 
     Ok(ChartAnalysis {
         contract,
-        contract_schema_signals,
         local_schema_universe,
     })
 }

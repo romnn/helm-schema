@@ -1,11 +1,11 @@
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::local_override::{
-    LocalSchemaLeaf, bundled_local_definition_schema,
-    descend_schema_path_expanding_leaf_with_root_metadata_source, expand_local_refs,
+use crate::doc_backed_schema::{
+    LocalSchemaLeaf, debug_materialize_local_schema,
+    descend_schema_path_expanding_leaf_with_root_metadata_source, fragment_for_source_leaf,
 };
+use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
     ProviderSchemaSource,
@@ -63,28 +63,7 @@ impl ChartLocalCrdSchemaProvider {
                 pointer.to_string(),
             )
         });
-        let source_schema = leaf.source_schema().cloned();
-        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-        match (source, source_schema) {
-            (Some(source), Some(source_schema)) => {
-                let definition_schema = bundled_local_definition_schema(
-                    document.schema_doc().root(),
-                    source.filename(),
-                    source.pointer(),
-                    &source_schema,
-                );
-                fragment = fragment.with_source_definition_schema(
-                    source,
-                    source_schema,
-                    definition_schema,
-                );
-            }
-            (Some(source), None) => {
-                fragment = fragment.with_source(source);
-            }
-            (None, _) => {}
-        }
-        fragment
+        fragment_for_source_leaf(document.schema_doc(), source, leaf)
     }
 }
 
@@ -172,10 +151,7 @@ pub fn debug_materialize_schema_for_resource(
     resource: &ResourceRef,
 ) -> Option<Value> {
     let root = provider.universe.schema_doc_for_resource(resource)?;
-    let mut stack = std::collections::HashSet::new();
-    Some(crate::metadata_enrichment::enrich_root_metadata_schema(
-        expand_local_refs(root.root(), root.root(), 0, &mut stack),
-    ))
+    Some(debug_materialize_local_schema(root.root()))
 }
 
 #[cfg(test)]

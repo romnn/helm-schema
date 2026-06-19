@@ -569,7 +569,7 @@ mod tests {
             root.clone(),
         );
         let expanded_root = expand_schema_node(&mut full_ctx, "root.json", root.root(), 0).1;
-        let expected = crate::local_override::descend_schema_path(&expanded_root, &path)
+        let expected = crate::doc_backed_schema::descend_schema_path(&expanded_root, &path)
             .expect("expanded root should contain path");
 
         let mut lazy_ctx = ResolveCtx::new(

@@ -13,27 +13,23 @@
 //!
 //! Nothing in the core schema-generation pipeline depends on anything here.
 
+use std::collections::BTreeSet;
+
 use helm_schema_engine::ContractPathSchemaEvidence;
 use serde_json::Value;
 use tracing::instrument;
 
-use crate::values_roots;
-
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.
-///
-/// `values_yaml` is the composed values.yaml (used to re-derive explicit chart
-/// defaults — those must not be marked required).
 #[instrument(skip_all)]
 pub(crate) fn apply(
     schema: &mut Value,
     schema_evidence_by_value_path: &std::collections::BTreeMap<String, ContractPathSchemaEvidence>,
-    values_yaml: Option<&str>,
+    explicit_value_paths: &BTreeSet<String>,
 ) {
-    let explicit_value_paths = values_roots::explicit_value_paths(values_yaml);
     helm_schema_engine::required_inference::apply_required_inference(
         schema,
         schema_evidence_by_value_path,
-        &explicit_value_paths,
+        explicit_value_paths,
     );
 }

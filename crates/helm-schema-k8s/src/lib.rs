@@ -17,6 +17,7 @@ pub mod builtin_groups;
 pub mod cache;
 pub mod crds_catalog;
 pub mod diagnostic;
+mod doc_backed_schema;
 pub mod fetch;
 mod filename;
 pub mod inference;

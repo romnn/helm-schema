@@ -1,9 +1,11 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use helm_schema_engine::contract::{ContractDocument, ContractDocumentUse, ContractProjection};
-use helm_schema_engine::{ContractIr, ValuesSchemaInput, generate_values_schema};
+use helm_schema_engine::{
+    ContractIr, ContractSchemaSignals, ValuesSchemaInput, generate_values_schema,
+};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
 
@@ -17,17 +19,18 @@ use crate::output_pipeline::{
 };
 use crate::provider_builder;
 use crate::required_inference;
+use crate::values_roots;
 
 /// Public analysis artifact produced by [`AnalysisSession`].
 ///
-/// This is the current stable facade-level view of chart-local analysis:
-/// the guarded contract graph, the typed schema-lowering signals derived from
-/// that contract, and the chart-local schema universe extracted from sources
-/// such as static and template-rendered CRDs.
+/// This keeps the core analysis artifact small and non-duplicated:
+/// the guarded contract graph plus the chart-local schema universe extracted
+/// from sources such as static and template-rendered CRDs. Typed schema
+/// lowering evidence stays available as its own memoized session query via
+/// [`AnalysisSession::contract_schema_signals`].
 #[derive(Debug, Clone)]
 pub struct Analysis {
     pub contract: ContractIr,
-    pub schema_signals: helm_schema_engine::ContractSchemaSignals,
     pub local_schemas: LocalSchemaUniverse,
 }
 
@@ -47,6 +50,7 @@ pub struct ValuePathExplanation {
 pub(crate) struct PreparedSession {
     pub(crate) analysis: Analysis,
     pub(crate) values_yaml: Option<String>,
+    pub(crate) explicit_value_paths: BTreeSet<String>,
     pub(crate) values_descriptions: BTreeMap<String, String>,
     pub(crate) subchart_value_prefixes: Vec<Vec<String>>,
 }
@@ -58,21 +62,23 @@ impl PreparedSession {
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
         let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
+        let top_level_value_paths = values_roots::top_level_value_paths(values_yaml.as_deref());
+        let explicit_value_paths = values_roots::explicit_value_paths(values_yaml.as_deref());
         let values_descriptions = chart::build_composed_values_descriptions(
             charts,
             opts.include_subchart_values,
             &opts.values_files,
         )?;
         let chart_analysis =
-            analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
+            analyze_charts(charts, &defines, opts.include_tests, &top_level_value_paths)?;
 
         Ok(Self {
             analysis: Analysis {
                 contract: chart_analysis.contract,
-                schema_signals: chart_analysis.contract_schema_signals,
                 local_schemas: chart_analysis.local_schema_universe,
             },
             values_yaml,
+            explicit_value_paths,
             values_descriptions,
             subchart_value_prefixes: charts
                 .iter()
@@ -96,6 +102,7 @@ pub struct AnalysisSession {
     opts: GenerateOptions,
     diagnostics: DiagnosticSink,
     prepared: Mutex<Option<Arc<PreparedSession>>>,
+    contract_schema_signals: Mutex<Option<Arc<ContractSchemaSignals>>>,
     resolved_contract: Mutex<Option<Arc<ResolvedContract>>>,
     generated_schema: Mutex<Option<Arc<GeneratedSchema>>>,
     projection: Mutex<Option<Arc<ContractProjection>>>,
@@ -113,6 +120,7 @@ impl AnalysisSession {
             opts,
             diagnostics,
             prepared: Mutex::new(None),
+            contract_schema_signals: Mutex::new(None),
             resolved_contract: Mutex::new(None),
             generated_schema: Mutex::new(None),
             projection: Mutex::new(None),
@@ -127,6 +135,11 @@ impl AnalysisSession {
     /// Return the guarded contract graph for the chart tree.
     pub fn contract(&self) -> CliResult<ContractIr> {
         Ok(self.prepared()?.analysis.contract.clone())
+    }
+
+    /// Return typed schema-lowering evidence derived from the guarded contract.
+    pub fn contract_schema_signals(&self) -> CliResult<ContractSchemaSignals> {
+        Ok((*self.schema_signals()?).clone())
     }
 
     /// Return the stable versioned contract export document.
@@ -169,8 +182,12 @@ impl AnalysisSession {
 
         let prepared = self.prepared()?;
         let resolved = self.resolved()?;
+        let contract_schema_signals = self.schema_signals()?;
         let generated = Arc::new(generate_schema_from_resolved_contract(
-            &resolved, &prepared, &self.opts,
+            &resolved,
+            &prepared,
+            &contract_schema_signals,
+            &self.opts,
         ));
         let mut guard = self
             .generated_schema
@@ -216,11 +233,8 @@ impl AnalysisSession {
     pub fn explain(&self, path: &str) -> CliResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
         let projection = self.contract_projection()?;
-        let prepared = self.prepared()?;
-        let evidence = prepared
-            .analysis
-            .schema_signals
-            .evidence_for(&normalized_path);
+        let schema_signals = self.schema_signals()?;
+        let evidence = schema_signals.evidence_for(&normalized_path);
 
         let exact_uses = projection
             .uses()
@@ -256,9 +270,7 @@ impl AnalysisSession {
                     .collect()
             })
             .unwrap_or_default();
-        let has_default_fallback = prepared
-            .analysis
-            .schema_signals
+        let has_default_fallback = schema_signals
             .evidence_for(&normalized_path)
             .is_some_and(|evidence| evidence.requiredness.has_default_fallback);
 
@@ -292,6 +304,27 @@ impl AnalysisSession {
         Path::new(self.opts.chart_dir.as_str())
     }
 
+    fn schema_signals(&self) -> CliResult<Arc<ContractSchemaSignals>> {
+        {
+            let guard = self
+                .contract_schema_signals
+                .lock()
+                .expect("contract schema signals mutex");
+            if let Some(signals) = guard.as_ref() {
+                return Ok(Arc::clone(signals));
+            }
+        }
+
+        let prepared = self.prepared()?;
+        let signals = Arc::new(prepared.analysis.contract.clone().into_schema_signals());
+        let mut guard = self
+            .contract_schema_signals
+            .lock()
+            .expect("contract schema signals mutex");
+        let signals = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&signals)));
+        Ok(signals)
+    }
+
     fn resolved(&self) -> CliResult<Arc<ResolvedContract>> {
         {
             let guard = self
@@ -304,8 +337,10 @@ impl AnalysisSession {
         }
 
         let prepared = self.prepared()?;
+        let contract_schema_signals = self.schema_signals()?;
         let resolved = Arc::new(resolve_contract_from_prepared(
             &prepared,
+            &contract_schema_signals,
             &self.opts,
             Some(&self.diagnostics),
         )?);
@@ -335,6 +370,7 @@ impl AnalysisSession {
 
 pub(crate) fn resolve_contract_from_prepared(
     prepared: &PreparedSession,
+    contract_schema_signals: &ContractSchemaSignals,
     opts: &GenerateOptions,
     diagnostic_sink: Option<&DiagnosticSink>,
 ) -> CliResult<ResolvedContract> {
@@ -343,7 +379,7 @@ pub(crate) fn resolve_contract_from_prepared(
     let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&prepared.analysis.schema_signals, &provider)
+        ValuesSchemaInput::new(contract_schema_signals, &provider)
             .with_values_yaml(prepared.values_yaml.as_deref())
             .with_values_descriptions(&prepared.values_descriptions),
     );
@@ -357,6 +393,7 @@ pub(crate) fn resolve_contract_from_prepared(
 pub(crate) fn generate_schema_from_resolved_contract(
     resolved: &ResolvedContract,
     prepared: &PreparedSession,
+    contract_schema_signals: &ContractSchemaSignals,
     opts: &GenerateOptions,
 ) -> GeneratedSchema {
     let mut schema = resolved.schema.clone();
@@ -364,11 +401,8 @@ pub(crate) fn generate_schema_from_resolved_contract(
     if opts.infer_required {
         required_inference::apply(
             &mut schema,
-            &prepared
-                .analysis
-                .schema_signals
-                .schema_evidence_by_value_path(),
-            prepared.values_yaml.as_deref(),
+            contract_schema_signals.schema_evidence_by_value_path(),
+            &prepared.explicit_value_paths,
         );
     }
 

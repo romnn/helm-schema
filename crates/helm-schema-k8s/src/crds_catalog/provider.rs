@@ -10,13 +10,13 @@ use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, crd_cache_path, write_meta_sidecar,
 };
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
+use crate::doc_backed_schema::{
+    LocalSchemaLeaf, debug_materialize_local_schema,
+    descend_schema_path_expanding_leaf_with_root_metadata_source, fragment_for_source_leaf,
+};
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::local_override::{
-    LocalSchemaLeaf, bundled_local_definition_schema,
-    descend_schema_path_expanding_leaf_with_root_metadata_source, expand_local_refs,
-};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
     ProviderSchemaSource,
@@ -284,29 +284,7 @@ impl CrdsCatalogSchemaProvider {
         loaded: &LoadedCrdSchemaDoc,
         leaf: LocalSchemaLeaf,
     ) -> ProviderSchemaFragment {
-        let source = self.source_for_leaf(loaded, &leaf);
-        let source_schema = leaf.source_schema().cloned();
-        let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
-        match (source, source_schema) {
-            (Some(source), Some(source_schema)) => {
-                let definition_schema = bundled_local_definition_schema(
-                    loaded.doc.root(),
-                    source.filename(),
-                    source.pointer(),
-                    &source_schema,
-                );
-                fragment = fragment.with_source_definition_schema(
-                    source,
-                    source_schema,
-                    definition_schema,
-                );
-            }
-            (Some(source), None) => {
-                fragment = fragment.with_source(source);
-            }
-            (None, _) => {}
-        }
-        fragment
+        fragment_for_source_leaf(&loaded.doc, self.source_for_leaf(loaded, &leaf), leaf)
     }
 }
 
@@ -331,10 +309,7 @@ pub fn debug_materialize_schema_for_resource(
     resource: &ResourceRef,
 ) -> Option<Value> {
     let loaded = provider.load_schema_doc(resource)?;
-    let mut stack = std::collections::HashSet::new();
-    Some(crate::metadata_enrichment::enrich_root_metadata_schema(
-        expand_local_refs(loaded.doc.root(), loaded.doc.root(), 0, &mut stack),
-    ))
+    Some(debug_materialize_local_schema(loaded.doc.root()))
 }
 
 impl K8sSchemaProvider for CrdsCatalogSchemaProvider {

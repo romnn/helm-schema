@@ -141,6 +141,11 @@ spec:
             .any(|use_| !use_.provenance.is_empty()),
         "session contract document should retain source provenance"
     );
+    let signals = session.contract_schema_signals()?;
+    assert!(
+        signals.evidence_for("replicas").is_some(),
+        "session schema-signal query should expose path-local evidence"
+    );
     let generated = session.generated_schema()?;
     assert_eq!(
         generated
