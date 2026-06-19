@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_engine::contract::{ContractDocument, ContractDocumentUse};
-use helm_schema_engine::{
-    ContractIr, ContractSchemaSignals, FinalizedContract, ValuesSchemaInput, generate_values_schema,
+use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
+use helm_schema_ir::{
+    ConditionalGuard, ContractDocument, ContractDocumentUse, ContractIr, ContractSchemaSignals,
+    ContractValuePathFacts, FinalizedContract, MetadataFieldKind,
 };
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
@@ -40,9 +41,9 @@ pub struct ValuePathExplanation {
     pub path: String,
     pub exact_uses: Vec<ContractDocumentUse>,
     pub descendant_uses: Vec<ContractDocumentUse>,
-    pub value_path_facts: Option<helm_schema_engine::ContractValuePathFacts>,
-    pub guard_predicates: Vec<helm_schema_engine::ConditionalGuard>,
-    pub metadata_fields: Vec<helm_schema_engine::MetadataFieldKind>,
+    pub value_path_facts: Option<ContractValuePathFacts>,
+    pub guard_predicates: Vec<ConditionalGuard>,
+    pub metadata_fields: Vec<MetadataFieldKind>,
     pub type_hints: Vec<Value>,
     pub has_default_fallback: bool,
 }

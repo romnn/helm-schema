@@ -19,7 +19,7 @@ pub mod diagnostics {
 }
 
 pub mod contract {
-    pub use helm_schema_engine::contract::{
+    pub use helm_schema_ir::{
         ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
         ContractDocumentUse,
     };

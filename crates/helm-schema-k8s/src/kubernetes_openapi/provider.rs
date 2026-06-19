@@ -1,14 +1,14 @@
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, default_source_id, k8s_cache_path,
-    not_found_marker_exists, not_found_marker_path, write_meta_sidecar, write_not_found_marker,
+    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, default_source_id,
+    k8s_cache_path, not_found_marker_exists, not_found_marker_path, read_cached_json_doc,
+    write_meta_sidecar, write_not_found_marker,
 };
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
@@ -53,7 +53,7 @@ pub struct KubernetesJsonSchemaProvider {
     layout_checker: Arc<LayoutChecker>,
     diagnostic_sink: Option<DiagnosticSink>,
 
-    mem: Mutex<HashMap<MemKey, SchemaDoc>>,
+    mem: SourceDocCache<MemKey>,
 }
 
 /// Tri-state outcome for the capability-oracle probe path. See
@@ -123,7 +123,7 @@ impl KubernetesJsonSchemaProvider {
             negative_cache: Arc::new(NegativeCache::new()),
             layout_checker: Arc::new(LayoutChecker::new()),
             diagnostic_sink: None,
-            mem: Mutex::new(HashMap::new()),
+            mem: SourceDocCache::new(),
         }
     }
 
@@ -245,10 +245,8 @@ impl KubernetesJsonSchemaProvider {
                 return Some(v);
             }
             if local.exists()
-                && let Ok(bytes) = fs::read(&local)
-                && let Ok(doc) = serde_json::from_slice::<Value>(&bytes)
+                && let Some(doc) = read_cached_json_doc(&local)
             {
-                let doc = SchemaDoc::new(doc);
                 self.write_mem(&source.source_id, version, filename, doc.clone());
                 return Some(doc);
             }
@@ -294,27 +292,22 @@ impl KubernetesJsonSchemaProvider {
     }
 
     fn read_mem_for(&self, source_id: &str, version: &str, filename: &str) -> Option<SchemaDoc> {
-        self.mem.lock().ok().and_then(|g| {
-            g.get(&(
-                source_id.to_string(),
-                version.to_string(),
-                filename.to_string(),
-            ))
-            .cloned()
-        })
+        self.mem.read(&(
+            source_id.to_string(),
+            version.to_string(),
+            filename.to_string(),
+        ))
     }
 
     fn write_mem(&self, source_id: &str, version: &str, filename: &str, doc: SchemaDoc) {
-        if let Ok(mut guard) = self.mem.lock() {
-            guard.insert(
-                (
-                    source_id.to_string(),
-                    version.to_string(),
-                    filename.to_string(),
-                ),
-                doc,
-            );
-        }
+        self.mem.write(
+            (
+                source_id.to_string(),
+                version.to_string(),
+                filename.to_string(),
+            ),
+            doc,
+        );
     }
 
     fn run_layout_check(&self) -> LayoutCheckOutcome {

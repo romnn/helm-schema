@@ -15,7 +15,7 @@
 
 use std::collections::BTreeSet;
 
-use helm_schema_engine::ContractPathSchemaEvidence;
+use helm_schema_ir::ContractPathSchemaEvidence;
 use serde_json::Value;
 use tracing::instrument;
 
@@ -27,7 +27,7 @@ pub(crate) fn apply(
     schema_evidence_by_value_path: &std::collections::BTreeMap<String, ContractPathSchemaEvidence>,
     explicit_value_paths: &BTreeSet<String>,
 ) {
-    helm_schema_engine::required_inference::apply_required_inference(
+    helm_schema_gen::required_inference::apply_required_inference(
         schema,
         schema_evidence_by_value_path,
         explicit_value_paths,

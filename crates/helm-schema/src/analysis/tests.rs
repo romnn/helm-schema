@@ -1,4 +1,4 @@
-use helm_schema_engine::{Guard, ResourceRef, YamlPath};
+use helm_schema_ir::{Guard, ResourceRef, YamlPath};
 use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
 use serde_json::json;
 use vfs::VfsPath;
@@ -158,7 +158,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
             overlay.guards.iter().any(|guard| {
                 matches!(
                     guard,
-                    helm_schema_engine::ConditionalGuard::Truthy { path }
+                    helm_schema_ir::ConditionalGuard::Truthy { path }
                     if path == "clickhouse.clickhouseOperator.serviceAccount.create"
                 )
             })
@@ -170,10 +170,10 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
             overlay.guards.iter().any(|guard| {
                 matches!(
                     guard,
-                    helm_schema_engine::ConditionalGuard::Not(inner)
+                    helm_schema_ir::ConditionalGuard::Not(inner)
                     if matches!(
                         inner.as_ref(),
-                        helm_schema_engine::ConditionalGuard::Truthy { path }
+                        helm_schema_ir::ConditionalGuard::Truthy { path }
                         if path == "clickhouse.clickhouseOperator.serviceAccount.create"
                     )
                 )

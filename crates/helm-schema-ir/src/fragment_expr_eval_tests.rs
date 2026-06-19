@@ -1,15 +1,15 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, TreeSitterParser, parse_action_expressions};
 
 use crate::define_body_cache::DefineBodyCache;
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding::{self, FragmentBinding};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr, fragment_binding_from_outer_expr,
     helper_binding_from_expr_with_fragment_locals,
 };
 use crate::helper_binding::HelperBinding;
-use crate::helper_summary::HelperSummaryCache;
+use crate::helper_summary::{HelperOutputMeta, HelperSummaryCache};
 
 fn single_expr(action: &str) -> TemplateExpr {
     let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
@@ -75,7 +75,7 @@ fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
         fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
         Some(FragmentBinding::Dict(BTreeMap::from([(
             "Values".to_string(),
-            FragmentBinding::ValuesRoot,
+            fragment_binding::values_root(),
         )])))
     );
 }
@@ -92,7 +92,7 @@ fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
         fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
         Some(FragmentBinding::Dict(BTreeMap::from([(
             "Values".to_string(),
-            FragmentBinding::ValuesRoot,
+            fragment_binding::values_root(),
         )])))
     );
 }
@@ -208,7 +208,20 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     assert_eq!(
         fragment_binding_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
         Some(FragmentBinding::OutputSet(
-            ["nameOverride".to_string()].into_iter().collect()
+            [(
+                "nameOverride".to_string(),
+                HelperOutputMeta {
+                    predicates: BTreeSet::new(),
+                    defaulted: false,
+                    provenance: vec![crate::ContractProvenance::new(
+                        "<inline:0>".to_string(),
+                        crate::SourceSpan::new(28, 54),
+                        vec!["common.name".to_string()],
+                    )],
+                },
+            )]
+            .into_iter()
+            .collect()
         )),
     );
 }

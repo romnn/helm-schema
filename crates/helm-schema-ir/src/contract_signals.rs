@@ -25,12 +25,49 @@ pub enum ConditionalGuard {
 /// hold for the overlay to apply.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ConditionalPathOverlay {
-    pub target_value_path: String,
     pub guards: Vec<ConditionalGuard>,
-    pub evidence: ContractPathSchemaEvidence,
+    pub evidence: ConditionalOverlayEvidence,
     /// Keep the unconditional/base schema for this path alongside the guarded
     /// overlay because the contract also observed an unguarded use.
     pub preserve_base_schema: bool,
+}
+
+/// Flattened compatibility view of a conditional overlay plus its target path.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ConditionalPathOverlayAtPath {
+    pub target_value_path: String,
+    pub guards: Vec<ConditionalGuard>,
+    pub evidence: ConditionalOverlayEvidence,
+    pub preserve_base_schema: bool,
+}
+
+/// Branch-local evidence for one conditional schema overlay.
+///
+/// The target path is implicit from the enclosing [`ContractPathSchemaEvidence`]
+/// entry that owns the overlay.
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ConditionalOverlayEvidence {
+    pub facts: ContractValuePathFacts,
+    pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    pub type_hints: BTreeSet<String>,
+    pub provider_schema_uses: Vec<ProviderSchemaUse>,
+}
+
+impl ConditionalOverlayEvidence {
+    #[must_use]
+    pub fn as_path_evidence(&self, value_path: &str) -> ContractPathSchemaEvidence {
+        ContractPathSchemaEvidence {
+            value_path: value_path.to_string(),
+            is_referenced_value_path: true,
+            facts: self.facts,
+            guard_predicates: Vec::new(),
+            metadata_field_kinds: self.metadata_field_kinds.clone(),
+            type_hints: self.type_hints.clone(),
+            provider_schema_uses: self.provider_schema_uses.clone(),
+            requiredness: ContractRequirednessEvidence::default(),
+            conditional_overlays: Vec::new(),
+        }
+    }
 }
 
 /// Kubernetes `metadata.*` field shape referenced by a values path.
@@ -62,6 +99,7 @@ pub struct ContractPathSchemaEvidence {
     pub type_hints: BTreeSet<String>,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub requiredness: ContractRequirednessEvidence,
+    pub conditional_overlays: Vec<ConditionalPathOverlay>,
 }
 
 impl ContractPathSchemaEvidence {
@@ -83,18 +121,15 @@ impl ContractPathSchemaEvidence {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
     schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
-    conditional_path_overlays: Vec<ConditionalPathOverlay>,
 }
 
 impl ContractSchemaSignals {
     #[must_use]
     pub(crate) fn new(
         schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
-        conditional_path_overlays: Vec<ConditionalPathOverlay>,
     ) -> Self {
         Self {
             schema_evidence_by_value_path,
-            conditional_path_overlays,
         }
     }
 
@@ -109,8 +144,21 @@ impl ContractSchemaSignals {
     }
 
     #[must_use]
-    pub fn conditional_path_overlays(&self) -> &[ConditionalPathOverlay] {
-        &self.conditional_path_overlays
+    pub fn conditional_path_overlays(&self) -> Vec<ConditionalPathOverlayAtPath> {
+        self.schema_evidence_by_value_path
+            .iter()
+            .flat_map(|(path, evidence)| {
+                evidence
+                    .conditional_overlays
+                    .iter()
+                    .map(|overlay| ConditionalPathOverlayAtPath {
+                        target_value_path: path.clone(),
+                        guards: overlay.guards.clone(),
+                        evidence: overlay.evidence.clone(),
+                        preserve_base_schema: overlay.preserve_base_schema,
+                    })
+            })
+            .collect()
     }
 }
 

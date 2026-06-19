@@ -2,46 +2,27 @@
 
 mod common;
 
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::TreeSitterParser;
 use helm_schema_ir::SymbolicIrContext;
 
 const TEMPLATE_PATH: &str = "charts/nats/templates/service.yaml";
 const VALUES_PATH: &str = "charts/nats/values.yaml";
-
-fn build_define_index(parser: &dyn HelmParser) -> DefineIndex {
-    let mut idx = DefineIndex::new();
-
-    let _ = idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/nats/templates/_helpers.tpl"),
-    );
-    let _ = idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/nats/templates/_jsonpatch.tpl"),
-    );
-    let _ = idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/nats/templates/_tplYaml.tpl"),
-    );
-    let _ = idx.add_source(
-        parser,
-        &test_util::read_testdata("charts/nats/templates/_toPrettyRawJson.tpl"),
-    );
-
-    idx.add_file_source(
-        "files/service.yaml",
-        &test_util::read_testdata("charts/nats/files/service.yaml"),
-    );
-
-    idx
-}
+const NATS_DEFINE_SOURCES: test_util::DefineSourceSpec<'static> = test_util::DefineSourceSpec {
+    helper_templates: &[
+        "charts/nats/templates/_helpers.tpl",
+        "charts/nats/templates/_jsonpatch.tpl",
+        "charts/nats/templates/_tplYaml.tpl",
+        "charts/nats/templates/_toPrettyRawJson.tpl",
+    ],
+    file_sources: &[("files/service.yaml", "charts/nats/files/service.yaml")],
+};
 
 #[test]
 #[allow(clippy::too_many_lines)]
 fn schema_from_tree_sitter() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
+    let idx = common::build_define_index(&TreeSitterParser, NATS_DEFINE_SOURCES);
     let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
@@ -82,7 +63,7 @@ fn helm_template_renders_successfully() {
 fn schema_validates_values_yaml() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
+    let idx = common::build_define_index(&TreeSitterParser, NATS_DEFINE_SOURCES);
     let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
@@ -100,7 +81,7 @@ fn schema_validates_values_yaml() {
 fn schema_keeps_live_service_name_paths_typed() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let values_yaml = test_util::read_testdata(VALUES_PATH);
-    let idx = build_define_index(&TreeSitterParser);
+    let idx = common::build_define_index(&TreeSitterParser, NATS_DEFINE_SOURCES);
     let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = common::production_k8s_chain("v1.35.0");
     let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));

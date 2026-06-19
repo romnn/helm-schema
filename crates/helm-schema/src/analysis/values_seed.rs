@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use helm_schema_engine::ContractIr;
+use helm_schema_ir::ContractIr;
 
 pub(super) fn seed_top_level_values_yaml_keys(
     contract: &mut ContractIr,

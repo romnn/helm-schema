@@ -4,7 +4,7 @@ use super::{
     collect_fragment_binding_output_uses, collect_helper_binding_output_uses,
     helper_binding_output_meta,
 };
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding::{self, FragmentBinding};
 use crate::helper_binding::HelperBinding;
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_summary::HelperOutputMeta;
@@ -113,7 +113,7 @@ fn helper_and_fragment_bindings_share_structural_output_projection() {
 fn nested_fragment_values_root_still_abstains_from_output_projection() {
     let fragment_binding = FragmentBinding::Dict(BTreeMap::from([(
         "values".to_string(),
-        FragmentBinding::ValuesRoot,
+        fragment_binding::values_root(),
     )]));
     let mut outputs = Vec::new();
 

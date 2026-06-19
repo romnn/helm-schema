@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::abstract_value::AbstractValue;
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding::{self, FragmentBinding};
 use crate::helper_binding::HelperBinding;
 use crate::helper_summary::HelperSummary;
 use crate::output_path;
@@ -29,7 +29,7 @@ pub(crate) fn helper_definitely_nonempty_iterable(binding: &HelperBinding) -> bo
 pub(crate) fn project_fragment_binding(analysis: HelperSummary) -> Option<FragmentBinding> {
     project_binding_value(analysis, ProjectionTarget::Fragment)
         .and_then(|value| value.to_fragment_binding())
-        .and_then(|binding| FragmentBinding::merge_all(vec![binding]))
+        .and_then(|binding| fragment_binding::merge_all(vec![binding]))
 }
 
 pub(crate) fn project_helper_binding(analysis: HelperSummary) -> Option<HelperBinding> {
@@ -112,6 +112,7 @@ mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
     use super::{project_fragment_binding, project_helper_binding};
+    use crate::fragment_binding;
     use crate::fragment_binding::FragmentBinding;
     use crate::helper_binding::HelperBinding;
     use crate::helper_summary::{HelperOutputMeta, HelperSummary};
@@ -158,7 +159,7 @@ mod tests {
             project_fragment_binding(analysis),
             Some(FragmentBinding::Dict(BTreeMap::from([(
                 "app".to_string(),
-                FragmentBinding::OutputSet(BTreeSet::from(["podLabels".to_string()])),
+                fragment_binding::output_set(BTreeSet::from(["podLabels".to_string()])),
             )])))
         );
     }
@@ -172,7 +173,7 @@ mod tests {
 
         assert_eq!(
             project_fragment_binding(analysis),
-            Some(FragmentBinding::OutputSet(BTreeSet::from([
+            Some(fragment_binding::output_set(BTreeSet::from([
                 "extraEnv".to_string(),
                 "image.repository".to_string(),
                 "image.tag".to_string(),

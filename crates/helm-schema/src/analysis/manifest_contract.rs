@@ -1,8 +1,7 @@
 use std::io::Read;
 
-use helm_schema_engine::helpers::DefineIndex;
-use helm_schema_engine::parse::contains_template_action;
-use helm_schema_engine::{ContractIr, Guard, SymbolicIrContext};
+use helm_schema_ast::{DefineIndex, contains_template_action};
+use helm_schema_ir::{ContractIr, Guard, SymbolicIrContext};
 use helm_schema_k8s::LocalResourceSchema;
 use vfs::VfsPath;
 

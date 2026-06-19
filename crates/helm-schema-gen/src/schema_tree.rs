@@ -7,6 +7,63 @@ use crate::schema_model::{is_empty_schema, schema_type};
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 
+pub(crate) struct SchemaDocument {
+    root: Value,
+}
+
+impl SchemaDocument {
+    pub(crate) fn new_root_object() -> Self {
+        Self {
+            root: object_schema(Map::new()),
+        }
+    }
+
+    pub(crate) fn from_value(root: Value) -> Self {
+        Self { root }
+    }
+
+    pub(crate) fn insert_path_schema(&mut self, path_segments: &[String], schema: Value) {
+        insert_schema_at_path_segments(&mut self.root, path_segments, schema);
+    }
+
+    pub(crate) fn append_conditional(
+        &mut self,
+        ancestor_segments: &[String],
+        condition: Value,
+        then_schema: Value,
+    ) {
+        let ancestor = ensure_schema_node_at_path_segments(&mut self.root, ancestor_segments);
+        append_conditional_entry(ancestor, condition, then_schema);
+    }
+
+    pub(crate) fn apply_descriptions(&mut self, descriptions: &BTreeMap<String, String>) {
+        apply_values_descriptions(&mut self.root, descriptions);
+    }
+
+    pub(crate) fn into_value(self) -> Value {
+        self.root
+    }
+}
+
+pub(crate) fn draft07_root_document(root_schema: Value) -> Value {
+    let mut out = Map::new();
+    out.insert(
+        "$schema".to_string(),
+        Value::String("http://json-schema.org/draft-07/schema#".to_string()),
+    );
+
+    if let Value::Object(obj) = root_schema {
+        for (k, v) in obj {
+            out.insert(k, v);
+        }
+    } else {
+        out.insert("type".to_string(), Value::String("object".to_string()));
+        out.insert("properties".to_string(), Value::Object(Map::new()));
+        out.insert("additionalProperties".to_string(), Value::Bool(false));
+    }
+    Value::Object(out)
+}
+
 pub(crate) fn object_schema(properties: Map<String, Value>) -> Value {
     Value::Object(
         [
@@ -102,6 +159,26 @@ pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMa
             .collect();
         apply_description_at_path_segments(root, &path_segments, description);
     }
+}
+
+pub(crate) fn append_conditional_entry(node: &mut Value, condition: Value, then_schema: Value) {
+    let Value::Object(object) = node else {
+        return;
+    };
+    let all_of = object
+        .entry("allOf".to_string())
+        .or_insert_with(|| Value::Array(Vec::new()));
+    let Value::Array(entries) = all_of else {
+        return;
+    };
+    entries.push(Value::Object(
+        [
+            ("if".to_string(), condition),
+            ("then".to_string(), then_schema),
+        ]
+        .into_iter()
+        .collect(),
+    ));
 }
 
 fn apply_description_at_path_segments(

@@ -11,6 +11,8 @@ use crate::error::{CliError, CliResult};
 pub struct LoadBudget {
     pub max_chart_archive_bytes: usize,
     pub max_schema_document_bytes: usize,
+    pub max_chart_archive_entries: usize,
+    pub max_chart_archive_unpacked_bytes: usize,
 }
 
 impl LoadBudget {
@@ -19,7 +21,20 @@ impl LoadBudget {
         Self {
             max_chart_archive_bytes,
             max_schema_document_bytes,
+            max_chart_archive_entries: 4096,
+            max_chart_archive_unpacked_bytes: 256 * 1024 * 1024,
         }
+    }
+
+    #[must_use]
+    pub const fn with_chart_archive_limits(
+        mut self,
+        max_chart_archive_entries: usize,
+        max_chart_archive_unpacked_bytes: usize,
+    ) -> Self {
+        self.max_chart_archive_entries = max_chart_archive_entries;
+        self.max_chart_archive_unpacked_bytes = max_chart_archive_unpacked_bytes;
+        self
     }
 }
 

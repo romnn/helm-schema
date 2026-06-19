@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
-use std::path::Path;
+use std::path::{Component, Path};
 
 use flate2::read::GzDecoder;
 use serde::Deserialize;
@@ -175,21 +175,52 @@ fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> CliResult<V
     let mut archive = tar::Archive::new(gz);
 
     let root = VfsPath::new(vfs::MemoryFS::new());
+    let mut extracted_entries = 0usize;
+    let mut extracted_bytes = 0usize;
     for entry in archive.entries()? {
         let mut entry = entry?;
         if !entry.header().entry_type().is_file() {
             continue;
         }
-        let path = entry.path()?;
-        let path_str = path.to_string_lossy();
+        extracted_entries = extracted_entries.saturating_add(1);
+        if extracted_entries > load_budget.max_chart_archive_entries {
+            return Err(CliError::LoadEntryBudgetExceeded {
+                subject: path.as_str().to_string(),
+                limit_entries: load_budget.max_chart_archive_entries,
+            });
+        }
+        let entry_path = entry.path()?;
+        validate_archive_entry_path(path.as_str(), &entry_path)?;
+        let path_str = entry_path.to_string_lossy();
         let out = root.join(path_str.as_ref())?;
         out.parent().create_dir_all()?;
         let mut file = out.create_file()?;
-        std::io::copy(&mut entry, &mut file)?;
+        let copied = std::io::copy(&mut entry, &mut file)?;
+        extracted_bytes = extracted_bytes.saturating_add(copied as usize);
+        if extracted_bytes > load_budget.max_chart_archive_unpacked_bytes {
+            return Err(CliError::LoadBudgetExceeded {
+                subject: format!("expanded {}", path.as_str()),
+                limit_bytes: load_budget.max_chart_archive_unpacked_bytes,
+            });
+        }
     }
 
     find_chart_dir(&root)?.ok_or_else(|| CliError::NoChartYamlInArchive {
         archive: path.as_str().to_string(),
+    })
+}
+
+pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> CliResult<()> {
+    let is_safe = entry_path
+        .components()
+        .all(|component| matches!(component, Component::Normal(_) | Component::CurDir));
+    if is_safe {
+        return Ok(());
+    }
+
+    Err(CliError::UnsafeArchiveEntryPath {
+        archive: archive.to_string(),
+        entry_path: entry_path.display().to_string(),
     })
 }
 

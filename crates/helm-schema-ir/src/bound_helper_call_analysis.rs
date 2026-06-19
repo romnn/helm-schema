@@ -47,7 +47,7 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals_in_exprs(
     analysis
 }
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all, fields(helper = name))]
 pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
     name: &str,
     arg: Option<&TemplateExpr>,
@@ -62,6 +62,7 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
     }
 
     let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
+        helper_name: name,
         arg,
         outer_bindings,
         current_dot,

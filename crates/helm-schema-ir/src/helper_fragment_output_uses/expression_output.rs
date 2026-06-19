@@ -6,7 +6,7 @@ use crate::bound_helper_env::BoundHelperEnv;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding::{self, FragmentBinding};
 use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
 use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_binding::HelperBinding;
@@ -216,7 +216,7 @@ fn collect_bound_fragment_output_assignment_uses(
         top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
         if let Some(nested_binding) = project_fragment_binding(nested) {
             binding = match binding {
-                Some(binding) => FragmentBinding::merge_all(vec![binding, nested_binding]),
+                Some(binding) => fragment_binding::merge_all(vec![binding, nested_binding]),
                 None => Some(nested_binding),
             };
         }
@@ -232,11 +232,12 @@ fn collect_bound_fragment_output_assignment_uses(
         let mut internal_item_paths = current_item_paths;
         internal_item_paths.extend(top_level_helper_dependency_paths);
         if !internal_item_paths.is_empty() {
-            binding = binding.and_then(|binding| binding.remove_paths(&internal_item_paths));
+            binding = binding
+                .and_then(|binding| fragment_binding::remove_paths(binding, &internal_item_paths));
         }
         binding = match binding {
             Some(binding) => {
-                FragmentBinding::merge_all(vec![binding, current_dot_fragment.clone()])
+                fragment_binding::merge_all(vec![binding, current_dot_fragment.clone()])
             }
             None => Some(current_dot_fragment.clone()),
         };

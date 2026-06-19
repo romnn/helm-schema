@@ -138,3 +138,150 @@ fn vendored_chart_archive_respects_load_budget() -> color_eyre::eyre::Result<()>
 
     Ok(())
 }
+
+#[test]
+fn vendored_chart_archive_respects_expanded_budget() -> color_eyre::eyre::Result<()> {
+    use std::io::Write;
+
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+
+    let mut tar_bytes = Vec::new();
+    {
+        let encoder = flate2::write::GzEncoder::new(&mut tar_bytes, flate2::Compression::default());
+        let mut builder = tar::Builder::new(encoder);
+
+        let chart_yaml = b"apiVersion: v2\nname: child\nversion: 0.1.0\n";
+        let mut chart_header = tar::Header::new_gnu();
+        chart_header.set_size(chart_yaml.len() as u64);
+        chart_header.set_mode(0o644);
+        chart_header.set_cksum();
+        builder.append_data(
+            &mut chart_header,
+            "child/Chart.yaml",
+            std::io::Cursor::new(chart_yaml.as_slice()),
+        )?;
+
+        let filler = vec![b'x'; 4096];
+        let mut values_header = tar::Header::new_gnu();
+        values_header.set_size(filler.len() as u64);
+        values_header.set_mode(0o644);
+        values_header.set_cksum();
+        builder.append_data(
+            &mut values_header,
+            "child/values.yaml",
+            std::io::Cursor::new(filler),
+        )?;
+
+        builder.finish()?;
+    }
+
+    let archive_path = chart_dir.join("charts/child.tgz")?;
+    archive_path.parent().create_dir_all()?;
+    archive_path.create_file()?.write_all(&tar_bytes)?;
+
+    let err = super::discovery::discover_chart_contexts_with_budget(
+        &chart_dir,
+        crate::load_budget::LoadBudget::new(16 * 1024, 1024).with_chart_archive_limits(16, 1024),
+    )
+    .expect_err("archive should exceed expanded budget");
+
+    match err {
+        crate::CliError::LoadBudgetExceeded {
+            subject,
+            limit_bytes,
+        } => {
+            assert!(subject.contains("expanded"));
+            assert_eq!(limit_bytes, 1024);
+        }
+        other => panic!("expected expanded load budget error, got {other:?}"),
+    }
+
+    Ok(())
+}
+
+#[test]
+fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()> {
+    use std::io::Write;
+
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+
+    let mut tar_bytes = Vec::new();
+    {
+        let encoder = flate2::write::GzEncoder::new(&mut tar_bytes, flate2::Compression::default());
+        let mut builder = tar::Builder::new(encoder);
+
+        for (path, bytes) in [
+            (
+                "child/Chart.yaml",
+                b"apiVersion: v2\nname: child\nversion: 0.1.0\n".as_slice(),
+            ),
+            ("child/values.yaml", b"enabled: true\n".as_slice()),
+            (
+                "child/templates/configmap.yaml",
+                b"apiVersion: v1\nkind: ConfigMap\n".as_slice(),
+            ),
+        ] {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(bytes.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            builder.append_data(&mut header, path, std::io::Cursor::new(bytes))?;
+        }
+
+        builder.finish()?;
+    }
+
+    let archive_path = chart_dir.join("charts/child.tgz")?;
+    archive_path.parent().create_dir_all()?;
+    archive_path.create_file()?.write_all(&tar_bytes)?;
+
+    let err = super::discovery::discover_chart_contexts_with_budget(
+        &chart_dir,
+        crate::load_budget::LoadBudget::new(16 * 1024, 1024)
+            .with_chart_archive_limits(2, 16 * 1024),
+    )
+    .expect_err("archive should exceed entry budget");
+
+    match err {
+        crate::CliError::LoadEntryBudgetExceeded {
+            subject,
+            limit_entries,
+        } => {
+            assert!(subject.contains("child.tgz"));
+            assert_eq!(limit_entries, 2);
+        }
+        other => panic!("expected entry budget error, got {other:?}"),
+    }
+
+    Ok(())
+}
+
+#[test]
+fn vendored_chart_archive_rejects_unsafe_entry_paths() -> color_eyre::eyre::Result<()> {
+    let err = super::discovery::validate_archive_entry_path(
+        "charts/child.tgz",
+        std::path::Path::new("../child/Chart.yaml"),
+    )
+    .expect_err("archive should reject unsafe entry path");
+
+    match err {
+        crate::CliError::UnsafeArchiveEntryPath {
+            archive,
+            entry_path,
+        } => {
+            assert!(archive.contains("child.tgz"));
+            assert_eq!(entry_path, "../child/Chart.yaml");
+        }
+        other => panic!("expected unsafe archive entry error, got {other:?}"),
+    }
+
+    Ok(())
+}

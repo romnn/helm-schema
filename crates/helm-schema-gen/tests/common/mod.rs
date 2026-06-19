@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use helm_schema_ast::{DefineIndex, HelmParser};
 use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::ContractIr;
@@ -7,6 +8,21 @@ use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProv
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
+
+pub fn build_define_index(
+    parser: &dyn HelmParser,
+    spec: test_util::DefineSourceSpec<'_>,
+) -> DefineIndex {
+    let loaded = spec.load();
+    let mut idx = DefineIndex::new();
+    for source in loaded.helper_templates {
+        let _ = idx.add_source(parser, &source);
+    }
+    for (name, source) in loaded.file_sources {
+        idx.add_file_source(&name, &source);
+    }
+    idx
+}
 
 /// Production-like K8s provider path for chart-level generator tests.
 ///

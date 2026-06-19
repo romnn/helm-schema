@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use helm_schema_engine::parse::extract_values_yaml_descriptions;
+use helm_schema_ast::extract_values_yaml_descriptions;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
 use vfs::VfsPath;

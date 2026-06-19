@@ -3,8 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::ValueKind;
 use crate::contract::{ContractTypeHint, ContractUse};
 use crate::contract_signals::{
-    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
-    ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
+    ContractValuePathFacts, MetadataFieldKind,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 
@@ -107,17 +108,10 @@ impl ContractSchemaSignalBuilder {
             &nullable_value_paths,
             &paths_with_referenced_descendants,
         );
-        let schema_evidence_by_value_path = build_schema_evidence_by_value_path(
-            &self.path_signals,
-            &self.provider_schema_uses,
-            &self.requiredness_by_path,
-            &self.type_hints_by_value_path,
-            &value_path_facts,
-        );
-        let conditional_path_overlays = self
+        let conditional_overlays_by_path = self
             .conditional_overlays_by_path
             .into_iter()
-            .flat_map(|(target_value_path, accumulator)| {
+            .map(|(target_value_path, accumulator)| {
                 let global_facts = value_path_facts
                     .get(&target_value_path)
                     .copied()
@@ -127,11 +121,22 @@ impl ContractSchemaSignalBuilder {
                     .get(&target_value_path)
                     .cloned()
                     .unwrap_or_default();
-                accumulator.finish(target_value_path, global_facts, type_hints)
+                (
+                    target_value_path.clone(),
+                    accumulator.finish(global_facts, type_hints),
+                )
             })
             .collect();
+        let schema_evidence_by_value_path = build_schema_evidence_by_value_path(
+            &self.path_signals,
+            &self.provider_schema_uses,
+            &self.requiredness_by_path,
+            &self.type_hints_by_value_path,
+            &value_path_facts,
+            &conditional_overlays_by_path,
+        );
 
-        ContractSchemaSignals::new(schema_evidence_by_value_path, conditional_path_overlays)
+        ContractSchemaSignals::new(schema_evidence_by_value_path)
     }
 
     fn record_declared_type_hint(&mut self, type_hint: &ContractTypeHint) {
@@ -359,7 +364,6 @@ impl ContractSchemaSignalBuilder {
 impl ConditionalOverlayAccumulator {
     fn finish(
         self,
-        target_value_path: String,
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
     ) -> Vec<ConditionalPathOverlay> {
@@ -370,13 +374,8 @@ impl ConditionalOverlayAccumulator {
         self.branches_by_guards
             .into_iter()
             .map(|(guards, branch)| {
-                let evidence = branch.schema_evidence(
-                    target_value_path.clone(),
-                    global_facts,
-                    type_hints.clone(),
-                );
+                let evidence = branch.schema_evidence(global_facts, type_hints.clone());
                 ConditionalPathOverlay {
-                    target_value_path: target_value_path.clone(),
                     guards,
                     evidence,
                     preserve_base_schema,
@@ -424,10 +423,9 @@ impl ConditionalOverlayBranchAccumulator {
 
     fn schema_evidence(
         self,
-        value_path: String,
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
-    ) -> ContractPathSchemaEvidence {
+    ) -> ConditionalOverlayEvidence {
         let facts = ContractValuePathFacts {
             has_referenced_descendants: global_facts.has_referenced_descendants,
             used_as_fragment: self.used_as_fragment,
@@ -439,15 +437,11 @@ impl ConditionalOverlayBranchAccumulator {
             has_self_range_guard_render_use: self.has_self_range_guard_render_use,
             is_nullable: self.has_render_use && self.all_uses_nullable,
         };
-        ContractPathSchemaEvidence {
-            value_path,
-            is_referenced_value_path: true,
+        ConditionalOverlayEvidence {
             facts,
-            guard_predicates: Vec::new(),
             metadata_field_kinds: self.metadata_field_kinds,
             type_hints,
             provider_schema_uses: self.provider_schema_uses,
-            requiredness: ContractRequirednessEvidence::default(),
         }
     }
 }
@@ -458,6 +452,7 @@ fn build_schema_evidence_by_value_path(
     requiredness_by_path: &BTreeMap<String, ContractRequirednessEvidence>,
     type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
     value_path_facts: &BTreeMap<String, ContractValuePathFacts>,
+    conditional_overlays_by_path: &BTreeMap<String, Vec<ConditionalPathOverlay>>,
 ) -> BTreeMap<String, ContractPathSchemaEvidence> {
     let mut provider_uses_by_path: BTreeMap<String, Vec<ProviderSchemaUse>> = BTreeMap::new();
     for provider_use in provider_schema_uses {
@@ -472,6 +467,7 @@ fn build_schema_evidence_by_value_path(
     paths.extend(type_hints_by_value_path.keys().cloned());
     paths.extend(provider_uses_by_path.keys().cloned());
     paths.extend(requiredness_by_path.keys().cloned());
+    paths.extend(conditional_overlays_by_path.keys().cloned());
 
     paths
         .into_iter()
@@ -504,6 +500,10 @@ fn build_schema_evidence_by_value_path(
                 requiredness: requiredness_by_path
                     .get(&value_path)
                     .copied()
+                    .unwrap_or_default(),
+                conditional_overlays: conditional_overlays_by_path
+                    .get(&value_path)
+                    .cloned()
                     .unwrap_or_default(),
             };
             (value_path, evidence)

@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding::{self, FragmentBinding};
 use crate::helper_summary::HelperOutputMeta;
 
 use super::SymbolicLocalState;
@@ -86,7 +86,7 @@ fn join_fragment_bindings(outcomes: &[SymbolicLocalState]) -> HashMap<String, Fr
             };
             bindings.push(binding.clone());
         }
-        if present_in_all_outcomes && let Some(binding) = FragmentBinding::choice(bindings) {
+        if present_in_all_outcomes && let Some(binding) = fragment_binding::choice(bindings) {
             joined.insert(variable, binding);
         }
     }

@@ -581,10 +581,8 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
         None,
     )]);
 
-    let overlay = signals
-        .conditional_path_overlays()
-        .first()
-        .expect("expected conditional overlay");
+    let overlays = signals.conditional_path_overlays();
+    let overlay = overlays.first().expect("expected conditional overlay");
     assert_eq!(
         overlay.target_value_path, "feature.host",
         "overlay should stay keyed by the values path being lowered"
@@ -626,10 +624,8 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
         None,
     )]);
 
-    let overlay = signals
-        .conditional_path_overlays()
-        .first()
-        .expect("expected conditional overlay");
+    let overlays = signals.conditional_path_overlays();
+    let overlay = overlays.first().expect("expected conditional overlay");
     assert_eq!(
         overlay.guards,
         vec![ConditionalGuard::Truthy {
@@ -698,24 +694,21 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ),
     ]);
 
-    assert_eq!(signals.conditional_path_overlays().len(), 4);
-    let feature_overlay = signals
-        .conditional_path_overlays()
+    let overlays = signals.conditional_path_overlays();
+    assert_eq!(overlays.len(), 4);
+    let feature_overlay = overlays
         .iter()
         .find(|overlay| overlay.target_value_path == "feature.host")
         .expect("feature.host overlay");
-    let other_overlay = signals
-        .conditional_path_overlays()
+    let other_overlay = overlays
         .iter()
         .find(|overlay| overlay.target_value_path == "other.host")
         .expect("other.host overlay");
-    let preset_overlay = signals
-        .conditional_path_overlays()
+    let preset_overlay = overlays
         .iter()
         .find(|overlay| overlay.target_value_path == "preset.resources")
         .expect("preset.resources overlay");
-    let image_overlay = signals
-        .conditional_path_overlays()
+    let image_overlay = overlays
         .iter()
         .find(|overlay| overlay.target_value_path == "image.tag")
         .expect("image.tag overlay");
@@ -761,12 +754,9 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ])],
     );
     assert!(
-        signals
-            .conditional_path_overlays()
-            .iter()
-            .all(|overlay| !overlay.preserve_base_schema),
+        overlays.iter().all(|overlay| !overlay.preserve_base_schema),
         "guarded-only branches must not preserve branch-specific evidence on the global base path: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
 }
 
@@ -795,13 +785,14 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
         ),
     ]);
 
+    let overlays = signals.conditional_path_overlays();
     assert_eq!(
-        signals.conditional_path_overlays().len(),
+        overlays.len(),
         2,
         "multiple supported guard sets for the same values path should survive as separate overlays"
     );
     assert!(
-        signals.conditional_path_overlays().iter().any(|overlay| {
+        overlays.iter().any(|overlay| {
             overlay.guards
                 == vec![ConditionalGuard::Eq {
                     path: "mode".to_string(),
@@ -813,7 +804,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
         "expected a metadata.name-targeted branch overlay"
     );
     assert!(
-        signals.conditional_path_overlays().iter().any(|overlay| {
+        overlays.iter().any(|overlay| {
             overlay.guards
                 == vec![ConditionalGuard::Eq {
                     path: "mode".to_string(),
@@ -857,29 +848,29 @@ fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditio
         ),
     ]);
 
+    let overlays = signals.conditional_path_overlays();
     assert_eq!(
-        signals.conditional_path_overlays().len(),
+        overlays.len(),
         1,
         "supported guarded branches should survive even when the path also has an unconditional base use: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
     assert_eq!(
-        signals.conditional_path_overlays()[0].guards,
+        overlays[0].guards,
         vec![ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }],
     );
     assert!(
-        signals.conditional_path_overlays()[0].preserve_base_schema,
+        overlays[0].preserve_base_schema,
         "unguarded peers should request base-schema preservation"
     );
     assert!(
-        !signals
-            .conditional_path_overlays()
+        !overlays
             .iter()
             .any(|overlay| overlay.target_value_path == "other.path"),
         "unsupported range-guarded paths must still stay on the wide/base path: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
 }
 
@@ -916,19 +907,17 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
         ),
     ]);
 
+    let overlays = signals.conditional_path_overlays();
     assert_eq!(
-        signals.conditional_path_overlays().len(),
+        overlays.len(),
         2,
         "complementary guarded branches should both survive: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
     assert!(
-        signals
-            .conditional_path_overlays()
-            .iter()
-            .all(|overlay| !overlay.preserve_base_schema),
+        overlays.iter().all(|overlay| !overlay.preserve_base_schema),
         "a complete truthy/not partition should be allowed to replace the base schema entirely: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
 }
 
@@ -974,19 +963,17 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
         ),
     ]);
 
+    let overlays = signals.conditional_path_overlays();
     assert_eq!(
-        signals.conditional_path_overlays().len(),
+        overlays.len(),
         3,
         "the broad shared branch and the complementary sub-branches should all survive: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
     assert!(
-        signals
-            .conditional_path_overlays()
-            .iter()
-            .all(|overlay| !overlay.preserve_base_schema),
+        overlays.iter().all(|overlay| !overlay.preserve_base_schema),
         "a shared broad branch plus a truthy/not partition should still replace the base schema: {:?}",
-        signals.conditional_path_overlays()
+        overlays
     );
 }
 

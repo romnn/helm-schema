@@ -379,114 +379,220 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn from_helper_binding(binding: &HelperBinding) -> Self {
-        match binding {
-            HelperBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),
-            HelperBinding::RootContext => Self::RootContext,
-            HelperBinding::Unknown => Self::Unknown,
-            HelperBinding::OutputSet(outputs) => Self::OutputSet(outputs.clone()),
-            HelperBinding::StringSet(strings) => Self::StringSet(strings.clone()),
-            HelperBinding::PathSet(paths) => Self::PathSet(paths.clone()),
-            HelperBinding::Dict(map) => Self::Dict(
-                map.iter()
-                    .map(|(key, value)| (key.clone(), Self::from_helper_binding(value)))
-                    .collect(),
-            ),
-            HelperBinding::List(items) => {
-                Self::List(items.iter().map(Self::from_helper_binding).collect())
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub(crate) fn is_values_root(&self) -> bool {
+        matches!(self, Self::ValuesPath(path) if path.is_empty())
+    }
+
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub(crate) fn fragment_output_paths(paths: impl IntoIterator<Item = String>) -> Self {
+        Self::OutputSet(
+            paths
+                .into_iter()
+                .map(|path| (path, HelperOutputMeta::default()))
+                .collect(),
+        )
+    }
+
+    pub(crate) fn merge_fragment_bindings(bindings: Vec<Self>) -> Option<Self> {
+        let mut map = BTreeMap::new();
+        let mut non_dict_value_paths = BTreeSet::new();
+        let mut non_dict_output_meta: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+        let mut non_dict_strings = BTreeSet::new();
+
+        let mut pending = bindings;
+        while let Some(binding) = pending.pop() {
+            match binding {
+                Self::Choice(choices) => pending.extend(choices),
+                Self::Dict(entries) => {
+                    for (key, value) in entries {
+                        let merged = match map.remove(&key) {
+                            Some(existing) => Self::choice(vec![existing, value]),
+                            None => Some(value),
+                        };
+                        if let Some(merged) = merged {
+                            map.insert(key, merged);
+                        }
+                    }
+                }
+                Self::Overlay { entries, fallback } => {
+                    pending.push(*fallback);
+                    for (key, value) in entries {
+                        let merged = match map.remove(&key) {
+                            Some(existing) => Self::choice(vec![existing, value]),
+                            None => Some(value),
+                        };
+                        if let Some(merged) = merged {
+                            map.insert(key, merged);
+                        }
+                    }
+                }
+                Self::ValuesPath(path) => {
+                    non_dict_value_paths.insert(path);
+                }
+                Self::PathSet(paths) => {
+                    non_dict_value_paths.extend(paths);
+                }
+                Self::OutputSet(outputs) => {
+                    for (path, meta) in outputs {
+                        non_dict_output_meta.entry(path).or_default().merge(meta);
+                    }
+                }
+                Self::StringSet(strings) => {
+                    non_dict_strings.extend(strings);
+                }
+                Self::RootContext | Self::Unknown | Self::Top | Self::List(_) => {}
             }
-            HelperBinding::Overlay { entries, fallback } => Self::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| (key.clone(), Self::from_helper_binding(value)))
-                    .collect(),
-                fallback: Box::new(Self::from_helper_binding(fallback)),
-            },
-            HelperBinding::Choice(choices) => Self::Choice(
+        }
+
+        let mut fallback_choices = Vec::new();
+        if !non_dict_value_paths.is_empty() {
+            fallback_choices.push(Self::PathSet(non_dict_value_paths));
+        }
+        if !non_dict_output_meta.is_empty() {
+            fallback_choices.push(Self::OutputSet(non_dict_output_meta));
+        }
+        if !non_dict_strings.is_empty() {
+            fallback_choices.push(Self::StringSet(non_dict_strings));
+        }
+        let fallback = Self::choice(fallback_choices);
+
+        if map.is_empty() {
+            fallback
+        } else if let Some(fallback) = fallback {
+            Some(Self::Overlay {
+                entries: map,
+                fallback: Box::new(fallback),
+            })
+        } else {
+            Some(Self::Dict(map))
+        }
+    }
+
+    pub(crate) fn remove_fragment_paths(self, remove: &BTreeSet<String>) -> Option<Self> {
+        if remove.is_empty() {
+            return Some(self);
+        }
+
+        match self {
+            Self::ValuesPath(path) if remove.contains(&path) => None,
+            Self::ValuesPath(_)
+            | Self::RootContext
+            | Self::Unknown
+            | Self::Top
+            | Self::StringSet(_) => Some(self),
+            Self::OutputSet(mut outputs) => {
+                outputs.retain(|path, _| !remove.contains(path));
+                if outputs.is_empty() {
+                    None
+                } else {
+                    Some(Self::OutputSet(outputs))
+                }
+            }
+            Self::PathSet(mut paths) => {
+                paths.retain(|path| !remove.contains(path));
+                if paths.is_empty() {
+                    None
+                } else {
+                    Some(Self::PathSet(paths))
+                }
+            }
+            Self::Dict(entries) => {
+                let entries = entries
+                    .into_iter()
+                    .filter_map(|(key, value)| {
+                        value
+                            .remove_fragment_paths(remove)
+                            .map(|value| (key, value))
+                    })
+                    .collect::<BTreeMap<_, _>>();
+                if entries.is_empty() {
+                    None
+                } else {
+                    Some(Self::Dict(entries))
+                }
+            }
+            Self::List(items) => {
+                let items = items
+                    .into_iter()
+                    .filter_map(|item| item.remove_fragment_paths(remove))
+                    .collect::<Vec<_>>();
+                if items.is_empty() {
+                    None
+                } else {
+                    Some(Self::List(items))
+                }
+            }
+            Self::Overlay { entries, fallback } => {
+                let entries = entries
+                    .into_iter()
+                    .filter_map(|(key, value)| {
+                        value
+                            .remove_fragment_paths(remove)
+                            .map(|value| (key, value))
+                    })
+                    .collect::<BTreeMap<_, _>>();
+                match (entries.is_empty(), fallback.remove_fragment_paths(remove)) {
+                    (true, fallback) => fallback,
+                    (false, Some(fallback)) => Some(Self::Overlay {
+                        entries,
+                        fallback: Box::new(fallback),
+                    }),
+                    (false, None) => Some(Self::Dict(entries)),
+                }
+            }
+            Self::Choice(choices) => Self::choice(
                 choices
-                    .iter()
-                    .map(Self::from_helper_binding)
-                    .collect::<BTreeSet<_>>(),
+                    .into_iter()
+                    .filter_map(|choice| choice.remove_fragment_paths(remove))
+                    .collect(),
             ),
         }
     }
 
+    pub(crate) fn from_helper_binding(binding: &HelperBinding) -> Self {
+        binding.clone()
+    }
+
     pub(crate) fn from_fragment_binding(binding: &FragmentBinding) -> Self {
-        match binding {
-            FragmentBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),
-            FragmentBinding::ValuesRoot => Self::ValuesPath(String::new()),
-            FragmentBinding::RootContext => Self::RootContext,
-            FragmentBinding::Unknown => Self::Unknown,
-            FragmentBinding::OutputSet(paths) => Self::OutputSet(
-                paths
-                    .iter()
-                    .map(|path| (path.clone(), HelperOutputMeta::default()))
-                    .collect(),
-            ),
-            FragmentBinding::StringSet(strings) => Self::StringSet(strings.clone()),
-            FragmentBinding::PathSet(paths) => Self::PathSet(paths.clone()),
-            FragmentBinding::Dict(map) => Self::Dict(
-                map.iter()
-                    .map(|(key, value)| (key.clone(), Self::from_fragment_binding(value)))
-                    .collect(),
-            ),
-            FragmentBinding::List(items) => {
-                Self::List(items.iter().map(Self::from_fragment_binding).collect())
-            }
-            FragmentBinding::Overlay { entries, fallback } => Self::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| (key.clone(), Self::from_fragment_binding(value)))
-                    .collect(),
-                fallback: Box::new(Self::from_fragment_binding(fallback)),
-            },
-            FragmentBinding::Choice(choices) => Self::Choice(
-                choices
-                    .iter()
-                    .map(Self::from_fragment_binding)
-                    .collect::<BTreeSet<_>>(),
-            ),
-        }
+        binding.clone()
     }
 
     /// Project a fragment binding for rendered-output attribution.
     ///
-    /// `ValuesRoot` means the whole values document is available as data, not
+    /// An empty values-root path means the whole values document is available as
+    /// data, not
     /// that the output path is the whole values document. Output attribution
     /// therefore abstains instead of inventing a root source path.
     pub(crate) fn from_fragment_output_binding(binding: &FragmentBinding) -> Self {
         match binding {
-            FragmentBinding::ValuesRoot => Self::Unknown,
-            FragmentBinding::ValuesPath(path) => Self::ValuesPath(path.clone()),
-            FragmentBinding::RootContext => Self::RootContext,
-            FragmentBinding::Unknown => Self::Unknown,
-            FragmentBinding::OutputSet(paths) => Self::OutputSet(
-                paths
-                    .iter()
-                    .map(|path| (path.clone(), HelperOutputMeta::default()))
-                    .collect(),
-            ),
-            FragmentBinding::StringSet(strings) => Self::StringSet(strings.clone()),
-            FragmentBinding::PathSet(paths) => Self::PathSet(paths.clone()),
-            FragmentBinding::Dict(map) => Self::Dict(
+            Self::ValuesPath(path) if path.is_empty() => Self::Unknown,
+            Self::ValuesPath(path) => Self::ValuesPath(path.clone()),
+            Self::RootContext => Self::RootContext,
+            Self::Unknown => Self::Unknown,
+            Self::Top => Self::Top,
+            Self::OutputSet(outputs) => Self::OutputSet(outputs.clone()),
+            Self::StringSet(strings) => Self::StringSet(strings.clone()),
+            Self::PathSet(paths) => Self::PathSet(paths.clone()),
+            Self::Dict(map) => Self::Dict(
                 map.iter()
                     .map(|(key, value)| (key.clone(), Self::from_fragment_output_binding(value)))
                     .collect(),
             ),
-            FragmentBinding::List(items) => Self::List(
+            Self::List(items) => Self::List(
                 items
                     .iter()
                     .map(Self::from_fragment_output_binding)
                     .collect(),
             ),
-            FragmentBinding::Overlay { entries, fallback } => Self::Overlay {
+            Self::Overlay { entries, fallback } => Self::Overlay {
                 entries: entries
                     .iter()
                     .map(|(key, value)| (key.clone(), Self::from_fragment_output_binding(value)))
                     .collect(),
                 fallback: Box::new(Self::from_fragment_output_binding(fallback)),
             },
-            FragmentBinding::Choice(choices) => Self::Choice(
+            Self::Choice(choices) => Self::Choice(
                 choices
                     .iter()
                     .map(Self::from_fragment_output_binding)
@@ -529,78 +635,17 @@ impl AbstractValue {
     }
 
     pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
-        match self {
-            Self::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
-            Self::Top => Some(HelperBinding::Unknown),
-            Self::RootContext => Some(HelperBinding::RootContext),
-            Self::Unknown => Some(HelperBinding::Unknown),
-            Self::StringSet(strings) => Some(HelperBinding::StringSet(strings.clone())),
-            Self::OutputSet(outputs) => Some(HelperBinding::OutputSet(outputs.clone())),
-            Self::PathSet(paths) => Some(HelperBinding::PathSet(paths.clone())),
-            Self::Dict(map) => Some(HelperBinding::Dict(
-                map.iter()
-                    .map(|(key, value)| Some((key.clone(), value.to_helper_binding()?)))
-                    .collect::<Option<BTreeMap<_, _>>>()?,
-            )),
-            Self::List(items) => Some(HelperBinding::List(
-                items
-                    .iter()
-                    .map(Self::to_helper_binding)
-                    .collect::<Option<Vec<_>>>()?,
-            )),
-            Self::Overlay { entries, fallback } => Some(HelperBinding::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| Some((key.clone(), value.to_helper_binding()?)))
-                    .collect::<Option<BTreeMap<_, _>>>()?,
-                fallback: Box::new(fallback.to_helper_binding()?),
-            }),
-            Self::Choice(choices) => HelperBinding::choice(
-                choices
-                    .iter()
-                    .map(Self::to_helper_binding)
-                    .collect::<Option<Vec<_>>>()?,
-            ),
-        }
+        Some(match self {
+            Self::Top => Self::Unknown,
+            other => other.clone(),
+        })
     }
 
     pub(crate) fn to_fragment_binding(&self) -> Option<FragmentBinding> {
-        match self {
-            Self::ValuesPath(path) if path.is_empty() => Some(FragmentBinding::ValuesRoot),
-            Self::ValuesPath(path) => Some(FragmentBinding::ValuesPath(path.clone())),
-            Self::Top => Some(FragmentBinding::Unknown),
-            Self::RootContext => Some(FragmentBinding::RootContext),
-            Self::Unknown => Some(FragmentBinding::Unknown),
-            Self::OutputSet(outputs) => Some(FragmentBinding::OutputSet(
-                outputs.keys().cloned().collect(),
-            )),
-            Self::StringSet(strings) => Some(FragmentBinding::StringSet(strings.clone())),
-            Self::PathSet(paths) => Some(FragmentBinding::PathSet(paths.clone())),
-            Self::Dict(map) => Some(FragmentBinding::Dict(
-                map.iter()
-                    .map(|(key, value)| Some((key.clone(), value.to_fragment_binding()?)))
-                    .collect::<Option<BTreeMap<_, _>>>()?,
-            )),
-            Self::List(items) => Some(FragmentBinding::List(
-                items
-                    .iter()
-                    .map(Self::to_fragment_binding)
-                    .collect::<Option<Vec<_>>>()?,
-            )),
-            Self::Overlay { entries, fallback } => Some(FragmentBinding::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| Some((key.clone(), value.to_fragment_binding()?)))
-                    .collect::<Option<BTreeMap<_, _>>>()?,
-                fallback: Box::new(fallback.to_fragment_binding()?),
-            }),
-            Self::Choice(choices) => FragmentBinding::choice(
-                choices
-                    .iter()
-                    .filter_map(Self::to_fragment_binding)
-                    .collect(),
-            ),
-        }
+        Some(match self {
+            Self::Top => Self::Unknown,
+            other => other.clone(),
+        })
     }
 }
 

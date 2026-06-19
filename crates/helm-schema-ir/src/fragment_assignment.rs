@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::expr_eval::apply_local_set_mutations_expr;
-use crate::fragment_binding::FragmentBinding;
+use crate::fragment_binding::{self, FragmentBinding};
 use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
@@ -102,7 +102,7 @@ pub(crate) fn merge_fragment_locals(
     other: HashMap<String, FragmentBinding>,
 ) -> HashMap<String, FragmentBinding> {
     for (key, value) in other {
-        let merged = FragmentBinding::union(base.remove(&key), Some(value));
+        let merged = fragment_binding::union(base.remove(&key), Some(value));
         if let Some(merged) = merged {
             base.insert(key, merged);
         }

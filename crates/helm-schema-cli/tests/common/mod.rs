@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use color_eyre::eyre::{Report, WrapErr};
+use helm_schema_ast::extract_values_yaml_descriptions;
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
-use helm_schema_engine::parse::extract_values_yaml_descriptions;
 use serde_json::Value;
 use tempfile::TempDir;
 use vfs::VfsPath;

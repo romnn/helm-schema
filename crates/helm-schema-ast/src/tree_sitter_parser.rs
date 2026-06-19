@@ -1,4 +1,4 @@
-use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateHeader};
+use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateExpr, TemplateHeader};
 
 /// Parser implementation backed by the tree-sitter fused Helm+YAML grammar.
 ///
@@ -63,15 +63,29 @@ fn is_template_delim_start(kind: &str) -> bool {
     kind == "{{" || kind == "{{-"
 }
 
-fn is_fragment_injector_expr(text: &str) -> bool {
-    let mut it = text.split_whitespace();
-    let first = it.next().unwrap_or("");
-    let is_include_like = matches!(first, "include" | "template" | "tpl");
-    is_include_like
-        || text.contains("nindent")
-        || text.contains("indent")
-        || text.contains("toYaml")
-        || text.contains("fromYaml")
+fn is_fragment_injector_action(action: &TemplateAction) -> bool {
+    action
+        .exprs()
+        .iter()
+        .any(template_expr_is_fragment_injector)
+}
+
+fn template_expr_is_fragment_injector(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Call { function, .. } => matches!(
+            function.as_str(),
+            "include" | "template" | "tpl" | "toYaml" | "fromYaml" | "indent" | "nindent"
+        ),
+        TemplateExpr::Pipeline(stages) => stages.iter().any(template_expr_is_fragment_injector),
+        TemplateExpr::Parenthesized(inner) => template_expr_is_fragment_injector(inner),
+        TemplateExpr::Literal(_)
+        | TemplateExpr::Field(_)
+        | TemplateExpr::Selector { .. }
+        | TemplateExpr::Variable(_)
+        | TemplateExpr::VariableDefinition { .. }
+        | TemplateExpr::Assignment { .. }
+        | TemplateExpr::Unknown(_) => false,
+    }
 }
 
 fn is_template_delim_end(kind: &str) -> bool {
@@ -530,10 +544,9 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                     let action_indent = line_indent_at(start, src);
                     let span_text = &src[start.min(src.len())..end.min(src.len())];
                     let normalized = normalize_helm_template_text(span_text);
+                    let action = TemplateAction::parse(normalized);
 
-                    if !in_control_flow
-                        && action_indent > 0
-                        && is_fragment_injector_expr(&normalized)
+                    if !in_control_flow && action_indent > 0 && is_fragment_injector_action(&action)
                     {
                         i = j + 1;
                         continue;
@@ -544,9 +557,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                         open_key_indent.is_some_and(|k| action_indent > k);
                     if !is_yaml_value_continuation {
                         flush_pending(&mut pending, &mut out);
-                        out.push(HelmAst::HelmExpr {
-                            action: TemplateAction::parse(normalized),
-                        });
+                        out.push(HelmAst::HelmExpr { action });
                         i = j + 1;
                         continue;
                     }
@@ -594,17 +605,16 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
             let is_yaml_value_continuation = open_key_indent.is_some_and(|k| action_indent > k);
             let text = b.utf8_text(src.as_bytes()).unwrap_or("");
             let normalized = normalize_helm_template_text(text);
+            let action = TemplateAction::parse(normalized);
 
-            if !in_control_flow && action_indent > 0 && is_fragment_injector_expr(&normalized) {
+            if !in_control_flow && action_indent > 0 && is_fragment_injector_action(&action) {
                 // Skip top-level fragment injectors; they typically expand to YAML.
             } else if is_yaml_value_continuation {
                 let r = b.byte_range();
                 pending.push_str(&src[r]);
             } else {
                 flush_pending(&mut pending, &mut out);
-                out.push(HelmAst::HelmExpr {
-                    action: TemplateAction::parse(normalized),
-                });
+                out.push(HelmAst::HelmExpr { action });
             }
         } else {
             let r = b.byte_range();

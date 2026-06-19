@@ -15,6 +15,36 @@ pub mod prelude {
     pub use similar_asserts::assert_eq as sim_assert_eq;
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct DefineSourceSpec<'a> {
+    pub helper_templates: &'a [&'a str],
+    pub file_sources: &'a [(&'a str, &'a str)],
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LoadedDefineSources {
+    pub helper_templates: Vec<String>,
+    pub file_sources: Vec<(String, String)>,
+}
+
+impl DefineSourceSpec<'_> {
+    #[must_use]
+    pub fn load(self) -> LoadedDefineSources {
+        LoadedDefineSources {
+            helper_templates: self
+                .helper_templates
+                .iter()
+                .map(|path| read_testdata(path))
+                .collect(),
+            file_sources: self
+                .file_sources
+                .iter()
+                .map(|(name, path)| ((*name).to_string(), read_testdata(path)))
+                .collect(),
+        }
+    }
+}
+
 /// Returns the workspace root directory via the `CARGO_WORKSPACE_DIR` env var
 /// set in `.cargo/config.toml`.
 ///

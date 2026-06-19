@@ -221,6 +221,7 @@ impl HelperSummary {
 
 pub(crate) struct HelperSummaryCache {
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallsCacheKey, HelperSummary>>,
+    bound_helper_call: RefCell<BTreeMap<BoundHelperCallCacheKey, HelperSummary>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -231,10 +232,21 @@ struct BoundHelperCallsCacheKey {
     fragment_locals: BTreeMap<String, FragmentBinding>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct BoundHelperCallCacheKey {
+    name: String,
+    arg: String,
+    current_dot: Option<HelperBinding>,
+    outer_bindings: BTreeMap<String, HelperBinding>,
+    fragment_locals: BTreeMap<String, FragmentBinding>,
+    seen: BTreeSet<String>,
+}
+
 impl HelperSummaryCache {
     pub(crate) fn new() -> Self {
         Self {
             bound_helper_calls: RefCell::new(BTreeMap::new()),
+            bound_helper_call: RefCell::new(BTreeMap::new()),
         }
     }
 
@@ -292,7 +304,7 @@ impl HelperSummaryCache {
         summary
     }
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all, fields(helper = name))]
     pub(crate) fn summarize_bound_helper_call(
         &self,
         name: &str,
@@ -303,7 +315,29 @@ impl HelperSummaryCache {
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> HelperSummary {
-        analyze_bound_helper_call_with_fragment_locals(
+        let outer_bindings_key: BTreeMap<String, HelperBinding> = outer_bindings
+            .into_iter()
+            .flatten()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
+        let fragment_locals_key: BTreeMap<String, FragmentBinding> = fragment_locals
+            .iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
+        let key = BoundHelperCallCacheKey {
+            name: name.to_string(),
+            arg: structural_optional_expr_cache_key(arg),
+            current_dot: current_dot.cloned(),
+            outer_bindings: outer_bindings_key,
+            fragment_locals: fragment_locals_key,
+            seen: seen.iter().cloned().collect(),
+        };
+
+        if let Some(cached) = self.bound_helper_call.borrow().get(&key) {
+            return cached.clone();
+        }
+
+        let summary = analyze_bound_helper_call_with_fragment_locals(
             name,
             arg,
             outer_bindings,
@@ -311,7 +345,11 @@ impl HelperSummaryCache {
             fragment_locals,
             context,
             seen,
-        )
+        );
+        self.bound_helper_call
+            .borrow_mut()
+            .insert(key, summary.clone());
+        summary
     }
 }
 
@@ -320,6 +358,15 @@ fn structural_exprs_cache_key(exprs: &[helm_schema_ast::TemplateExpr]) -> String
     let _ = write!(out, "n{}|", exprs.len());
     for expr in exprs {
         append_structural_expr_key(&mut out, expr);
+    }
+    out
+}
+
+fn structural_optional_expr_cache_key(expr: Option<&helm_schema_ast::TemplateExpr>) -> String {
+    let mut out = String::new();
+    match expr {
+        Some(expr) => append_structural_expr_key(&mut out, expr),
+        None => out.push('n'),
     }
     out
 }

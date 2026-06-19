@@ -1,7 +1,6 @@
 use std::io::Read;
 
-use helm_schema_engine::helpers::DefineIndex;
-use helm_schema_engine::parse::TreeSitterParser;
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use tracing::instrument;
 use vfs::VfsPath;
 

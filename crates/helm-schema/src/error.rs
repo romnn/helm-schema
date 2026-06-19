@@ -15,7 +15,7 @@ pub enum CliError {
     Json(#[from] serde_json::Error),
 
     #[error("template parse error: {0}")]
-    TemplateParse(#[from] helm_schema_engine::parse::ParseError),
+    TemplateParse(#[from] helm_schema_ast::ParseError),
 
     #[error("no charts discovered")]
     NoChartsDiscovered,
@@ -54,6 +54,15 @@ pub enum CliError {
 
     #[error("load budget exceeded for {subject} (limit {limit_bytes} bytes)")]
     LoadBudgetExceeded { subject: String, limit_bytes: usize },
+
+    #[error("load budget exceeded for {subject} (limit {limit_entries} entries)")]
+    LoadEntryBudgetExceeded {
+        subject: String,
+        limit_entries: usize,
+    },
+
+    #[error("unsafe archive entry path {entry_path} in {archive}")]
+    UnsafeArchiveEntryPath { archive: String, entry_path: String },
 
     /// Mutually-exclusive CLI flags or otherwise-invalid combination
     /// detected after `clap` parsing succeeded.

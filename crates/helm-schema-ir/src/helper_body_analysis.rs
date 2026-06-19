@@ -22,6 +22,7 @@ pub(crate) struct BoundHelperCallResolution {
 }
 
 pub(crate) struct ResolveBoundHelperCallParams<'a, 'context> {
+    pub(crate) helper_name: &'a str,
     pub(crate) arg: Option<&'a TemplateExpr>,
     pub(crate) outer_bindings: Option<&'a HashMap<String, HelperBinding>>,
     pub(crate) current_dot: Option<&'a HelperBinding>,
@@ -34,7 +35,7 @@ pub(crate) fn resolve_bound_helper_call(
     params: ResolveBoundHelperCallParams<'_, '_>,
 ) -> BoundHelperCallResolution {
     let mut binding_seen = params.seen.clone();
-    let bindings = bindings_for_helper_arg_with_fragment_locals(
+    let mut bindings = bindings_for_helper_arg_with_fragment_locals(
         params.arg,
         params.outer_bindings,
         params.current_dot,
@@ -44,7 +45,7 @@ pub(crate) fn resolve_bound_helper_call(
     );
 
     let mut dot_seen = params.seen.clone();
-    let helper_body_dot = params
+    let mut helper_body_dot = params
         .arg
         .and_then(|expr| {
             helper_binding_from_expr_with_fragment_locals(
@@ -58,7 +59,7 @@ pub(crate) fn resolve_bound_helper_call(
         })
         .or_else(|| params.current_dot.cloned());
 
-    let helper_fragment_dot = params.arg.and_then(|expr| {
+    let mut helper_fragment_dot = params.arg.and_then(|expr| {
         fragment_binding_from_outer_expr(
             expr,
             Some(params.fragment_locals),
@@ -67,6 +68,14 @@ pub(crate) fn resolve_bound_helper_call(
         )
     });
 
+    if helper_uses_large_config_arg(params.helper_name) {
+        if let Some(binding) = bindings.remove("config") {
+            bindings.insert("config".to_string(), abstract_config_binding(binding));
+        }
+        helper_body_dot = helper_body_dot.map(abstract_config_entry_in_binding);
+        helper_fragment_dot = helper_fragment_dot.map(abstract_config_entry_in_binding);
+    }
+
     BoundHelperCallResolution {
         bindings,
         helper_body_dot,
@@ -74,7 +83,32 @@ pub(crate) fn resolve_bound_helper_call(
     }
 }
 
-#[tracing::instrument(skip_all)]
+fn helper_uses_large_config_arg(name: &str) -> bool {
+    name.starts_with("opentelemetry-collector.apply")
+}
+
+fn abstract_config_binding(binding: HelperBinding) -> HelperBinding {
+    let paths = binding.paths();
+    if paths.is_empty() {
+        HelperBinding::Top
+    } else {
+        HelperBinding::PathSet(paths)
+    }
+}
+
+fn abstract_config_entry_in_binding(binding: HelperBinding) -> HelperBinding {
+    match binding {
+        HelperBinding::Dict(mut entries) => {
+            if let Some(config) = entries.remove("config") {
+                entries.insert("config".to_string(), abstract_config_binding(config));
+            }
+            HelperBinding::Dict(entries)
+        }
+        other => other,
+    }
+}
+
+#[tracing::instrument(skip_all, fields(helper = name))]
 pub(crate) fn interpret_bound_helper_body(
     name: &str,
     resolution: &BoundHelperCallResolution,

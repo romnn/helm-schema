@@ -16,16 +16,15 @@ use helm_schema_core::ResourceSchemaOracle;
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue};
+use helm_schema_ir::{
+    ConditionalGuard, ConditionalPathOverlayAtPath, ContractSchemaSignals, GuardValue,
+};
 
 use merge::union_schema_list;
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
 use schema_model::{guard_value_to_json, schema_allows_type, type_schema};
-use schema_tree::{
-    apply_values_descriptions, ensure_schema_node_at_path_segments, insert_schema_at_path_segments,
-    object_schema, open_array_schema, open_object_schema,
-};
+use schema_tree::{SchemaDocument, draft07_root_document, open_array_schema, open_object_schema};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
@@ -93,22 +92,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         input.provider,
     );
 
-    let mut out = Map::new();
-    out.insert(
-        "$schema".to_string(),
-        Value::String("http://json-schema.org/draft-07/schema#".to_string()),
-    );
-
-    if let Value::Object(obj) = root_schema {
-        for (k, v) in obj {
-            out.insert(k, v);
-        }
-    } else {
-        out.insert("type".to_string(), Value::String("object".to_string()));
-        out.insert("properties".to_string(), Value::Object(Map::new()));
-        out.insert("additionalProperties".to_string(), Value::Bool(false));
-    }
-    Value::Object(out)
+    draft07_root_document(root_schema)
 }
 
 #[tracing::instrument(skip_all)]
@@ -118,7 +102,7 @@ fn build_root_schema(
     values_descriptions: &BTreeMap<String, String>,
     provider: &dyn ResourceSchemaOracle,
 ) -> Value {
-    let mut root_schema = object_schema(Map::new());
+    let mut root_schema = SchemaDocument::new_root_object();
     let path_resolver = PathSchemaResolver::new(contract_schema_signals, values_yaml_doc, provider);
     let mut resolved_paths = path_resolver.resolve_all();
     let provider_definitions =
@@ -126,7 +110,7 @@ fn build_root_schema(
 
     let conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
-        contract_schema_signals.conditional_path_overlays(),
+        contract_schema_signals,
         values_yaml_doc,
         provider,
     );
@@ -141,15 +125,17 @@ fn build_root_schema(
             Some(_) => crate::schema_model::empty_schema(),
             None => resolved_path.schema,
         };
-        insert_schema_at_path_segments(&mut root_schema, &resolved_path.path_segments, schema);
+        root_schema.insert_path_schema(&resolved_path.path_segments, schema);
     }
 
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
 
+    let mut root_schema = root_schema.into_value();
     provider_definitions.insert_into_root(&mut root_schema);
-    apply_values_descriptions(&mut root_schema, values_descriptions);
+    let mut root_schema = SchemaDocument::from_value(root_schema);
+    root_schema.apply_descriptions(values_descriptions);
 
-    root_schema
+    root_schema.into_value()
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -210,7 +196,7 @@ struct ConditionalResolvedSchema {
 
 fn collect_conditional_schemas(
     resolved_paths: &[path_resolver::ResolvedPathSchema],
-    overlays: &[ConditionalPathOverlay],
+    contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
@@ -219,8 +205,9 @@ fn collect_conditional_schemas(
         .map(|resolved| (resolved.value_path.as_str(), &resolved.schema))
         .collect::<BTreeMap<_, _>>();
 
-    overlays
-        .iter()
+    contract_schema_signals
+        .conditional_path_overlays()
+        .into_iter()
         .filter_map(|overlay| {
             resolved_paths
                 .iter()
@@ -229,7 +216,8 @@ fn collect_conditional_schemas(
             let ancestor_segments =
                 conditional_ancestor_segments(&target_segments, &overlay.guards);
             let target_schema = conditional_target_schema(
-                overlay,
+                &overlay.target_value_path,
+                &overlay,
                 values_yaml_doc,
                 provider,
                 resolved_by_path
@@ -254,12 +242,13 @@ fn collect_conditional_schemas(
 }
 
 fn conditional_target_schema(
-    overlay: &ConditionalPathOverlay,
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlayAtPath,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
     resolved_fallback: Option<Value>,
 ) -> Value {
-    let branch_schema = resolve_overlay_target_schema(overlay, provider)
+    let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider)
         .or(resolved_fallback.clone())
         .unwrap_or_else(crate::schema_model::empty_schema);
 
@@ -277,8 +266,7 @@ fn conditional_target_schema(
         return branch_schema;
     }
 
-    let Some(default_value) = yaml_value_at_path(values_yaml_doc, &overlay.target_value_path)
-    else {
+    let Some(default_value) = yaml_value_at_path(values_yaml_doc, target_value_path) else {
         return branch_schema;
     };
     let Ok(default_value) = serde_json::to_value(default_value) else {
@@ -292,10 +280,12 @@ fn conditional_target_schema(
 }
 
 fn resolve_overlay_target_schema(
-    overlay: &ConditionalPathOverlay,
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlayAtPath,
     provider: &dyn ResourceSchemaOracle,
 ) -> Option<Value> {
-    PathSchemaResolver::resolve_single_path_evidence(&overlay.evidence, &YamlValue::Null, provider)
+    let evidence = overlay.evidence.as_path_evidence(target_value_path);
+    PathSchemaResolver::resolve_single_path_evidence(&evidence, &YamlValue::Null, provider)
         .map(|resolved| resolved.schema)
 }
 
@@ -359,7 +349,7 @@ fn schema_is_boolean_like(schema: &Value) -> bool {
 }
 
 fn append_conditional_schemas(
-    root_schema: &mut Value,
+    root_schema: &mut SchemaDocument,
     conditionals: Vec<ConditionalResolvedSchema>,
     values_yaml_doc: &YamlValue,
 ) {
@@ -377,30 +367,8 @@ fn append_conditional_schemas(
             &conditional.relative_target_segments,
             conditional.target_schema,
         );
-        let ancestor =
-            ensure_schema_node_at_path_segments(root_schema, &conditional.ancestor_segments);
-        append_conditional_entry(ancestor, condition, then_schema);
+        root_schema.append_conditional(&conditional.ancestor_segments, condition, then_schema);
     }
-}
-
-fn append_conditional_entry(node: &mut Value, condition: Value, then_schema: Value) {
-    let Value::Object(object) = node else {
-        return;
-    };
-    let all_of = object
-        .entry("allOf".to_string())
-        .or_insert_with(|| Value::Array(Vec::new()));
-    let Value::Array(entries) = all_of else {
-        return;
-    };
-    entries.push(Value::Object(
-        [
-            ("if".to_string(), condition),
-            ("then".to_string(), then_schema),
-        ]
-        .into_iter()
-        .collect(),
-    ));
 }
 
 fn build_condition_fragment(

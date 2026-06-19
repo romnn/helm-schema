@@ -85,8 +85,9 @@ pub use contract::{
     ContractDocumentUse, ContractIr, ContractProjection, ContractUse, FinalizedContract,
 };
 pub use contract_signals::{
-    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
-    ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+    ConditionalPathOverlayAtPath, ContractPathSchemaEvidence, ContractRequirednessEvidence,
+    ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
 };
 pub use contract_types::{Guard, GuardValue};
 pub use helm_schema_core::{

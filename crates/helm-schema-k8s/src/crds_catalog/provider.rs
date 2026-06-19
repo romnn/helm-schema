@@ -1,13 +1,13 @@
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, crd_cache_path, write_meta_sidecar,
+    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, crd_cache_path,
+    read_cached_json_doc, write_meta_sidecar,
 };
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{
@@ -44,7 +44,7 @@ pub struct CrdsCatalogSchemaProvider {
     layout_checker: Arc<LayoutChecker>,
     diagnostic_sink: Option<DiagnosticSink>,
 
-    mem: Mutex<HashMap<MemKey, SchemaDoc>>,
+    mem: SourceDocCache<MemKey>,
 }
 
 impl CrdsCatalogSchemaProvider {
@@ -63,7 +63,7 @@ impl CrdsCatalogSchemaProvider {
             negative_cache: Arc::new(NegativeCache::new()),
             layout_checker: Arc::new(LayoutChecker::new()),
             diagnostic_sink: None,
-            mem: Mutex::new(HashMap::new()),
+            mem: SourceDocCache::new(),
         }
     }
 
@@ -190,10 +190,8 @@ impl CrdsCatalogSchemaProvider {
         }
         let local = crd_cache_path(&self.cache_dir, &source.source_id, relative_path);
         if local.exists()
-            && let Ok(bytes) = fs::read(&local)
-            && let Ok(doc) = serde_json::from_slice::<Value>(&bytes)
+            && let Some(doc) = read_cached_json_doc(&local)
         {
-            let doc = SchemaDoc::new(doc);
             self.write_mem(&source.source_id, relative_path, doc.clone());
             return Some(doc);
         }
@@ -231,16 +229,13 @@ impl CrdsCatalogSchemaProvider {
     }
 
     fn read_mem(&self, source_id: &str, relative_path: &str) -> Option<SchemaDoc> {
-        self.mem.lock().ok().and_then(|g| {
-            g.get(&(source_id.to_string(), relative_path.to_string()))
-                .cloned()
-        })
+        self.mem
+            .read(&(source_id.to_string(), relative_path.to_string()))
     }
 
     fn write_mem(&self, source_id: &str, relative_path: &str, doc: SchemaDoc) {
-        if let Ok(mut g) = self.mem.lock() {
-            g.insert((source_id.to_string(), relative_path.to_string()), doc);
-        }
+        self.mem
+            .write((source_id.to_string(), relative_path.to_string()), doc);
     }
 
     fn local_owns_resource(&self, resource: &ResourceRef) -> bool {

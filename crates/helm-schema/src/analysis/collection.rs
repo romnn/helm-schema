@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
-use helm_schema_engine::helpers::DefineIndex;
-use helm_schema_engine::{ContractIr, SymbolicIrContext};
+use helm_schema_ast::DefineIndex;
+use helm_schema_ir::{ContractIr, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
@@ -17,7 +17,7 @@ pub(crate) struct ChartAnalysis {
 
 impl ChartAnalysis {
     #[cfg(test)]
-    pub(crate) fn contract_schema_signals(&self) -> helm_schema_engine::ContractSchemaSignals {
+    pub(crate) fn contract_schema_signals(&self) -> helm_schema_ir::ContractSchemaSignals {
         self.contract.clone().into_schema_signals()
     }
 }

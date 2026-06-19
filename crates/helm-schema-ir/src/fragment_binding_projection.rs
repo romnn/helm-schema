@@ -11,10 +11,13 @@ pub(crate) fn fragment_to_current_dot_helper_binding(
     // the root context or a `.Values` path. Rendered fragments are not a stable
     // substitute for the caller's lexical dot.
     match binding {
+        FragmentBinding::ValuesPath(path) if path.is_empty() => {
+            Some(HelperBinding::ValuesPath(String::new()))
+        }
         FragmentBinding::ValuesPath(path) => Some(HelperBinding::ValuesPath(path.clone())),
-        FragmentBinding::ValuesRoot => Some(HelperBinding::ValuesPath(String::new())),
         FragmentBinding::RootContext => Some(HelperBinding::RootContext),
-        FragmentBinding::Unknown
+        FragmentBinding::Top
+        | FragmentBinding::Unknown
         | FragmentBinding::Dict(_)
         | FragmentBinding::List(_)
         | FragmentBinding::Overlay { .. }
@@ -65,16 +68,17 @@ mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
     use super::{fragment_rendered_paths, fragment_source_paths};
+    use crate::fragment_binding;
     use crate::fragment_binding::FragmentBinding;
 
     #[test]
     fn values_root_abstains_from_fragment_path_extraction() {
         assert_eq!(
-            fragment_source_paths(&FragmentBinding::ValuesRoot),
+            fragment_source_paths(&fragment_binding::values_root()),
             BTreeSet::new()
         );
         assert_eq!(
-            fragment_rendered_paths(&FragmentBinding::ValuesRoot),
+            fragment_rendered_paths(&fragment_binding::values_root()),
             BTreeSet::new()
         );
     }
