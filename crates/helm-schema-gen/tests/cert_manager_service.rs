@@ -62,3 +62,39 @@ fn schema_validates_values_yaml() {
         errors.join("\n")
     );
 }
+
+#[test]
+fn schema_keeps_default_rendered_service_metadata_typed() {
+    let src = test_util::read_testdata("charts/cert-manager/templates/service.yaml");
+    let values_yaml = test_util::read_testdata("charts/cert-manager/values.yaml");
+    let idx = build_cert_manager_define_index(&TreeSitterParser);
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let provider = common::production_k8s_chain("v1.35.0");
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
+
+    assert!(
+        !common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAnnotations": {
+                    "example.com/bad": 7
+                }
+            })
+        ),
+        "serviceAnnotations must stay a string map because prometheus.enabled defaults to true and podmonitor.enabled defaults to false: {schema}"
+    );
+    assert!(
+        common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "prometheus": {
+                    "enabled": false
+                },
+                "serviceAnnotations": {
+                    "example.com/bad": 7
+                }
+            })
+        ),
+        "serviceAnnotations should be unconstrained when the Service template is disabled: {schema}"
+    );
+}

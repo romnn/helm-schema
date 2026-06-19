@@ -1,5 +1,6 @@
 use crate::{
-    DefineIndex, HelmAst, HelmParser, TemplateExpr, TreeSitterParser, contains_template_action,
+    DefineIndex, HelmAst, HelmParser, TemplateExpr, TemplateHeader, TreeSitterParser,
+    contains_template_action,
 };
 
 // ===========================================================================
@@ -60,6 +61,24 @@ fn tree_sitter_ast_control_flow_headers_are_typed() {
         }
     });
     assert!(saw_include, "expected typed range header include call");
+}
+
+#[test]
+fn template_header_parse_control_normalizes_control_keyword_prefix() {
+    let expected = TemplateExpr::Field(vec![
+        "Values".to_string(),
+        "signoz".to_string(),
+        "serviceAccount".to_string(),
+        "create".to_string(),
+    ]);
+
+    for raw in [
+        "if .Values.signoz.serviceAccount.create",
+        "{{- if .Values.signoz.serviceAccount.create -}}",
+    ] {
+        let header = TemplateHeader::parse_control(raw);
+        assert_eq!(header.expr(), &expected, "raw={raw}");
+    }
 }
 
 #[test]

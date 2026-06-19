@@ -24,6 +24,7 @@ pub(crate) struct ValuePathCaches {
 pub(crate) fn build_value_path_caches(
     values_yaml_doc: &YamlValue,
     referenced_value_paths: &BTreeSet<String>,
+    pruned_parent_value_paths: &BTreeSet<String>,
 ) -> ValuePathCaches {
     let path_segments: BTreeMap<String, Vec<String>> = referenced_value_paths
         .iter()
@@ -42,6 +43,16 @@ pub(crate) fn build_value_path_caches(
         .iter()
         .filter_map(|(path, segments)| {
             lookup_values_yaml_path_info(values_yaml_doc, segments)
+                .map(|mut path_info| {
+                    if pruned_parent_value_paths.contains(path) {
+                        prune_referenced_descendant_schemas(
+                            &mut path_info.schema,
+                            path,
+                            referenced_value_paths,
+                        );
+                    }
+                    path_info
+                })
                 .map(|path_info| (path.clone(), path_info))
         })
         .collect();
@@ -113,6 +124,89 @@ fn lookup_values_yaml_values<'a>(
             if out.is_empty() { None } else { Some(out) }
         }
         _ => None,
+    }
+}
+
+fn prune_referenced_descendant_schemas(
+    schema: &mut Value,
+    value_path: &str,
+    referenced_value_paths: &BTreeSet<String>,
+) {
+    let descendant_prefix = format!("{value_path}.");
+    let mut relative_paths_to_prune = BTreeSet::new();
+    for descendant in referenced_value_paths {
+        let Some(relative_path) = descendant.strip_prefix(&descendant_prefix) else {
+            continue;
+        };
+        let relative_segments: Vec<String> = relative_path
+            .split('.')
+            .filter(|segment| !segment.is_empty())
+            .map(std::string::ToString::to_string)
+            .collect();
+        if relative_segments.is_empty() {
+            continue;
+        }
+        relative_paths_to_prune.insert(shortest_referenced_relative_path(
+            value_path,
+            &relative_segments,
+            referenced_value_paths,
+        ));
+    }
+
+    for relative_segments in relative_paths_to_prune {
+        let relative_segments: Vec<&str> = relative_segments
+            .iter()
+            .map(std::string::String::as_str)
+            .collect();
+        prune_schema_at_relative_path(schema, &relative_segments);
+    }
+}
+
+fn shortest_referenced_relative_path(
+    value_path: &str,
+    relative_segments: &[String],
+    referenced_value_paths: &BTreeSet<String>,
+) -> Vec<String> {
+    let mut prefix = Vec::new();
+    for segment in relative_segments {
+        prefix.push(segment.clone());
+        let candidate_path = format!("{value_path}.{}", prefix.join("."));
+        if referenced_value_paths.contains(&candidate_path) {
+            return prefix;
+        }
+    }
+    relative_segments.to_vec()
+}
+
+fn prune_schema_at_relative_path(schema: &mut Value, relative_segments: &[&str]) {
+    let Some((head, tail)) = relative_segments.split_first() else {
+        return;
+    };
+    let Value::Object(object) = schema else {
+        return;
+    };
+
+    if *head == "*" {
+        if let Some(items) = object.get_mut("items") {
+            if tail.is_empty() {
+                *items = empty_schema();
+            } else {
+                prune_schema_at_relative_path(items, tail);
+            }
+        }
+        return;
+    }
+
+    let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) else {
+        return;
+    };
+    if tail.is_empty() {
+        properties.remove(*head);
+        return;
+    }
+
+    if let Some(child) = properties.get_mut(*head) {
+        prune_schema_at_relative_path(child, tail);
     }
 }
 

@@ -18,8 +18,8 @@ pub struct GenerateOptions {
 /// Provider-resolved values contract prior to heuristic required-inference
 /// and output-pipeline emission transforms.
 ///
-/// The resolved contract already includes chart-authored constraint
-/// composition such as shipped `values.schema.json` intersections. The later
+/// The resolved contract contains facts inferred from templates, helpers,
+/// composed values defaults/descriptions, and provider schemas. The later
 /// `GeneratedSchema` stage is reserved for additional synthesized mutations
 /// like the optional `--infer-required` heuristic.
 #[derive(Debug, Clone)]

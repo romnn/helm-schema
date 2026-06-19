@@ -7,7 +7,7 @@ use crate::fragment_classification::is_fragment_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
-use crate::yaml_syntax::parse_yaml_key;
+use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
 
 pub(crate) fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
     let TemplateExpr::VariableDefinition { name, .. } = expr.deparen() else {
@@ -112,6 +112,53 @@ pub(crate) fn range_body_renders_mapping_entries_from_ast(
     ast_directly_renders_templated_mapping_key(&ast, &key_variable)
 }
 
+pub(crate) fn range_body_mapping_entry_indent_from_source(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+) -> Option<usize> {
+    let key_variable = range_destructured_key_variable(node, source)?;
+    let mut body_text = String::new();
+    for body_node in children_with_field(node, "body") {
+        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
+            continue;
+        };
+        body_text.push_str(text);
+    }
+
+    for line in body_text.lines() {
+        let indent = line.chars().take_while(|&ch| ch == ' ').count();
+        let after = &line[indent..];
+        if mapping_key_text_refs_range_key_variable(after, &key_variable) {
+            return Some(indent);
+        }
+    }
+    None
+}
+
+fn mapping_key_text_refs_range_key_variable(text: &str, key_variable: &str) -> bool {
+    let Some(colon_offset) = first_mapping_colon_offset(text) else {
+        return false;
+    };
+    let key_text = &text[..colon_offset];
+    parse_expr_text(key_text)
+        .iter()
+        .any(|expr| expr_refs_range_key_variable(expr, key_variable))
+}
+
+fn expr_refs_range_key_variable(expr: &TemplateExpr, key_variable: &str) -> bool {
+    let mut refs_variable = false;
+    expr.walk(|node| {
+        if matches!(
+            node,
+            TemplateExpr::Variable(name)
+                if name == key_variable || name.trim_start_matches('$') == key_variable
+        ) {
+            refs_variable = true;
+        }
+    });
+    refs_variable
+}
+
 fn ast_directly_renders_templated_mapping_key(ast: &HelmAst, key_variable: &str) -> bool {
     match ast {
         HelmAst::Pair { key, .. } => ast_key_refs_range_key_variable(key, key_variable),
@@ -142,19 +189,14 @@ fn ast_directly_renders_templated_mapping_key(ast: &HelmAst, key_variable: &str)
 }
 
 fn ast_key_refs_range_key_variable(key: &HelmAst, key_variable: &str) -> bool {
-    let mut refs_variable = |expr: &TemplateExpr| {
-        let mut matches_key_variable = false;
-        expr.walk(|node| {
-            if matches!(node, TemplateExpr::Variable(name) if name == key_variable) {
-                matches_key_variable = true;
-            }
-        });
-        matches_key_variable
-    };
-
     match key {
-        HelmAst::HelmExpr { action } => action.exprs().iter().any(&mut refs_variable),
-        HelmAst::Scalar { text } => parse_expr_text(text).iter().any(refs_variable),
+        HelmAst::HelmExpr { action } => action
+            .exprs()
+            .iter()
+            .any(|expr| expr_refs_range_key_variable(expr, key_variable)),
+        HelmAst::Scalar { text } => parse_expr_text(text)
+            .iter()
+            .any(|expr| expr_refs_range_key_variable(expr, key_variable)),
         _ => false,
     }
 }
@@ -219,4 +261,59 @@ fn range_destructured_key_variable(node: tree_sitter::Node<'_>, source: &str) ->
         .utf8_text(source.as_bytes())
         .ok()
         .map(|text| text.trim_start_matches('$').to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        mapping_key_text_refs_range_key_variable, range_body_mapping_entry_indent_from_source,
+    };
+
+    #[test]
+    fn templated_mapping_key_text_refs_range_key_variable() {
+        assert!(mapping_key_text_refs_range_key_variable(
+            "{{- $key | nindent 2 }}: {{ tpl (toString $value) $ | quote }}",
+            "key",
+        ));
+    }
+
+    #[test]
+    fn destructured_range_mapping_entry_indent_uses_body_key_indent() {
+        let source = r#"
+data:
+{{- range $key, $value := .Values.controller.config }}
+  {{- $key | nindent 2 }}: {{ tpl (toString $value) $ | quote }}
+{{- end }}
+        "#;
+        let tree = parse_go_template(source);
+        let range = find_kind(tree.root_node(), "range_action").expect("range action");
+
+        assert_eq!(
+            range_body_mapping_entry_indent_from_source(range, source),
+            Some(2)
+        );
+    }
+
+    fn parse_go_template(source: &str) -> tree_sitter::Tree {
+        let language =
+            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(&language)
+            .expect("set go template language");
+        parser.parse(source, None).expect("parse go template")
+    }
+
+    fn find_kind<'a>(node: tree_sitter::Node<'a>, kind: &str) -> Option<tree_sitter::Node<'a>> {
+        if node.kind() == kind {
+            return Some(node);
+        }
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            if let Some(found) = find_kind(child, kind) {
+                return Some(found);
+            }
+        }
+        None
+    }
 }

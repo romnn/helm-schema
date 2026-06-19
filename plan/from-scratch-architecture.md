@@ -18,17 +18,16 @@ replacing the flat guard vocabulary; the trait census cut to three; a pure
 lookup planner/executor for the knowledge layer; a two-tier schema model
 (foreign JSON verbatim, typed algebra for synthesized content); the input
 universe widened to real charts (`files/` manifests, `crds/`, Chart.yaml
-conditions, shipped schemas); first-class security budgets; and corrected
+conditions); first-class security budgets; and corrected
 Rust shapes (no interner, state-passing environments, fingerprinted
 Arc-shared lattice nodes).
 
 Two further external review rounds tightened v2 in place: an explicit
 strict-core / assistance / overrides authority model with a cache-independent
 advisor; values-overridable capability shims lowering to mixed `Values`/`Env`
-predicates instead of oracle atoms; shipped `values.schema.json` reclassified
-from evidence to **enforced constraints**; template-rendered CRD extraction
-promoted to a pipeline edge; and the AbsDoc escape hatches absorbed into the
-model (`Merged` lattice node, wildcard-anchored attribution).
+predicates instead of oracle atoms; template-rendered CRD extraction promoted
+to a pipeline edge; and the AbsDoc escape hatches absorbed into the model
+(`Merged` lattice node, wildcard-anchored attribution).
 
 *v3* (this revision) responds to a third review round that found the
 remaining local maxima:
@@ -52,10 +51,11 @@ remaining local maxima:
    document alone (`Values` atoms) can be *lowered* to draft-07
    `if`/`then`/`dependencies` at the nearest common ancestor under policy
    bounds; only environment-dependent and opaque predicates must widen.
-4. **Chart-authored contracts purged of "evidence" framing everywhere**
-   (shipped schemas are constraints, full stop), and the chart-local
-   knowledge pass is specified as a single forward edge — with the argument
-   for why no fixed-point iteration is needed.
+4. **Chart-authored `values.schema.json` is removed from inference.**
+   Existing chart/dependency schema files are neither evidence nor automatic
+   constraints for helm-schema. The generator infers from templates, helpers,
+   values defaults/descriptions, and rendered resource sinks; explicit
+   user-supplied overrides remain policy inputs outside inference.
 5. **The output contract defaults to a bundled, self-contained document with
    internal `$defs`**; full flattening becomes an explicit export mode. v2
    had inherited today's flatten-by-default, which inflates output on the
@@ -140,13 +140,12 @@ Helm validates the **coalesced** values `V = coalesce(D, U)` — and Helm's
 coalescing deletes keys the user sets to `null`. The schema's domain is
 coalesced documents. Define:
 
-- `AccRender(C, E)` — values for which `helm template` succeeds. Non-trivial:
-  deep access through a `null` parent fails rendering; `required`/`fail` fail
-  it explicitly; and Helm validates each chart's coalesced values against
-  that chart's **shipped `values.schema.json`** before rendering — shipped
-  schemas are part of the accepted-set *definition*, not inference evidence
-  (the §6.5 intersection rule follows from the contract, not from a
-  precedence choice).
+- `AccRender(C, E)` — values for which the render program succeeds.
+  Non-trivial: deep access through a `null` parent fails rendering, and
+  `required`/`fail` fail it explicitly. Existing chart/dependency
+  `values.schema.json` files are deliberately outside helm-schema's inferred
+  accepted-set definition; they are external author assertions, not facts
+  recovered from templates.
 - `AccK8s(C, E, K)` — the subset whose emitted manifests (where identity is
   resolvable) validate against their resource schemas.
 
@@ -182,9 +181,10 @@ Two deliberate, *named* policies (not silent behavior):
   (`additionalProperties: false`) rejects unread keys that `AccRender`
   technically accepts. Deliberate, diagnosable, off-switchable.
 
-Two mechanical self-obligations: the chart's own composed defaults `D` must
-validate against `S` (a pipeline postcondition — `helm lint` enforces exactly
-this), and shipped subchart schemas must not contradict `S` on their prefix.
+One mechanical self-obligation: every narrowing must be backed by structural
+evidence from the render program or an explicit caller policy input. A
+defaults-validation harness is useful for regression testing, but it is not a
+hard product postcondition derived from sibling `values.schema.json` files.
 
 **The polarity table.** Every evidence kind may err in exactly one
 direction; uncertainty always moves `L(S)` *up* (wider):
@@ -201,13 +201,12 @@ direction; uncertainty always moves `L(S)` *up* (wider):
 | conditional lowering (P1.1) | only on fully `Values`-decidable predicates | a lowered `Env` predicate would bake one cluster's truth into the schema |
 
 Derived consequences used throughout: `Lookup::Unknown` never prunes and
-never narrows; evidence-source precedence may never *override* (an override
-can violate `D ∈ L(S)`) — disagreement reconciles by widening plus a
-conflict diagnostic (this rule governs *inference evidence*; constraints
-Helm itself enforces, i.e. shipped schemas, are part of `Acc` and compose by
-intersection — §6.5); determinism is claimed **given identical oracle
-answers**, and cache state may move output only in the widening direction
-(reproducibility over time is the lockfile's job).
+never narrows; evidence-source precedence may never *override* structural
+facts. Disagreement between inference sources reconciles by widening plus a
+conflict diagnostic. Explicit user overrides are policy inputs, not inferred
+facts. Determinism is claimed **given identical oracle answers**, and cache
+state may move output only in the widening direction (reproducibility over
+time is the lockfile's job).
 
 ## 3. What the evidence teaches
 
@@ -289,11 +288,11 @@ values.yaml":
   truthiness as `"true"`/`""` strings through `include`.
 - **Umbrella charts** declare `condition: clickhouse.enabled` / `tags:` in
   Chart.yaml — declarative boolean evidence and chart-level guards, for free.
-- **bitnami-redis** ships its own `values.schema.json` (Helm validates each
-  chart's coalesced values against its own shipped schema independently),
-  routes ~40 paths through `common.tplvalues.render` (every such path must
-  also admit `string`), and uses `lookup` (cluster state — statically
-  `Unknown` by definition).
+- **bitnami-redis** ships a `values.schema.json`, but helm-schema does not
+  treat that file as inference evidence; the relevant static facts come from
+  its templates. It routes ~40 paths through `common.tplvalues.render` (every
+  such path must also admit `string`) and uses `lookup` (cluster state —
+  statically `Unknown` by definition).
 - **values.yaml uses YAML anchors/aliases** (signoz) — the values parser must
   resolve them or every aliased default is wrong.
 - `required`/`fail` appear as *conditional contract statements*
@@ -386,7 +385,7 @@ helm-schema (facade)           the stable product surface + IO shell: chart
                                (the canonical API; memoized queries) +
                                parallel fan-out,
                                pure output passes, diagnostics projection,
-                               postcondition checks, lockfile.
+                               lockfile.
 
 helm-schema-cli                thin binary: clap → Config (env vars
                                interpreted HERE) → facade → output/exit codes.
@@ -414,7 +413,7 @@ world, (b) the external knowledge resolver, (c) the grammar's build
 isolation. Parse/interpret/contract/resolve/lower co-evolve — the corpus
 shows every feature touching several at once (tpl-admits-string: interpreter
 marker + lowering rule; overlays: lattice node + co-walk + `partialize`;
-shipped schemas: chart model + resolution) — and the removed
+dependency activation: chart model + guarded lowering) — and the removed
 `generate_values_schema_full_with_*` arity ladder is the fossil record of
 publishing that seam too early. Internal phase boundaries stay (modules with
 named types between them); they just stop being semver surfaces.
@@ -424,7 +423,7 @@ named types between them); they just stop being semver surfaces.
 ```
 1. load            (facade — the ONLY ambient IO besides knowledge fetches)
    dir/tgz/mem ──► ChartProgram   {files+roles, Chart.yaml model, values
-                                   docs, crds/, shipped schemas}
+                                   docs, crds/}
               ──► PolicyInputs    {override documents loaded AND their
                                    external $refs resolved HERE, under
                                    FetchPolicy — never on the output path}
@@ -437,10 +436,10 @@ named types between them); they just stop being semver surfaces.
    + fully-literal template-rendered CRDs); AbsDoc never escapes
 
 3. resolve         (engine, pure given oracle answers)
-   resolve(&Analysis, shipped schemas from ChartProgram,
-           &dyn ResourceSchemaOracle, &dyn CapabilityOracle, &ResolvePolicy)
+   resolve(&Analysis, &dyn ResourceSchemaOracle,
+           &dyn CapabilityOracle, &ResolvePolicy)
         ──► ResolvedContract        branch liveness, anchor co-walk,
-                                    shipped-schema intersection, decisions
+                                    structural decisions
    (facade registers Analysis.local_schemas ahead of remote catalogs in
     the oracle stack before this step runs)
 
@@ -448,8 +447,7 @@ named types between them); they just stop being semver surfaces.
    lower(&ResolvedContract, EmitMode::Bundled | EmitMode::FullyInlinedExport)
         ──► draft-07 Value (self-contained, internal $defs by default)
    then pure passes over (Value × PolicyInputs): override merge →
-   optional flatten export → strip → minify →
-   postcondition-validate(defaults) ──► bytes + diagnostics
+   optional flatten export → strip → minify ──► bytes + diagnostics
 ```
 
 **The product abstraction is the session, not the pipeline.** Conceptually
@@ -866,7 +864,7 @@ Design points:
 
 ### 6.5 `engine::resolve` + `engine::lower` — from contract to schema
 
-**Resolution** (`resolve(&Analysis, shipped, oracles, &ResolvePolicy) ->
+**Resolution** (`resolve(&Analysis, oracles, &ResolvePolicy) ->
 ResolvedContract`) — pure given oracle answers:
 
 - Evaluate `Env` atoms against the oracles (three-valued); compute branch
@@ -885,15 +883,12 @@ ResolvedContract`) — pure given oracle answers:
   template-rendered CRD documents, produced by the same `analyze` call) are
   registered in the oracle composition ahead of remote catalogs before this
   step runs.
-- **Shipped `values.schema.json` files are enforced constraints, not
-  evidence.** Helm validates each chart's coalesced values against its own
-  shipped schema at lint/install time, so shipped schemas are part of `Acc`
-  (§2): they compose by **intersection** on the chart's prefix — through the
-  foreign tier, with the same coalescing and global-injection care Helm
-  applies — never by ranking against template evidence. Template evidence
-  contradicting the shipped schema means the chart is broken at install
-  time: a conflict diagnostic, not something to widen over. A policy switch
-  disables the intersection for users who knowingly diverge.
+- **Existing `values.schema.json` files are not inference inputs.** They are
+  external author assertions and may be stale, incomplete, generated by a
+  different tool, or aimed at a different policy. helm-schema may emit a
+  `values.schema.json` document, but generation does not read sibling or
+  dependency `values.schema.json` files as facts. Explicit user override
+  schemas stay in `PolicyInputs`, outside inference.
 - Fold in `ValuesModel` defaults/descriptions, Chart.yaml condition
   evidence (each `condition:` path contributes boolean type evidence and a
   chart-level predicate on all of that subchart's constraints), abort
@@ -913,7 +908,7 @@ ResolvedContract`) — pure given oracle answers:
 **Lowering** (`lower(&ResolvedContract, EmitMode) -> Value`) — the two-tier
 schema model:
 
-- **Foreign tier:** upstream and shipped subtrees remain verbatim
+- **Foreign tier:** upstream and explicit override subtrees remain verbatim
   `Arc<Value>` behind `SchemaDoc` pointers — never lifted into a closed enum
   (no round-trip risk for `patternProperties`,
   `x-kubernetes-int-or-string`, `oneOf` discriminators, vendor extensions).
@@ -1039,8 +1034,8 @@ The facade is the stable product surface and the IO shell. It owns:
 - **Chart loading → `ChartProgram`**: discovery over `vfs` (directory,
   `.tgz` into MemoryFS — structurally preventing zip-slip; under a
   `LoadBudget`), dependency aliasing and recursion, **`FileRole`**
-  assignment (`Manifest | Notes | Test | Partial | FileFragment | Crd |
-  ShippedSchema`) driving parse modes and policy (`--exclude-tests` is a
+  assignment (`Manifest | Notes | Test | Partial | FileFragment | Crd`)
+  driving parse modes and policy (`--exclude-tests` is a
   role filter), the Chart.yaml model (deps with `alias`, `condition:` paths
   and `tags:`, `kubeVersion` constraints; `import-values`/`export-values`
   modeled if trivial, otherwise structured abstention), `compose_values`
@@ -1069,9 +1064,7 @@ The facade is the stable product surface and the IO shell. It owns:
   `(Value × PolicyInputs)`: override merge (replace-on-`$ref` markers,
   override-file-relative base URI, `--keep-refs` honored), optional
   fully inlined export, description strip, minify, **global-schema mirroring
-  into subcharts** (a named pass), and the **postcondition**: composed
-  defaults validate against the emitted schema (hard diagnostic on
-  failure). Override documents and their external `$ref`s are loaded and
+  into subcharts** (a named pass). Override documents and their external `$ref`s are loaded and
   resolved during input assembly (`PolicyInputs`, under `FetchPolicy`) —
   there is **no retrieval on the output path at all**: after `load`, the
   run is IO-free except knowledge fetches.
@@ -1175,7 +1168,7 @@ provably suffices; the only residue is guard-conditional CRD emission, §14).
 7. **Lints/deps:** `[lints] workspace = true` in every crate;
    tree-sitter/`cc` only under the grammar crate; `ureq` (pinned TLS
    feature) only in knowledge; `jsonschema` only in the facade (override
-   resolution, postcondition validation, flatten export); the YAML parser is
+   resolution, flatten export); the YAML parser is
    a maintained, span-preserving one (`serde_yaml` is unmaintained and
    span-less).
 
@@ -1225,12 +1218,12 @@ provably suffices; the only residue is guard-conditional CRD emission, §14).
   kind-qualified (`group/version/Kind`) capability probes covered alongside
   the two-part form; advisor off by default and cache-independent.
 - **facade/cli:** golden corpus equality (bundled default + flattened
-  export); postcondition active; parity checklist (§13) checked off;
+  export); parity checklist (§13) checked off;
   exit-code table tested; session queries memoized and
   substrate-equivalent (session result ≡ stage-function result);
   no-IO-after-load verified (output passes are pure functions); corpus discovery parity (incl.
   `Chart.template.yaml`, tgz, aliases); compose_values fixtures;
-  conditions/tags/crds/shipped-schema extraction tested; budgets enforced.
+  conditions/tags/crds extraction tested; budgets enforced.
 
 ## 11. Sizing sanity check
 
@@ -1289,8 +1282,7 @@ values-key seeding (named policy); global-schema mirroring into subcharts;
 subchart values composition + library-chart scoping + `Chart.template.yaml`;
 `--exclude-tests` (as role filter); extra values files; `--infer-required`
 (legacy policy + new witness-based rules); diag text/JSON formats (now
-versioned); `--trace-output`; defaults-validate postcondition (new, but
-required for §2).
+versioned); `--trace-output`.
 
 **Deliberate output-contract change:** the default emission becomes a
 bundled, self-contained document with internal `$defs` (§6.5); today's
@@ -1345,8 +1337,7 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
 ### 15.2 Step 0 — lock in the ratchet (first, independent of everything)
 
 - **Differential harness** (§9.5): `helm template` + `helm lint` over the
-  fixture corpus with default and guard-flipping values samples, plus the
-  composed-defaults-must-validate postcondition as a test.
+  fixture corpus with default and guard-flipping values samples.
 - **Security closures**: validated `RelPath` at the coordinate→cache-path
   boundary; gate `file://` and add size/time budgets in `$ref` resolution
   (`FetchPolicy` seed); `LoadBudget` on tgz extraction.
@@ -1956,9 +1947,9 @@ is green. Consistent with `next-priorities.md`'s ordering philosophy
   instead of inventing a synthetic diagnostic now. Typed guard decoding,
   IR-side liveness, provider-side capability execution, and traced chain
   execution are all covered by focused tests.
-- **B4 — chart-local CRDs as a source (complete)**. Shipped
-  `values.schema.json` is *not* a knowledge source — it lands in A4's
-  resolution as the enforced-constraint intersection. Current progress:
+- **B4 — chart-local CRDs as a source (complete)**. Existing
+  `values.schema.json` files are *not* a knowledge source and are not read
+  as inference input. Current progress:
   static CRDs bundled under discovered chart and subchart `crds/` directories
   are parsed through the same VFS-backed chart discovery path into a
   `LocalSchemaUniverse`, then registered through a first-class provider in the

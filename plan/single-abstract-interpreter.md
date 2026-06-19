@@ -800,8 +800,8 @@ Goal:
 
 - Introduce the guarded witness graph (`ContractIR`) as the semantic seam.
 - Let `helm-schema-gen` consume resolved witnesses for nullability, falsey
-  states, open objects, scalar hints, fragment provenance, shipped-schema
-  intersections, and resource anchors.
+  states, open objects, scalar hints, fragment provenance, explicit override
+  policy inputs, and resource anchors.
 - Extract the polarity-table policy from generator reconstruction into named
   resolution/lowering policy functions.
 - Replace flat `Guard` at the IR boundary with the predicate algebra; keep

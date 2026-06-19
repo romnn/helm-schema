@@ -6,7 +6,7 @@ This compares the original `plan/from-scratch-architecture.md` as it existed in 
 The short version:
 
 - The current implementation has made real structural progress toward the plan. The strongest areas are chart discovery/modeling, chart-local schema sources, typed capability lookup, reusable library extraction, and self-contained bundled output.
-- The biggest remaining architecture gaps are still the public seam and API shape, the contract representation, guarded schema lowering, shipped `values.schema.json` enforcement, end-to-end provenance/spans, and the security/budget model.
+- The biggest remaining architecture gaps are still the public seam and API shape, the contract representation, guarded schema lowering, end-to-end provenance/spans, and the security/budget model.
 - There are also a few places where the code has gone beyond the original plan in useful ways, especially source-aware provider bundling and some resource-identity edge cases.
 
 ## 1. What has been implemented faithfully
@@ -173,7 +173,7 @@ Instead, the code still relies on:
 
 That is useful migration scaffolding, but it is not the architecture the original document committed to.
 
-### 2.4 Guarded JSON Schema lowering is still far short of the planned precision ladder
+### 2.4 Guarded JSON Schema lowering is substantially improved, but not the final precision ladder
 
 The plan's major semantic promise was not merely "track guards", but:
 
@@ -182,16 +182,23 @@ The plan's major semantic promise was not merely "track guards", but:
 - lower those to draft-07 `if` / `then` / `dependencies` when sound
 - widen only for `Env` or opaque predicates
 
-Current code has only a reduced version of that:
+Current code now implements an important slice of that:
 
-- `crates/helm-schema-ir/src/predicate.rs` has an internal predicate algebra with `Not`, `And`, and `Or`
+- `crates/helm-schema-ir/src/predicate.rs` keeps an internal predicate algebra with `Not`, `And`, and `Or`.
+- `crates/helm-schema-ir/src/contract_signal_builder/builder.rs` projects lowerable guard sets into `ConditionalPathOverlay` records.
+- `crates/helm-schema-gen/src/lib.rs` lowers those overlays into draft-07 `if` / `then` conditionals, including default-aware truthiness when `values.yaml` makes an omitted guard path active.
+- `crates/helm-schema/src/analysis/manifest_contract.rs` now applies `Chart.yaml` dependency activation as real guard branches instead of just boolean type hints.
+
+That is a real implementation of values-decidable guarded lowering, and it is materially more faithful to the original plan than the previous state.
+
+The remaining gap is that this is still a compatibility projection rather than the plan's final witness model:
+
 - but `crates/helm-schema-ir/src/contract/use_claim.rs` still stores compatibility `Vec<Guard>`
-- `crates/helm-schema-ir/src/contract_signals.rs` reduces guard information further into `GuardConstraint::{Eq, TypeIs}`
-- `crates/helm-schema-gen/src/resolve_policy.rs` lowers those constraints only as per-path schema fragments
+- `crates/helm-schema-ir/src/contract_signals.rs` still carries both path-local `GuardConstraint` facts and separate conditional overlay DTOs
+- opaque/environment predicates still do not have the planned widen/abstain classification boundary
+- the lowering does not yet cover every predicate shape the internal algebra can represent
 
-I found no production lowering that emits chart-derived `if` / `then` / `else` / `dependencies` structures from the predicate algebra itself.
-
-So the project has implemented better guard tracking, but not the original plan's guarded-typing precision ladder.
+So the project has implemented the central `if` / `then` mechanism, but not the original plan's complete guarded-typing precision ladder.
 
 ### 2.5 The engine is not consolidated; `helm-schema-engine` is still a facade, not the engine
 
@@ -250,38 +257,36 @@ But the main contract data does not carry the planned provenance model:
 
 This is a major remaining gap between "better implementation" and the actual architecture in the plan.
 
-### 2.8 `values.schema.json` is still not treated as an enforced chart-authored constraint
+### 2.8 Superseded: shipped `values.schema.json` is not analyzer evidence
 
-This is another major miss.
+This audit originally treated shipped `values.schema.json` enforcement as a
+missing architecture item. That premise has been rejected.
 
-The original architecture repeatedly insisted that shipped `values.schema.json` files are:
+From first principles, helm-schema's inference engine should recover accepted
+values from the chart's render program: templates, helpers, `.Values` control
+flow, composed values defaults/descriptions, and rendered Kubernetes/CRD sink
+schemas. A sibling or dependency `values.schema.json` is an external author
+assertion. It can be useful to Helm or to humans, but it is not structural
+evidence from the templates.
 
-- not evidence
-- enforced constraints
-- part of the accepted-set definition
+Current architecture direction:
 
-The repository already contains real fixtures with shipped schemas:
+- do not automatically read chart/dependency `values.schema.json` files
+- do not intersect generated output with shipped schema files
+- do not infer type, shape, nullability, requiredness, or guards from them
+- keep explicit user override schemas as policy inputs outside inference
 
-- `testdata/charts/bitnami-redis/values.schema.json`
-- `testdata/charts/cert-manager/values.schema.json`
-- `testdata/charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/values.schema.json`
-
-But I found no production code that loads, composes, or intersects shipped `values.schema.json` documents into the generated result.
-
-This means one of the strongest architecture commitments from the original plan is still not implemented.
-
-### 2.9 `Chart.yaml` `condition:` / `tags:` are only used as boolean type hints, not chart-level guards
+### 2.9 `Chart.yaml` `condition:` / `tags:` now drive chart-level guards, but through compatibility claims
 
 The original plan wanted `Chart.yaml` dependency activation to provide real declarative guard evidence.
 
-Current code only partially uses that information:
+Current code now uses that information semantically:
 
 - `crates/helm-schema/src/chart/discovery.rs` extracts dependency activation paths correctly
-- but the only downstream use I found is `crates/helm-schema/src/chart_evidence/extraction.rs`, where those paths become boolean type hints
+- `crates/helm-schema/src/analysis/manifest_contract.rs` applies dependency activation as branch guard sets on subchart contract uses
+- condition order follows Helm precedence: the first present condition decides, tags are considered only after all conditions are absent, and a fully absent activation set preserves Helm's default-active dependency behavior
 
-So the code knows that `kid.enabled` or `tags.observability` are booleans, but it does not appear to use them as actual liveness/guard constraints for subchart-emitted contract facts.
-
-That is a meaningful semantic gap.
+The remaining gap is architectural rather than basic semantics: activation is still projected as compatibility guards on duplicated `ContractUse` rows instead of becoming first-class guarded witness data.
 
 ### 2.10 Requiredness is still explicitly heuristic and outside the core pipeline
 
@@ -353,7 +358,6 @@ What I did not find as a unified architecture feature:
 
 - a full differential harness that systematically explores guard-flipping samples across the corpus
 - a general `helm lint` acceptance gate
-- a runtime postcondition that the chart's composed defaults validate against the produced schema
 - a lockfile-backed reproducibility story
 - the 100-run contract DTO determinism gate described in the plan
 
@@ -442,23 +446,20 @@ If the goal is to become faithful to the original architecture rather than just 
 2. Finish the contract representation migration.
    - Replace migration-era `ContractUse` / signal bundles with the planned public contract artifact, including provenance and object-scope facts.
 
-3. Implement guarded JSON Schema lowering for values-decidable predicates.
-   - The internal predicate work is already there; the missing piece is lowering it into output conditionals where sound.
+3. Finish the guarded-lowering migration.
+   - A strong `if` / `then` overlay path now exists. The next step is to remove compatibility projections, make the predicate/witness artifact the direct lowering input, and define the planned opaque-predicate widen/abstain boundary.
 
-4. Treat shipped `values.schema.json` as enforced constraints.
-   - This is a major correctness feature, not a convenience feature.
+4. Harden and generalize `Chart.yaml` dependency activation.
+   - Conditions and tags now affect liveness. The remaining work is broader corpus validation and ensuring the activation branch model feeds the final contract artifact rather than compatibility guards.
 
-5. Upgrade `Chart.yaml` dependency activation from type hints to real guards.
-   - Conditions and tags should affect liveness, not just boolean typing.
-
-6. Finish the parsing/provenance story.
+5. Finish the parsing/provenance story.
    - Typed control-flow headers, source spans, and less heuristic document tracking are still missing.
 
-7. Implement the planned security/budget model.
+6. Implement the planned security/budget model.
    - `FetchPolicy`, `LoadBudget`, and the path-validation boundary are still absent.
 
-8. Add the architecture-level validation harness.
-   - Especially defaults-validate postconditions, guard-flipping differentials, and `helm lint` coverage.
+7. Add the architecture-level validation harness.
+   - Especially guard-flipping differentials and `helm lint` coverage.
 
 ## 5. Bottom line
 
@@ -475,8 +476,7 @@ But the architectural center of gravity is still not where the original document
 
 - there is no canonical session API
 - the semantic seam is still not the final contract artifact
-- guard information is still mostly collapsed before lowering
-- shipped chart-authored schemas are not yet enforced
+- guard lowering still depends on compatibility projections instead of the final predicate/witness artifact
 - provenance, security policy, and validation architecture are still incomplete
 
 So the current state is best described as:

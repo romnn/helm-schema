@@ -1265,11 +1265,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -1288,11 +1288,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -1526,15 +1526,46 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
-          "type": "truthy"
-        },
-        {
           "path": "persistence.enabled",
           "type": "truthy"
         },
         {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "truthy"
+        },
+        {
           "path": "persistence.existingClaim",
+          "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
+        },
+        {
+          "path": "dataLogDir",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "dataLogDir"
+    },
+    {
+      "guards": [
+        {
+          "path": "volumePermissions.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -1558,11 +1589,7 @@
       "guards": [
         {
           "path": "persistence.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "volumePermissions.enabled",
-          "type": "truthy"
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -1631,11 +1658,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -1664,11 +1691,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -2401,12 +2428,96 @@
     {
       "guards": [
         {
+          "path": "auth.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "auth.client.existingSecret",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.secretName"
+          ],
+          "span": {
+            "end": 1875,
+            "start": 1664
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
           "path": "auth.quorum.enabled",
           "type": "truthy"
         }
       ],
       "kind": "Scalar",
       "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "auth.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "auth.quorum.existingSecret",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.secretName"
+          ],
+          "span": {
+            "end": 2222,
+            "start": 2011
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -2467,6 +2578,48 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.client.existingSecret",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsSecretName"
+          ],
+          "span": {
+            "end": 5712,
+            "start": 5491
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
           "paths": [
             "tls.client.autoGenerated",
             "tls.client.keystorePassword",
@@ -2477,6 +2630,56 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.client.autoGenerated",
+            "tls.client.keystorePassword",
+            "tls.client.passwordsSecretName"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7944,
+            "start": 7713
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -2503,12 +2706,104 @@
     {
       "guards": [
         {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.client.autoGenerated",
+            "tls.client.passwordsSecretName",
+            "tls.client.truststorePassword"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7944,
+            "start": 7713
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
           "path": "tls.quorum.enabled",
           "type": "truthy"
         }
       ],
       "kind": "Scalar",
       "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.quorum.existingSecret",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsSecretName"
+          ],
+          "span": {
+            "end": 4383,
+            "start": 4162
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -2541,8 +2836,123 @@
         {
           "paths": [
             "tls.quorum.autoGenerated",
+            "tls.quorum.keystorePassword",
+            "tls.quorum.passwordsSecretName"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 5075,
+            "start": 4844
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.quorum.autoGenerated",
             "tls.quorum.passwordsSecretName",
             "tls.quorum.truststorePassword"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.quorum.autoGenerated",
+            "tls.quorum.passwordsSecretName",
+            "tls.quorum.truststorePassword"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 5075,
+            "start": 4844
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "configuration",
+            "existingConfigmap"
           ],
           "type": "or"
         }
@@ -2560,10 +2970,40 @@
             "existingConfigmap"
           ],
           "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "existingConfigmap",
+          "type": "not"
         }
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.configmapName"
+          ],
+          "span": {
+            "end": 3503,
+            "start": 3322
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -2596,12 +3036,110 @@
           "type": "or"
         },
         {
+          "path": "tls.client.passwordsSecretName",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7944,
+            "start": 7713
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        },
+        {
           "path": "tls.quorum.passwordsSecretName",
           "type": "truthy"
         }
       ],
       "kind": "Scalar",
       "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 5075,
+            "start": 4844
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -2703,484 +3241,6 @@
     {
       "guards": [
         {
-          "path": "auth.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.secretName"
-          ],
-          "span": {
-            "end": 1875,
-            "start": 1664
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "auth.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.secretName"
-          ],
-          "span": {
-            "end": 2222,
-            "start": 2011
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.client.autoGenerated",
-            "tls.client.keystorePassword",
-            "tls.client.passwordsSecretName"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7944,
-            "start": 7713
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.client.autoGenerated",
-            "tls.client.passwordsSecretName",
-            "tls.client.truststorePassword"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7944,
-            "start": 7713
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.quorum.autoGenerated",
-            "tls.quorum.keystorePassword",
-            "tls.quorum.passwordsSecretName"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 5075,
-            "start": 4844
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.quorum.autoGenerated",
-            "tls.quorum.passwordsSecretName",
-            "tls.quorum.truststorePassword"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 5075,
-            "start": 4844
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "tls.client.passwordsSecretName",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "initContainers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7944,
-            "start": 7713
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "tls.quorum.passwordsSecretName",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "initContainers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 5075,
-            "start": 4844
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
           "path": "fullnameOverride",
           "type": "truthy"
         }
@@ -3204,165 +3264,6 @@
             "start": 681
           },
           "template_path": "<inline:6>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "configuration",
-            "existingConfigmap"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "configMap",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.configmapName"
-          ],
-          "span": {
-            "end": 3503,
-            "start": 3322
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "secret",
-        "secretName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsSecretName"
-          ],
-          "span": {
-            "end": 5712,
-            "start": 5491
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "secret",
-        "secretName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsSecretName"
-          ],
-          "span": {
-            "end": 4383,
-            "start": 4162
-          },
-          "template_path": "<inline:0>"
         }
       ],
       "resource": {
@@ -3385,16 +3286,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -3409,11 +3314,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -3433,11 +3338,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -3562,6 +3467,10 @@
     {
       "guards": [
         {
+          "path": "global",
+          "type": "truthy"
+        },
+        {
           "path": "global.imageRegistry",
           "type": "truthy"
         },
@@ -3600,11 +3509,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -3616,11 +3525,15 @@
     {
       "guards": [
         {
+          "path": "volumePermissions.enabled",
+          "type": "truthy"
+        },
+        {
           "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "global",
           "type": "truthy"
         },
         {
@@ -3684,6 +3597,10 @@
           "type": "or"
         },
         {
+          "path": "global",
+          "type": "truthy"
+        },
+        {
           "path": "global.imageRegistry",
           "type": "truthy"
         },
@@ -3742,16 +3659,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -3766,11 +3687,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -3790,16 +3711,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -3846,11 +3771,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -4007,28 +3932,6 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.images.image"
-          ],
-          "span": {
-            "end": 852,
-            "start": 220
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.image"
-          ],
-          "span": {
-            "end": 214,
-            "start": 120
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
       "resource": null,
       "source_expr": "image.digest"
     },
@@ -4036,6 +3939,10 @@
       "guards": [
         {
           "path": "global.imageRegistry",
+          "type": "truthy"
+        },
+        {
+          "path": "image.digest",
           "type": "truthy"
         },
         {
@@ -4073,6 +3980,40 @@
     {
       "guards": [
         {
+          "path": "image.digest",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.images.image"
+          ],
+          "span": {
+            "end": 852,
+            "start": 220
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.image"
+          ],
+          "span": {
+            "end": 214,
+            "start": 120
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "image.digest"
+    },
+    {
+      "guards": [
+        {
           "paths": [
             "tls.client.enabled",
             "tls.quorum.enabled"
@@ -4093,6 +4034,18 @@
             "tls.quorum.enabled"
           ],
           "type": "or"
+        },
+        {
+          "path": "global.imageRegistry",
+          "type": "truthy"
+        },
+        {
+          "path": "image.digest",
+          "type": "truthy"
+        },
+        {
+          "path": "image.registry",
+          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -4145,11 +4098,7 @@
           "type": "or"
         },
         {
-          "path": "global.imageRegistry",
-          "type": "truthy"
-        },
-        {
-          "path": "image.registry",
+          "path": "image.digest",
           "type": "truthy"
         }
       ],
@@ -5449,8 +5398,116 @@
     {
       "guards": [
         {
+          "path": "auth.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "auth.client.existingSecret",
+          "type": "not"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.secretName"
+          ],
+          "span": {
+            "end": 1875,
+            "start": 1664
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "auth.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "auth.quorum.existingSecret",
+          "type": "not"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.secretName"
+          ],
+          "span": {
+            "end": 2222,
+            "start": 2011
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
           "path": "serviceAccount.create",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -5486,6 +5543,513 @@
     },
     {
       "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.client.existingSecret",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsSecretName"
+          ],
+          "span": {
+            "end": 5712,
+            "start": 5491
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.client.autoGenerated",
+            "tls.client.keystorePassword",
+            "tls.client.passwordsSecretName"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7944,
+            "start": 7713
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.client.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.client.autoGenerated",
+            "tls.client.passwordsSecretName",
+            "tls.client.truststorePassword"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7944,
+            "start": 7713
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.quorum.existingSecret",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsSecretName"
+          ],
+          "span": {
+            "end": 4383,
+            "start": 4162
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.quorum.autoGenerated",
+            "tls.quorum.keystorePassword",
+            "tls.quorum.passwordsSecretName"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 5075,
+            "start": 4844
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "tls.quorum.enabled",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "tls.quorum.autoGenerated",
+            "tls.quorum.passwordsSecretName",
+            "tls.quorum.truststorePassword"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 5075,
+            "start": 4844
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "configuration",
+            "existingConfigmap"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "existingConfigmap",
+          "type": "not"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.configmapName"
+          ],
+          "span": {
+            "end": 3503,
+            "start": 3322
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.client.passwordsSecretName",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7944,
+            "start": 7713
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "tls.quorum.passwordsSecretName",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.tlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 5075,
+            "start": 4844
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
         {
           "path": "nameOverride",
           "type": "default"
@@ -5608,6 +6172,14 @@
     },
     {
       "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
         {
           "path": "nameOverride",
           "type": "default"
@@ -6184,6 +6756,14 @@
           "type": "range"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -6210,489 +6790,12 @@
     {
       "guards": [
         {
-          "path": "auth.client.enabled",
-          "type": "truthy"
+          "path": "fullnameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.secretName"
-          ],
-          "span": {
-            "end": 1875,
-            "start": 1664
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "auth.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.secretName"
-          ],
-          "span": {
-            "end": 2222,
-            "start": 2011
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.client.autoGenerated",
-            "tls.client.keystorePassword",
-            "tls.client.passwordsSecretName"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7944,
-            "start": 7713
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.client.autoGenerated",
-            "tls.client.passwordsSecretName",
-            "tls.client.truststorePassword"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7944,
-            "start": 7713
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.quorum.autoGenerated",
-            "tls.quorum.keystorePassword",
-            "tls.quorum.passwordsSecretName"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 5075,
-            "start": 4844
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "tls.quorum.autoGenerated",
-            "tls.quorum.passwordsSecretName",
-            "tls.quorum.truststorePassword"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 5075,
-            "start": 4844
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "tls.client.passwordsSecretName",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "initContainers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7944,
-            "start": 7713
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "tls.quorum.passwordsSecretName",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "initContainers[*]",
-        "env[*]",
-        "valueFrom",
-        "secretKeyRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 5075,
-            "start": 4844
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "configuration",
-            "existingConfigmap"
-          ],
-          "type": "or"
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -6718,158 +6821,6 @@
             "start": 681
           },
           "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.configmapName"
-          ],
-          "span": {
-            "end": 3503,
-            "start": 3322
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "configMap",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "secret",
-        "secretName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.tlsSecretName"
-          ],
-          "span": {
-            "end": 5712,
-            "start": 5491
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.quorum.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "secret",
-        "secretName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.quorum.tlsSecretName"
-          ],
-          "span": {
-            "end": 4383,
-            "start": 4162
-          },
-          "template_path": "<inline:0>"
         }
       ],
       "resource": {
@@ -7260,16 +7211,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7300,11 +7255,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7340,16 +7295,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7380,11 +7339,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7420,16 +7379,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7455,11 +7418,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7490,16 +7453,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7542,11 +7509,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7594,6 +7561,10 @@
     {
       "guards": [
         {
+          "path": "persistence.enabled",
+          "type": "truthy"
+        },
+        {
           "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         }
@@ -7613,11 +7584,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7625,8 +7596,8 @@
           "type": "truthy"
         },
         {
-          "path": "dataLogDir",
-          "type": "truthy"
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         }
       ],
       "kind": "Scalar",
@@ -7644,11 +7615,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         }
       ],
@@ -7674,16 +7645,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7709,16 +7684,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7761,16 +7740,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -7799,10 +7782,6 @@
     {
       "guards": [
         {
-          "path": "dataLogDir",
-          "type": "truthy"
-        },
-        {
           "path": "persistence.enabled",
           "type": "truthy"
         }
@@ -7822,28 +7801,9 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
-        {
-          "path": "persistence.enabled",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "",
-        "api_version_candidates": [
-          "apps/v1beta1",
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "persistence.enabled"
-    },
-    {
-      "guards": [
         {
           "path": "persistence.enabled",
           "type": "truthy"
@@ -7883,11 +7843,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7910,11 +7870,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -7994,16 +7954,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -8029,11 +7993,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8064,16 +8028,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -8116,11 +8084,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8168,11 +8136,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8203,11 +8171,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8255,11 +8223,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8293,16 +8261,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -8317,11 +8289,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8341,16 +8313,20 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
           "path": "persistence.existingClaim",
           "type": "truthy"
+        },
+        {
+          "path": "persistence.dataLogDir.existingClaim",
+          "type": "not"
         },
         {
           "path": "dataLogDir",
@@ -8397,11 +8373,11 @@
     {
       "guards": [
         {
-          "path": "persistence.dataLogDir.existingClaim",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
-          "path": "persistence.enabled",
+          "path": "persistence.dataLogDir.existingClaim",
           "type": "truthy"
         },
         {
@@ -8647,11 +8623,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -8676,11 +8652,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -8709,11 +8685,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -8738,11 +8714,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -9550,6 +9526,38 @@
     },
     {
       "guards": [
+        {
+          "path": "serviceAccount.create",
+          "type": "truthy"
+        },
+        {
+          "path": "serviceAccount.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.serviceAccountName"
+          ],
+          "span": {
+            "end": 1528,
+            "start": 1323
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "serviceAccount.name"
+    },
+    {
+      "guards": [
+        {
+          "path": "serviceAccount.create",
+          "type": "not"
+        },
         {
           "path": "serviceAccount.name",
           "type": "default"
@@ -11826,11 +11834,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -11859,11 +11867,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -11885,10 +11893,6 @@
     },
     {
       "guards": [
-        {
-          "path": "persistence.enabled",
-          "type": "truthy"
-        },
         {
           "path": "volumePermissions.enabled",
           "type": "truthy"
@@ -11916,53 +11920,35 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.images.image"
-          ],
-          "span": {
-            "end": 852,
-            "start": 220
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.volumePermissions.image"
-          ],
-          "span": {
-            "end": 478,
-            "start": 366
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
       "resource": null,
       "source_expr": "volumePermissions.image.digest"
     },
     {
       "guards": [
         {
-          "path": "persistence.enabled",
-          "type": "truthy"
-        },
-        {
           "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
+          "path": "persistence.enabled",
+          "type": "truthy"
+        },
+        {
           "path": "global.imageRegistry",
+          "type": "truthy"
+        },
+        {
+          "path": "volumePermissions.image.digest",
           "type": "truthy"
         },
         {
@@ -12000,11 +11986,53 @@
     {
       "guards": [
         {
+          "path": "volumePermissions.enabled",
+          "type": "truthy"
+        },
+        {
           "path": "persistence.enabled",
           "type": "truthy"
         },
         {
+          "path": "volumePermissions.image.digest",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.images.image"
+          ],
+          "span": {
+            "end": 852,
+            "start": 220
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.volumePermissions.image"
+          ],
+          "span": {
+            "end": 478,
+            "start": 366
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "volumePermissions.image.digest"
+    },
+    {
+      "guards": [
+        {
           "path": "volumePermissions.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -12082,11 +12110,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -12098,11 +12126,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -12144,11 +12172,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -12182,11 +12210,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -12228,11 +12256,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         }
       ],
@@ -12266,11 +12294,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -12312,11 +12340,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {
@@ -12339,11 +12367,11 @@
     {
       "guards": [
         {
-          "path": "persistence.enabled",
+          "path": "volumePermissions.enabled",
           "type": "truthy"
         },
         {
-          "path": "volumePermissions.enabled",
+          "path": "persistence.enabled",
           "type": "truthy"
         },
         {

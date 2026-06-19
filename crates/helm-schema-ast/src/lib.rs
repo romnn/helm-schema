@@ -39,11 +39,7 @@ impl TemplateHeader {
     #[must_use]
     pub fn parse_control(raw: impl Into<String>) -> Self {
         let raw = raw.into();
-        let wrapped = format!("{{{{ {raw} }}}}");
-        let expr = parse_action_expressions(&wrapped)
-            .into_iter()
-            .next()
-            .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
+        let expr = parse_control_expr(&raw).unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
         Self::new(raw, expr)
     }
 
@@ -67,6 +63,40 @@ impl TemplateHeader {
     pub fn expr(&self) -> &TemplateExpr {
         &self.expr
     }
+}
+
+fn parse_control_expr(raw: &str) -> Option<TemplateExpr> {
+    let parsed = parse_action_expressions(&format!("{{{{ {raw} }}}}"))
+        .into_iter()
+        .next();
+    match parsed {
+        Some(TemplateExpr::Unknown(_)) | None => {
+            let condition = normalized_control_condition(raw)?;
+            parse_action_expressions(&format!("{{{{ {condition} }}}}"))
+                .into_iter()
+                .next()
+        }
+        expr => expr,
+    }
+}
+
+fn normalized_control_condition(raw: &str) -> Option<&str> {
+    let mut text = raw.trim();
+    if let Some(rest) = text.strip_prefix("{{") {
+        text = rest.trim_start();
+        if let Some(rest) = text.strip_prefix('-') {
+            text = rest.trim_start();
+        }
+        let rest = text.strip_suffix("}}")?;
+        text = rest.trim_end();
+        if let Some(rest) = text.strip_suffix('-') {
+            text = rest.trim_end();
+        }
+    }
+
+    text.strip_prefix("else if ")
+        .or_else(|| text.strip_prefix("if "))
+        .or_else(|| text.strip_prefix("with "))
 }
 
 /// Parsed Helm action/output node.

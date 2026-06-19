@@ -112,3 +112,38 @@ fn schema_validates_values_yaml() {
         errors.join("\n")
     );
 }
+
+#[test]
+fn schema_keeps_live_service_account_name_typed() {
+    let src = test_util::read_testdata(TEMPLATE_PATH);
+    let values_yaml = test_util::read_testdata(VALUES_PATH);
+    let idx = build_define_index(&TreeSitterParser);
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let provider = common::production_k8s_chain("v1.35.0");
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
+
+    assert!(
+        !common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAccount": {
+                    "enabled": true,
+                    "name": 7
+                }
+            })
+        ),
+        "serviceAccount.name must stay string-like when ServiceAccount rendering is enabled: {schema}"
+    );
+    assert!(
+        common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAccount": {
+                    "enabled": false,
+                    "name": 7
+                }
+            })
+        ),
+        "serviceAccount.name should remain unconstrained when the ServiceAccount is disabled: {schema}"
+    );
+}

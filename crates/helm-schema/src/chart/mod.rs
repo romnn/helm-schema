@@ -8,7 +8,6 @@ mod static_crds;
 mod tests;
 mod types;
 mod values;
-mod values_schema;
 
 pub use define_index::build_define_index;
 pub use discovery::discover_chart_contexts;
@@ -18,7 +17,3 @@ pub(crate) use paths::scope_values_path;
 pub use static_crds::collect_static_crd_universe;
 pub use types::{ChartContext, ChartDependencyActivation};
 pub use values::{build_composed_values_descriptions, build_composed_values_yaml};
-pub(crate) use values_schema::{
-    GENERATED_SCHEMA_MARKER_KEY, ScopedValuesSchemaConstraint,
-    load_shipped_values_schema_constraints,
-};

@@ -4,7 +4,8 @@ use crate::YamlPath;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
 use crate::fragment_binding::FragmentBinding;
 use crate::fragment_range_scope::{
-    range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
+    range_body_emits_sequence_item_from_source, range_body_mapping_entry_indent_from_source,
+    range_body_renders_mapping_entries_from_ast,
     range_body_renders_scalar_sequence_items_from_source,
     range_has_destructured_variable_definition,
 };
@@ -17,6 +18,7 @@ pub(crate) struct RangeActionPlan {
     pub(crate) guard_path: YamlPath,
     pub(crate) emit_header_use: bool,
     pub(crate) renders_mapping_entries: bool,
+    pub(crate) mapping_entry_indent: Option<usize>,
     pub(crate) dot_binding: Option<FragmentBinding>,
     pub(crate) apply_dot_binding: bool,
 }
@@ -30,6 +32,7 @@ impl RangeActionPlan {
             guard_path: YamlPath(Vec::new()),
             emit_header_use: false,
             renders_mapping_entries: false,
+            mapping_entry_indent: None,
             dot_binding: None,
             apply_dot_binding: true,
         }
@@ -57,6 +60,9 @@ pub(crate) fn plan_range_action(
     let has_variable_definition = range_has_destructured_variable_definition(node);
     let body_emits_sequence_item = range_body_emits_sequence_item_from_source(node, source);
     let body_renders_mapping_entries = range_body_renders_mapping_entries_from_ast(node, source);
+    let mapping_entry_indent = body_renders_mapping_entries
+        .then(|| range_body_mapping_entry_indent_from_source(node, source))
+        .flatten();
     let body_renders_scalar_sequence_items = !has_variable_definition
         && range_body_renders_scalar_sequence_items_from_source(node, source);
 
@@ -85,6 +91,7 @@ pub(crate) fn plan_range_action(
     let renders_mapping_entries = has_variable_definition
         && !body_emits_sequence_item
         && body_renders_mapping_entries
+        && mapping_entry_indent.is_some()
         && !current_path.0.is_empty()
         && current_path
             .0
@@ -101,6 +108,7 @@ pub(crate) fn plan_range_action(
         guard_path,
         emit_header_use,
         renders_mapping_entries,
+        mapping_entry_indent,
         dot_binding,
         apply_dot_binding: true,
     }

@@ -4,23 +4,68 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "service": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "enabled": {
-                "const": true
+              "service": {
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "enabled"
+              "service"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
@@ -607,16 +652,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nameOverride": {},
     "namespaceOverride": {
       "anyOf": [
         {
@@ -761,15 +797,52 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "enabled": {
-                "const": true
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            ]
           },
           "then": {
             "properties": {
@@ -797,17 +870,7 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "name": {
-          "anyOf": [
-            {
-              "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "name": {},
         "patch": {
           "items": {},
           "type": "array"

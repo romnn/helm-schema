@@ -5,14 +5,12 @@ use std::sync::{Arc, Mutex};
 use helm_schema_engine::contract::{ContractDocument, ContractDocumentUse, ContractProjection};
 use helm_schema_engine::{ContractIr, ValuesSchemaInput, generate_values_schema};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use crate::analysis::analyze_charts;
 use crate::chart;
 use crate::error::CliResult;
-use crate::fetch_policy::FetchPolicy;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
-use crate::load_budget::LoadBudget;
 use crate::output_pipeline::{
     OutputPipelineOptions, PolicyInputOptions, PolicyInputs, apply_schema_output_pipeline,
     load_policy_inputs,
@@ -52,7 +50,6 @@ pub(crate) struct PreparedSession {
     pub(crate) values_yaml: Option<String>,
     pub(crate) values_descriptions: BTreeMap<String, String>,
     pub(crate) subchart_value_prefixes: Vec<Vec<String>>,
-    pub(crate) shipped_values_schema_constraints: Vec<chart::ScopedValuesSchemaConstraint>,
 }
 
 impl PreparedSession {
@@ -69,11 +66,6 @@ impl PreparedSession {
         )?;
         let chart_analysis =
             analyze_charts(charts, &defines, opts.include_tests, values_yaml.as_deref())?;
-        let shipped_values_schema_constraints = chart::load_shipped_values_schema_constraints(
-            charts,
-            FetchPolicy::input_assembly(opts.provider.allow_net),
-            LoadBudget::default(),
-        )?;
 
         Ok(Self {
             analysis: Analysis {
@@ -89,7 +81,6 @@ impl PreparedSession {
                 .filter(|chart| !chart.values_prefix.is_empty())
                 .map(|chart| chart.values_prefix.clone())
                 .collect(),
-            shipped_values_schema_constraints,
         })
     }
 
@@ -160,9 +151,8 @@ impl AnalysisSession {
     ///
     /// This query exposes the stage boundary the architecture document calls
     /// `resolved_contract(policy)`: structural contract facts have already
-    /// been resolved against providers and chart-authored shipped
-    /// `values.schema.json` constraints have been intersected, but the later
-    /// heuristic `--infer-required` mutation has not yet run.
+    /// been resolved against providers, but the later heuristic
+    /// `--infer-required` mutation has not yet run.
     pub fn resolved_contract(&self) -> CliResult<ResolvedContract> {
         Ok((*self.resolved()?).clone())
     }
@@ -372,11 +362,6 @@ pub(crate) fn resolve_contract_from_prepared(
             .with_values_yaml(prepared.values_yaml.as_deref())
             .with_values_descriptions(&prepared.values_descriptions),
     );
-    let schema = apply_shipped_values_schema_constraints(
-        schema,
-        &prepared.shipped_values_schema_constraints,
-    );
-    validate_composed_defaults_against_schema(prepared.values_yaml.as_deref(), &schema)?;
 
     Ok(ResolvedContract {
         schema,
@@ -404,229 +389,6 @@ pub(crate) fn generate_schema_from_resolved_contract(
         schema,
         subchart_value_prefixes: resolved.subchart_value_prefixes.clone(),
     }
-}
-
-fn apply_shipped_values_schema_constraints(
-    mut schema: Value,
-    constraints: &[chart::ScopedValuesSchemaConstraint],
-) -> Value {
-    if constraints.is_empty() {
-        return schema;
-    }
-
-    let prepared_constraints = constraints
-        .iter()
-        .cloned()
-        .enumerate()
-        .map(|(index, constraint)| prepare_values_schema_constraint(index, constraint))
-        .collect::<Vec<_>>();
-
-    let Value::Object(root) = &mut schema else {
-        return schema;
-    };
-    if let Some(hoisted_defs) = collect_hoisted_constraint_definitions(&prepared_constraints) {
-        let definitions = root
-            .entry("$defs".to_string())
-            .or_insert_with(|| Value::Object(Map::new()));
-        let Value::Object(existing_defs) = definitions else {
-            return schema;
-        };
-        existing_defs.extend(hoisted_defs);
-    }
-    let wrapped_constraints = prepared_constraints
-        .into_iter()
-        .map(|constraint| wrap_values_schema_constraint(constraint))
-        .collect::<Vec<_>>();
-    let all_of = root
-        .entry("allOf".to_string())
-        .or_insert_with(|| Value::Array(Vec::new()));
-    let Value::Array(entries) = all_of else {
-        root.insert("allOf".to_string(), Value::Array(wrapped_constraints));
-        return schema;
-    };
-    entries.extend(wrapped_constraints);
-    schema
-}
-
-fn validate_composed_defaults_against_schema(
-    values_yaml: Option<&str>,
-    schema: &Value,
-) -> CliResult<()> {
-    let Some(values_yaml) = values_yaml else {
-        return Ok(());
-    };
-
-    let values_json: Value = serde_yaml::from_str(values_yaml)?;
-    let values_json = coalesced_values_json(&values_json);
-    let validator = jsonschema::validator_for(schema).map_err(|err| {
-        crate::error::CliError::SchemaPostconditionCompile {
-            reason: err.to_string(),
-        }
-    })?;
-    let errors = validator
-        .iter_errors(&values_json)
-        .map(|err| format!("{path}: {err}", path = err.instance_path()))
-        .collect::<Vec<_>>();
-
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(crate::error::CliError::SchemaPostconditionViolated { errors })
-    }
-}
-
-fn coalesced_values_json(value: &Value) -> Value {
-    match value {
-        Value::Null => Value::Null,
-        Value::Bool(_) | Value::Number(_) | Value::String(_) => value.clone(),
-        Value::Array(items) => Value::Array(
-            items
-                .iter()
-                .filter(|item| !item.is_null())
-                .map(coalesced_values_json)
-                .collect(),
-        ),
-        Value::Object(map) => {
-            let mut out = Map::new();
-            for (key, value) in map {
-                if value.is_null() {
-                    continue;
-                }
-                out.insert(key.clone(), coalesced_values_json(value));
-            }
-            Value::Object(out)
-        }
-    }
-}
-
-struct PreparedValuesSchemaConstraint {
-    values_prefix: Vec<String>,
-    schema: Value,
-    hoisted_defs: Map<String, Value>,
-}
-
-fn prepare_values_schema_constraint(
-    index: usize,
-    constraint: chart::ScopedValuesSchemaConstraint,
-) -> PreparedValuesSchemaConstraint {
-    let namespace = format!("shippedValuesSchema{index}");
-    let mut schema = constraint.schema;
-    strip_root_schema_keyword(&mut schema);
-    strip_root_id_keyword(&mut schema);
-    let mut hoisted_defs = Map::new();
-    hoist_constraint_defs(&mut schema, &namespace, &mut hoisted_defs);
-
-    PreparedValuesSchemaConstraint {
-        values_prefix: constraint.values_prefix,
-        schema,
-        hoisted_defs,
-    }
-}
-
-fn wrap_values_schema_constraint(constraint: PreparedValuesSchemaConstraint) -> Value {
-    constraint
-        .values_prefix
-        .iter()
-        .rev()
-        .fold(constraint.schema, |inner, segment| {
-            Value::Object(
-                [
-                    ("type".to_string(), Value::String("object".to_string())),
-                    (
-                        "properties".to_string(),
-                        Value::Object(
-                            [(segment.clone(), inner)]
-                                .into_iter()
-                                .collect::<Map<String, Value>>(),
-                        ),
-                    ),
-                ]
-                .into_iter()
-                .collect(),
-            )
-        })
-}
-
-fn strip_root_schema_keyword(schema: &mut Value) {
-    if let Value::Object(object) = schema {
-        object.remove("$schema");
-    }
-}
-
-fn strip_root_id_keyword(schema: &mut Value) {
-    if let Value::Object(object) = schema {
-        object.remove("$id");
-    }
-}
-
-fn collect_hoisted_constraint_definitions(
-    constraints: &[PreparedValuesSchemaConstraint],
-) -> Option<Map<String, Value>> {
-    let mut definitions = Map::new();
-    for constraint in constraints {
-        definitions.extend(constraint.hoisted_defs.clone());
-    }
-    (!definitions.is_empty()).then_some(definitions)
-}
-
-fn hoist_constraint_defs(
-    schema: &mut Value,
-    namespace: &str,
-    hoisted_defs: &mut Map<String, Value>,
-) {
-    rewrite_constraint_refs(schema, namespace);
-
-    let Value::Object(object) = schema else {
-        return;
-    };
-
-    for defs_key in ["$defs", "definitions"] {
-        let Some(Value::Object(definitions)) = object.remove(defs_key) else {
-            continue;
-        };
-
-        for (name, mut definition) in definitions {
-            rewrite_constraint_refs(&mut definition, namespace);
-            hoisted_defs.insert(namespaced_definition_name(namespace, &name), definition);
-        }
-    }
-}
-
-fn rewrite_constraint_refs(schema: &mut Value, namespace: &str) {
-    match schema {
-        Value::Object(object) => {
-            if let Some(Value::String(reference)) = object.get_mut("$ref") {
-                if let Some(def_name) = reference.strip_prefix("#/$defs/")
-                    && !def_name.starts_with(&format!("{namespace}."))
-                {
-                    *reference = format!(
-                        "#/$defs/{}",
-                        namespaced_definition_name(namespace, def_name)
-                    );
-                } else if let Some(def_name) = reference.strip_prefix("#/definitions/")
-                    && !def_name.starts_with(&format!("{namespace}."))
-                {
-                    *reference = format!(
-                        "#/$defs/{}",
-                        namespaced_definition_name(namespace, def_name)
-                    );
-                }
-            }
-            for value in object.values_mut() {
-                rewrite_constraint_refs(value, namespace);
-            }
-        }
-        Value::Array(values) => {
-            for value in values {
-                rewrite_constraint_refs(value, namespace);
-            }
-        }
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
-    }
-}
-
-fn namespaced_definition_name(namespace: &str, name: &str) -> String {
-    format!("{namespace}.{name}")
 }
 
 fn normalize_values_path(path: &str) -> String {

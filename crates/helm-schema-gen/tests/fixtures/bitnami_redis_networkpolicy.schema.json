@@ -13,23 +13,68 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "networkPolicy": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "enabled": {
-                "const": true
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "enabled"
+              "networkPolicy"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "networkPolicy"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
@@ -61,23 +106,68 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "networkPolicy": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "networkPolicy"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            ]
           },
           {
             "properties": {
@@ -94,23 +184,68 @@
           },
           {
             "not": {
-              "properties": {
-                "networkPolicy": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "allowExternalEgress": {}
+                        },
+                        "required": [
+                          "allowExternalEgress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
                   "properties": {
-                    "allowExternalEgress": {
-                      "const": true
+                    "networkPolicy": {
+                      "properties": {
+                        "allowExternalEgress": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "allowExternalEgress"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "allowExternalEgress"
+                    "networkPolicy"
                   ],
                   "type": "object"
                 }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
+              ]
             }
           }
         ]
@@ -149,7 +284,29 @@
               "metrics": {
                 "properties": {
                   "enabled": {
-                    "const": true
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -164,23 +321,68 @@
             "type": "object"
           },
           {
-            "properties": {
-              "networkPolicy": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "networkPolicy"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            ]
           }
         ]
       },
@@ -212,23 +414,68 @@
     },
     {
       "if": {
-        "properties": {
-          "networkPolicy": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "enabled": {
-                "const": true
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "enabled"
+              "networkPolicy"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "networkPolicy"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
@@ -250,23 +497,68 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "networkPolicy": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "networkPolicy"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            ]
           },
           {
             "properties": {
@@ -283,23 +575,68 @@
           },
           {
             "not": {
-              "properties": {
-                "networkPolicy": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "allowExternalEgress": {}
+                        },
+                        "required": [
+                          "allowExternalEgress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
                   "properties": {
-                    "allowExternalEgress": {
-                      "const": true
+                    "networkPolicy": {
+                      "properties": {
+                        "allowExternalEgress": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "allowExternalEgress"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "allowExternalEgress"
+                    "networkPolicy"
                   ],
                   "type": "object"
                 }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
+              ]
             }
           }
         ]
@@ -324,43 +661,133 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "networkPolicy": {
-                "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "networkPolicy": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "allowExternal": {
-                      "const": true
+                    "networkPolicy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "allowExternal"
+                    "networkPolicy"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "allowExternal": {}
+                        },
+                        "required": [
+                          "allowExternal"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "allowExternal": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "allowExternal"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              ]
             }
           }
         ]
@@ -383,23 +810,68 @@
     },
     {
       "if": {
-        "properties": {
-          "networkPolicy": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "enabled": {
-                "const": true
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "enabled"
+              "networkPolicy"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "networkPolicy"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
@@ -422,30 +894,97 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "networkPolicy": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "networkPolicy"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            ]
           },
           {
             "properties": {
               "sentinel": {
                 "properties": {
                   "enabled": {
-                    "const": true
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -491,30 +1030,97 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "networkPolicy": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "networkPolicy"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            ]
           },
           {
             "properties": {
               "sentinel": {
                 "properties": {
                   "enabled": {
-                    "const": true
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -543,23 +1149,68 @@
           },
           {
             "not": {
-              "properties": {
-                "networkPolicy": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "allowExternalEgress": {}
+                        },
+                        "required": [
+                          "allowExternalEgress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
                   "properties": {
-                    "allowExternalEgress": {
-                      "const": true
+                    "networkPolicy": {
+                      "properties": {
+                        "allowExternalEgress": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "allowExternalEgress"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "allowExternalEgress"
+                    "networkPolicy"
                   ],
                   "type": "object"
                 }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
+              ]
             }
           }
         ]
@@ -643,16 +1294,7 @@
         "containerPorts": {
           "additionalProperties": false,
           "properties": {
-            "redis": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
+            "redis": {}
           },
           "type": "object"
         }
@@ -665,16 +1307,7 @@
         "containerPorts": {
           "additionalProperties": false,
           "properties": {
-            "http": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
+            "http": {}
           },
           "type": "object"
         },
@@ -684,27 +1317,8 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "namespaceOverride": {
-      "anyOf": [
-        {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
+    "nameOverride": {},
+    "namespaceOverride": {},
     "networkPolicy": {
       "additionalProperties": false,
       "properties": {
@@ -1005,16 +1619,7 @@
         "containerPorts": {
           "additionalProperties": false,
           "properties": {
-            "sentinel": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
+            "sentinel": {}
           },
           "type": "object"
         },

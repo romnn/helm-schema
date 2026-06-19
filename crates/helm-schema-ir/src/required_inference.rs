@@ -29,6 +29,12 @@ pub(crate) fn derive_required_inference_signals(uses: &[ContractUse]) -> Require
                 Guard::Not { path } => {
                     signals.conditionally_optional_paths.insert(path.clone());
                 }
+                Guard::Absent { path } => {
+                    signals.conditionally_optional_paths.insert(path.clone());
+                }
+                Guard::NotEq { path, .. } => {
+                    signals.conditionally_optional_paths.insert(path.clone());
+                }
                 Guard::Or { paths } => {
                     signals
                         .conditionally_optional_paths
@@ -66,6 +72,8 @@ fn use_is_positive_header(use_: &ContractUse) -> bool {
                 path == &use_.source_expr
             }
             Guard::Not { .. }
+            | Guard::NotEq { .. }
+            | Guard::Absent { .. }
             | Guard::Or { .. }
             | Guard::Range { .. }
             | Guard::With { .. }

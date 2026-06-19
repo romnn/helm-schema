@@ -27,6 +27,8 @@ pub(super) fn guard_constraint_from_guard(guard: &Guard) -> Option<GuardConstrai
         }),
         Guard::Truthy { .. }
         | Guard::Not { .. }
+        | Guard::NotEq { .. }
+        | Guard::Absent { .. }
         | Guard::Or { .. }
         | Guard::Range { .. }
         | Guard::With { .. }
@@ -57,6 +59,10 @@ fn use_has_matching_self_guard(use_: &ContractUse) -> bool {
         | Guard::Range { path }
         | Guard::With { path }
         | Guard::Default { path } => path == &use_.source_expr,
-        Guard::Not { .. } | Guard::Or { .. } | Guard::TypeIs { .. } => false,
+        Guard::Not { .. }
+        | Guard::NotEq { .. }
+        | Guard::Absent { .. }
+        | Guard::Or { .. }
+        | Guard::TypeIs { .. } => false,
     })
 }

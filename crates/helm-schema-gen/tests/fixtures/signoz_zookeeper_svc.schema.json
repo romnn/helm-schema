@@ -10,7 +10,29 @@
               "client": {
                 "properties": {
                   "enabled": {
-                    "const": true
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -93,7 +115,29 @@
             "not": {
               "properties": {
                 "disableBaseClientPort": {
-                  "const": true
+                  "anyOf": [
+                    {
+                      "const": true
+                    },
+                    {
+                      "not": {
+                        "const": 0
+                      },
+                      "type": "number"
+                    },
+                    {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    {
+                      "minProperties": 1,
+                      "type": "object"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -256,11 +300,7 @@
         "ports": {
           "additionalProperties": false,
           "properties": {
-            "client": {
-              "description": "The port that will be exposed by this service.",
-              "format": "int32",
-              "type": "integer"
-            },
+            "client": {},
             "election": {
               "description": "The port that will be exposed by this service.",
               "format": "int32",
@@ -271,11 +311,7 @@
               "format": "int32",
               "type": "integer"
             },
-            "tls": {
-              "description": "The port that will be exposed by this service.",
-              "format": "int32",
-              "type": "integer"
-            }
+            "tls": {}
           },
           "type": "object"
         },
@@ -316,6 +352,11 @@
             {
               "enum": [
                 "ClusterIP"
+              ]
+            },
+            {
+              "enum": [
+                "LoadBalancer"
               ]
             }
           ]

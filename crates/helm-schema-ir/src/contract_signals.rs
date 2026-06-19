@@ -8,6 +8,8 @@ use crate::provider_schema_use::ProviderSchemaUse;
 pub enum ConditionalGuard {
     Truthy { path: String },
     Eq { path: String, value: String },
+    NotEq { path: String, value: String },
+    Absent { path: String },
     TypeIs { path: String, schema_type: String },
     Not(Box<ConditionalGuard>),
     AnyOf(Vec<ConditionalGuard>),

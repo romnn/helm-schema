@@ -415,9 +415,19 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             }],
             None,
         ),
+        ContractUse::new(
+            "preset.resources".to_string(),
+            YamlPath(vec!["spec".to_string(), "resources".to_string()]),
+            ValueKind::Fragment,
+            vec![Guard::NotEq {
+                path: "resourcesPreset".to_string(),
+                value: "none".to_string(),
+            }],
+            None,
+        ),
     ]);
 
-    assert_eq!(signals.conditional_path_overlays.len(), 2);
+    assert_eq!(signals.conditional_path_overlays.len(), 3);
     assert_eq!(
         signals.conditional_path_overlays[0].guards,
         vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
@@ -435,12 +445,19 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             },
         ])],
     );
+    assert_eq!(
+        signals.conditional_path_overlays[2].guards,
+        vec![ConditionalGuard::NotEq {
+            path: "resourcesPreset".to_string(),
+            value: "none".to_string(),
+        }],
+    );
     assert!(
         signals
             .conditional_path_overlays
             .iter()
-            .all(|overlay| overlay.preserve_base_schema),
-        "single-sided guarded branches must keep their base schema because the complementary branch is not structurally covered: {:?}",
+            .all(|overlay| !overlay.preserve_base_schema),
+        "guarded-only branches must not preserve branch-specific evidence on the global base path: {:?}",
         signals.conditional_path_overlays
     );
 }
@@ -745,6 +762,16 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
             None,
         ),
         ContractUse::new(
+            "resourcesPreset".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            vec![Guard::NotEq {
+                path: "resourcesPreset".to_string(),
+                value: "none".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
             "either.primary".to_string(),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
@@ -782,6 +809,7 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
         signals.conditionally_optional_paths,
         BTreeSet::from([
             "optional".to_string(),
+            "resourcesPreset".to_string(),
             "either.primary".to_string(),
             "either.fallback".to_string(),
         ])

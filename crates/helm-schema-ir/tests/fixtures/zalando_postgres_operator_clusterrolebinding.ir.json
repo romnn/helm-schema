@@ -179,6 +179,14 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -223,6 +231,14 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -265,6 +281,14 @@
         {
           "path": "rbac.create",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -328,7 +352,10 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -341,7 +368,78 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "serviceAccount.name"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "serviceAccount.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "roleRef",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.serviceAccountName"
+          ],
+          "span": {
+            "end": 1036,
+            "start": 952
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "serviceAccount.name"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
+        },
+        {
+          "path": "serviceAccount.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "subjects[*]",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.serviceAccountName"
+          ],
+          "span": {
+            "end": 1036,
+            "start": 952
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
       "source_expr": "serviceAccount.name"
     }
   ],

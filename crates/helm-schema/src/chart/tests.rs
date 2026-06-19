@@ -45,7 +45,7 @@ dependencies:
         .ok_or_else(|| color_eyre::eyre::eyre!("discover child chart"))?;
     assert_eq!(
         child.dependency_activation.condition_paths,
-        vec!["global.kidEnabled".to_string(), "kid.enabled".to_string()]
+        vec!["kid.enabled".to_string(), "global.kidEnabled".to_string()]
     );
     assert_eq!(
         child.dependency_activation.tag_paths,

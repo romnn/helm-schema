@@ -1376,30 +1376,6 @@
         {
           "path": "image",
           "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 6111,
-            "start": 5825
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "image.repository"
-    },
-    {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
         },
         {
           "path": "image.registry",
@@ -1428,6 +1404,38 @@
         {
           "path": "image",
           "type": "truthy"
+        },
+        {
+          "path": "image.registry",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "image"
+          ],
+          "span": {
+            "end": 6111,
+            "start": 5825
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "image.repository"
+    },
+    {
+      "guards": [
+        {
+          "path": "image",
+          "type": "truthy"
+        },
+        {
+          "path": "image.digest",
+          "type": "not"
         },
         {
           "path": "image.tag",
@@ -1805,6 +1813,14 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -1839,6 +1855,14 @@
     {
       "guards": [
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -1855,7 +1879,21 @@
             "start": 400
           },
           "template_path": "<inline:0>"
-        },
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
         {
           "helper_chain": [
             "cert-manager.name"
@@ -1882,6 +1920,14 @@
         {
           "path": "config",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -2361,6 +2407,38 @@
     },
     {
       "guards": [
+        {
+          "path": "serviceAccount.create",
+          "type": "truthy"
+        },
+        {
+          "path": "serviceAccount.name",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1089,
+            "start": 884
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "serviceAccount.name"
+    },
+    {
+      "guards": [
+        {
+          "path": "serviceAccount.create",
+          "type": "not"
+        },
         {
           "path": "serviceAccount.name",
           "type": "default"

@@ -156,6 +156,14 @@
     {
       "guards": [
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -390,7 +398,8 @@
         },
         {
           "path": "service.type",
-          "type": "truthy"
+          "type": "eq",
+          "value": "ClusterIP"
         }
       ],
       "kind": "Scalar",
@@ -485,6 +494,11 @@
     {
       "guards": [
         {
+          "path": "service.type",
+          "type": "eq",
+          "value": "LoadBalancer"
+        },
+        {
           "path": "service.loadBalancerIP",
           "type": "truthy"
         }
@@ -500,11 +514,12 @@
     {
       "guards": [
         {
-          "path": "service.loadBalancerIP",
-          "type": "truthy"
+          "path": "service.type",
+          "type": "eq",
+          "value": "LoadBalancer"
         },
         {
-          "path": "service.type",
+          "path": "service.loadBalancerIP",
           "type": "truthy"
         }
       ],
@@ -522,6 +537,11 @@
     {
       "guards": [
         {
+          "path": "service.type",
+          "type": "eq",
+          "value": "LoadBalancer"
+        },
+        {
           "path": "service.loadBalancerSourceRanges",
           "type": "truthy"
         }
@@ -537,11 +557,12 @@
     {
       "guards": [
         {
-          "path": "service.loadBalancerSourceRanges",
-          "type": "truthy"
+          "path": "service.type",
+          "type": "eq",
+          "value": "LoadBalancer"
         },
         {
-          "path": "service.type",
+          "path": "service.loadBalancerSourceRanges",
           "type": "truthy"
         }
       ],
@@ -563,6 +584,10 @@
           "type": "not"
         },
         {
+          "path": "service.type",
+          "type": "truthy"
+        },
+        {
           "path": "service.nodePorts.client",
           "type": "truthy"
         }
@@ -582,11 +607,11 @@
           "type": "not"
         },
         {
-          "path": "service.nodePorts.client",
+          "path": "service.type",
           "type": "truthy"
         },
         {
-          "path": "service.type",
+          "path": "service.nodePorts.client",
           "type": "truthy"
         }
       ],
@@ -609,6 +634,10 @@
           "type": "truthy"
         },
         {
+          "path": "service.type",
+          "type": "truthy"
+        },
+        {
           "path": "service.nodePorts.tls",
           "type": "truthy"
         }
@@ -628,11 +657,11 @@
           "type": "truthy"
         },
         {
-          "path": "service.nodePorts.tls",
+          "path": "service.type",
           "type": "truthy"
         },
         {
-          "path": "service.type",
+          "path": "service.nodePorts.tls",
           "type": "truthy"
         }
       ],
@@ -800,45 +829,8 @@
         },
         {
           "path": "service.type",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.loadBalancerIP",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.loadBalancerSourceRanges",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "truthy"
+          "type": "eq",
+          "value": "ClusterIP"
         }
       ],
       "kind": "Scalar",
@@ -868,10 +860,6 @@
       "guards": [
         {
           "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "service.nodePorts.tls",
           "type": "truthy"
         },
         {
@@ -914,10 +902,6 @@
           "type": "not"
         },
         {
-          "path": "service.nodePorts.client",
-          "type": "truthy"
-        },
-        {
           "path": "service.type",
           "type": "truthy"
         }
@@ -940,6 +924,22 @@
           "path": "service.type",
           "type": "eq",
           "value": "ClusterIP"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.type"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.type",
+          "type": "eq",
+          "value": "LoadBalancer"
         }
       ],
       "kind": "Scalar",

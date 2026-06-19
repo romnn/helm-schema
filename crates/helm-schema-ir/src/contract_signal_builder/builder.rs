@@ -318,8 +318,7 @@ impl ConditionalOverlayAccumulator {
         if self.saw_unsupported {
             return Vec::new();
         }
-        let preserve_base_schema = self.has_unconditional_peer_use
-            || !guard_sets_form_complete_boolean_partition(self.branches_by_guards.keys());
+        let preserve_base_schema = self.has_unconditional_peer_use;
         self.branches_by_guards
             .into_iter()
             .map(|(guards, branch)| {
@@ -334,75 +333,6 @@ impl ConditionalOverlayAccumulator {
                 }
             })
             .collect()
-    }
-}
-
-fn guard_sets_form_complete_boolean_partition<'a>(
-    guard_sets: impl IntoIterator<Item = &'a Vec<ConditionalGuard>>,
-) -> bool {
-    let guard_sets = guard_sets
-        .into_iter()
-        .map(|guards| guards.iter().cloned().collect::<BTreeSet<_>>())
-        .collect::<Vec<_>>();
-    if guard_sets.len() < 2 {
-        return false;
-    }
-
-    for left_index in 0..guard_sets.len() {
-        for right_index in left_index + 1..guard_sets.len() {
-            let left = &guard_sets[left_index];
-            let right = &guard_sets[right_index];
-            let common_guards = left.intersection(right).cloned().collect::<BTreeSet<_>>();
-            let left_only = left
-                .difference(&common_guards)
-                .cloned()
-                .collect::<Vec<ConditionalGuard>>();
-            let right_only = right
-                .difference(&common_guards)
-                .cloned()
-                .collect::<Vec<ConditionalGuard>>();
-            let ([left_guard], [right_guard]) = (left_only.as_slice(), right_only.as_slice())
-            else {
-                continue;
-            };
-
-            let is_complementary_pair = match (
-                boolean_partition_guard_path(left_guard),
-                boolean_partition_guard_path(right_guard),
-            ) {
-                (Some((left_path, left_truthy)), Some((right_path, right_truthy))) => {
-                    left_path == right_path && left_truthy != right_truthy
-                }
-                _ => false,
-            };
-            if !is_complementary_pair {
-                continue;
-            }
-
-            let remaining_sets_cover_common_guard_only = guard_sets
-                .iter()
-                .enumerate()
-                .filter(|(index, _)| *index != left_index && *index != right_index)
-                .all(|(_, guards)| guards == &common_guards);
-            if remaining_sets_cover_common_guard_only {
-                return true;
-            }
-        }
-    }
-
-    false
-}
-
-fn boolean_partition_guard_path(guard: &ConditionalGuard) -> Option<(&str, bool)> {
-    match guard {
-        ConditionalGuard::Truthy { path } => Some((path.as_str(), true)),
-        ConditionalGuard::Not(inner) => match inner.as_ref() {
-            ConditionalGuard::Truthy { path } => Some((path.as_str(), false)),
-            _ => None,
-        },
-        ConditionalGuard::Eq { .. }
-        | ConditionalGuard::TypeIs { .. }
-        | ConditionalGuard::AnyOf(_) => None,
     }
 }
 
@@ -475,6 +405,13 @@ fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuar
             Guard::Eq { path, value } => guards.push(ConditionalGuard::Eq {
                 path: lowerable_guard_path(path, &contract_use.source_expr)?,
                 value: value.clone(),
+            }),
+            Guard::NotEq { path, value } => guards.push(ConditionalGuard::NotEq {
+                path: lowerable_guard_path(path, &contract_use.source_expr)?,
+                value: value.clone(),
+            }),
+            Guard::Absent { path } => guards.push(ConditionalGuard::Absent {
+                path: lowerable_guard_path(path, &contract_use.source_expr)?,
             }),
             Guard::TypeIs { path, schema_type } => guards.push(ConditionalGuard::TypeIs {
                 path: lowerable_guard_path(path, &contract_use.source_expr)?,

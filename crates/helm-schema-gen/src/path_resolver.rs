@@ -44,7 +44,18 @@ impl<'a> PathSchemaResolver<'a> {
         values_yaml_doc: &YamlValue,
         type_hints: &'a BTreeMap<String, BTreeSet<String>>,
     ) -> Self {
-        let path_caches = build_value_path_caches(values_yaml_doc, &signals.referenced_value_paths);
+        let pruned_parent_value_paths = value_path_facts
+            .iter()
+            .filter_map(|(path, facts)| {
+                (facts.has_referenced_descendants && !facts.used_as_fragment)
+                    .then_some(path.clone())
+            })
+            .collect();
+        let path_caches = build_value_path_caches(
+            values_yaml_doc,
+            &signals.referenced_value_paths,
+            &pruned_parent_value_paths,
+        );
         Self {
             signals,
             value_path_facts,

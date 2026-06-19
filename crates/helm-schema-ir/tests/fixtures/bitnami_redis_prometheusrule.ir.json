@@ -38,44 +38,6 @@
           "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        }
-      ],
       "kind": "Fragment",
       "path": [
         "metadata",
@@ -355,44 +317,6 @@
           "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "metrics.prometheusRule.additionalLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.additionalLabels",
-          "type": "truthy"
-        }
-      ],
       "kind": "Fragment",
       "path": [
         "metadata",
@@ -475,41 +399,6 @@
       "kind": "Scalar",
       "path": [],
       "resource": null,
-      "source_expr": "metrics.prometheusRule.rules"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.enabled",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "groups[*]",
-        "rules"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
       "source_expr": "metrics.prometheusRule.rules"
     },
     {
@@ -628,6 +517,14 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -707,6 +604,14 @@
         {
           "path": "metrics.prometheusRule.enabled",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",

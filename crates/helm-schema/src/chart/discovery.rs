@@ -265,14 +265,19 @@ fn dependency_activation(
 }
 
 fn dependency_condition_paths(condition: &str, parent_prefix: &[String]) -> Vec<String> {
-    condition
+    let mut seen = BTreeSet::new();
+    let mut paths = Vec::new();
+    for path in condition
         .split(',')
         .map(str::trim)
         .filter(|path| !path.is_empty())
         .map(|path| scope_chart_yaml_value_path(path, parent_prefix))
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .collect()
+    {
+        if seen.insert(path.clone()) {
+            paths.push(path);
+        }
+    }
+    paths
 }
 
 fn dependency_tag_paths(tags: &[String]) -> Vec<String> {

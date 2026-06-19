@@ -181,10 +181,14 @@ where
     let current_path = runtime.current_document_path();
     let header = range_header_from_source(node, runtime.source());
     let plan = runtime.plan_range_action(node, header.as_ref(), &current_path);
+    let range_output_path = plan
+        .mapping_entry_indent
+        .map(|indent| runtime.current_document_path_at_mapping_entry_indent(indent))
+        .unwrap_or_else(|| current_path.clone());
     let iteration_count = runtime.range_iteration_count();
 
     runtime.enter_local_scope();
-    apply_range_action_plan(runtime, &plan, &current_path);
+    apply_range_action_plan(runtime, &plan, &range_output_path);
 
     for index in 0..iteration_count {
         runtime.enter_range_iteration(index);

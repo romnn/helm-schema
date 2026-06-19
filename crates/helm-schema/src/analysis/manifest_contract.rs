@@ -19,7 +19,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
 ) -> CliResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
-    let activation_guards = chart_activation_guards(&chart.dependency_activation);
+    let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation);
 
     let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
     for path in manifests {
@@ -29,7 +29,8 @@ pub(crate) fn collect_manifest_contract_for_chart(
         } = collect_manifest_contract_for_template(&path, defines, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
-        manifest_contract.append_guards_to_all_uses(&activation_guards);
+        manifest_contract =
+            apply_chart_activation_guard_sets(manifest_contract, &activation_guard_sets);
         contract.append(manifest_contract);
         local_resource_schemas.extend(template_local_resource_schemas);
     }
@@ -71,30 +72,95 @@ fn collect_manifest_contract_for_template(
     })
 }
 
-fn chart_activation_guards(activation: &chart::ChartDependencyActivation) -> Vec<Guard> {
-    let activation_paths = chart_activation_paths(activation);
-
-    match activation_paths.as_slice() {
-        [] => Vec::new(),
-        [path] => vec![Guard::Truthy { path: path.clone() }],
-        _ => vec![Guard::Or {
-            paths: activation_paths,
-        }],
+fn apply_chart_activation_guard_sets(
+    contract: ContractIr,
+    activation_guard_sets: &[Vec<Guard>],
+) -> ContractIr {
+    if activation_guard_sets.is_empty() {
+        return contract;
     }
+
+    let mut activated_contract = ContractIr::default();
+    for guards in activation_guard_sets {
+        let mut guarded_contract = contract.clone();
+        guarded_contract.append_guards_to_all_uses(guards);
+        activated_contract.append(guarded_contract);
+    }
+    activated_contract
 }
 
-fn chart_activation_paths(activation: &chart::ChartDependencyActivation) -> Vec<String> {
-    let mut activation_paths = activation
-        .condition_paths
+fn chart_activation_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
+    let condition_paths = normalized_ordered_paths(&activation.condition_paths);
+    let tag_paths = normalized_sorted_paths(&activation.tag_paths);
+
+    if condition_paths.is_empty() && tag_paths.is_empty() {
+        return Vec::new();
+    }
+
+    let mut guard_sets = Vec::new();
+    for (index, condition_path) in condition_paths.iter().enumerate() {
+        let mut guards = absent_guards(&condition_paths[..index]);
+        guards.push(Guard::Truthy {
+            path: condition_path.clone(),
+        });
+        guard_sets.push(guards);
+    }
+
+    let mut fallback_guards = absent_guards(&condition_paths);
+    if tag_paths.is_empty() {
+        guard_sets.push(fallback_guards);
+    } else {
+        let mut tag_truthy_guards = fallback_guards.clone();
+        tag_truthy_guards.push(truthy_tag_guard(&tag_paths));
+        guard_sets.push(tag_truthy_guards);
+
+        fallback_guards.extend(absent_guards(&tag_paths));
+        guard_sets.push(fallback_guards);
+    }
+
+    guard_sets
+}
+
+fn normalized_ordered_paths(paths: &[String]) -> Vec<String> {
+    let mut seen = std::collections::BTreeSet::new();
+    let mut normalized = Vec::new();
+    for path in paths.iter().filter_map(|path| {
+        let path = path.trim();
+        (!path.is_empty()).then_some(path.to_string())
+    }) {
+        if seen.insert(path.clone()) {
+            normalized.push(path);
+        }
+    }
+    normalized
+}
+
+fn normalized_sorted_paths(paths: &[String]) -> Vec<String> {
+    let mut normalized = paths
         .iter()
-        .chain(activation.tag_paths.iter())
         .filter_map(|path| {
             let path = path.trim();
             (!path.is_empty()).then_some(path.to_string())
         })
         .collect::<Vec<_>>();
+    normalized.sort();
+    normalized.dedup();
+    normalized
+}
 
-    activation_paths.sort();
-    activation_paths.dedup();
-    activation_paths
+fn absent_guards(paths: &[String]) -> Vec<Guard> {
+    paths
+        .iter()
+        .cloned()
+        .map(|path| Guard::Absent { path })
+        .collect()
+}
+
+fn truthy_tag_guard(tag_paths: &[String]) -> Guard {
+    match tag_paths {
+        [path] => Guard::Truthy { path: path.clone() },
+        paths => Guard::Or {
+            paths: paths.to_vec(),
+        },
+    }
 }

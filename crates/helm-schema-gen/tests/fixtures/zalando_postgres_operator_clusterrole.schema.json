@@ -4,36 +4,86 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "rbac": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "create": {
-                "const": true
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "create"
+              "rbac"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                "type": "string"
-              },
-              {
-                "type": "null"
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
-            ]
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -100,16 +150,7 @@
     "serviceAccount": {
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "name": {}
       },
       "type": "object"
     }

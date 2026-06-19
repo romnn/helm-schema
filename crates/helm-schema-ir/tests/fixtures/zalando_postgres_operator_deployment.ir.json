@@ -419,6 +419,14 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -453,9 +461,49 @@
     {
       "guards": [
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 845,
+            "start": 478
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
           "path": "configTarget",
           "type": "eq",
           "value": "ConfigMap"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -498,16 +546,6 @@
             "start": 117
           },
           "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 845,
-            "start": 478
-          },
-          "template_path": "<inline:0>"
         }
       ],
       "resource": null,
@@ -515,6 +553,14 @@
     },
     {
       "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
         {
           "path": "nameOverride",
           "type": "default"
@@ -774,7 +820,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -787,7 +838,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "serviceAccount.name"
     },
     {

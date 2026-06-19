@@ -10,7 +10,29 @@
               "jetstream": {
                 "properties": {
                   "enabled": {
-                    "const": true
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -113,16 +135,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    }
+    "nameOverride": {}
   },
   "type": "object"
 }

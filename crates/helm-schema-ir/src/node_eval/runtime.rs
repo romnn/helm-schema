@@ -17,6 +17,10 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn current_document_path(&self) -> YamlPath;
 
+    fn current_document_path_at_mapping_entry_indent(&self, _indent: usize) -> YamlPath {
+        self.current_document_path()
+    }
+
     fn scope_snapshot(&self) -> Self::ScopeSnapshot;
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot);

@@ -10,74 +10,29 @@
               "metrics": {
                 "properties": {
                   "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "prometheusRule": {
-                    "properties": {
-                      "enabled": {
+                    "anyOf": [
+                      {
                         "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
                       }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheusRule"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "const": true
+                    ]
                   }
                 },
                 "required": [
@@ -98,7 +53,29 @@
                   "prometheusRule": {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -191,7 +168,29 @@
               {
                 "properties": {
                   "enabled": {
-                    "const": true
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -204,7 +203,29 @@
                   "prometheusRule": {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -265,16 +286,7 @@
             "enabled": {
               "type": "boolean"
             },
-            "namespace": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "namespace": {},
             "rules": {
               "anyOf": [
                 {
@@ -357,16 +369,7 @@
         }
       ]
     },
-    "namespaceOverride": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    }
+    "namespaceOverride": {}
   },
   "type": "object"
 }

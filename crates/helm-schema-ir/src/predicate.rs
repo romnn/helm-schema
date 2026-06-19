@@ -14,6 +14,8 @@ pub(crate) enum Predicate {
 pub(crate) enum PredicateAtom {
     Truthy { path: String },
     Eq { path: String, value: String },
+    NotEq { path: String, value: String },
+    Absent { path: String },
     Range { path: String },
     With { path: String },
     Default { path: String },
@@ -26,6 +28,8 @@ impl From<Guard> for Predicate {
             Guard::Truthy { path } => Self::Atom(PredicateAtom::Truthy { path }),
             Guard::Not { path } => Self::Not(Box::new(Self::Atom(PredicateAtom::Truthy { path }))),
             Guard::Eq { path, value } => Self::Atom(PredicateAtom::Eq { path, value }),
+            Guard::NotEq { path, value } => Self::Atom(PredicateAtom::NotEq { path, value }),
+            Guard::Absent { path } => Self::Atom(PredicateAtom::Absent { path }),
             Guard::Or { paths } => Self::Or(
                 paths
                     .into_iter()
@@ -118,6 +122,11 @@ impl PredicateAtom {
                 path: path.clone(),
                 value: value.clone(),
             },
+            Self::NotEq { path, value } => Guard::NotEq {
+                path: path.clone(),
+                value: value.clone(),
+            },
+            Self::Absent { path } => Guard::Absent { path: path.clone() },
             Self::Range { path } => Guard::Range { path: path.clone() },
             Self::With { path } => Guard::With { path: path.clone() },
             Self::Default { path } => Guard::Default { path: path.clone() },
@@ -188,6 +197,22 @@ mod tests {
         })));
 
         assert_eq!(predicate.compatibility_guards(), Vec::new());
+    }
+
+    #[test]
+    fn not_eq_predicate_projects_to_not_eq_guard() {
+        let predicate = Predicate::from(Guard::NotEq {
+            path: "mode".to_string(),
+            value: "disabled".to_string(),
+        });
+
+        assert_eq!(
+            predicate.compatibility_guards(),
+            vec![Guard::NotEq {
+                path: "mode".to_string(),
+                value: "disabled".to_string(),
+            }]
+        );
     }
 
     #[test]

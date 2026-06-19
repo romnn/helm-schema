@@ -22,6 +22,10 @@ correctness, output-size, parser, comments, and performance passes.
 - Values-file comments are carried into generated JSON Schema descriptions as
   metadata only. They do not create values paths or influence inferred types,
   nullability, requiredness, or object shape.
+- Existing chart/dependency `values.schema.json` files are not inference
+  inputs. The generator may emit a `values.schema.json`, but it infers from
+  templates, helpers, values defaults/descriptions, and rendered resource
+  sinks; explicit override schemas remain caller policy inputs.
 - The Temporal runaway bug is fixed. Generation now finishes reliably instead
   of exhausting swap and RAM.
 - The current Temporal-class performance/RSS pass is good enough for local

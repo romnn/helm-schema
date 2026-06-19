@@ -5,9 +5,7 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "className": {
@@ -70,31 +68,6 @@
       },
       "type": "object"
     },
-    "/properties/alertmanager/properties/serviceAccount": {
-      "additionalProperties": false,
-      "properties": {
-        "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "create": {
-          "type": "boolean"
-        },
-        "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
     "/properties/clickhouse/properties/clickhouseOperator/properties/image": {
       "additionalProperties": false,
       "properties": {
@@ -130,7 +103,29 @@
           "if": {
             "properties": {
               "enabled": {
-                "const": true
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
               }
             },
             "required": [
@@ -153,9 +148,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "className": {
@@ -244,15 +237,52 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "create": {
-                "const": true
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
+            ]
           },
           "then": {
             "properties": {
@@ -269,9 +299,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "create": {
@@ -387,34 +415,6 @@
       },
       "type": "object"
     },
-    "/properties/signoz-otel-gateway/properties/serviceAccount": {
-      "additionalProperties": false,
-      "properties": {
-        "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "automount": {
-          "type": "boolean"
-        },
-        "create": {
-          "type": "boolean"
-        },
-        "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
     "/properties/signoz/properties/service": {
       "additionalProperties": false,
       "properties": {
@@ -450,85 +450,6 @@
         },
         "type": {
           "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "/properties/signoz/properties/serviceAccount": {
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "create": {
-                "const": true
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "create": {
-                "const": true
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
-      "properties": {
-        "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "create": {
-          "type": "boolean"
-        },
-        "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
         }
       },
       "type": "object"

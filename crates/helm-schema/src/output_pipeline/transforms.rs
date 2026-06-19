@@ -3,13 +3,14 @@ use std::path::Path;
 use json_schema_minify::{MinimizeOptions, minimize_schema};
 use serde_json::Value;
 
-use crate::chart::GENERATED_SCHEMA_MARKER_KEY;
 use crate::error::CliResult;
 use crate::flatten;
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
 use crate::output_pipeline::global_mirror::mirror_global_schema_into_subcharts;
 use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs};
 use crate::schema_override;
+
+const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 
 #[tracing::instrument(
     skip_all,
@@ -79,6 +80,7 @@ fn mark_generated_schema(schema: &mut Value) {
 mod tests {
     use serde_json::Value;
 
+    use super::GENERATED_SCHEMA_MARKER_KEY;
     use crate::output_pipeline::{
         OutputPipelineOptions, PolicyInputs, ReferenceMode, apply_schema_output_pipeline,
     };
@@ -257,7 +259,7 @@ mod tests {
 
         assert_eq!(
             output
-                .get(crate::chart::GENERATED_SCHEMA_MARKER_KEY)
+                .get(GENERATED_SCHEMA_MARKER_KEY)
                 .and_then(Value::as_bool),
             Some(true)
         );

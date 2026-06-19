@@ -103,6 +103,28 @@ impl ValuePathContext<'_> {
                     })
                 }));
             }
+            "ne" => {
+                let [left, right] = args.as_slice() else {
+                    return out;
+                };
+                if !self.expr_needs_context_value_resolution(left)
+                    && !self.expr_needs_context_value_resolution(right)
+                {
+                    return out;
+                }
+                let (value, paths) = match (owned_string_literal(left), owned_string_literal(right))
+                {
+                    (Some(value), None) => (value, self.paths_for_expr(right)),
+                    (None, Some(value)) => (value, self.paths_for_expr(left)),
+                    _ => return out,
+                };
+                out.extend(paths.into_iter().map(|path| {
+                    Predicate::Atom(PredicateAtom::NotEq {
+                        path,
+                        value: value.clone(),
+                    })
+                }));
+            }
             "typeIs" => {
                 let Some(schema_type) = type_is_schema_type(args.first()) else {
                     return out;
@@ -160,7 +182,25 @@ impl ValuePathContext<'_> {
                     (Some(_), None) | (None, Some(_))
                 )
             }
-            "ne" | "typeIs" => args
+            "ne" => {
+                let has_values_path = args
+                    .iter()
+                    .any(|arg| self.expr_needs_context_value_resolution(arg));
+                if !has_values_path {
+                    return false;
+                }
+                let [left, right] = args.as_slice() else {
+                    return true;
+                };
+                !matches!(
+                    (
+                        borrowed_string_literal(left),
+                        borrowed_string_literal(right)
+                    ),
+                    (Some(_), None) | (None, Some(_))
+                )
+            }
+            "typeIs" => args
                 .iter()
                 .any(|arg| self.expr_needs_context_value_resolution(arg)),
             _ => false,
@@ -239,8 +279,13 @@ fn with_predicates_from_condition_predicate(predicate: Predicate) -> Vec<Predica
             Predicate::Atom(PredicateAtom::With { path: path.clone() }),
             Predicate::Atom(PredicateAtom::Eq { path, value }),
         ],
+        Predicate::Atom(PredicateAtom::NotEq { path, value }) => vec![
+            Predicate::Atom(PredicateAtom::With { path: path.clone() }),
+            Predicate::Atom(PredicateAtom::NotEq { path, value }),
+        ],
         Predicate::Atom(
             PredicateAtom::Range { .. }
+            | PredicateAtom::Absent { .. }
             | PredicateAtom::With { .. }
             | PredicateAtom::Default { .. }
             | PredicateAtom::TypeIs { .. },

@@ -115,6 +115,10 @@ pub fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<Str
         .collect()
 }
 
+pub fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
+    validate_json_against_schema(instance, schema).is_empty()
+}
+
 /// Validate a `values.yaml` string against a generated JSON schema.
 ///
 /// The schema is first relaxed (removing `additionalProperties: false`) so that

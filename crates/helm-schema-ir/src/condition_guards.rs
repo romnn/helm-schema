@@ -3,52 +3,137 @@ use std::collections::BTreeSet;
 use helm_schema_ast::TemplateExpr;
 
 use crate::Guard;
-use crate::value_path_extraction::collect_loose_values_paths;
+use crate::value_path_extraction::{collect_loose_values_paths, values_path_from_expr};
 
 #[must_use]
 pub(crate) fn parse_condition_expr(top: &TemplateExpr) -> Vec<Guard> {
-    let mut paths = BTreeSet::new();
-    collect_loose_values_paths(top, &mut paths);
-
-    if let TemplateExpr::Call { function, args } = top {
-        match function.as_str() {
-            "not" => {
-                if let Some(path) = single(&paths) {
-                    return vec![Guard::Not { path }];
-                }
-            }
-            "or" if paths.len() >= 2 => {
-                return vec![Guard::Or {
-                    paths: paths.into_iter().collect(),
-                }];
-            }
-            "eq" => {
-                if let Some(path) = single(&paths)
-                    && let Some(value) = first_string_literal(args)
-                {
-                    return vec![Guard::Eq { path, value }];
-                }
-            }
-            "ne" => {
-                if let Some(path) = single(&paths) {
-                    return vec![Guard::Truthy { path }];
-                }
-            }
-            "typeIs" => {
-                if let Some(path) = single(&paths)
-                    && let Some(schema_type) = type_is_schema_type(args.first())
-                {
-                    return vec![Guard::TypeIs { path, schema_type }];
-                }
-            }
-            _ => {}
-        }
+    if let Some(guards) = parse_structural_condition_expr(top) {
+        return dedupe_guards(guards);
     }
+
+    loose_truthy_guards(top)
+}
+
+fn parse_structural_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
+    if let Some(path) = values_path_from_expr(expr) {
+        return Some(vec![Guard::Truthy { path }]);
+    }
+
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+
+    match function.as_str() {
+        "and" => {
+            let mut guards = Vec::new();
+            for arg in args {
+                let child_guards = parse_structural_condition_expr(arg)
+                    .unwrap_or_else(|| loose_truthy_guards(arg));
+                extend_unique_guards(&mut guards, child_guards);
+            }
+            (!guards.is_empty()).then_some(guards)
+        }
+        "not" => {
+            let [arg] = args.as_slice() else {
+                return None;
+            };
+            parse_negated_condition_expr(arg)
+        }
+        "empty" => {
+            let [arg] = args.as_slice() else {
+                return None;
+            };
+            single_loose_path(arg).map(|path| vec![Guard::Not { path }])
+        }
+        "or" => {
+            let mut paths = BTreeSet::new();
+            for arg in args {
+                collect_loose_values_paths(arg, &mut paths);
+            }
+            match paths.len() {
+                0 => None,
+                1 => single(&paths).map(|path| vec![Guard::Truthy { path }]),
+                _ => Some(vec![Guard::Or {
+                    paths: paths.into_iter().collect(),
+                }]),
+            }
+        }
+        "eq" => {
+            let [left, right] = args.as_slice() else {
+                return None;
+            };
+            let path = single_loose_path(left).or_else(|| single_loose_path(right))?;
+            let value = first_string_literal(args)?;
+            Some(vec![Guard::Eq { path, value }])
+        }
+        "ne" => {
+            let [left, right] = args.as_slice() else {
+                return None;
+            };
+            let path = single_loose_path(left).or_else(|| single_loose_path(right))?;
+            let value = first_string_literal(args)?;
+            Some(vec![Guard::NotEq { path, value }])
+        }
+        "typeIs" => {
+            let schema_type = type_is_schema_type(args.first())?;
+            let mut paths = BTreeSet::new();
+            for arg in args.iter().skip(1) {
+                collect_loose_values_paths(arg, &mut paths);
+            }
+            let path = single(&paths)?;
+            Some(vec![Guard::TypeIs { path, schema_type }])
+        }
+        _ => None,
+    }
+}
+
+fn parse_negated_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
+    if let Some(path) = values_path_from_expr(expr) {
+        return Some(vec![Guard::Not { path }]);
+    }
+
+    if let TemplateExpr::Call { function, args } = expr.deparen()
+        && function == "empty"
+    {
+        let [arg] = args.as_slice() else {
+            return None;
+        };
+        return single_loose_path(arg).map(|path| vec![Guard::Truthy { path }]);
+    }
+
+    let mut paths = BTreeSet::new();
+    collect_loose_values_paths(expr, &mut paths);
+    single(&paths).map(|path| vec![Guard::Not { path }])
+}
+
+fn loose_truthy_guards(expr: &TemplateExpr) -> Vec<Guard> {
+    let mut paths = BTreeSet::new();
+    collect_loose_values_paths(expr, &mut paths);
 
     paths
         .into_iter()
         .map(|path| Guard::Truthy { path })
         .collect()
+}
+
+fn single_loose_path(expr: &TemplateExpr) -> Option<String> {
+    let mut paths = BTreeSet::new();
+    collect_loose_values_paths(expr, &mut paths);
+    single(&paths)
+}
+
+fn dedupe_guards(guards: Vec<Guard>) -> Vec<Guard> {
+    let mut out = Vec::new();
+    extend_unique_guards(&mut out, guards);
+    out
+}
+
+fn extend_unique_guards(out: &mut Vec<Guard>, guards: Vec<Guard>) {
+    for guard in guards {
+        if !out.contains(&guard) {
+            out.push(guard);
+        }
+    }
 }
 
 fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
@@ -205,10 +290,13 @@ mod tests {
     }
 
     #[test]
-    fn ne_with_string_literal_emits_truthy() {
+    fn ne_with_string_literal_emits_not_eq() {
         assert_eq!(
             parse_condition(r#"ne .Values.X "value""#),
-            vec![Guard::Truthy { path: "X".into() }],
+            vec![Guard::NotEq {
+                path: "X".into(),
+                value: "value".into(),
+            }],
         );
     }
 
@@ -231,6 +319,60 @@ mod tests {
                 Guard::Truthy { path: "A".into() },
                 Guard::Truthy { path: "B".into() },
             ],
+        );
+    }
+
+    #[test]
+    fn and_preserves_nested_not_guard() {
+        assert_eq!(
+            parse_condition(
+                "and .Values.prometheus.enabled (not .Values.prometheus.podmonitor.enabled)"
+            ),
+            vec![
+                Guard::Truthy {
+                    path: "prometheus.enabled".into()
+                },
+                Guard::Not {
+                    path: "prometheus.podmonitor.enabled".into()
+                },
+            ],
+        );
+    }
+
+    #[test]
+    fn and_preserves_nested_or_guard() {
+        assert_eq!(
+            parse_condition(
+                "and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw)"
+            ),
+            vec![
+                Guard::Truthy {
+                    path: "ldap.enabled".into()
+                },
+                Guard::Or {
+                    paths: vec!["ldap.bind_password".into(), "ldap.bindpw".into()]
+                },
+            ],
+        );
+    }
+
+    #[test]
+    fn empty_path_is_falsey_guard() {
+        assert_eq!(
+            parse_condition("empty .Values.service.loadBalancerIP"),
+            vec![Guard::Not {
+                path: "service.loadBalancerIP".into()
+            }],
+        );
+    }
+
+    #[test]
+    fn not_empty_path_is_truthy_guard() {
+        assert_eq!(
+            parse_condition("not (empty .Values.service.loadBalancerIP)"),
+            vec![Guard::Truthy {
+                path: "service.loadBalancerIP".into()
+            }],
         );
     }
 

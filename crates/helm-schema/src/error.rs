@@ -55,12 +55,6 @@ pub enum CliError {
     #[error("load budget exceeded for {subject} (limit {limit_bytes} bytes)")]
     LoadBudgetExceeded { subject: String, limit_bytes: usize },
 
-    #[error("schema postcondition failed to compile generated schema: {reason}")]
-    SchemaPostconditionCompile { reason: String },
-
-    #[error("schema postcondition failed: composed default values do not validate: {errors:?}")]
-    SchemaPostconditionViolated { errors: Vec<String> },
-
     /// Mutually-exclusive CLI flags or otherwise-invalid combination
     /// detected after `clap` parsing succeeded.
     #[error("invalid CLI options: {0}")]

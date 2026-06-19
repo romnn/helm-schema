@@ -67,3 +67,44 @@ fn schema_validates_values_yaml() {
         errors.join("\n")
     );
 }
+
+#[test]
+fn schema_keeps_prometheus_rule_namespace_guarded() {
+    let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
+    let values_yaml = test_util::read_testdata("charts/bitnami-redis/values.yaml");
+    let idx = build_define_index(&TreeSitterParser);
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let provider = common::production_crd_k8s_chain("v1.35.0");
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
+
+    assert!(
+        !common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "metrics": {
+                    "enabled": true,
+                    "prometheusRule": {
+                        "enabled": true,
+                        "namespace": 7
+                    }
+                }
+            })
+        ),
+        "metrics.prometheusRule.namespace must stay namespace/string-like when the PrometheusRule renders: {schema}"
+    );
+    assert!(
+        common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "metrics": {
+                    "enabled": false,
+                    "prometheusRule": {
+                        "enabled": true,
+                        "namespace": 7
+                    }
+                }
+            })
+        ),
+        "PrometheusRule-only namespace should remain unconstrained when metrics disables the resource: {schema}"
+    );
+}

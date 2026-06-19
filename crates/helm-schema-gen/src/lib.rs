@@ -21,17 +21,15 @@ use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, ContractValuePathFacts,
 };
 
+use merge::union_schema_list;
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
+use schema_model::{schema_allows_type, type_schema};
 use schema_tree::{
     apply_values_descriptions, ensure_schema_node_at_path_segments, insert_schema_at_path_segments,
-    object_schema,
+    object_schema, open_array_schema, open_object_schema,
 };
 use use_signals::{UseSignals, collect_use_signals};
-
-// ---------------------------------------------------------------------------
-// Core generation logic
-// ---------------------------------------------------------------------------
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
@@ -185,30 +183,72 @@ fn build_root_schema(
         values_yaml_doc,
         provider,
     );
-    let conditional_targets = conditional_schemas
-        .iter()
-        .map(|conditional| {
-            (
-                conditional.target_value_path.as_str(),
-                conditional.preserve_base_schema,
-            )
-        })
-        .collect::<BTreeMap<_, _>>();
+    let conditional_targets = summarize_conditional_targets(&conditional_schemas);
 
     for resolved_path in resolved_paths {
         let schema = match conditional_targets.get(resolved_path.value_path.as_str()) {
-            Some(true) | None => resolved_path.schema,
-            Some(false) => crate::schema_model::empty_schema(),
+            Some(target) if target.preserve_base_schema => resolved_path.schema,
+            Some(target) if target.open_fragment_base_schema => {
+                open_fragment_base_schema(&resolved_path.schema)
+            }
+            Some(_) => crate::schema_model::empty_schema(),
+            None => resolved_path.schema,
         };
         insert_schema_at_path_segments(&mut root_schema, &resolved_path.path_segments, schema);
     }
 
-    append_conditional_schemas(&mut root_schema, conditional_schemas);
+    append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
 
     provider_definitions.insert_into_root(&mut root_schema);
     apply_values_descriptions(&mut root_schema, values_descriptions);
 
     root_schema
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ConditionalTargetSummary {
+    preserve_base_schema: bool,
+    open_fragment_base_schema: bool,
+}
+
+fn summarize_conditional_targets(
+    conditionals: &[ConditionalResolvedSchema],
+) -> BTreeMap<&str, ConditionalTargetSummary> {
+    let mut targets = BTreeMap::new();
+    for conditional in conditionals {
+        let entry = targets
+            .entry(conditional.target_value_path.as_str())
+            .or_insert(ConditionalTargetSummary {
+                preserve_base_schema: false,
+                open_fragment_base_schema: true,
+            });
+        entry.preserve_base_schema |= conditional.preserve_base_schema;
+        if !conditional.preserve_base_schema {
+            entry.open_fragment_base_schema &= conditional.target_is_fragment;
+        }
+    }
+    targets
+}
+
+fn open_fragment_base_schema(resolved_schema: &Value) -> Value {
+    let mut schemas = Vec::new();
+    if schema_allows_type(resolved_schema, "object") {
+        schemas.push(open_object_schema());
+    }
+    if schema_allows_type(resolved_schema, "array") {
+        schemas.push(open_array_schema());
+    }
+    if schema_allows_type(resolved_schema, "null") {
+        schemas.push(type_schema("null"));
+    }
+
+    match schemas.len() {
+        0 => crate::schema_model::empty_schema(),
+        1 => schemas
+            .pop()
+            .expect("single open fragment schema should be present"),
+        _ => union_schema_list(schemas),
+    }
 }
 
 struct ConditionalResolvedSchema {
@@ -218,6 +258,7 @@ struct ConditionalResolvedSchema {
     guards: Vec<ConditionalGuard>,
     target_schema: Value,
     preserve_base_schema: bool,
+    target_is_fragment: bool,
 }
 
 fn collect_conditional_schemas(
@@ -259,6 +300,7 @@ fn collect_conditional_schemas(
                     guards: overlay.guards.clone(),
                     target_schema,
                     preserve_base_schema: overlay.preserve_base_schema,
+                    target_is_fragment: overlay.value_path_facts.used_as_fragment,
                 },
             )
         })
@@ -378,7 +420,10 @@ fn guards_supported_for_conditional_lowering(
             ConditionalGuard::Truthy { path } => resolved_by_path
                 .get(path.as_str())
                 .is_some_and(|schema| schema_is_boolean_like(schema)),
-            ConditionalGuard::Eq { .. } | ConditionalGuard::TypeIs { .. } => true,
+            ConditionalGuard::Eq { .. }
+            | ConditionalGuard::NotEq { .. }
+            | ConditionalGuard::Absent { .. }
+            | ConditionalGuard::TypeIs { .. } => true,
             ConditionalGuard::Not(inner) => guards_supported_for_conditional_lowering(
                 std::slice::from_ref(inner),
                 resolved_by_path,
@@ -401,14 +446,18 @@ fn schema_is_boolean_like(schema: &Value) -> bool {
 fn append_conditional_schemas(
     root_schema: &mut Value,
     conditionals: Vec<ConditionalResolvedSchema>,
+    values_yaml_doc: &YamlValue,
 ) {
     if conditionals.is_empty() {
         return;
     }
 
     for conditional in conditionals {
-        let condition =
-            build_condition_fragment(&conditional.guards, &conditional.ancestor_segments);
+        let condition = build_condition_fragment(
+            &conditional.guards,
+            &conditional.ancestor_segments,
+            values_yaml_doc,
+        );
         let then_schema = build_target_fragment(
             &conditional.relative_target_segments,
             conditional.target_schema,
@@ -439,10 +488,16 @@ fn append_conditional_entry(node: &mut Value, condition: Value, then_schema: Val
     ));
 }
 
-fn build_condition_fragment(guards: &[ConditionalGuard], ancestor_segments: &[String]) -> Value {
+fn build_condition_fragment(
+    guards: &[ConditionalGuard],
+    ancestor_segments: &[String],
+    values_yaml_doc: &YamlValue,
+) -> Value {
     let mut clauses = guards
         .iter()
-        .filter_map(|guard| build_single_condition_fragment(guard, ancestor_segments))
+        .filter_map(|guard| {
+            build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
+        })
         .collect::<Vec<_>>();
 
     if clauses.len() == 1 {
@@ -459,16 +514,14 @@ fn build_condition_fragment(guards: &[ConditionalGuard], ancestor_segments: &[St
 fn build_single_condition_fragment(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
+    values_yaml_doc: &YamlValue,
 ) -> Option<Value> {
     match guard {
-        ConditionalGuard::Truthy { path } => build_leaf_condition_fragment(
+        ConditionalGuard::Truthy { path } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            Value::Object(
-                [("const".to_string(), Value::Bool(true))]
-                    .into_iter()
-                    .collect(),
-            ),
+            helm_truthy_condition_schema(),
+            yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy),
         ),
         ConditionalGuard::Eq { path, value } => build_leaf_condition_fragment(
             path,
@@ -482,19 +535,56 @@ fn build_single_condition_fragment(
                 .collect(),
             ),
         ),
-        ConditionalGuard::TypeIs { path, schema_type } => build_leaf_condition_fragment(
+        ConditionalGuard::NotEq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
             Value::Object(
-                [("type".to_string(), Value::String(schema_type.clone()))]
-                    .into_iter()
-                    .collect(),
+                [(
+                    "not".to_string(),
+                    Value::Object(
+                        [(
+                            "enum".to_string(),
+                            Value::Array(vec![Value::String(value.clone())]),
+                        )]
+                        .into_iter()
+                        .collect(),
+                    ),
+                )]
+                .into_iter()
+                .collect(),
             ),
+            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
+                != Some(value.as_str()),
         ),
+        ConditionalGuard::Absent { path } => {
+            let segments = split_value_path(path);
+            let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
+            if relative_segments.is_empty() {
+                None
+            } else {
+                build_required_condition_fragment(&relative_segments, Value::Object(Map::new()))
+                    .map(|present| {
+                        Value::Object([("not".to_string(), present)].into_iter().collect())
+                    })
+            }
+        }
+        ConditionalGuard::TypeIs { path, schema_type } => {
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                Value::Object(
+                    [("type".to_string(), Value::String(schema_type.clone()))]
+                        .into_iter()
+                        .collect(),
+                ),
+                yaml_value_at_path(values_yaml_doc, path)
+                    .is_some_and(|value| matches_yaml_schema_type(value, schema_type)),
+            )
+        }
         ConditionalGuard::Not(inner) => Some(Value::Object(
             [(
                 "not".to_string(),
-                build_single_condition_fragment(inner, ancestor_segments)?,
+                build_single_condition_fragment(inner, ancestor_segments, values_yaml_doc)?,
             )]
             .into_iter()
             .collect(),
@@ -502,7 +592,9 @@ fn build_single_condition_fragment(
         ConditionalGuard::AnyOf(guards) => {
             let mut clauses = guards
                 .iter()
-                .filter_map(|guard| build_single_condition_fragment(guard, ancestor_segments))
+                .filter_map(|guard| {
+                    build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
+                })
                 .collect::<Vec<_>>();
             if clauses.is_empty() {
                 None
@@ -531,6 +623,88 @@ fn build_leaf_condition_fragment(
     } else {
         build_required_condition_fragment(&relative_segments, leaf_schema)
     }
+}
+
+fn build_default_aware_leaf_condition_fragment(
+    value_path: &str,
+    ancestor_segments: &[String],
+    leaf_schema: Value,
+    default_matches: bool,
+) -> Option<Value> {
+    let explicit = build_leaf_condition_fragment(value_path, ancestor_segments, leaf_schema)?;
+    if !default_matches {
+        return Some(explicit);
+    }
+
+    let segments = split_value_path(value_path);
+    let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
+    if relative_segments.is_empty() {
+        return Some(explicit);
+    }
+    let absent =
+        build_required_condition_fragment(&relative_segments, Value::Object(Map::new()))
+            .map(|present| Value::Object([("not".to_string(), present)].into_iter().collect()))?;
+    Some(Value::Object(
+        [("anyOf".to_string(), Value::Array(vec![absent, explicit]))]
+            .into_iter()
+            .collect(),
+    ))
+}
+
+fn helm_truthy_condition_schema() -> Value {
+    Value::Object(
+        [(
+            "anyOf".to_string(),
+            Value::Array(vec![
+                Value::Object(
+                    [("const".to_string(), Value::Bool(true))]
+                        .into_iter()
+                        .collect(),
+                ),
+                Value::Object(
+                    [
+                        ("type".to_string(), Value::String("number".to_string())),
+                        (
+                            "not".to_string(),
+                            Value::Object(
+                                [("const".to_string(), Value::Number(0.into()))]
+                                    .into_iter()
+                                    .collect(),
+                            ),
+                        ),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                Value::Object(
+                    [
+                        ("type".to_string(), Value::String("string".to_string())),
+                        ("minLength".to_string(), Value::Number(1.into())),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                Value::Object(
+                    [
+                        ("type".to_string(), Value::String("array".to_string())),
+                        ("minItems".to_string(), Value::Number(1.into())),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                Value::Object(
+                    [
+                        ("type".to_string(), Value::String("object".to_string())),
+                        ("minProperties".to_string(), Value::Number(1.into())),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+            ]),
+        )]
+        .into_iter()
+        .collect(),
+    )
 }
 
 fn build_required_condition_fragment(
@@ -601,13 +775,20 @@ fn evaluate_guard_set_on_values(
 
 fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
     match guard {
-        ConditionalGuard::Truthy { path } => Some(
-            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_bool) == Some(true),
-        ),
+        ConditionalGuard::Truthy { path } => {
+            Some(yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy))
+        }
         ConditionalGuard::Eq { path, value } => Some(
             yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
                 == Some(value.as_str()),
         ),
+        ConditionalGuard::NotEq { path, value } => Some(
+            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
+                != Some(value.as_str()),
+        ),
+        ConditionalGuard::Absent { path } => {
+            Some(yaml_value_at_path(values_yaml_doc, path).is_none())
+        }
         ConditionalGuard::TypeIs { path, schema_type } => {
             let Some(value) = yaml_value_at_path(values_yaml_doc, path) else {
                 return Some(false);
@@ -622,6 +803,22 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
             .collect::<Option<Vec<_>>>()
             .map(|results| results.into_iter().any(|result| result)),
+    }
+}
+
+fn yaml_value_is_truthy(value: &YamlValue) -> bool {
+    match value {
+        YamlValue::Null => false,
+        YamlValue::Bool(value) => *value,
+        YamlValue::Number(value) => {
+            value.as_i64().is_some_and(|value| value != 0)
+                || value.as_u64().is_some_and(|value| value != 0)
+                || value.as_f64().is_some_and(|value| value != 0.0)
+        }
+        YamlValue::String(value) => !value.is_empty(),
+        YamlValue::Sequence(value) => !value.is_empty(),
+        YamlValue::Mapping(value) => !value.is_empty(),
+        YamlValue::Tagged(_) => false,
     }
 }
 
@@ -658,6 +855,8 @@ fn collect_guard_paths(guard: &ConditionalGuard, paths: &mut Vec<Vec<String>>) {
     match guard {
         ConditionalGuard::Truthy { path }
         | ConditionalGuard::Eq { path, .. }
+        | ConditionalGuard::NotEq { path, .. }
+        | ConditionalGuard::Absent { path }
         | ConditionalGuard::TypeIs { path, .. } => paths.push(split_value_path(path)),
         ConditionalGuard::Not(inner) => collect_guard_paths(inner, paths),
         ConditionalGuard::AnyOf(guards) => {

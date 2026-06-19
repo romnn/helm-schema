@@ -454,21 +454,47 @@
       "provenance": [
         {
           "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 851,
-            "start": 484
-          },
-          "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
             "postgres-operator-ui.name"
           ],
           "span": {
             "end": 198,
             "start": 120
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "ingress.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
           },
           "template_path": "<inline:0>"
         }
@@ -488,6 +514,14 @@
         {
           "path": "ingress.enabled",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -522,6 +556,14 @@
         {
           "path": "ingress.hosts.*.paths",
           "type": "range"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -561,6 +603,14 @@
         {
           "path": "ingress.hosts.*.paths",
           "type": "range"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",

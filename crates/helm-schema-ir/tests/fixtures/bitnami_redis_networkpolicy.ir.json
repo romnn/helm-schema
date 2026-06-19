@@ -54,40 +54,6 @@
           "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        }
-      ],
       "kind": "Fragment",
       "path": [
         "metadata",
@@ -272,62 +238,6 @@
           "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2176,
-            "start": 1680
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        }
-      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -379,107 +289,11 @@
           "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2176,
-            "start": 1680
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        }
-      ],
       "kind": "Fragment",
       "path": [
         "spec",
         "ingress[*]",
         "from[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2176,
-            "start": 1680
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
         "podSelector",
         "matchLabels"
       ],
@@ -805,7 +619,11 @@
           "type": "truthy"
         },
         {
-          "path": "networkPolicy.allowExternal",
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
           "type": "not"
         },
         {
@@ -835,6 +653,18 @@
         {
           "path": "networkPolicy.enabled",
           "type": "truthy"
+        },
+        {
+          "path": "networkPolicy.allowExternal",
+          "type": "not"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
         },
         {
           "path": "nameOverride",
@@ -933,66 +763,6 @@
         "egress[*]",
         "to[*]",
         "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 283,
-            "start": 205
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2176,
-            "start": 1680
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to[*]",
-        "podSelector",
         "matchLabels",
         "app.kubernetes.io/name"
       ],
@@ -1106,61 +876,6 @@
         "ingress[*]",
         "from[*]",
         "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 283,
-            "start": 205
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2176,
-            "start": 1680
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
         "matchLabels",
         "app.kubernetes.io/name"
       ],
@@ -1215,55 +930,6 @@
         "podSelector",
         "matchLabels",
         "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 283,
-            "start": 205
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2176,
-            "start": 1680
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "podSelector",
-        "matchLabels"
       ],
       "provenance": [
         {
@@ -1514,45 +1180,6 @@
           "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.extraEgress"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "networkPolicy.extraEgress",
-          "type": "truthy"
-        }
-      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -1590,41 +1217,6 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.extraIngress"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.extraIngress",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"

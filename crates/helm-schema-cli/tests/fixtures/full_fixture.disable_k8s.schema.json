@@ -47,15 +47,52 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "enabled": {
-                "const": true
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            ]
           },
           "then": {
             "properties": {
@@ -72,9 +109,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "className": {

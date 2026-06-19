@@ -7,6 +7,11 @@ pub enum Guard {
     Not { path: String },
     /// Equality check: `if eq .Values.X "value"`
     Eq { path: String, value: String },
+    /// Inequality check: `if ne .Values.X "value"`
+    NotEq { path: String, value: String },
+    /// Path absence check, used for structural rules where missing values are
+    /// semantically distinct from false values.
+    Absent { path: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
     /// Body of `range .Values.X` / `range .foo` block. The referenced path is
@@ -42,6 +47,8 @@ impl Guard {
             Guard::Truthy { path }
             | Guard::Not { path }
             | Guard::Eq { path, .. }
+            | Guard::NotEq { path, .. }
+            | Guard::Absent { path }
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path }
@@ -65,6 +72,11 @@ impl Guard {
                 path: map(&path),
                 value,
             },
+            Guard::NotEq { path, value } => Guard::NotEq {
+                path: map(&path),
+                value,
+            },
+            Guard::Absent { path } => Guard::Absent { path: map(&path) },
             Guard::Or { paths } => Guard::Or {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
             },

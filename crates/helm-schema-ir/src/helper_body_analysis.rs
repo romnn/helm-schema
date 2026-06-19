@@ -202,6 +202,8 @@ fn collect_fragment_output_uses(
         resolution.helper_fragment_dot.as_ref(),
         &mut fragment_output_state,
     );
+    fragment_output_uses
+        .retain(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty());
     for source in analysis.output.keys() {
         analysis.fragment_output.remove(source);
     }
@@ -215,4 +217,81 @@ fn collect_fragment_output_uses(
         analysis.fragment_output.remove(source);
     }
     analysis.fragment_output_uses.extend(fragment_output_uses);
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{HashMap, HashSet};
+
+    use helm_schema_ast::{DefineIndex, TreeSitterParser};
+
+    use crate::Guard;
+    use crate::define_body_cache::DefineBodyCache;
+    use crate::fragment_expr_eval::FragmentEvalContext;
+    use crate::helper_summary::HelperSummaryCache;
+
+    use super::{BoundHelperCallResolution, interpret_bound_helper_body};
+
+    #[test]
+    fn helper_body_summary_preserves_if_else_output_predicates() {
+        let source = r#"
+            {{- define "serviceAccountName" -}}
+            {{- if .Values.signoz.serviceAccount.create -}}
+              {{ default (include "fullname" .) .Values.signoz.serviceAccount.name }}
+            {{- else -}}
+              {{ default "default" .Values.signoz.serviceAccount.name }}
+            {{- end -}}
+            {{- end -}}
+        "#;
+        let mut defines = DefineIndex::new();
+        defines
+            .add_source(&TreeSitterParser, source)
+            .expect("define source");
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries);
+        let resolution = BoundHelperCallResolution {
+            bindings: HashMap::new(),
+            helper_body_dot: None,
+            helper_fragment_dot: None,
+        };
+        let mut seen = HashSet::new();
+
+        let summary =
+            interpret_bound_helper_body("serviceAccountName", &resolution, context, &mut seen);
+        let meta = summary
+            .output
+            .get("signoz.serviceAccount.name")
+            .expect("service account name output metadata");
+        let guard_sets = meta.compatibility_guard_sets("signoz.serviceAccount.name");
+
+        assert!(
+            guard_sets.contains(&vec![
+                Guard::Truthy {
+                    path: "signoz.serviceAccount.create".to_string(),
+                },
+                Guard::Default {
+                    path: "signoz.serviceAccount.name".to_string(),
+                },
+            ]),
+            "expected create=true output branch; guard_sets={guard_sets:#?}"
+        );
+        assert!(
+            guard_sets.contains(&vec![
+                Guard::Not {
+                    path: "signoz.serviceAccount.create".to_string(),
+                },
+                Guard::Default {
+                    path: "signoz.serviceAccount.name".to_string(),
+                },
+            ]),
+            "expected create=false output branch; guard_sets={guard_sets:#?}"
+        );
+        assert_eq!(
+            summary.type_hints.get("signoz.serviceAccount.name"),
+            Some(&["string".to_string()].into_iter().collect()),
+            "defaulted scalar output should retain string type hint"
+        );
+        assert!(summary.fragment_output_uses.is_empty());
+    }
 }

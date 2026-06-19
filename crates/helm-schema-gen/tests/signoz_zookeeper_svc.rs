@@ -82,3 +82,59 @@ fn schema_validates_values_yaml() {
         errors.join("\n")
     );
 }
+
+#[test]
+fn schema_keeps_service_port_fields_guarded() {
+    let src = test_util::read_testdata(TEMPLATE_PATH);
+    let values_yaml = test_util::read_testdata(VALUES_PATH);
+    let idx = build_define_index(&TreeSitterParser);
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let provider = common::production_k8s_chain("v1.35.0");
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
+
+    assert!(
+        !common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "service": {
+                    "ports": {
+                        "client": "client-port"
+                    }
+                }
+            })
+        ),
+        "service.ports.client must stay integer-like because disableBaseClientPort defaults to false: {schema}"
+    );
+    assert!(
+        common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "service": {
+                    "disableBaseClientPort": true,
+                    "ports": {
+                        "client": "client-port"
+                    }
+                }
+            })
+        ),
+        "service.ports.client should be unconstrained when disableBaseClientPort removes that Service port: {schema}"
+    );
+    assert!(
+        !common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "tls": {
+                    "client": {
+                        "enabled": true
+                    }
+                },
+                "service": {
+                    "ports": {
+                        "tls": "tls-port"
+                    }
+                }
+            })
+        ),
+        "service.ports.tls must stay integer-like when tls.client.enabled renders the TLS port: {schema}"
+    );
+}

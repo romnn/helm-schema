@@ -63,3 +63,37 @@ fn schema_validates_values_yaml() {
         errors.join("\n")
     );
 }
+
+#[test]
+fn schema_keeps_default_enabled_liveness_probe_fields_typed() {
+    let src = test_util::read_testdata("charts/cert-manager/templates/deployment.yaml");
+    let values_yaml = test_util::read_testdata("charts/cert-manager/values.yaml");
+    let idx = build_cert_manager_define_index(&TreeSitterParser);
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let provider = common::production_k8s_chain("v1.35.0");
+    let schema = common::generate_schema_with_values_yaml(ir, &provider, Some(&values_yaml));
+
+    assert!(
+        !common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "livenessProbe": {
+                    "failureThreshold": "eight"
+                }
+            })
+        ),
+        "livenessProbe.failureThreshold must stay integer-like because livenessProbe.enabled defaults to true: {schema}"
+    );
+    assert!(
+        common::schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "livenessProbe": {
+                    "enabled": false,
+                    "failureThreshold": "eight"
+                }
+            })
+        ),
+        "disabled livenessProbe fields should remain unconstrained because the template skips them: {schema}"
+    );
+}

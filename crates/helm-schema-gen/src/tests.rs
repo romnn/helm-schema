@@ -1124,11 +1124,11 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
         .pointer("/properties/feature/properties/host")
         .expect("feature.host base schema");
     assert!(
-        permits_type(base_host, "string"),
-        "conditionally lowered paths should keep their string evidence on the base path when no complementary branch was proven: {schema}"
+        base_host.as_object().is_some_and(serde_json::Map::is_empty),
+        "guarded-only paths should stay open outside the branch that consumes them: {schema}"
     );
     assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/if/properties/enabled/const"),
+        schema.pointer("/properties/feature/allOf/0/if/properties/enabled/anyOf/0/const"),
         Some(&serde_json::json!(true)),
         "guard should lower at the nearest common ancestor, not only at the root: {schema}"
     );
@@ -1140,6 +1140,53 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
     assert!(
         schema.get("allOf").is_none(),
         "nested guard/target pairs should not be forced to the root schema: {schema}"
+    );
+}
+
+#[test]
+fn default_true_boolean_guard_lowers_absence_as_active_branch() {
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("feature:\n  enabled: true\n")),
+    );
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "host": 7
+                }
+            })
+        ),
+        "omitted default-true guard should still activate the guarded host schema: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "enabled": false,
+                    "host": 7
+                }
+            })
+        ),
+        "explicit false guard should leave the guarded-only host value unconstrained: {schema}"
     );
 }
 
@@ -1166,7 +1213,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
     );
 
     assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/const"),
+        schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/anyOf/0/const"),
         Some(&serde_json::json!(true)),
         "negated boolean guards should lower to JSON Schema `not`: {schema}"
     );
@@ -1174,6 +1221,80 @@ fn negated_boolean_guard_lowers_to_not_condition() {
         schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
         Some(&serde_json::json!("string")),
         "negated guard should still reapply the target schema in the then branch: {schema}"
+    );
+}
+
+#[test]
+fn not_equal_guard_lowers_to_value_decidable_condition() {
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::NotEq {
+                path: "feature.mode".to_string(),
+                value: "disabled".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("feature:\n  mode: auto\n")),
+    );
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "host": 7
+                }
+            })
+        ),
+        "omitted default-not-disabled guard should activate the guarded host schema: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "mode": "disabled",
+                    "host": 7
+                }
+            })
+        ),
+        "explicit disabled mode should leave the guarded-only host value unconstrained: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "mode": "custom",
+                    "host": 7
+                }
+            })
+        ),
+        "explicit non-disabled mode should apply the guarded host schema: {schema}"
+    );
+
+    let schema_without_defaults =
+        generate_values_schema(ValuesSchemaInput::new(&schema_signals, &NoopProvider));
+    assert!(
+        !schema_accepts_instance(
+            &schema_without_defaults,
+            &serde_json::json!({
+                "feature": {
+                    "host": 7
+                }
+            })
+        ),
+        "missing not-equal guard path should activate the guarded branch: {schema_without_defaults}"
     );
 }
 
@@ -1204,12 +1325,14 @@ fn or_boolean_guards_lower_to_any_of_condition() {
     );
 
     assert_eq!(
-        schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/const"),
+        schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/anyOf/0/const"),
         Some(&serde_json::json!(true)),
         "disjunctions should lower to anyOf clauses: {schema}"
     );
     assert_eq!(
-        schema.pointer("/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/const"),
+        schema.pointer(
+            "/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/anyOf/0/const"
+        ),
         Some(&serde_json::json!(true)),
         "all boolean branches in the disjunction should be preserved: {schema}"
     );
@@ -1256,12 +1379,10 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
         .pointer("/properties/feature/properties/value")
         .expect("feature.value base schema");
     assert!(
-        permits_type(base_value, "string"),
-        "multi-branch paths should keep their scalar evidence on the base path: {schema}"
-    );
-    assert!(
-        permits_type(base_value, "object"),
-        "multi-branch paths should also keep their object/string-map evidence on the base path: {schema}"
+        base_value
+            .as_object()
+            .is_some_and(serde_json::Map::is_empty),
+        "branch-specific variants should stay open on the base path and be enforced by overlays: {schema}"
     );
 
     let branches = schema
@@ -2048,6 +2169,65 @@ fn scalar_range_with_root_helper_stays_scalar_array() {
 }
 
 #[test]
+fn map_entry_range_over_values_path_keeps_object_map_schema() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+        {{- range $key, $value := .Values.controller.config }}
+          {{- $key | nindent 2 }}: {{ tpl (toString $value) $ | quote }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        controller:
+          config: {}
+    "};
+    let contract = parse_ir(src);
+    let signals = schema_signals_for(&contract);
+    let facts = signals
+        .value_path_facts
+        .get("controller.config")
+        .expect("controller.config fact present");
+    assert!(
+        facts.is_ranged_source,
+        "range header should mark controller.config as a ranged source, facts={facts:#?}"
+    );
+    assert!(
+        facts.used_as_fragment,
+        "map-entry range should mark controller.config as a rendered fragment, facts={facts:#?}"
+    );
+
+    let schema = schema_for_values_yaml(&contract, Some(values_yaml));
+    let config = schema
+        .pointer("/properties/controller/properties/config")
+        .expect("controller.config schema present");
+    assert!(
+        schema_contains_type(config, "object"),
+        "controller.config should retain an object-valued branch, got {config}"
+    );
+    assert!(
+        !schema_contains_type(config, "string"),
+        "controller.config should not collapse to a scalar string branch, got {config}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({"controller": {"config": {"allow-snippet-annotations": "true"}}}),
+        ),
+        "controller.config should accept arbitrary ConfigMap data keys: {schema:#}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({"controller": {"config": "allow-snippet-annotations=true"}}),
+        ),
+        "controller.config should not collapse to a scalar string: {schema:#}"
+    );
+}
+
+#[test]
 fn wildcard_source_path_creates_array_without_empty_object_variant() {
     let uses = vec![ContractUse {
         source_expr: "image.pullSecrets.*".to_string(),
@@ -2159,12 +2339,29 @@ fn helper_defaulted_bound_name_allows_null() {
 
     let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    let name = schema
-        .pointer("/properties/serviceAccount/properties/name")
-        .expect("serviceAccount.name present");
     assert!(
-        permits_null(name),
-        "defaulted helper-bound serviceAccount.name should allow null, got {name}"
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAccount": {
+                    "create": true,
+                    "name": null
+                }
+            })
+        ),
+        "defaulted helper-bound serviceAccount.name should allow null on the create=true branch: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "serviceAccount": {
+                    "create": false,
+                    "name": 7
+                }
+            })
+        ),
+        "defaulted helper-bound serviceAccount.name should remain string-like on the create=false branch: {schema}"
     );
 }
 
@@ -3428,12 +3625,8 @@ fn helper_defaulted_root_service_account_name_allows_null() {
         .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
         .expect("alertmanager.serviceAccount.name present");
     assert!(
-        schema_contains_type(name, "null"),
-        "defaulted helper serviceAccount.name must stay null-tolerant, got {name}; schema={schema}"
-    );
-    assert!(
-        schema_contains_type(name, "string"),
-        "defaulted helper serviceAccount.name must stay string-like, got {name}; schema={schema}"
+        name.as_object().is_some_and(serde_json::Map::is_empty),
+        "defaulted helper serviceAccount.name should stay open at the guarded-only base path, got {name}; schema={schema}"
     );
     assert!(
         schema_accepts_instance(
@@ -3482,6 +3675,200 @@ fn helper_defaulted_root_service_account_name_allows_null() {
             })
         ),
         "serviceAccount.name should not collapse to unconstrained schema on the else branch: {schema}"
+    );
+}
+
+#[test]
+fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "signoz-otel-gateway.serviceAccount.name".to_string(),
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![
+            Guard::Truthy {
+                path: "signoz-otel-gateway.serviceAccount.create".to_string(),
+            },
+            Guard::Default {
+                path: "signoz-otel-gateway.serviceAccount.name".to_string(),
+            },
+        ],
+        resource: None,
+        provenance: Vec::new(),
+    }]);
+    contract.push_pathless_scalar("signoz-otel-gateway");
+    contract.add_type_hint("signoz-otel-gateway.serviceAccount.name", "string");
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
+            Some(indoc! {r#"
+                signoz-otel-gateway:
+                  serviceAccount:
+                    create: true
+                    name: ""
+            "#}),
+        ),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz-otel-gateway": {
+                    "serviceAccount": {
+                        "create": true,
+                        "name": null
+                    }
+                }
+            })
+        ),
+        "exact helper-defaulted child path should widen the parent values seed, got {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz-otel-gateway": {
+                    "serviceAccount": {
+                        "create": true,
+                        "name": 7
+                    }
+                }
+            })
+        ),
+        "exact child path should still preserve string-like helper metadata shape, got {schema}"
+    );
+}
+
+#[test]
+fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "clickhouse.securityContext".to_string(),
+        path: YamlPath(vec![
+            "spec".to_string(),
+            "template".to_string(),
+            "spec".to_string(),
+            "securityContext".to_string(),
+        ]),
+        kind: ValueKind::Fragment,
+        guards: vec![Guard::Truthy {
+            path: "clickhouse.securityContext.enabled".to_string(),
+        }],
+        resource: None,
+        provenance: Vec::new(),
+    }]);
+    contract.push_pathless_scalar("clickhouse");
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
+            Some(indoc! {r#"
+                clickhouse:
+                  securityContext:
+                    enabled: true
+                    fsGroup: 101
+                    runAsUser: 1001
+            "#}),
+        ),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "clickhouse": {
+                    "securityContext": {
+                        "enabled": true,
+                        "fsGroup": 101,
+                        "runAsUser": 1001
+                    }
+                }
+            })
+        ),
+        "guarded fragment base should stay open after inserting guard descendants, got {schema}"
+    );
+}
+
+#[test]
+fn guarded_array_fragment_parent_seed_stays_array_shaped() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "alertmanager.tolerations".to_string(),
+        path: YamlPath(vec![
+            "spec".to_string(),
+            "template".to_string(),
+            "spec".to_string(),
+            "tolerations".to_string(),
+        ]),
+        kind: ValueKind::Fragment,
+        guards: vec![Guard::Truthy {
+            path: "alertmanager.enabled".to_string(),
+        }],
+        resource: None,
+        provenance: Vec::new(),
+    }]);
+    contract.push_pathless_scalar("alertmanager");
+    contract.add_type_hint("alertmanager.enabled", "boolean");
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
+            Some(indoc! {"
+                alertmanager:
+                  enabled: true
+                  tolerations: []
+            "}),
+        ),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "alertmanager": {
+                    "enabled": true,
+                    "tolerations": []
+                }
+            })
+        ),
+        "guarded array fragment base should preserve array shape, got {schema}"
+    );
+}
+
+#[test]
+fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "clickhouse.clickhouseOperator.configs.confdFiles".to_string(),
+        path: YamlPath(vec!["data".to_string()]),
+        kind: ValueKind::Fragment,
+        guards: vec![Guard::Truthy {
+            path: "clickhouse.enabled".to_string(),
+        }],
+        resource: None,
+        provenance: Vec::new(),
+    }]);
+    contract.push_pathless_scalar("clickhouse");
+    contract.add_type_hint("clickhouse.enabled", "boolean");
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
+            Some(indoc! {"
+                clickhouse:
+                  enabled: true
+                  clickhouseOperator:
+                    configs:
+                      confdFiles:
+            "}),
+        ),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "clickhouse": {
+                    "enabled": true,
+                    "clickhouseOperator": {
+                        "configs": {
+                            "confdFiles": null
+                        }
+                    }
+                }
+            })
+        ),
+        "guarded object fragment base should preserve explicit null defaults, got {schema}"
     );
 }
 

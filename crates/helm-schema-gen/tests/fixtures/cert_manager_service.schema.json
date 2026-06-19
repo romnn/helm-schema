@@ -6,32 +6,54 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "prometheus": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "podmonitor": {
+                  "prometheus": {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -41,15 +63,62 @@
                   }
                 },
                 "required": [
-                  "podmonitor"
+                  "prometheus"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podmonitor": {
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -73,32 +142,54 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "prometheus": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "podmonitor": {
+                  "prometheus": {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -108,15 +199,62 @@
                   }
                 },
                 "required": [
-                  "podmonitor"
+                  "prometheus"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podmonitor": {
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -141,32 +279,54 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "prometheus": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "podmonitor": {
+                  "prometheus": {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -176,15 +336,62 @@
                   }
                 },
                 "required": [
-                  "podmonitor"
+                  "prometheus"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podmonitor": {
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -206,32 +413,54 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "prometheus": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "podmonitor": {
+                  "prometheus": {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -241,15 +470,62 @@
                   }
                 },
                 "required": [
-                  "podmonitor"
+                  "prometheus"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podmonitor": {
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -289,27 +565,8 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "namespace": {
-      "anyOf": [
-        {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
+    "nameOverride": {},
+    "namespace": {},
     "prometheus": {
       "additionalProperties": false,
       "allOf": [
@@ -317,22 +574,44 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "podmonitor": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
                     "properties": {
                       "enabled": {
-                        "const": true
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -340,11 +619,50 @@
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "podmonitor"
-                ],
-                "type": "object"
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podmonitor": {
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -386,16 +704,7 @@
         "servicemonitor": {
           "additionalProperties": false,
           "properties": {
-            "targetPort": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
+            "targetPort": {}
           },
           "type": "object"
         }
@@ -403,11 +712,7 @@
       "type": "object"
     },
     "serviceAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-      "properties": {},
+      "additionalProperties": {},
       "type": "object"
     },
     "serviceIPFamilies": {
@@ -430,11 +735,7 @@
       ]
     },
     "serviceLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-      "properties": {},
+      "additionalProperties": {},
       "type": "object"
     }
   },

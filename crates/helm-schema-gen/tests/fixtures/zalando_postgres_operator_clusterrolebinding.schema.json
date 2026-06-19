@@ -4,35 +4,85 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "rbac": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "create": {
-                "const": true
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "create"
+              "rbac"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            ]
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -72,16 +122,7 @@
     "serviceAccount": {
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "name": {}
       },
       "type": "object"
     }

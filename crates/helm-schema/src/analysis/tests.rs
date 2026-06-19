@@ -170,6 +170,139 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
 }
 
 #[test]
+fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("signoz-signoz");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
+    let projection = collection.contract.clone().project();
+    let path = "signoz.serviceAccount.name";
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == path)
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
+        uses.iter().any(|use_| {
+            use_.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    Guard::Truthy { path }
+                    if path == "signoz.serviceAccount.create"
+                )
+            })
+        }),
+        "expected a create=true helper-backed branch for {path}; uses={uses:#?}"
+    );
+    assert!(
+        uses.iter().any(|use_| {
+            use_.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    Guard::Not { path }
+                    if path == "signoz.serviceAccount.create"
+                )
+            })
+        }),
+        "expected a create=false helper-backed branch for {path}; uses={uses:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("signoz-signoz");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, values_yaml.as_deref())?;
+    let projection = collection.contract.clone().project();
+    let path = "signoz-otel-gateway.serviceAccount.name";
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == path)
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
+        uses.iter().any(|use_| {
+            use_.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    Guard::Default { path }
+                    if path == "signoz-otel-gateway.serviceAccount.name"
+                )
+            })
+        }),
+        "expected helper default guard for {path}; uses={uses:#?}"
+    );
+    assert!(
+        collection
+            .contract_schema_signals
+            .value_path_facts
+            .get(path)
+            .is_some_and(|fact| fact.is_nullable),
+        "helper-defaulted subchart path should be globally nullable; facts={:#?}; uses={uses:#?}",
+        collection
+            .contract_schema_signals
+            .value_path_facts
+            .get(path),
+    );
+
+    Ok(())
+}
+
+#[test]
+fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("signoz-signoz");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
+    let collection = analyze_charts(&discovery.charts, &defines, false, values_yaml.as_deref())?;
+    let projection = collection.contract.clone().project();
+    let path = "clickhouse.securityContext";
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == path)
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
+        collection
+            .contract_schema_signals
+            .value_path_facts
+            .get(path)
+            .is_some_and(|fact| fact.used_as_fragment),
+        "fragment-valued securityContext should not be pruned as a scalar parent; facts={:#?}; uses={uses:#?}",
+        collection
+            .contract_schema_signals
+            .value_path_facts
+            .get(path),
+    );
+
+    Ok(())
+}
+
+#[test]
 fn transitive_library_helper_default_flows_into_required_inference_signals()
 -> color_eyre::eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
@@ -336,25 +469,68 @@ data:
     let defines = chart::build_define_index(&discovery.charts, false)?;
     let collection = analyze_charts(&discovery.charts, &defines, false, None)?;
     let projection = collection.contract.project();
-    let use_ = projection
+    let uses = projection
         .uses()
         .iter()
-        .find(|use_| {
+        .filter(|use_| {
             use_.source_expr == "kid.enabled"
                 && use_.path.0 == ["data".to_string(), "enabled".to_string()]
         })
-        .unwrap_or_else(|| panic!("missing guarded subchart use: {:?}", projection.uses()));
+        .cloned()
+        .collect::<Vec<_>>();
 
     assert!(
-        use_.guards.contains(&Guard::Or {
-            paths: vec![
-                "global.kidEnabled".to_string(),
-                "kid.enabled".to_string(),
-                "tags.observability".to_string(),
+        uses.iter().any(|use_| use_.guards.as_slice()
+            == [Guard::Truthy {
+                path: "kid.enabled".to_string()
+            }]
+            .as_slice()),
+        "expected first condition activation branch, got {uses:#?}"
+    );
+    assert!(
+        uses.iter().any(|use_| use_.guards.as_slice()
+            == [
+                Guard::Absent {
+                    path: "kid.enabled".to_string()
+                },
+                Guard::Truthy {
+                    path: "global.kidEnabled".to_string()
+                },
             ]
-        }),
-        "expected Chart.yaml activation guard on subchart use, got {:?}",
-        use_.guards
+            .as_slice()),
+        "expected second condition branch guarded by first-condition absence, got {uses:#?}"
+    );
+    assert!(
+        uses.iter().any(|use_| use_.guards.as_slice()
+            == [
+                Guard::Absent {
+                    path: "kid.enabled".to_string()
+                },
+                Guard::Absent {
+                    path: "global.kidEnabled".to_string()
+                },
+                Guard::Truthy {
+                    path: "tags.observability".to_string()
+                },
+            ]
+            .as_slice()),
+        "expected tag activation branch guarded by condition absence, got {uses:#?}"
+    );
+    assert!(
+        uses.iter().any(|use_| use_.guards.as_slice()
+            == [
+                Guard::Absent {
+                    path: "kid.enabled".to_string()
+                },
+                Guard::Absent {
+                    path: "global.kidEnabled".to_string()
+                },
+                Guard::Absent {
+                    path: "tags.observability".to_string()
+                },
+            ]
+            .as_slice()),
+        "expected default-active branch when no activation values exist, got {uses:#?}"
     );
 
     Ok(())

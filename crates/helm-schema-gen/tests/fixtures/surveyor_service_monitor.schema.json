@@ -901,7 +901,29 @@
           "serviceMonitor": {
             "properties": {
               "enabled": {
-                "const": true
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
               }
             },
             "required": [
@@ -948,16 +970,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nameOverride": {},
     "serviceMonitor": {
       "additionalProperties": false,
       "allOf": [
@@ -965,7 +978,29 @@
           "if": {
             "properties": {
               "enabled": {
-                "const": true
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
               }
             },
             "required": [
@@ -989,7 +1024,29 @@
           "if": {
             "properties": {
               "enabled": {
-                "const": true
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
               }
             },
             "required": [
@@ -1013,7 +1070,29 @@
           "if": {
             "properties": {
               "enabled": {
-                "const": true
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
               }
             },
             "required": [
@@ -1922,7 +2001,29 @@
           "if": {
             "properties": {
               "enabled": {
-                "const": true
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
               }
             },
             "required": [
@@ -2830,9 +2931,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "enabled": {
@@ -2851,17 +2950,11 @@
           ]
         },
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
-        "metricRelabelings": {
-          "$ref": "#/$defs/providerSource_crd_catalog_4d2d66b53c70"
-        },
-        "relabelings": {
-          "$ref": "#/$defs/providerSource_crd_catalog_4d2d66b53c70"
-        },
+        "metricRelabelings": {},
+        "relabelings": {},
         "scrapeTimeout": {
           "anyOf": [
             {

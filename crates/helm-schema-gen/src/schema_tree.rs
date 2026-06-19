@@ -33,6 +33,31 @@ pub(crate) fn unknown_object_schema() -> Value {
     )
 }
 
+pub(crate) fn open_object_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("object".to_string())),
+            (
+                "additionalProperties".to_string(),
+                Value::Object(Map::new()),
+            ),
+        ]
+        .into_iter()
+        .collect(),
+    )
+}
+
+pub(crate) fn open_array_schema() -> Value {
+    Value::Object(
+        [
+            ("type".to_string(), Value::String("array".to_string())),
+            ("items".to_string(), Value::Object(Map::new())),
+        ]
+        .into_iter()
+        .collect(),
+    )
+}
+
 pub(crate) fn insert_schema_at_path_segments(
     root: &mut Value,
     path_segments: &[String],
@@ -156,6 +181,7 @@ fn set_schema_description(node: &mut Value, description: &str) {
 fn ensure_object_schema(value: &mut Value) {
     match value {
         Value::Object(obj) => {
+            let had_additional_properties = obj.contains_key("additionalProperties");
             if obj.get("type").and_then(Value::as_str) != Some("object") {
                 obj.insert("type".to_string(), Value::String("object".to_string()));
             }
@@ -185,7 +211,8 @@ fn ensure_object_schema(value: &mut Value) {
                 .and_then(Value::as_object)
                 .is_some_and(serde_json::Map::is_empty);
 
-            if has_structure && additional_properties_is_empty_schema {
+            if has_structure && additional_properties_is_empty_schema && !had_additional_properties
+            {
                 obj.insert("additionalProperties".to_string(), Value::Bool(false));
             }
         }

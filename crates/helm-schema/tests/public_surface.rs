@@ -5,7 +5,7 @@ use helm_schema::generation::{
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
-    AnalysisSession, CliError,
+    AnalysisSession,
     contract::{ContractDocument, ContractDocumentGuard},
     diagnostics::DiagnosticSink,
 };
@@ -273,7 +273,10 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
         &chart_dir.join("Chart.yaml")?,
         "apiVersion: v2\nname: root\nversion: 0.1.0\n",
     )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        "mode: unsafe\nserviceAccount:\n  create: false\n",
+    )?;
     test_util::write(
         &chart_dir.join("values.schema.json")?,
         r#"{
@@ -287,13 +290,15 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
 }"#,
     )?;
     test_util::write(
-        &chart_dir.join("templates/serviceaccount.yaml")?,
+        &chart_dir.join("templates/configmap.yaml")?,
         r#"
 {{- if .Values.serviceAccount.create }}
 apiVersion: v1
-kind: ServiceAccount
+kind: ConfigMap
 metadata:
   name: root
+data:
+  mode: "{{ .Values.mode }}"
 {{- end }}
 "#,
     )?;
@@ -313,9 +318,17 @@ metadata:
     });
 
     let resolved = session.resolved_contract()?;
+    assert!(
+        resolved.schema.pointer("/properties/mode/enum").is_none(),
+        "resolved contract must not ingest sibling values.schema.json as inference evidence: {}",
+        resolved.schema
+    );
     assert_eq!(
-        resolved.schema.pointer("/allOf/0/properties/mode/enum"),
-        Some(&json!(["safe", "fast"]))
+        resolved
+            .schema
+            .pointer("/properties/mode/type")
+            .and_then(serde_json::Value::as_str),
+        Some("string")
     );
     assert!(
         resolved
@@ -335,9 +348,10 @@ metadata:
         "guard-only toggles stay optional even under --infer-required: {}",
         generated.schema
     );
-    assert_eq!(
-        generated.schema.pointer("/allOf/0/properties/mode/enum"),
-        Some(&json!(["safe", "fast"]))
+    assert!(
+        generated.schema.pointer("/properties/mode/enum").is_none(),
+        "generated schema must not ingest sibling values.schema.json as inference evidence: {}",
+        generated.schema
     );
 
     Ok(())
@@ -468,14 +482,28 @@ data:
         explanation
             .exact_uses
             .iter()
-            .any(|use_| use_.guards.contains(&ContractDocumentGuard::Or {
-                paths: vec![
-                    "global.kidEnabled".to_string(),
-                    "kid.enabled".to_string(),
-                    "tags.observability".to_string(),
-                ],
-            })),
-        "expected activation guard in explanation: {explanation:#?}"
+            .any(|use_| use_.guards.as_slice()
+                == [ContractDocumentGuard::Truthy {
+                    path: "kid.enabled".to_string()
+                }]
+                .as_slice()),
+        "expected first condition activation branch in explanation: {explanation:#?}"
+    );
+    assert!(
+        explanation
+            .exact_uses
+            .iter()
+            .any(|use_| use_.guards.as_slice()
+                == [
+                    ContractDocumentGuard::Absent {
+                        path: "kid.enabled".to_string()
+                    },
+                    ContractDocumentGuard::Truthy {
+                        path: "global.kidEnabled".to_string()
+                    },
+                ]
+                .as_slice()),
+        "expected second condition branch guarded by first-condition absence: {explanation:#?}"
     );
     assert!(
         explanation
@@ -629,7 +657,7 @@ data:
 }
 
 #[test]
-fn dependency_activation_guards_lower_to_root_any_of_condition() -> eyre::Result<()> {
+fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -677,144 +705,53 @@ metadata:
         },
     })?;
 
-    assert_eq!(
-        schema.pointer("/allOf/0/if/anyOf/0/properties/global/properties/kidEnabled/const"),
-        Some(&json!(true))
-    );
-    assert_eq!(
-        schema.pointer("/allOf/0/if/anyOf/1/properties/kid/properties/enabled/const"),
-        Some(&json!(true))
-    );
-    assert_eq!(
-        schema.pointer("/allOf/0/if/anyOf/2/properties/tags/properties/observability/const"),
-        Some(&json!(true))
-    );
-    assert_eq!(
-        schema.pointer("/allOf/0/then/properties/kid/properties/name/type"),
-        Some(&json!("string")),
-        "subchart values path should be guarded by Chart.yaml activation predicates: {schema}"
-    );
-
-    Ok(())
-}
-
-#[test]
-fn shipped_values_schema_is_enforced_as_constraint() -> eyre::Result<()> {
-    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
-
-    test_util::write(
-        &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
-    )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "mode: safe\n")?;
-    test_util::write(
-        &chart_dir.join("values.schema.json")?,
-        r#"{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "mode": {
-      "enum": ["safe", "fast"]
-    }
-  }
-}"#,
-    )?;
-    test_util::write(
-        &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  mode: "{{ .Values.mode }}"
-"#,
-    )?;
-
-    let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
-        include_tests: false,
-        include_subchart_values: true,
-        values_files: Vec::new(),
-        infer_required: false,
-        provider: ProviderOptions {
-            k8s_versions: vec!["v1.35.0".to_string()],
-            allow_net: false,
-            disable_k8s_schemas: true,
-            ..Default::default()
-        },
-    })?;
-
-    assert_eq!(
-        schema.pointer("/allOf/0/properties/mode/enum"),
-        Some(&json!(["safe", "fast"]))
-    );
-
     let validator = jsonschema::validator_for(&schema)?;
-    assert!(validator.is_valid(&json!({ "mode": "safe" })));
-    assert!(!validator.is_valid(&json!({ "mode": "unsafe" })));
-
-    Ok(())
-}
-
-#[test]
-fn generated_root_values_schema_is_not_reingested_as_shipped_constraint() -> eyre::Result<()> {
-    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
-
-    test_util::write(
-        &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
-    )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "mode: safe\n")?;
-    test_util::write(
-        &chart_dir.join("values.schema.json")?,
-        r#"{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "x-helm-schema-generated": true,
-  "type": "object",
-  "properties": {
-    "mode": {
-      "enum": ["generated-only"]
-    }
-  }
-}"#,
-    )?;
-    test_util::write(
-        &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  mode: "{{ .Values.mode }}"
-"#,
-    )?;
-
-    let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
-        include_tests: false,
-        include_subchart_values: true,
-        values_files: Vec::new(),
-        infer_required: false,
-        provider: ProviderOptions {
-            k8s_versions: vec!["v1.35.0".to_string()],
-            allow_net: false,
-            disable_k8s_schemas: true,
-            ..Default::default()
-        },
-    })?;
-
     assert!(
-        schema.pointer("/allOf/0/properties/mode/enum").is_none(),
-        "generated root schema must not be re-ingested as a shipped constraint"
+        !validator.is_valid(&json!({ "kid": { "enabled": true, "name": 7 } })),
+        "first condition true should activate subchart schema: {schema}"
+    );
+    assert!(
+        validator.is_valid(&json!({ "kid": { "enabled": false, "name": 7 } })),
+        "first condition false should disable subchart schema even if name is invalid: {schema}"
+    );
+    assert!(
+        !validator.is_valid(&json!({
+            "global": { "kidEnabled": true },
+            "kid": { "name": 7 }
+        })),
+        "second condition true should activate when first condition is absent: {schema}"
+    );
+    assert!(
+        validator.is_valid(&json!({
+            "global": { "kidEnabled": true },
+            "kid": { "enabled": false, "name": 7 }
+        })),
+        "first condition false should override a later true condition: {schema}"
+    );
+    assert!(
+        !validator.is_valid(&json!({
+            "tags": { "observability": true },
+            "kid": { "name": 7 }
+        })),
+        "tag true should activate when all conditions are absent: {schema}"
+    );
+    assert!(
+        validator.is_valid(&json!({
+            "tags": { "observability": false },
+            "kid": { "name": 7 }
+        })),
+        "tag false should disable when all conditions are absent: {schema}"
+    );
+    assert!(
+        !validator.is_valid(&json!({ "kid": { "name": 7 } })),
+        "dependency should remain active by default when no activation values exist: {schema}"
     );
 
     Ok(())
 }
 
 #[test]
-fn resolved_contract_rejects_invalid_composed_defaults() -> eyre::Result<()> {
+fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -846,7 +783,7 @@ data:
 "#,
     )?;
 
-    let session = AnalysisSession::new(GenerateOptions {
+    let schema = generate_values_schema_for_chart(&GenerateOptions {
         chart_dir,
         include_tests: false,
         include_subchart_values: true,
@@ -858,20 +795,22 @@ data:
             disable_k8s_schemas: true,
             ..Default::default()
         },
-    });
+    })?;
 
-    let err = session
-        .resolved_contract()
-        .expect_err("invalid shipped defaults constraint should fail postcondition");
-    match err {
-        CliError::SchemaPostconditionViolated { errors } => {
-            assert!(
-                errors.iter().any(|err| err.contains("/mode")),
-                "expected path-specific validation error, got {errors:?}"
-            );
-        }
-        other => panic!("expected schema postcondition error, got {other:?}"),
-    }
+    assert!(
+        schema.pointer("/properties/mode/enum").is_none(),
+        "inference must ignore sibling values.schema.json and use render evidence only: {schema}"
+    );
+    assert_eq!(
+        schema
+            .pointer("/properties/mode/type")
+            .and_then(serde_json::Value::as_str),
+        Some("string")
+    );
+
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&json!({ "mode": "safe" })));
+    assert!(validator.is_valid(&json!({ "mode": "unsafe" })));
 
     Ok(())
 }

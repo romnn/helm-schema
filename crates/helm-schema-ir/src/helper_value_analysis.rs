@@ -337,7 +337,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             predicate: truthy_predicate_for_paths(&branch_guard_paths),
             bound_values: Vec::new(),
             dot_binding: None,
-            apply_alternative_predicate: false,
+            apply_alternative_predicate: true,
         }
     }
 
@@ -357,7 +357,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             predicate: truthy_predicate_for_paths(&branch_guard_paths),
             bound_values: Vec::new(),
             dot_binding: body_dot,
-            apply_alternative_predicate: false,
+            apply_alternative_predicate: true,
         }
     }
 

@@ -91,6 +91,14 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
           "path": "nameOverride",
           "type": "default"
         }
@@ -152,7 +160,10 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -165,7 +176,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "scheduling.k8s.io/v1",
+        "kind": "PriorityClass"
+      },
       "source_expr": "podPriorityClassName.name"
     },
     {
