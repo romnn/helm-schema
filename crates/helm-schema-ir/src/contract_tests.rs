@@ -199,3 +199,23 @@ fn contract_ir_declared_type_hints_do_not_project_as_contract_rows() {
         "declared type hints should stay internal to the contract artifact: {projection:#?}"
     );
 }
+
+#[test]
+fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contract() {
+    let mut contract = ContractIr::default();
+    contract.push(ContractUse::new(
+        "feature".to_string(),
+        YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        ValueKind::Scalar,
+        vec![Guard::Default {
+            path: "feature".to_string(),
+        }],
+        None,
+    ));
+    contract.add_type_hint("feature", "string");
+
+    let finalized = contract.clone().finalize();
+
+    assert_eq!(finalized.projection(), &contract.clone().project());
+    assert_eq!(finalized.schema_signals(), &contract.into_schema_signals());
+}

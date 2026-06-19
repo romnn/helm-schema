@@ -1,9 +1,8 @@
 use std::collections::BTreeSet;
 
 use crate::contract::fact::ContractFact;
-use crate::contract::{ContractProjection, ContractTypeHint};
+use crate::contract::{ContractProjection, ContractTypeHint, FinalizedContract};
 use crate::contract_normalization::normalize_contract_uses;
-use crate::contract_signal_builder::derive_schema_signals_from_contract_parts;
 use crate::contract_signals::ContractSchemaSignals;
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
@@ -132,9 +131,7 @@ impl ContractIr {
     /// Finalize claims and project them to the inspection DTO artifact.
     #[must_use]
     pub fn project(self) -> ContractProjection {
-        let (mut uses, _) = self.into_contract_parts();
-        normalize_contract_uses(&mut uses);
-        ContractProjection::from_normalized_uses(uses)
+        self.finalize().into_projection()
     }
 
     /// Finalize claims and derive the typed schema-generation signals.
@@ -144,9 +141,16 @@ impl ContractIr {
     /// explicit DTO projection boundary.
     #[must_use]
     pub fn into_schema_signals(self) -> ContractSchemaSignals {
+        self.finalize().into_schema_signals()
+    }
+
+    /// Finalize the contract once and derive downstream artifacts from that
+    /// one normalized contract representation.
+    #[must_use]
+    pub fn finalize(self) -> FinalizedContract {
         let (mut uses, type_hints) = self.into_contract_parts();
         normalize_contract_uses(&mut uses);
-        derive_schema_signals_from_contract_parts(&uses, &type_hints)
+        FinalizedContract::new(uses, type_hints)
     }
 
     fn into_contract_parts(self) -> (Vec<ContractUse>, Vec<ContractTypeHint>) {

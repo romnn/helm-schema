@@ -1,7 +1,7 @@
 pub mod contract {
     pub use helm_schema_ir::{
         ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
-        ContractDocumentUse, ContractProjection,
+        ContractDocumentUse, ContractProjection, FinalizedContract,
     };
 }
 
@@ -30,7 +30,8 @@ pub use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 pub use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlay, ContractIr, ContractPathSchemaEvidence,
     ContractProvenance, ContractRequirednessEvidence, ContractSchemaSignals, ContractUse,
-    ContractValuePathFacts, Guard, MetadataFieldKind, SourceSpan, SymbolicIrContext,
+    ContractValuePathFacts, FinalizedContract, Guard, MetadataFieldKind, SourceSpan,
+    SymbolicIrContext,
 };
 
 pub mod required_inference {

@@ -82,7 +82,7 @@ pub use capability_liveness::{
 };
 pub use contract::{
     ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
-    ContractDocumentUse, ContractIr, ContractProjection, ContractUse,
+    ContractDocumentUse, ContractIr, ContractProjection, ContractUse, FinalizedContract,
 };
 pub use contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,

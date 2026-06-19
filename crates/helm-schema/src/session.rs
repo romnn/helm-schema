@@ -2,9 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_engine::contract::{ContractDocument, ContractDocumentUse, ContractProjection};
+use helm_schema_engine::contract::{ContractDocument, ContractDocumentUse};
 use helm_schema_engine::{
-    ContractIr, ContractSchemaSignals, ValuesSchemaInput, generate_values_schema,
+    ContractIr, ContractSchemaSignals, FinalizedContract, ValuesSchemaInput, generate_values_schema,
 };
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
@@ -102,10 +102,9 @@ pub struct AnalysisSession {
     opts: GenerateOptions,
     diagnostics: DiagnosticSink,
     prepared: Mutex<Option<Arc<PreparedSession>>>,
-    contract_schema_signals: Mutex<Option<Arc<ContractSchemaSignals>>>,
+    finalized_contract: Mutex<Option<Arc<FinalizedContract>>>,
     resolved_contract: Mutex<Option<Arc<ResolvedContract>>>,
     generated_schema: Mutex<Option<Arc<GeneratedSchema>>>,
-    projection: Mutex<Option<Arc<ContractProjection>>>,
 }
 
 impl AnalysisSession {
@@ -120,10 +119,9 @@ impl AnalysisSession {
             opts,
             diagnostics,
             prepared: Mutex::new(None),
-            contract_schema_signals: Mutex::new(None),
+            finalized_contract: Mutex::new(None),
             resolved_contract: Mutex::new(None),
             generated_schema: Mutex::new(None),
-            projection: Mutex::new(None),
         }
     }
 
@@ -139,12 +137,12 @@ impl AnalysisSession {
 
     /// Return typed schema-lowering evidence derived from the guarded contract.
     pub fn contract_schema_signals(&self) -> CliResult<ContractSchemaSignals> {
-        Ok((*self.schema_signals()?).clone())
+        Ok(self.finalized_contract()?.schema_signals().clone())
     }
 
     /// Return the stable versioned contract export document.
     pub fn contract_document(&self) -> CliResult<ContractDocument> {
-        Ok(self.contract_projection()?.as_ref().clone().into_document())
+        Ok(self.finalized_contract()?.document())
     }
 
     /// Return the chart-local schema universe extracted from the chart tree.
@@ -182,11 +180,11 @@ impl AnalysisSession {
 
         let prepared = self.prepared()?;
         let resolved = self.resolved()?;
-        let contract_schema_signals = self.schema_signals()?;
+        let finalized_contract = self.finalized_contract()?;
         let generated = Arc::new(generate_schema_from_resolved_contract(
             &resolved,
             &prepared,
-            &contract_schema_signals,
+            finalized_contract.schema_signals(),
             &self.opts,
         ));
         let mut guard = self
@@ -232,8 +230,9 @@ impl AnalysisSession {
     /// Explain one values path using the current contract and chart evidence.
     pub fn explain(&self, path: &str) -> CliResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
-        let projection = self.contract_projection()?;
-        let schema_signals = self.schema_signals()?;
+        let finalized_contract = self.finalized_contract()?;
+        let projection = finalized_contract.projection();
+        let schema_signals = finalized_contract.schema_signals();
         let evidence = schema_signals.evidence_for(&normalized_path);
 
         let exact_uses = projection
@@ -304,25 +303,26 @@ impl AnalysisSession {
         Path::new(self.opts.chart_dir.as_str())
     }
 
-    fn schema_signals(&self) -> CliResult<Arc<ContractSchemaSignals>> {
+    fn finalized_contract(&self) -> CliResult<Arc<FinalizedContract>> {
         {
             let guard = self
-                .contract_schema_signals
+                .finalized_contract
                 .lock()
-                .expect("contract schema signals mutex");
-            if let Some(signals) = guard.as_ref() {
-                return Ok(Arc::clone(signals));
+                .expect("finalized contract mutex");
+            if let Some(finalized_contract) = guard.as_ref() {
+                return Ok(Arc::clone(finalized_contract));
             }
         }
 
         let prepared = self.prepared()?;
-        let signals = Arc::new(prepared.analysis.contract.clone().into_schema_signals());
+        let finalized_contract = Arc::new(prepared.analysis.contract.clone().finalize());
         let mut guard = self
-            .contract_schema_signals
+            .finalized_contract
             .lock()
-            .expect("contract schema signals mutex");
-        let signals = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&signals)));
-        Ok(signals)
+            .expect("finalized contract mutex");
+        let finalized_contract =
+            Arc::clone(guard.get_or_insert_with(|| Arc::clone(&finalized_contract)));
+        Ok(finalized_contract)
     }
 
     fn resolved(&self) -> CliResult<Arc<ResolvedContract>> {
@@ -337,10 +337,10 @@ impl AnalysisSession {
         }
 
         let prepared = self.prepared()?;
-        let contract_schema_signals = self.schema_signals()?;
+        let finalized_contract = self.finalized_contract()?;
         let resolved = Arc::new(resolve_contract_from_prepared(
             &prepared,
-            &contract_schema_signals,
+            finalized_contract.schema_signals(),
             &self.opts,
             Some(&self.diagnostics),
         )?);
@@ -350,21 +350,6 @@ impl AnalysisSession {
             .expect("resolved contract mutex");
         let resolved = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&resolved)));
         Ok(resolved)
-    }
-
-    fn contract_projection(&self) -> CliResult<Arc<ContractProjection>> {
-        {
-            let guard = self.projection.lock().expect("projection mutex");
-            if let Some(projection) = guard.as_ref() {
-                return Ok(Arc::clone(projection));
-            }
-        }
-
-        let prepared = self.prepared()?;
-        let projection = Arc::new(prepared.analysis.contract.clone().project());
-        let mut guard = self.projection.lock().expect("projection mutex");
-        let projection = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&projection)));
-        Ok(projection)
     }
 }
 
