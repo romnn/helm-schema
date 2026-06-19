@@ -6,12 +6,13 @@ use serde_json::Value;
 use crate::{
     ValuesSchemaInput, generate_values_schema,
     resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
+    values_yaml::ValuesYamlPathFacts,
 };
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_core::{ProviderOrigin, ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
-    ContractIr, ContractSchemaSignals, ContractUse, Guard, GuardValue, ProviderSchemaUse,
-    ResourceRef, SymbolicIrContext, ValueKind, YamlPath,
+    ContractIr, ContractSchemaSignals, ContractUse, ContractValuePathFacts, Guard, GuardValue,
+    ProviderSchemaUse, ResourceRef, SymbolicIrContext, ValueKind, YamlPath,
 };
 use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
@@ -698,13 +699,18 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
     });
 
     let schema = ResolvePolicy::default().resolve_schema_for_value_path(ValuePathSchemaInputs {
-        facts: ValuePathSchemaFacts {
-            path_has_render_use: true,
-            path_all_render_uses_self_guarded: true,
-            contract_path_is_nullable: true,
-            values_yaml_is_empty_string: true,
-            ..ValuePathSchemaFacts::default()
-        },
+        facts: ValuePathSchemaFacts::new(
+            ContractValuePathFacts {
+                has_render_use: true,
+                all_render_uses_self_guarded: true,
+                is_nullable: true,
+                ..ContractValuePathFacts::default()
+            },
+            ValuesYamlPathFacts {
+                is_empty_string: true,
+                ..ValuesYamlPathFacts::default()
+            },
+        ),
         provider_schema,
         values_yaml_schema,
         guard_constraint_schema: serde_json::json!({}),

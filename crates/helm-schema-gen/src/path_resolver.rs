@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use helm_schema_core::ResourceSchemaOracle;
 use serde_json::Value;
@@ -11,7 +11,7 @@ use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema, type_schema};
-use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
+use crate::values_yaml::{ValuePathCaches, ValuesYamlPathFacts, build_value_path_caches};
 
 pub(crate) struct ResolvedPathSchema {
     pub(crate) value_path: String,
@@ -100,30 +100,12 @@ impl<'a> PathSchemaResolver<'a> {
             .unwrap_or_default();
         let provider_schema = self.provider_schema_for_path(value_path);
         let values_yaml_info = self.path_caches.values_yaml.get(value_path);
-        let type_hint_schema = contract_evidence.map_or_else(empty_schema, |evidence| {
-            merge_type_hint_schemas(&evidence.type_hints)
-        });
+        let type_hint_schema = self.evidence_index.take_type_hint_schema(value_path);
         let guard_constraint_schema = self.evidence_index.take_guard_constraint_schema(value_path);
 
-        let facts = ValuePathSchemaFacts {
-            has_referenced_descendants: contract_facts.has_referenced_descendants,
-            used_as_fragment: contract_facts.used_as_fragment,
-            is_ranged_source: contract_facts.is_ranged_source,
-            is_partial_scalar_value_path: contract_facts.is_partial_scalar_value_path,
-            path_has_render_use: contract_facts.has_render_use,
-            path_all_render_uses_self_guarded: contract_facts.all_render_uses_self_guarded,
-            path_has_self_range_guard_render_use: contract_facts.has_self_range_guard_render_use,
-            contract_path_is_nullable: contract_facts.is_nullable,
-            values_yaml_has_no_schema_evidence: values_yaml_info
-                .is_none_or(|path_info| is_empty_schema(&path_info.schema)),
-            values_yaml_is_explicit_null: values_yaml_info
-                .is_some_and(|path_info| path_info.is_explicit_null),
-            values_yaml_is_empty_string: values_yaml_info
-                .is_some_and(|path_info| path_info.is_empty_string),
-            values_yaml_is_empty_map: values_yaml_info
-                .is_some_and(|path_info| path_info.is_empty_map),
-            values_yaml_is_mapping: values_yaml_info.is_some_and(|path_info| path_info.is_mapping),
-        };
+        let values_yaml_facts = values_yaml_info
+            .map_or_else(ValuesYamlPathFacts::absent, |path_info| path_info.facts());
+        let facts = ValuePathSchemaFacts::new(contract_facts, values_yaml_facts);
 
         let values_yaml_schema = values_yaml_info
             .map(|path_info| path_info.schema.clone())
@@ -174,13 +156,4 @@ impl<'a> PathSchemaResolver<'a> {
             provider_schema_candidate,
         }
     }
-}
-
-fn merge_type_hint_schemas(schema_types: &BTreeSet<String>) -> Value {
-    merge_schema_list(
-        schema_types
-            .iter()
-            .map(|schema_type| type_schema(schema_type))
-            .collect(),
-    )
 }

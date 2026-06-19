@@ -13,6 +13,7 @@ use crate::schema_model::type_schema;
 pub(crate) struct ContractEvidenceIndex {
     referenced_value_paths: BTreeSet<String>,
     provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<ProviderSchemaCandidate>>>,
+    type_hint_schema_by_value_path: BTreeMap<String, Value>,
     metadata_schema_by_value_path: BTreeMap<String, Value>,
     guard_constraint_schema_by_value_path: BTreeMap<String, Value>,
 }
@@ -36,6 +37,13 @@ impl ContractEvidenceIndex {
             .iter()
             .filter(|(_, evidence)| evidence.is_referenced_value_path)
             .map(|(path, _)| path.clone())
+            .collect();
+        let type_hint_schema_by_value_path = schema_evidence_by_path
+            .iter()
+            .filter_map(|(path, evidence)| {
+                (!evidence.type_hints.is_empty())
+                    .then(|| (path.clone(), merge_type_hint_schemas(&evidence.type_hints)))
+            })
             .collect();
         let metadata_schema_by_value_path = schema_evidence_by_path
             .iter()
@@ -111,6 +119,7 @@ impl ContractEvidenceIndex {
         Self {
             referenced_value_paths,
             provider_schemas_by_value_path,
+            type_hint_schema_by_value_path,
             metadata_schema_by_value_path,
             guard_constraint_schema_by_value_path,
         }
@@ -135,6 +144,12 @@ impl ContractEvidenceIndex {
 
     pub(crate) fn take_metadata_schema(&mut self, value_path: &str) -> Value {
         self.metadata_schema_by_value_path
+            .remove(value_path)
+            .unwrap_or_else(crate::schema_model::empty_schema)
+    }
+
+    pub(crate) fn take_type_hint_schema(&mut self, value_path: &str) -> Value {
+        self.type_hint_schema_by_value_path
             .remove(value_path)
             .unwrap_or_else(crate::schema_model::empty_schema)
     }
@@ -175,6 +190,15 @@ fn metadata_field_schema(field: MetadataFieldKind) -> Value {
         MetadataFieldKind::StringMap => string_map_schema(),
         MetadataFieldKind::Name | MetadataFieldKind::Namespace => type_schema("string"),
     }
+}
+
+fn merge_type_hint_schemas(schema_types: &BTreeSet<String>) -> Value {
+    merge_schema_list(
+        schema_types
+            .iter()
+            .map(|schema_type| type_schema(schema_type))
+            .collect(),
+    )
 }
 
 fn string_map_schema() -> Value {

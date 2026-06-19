@@ -4,7 +4,7 @@ use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use crate::merge::merge_schema_list;
-use crate::schema_model::{empty_schema, type_schema};
+use crate::schema_model::{empty_schema, is_empty_schema, type_schema};
 use crate::schema_tree::{object_schema, unknown_object_schema};
 
 pub(crate) struct ValuesYamlPathInfo {
@@ -13,6 +13,36 @@ pub(crate) struct ValuesYamlPathInfo {
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) struct ValuesYamlPathFacts {
+    pub(crate) has_no_schema_evidence: bool,
+    pub(crate) is_explicit_null: bool,
+    pub(crate) is_empty_string: bool,
+    pub(crate) is_empty_map: bool,
+    pub(crate) is_mapping: bool,
+}
+
+impl ValuesYamlPathFacts {
+    pub(crate) fn absent() -> Self {
+        Self {
+            has_no_schema_evidence: true,
+            ..Self::default()
+        }
+    }
+}
+
+impl ValuesYamlPathInfo {
+    pub(crate) fn facts(&self) -> ValuesYamlPathFacts {
+        ValuesYamlPathFacts {
+            has_no_schema_evidence: is_empty_schema(&self.schema),
+            is_explicit_null: self.is_explicit_null,
+            is_empty_string: self.is_empty_string,
+            is_empty_map: self.is_empty_map,
+            is_mapping: self.is_mapping,
+        }
+    }
 }
 
 pub(crate) struct ValuePathCaches {

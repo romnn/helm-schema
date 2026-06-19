@@ -1,6 +1,8 @@
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{GuardConstraint, GuardValue, ProviderSchemaUse, ValueKind};
+use helm_schema_ir::{
+    ContractValuePathFacts, GuardConstraint, GuardValue, ProviderSchemaUse, ValueKind,
+};
 
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
@@ -15,6 +17,7 @@ use crate::schema_model::{
     schema_permits_empty_string, schema_type, type_schema,
 };
 use crate::schema_tree::unknown_object_schema;
+use crate::values_yaml::ValuesYamlPathFacts;
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
@@ -26,30 +29,26 @@ pub(crate) struct ResolvePolicy;
 /// Structural facts for one `.Values.*` path.
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct ValuePathSchemaFacts {
-    pub(crate) has_referenced_descendants: bool,
-    pub(crate) used_as_fragment: bool,
-    pub(crate) is_ranged_source: bool,
-    pub(crate) is_partial_scalar_value_path: bool,
-    pub(crate) path_has_render_use: bool,
-    pub(crate) path_all_render_uses_self_guarded: bool,
-    pub(crate) path_has_self_range_guard_render_use: bool,
-    pub(crate) contract_path_is_nullable: bool,
-    pub(crate) values_yaml_has_no_schema_evidence: bool,
-    pub(crate) values_yaml_is_explicit_null: bool,
-    pub(crate) values_yaml_is_empty_string: bool,
-    pub(crate) values_yaml_is_empty_map: bool,
-    pub(crate) values_yaml_is_mapping: bool,
+    pub(crate) contract: ContractValuePathFacts,
+    pub(crate) values_yaml: ValuesYamlPathFacts,
 }
 
 impl ValuePathSchemaFacts {
+    pub(crate) fn new(contract: ContractValuePathFacts, values_yaml: ValuesYamlPathFacts) -> Self {
+        Self {
+            contract,
+            values_yaml,
+        }
+    }
+
     fn has_explicit_null_scalar_default(
         self,
         type_hint_schema: &Value,
         guard_constraint_schema: &Value,
     ) -> bool {
-        self.values_yaml_is_explicit_null
+        self.values_yaml.is_explicit_null
             && (is_scalar_like_schema(guard_constraint_schema)
-                || (!self.path_has_render_use && is_scalar_like_schema(type_hint_schema)))
+                || (!self.contract.has_render_use && is_scalar_like_schema(type_hint_schema)))
     }
 
     fn accepts_null_default(
@@ -57,7 +56,7 @@ impl ValuePathSchemaFacts {
         type_hint_schema: &Value,
         guard_constraint_schema: &Value,
     ) -> bool {
-        self.contract_path_is_nullable
+        self.contract.is_nullable
             || self.has_explicit_null_scalar_default(type_hint_schema, guard_constraint_schema)
     }
 
@@ -66,7 +65,7 @@ impl ValuePathSchemaFacts {
         type_hint_schema: &Value,
         guard_constraint_schema: &Value,
     ) -> bool {
-        self.values_yaml_is_explicit_null
+        self.values_yaml.is_explicit_null
             && self.accepts_null_default(type_hint_schema, guard_constraint_schema)
     }
 
@@ -75,20 +74,20 @@ impl ValuePathSchemaFacts {
         type_hint_schema: &Value,
         guard_constraint_schema: &Value,
     ) -> bool {
-        self.values_yaml_is_empty_string
-            && ((self.path_has_render_use && self.path_all_render_uses_self_guarded)
+        self.values_yaml.is_empty_string
+            && ((self.contract.has_render_use && self.contract.all_render_uses_self_guarded)
                 || is_scalar_like_schema(type_hint_schema)
                 || is_scalar_like_schema(guard_constraint_schema))
     }
 
     fn empty_map_placeholder_use(self) -> EmptyMapPlaceholderUse {
         EmptyMapPlaceholderUse {
-            is_empty_map: self.values_yaml_is_empty_map,
-            is_ranged_source: self.is_ranged_source,
-            has_self_range_guard_render_use: self.path_has_self_range_guard_render_use,
-            has_render_use: self.path_has_render_use,
-            all_render_uses_self_guarded: self.path_all_render_uses_self_guarded,
-            used_as_fragment: self.used_as_fragment,
+            is_empty_map: self.values_yaml.is_empty_map,
+            is_ranged_source: self.contract.is_ranged_source,
+            has_self_range_guard_render_use: self.contract.has_self_range_guard_render_use,
+            has_render_use: self.contract.has_render_use,
+            all_render_uses_self_guarded: self.contract.all_render_uses_self_guarded,
+            used_as_fragment: self.contract.used_as_fragment,
         }
     }
 }
@@ -208,12 +207,12 @@ impl ResolvePolicy {
             preserve_empty_string_fallback,
         });
         let preserve_explicit_null_default = preserve_explicit_null_default_by_contract
-            || (facts.values_yaml_is_explicit_null
-                && facts.used_as_fragment
+            || (facts.values_yaml.is_explicit_null
+                && facts.contract.used_as_fragment
                 && !is_empty_schema(&merged));
 
         if (preserve_explicit_null_default
-            || (is_scalar_like_schema(&merged) && facts.contract_path_is_nullable))
+            || (is_scalar_like_schema(&merged) && facts.contract.is_nullable))
             && !is_empty_schema(&merged)
         {
             add_null_schema(merged)
@@ -223,7 +222,7 @@ impl ResolvePolicy {
             &merged,
             facts.empty_map_placeholder_use(),
         ) {
-            merge_explicit_empty_placeholder(merged, facts.values_yaml_is_empty_map)
+            merge_explicit_empty_placeholder(merged, facts.values_yaml.is_empty_map)
         } else {
             merged
         }
@@ -243,13 +242,14 @@ impl ResolvePolicy {
         } else {
             values_yaml_schema
         };
-        let values_yaml_schema = if facts.used_as_fragment && is_empty_schema(provider_schema) {
-            open_fragment_values_schema(values_yaml_schema)
-        } else {
-            values_yaml_schema
-        };
+        let values_yaml_schema =
+            if facts.contract.used_as_fragment && is_empty_schema(provider_schema) {
+                open_fragment_values_schema(values_yaml_schema)
+            } else {
+                values_yaml_schema
+            };
 
-        if facts.is_ranged_source && facts.values_yaml_is_mapping {
+        if facts.contract.is_ranged_source && facts.values_yaml.is_mapping {
             generalize_fixed_object_schema_to_open_map(values_yaml_schema)
         } else {
             values_yaml_schema
@@ -264,7 +264,7 @@ impl ResolvePolicy {
         type_hint_schema: &Value,
         guard_constraint_schema: &Value,
     ) -> Value {
-        if facts.used_as_fragment
+        if facts.contract.used_as_fragment
             && is_scalar_schema(values_yaml_schema)
             && (is_scalar_like_schema(type_hint_schema)
                 || is_scalar_like_schema(guard_constraint_schema))
@@ -283,11 +283,11 @@ impl ResolvePolicy {
         type_hint_schema: &Value,
         guard_constraint_schema: &Value,
     ) -> Value {
-        if facts.is_partial_scalar_value_path
+        if facts.contract.is_partial_scalar_value_path
             && is_empty_schema(provider_schema)
             && is_empty_schema(type_hint_schema)
             && is_empty_schema(guard_constraint_schema)
-            && facts.values_yaml_has_no_schema_evidence
+            && facts.values_yaml.has_no_schema_evidence
         {
             type_schema("string")
         } else {
@@ -304,17 +304,17 @@ impl ResolvePolicy {
                 // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
                 // In these cases the *input* type in values.yaml is the scalar, not the output
                 // object type, so prefer the values.yaml scalar schema.
-                if input.facts.has_referenced_descendants
+                if input.facts.contract.has_referenced_descendants
                     && is_fixed_object_schema(&input.values_yaml_schema)
                     && is_scalar_schema(&input.provider_schema)
                 {
                     input.values_yaml_schema
-                } else if input.facts.used_as_fragment
+                } else if input.facts.contract.used_as_fragment
                     && is_fixed_object_schema(&input.values_yaml_schema)
                     && is_open_string_map_schema(&input.provider_schema)
                 {
                     input.provider_schema
-                } else if input.facts.used_as_fragment
+                } else if input.facts.contract.used_as_fragment
                     && is_scalar_schema(&input.values_yaml_schema)
                     && is_object_or_array_schema(&input.provider_schema)
                 {
@@ -337,7 +337,7 @@ impl ResolvePolicy {
             }
         } else if !is_empty_schema(&input.values_yaml_schema) {
             input.values_yaml_schema
-        } else if input.facts.used_as_fragment {
+        } else if input.facts.contract.used_as_fragment {
             unknown_object_schema()
         } else {
             empty_schema()
