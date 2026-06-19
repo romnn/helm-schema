@@ -173,7 +173,7 @@ mod tests {
         );
         apply_required_inference(
             &mut schema,
-            &schema_signals.schema_evidence_by_value_path,
+            schema_signals.schema_evidence_by_value_path(),
             &BTreeSet::new(),
         );
         schema
@@ -207,7 +207,7 @@ mod tests {
 
         apply_required_inference(
             &mut schema,
-            &schema_signals.schema_evidence_by_value_path,
+            schema_signals.schema_evidence_by_value_path(),
             &BTreeSet::new(),
         );
 
@@ -234,7 +234,7 @@ mod tests {
 
         apply_required_inference(
             &mut schema,
-            &schema_signals.schema_evidence_by_value_path,
+            schema_signals.schema_evidence_by_value_path(),
             &BTreeSet::new(),
         );
 
@@ -266,7 +266,7 @@ mod tests {
 
         apply_required_inference(
             &mut schema,
-            &schema_signals.schema_evidence_by_value_path,
+            schema_signals.schema_evidence_by_value_path(),
             &explicit_default_value_paths,
         );
 

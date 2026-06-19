@@ -168,20 +168,21 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
 
     let signals = contract.into_schema_signals();
     assert_eq!(
-        signals.type_hints_by_value_path.get("subchart.image.tag"),
+        signals
+            .evidence_for("subchart.image.tag")
+            .map(|evidence| &evidence.type_hints),
         Some(&["string".to_string()].into_iter().collect())
     );
     assert_eq!(
         signals
-            .type_hints_by_value_path
-            .get("subchart.image.pullPolicy"),
+            .evidence_for("subchart.image.pullPolicy")
+            .map(|evidence| &evidence.type_hints),
         Some(&["string".to_string()].into_iter().collect())
     );
     assert!(
         signals
-            .value_path_facts
-            .get("subchart.image")
-            .is_some_and(|facts| facts.has_referenced_descendants),
+            .evidence_for("subchart.image")
+            .is_some_and(|evidence| evidence.facts.has_referenced_descendants),
         "declared type hints should still mark ancestor object paths as having referenced descendants"
     );
 }

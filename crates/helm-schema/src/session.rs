@@ -220,8 +220,7 @@ impl AnalysisSession {
         let evidence = prepared
             .analysis
             .schema_signals
-            .schema_evidence_by_value_path
-            .get(&normalized_path);
+            .evidence_for(&normalized_path);
 
         let exact_uses = projection
             .uses()
@@ -260,8 +259,7 @@ impl AnalysisSession {
         let has_default_fallback = prepared
             .analysis
             .schema_signals
-            .schema_evidence_by_value_path
-            .get(&normalized_path)
+            .evidence_for(&normalized_path)
             .is_some_and(|evidence| evidence.requiredness.has_default_fallback);
 
         Ok(ValuePathExplanation {
@@ -369,7 +367,7 @@ pub(crate) fn generate_schema_from_resolved_contract(
             &prepared
                 .analysis
                 .schema_signals
-                .schema_evidence_by_value_path,
+                .schema_evidence_by_value_path(),
             prepared.values_yaml.as_deref(),
         );
     }

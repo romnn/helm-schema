@@ -29,8 +29,8 @@ pub use helm_schema_core::{
 pub use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 pub use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlay, ContractIr, ContractPathSchemaEvidence,
-    ContractPathSignals, ContractProvenance, ContractRequirednessEvidence, ContractSchemaSignals,
-    ContractUse, ContractValuePathFacts, Guard, GuardConstraint, MetadataFieldKind, SourceSpan,
+    ContractProvenance, ContractRequirednessEvidence, ContractSchemaSignals, ContractUse,
+    ContractValuePathFacts, Guard, GuardConstraint, MetadataFieldKind, SourceSpan,
     SymbolicIrContext,
 };
 

@@ -10,9 +10,26 @@ fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
     ContractIr::from_contract_uses(uses).into_schema_signals()
 }
 
+fn nullable_paths_for(signals: &ContractSchemaSignals) -> BTreeSet<String> {
+    signals
+        .schema_evidence_by_value_path()
+        .iter()
+        .filter(|(_, evidence)| evidence.facts.is_nullable)
+        .map(|(path, _)| path.clone())
+        .collect()
+}
+
+fn provider_schema_uses_for(signals: &ContractSchemaSignals) -> Vec<&crate::ProviderSchemaUse> {
+    signals
+        .schema_evidence_by_value_path()
+        .values()
+        .flat_map(|evidence| evidence.provider_schema_uses.iter())
+        .collect()
+}
+
 #[test]
 fn contract_ir_nullable_paths_include_range_only_collection() {
-    let nullable_paths = signals_for(vec![ContractUse::new(
+    let signals = signals_for(vec![ContractUse::new(
         "snapshot".to_string(),
         YamlPath(vec!["data".to_string(), "command".to_string()]),
         ValueKind::Scalar,
@@ -20,8 +37,8 @@ fn contract_ir_nullable_paths_include_range_only_collection() {
             path: "snapshots".to_string(),
         }],
         None,
-    )])
-    .nullable_value_paths;
+    )]);
+    let nullable_paths = nullable_paths_for(&signals);
 
     assert!(
         nullable_paths.contains("snapshots"),
@@ -35,7 +52,7 @@ fn contract_ir_nullable_paths_include_range_only_collection() {
 
 #[test]
 fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
-    let nullable_paths = signals_for(vec![
+    let signals = signals_for(vec![
         ContractUse::new(
             "serviceAccount.name".to_string(),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
@@ -52,8 +69,8 @@ fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
             Vec::new(),
             None,
         ),
-    ])
-    .nullable_value_paths;
+    ]);
+    let nullable_paths = nullable_paths_for(&signals);
 
     assert!(
         !nullable_paths.contains("serviceAccount.name"),
@@ -114,11 +131,15 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
             }],
             None,
         ),
-    ])
-    .path_signals;
+    ]);
+    let evidence = signals.schema_evidence_by_value_path();
 
     assert_eq!(
-        signals.referenced_value_paths,
+        evidence
+            .iter()
+            .filter(|(_, evidence)| evidence.is_referenced_value_path)
+            .map(|(path, _)| path.clone())
+            .collect::<BTreeSet<_>>(),
         BTreeSet::from([
             "extraConfig".to_string(),
             "extraEnv".to_string(),
@@ -130,47 +151,71 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
         ]),
     );
     assert_eq!(
-        signals.ranged_value_paths,
+        evidence
+            .iter()
+            .filter(|(_, evidence)| evidence.facts.is_ranged_source)
+            .map(|(path, _)| path.clone())
+            .collect::<BTreeSet<_>>(),
         BTreeSet::from(["extraEnv".to_string()]),
     );
     assert_eq!(
-        signals.value_paths_used_as_fragment,
+        evidence
+            .iter()
+            .filter(|(_, evidence)| evidence.facts.used_as_fragment)
+            .map(|(path, _)| path.clone())
+            .collect::<BTreeSet<_>>(),
         BTreeSet::from(["podLabels".to_string()]),
     );
     assert_eq!(
-        signals.partial_scalar_value_paths,
+        evidence
+            .iter()
+            .filter(|(_, evidence)| evidence.facts.is_partial_scalar_value_path)
+            .map(|(path, _)| path.clone())
+            .collect::<BTreeSet<_>>(),
         BTreeSet::from(["image.tag".to_string()]),
     );
     assert_eq!(
-        signals.metadata_fields_by_value_path.get("podLabels"),
+        evidence
+            .get("podLabels")
+            .map(|evidence| &evidence.metadata_field_kinds),
         Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
     );
     assert_eq!(
-        signals.metadata_fields_by_value_path.get("podName"),
+        evidence
+            .get("podName")
+            .map(|evidence| &evidence.metadata_field_kinds),
         Some(&BTreeSet::from([MetadataFieldKind::Name])),
     );
     assert_eq!(
-        signals.metadata_fields_by_value_path.get("podNamespace"),
+        evidence
+            .get("podNamespace")
+            .map(|evidence| &evidence.metadata_field_kinds),
         Some(&BTreeSet::from([MetadataFieldKind::Namespace])),
     );
     assert_eq!(
-        signals.guard_constraints_by_value_path.get("mode"),
+        evidence
+            .get("mode")
+            .map(|evidence| &evidence.guard_constraints),
         Some(&vec![GuardConstraint::Eq {
             value: GuardValue::string("prod"),
         }]),
     );
     assert_eq!(
-        signals.guard_constraints_by_value_path.get("extraConfig"),
+        evidence
+            .get("extraConfig")
+            .map(|evidence| &evidence.guard_constraints),
         Some(&vec![GuardConstraint::TypeIs {
             schema_type: "string".to_string(),
         }]),
     );
     assert!(
-        !signals.referenced_value_paths.contains("ignored.guard"),
+        !evidence
+            .get("ignored.guard")
+            .is_some_and(|evidence| evidence.is_referenced_value_path),
         "empty-source compatibility rows should not seed schema paths",
     );
     assert!(
-        !signals.metadata_fields_by_value_path.contains_key(""),
+        !evidence.contains_key(""),
         "empty-source compatibility rows should not seed metadata facts",
     );
 }
@@ -183,7 +228,7 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let requests = signals_for(vec![
+    let signals = signals_for(vec![
         ContractUse::new(
             "containers".to_string(),
             YamlPath(vec![
@@ -233,8 +278,8 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
             Vec::new(),
             Some(resource),
         ),
-    ])
-    .provider_schema_uses;
+    ]);
+    let requests = provider_schema_uses_for(&signals);
 
     assert_eq!(requests.len(), 2, "{requests:#?}");
     assert_eq!(requests[0].value_path, "containers");
@@ -274,47 +319,45 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
 
     assert_eq!(
         signals
-            .path_signals
-            .metadata_fields_by_value_path
-            .get("podLabels"),
+            .evidence_for("podLabels")
+            .map(|evidence| &evidence.metadata_field_kinds),
         Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
     );
     assert!(
-        signals.nullable_value_paths.contains("serviceAccount.name"),
+        signals
+            .evidence_for("serviceAccount.name")
+            .is_some_and(|evidence| evidence.facts.is_nullable),
         "default-guarded render use should surface as nullable contract evidence",
     );
     assert!(
         signals
-            .paths_with_referenced_descendants
-            .contains("serviceAccount"),
+            .evidence_for("serviceAccount")
+            .is_some_and(|evidence| evidence.facts.has_referenced_descendants),
         "contract schema signals should own descendant path topology",
     );
     assert!(
         signals
-            .value_path_facts
-            .get("serviceAccount.name")
-            .is_some_and(|fact| fact.has_render_use && fact.all_render_uses_self_guarded),
+            .evidence_for("serviceAccount.name")
+            .is_some_and(|evidence| evidence.facts.has_render_use
+                && evidence.facts.all_render_uses_self_guarded),
         "contract value-path facts should own render-use evidence",
     );
     assert!(
         signals
-            .value_path_facts
-            .get("serviceAccount")
-            .is_some_and(|fact| fact.has_referenced_descendants),
+            .evidence_for("serviceAccount")
+            .is_some_and(|evidence| evidence.facts.has_referenced_descendants),
         "contract value-path facts should own descendant path topology",
     );
     assert!(
         signals
-            .value_path_facts
-            .get("serviceAccount.name")
-            .is_some_and(|fact| fact.has_render_use
-                && fact.all_render_uses_self_guarded
-                && fact.is_nullable),
+            .evidence_for("serviceAccount.name")
+            .is_some_and(|evidence| evidence.facts.has_render_use
+                && evidence.facts.all_render_uses_self_guarded
+                && evidence.facts.is_nullable),
         "contract value-path facts should bundle nullable render-use evidence",
     );
     let pod_labels_evidence = signals
-        .schema_evidence_by_value_path
-        .get("podLabels")
+        .evidence_for("podLabels")
         .expect("podLabels evidence");
     assert_eq!(pod_labels_evidence.value_path, "podLabels");
     assert_eq!(
@@ -328,25 +371,23 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
         "path evidence should carry provider-schema requests for that path only",
     );
     let service_account_evidence = signals
-        .schema_evidence_by_value_path
-        .get("serviceAccount.name")
+        .evidence_for("serviceAccount.name")
         .expect("serviceAccount.name evidence");
     assert!(service_account_evidence.is_referenced_value_path);
     assert!(
         service_account_evidence.facts.has_render_use
             && service_account_evidence.facts.all_render_uses_self_guarded
             && service_account_evidence.facts.is_nullable,
-        "path evidence should carry the same render/nullability facts as the legacy fact map",
+        "path evidence should carry render/nullability facts",
     );
     let service_account_parent_evidence = signals
-        .schema_evidence_by_value_path
-        .get("serviceAccount")
+        .evidence_for("serviceAccount")
         .expect("serviceAccount parent evidence");
     assert!(
         !service_account_parent_evidence.is_referenced_value_path,
         "ancestor-only fact rows must not become schema subjects",
     );
-    assert_eq!(signals.provider_schema_uses.len(), 2);
+    assert_eq!(provider_schema_uses_for(&signals).len(), 2);
 }
 
 #[test]
@@ -367,7 +408,7 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
     )]);
 
     let overlay = signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .first()
         .expect("expected conditional overlay");
     assert_eq!(
@@ -412,7 +453,7 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
     )]);
 
     let overlay = signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .first()
         .expect("expected conditional overlay");
     assert_eq!(
@@ -483,24 +524,24 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ),
     ]);
 
-    assert_eq!(signals.conditional_path_overlays.len(), 4);
+    assert_eq!(signals.conditional_path_overlays().len(), 4);
     let feature_overlay = signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .iter()
         .find(|overlay| overlay.target_value_path == "feature.host")
         .expect("feature.host overlay");
     let other_overlay = signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .iter()
         .find(|overlay| overlay.target_value_path == "other.host")
         .expect("other.host overlay");
     let preset_overlay = signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .iter()
         .find(|overlay| overlay.target_value_path == "preset.resources")
         .expect("preset.resources overlay");
     let image_overlay = signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .iter()
         .find(|overlay| overlay.target_value_path == "image.tag")
         .expect("image.tag overlay");
@@ -547,11 +588,11 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
     );
     assert!(
         signals
-            .conditional_path_overlays
+            .conditional_path_overlays()
             .iter()
             .all(|overlay| !overlay.preserve_base_schema),
         "guarded-only branches must not preserve branch-specific evidence on the global base path: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
 }
 
@@ -581,12 +622,12 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
     ]);
 
     assert_eq!(
-        signals.conditional_path_overlays.len(),
+        signals.conditional_path_overlays().len(),
         2,
         "multiple supported guard sets for the same values path should survive as separate overlays"
     );
     assert!(
-        signals.conditional_path_overlays.iter().any(|overlay| {
+        signals.conditional_path_overlays().iter().any(|overlay| {
             overlay.guards
                 == vec![ConditionalGuard::Eq {
                     path: "mode".to_string(),
@@ -598,7 +639,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
         "expected a metadata.name-targeted branch overlay"
     );
     assert!(
-        signals.conditional_path_overlays.iter().any(|overlay| {
+        signals.conditional_path_overlays().iter().any(|overlay| {
             overlay.guards
                 == vec![ConditionalGuard::Eq {
                     path: "mode".to_string(),
@@ -643,28 +684,28 @@ fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditio
     ]);
 
     assert_eq!(
-        signals.conditional_path_overlays.len(),
+        signals.conditional_path_overlays().len(),
         1,
         "supported guarded branches should survive even when the path also has an unconditional base use: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
     assert_eq!(
-        signals.conditional_path_overlays[0].guards,
+        signals.conditional_path_overlays()[0].guards,
         vec![ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }],
     );
     assert!(
-        signals.conditional_path_overlays[0].preserve_base_schema,
+        signals.conditional_path_overlays()[0].preserve_base_schema,
         "unguarded peers should request base-schema preservation"
     );
     assert!(
         !signals
-            .conditional_path_overlays
+            .conditional_path_overlays()
             .iter()
             .any(|overlay| overlay.target_value_path == "other.path"),
         "unsupported range-guarded paths must still stay on the wide/base path: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
 }
 
@@ -702,18 +743,18 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
     ]);
 
     assert_eq!(
-        signals.conditional_path_overlays.len(),
+        signals.conditional_path_overlays().len(),
         2,
         "complementary guarded branches should both survive: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
     assert!(
         signals
-            .conditional_path_overlays
+            .conditional_path_overlays()
             .iter()
             .all(|overlay| !overlay.preserve_base_schema),
         "a complete truthy/not partition should be allowed to replace the base schema entirely: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
 }
 
@@ -760,18 +801,18 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
     ]);
 
     assert_eq!(
-        signals.conditional_path_overlays.len(),
+        signals.conditional_path_overlays().len(),
         3,
         "the broad shared branch and the complementary sub-branches should all survive: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
     assert!(
         signals
-            .conditional_path_overlays
+            .conditional_path_overlays()
             .iter()
             .all(|overlay| !overlay.preserve_base_schema),
         "a shared broad branch plus a truthy/not partition should still replace the base schema: {:?}",
-        signals.conditional_path_overlays
+        signals.conditional_path_overlays()
     );
 }
 
@@ -812,16 +853,17 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
 
     assert!(
         direct_signals
-            .nullable_value_paths
-            .contains("serviceAccount.name"),
+            .evidence_for("serviceAccount.name")
+            .is_some_and(|evidence| evidence.facts.is_nullable),
         "semantic finalization should keep the default-guarded render claim",
     );
-    assert_eq!(direct_signals.provider_schema_uses.len(), 1);
+    assert_eq!(provider_schema_uses_for(&direct_signals).len(), 1);
     assert!(
         direct_signals
-            .path_signals
-            .metadata_fields_by_value_path
-            .contains_key("podLabels"),
+            .evidence_for("podLabels")
+            .is_some_and(|evidence| evidence
+                .metadata_field_kinds
+                .contains(&MetadataFieldKind::StringMap)),
     );
 }
 
@@ -896,7 +938,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
     ])
     .into_schema_signals();
 
-    let evidence = &signals.schema_evidence_by_value_path;
+    let evidence = signals.schema_evidence_by_value_path();
 
     assert!(
         evidence
@@ -964,10 +1006,10 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
 
     assert!(
         signals
-            .schema_evidence_by_value_path
+            .schema_evidence_by_value_path()
             .values()
             .all(|evidence| !evidence.requiredness.is_positive_header),
         "plain pathless scalar uses must not be treated as positive header facts: {:#?}",
-        signals.schema_evidence_by_value_path
+        signals.schema_evidence_by_value_path()
     );
 }

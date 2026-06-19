@@ -49,8 +49,8 @@ spec:
 
     let ir_fact = collection
         .contract_schema_signals
-        .value_path_facts
-        .get(path)
+        .evidence_for(path)
+        .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing IR-derived fact for {path}"));
     assert!(
         ir_fact.all_render_uses_self_guarded,
@@ -76,11 +76,12 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     assert!(
         collection
             .contract_schema_signals
-            .type_hints_by_value_path
-            .get(path)
-            .is_some_and(|schema_types| schema_types.contains("string")),
+            .evidence_for(path)
+            .is_some_and(|evidence| evidence.type_hints.contains("string")),
         "expected structural contract type hint for {path}; contract_hints={:?}",
-        collection.contract_schema_signals.type_hints_by_value_path,
+        collection
+            .contract_schema_signals
+            .schema_evidence_by_value_path(),
     );
 
     Ok(())
@@ -132,7 +133,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
     );
     let overlays = collection
         .contract_schema_signals
-        .conditional_path_overlays
+        .conditional_path_overlays()
         .iter()
         .filter(|overlay| overlay.target_value_path == path)
         .cloned()
@@ -253,14 +254,13 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
     assert!(
         collection
             .contract_schema_signals
-            .value_path_facts
-            .get(path)
-            .is_some_and(|fact| fact.is_nullable),
+            .evidence_for(path)
+            .is_some_and(|evidence| evidence.facts.is_nullable),
         "helper-defaulted subchart path should be globally nullable; facts={:#?}; uses={uses:#?}",
         collection
             .contract_schema_signals
-            .value_path_facts
-            .get(path),
+            .evidence_for(path)
+            .map(|evidence| evidence.facts),
     );
 
     Ok(())
@@ -289,14 +289,13 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
     assert!(
         collection
             .contract_schema_signals
-            .value_path_facts
-            .get(path)
-            .is_some_and(|fact| fact.used_as_fragment),
+            .evidence_for(path)
+            .is_some_and(|evidence| evidence.facts.used_as_fragment),
         "fragment-valued securityContext should not be pruned as a scalar parent; facts={:#?}; uses={uses:#?}",
         collection
             .contract_schema_signals
-            .value_path_facts
-            .get(path),
+            .evidence_for(path)
+            .map(|evidence| evidence.facts),
     );
 
     Ok(())
@@ -383,8 +382,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 
     let evidence = collection
         .contract_schema_signals
-        .schema_evidence_by_value_path
-        .get("app.nameOverride")
+        .evidence_for("app.nameOverride")
         .unwrap_or_else(|| {
             panic!("missing schema evidence for app.nameOverride; uses={name_override_uses:#?}")
         });
@@ -417,8 +415,8 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
         .collect::<Vec<_>>();
     let facts = collection
         .contract_schema_signals
-        .value_path_facts
-        .get(path)
+        .evidence_for(path)
+        .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing facts for {path}; uses={uses:#?}"));
 
     assert!(

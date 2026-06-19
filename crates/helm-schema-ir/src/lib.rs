@@ -85,7 +85,7 @@ pub use contract::{
     ContractDocumentUse, ContractIr, ContractProjection, ContractUse,
 };
 pub use contract_signals::{
-    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence, ContractPathSignals,
+    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
     MetadataFieldKind,
 };

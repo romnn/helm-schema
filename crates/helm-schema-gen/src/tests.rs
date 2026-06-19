@@ -105,7 +105,13 @@ fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
 }
 
 fn type_hints_for(source: impl SchemaSignalSource) -> BTreeMap<String, BTreeSet<String>> {
-    source.into_schema_signals().type_hints_by_value_path
+    source
+        .into_schema_signals()
+        .schema_evidence_by_value_path()
+        .iter()
+        .filter(|(_, evidence)| !evidence.type_hints.is_empty())
+        .map(|(path, evidence)| (path.clone(), evidence.type_hints.clone()))
+        .collect()
 }
 
 #[test]
@@ -1052,7 +1058,13 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         snapshots:
     "};
     let ir = parse_ir(src);
-    let nullable_paths = schema_signals_for(ir.clone()).nullable_value_paths;
+    let signals = schema_signals_for(ir.clone());
+    let nullable_paths = signals
+        .schema_evidence_by_value_path()
+        .iter()
+        .filter(|(_, evidence)| evidence.facts.is_nullable)
+        .map(|(path, _)| path.clone())
+        .collect::<BTreeSet<_>>();
     assert!(
         nullable_paths.contains("snapshots"),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
@@ -2378,8 +2390,8 @@ fn map_entry_range_over_values_path_keeps_object_map_schema() {
     let contract = parse_ir(src);
     let signals = schema_signals_for(&contract);
     let facts = signals
-        .value_path_facts
-        .get("controller.config")
+        .evidence_for("controller.config")
+        .map(|evidence| evidence.facts)
         .expect("controller.config fact present");
     assert!(
         facts.is_ranged_source,
@@ -5239,7 +5251,13 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         provenance: Vec::new(),
     };
 
-    let null_paths = schema_signals_for(vec![guarded, bare]).nullable_value_paths;
+    let signals = schema_signals_for(vec![guarded, bare]);
+    let null_paths = signals
+        .schema_evidence_by_value_path()
+        .iter()
+        .filter(|(_, evidence)| evidence.facts.is_nullable)
+        .map(|(path, _)| path.clone())
+        .collect::<BTreeSet<_>>();
     assert!(
         null_paths.is_empty(),
         "image.tag must not be widened to nullable when one render use is unguarded; got {null_paths:?}",

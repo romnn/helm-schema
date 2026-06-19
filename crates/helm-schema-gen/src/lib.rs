@@ -83,7 +83,9 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .unwrap_or(&empty_values_descriptions);
 
     let signals = collect_use_signals(
-        &input.contract_schema_signals.schema_evidence_by_value_path,
+        input
+            .contract_schema_signals
+            .schema_evidence_by_value_path(),
         input.provider,
     );
 
@@ -94,10 +96,12 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 
     let root_schema = build_root_schema(
         signals,
-        &input.contract_schema_signals.schema_evidence_by_value_path,
+        input
+            .contract_schema_signals
+            .schema_evidence_by_value_path(),
         &values_yaml_doc,
         values_descriptions,
-        &input.contract_schema_signals.conditional_path_overlays,
+        input.contract_schema_signals.conditional_path_overlays(),
         input.provider,
     );
 

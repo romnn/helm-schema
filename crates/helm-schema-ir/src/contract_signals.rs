@@ -66,7 +66,7 @@ pub enum MetadataFieldKind {
 /// These are the values paths that downstream schema generation must consider,
 /// plus typed guard facts that can be lowered by generator policy.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ContractPathSignals {
+pub(crate) struct ContractPathSignals {
     pub referenced_value_paths: BTreeSet<String>,
     pub ranged_value_paths: BTreeSet<String>,
     pub value_paths_used_as_fragment: BTreeSet<String>,
@@ -100,14 +100,36 @@ pub struct ContractPathSchemaEvidence {
 /// re-reading raw contract claims.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
-    pub path_signals: ContractPathSignals,
-    pub provider_schema_uses: Vec<ProviderSchemaUse>,
-    pub type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
-    pub nullable_value_paths: BTreeSet<String>,
-    pub paths_with_referenced_descendants: BTreeSet<String>,
-    pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,
-    pub schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
-    pub conditional_path_overlays: Vec<ConditionalPathOverlay>,
+    schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
+    conditional_path_overlays: Vec<ConditionalPathOverlay>,
+}
+
+impl ContractSchemaSignals {
+    #[must_use]
+    pub(crate) fn new(
+        schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
+        conditional_path_overlays: Vec<ConditionalPathOverlay>,
+    ) -> Self {
+        Self {
+            schema_evidence_by_value_path,
+            conditional_path_overlays,
+        }
+    }
+
+    #[must_use]
+    pub fn schema_evidence_by_value_path(&self) -> &BTreeMap<String, ContractPathSchemaEvidence> {
+        &self.schema_evidence_by_value_path
+    }
+
+    #[must_use]
+    pub fn evidence_for(&self, value_path: &str) -> Option<&ContractPathSchemaEvidence> {
+        self.schema_evidence_by_value_path.get(value_path)
+    }
+
+    #[must_use]
+    pub fn conditional_path_overlays(&self) -> &[ConditionalPathOverlay] {
+        &self.conditional_path_overlays
+    }
 }
 
 /// Schema-generation facts for one input values path.

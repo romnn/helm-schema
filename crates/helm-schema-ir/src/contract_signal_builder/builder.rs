@@ -129,16 +129,7 @@ impl ContractSchemaSignalBuilder {
             })
             .collect();
 
-        ContractSchemaSignals {
-            path_signals: self.path_signals,
-            provider_schema_uses: self.provider_schema_uses,
-            type_hints_by_value_path,
-            nullable_value_paths,
-            paths_with_referenced_descendants,
-            value_path_facts,
-            schema_evidence_by_value_path,
-            conditional_path_overlays,
-        }
+        ContractSchemaSignals::new(schema_evidence_by_value_path, conditional_path_overlays)
     }
 
     fn record_provider_schema_use(&mut self, contract_use: &ContractUse) {
