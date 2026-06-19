@@ -1,9 +1,9 @@
-use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
-use crate::contract::ContractProjection;
+use crate::contract::fact::ContractFact;
+use crate::contract::{ContractProjection, ContractTypeHint};
 use crate::contract_normalization::normalize_contract_uses;
-use crate::contract_signal_builder::derive_schema_signals_from_uses;
+use crate::contract_signal_builder::derive_schema_signals_from_contract_parts;
 use crate::contract_signals::ContractSchemaSignals;
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
@@ -13,8 +13,7 @@ use crate::{ContractUse, Guard, ValueKind, YamlPath};
 /// contract-layer artifact instead of a raw vector owned by callers.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractIr {
-    uses: Vec<ContractUse>,
-    type_hints: BTreeMap<String, BTreeSet<String>>,
+    facts: Vec<ContractFact>,
 }
 
 impl ContractIr {
@@ -27,13 +26,12 @@ impl ContractIr {
     #[must_use]
     pub fn from_contract_uses(uses: Vec<ContractUse>) -> Self {
         Self {
-            uses,
-            type_hints: BTreeMap::new(),
+            facts: uses.into_iter().map(ContractFact::Use).collect(),
         }
     }
 
     pub(crate) fn push(&mut self, contract_use: ContractUse) {
-        self.uses.push(contract_use);
+        self.facts.push(ContractFact::Use(contract_use));
     }
 
     /// Add a pathless scalar claim for a value path.
@@ -52,8 +50,7 @@ impl ContractIr {
 
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
-        self.uses.append(&mut other.uses);
-        self.extend_type_hints(std::mem::take(&mut other.type_hints));
+        self.facts.append(&mut other.facts);
     }
 
     /// Append guards to every claim in the graph without rewriting any paths.
@@ -66,10 +63,12 @@ impl ContractIr {
             return;
         }
 
-        for contract_use in &mut self.uses {
-            for guard in guards {
-                if !contract_use.guards.contains(guard) {
-                    contract_use.guards.push(guard.clone());
+        for fact in &mut self.facts {
+            if let ContractFact::Use(contract_use) = fact {
+                for guard in guards {
+                    if !contract_use.guards.contains(guard) {
+                        contract_use.guards.push(guard.clone());
+                    }
                 }
             }
         }
@@ -84,17 +83,9 @@ impl ContractIr {
     where
         F: FnMut(&str) -> String,
     {
-        for contract_use in &mut self.uses {
-            contract_use.map_value_paths(&mut map);
+        for fact in &mut self.facts {
+            fact.map_value_paths(&mut map);
         }
-        let mut mapped = BTreeMap::new();
-        for (path, schema_types) in std::mem::take(&mut self.type_hints) {
-            mapped
-                .entry(map(&path))
-                .or_insert_with(BTreeSet::new)
-                .extend(schema_types);
-        }
-        self.type_hints = mapped;
     }
 
     /// Add declared input-type hints for values paths without projecting them
@@ -105,7 +96,17 @@ impl ContractIr {
         if path.trim().is_empty() || schema_type.trim().is_empty() {
             return;
         }
-        self.type_hints.entry(path).or_default().insert(schema_type);
+        if let Some(existing) = self.facts.iter_mut().find_map(|fact| match fact {
+            ContractFact::TypeHint(type_hint) if type_hint.value_path == path => Some(type_hint),
+            _ => None,
+        }) {
+            existing.schema_types.insert(schema_type);
+            return;
+        }
+
+        if let Some(type_hint) = ContractTypeHint::new(path, [schema_type]) {
+            self.facts.push(ContractFact::TypeHint(type_hint));
+        }
     }
 
     /// Extend the graph with already-grouped path type hints.
@@ -114,22 +115,26 @@ impl ContractIr {
         type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
     ) {
         for (path, schema_types) in type_hints {
-            if path.trim().is_empty() {
+            let Some(type_hint) = ContractTypeHint::new(path.clone(), schema_types) else {
                 continue;
+            };
+            if let Some(existing) = self.facts.iter_mut().find_map(|fact| match fact {
+                ContractFact::TypeHint(existing) if existing.value_path == path => Some(existing),
+                _ => None,
+            }) {
+                existing.schema_types.extend(type_hint.schema_types);
+            } else {
+                self.facts.push(ContractFact::TypeHint(type_hint));
             }
-            self.type_hints.entry(path).or_default().extend(
-                schema_types
-                    .into_iter()
-                    .filter(|schema_type| !schema_type.trim().is_empty()),
-            );
         }
     }
 
     /// Finalize claims and project them to the inspection DTO artifact.
     #[must_use]
-    pub fn project(mut self) -> ContractProjection {
-        self.normalize();
-        ContractProjection::from_normalized_uses(self.uses)
+    pub fn project(self) -> ContractProjection {
+        let (mut uses, _) = self.into_contract_parts();
+        normalize_contract_uses(&mut uses);
+        ContractProjection::from_normalized_uses(uses)
     }
 
     /// Finalize claims and derive the typed schema-generation signals.
@@ -138,12 +143,23 @@ impl ContractIr {
     /// need fixture/inspection rows. [`ContractProjection`] remains the
     /// explicit DTO projection boundary.
     #[must_use]
-    pub fn into_schema_signals(mut self) -> ContractSchemaSignals {
-        self.normalize();
-        derive_schema_signals_from_uses(&self.uses, &self.type_hints)
+    pub fn into_schema_signals(self) -> ContractSchemaSignals {
+        let (mut uses, type_hints) = self.into_contract_parts();
+        normalize_contract_uses(&mut uses);
+        derive_schema_signals_from_contract_parts(&uses, &type_hints)
     }
 
-    fn normalize(&mut self) {
-        normalize_contract_uses(&mut self.uses);
+    fn into_contract_parts(self) -> (Vec<ContractUse>, Vec<ContractTypeHint>) {
+        let mut uses = Vec::new();
+        let mut type_hints = Vec::new();
+
+        for fact in self.facts {
+            match fact {
+                ContractFact::Use(contract_use) => uses.push(contract_use),
+                ContractFact::TypeHint(type_hint) => type_hints.push(type_hint),
+            }
+        }
+
+        (uses, type_hints)
     }
 }

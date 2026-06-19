@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ValueKind;
-use crate::contract::ContractUse;
+use crate::contract::{ContractTypeHint, ContractUse};
 use crate::contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
@@ -16,15 +16,17 @@ use super::value_path_facts::{
     RenderPathFacts, build_contract_value_path_facts, collect_paths_with_descendants,
 };
 
-pub(crate) fn derive_schema_signals_from_uses(
+pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
-    type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
+    type_hints: &[ContractTypeHint],
 ) -> ContractSchemaSignals {
     let mut builder = ContractSchemaSignalBuilder::default();
     for contract_use in uses {
         builder.record(contract_use);
     }
-    builder.record_declared_type_hints(type_hints_by_value_path);
+    for type_hint in type_hints {
+        builder.record_declared_type_hint(type_hint);
+    }
     builder.finish()
 }
 
@@ -132,24 +134,11 @@ impl ContractSchemaSignalBuilder {
         ContractSchemaSignals::new(schema_evidence_by_value_path, conditional_path_overlays)
     }
 
-    fn record_declared_type_hints(
-        &mut self,
-        type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
-    ) {
-        for (path, schema_types) in type_hints_by_value_path {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.type_hints_by_value_path
-                .entry(path.clone())
-                .or_default()
-                .extend(
-                    schema_types
-                        .iter()
-                        .filter(|schema_type| !schema_type.trim().is_empty())
-                        .cloned(),
-                );
-        }
+    fn record_declared_type_hint(&mut self, type_hint: &ContractTypeHint) {
+        self.type_hints_by_value_path
+            .entry(type_hint.value_path.clone())
+            .or_default()
+            .extend(type_hint.schema_types.iter().cloned());
     }
 
     fn record_provider_schema_use(&mut self, contract_use: &ContractUse) {

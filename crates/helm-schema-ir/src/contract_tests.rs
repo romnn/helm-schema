@@ -186,3 +186,16 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
         "declared type hints should still mark ancestor object paths as having referenced descendants"
     );
 }
+
+#[test]
+fn contract_ir_declared_type_hints_do_not_project_as_contract_rows() {
+    let mut contract = ContractIr::default();
+    contract.add_type_hint("image.tag", "string");
+
+    let projection = contract.project();
+
+    assert!(
+        projection.uses().is_empty(),
+        "declared type hints should stay internal to the contract artifact: {projection:#?}"
+    );
+}
