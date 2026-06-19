@@ -6,11 +6,11 @@ use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::ContractPathSchemaEvidence;
 
+use crate::contract_evidence_index::ContractEvidenceIndex;
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema, type_schema};
-use crate::use_signals::{UseSignals, collect_use_signals};
 use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
 
 pub(crate) struct ResolvedPathSchema {
@@ -31,7 +31,7 @@ struct PathSchemaEvidence {
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
-    signals: UseSignals,
+    evidence_index: ContractEvidenceIndex,
     schema_evidence_by_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
     path_caches: ValuePathCaches,
     resolve_policy: ResolvePolicy,
@@ -43,7 +43,8 @@ impl<'a> PathSchemaResolver<'a> {
         values_yaml_doc: &YamlValue,
         provider: &dyn ResourceSchemaOracle,
     ) -> Self {
-        let signals = collect_use_signals(schema_evidence_by_path, provider);
+        let evidence_index =
+            ContractEvidenceIndex::from_schema_evidence(schema_evidence_by_path, provider);
         let pruned_parent_value_paths = schema_evidence_by_path
             .iter()
             .filter_map(|(path, evidence)| {
@@ -53,11 +54,11 @@ impl<'a> PathSchemaResolver<'a> {
             .collect();
         let path_caches = build_value_path_caches(
             values_yaml_doc,
-            &signals.referenced_value_paths,
+            evidence_index.referenced_value_paths(),
             &pruned_parent_value_paths,
         );
         Self {
-            signals,
+            evidence_index,
             schema_evidence_by_path,
             path_caches,
             resolve_policy: ResolvePolicy::default(),
@@ -65,7 +66,7 @@ impl<'a> PathSchemaResolver<'a> {
     }
 
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
-        let referenced_value_paths = std::mem::take(&mut self.signals.referenced_value_paths);
+        let referenced_value_paths = self.evidence_index.take_referenced_value_paths();
         referenced_value_paths
             .into_iter()
             .filter_map(|value_path| self.resolve_path(value_path))
@@ -102,11 +103,7 @@ impl<'a> PathSchemaResolver<'a> {
         let type_hint_schema = contract_evidence.map_or_else(empty_schema, |evidence| {
             merge_type_hint_schemas(&evidence.type_hints)
         });
-        let guard_constraint_schema = self
-            .signals
-            .guard_constraints_by_value_path
-            .remove(value_path)
-            .map_or_else(empty_schema, merge_schema_list);
+        let guard_constraint_schema = self.evidence_index.take_guard_constraint_schema(value_path);
 
         let facts = ValuePathSchemaFacts {
             has_referenced_descendants: contract_facts.has_referenced_descendants,
@@ -144,11 +141,7 @@ impl<'a> PathSchemaResolver<'a> {
     }
 
     fn provider_schema_for_path(&mut self, value_path: &str) -> ProviderSchemaForPath {
-        let provider_schemas = self
-            .signals
-            .provider_schemas_by_value_path
-            .remove(value_path)
-            .unwrap_or_default();
+        let provider_schemas = self.evidence_index.take_provider_schemas(value_path);
         let single_provider_schema = match provider_schemas.as_slice() {
             [schema] => Some(schema.clone()),
             _ => None,
@@ -169,11 +162,7 @@ impl<'a> PathSchemaResolver<'a> {
                     .collect(),
             )
         };
-        let metadata_schema = self
-            .signals
-            .metadata_schemas_by_value_path
-            .remove(value_path)
-            .map_or_else(empty_schema, merge_schema_list);
+        let metadata_schema = self.evidence_index.take_metadata_schema(value_path);
         let provider_schema_candidate = if is_empty_schema(&metadata_schema) {
             single_provider_schema.as_deref().cloned()
         } else {

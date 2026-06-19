@@ -78,6 +78,16 @@ pub struct ContractPathSchemaEvidence {
     pub requiredness: ContractRequirednessEvidence,
 }
 
+impl ContractPathSchemaEvidence {
+    #[must_use]
+    pub fn is_required_inference_candidate(&self) -> bool {
+        self.requiredness.is_positive_header
+            && !self.requiredness.has_default_fallback
+            && !self.requiredness.is_conditionally_optional
+            && self.facts.has_non_self_guarded_render_use()
+    }
+}
+
 /// Contract-derived facts consumed by core values-schema generation.
 ///
 /// This is the typed boundary between static template interpretation and JSON
@@ -134,6 +144,15 @@ pub struct ContractValuePathFacts {
     pub all_render_uses_self_guarded: bool,
     pub has_self_range_guard_render_use: bool,
     pub is_nullable: bool,
+}
+
+impl ContractValuePathFacts {
+    #[must_use]
+    pub fn has_non_self_guarded_render_use(self) -> bool {
+        self.has_render_use
+            && !self.has_self_guarded_render_use
+            && !self.all_render_uses_self_guarded
+    }
 }
 
 /// Path-local evidence consumed by the optional `--infer-required` post-pass.

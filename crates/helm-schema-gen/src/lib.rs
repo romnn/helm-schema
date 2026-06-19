@@ -1,3 +1,4 @@
+mod contract_evidence_index;
 mod merge;
 mod path_resolver;
 mod path_schema;
@@ -7,7 +8,6 @@ pub mod required_inference;
 mod resolve_policy;
 mod schema_model;
 mod schema_tree;
-mod use_signals;
 mod values_yaml;
 
 use std::collections::BTreeMap;

@@ -62,11 +62,8 @@ impl RequiredInferencePolicy {
     fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
         let mut required: BTreeSet<String> = BTreeSet::new();
         for (path, evidence) in input.schema_evidence_by_value_path {
-            if !evidence.requiredness.is_positive_header
-                || evidence.requiredness.has_default_fallback
-                || evidence.requiredness.is_conditionally_optional
+            if !evidence.is_required_inference_candidate()
                 || input.explicit_default_value_paths.contains(path)
-                || !has_non_self_guarded_render_use(evidence)
             {
                 continue;
             }
@@ -74,13 +71,6 @@ impl RequiredInferencePolicy {
         }
         required
     }
-}
-
-fn has_non_self_guarded_render_use(evidence: &ContractPathSchemaEvidence) -> bool {
-    let facts = evidence.facts;
-    facts.has_render_use
-        && !facts.has_self_guarded_render_use
-        && !facts.all_render_uses_self_guarded
 }
 
 /// Locate `path`'s parent object schema and add the leaf segment to its
