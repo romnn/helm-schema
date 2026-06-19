@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::contract_signals::{
-    ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
-    ContractValuePathFacts, MetadataFieldKind,
+    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence, ContractPathSignals,
+    ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
@@ -104,6 +104,12 @@ impl ContractSchemaSignalBuilder {
             &nullable_value_paths,
             &paths_with_referenced_descendants,
         );
+        let schema_evidence_by_value_path = build_schema_evidence_by_value_path(
+            &self.path_signals,
+            &self.provider_schema_uses,
+            &type_hints_by_value_path,
+            &value_path_facts,
+        );
         let conditional_path_overlays = self
             .conditional_overlays_by_path
             .into_iter()
@@ -112,7 +118,11 @@ impl ContractSchemaSignalBuilder {
                     .get(&target_value_path)
                     .copied()
                     .unwrap_or_default();
-                accumulator.finish(target_value_path, global_facts)
+                let type_hints = type_hints_by_value_path
+                    .get(&target_value_path)
+                    .cloned()
+                    .unwrap_or_default();
+                accumulator.finish(target_value_path, global_facts, type_hints)
             })
             .collect();
 
@@ -123,6 +133,7 @@ impl ContractSchemaSignalBuilder {
             nullable_value_paths,
             paths_with_referenced_descendants,
             value_path_facts,
+            schema_evidence_by_value_path,
             conditional_path_overlays,
         }
     }
@@ -314,6 +325,7 @@ impl ConditionalOverlayAccumulator {
         self,
         target_value_path: String,
         global_facts: ContractValuePathFacts,
+        type_hints: BTreeSet<String>,
     ) -> Vec<ConditionalPathOverlay> {
         if self.saw_unsupported {
             return Vec::new();
@@ -322,13 +334,15 @@ impl ConditionalOverlayAccumulator {
         self.branches_by_guards
             .into_iter()
             .map(|(guards, branch)| {
-                let value_path_facts = branch.value_path_facts(global_facts);
+                let evidence = branch.schema_evidence(
+                    target_value_path.clone(),
+                    global_facts,
+                    type_hints.clone(),
+                );
                 ConditionalPathOverlay {
                     target_value_path: target_value_path.clone(),
                     guards,
-                    provider_schema_uses: branch.provider_schema_uses,
-                    metadata_field_kinds: branch.metadata_field_kinds,
-                    value_path_facts,
+                    evidence,
                     preserve_base_schema,
                 }
             })
@@ -375,8 +389,13 @@ impl ConditionalOverlayBranchAccumulator {
         }
     }
 
-    fn value_path_facts(&self, global_facts: ContractValuePathFacts) -> ContractValuePathFacts {
-        ContractValuePathFacts {
+    fn schema_evidence(
+        self,
+        value_path: String,
+        global_facts: ContractValuePathFacts,
+        type_hints: BTreeSet<String>,
+    ) -> ContractPathSchemaEvidence {
+        let facts = ContractValuePathFacts {
             has_referenced_descendants: global_facts.has_referenced_descendants,
             used_as_fragment: self.used_as_fragment,
             is_ranged_source: false,
@@ -386,8 +405,70 @@ impl ConditionalOverlayBranchAccumulator {
             all_render_uses_self_guarded: self.all_render_uses_self_guarded,
             has_self_range_guard_render_use: self.has_self_range_guard_render_use,
             is_nullable: self.has_render_use && self.all_uses_nullable,
+        };
+        ContractPathSchemaEvidence {
+            value_path,
+            is_referenced_value_path: true,
+            facts,
+            guard_constraints: Vec::new(),
+            metadata_field_kinds: self.metadata_field_kinds,
+            type_hints,
+            provider_schema_uses: self.provider_schema_uses,
         }
     }
+}
+
+fn build_schema_evidence_by_value_path(
+    path_signals: &ContractPathSignals,
+    provider_schema_uses: &[ProviderSchemaUse],
+    type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
+    value_path_facts: &BTreeMap<String, ContractValuePathFacts>,
+) -> BTreeMap<String, ContractPathSchemaEvidence> {
+    let mut provider_uses_by_path: BTreeMap<String, Vec<ProviderSchemaUse>> = BTreeMap::new();
+    for provider_use in provider_schema_uses {
+        provider_uses_by_path
+            .entry(provider_use.value_path.clone())
+            .or_default()
+            .push(provider_use.clone());
+    }
+
+    let mut paths = BTreeSet::new();
+    paths.extend(value_path_facts.keys().cloned());
+    paths.extend(type_hints_by_value_path.keys().cloned());
+    paths.extend(provider_uses_by_path.keys().cloned());
+
+    paths
+        .into_iter()
+        .map(|value_path| {
+            let evidence = ContractPathSchemaEvidence {
+                value_path: value_path.clone(),
+                is_referenced_value_path: path_signals.referenced_value_paths.contains(&value_path),
+                facts: value_path_facts
+                    .get(&value_path)
+                    .copied()
+                    .unwrap_or_default(),
+                guard_constraints: path_signals
+                    .guard_constraints_by_value_path
+                    .get(&value_path)
+                    .cloned()
+                    .unwrap_or_default(),
+                metadata_field_kinds: path_signals
+                    .metadata_fields_by_value_path
+                    .get(&value_path)
+                    .cloned()
+                    .unwrap_or_default(),
+                type_hints: type_hints_by_value_path
+                    .get(&value_path)
+                    .cloned()
+                    .unwrap_or_default(),
+                provider_schema_uses: provider_uses_by_path
+                    .get(&value_path)
+                    .cloned()
+                    .unwrap_or_default(),
+            };
+            (value_path, evidence)
+        })
+        .collect()
 }
 
 fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuard>> {

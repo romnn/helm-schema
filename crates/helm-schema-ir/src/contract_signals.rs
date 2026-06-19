@@ -26,9 +26,7 @@ pub enum ConditionalGuard {
 pub struct ConditionalPathOverlay {
     pub target_value_path: String,
     pub guards: Vec<ConditionalGuard>,
-    pub provider_schema_uses: Vec<ProviderSchemaUse>,
-    pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
-    pub value_path_facts: ContractValuePathFacts,
+    pub evidence: ContractPathSchemaEvidence,
     /// Keep the unconditional/base schema for this path alongside the guarded
     /// overlay because the contract also observed an unguarded use.
     pub preserve_base_schema: bool,
@@ -77,6 +75,22 @@ pub struct ContractPathSignals {
     pub metadata_fields_by_value_path: BTreeMap<String, BTreeSet<MetadataFieldKind>>,
 }
 
+/// All schema-lowering evidence for one values path.
+///
+/// The contract layer owns this view so downstream generation can consume one
+/// path-local static-analysis fact instead of reassembling meaning from
+/// several parallel maps.
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ContractPathSchemaEvidence {
+    pub value_path: String,
+    pub is_referenced_value_path: bool,
+    pub facts: ContractValuePathFacts,
+    pub guard_constraints: Vec<GuardConstraint>,
+    pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    pub type_hints: BTreeSet<String>,
+    pub provider_schema_uses: Vec<ProviderSchemaUse>,
+}
+
 /// Contract-derived facts consumed by core values-schema generation.
 ///
 /// This is the typed boundary between static template interpretation and JSON
@@ -91,6 +105,7 @@ pub struct ContractSchemaSignals {
     pub nullable_value_paths: BTreeSet<String>,
     pub paths_with_referenced_descendants: BTreeSet<String>,
     pub value_path_facts: BTreeMap<String, ContractValuePathFacts>,
+    pub schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
     pub conditional_path_overlays: Vec<ConditionalPathOverlay>,
 }
 

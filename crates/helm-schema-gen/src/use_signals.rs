@@ -4,7 +4,7 @@ use std::sync::Arc;
 use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{ContractPathSignals, MetadataFieldKind};
+use helm_schema_ir::{ContractPathSchemaEvidence, MetadataFieldKind};
 
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::ResolvePolicy;
@@ -25,43 +25,54 @@ struct ProviderSchemaLookupKey {
     is_self_range_collection: bool,
 }
 
-#[tracing::instrument(skip_all, fields(provider_uses = provider_schema_uses.len()))]
+#[tracing::instrument(skip_all, fields(provider_uses))]
 pub(crate) fn collect_use_signals(
-    path_signals: ContractPathSignals,
-    provider_schema_uses: &[ProviderSchemaUse],
+    schema_evidence_by_path: &BTreeMap<String, ContractPathSchemaEvidence>,
     provider: &dyn ResourceSchemaOracle,
 ) -> UseSignals {
     let resolve_policy = ResolvePolicy::default();
-    let ContractPathSignals {
-        referenced_value_paths,
-        guard_constraints_by_value_path,
-        metadata_fields_by_value_path,
-        ..
-    } = path_signals;
+    let referenced_value_paths = schema_evidence_by_path
+        .iter()
+        .filter(|(_, evidence)| evidence.is_referenced_value_path)
+        .map(|(path, _)| path.clone())
+        .collect();
     let mut provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<ProviderSchemaCandidate>>> =
         BTreeMap::new();
-    let metadata_schemas_by_value_path = metadata_fields_by_value_path
-        .into_iter()
-        .map(|(path, fields)| {
-            (
-                path,
-                fields
-                    .into_iter()
-                    .map(metadata_field_schema)
-                    .collect::<Vec<_>>(),
-            )
+    let metadata_schemas_by_value_path = schema_evidence_by_path
+        .iter()
+        .filter_map(|(path, evidence)| {
+            (!evidence.metadata_field_kinds.is_empty()).then(|| {
+                (
+                    path.clone(),
+                    evidence
+                        .metadata_field_kinds
+                        .iter()
+                        .copied()
+                        .map(metadata_field_schema)
+                        .collect::<Vec<_>>(),
+                )
+            })
         })
         .collect();
-    let guard_constraints_by_value_path = guard_constraints_by_value_path
-        .into_iter()
-        .filter_map(|(path, constraints)| {
-            let schemas: Vec<Value> = constraints
+    let guard_constraints_by_value_path = schema_evidence_by_path
+        .iter()
+        .filter_map(|(path, evidence)| {
+            let schemas: Vec<Value> = evidence
+                .guard_constraints
                 .iter()
                 .filter_map(|constraint| resolve_policy.guard_constraint_schema(constraint))
                 .collect();
-            (!schemas.is_empty()).then_some((path, schemas))
+            (!schemas.is_empty()).then_some((path.clone(), schemas))
         })
         .collect();
+    let provider_schema_uses = schema_evidence_by_path
+        .values()
+        .flat_map(|evidence| evidence.provider_schema_uses.iter());
+    let provider_use_count = schema_evidence_by_path
+        .values()
+        .map(|evidence| evidence.provider_schema_uses.len())
+        .sum::<usize>();
+    tracing::Span::current().record("provider_uses", provider_use_count);
     let mut provider_schema_cache: HashMap<
         ProviderSchemaLookupKey,
         Option<Arc<ProviderSchemaCandidate>>,
@@ -77,7 +88,7 @@ pub(crate) fn collect_use_signals(
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
             std::collections::hash_map::Entry::Vacant(entry) => {
-                let schema = lookup_provider_schema(provider, &provider_use, &resolve_policy);
+                let schema = lookup_provider_schema(provider, provider_use, &resolve_policy);
                 entry.insert(schema.clone());
                 schema
             }

@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::ContractValuePathFacts;
+use helm_schema_ir::ContractPathSchemaEvidence;
 
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
@@ -31,23 +31,21 @@ struct PathSchemaEvidence {
 
 pub(crate) struct PathSchemaResolver<'a> {
     signals: UseSignals,
-    value_path_facts: &'a BTreeMap<String, ContractValuePathFacts>,
+    schema_evidence_by_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
     path_caches: ValuePathCaches,
-    type_hints: &'a BTreeMap<String, BTreeSet<String>>,
     resolve_policy: ResolvePolicy,
 }
 
 impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
         signals: UseSignals,
-        value_path_facts: &'a BTreeMap<String, ContractValuePathFacts>,
+        schema_evidence_by_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
         values_yaml_doc: &YamlValue,
-        type_hints: &'a BTreeMap<String, BTreeSet<String>>,
     ) -> Self {
-        let pruned_parent_value_paths = value_path_facts
+        let pruned_parent_value_paths = schema_evidence_by_path
             .iter()
-            .filter_map(|(path, facts)| {
-                (facts.has_referenced_descendants && !facts.used_as_fragment)
+            .filter_map(|(path, evidence)| {
+                (evidence.facts.has_referenced_descendants && !evidence.facts.used_as_fragment)
                     .then_some(path.clone())
             })
             .collect();
@@ -58,9 +56,8 @@ impl<'a> PathSchemaResolver<'a> {
         );
         Self {
             signals,
-            value_path_facts,
+            schema_evidence_by_path,
             path_caches,
-            type_hints,
             resolve_policy: ResolvePolicy::default(),
         }
     }
@@ -94,17 +91,15 @@ impl<'a> PathSchemaResolver<'a> {
     }
 
     fn path_schema_evidence(&mut self, value_path: &str) -> PathSchemaEvidence {
-        let contract_facts = self
-            .value_path_facts
-            .get(value_path)
-            .copied()
+        let contract_evidence = self.schema_evidence_by_path.get(value_path);
+        let contract_facts = contract_evidence
+            .map(|evidence| evidence.facts)
             .unwrap_or_default();
         let provider_schema = self.provider_schema_for_path(value_path);
         let values_yaml_info = self.path_caches.values_yaml.get(value_path);
-        let type_hint_schema = self
-            .type_hints
-            .get(value_path)
-            .map_or_else(empty_schema, merge_type_hint_schemas);
+        let type_hint_schema = contract_evidence.map_or_else(empty_schema, |evidence| {
+            merge_type_hint_schemas(&evidence.type_hints)
+        });
         let guard_constraint_schema = self
             .signals
             .guard_constraints_by_value_path

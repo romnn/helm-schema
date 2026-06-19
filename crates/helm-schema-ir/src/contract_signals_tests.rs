@@ -312,6 +312,40 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
                 && fact.is_nullable),
         "contract value-path facts should bundle nullable render-use evidence",
     );
+    let pod_labels_evidence = signals
+        .schema_evidence_by_value_path
+        .get("podLabels")
+        .expect("podLabels evidence");
+    assert_eq!(pod_labels_evidence.value_path, "podLabels");
+    assert_eq!(
+        pod_labels_evidence.metadata_field_kinds,
+        BTreeSet::from([MetadataFieldKind::StringMap]),
+        "path evidence should carry metadata lowering facts",
+    );
+    assert_eq!(
+        pod_labels_evidence.provider_schema_uses.len(),
+        1,
+        "path evidence should carry provider-schema requests for that path only",
+    );
+    let service_account_evidence = signals
+        .schema_evidence_by_value_path
+        .get("serviceAccount.name")
+        .expect("serviceAccount.name evidence");
+    assert!(service_account_evidence.is_referenced_value_path);
+    assert!(
+        service_account_evidence.facts.has_render_use
+            && service_account_evidence.facts.all_render_uses_self_guarded
+            && service_account_evidence.facts.is_nullable,
+        "path evidence should carry the same render/nullability facts as the legacy fact map",
+    );
+    let service_account_parent_evidence = signals
+        .schema_evidence_by_value_path
+        .get("serviceAccount")
+        .expect("serviceAccount parent evidence");
+    assert!(
+        !service_account_parent_evidence.is_referenced_value_path,
+        "ancestor-only fact rows must not become schema subjects",
+    );
     assert_eq!(signals.provider_schema_uses.len(), 2);
 }
 
@@ -347,15 +381,15 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
         }],
     );
     assert!(
-        overlay.provider_schema_uses.is_empty(),
+        overlay.evidence.provider_schema_uses.is_empty(),
         "non-resource scalar overlays should not invent provider lookups"
     );
     assert!(
-        overlay.metadata_field_kinds.is_empty(),
+        overlay.evidence.metadata_field_kinds.is_empty(),
         "non-metadata target should not carry metadata-field lowering hints"
     );
     assert_eq!(
-        overlay.value_path_facts.has_render_use, true,
+        overlay.evidence.facts.has_render_use, true,
         "branch-local facts should preserve the target's render-use status"
     );
 }
@@ -389,7 +423,7 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
         "self-default guards should not suppress an otherwise lowerable boolean branch",
     );
     assert!(
-        overlay.value_path_facts.is_nullable,
+        overlay.evidence.facts.is_nullable,
         "branch-local nullability should still reflect the self-defaulted render use",
     );
 }
@@ -558,7 +592,8 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
                     path: "mode".to_string(),
                     value: GuardValue::string("name"),
                 }]
-                && overlay.metadata_field_kinds == BTreeSet::from([MetadataFieldKind::Name])
+                && overlay.evidence.metadata_field_kinds
+                    == BTreeSet::from([MetadataFieldKind::Name])
         }),
         "expected a metadata.name-targeted branch overlay"
     );
@@ -569,8 +604,9 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
                     path: "mode".to_string(),
                     value: GuardValue::string("labels"),
                 }]
-                && overlay.metadata_field_kinds == BTreeSet::from([MetadataFieldKind::StringMap])
-                && overlay.value_path_facts.used_as_fragment
+                && overlay.evidence.metadata_field_kinds
+                    == BTreeSet::from([MetadataFieldKind::StringMap])
+                && overlay.evidence.facts.used_as_fragment
         }),
         "expected a metadata.labels fragment branch overlay"
     );

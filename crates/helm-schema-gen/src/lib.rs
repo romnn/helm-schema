@@ -11,16 +11,12 @@ mod use_signals;
 mod values_yaml;
 
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 
 use helm_schema_core::ResourceSchemaOracle;
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{
-    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, ContractValuePathFacts,
-    GuardValue,
-};
+use helm_schema_ir::{ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue};
 
 use merge::union_schema_list;
 use path_resolver::PathSchemaResolver;
@@ -86,26 +82,9 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .values_descriptions
         .unwrap_or(&empty_values_descriptions);
 
-    let path_signals = input.contract_schema_signals.path_signals.clone();
-    let mut value_path_facts = input.contract_schema_signals.value_path_facts.clone();
-    let mut signals = collect_use_signals(
-        path_signals,
-        &input.contract_schema_signals.provider_schema_uses,
+    let signals = collect_use_signals(
+        &input.contract_schema_signals.schema_evidence_by_value_path,
         input.provider,
-    );
-    signals.referenced_value_paths.extend(
-        input
-            .contract_schema_signals
-            .type_hints_by_value_path
-            .keys()
-            .cloned(),
-    );
-    mark_type_hint_descendant_facts(
-        &mut value_path_facts,
-        input
-            .contract_schema_signals
-            .type_hints_by_value_path
-            .keys(),
     );
 
     let values_yaml_doc = input
@@ -115,9 +94,8 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 
     let root_schema = build_root_schema(
         signals,
-        &value_path_facts,
+        &input.contract_schema_signals.schema_evidence_by_value_path,
         &values_yaml_doc,
-        &input.contract_schema_signals.type_hints_by_value_path,
         values_descriptions,
         &input.contract_schema_signals.conditional_path_overlays,
         input.provider,
@@ -141,38 +119,17 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     Value::Object(out)
 }
 
-fn mark_type_hint_descendant_facts<'a>(
-    value_path_facts: &mut BTreeMap<String, ContractValuePathFacts>,
-    paths: impl IntoIterator<Item = &'a String>,
-) {
-    for path in paths {
-        let mut segments: Vec<&str> = path
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .collect();
-        while segments.len() > 1 {
-            segments.pop();
-            value_path_facts
-                .entry(segments.join("."))
-                .or_default()
-                .has_referenced_descendants = true;
-        }
-    }
-}
-
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
     signals: UseSignals,
-    value_path_facts: &BTreeMap<String, ContractValuePathFacts>,
+    schema_evidence_by_path: &BTreeMap<String, helm_schema_ir::ContractPathSchemaEvidence>,
     values_yaml_doc: &YamlValue,
-    type_hints: &BTreeMap<String, BTreeSet<String>>,
     values_descriptions: &BTreeMap<String, String>,
     conditional_path_overlays: &[ConditionalPathOverlay],
     provider: &dyn ResourceSchemaOracle,
 ) -> Value {
     let mut root_schema = object_schema(Map::new());
-    let path_resolver =
-        PathSchemaResolver::new(signals, value_path_facts, values_yaml_doc, type_hints);
+    let path_resolver = PathSchemaResolver::new(signals, schema_evidence_by_path, values_yaml_doc);
     let mut resolved_paths = path_resolver.resolve_all();
     let provider_definitions =
         ProviderSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
@@ -180,7 +137,6 @@ fn build_root_schema(
     let conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
         conditional_path_overlays,
-        type_hints,
         values_yaml_doc,
         provider,
     );
@@ -265,7 +221,6 @@ struct ConditionalResolvedSchema {
 fn collect_conditional_schemas(
     resolved_paths: &[path_resolver::ResolvedPathSchema],
     overlays: &[ConditionalPathOverlay],
-    type_hints: &BTreeMap<String, BTreeSet<String>>,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
@@ -285,7 +240,6 @@ fn collect_conditional_schemas(
                 conditional_ancestor_segments(&target_segments, &overlay.guards);
             let target_schema = conditional_target_schema(
                 overlay,
-                type_hints,
                 values_yaml_doc,
                 provider,
                 resolved_by_path
@@ -301,7 +255,7 @@ fn collect_conditional_schemas(
                     guards: overlay.guards.clone(),
                     target_schema,
                     preserve_base_schema: overlay.preserve_base_schema,
-                    target_is_fragment: overlay.value_path_facts.used_as_fragment,
+                    target_is_fragment: overlay.evidence.facts.used_as_fragment,
                 },
             )
         })
@@ -311,12 +265,11 @@ fn collect_conditional_schemas(
 
 fn conditional_target_schema(
     overlay: &ConditionalPathOverlay,
-    type_hints: &BTreeMap<String, BTreeSet<String>>,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
     resolved_fallback: Option<Value>,
 ) -> Value {
-    let branch_schema = resolve_overlay_target_schema(overlay, type_hints, provider)
+    let branch_schema = resolve_overlay_target_schema(overlay, provider)
         .or(resolved_fallback.clone())
         .unwrap_or_else(crate::schema_model::empty_schema);
 
@@ -350,23 +303,13 @@ fn conditional_target_schema(
 
 fn resolve_overlay_target_schema(
     overlay: &ConditionalPathOverlay,
-    type_hints: &BTreeMap<String, BTreeSet<String>>,
     provider: &dyn ResourceSchemaOracle,
 ) -> Option<Value> {
-    let path_signals = overlay_path_signals(overlay);
-    let use_signals = collect_use_signals(path_signals, &overlay.provider_schema_uses, provider);
-    let value_path_facts =
-        BTreeMap::from([(overlay.target_value_path.clone(), overlay.value_path_facts)]);
-    let overlay_type_hints = type_hints
-        .get(&overlay.target_value_path)
-        .map(|hints| BTreeMap::from([(overlay.target_value_path.clone(), hints.clone())]))
-        .unwrap_or_default();
-    let path_resolver = PathSchemaResolver::new(
-        use_signals,
-        &value_path_facts,
-        &YamlValue::Null,
-        &overlay_type_hints,
-    );
+    let schema_evidence_by_path =
+        BTreeMap::from([(overlay.target_value_path.clone(), overlay.evidence.clone())]);
+    let use_signals = collect_use_signals(&schema_evidence_by_path, provider);
+    let path_resolver =
+        PathSchemaResolver::new(use_signals, &schema_evidence_by_path, &YamlValue::Null);
     path_resolver
         .resolve_all()
         .into_iter()
@@ -381,20 +324,6 @@ fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
             && !object.contains_key("properties")
             && !object.contains_key("required")
     })
-}
-
-fn overlay_path_signals(overlay: &ConditionalPathOverlay) -> helm_schema_ir::ContractPathSignals {
-    let metadata_fields_by_value_path = (!overlay.metadata_field_kinds.is_empty()).then(|| {
-        BTreeMap::from([(
-            overlay.target_value_path.clone(),
-            overlay.metadata_field_kinds.clone(),
-        )])
-    });
-    helm_schema_ir::ContractPathSignals {
-        referenced_value_paths: std::iter::once(overlay.target_value_path.clone()).collect(),
-        metadata_fields_by_value_path: metadata_fields_by_value_path.unwrap_or_default(),
-        ..Default::default()
-    }
 }
 
 fn conditional_ancestor_segments(

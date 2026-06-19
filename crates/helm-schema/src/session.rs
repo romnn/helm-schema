@@ -219,6 +219,11 @@ impl AnalysisSession {
         let normalized_path = normalize_values_path(path);
         let projection = self.contract_projection()?;
         let prepared = self.prepared()?;
+        let evidence = prepared
+            .analysis
+            .schema_signals
+            .schema_evidence_by_value_path
+            .get(&normalized_path);
 
         let exact_uses = projection
             .uses()
@@ -238,34 +243,16 @@ impl AnalysisSession {
             .cloned()
             .map(ContractDocumentUse::from)
             .collect();
-        let value_path_facts = prepared
-            .analysis
-            .schema_signals
-            .value_path_facts
-            .get(&normalized_path)
-            .copied();
-        let guard_constraints = prepared
-            .analysis
-            .schema_signals
-            .path_signals
-            .guard_constraints_by_value_path
-            .get(&normalized_path)
-            .cloned()
+        let value_path_facts = evidence.map(|evidence| evidence.facts);
+        let guard_constraints = evidence
+            .map(|evidence| evidence.guard_constraints.clone())
             .unwrap_or_default();
-        let metadata_fields = prepared
-            .analysis
-            .schema_signals
-            .path_signals
-            .metadata_fields_by_value_path
-            .get(&normalized_path)
-            .map(|fields| fields.iter().copied().collect())
+        let metadata_fields = evidence
+            .map(|evidence| evidence.metadata_field_kinds.iter().copied().collect())
             .unwrap_or_default();
-        let type_hints: Vec<serde_json::Value> = prepared
-            .analysis
-            .schema_signals
-            .type_hints_by_value_path
-            .get(&normalized_path)
-            .map(|schema_types| {
+        let type_hints: Vec<serde_json::Value> = evidence
+            .map(|evidence| {
+                let schema_types = &evidence.type_hints;
                 schema_types
                     .iter()
                     .map(|schema_type| serde_json::json!({ "type": schema_type }))
