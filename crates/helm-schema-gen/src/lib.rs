@@ -340,7 +340,7 @@ fn guards_supported_for_conditional_lowering(
 ) -> bool {
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
-            ConditionalGuard::Truthy { path } => resolved_by_path
+            ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => resolved_by_path
                 .get(path.as_str())
                 .is_some_and(|schema| schema_is_boolean_like(schema)),
             ConditionalGuard::Eq { .. }
@@ -443,12 +443,14 @@ fn build_single_condition_fragment(
     values_yaml_doc: &YamlValue,
 ) -> Option<Value> {
     match guard {
-        ConditionalGuard::Truthy { path } => build_default_aware_leaf_condition_fragment(
-            path,
-            ancestor_segments,
-            helm_truthy_condition_schema(),
-            yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy),
-        ),
+        ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                helm_truthy_condition_schema(),
+                yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy),
+            )
+        }
         ConditionalGuard::Eq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
@@ -713,7 +715,7 @@ fn evaluate_guard_set_on_values(
 
 fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
     match guard {
-        ConditionalGuard::Truthy { path } => {
+        ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy))
         }
         ConditionalGuard::Eq { path, value } => Some(guard_value_matches_optional_yaml(
@@ -818,6 +820,7 @@ fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
 fn collect_guard_paths(guard: &ConditionalGuard, paths: &mut Vec<Vec<String>>) {
     match guard {
         ConditionalGuard::Truthy { path }
+        | ConditionalGuard::With { path }
         | ConditionalGuard::Eq { path, .. }
         | ConditionalGuard::NotEq { path, .. }
         | ConditionalGuard::Absent { path }

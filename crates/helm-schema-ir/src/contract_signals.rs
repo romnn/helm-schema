@@ -8,6 +8,7 @@ use crate::provider_schema_use::ProviderSchemaUse;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConditionalGuard {
     Truthy { path: String },
+    With { path: String },
     Eq { path: String, value: GuardValue },
     NotEq { path: String, value: GuardValue },
     Absent { path: String },

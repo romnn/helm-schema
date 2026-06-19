@@ -237,14 +237,28 @@ impl ContractSchemaSignalBuilder {
                         .ranged_value_paths
                         .insert(path.to_string());
                 }
+            }
 
-                if let Some(predicate) = path_local_guard_predicate(guard, path) {
-                    self.path_signals
-                        .guard_predicates_by_value_path
-                        .entry(path.to_string())
-                        .or_default()
-                        .push(predicate);
-                }
+            if let Some(predicate) = guard_predicate(guard) {
+                self.record_guard_predicate(predicate);
+            }
+        }
+    }
+
+    fn record_guard_predicate(&mut self, predicate: ConditionalGuard) {
+        let mut paths = BTreeSet::new();
+        collect_conditional_guard_paths(&predicate, &mut paths);
+        for path in paths {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let predicates = self
+                .path_signals
+                .guard_predicates_by_value_path
+                .entry(path)
+                .or_default();
+            if !predicates.contains(&predicate) {
+                predicates.push(predicate.clone());
             }
         }
     }
@@ -550,29 +564,78 @@ fn use_is_positive_header(contract_use: &ContractUse) -> bool {
         })
 }
 
-fn path_local_guard_predicate(guard: &Guard, value_path: &str) -> Option<ConditionalGuard> {
+fn guard_predicate(guard: &Guard) -> Option<ConditionalGuard> {
     match guard {
-        Guard::Eq { path, value } if path == value_path => Some(ConditionalGuard::Eq {
+        Guard::Truthy { path } => Some(ConditionalGuard::Truthy { path: path.clone() }),
+        Guard::With { path } => Some(ConditionalGuard::With { path: path.clone() }),
+        Guard::Not { path } => Some(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+            path: path.clone(),
+        }))),
+        Guard::Eq { path, value } => Some(ConditionalGuard::Eq {
             path: path.clone(),
             value: value.clone(),
         }),
-        Guard::TypeIs { path, schema_type } if path == value_path => {
-            Some(ConditionalGuard::TypeIs {
-                path: path.clone(),
-                schema_type: schema_type.clone(),
-            })
+        Guard::NotEq { path, value } => Some(ConditionalGuard::NotEq {
+            path: path.clone(),
+            value: value.clone(),
+        }),
+        Guard::Absent { path } => Some(ConditionalGuard::Absent { path: path.clone() }),
+        Guard::Or { paths } => {
+            let mut alternatives = paths
+                .iter()
+                .map(|path| ConditionalGuard::Truthy { path: path.clone() })
+                .collect::<Vec<_>>();
+            alternatives.sort();
+            alternatives.dedup();
+            (!alternatives.is_empty()).then_some(ConditionalGuard::AnyOf(alternatives))
         }
-        Guard::Truthy { .. }
-        | Guard::Not { .. }
-        | Guard::Eq { .. }
-        | Guard::NotEq { .. }
-        | Guard::Absent { .. }
-        | Guard::Or { .. }
-        | Guard::AnyOf { .. }
-        | Guard::Range { .. }
-        | Guard::With { .. }
-        | Guard::Default { .. }
-        | Guard::TypeIs { .. } => None,
+        Guard::AnyOf { alternatives } => {
+            let mut alternatives = alternatives
+                .iter()
+                .map(|alternative| guard_predicate_alternative(alternative))
+                .collect::<Option<Vec<_>>>()?;
+            alternatives.sort();
+            alternatives.dedup();
+            (!alternatives.is_empty()).then_some(ConditionalGuard::AnyOf(alternatives))
+        }
+        Guard::TypeIs { path, schema_type } => Some(ConditionalGuard::TypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
+        }),
+        Guard::Range { .. } | Guard::Default { .. } => None,
+    }
+}
+
+fn guard_predicate_alternative(alternative: &[Guard]) -> Option<ConditionalGuard> {
+    let mut guards = alternative
+        .iter()
+        .map(guard_predicate)
+        .collect::<Option<Vec<_>>>()?;
+    guards.sort();
+    guards.dedup();
+    match guards.as_slice() {
+        [] => None,
+        [guard] => Some(guard.clone()),
+        _ => Some(ConditionalGuard::AllOf(guards)),
+    }
+}
+
+fn collect_conditional_guard_paths(guard: &ConditionalGuard, paths: &mut BTreeSet<String>) {
+    match guard {
+        ConditionalGuard::Truthy { path }
+        | ConditionalGuard::With { path }
+        | ConditionalGuard::Eq { path, .. }
+        | ConditionalGuard::NotEq { path, .. }
+        | ConditionalGuard::Absent { path }
+        | ConditionalGuard::TypeIs { path, .. } => {
+            paths.insert(path.clone());
+        }
+        ConditionalGuard::Not(inner) => collect_conditional_guard_paths(inner, paths),
+        ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+            for guard in guards {
+                collect_conditional_guard_paths(guard, paths);
+            }
+        }
     }
 }
 

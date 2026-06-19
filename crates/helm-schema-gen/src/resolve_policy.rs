@@ -166,6 +166,7 @@ impl ResolvePolicy {
                 }
             }
             ConditionalGuard::Truthy { .. }
+            | ConditionalGuard::With { .. }
             | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }

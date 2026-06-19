@@ -221,6 +221,180 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_predicates() {
 }
 
 #[test]
+fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes() {
+    let signals = signals_for(vec![
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::With {
+                path: "feature.config".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Not {
+                path: "feature.disabled".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::NotEq {
+                path: "feature.mode".to_string(),
+                value: GuardValue::string("off"),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Absent {
+                path: "feature.name".to_string(),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Or {
+                paths: vec![
+                    "feature.primary".to_string(),
+                    "feature.secondary".to_string(),
+                ],
+            }],
+            None,
+        ),
+        ContractUse::new(
+            "feature.host".to_string(),
+            YamlPath(vec!["spec".to_string(), "host".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::AnyOf {
+                alternatives: vec![
+                    vec![
+                        Guard::Truthy {
+                            path: "feature.managed".to_string(),
+                        },
+                        Guard::Eq {
+                            path: "feature.tier".to_string(),
+                            value: GuardValue::string("prod"),
+                        },
+                    ],
+                    vec![Guard::Not {
+                        path: "feature.skip".to_string(),
+                    }],
+                ],
+            }],
+            None,
+        ),
+    ]);
+    let evidence = signals.schema_evidence_by_value_path();
+
+    assert_eq!(
+        evidence
+            .get("feature.enabled")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::Truthy {
+            path: "feature.enabled".to_string(),
+        }]),
+    );
+    assert_eq!(
+        evidence
+            .get("feature.config")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::With {
+            path: "feature.config".to_string(),
+        }]),
+    );
+    assert_eq!(
+        evidence
+            .get("feature.disabled")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::Not(Box::new(
+            ConditionalGuard::Truthy {
+                path: "feature.disabled".to_string(),
+            },
+        ))]),
+    );
+    assert_eq!(
+        evidence
+            .get("feature.mode")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::NotEq {
+            path: "feature.mode".to_string(),
+            value: GuardValue::string("off"),
+        }]),
+    );
+    assert_eq!(
+        evidence
+            .get("feature.name")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::Absent {
+            path: "feature.name".to_string(),
+        }]),
+    );
+    let disjunction = ConditionalGuard::AnyOf(vec![
+        ConditionalGuard::Truthy {
+            path: "feature.primary".to_string(),
+        },
+        ConditionalGuard::Truthy {
+            path: "feature.secondary".to_string(),
+        },
+    ]);
+    assert_eq!(
+        evidence
+            .get("feature.primary")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![disjunction.clone()]),
+    );
+    assert_eq!(
+        evidence
+            .get("feature.secondary")
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![disjunction]),
+    );
+    let nested_disjunction = ConditionalGuard::AnyOf(vec![
+        ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+            path: "feature.skip".to_string(),
+        })),
+        ConditionalGuard::AllOf(vec![
+            ConditionalGuard::Truthy {
+                path: "feature.managed".to_string(),
+            },
+            ConditionalGuard::Eq {
+                path: "feature.tier".to_string(),
+                value: GuardValue::string("prod"),
+            },
+        ]),
+    ]);
+    for path in ["feature.managed", "feature.tier", "feature.skip"] {
+        assert_eq!(
+            evidence
+                .get(path)
+                .map(|evidence| &evidence.guard_predicates),
+            Some(&vec![nested_disjunction.clone()]),
+            "expected the full nested predicate to be preserved for {path}",
+        );
+    }
+}
+
+#[test]
 fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
     let resource = ResourceRef {
         api_version: "apps/v1".to_string(),
