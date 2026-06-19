@@ -19,12 +19,13 @@ use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, ContractValuePathFacts,
+    GuardValue,
 };
 
 use merge::union_schema_list;
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
-use schema_model::{schema_allows_type, type_schema};
+use schema_model::{guard_value_to_json, schema_allows_type, type_schema};
 use schema_tree::{
     apply_values_descriptions, ensure_schema_node_at_path_segments, insert_schema_at_path_segments,
     object_schema, open_array_schema, open_object_schema,
@@ -523,38 +524,21 @@ fn build_single_condition_fragment(
             helm_truthy_condition_schema(),
             yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy),
         ),
-        ConditionalGuard::Eq { path, value } => build_leaf_condition_fragment(
+        ConditionalGuard::Eq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            Value::Object(
-                [(
-                    "enum".to_string(),
-                    Value::Array(vec![Value::String(value.clone())]),
-                )]
-                .into_iter()
-                .collect(),
-            ),
+            guard_value_enum_schema(value)?,
+            guard_value_matches_optional_yaml(value, yaml_value_at_path(values_yaml_doc, path)),
         ),
         ConditionalGuard::NotEq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
             Value::Object(
-                [(
-                    "not".to_string(),
-                    Value::Object(
-                        [(
-                            "enum".to_string(),
-                            Value::Array(vec![Value::String(value.clone())]),
-                        )]
-                        .into_iter()
-                        .collect(),
-                    ),
-                )]
-                .into_iter()
-                .collect(),
+                [("not".to_string(), guard_value_enum_schema(value)?)]
+                    .into_iter()
+                    .collect(),
             ),
-            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
-                != Some(value.as_str()),
+            !guard_value_matches_optional_yaml(value, yaml_value_at_path(values_yaml_doc, path)),
         ),
         ConditionalGuard::Absent { path } => {
             let segments = split_value_path(path);
@@ -609,6 +593,16 @@ fn build_single_condition_fragment(
             }
         }
     }
+}
+
+fn guard_value_enum_schema(value: &GuardValue) -> Option<Value> {
+    guard_value_to_json(value).map(|value| {
+        Value::Object(
+            [("enum".to_string(), Value::Array(vec![value]))]
+                .into_iter()
+                .collect(),
+        )
+    })
 }
 
 fn build_leaf_condition_fragment(
@@ -778,14 +772,14 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Truthy { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy))
         }
-        ConditionalGuard::Eq { path, value } => Some(
-            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
-                == Some(value.as_str()),
-        ),
-        ConditionalGuard::NotEq { path, value } => Some(
-            yaml_value_at_path(values_yaml_doc, path).and_then(YamlValue::as_str)
-                != Some(value.as_str()),
-        ),
+        ConditionalGuard::Eq { path, value } => Some(guard_value_matches_optional_yaml(
+            value,
+            yaml_value_at_path(values_yaml_doc, path),
+        )),
+        ConditionalGuard::NotEq { path, value } => Some(!guard_value_matches_optional_yaml(
+            value,
+            yaml_value_at_path(values_yaml_doc, path),
+        )),
         ConditionalGuard::Absent { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_none())
         }
@@ -803,6 +797,27 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
             .collect::<Option<Vec<_>>>()
             .map(|results| results.into_iter().any(|result| result)),
+    }
+}
+
+fn guard_value_matches_optional_yaml(value: &GuardValue, yaml: Option<&YamlValue>) -> bool {
+    let Some(yaml) = yaml else {
+        return matches!(value, GuardValue::Null);
+    };
+    match value {
+        GuardValue::String(expected) => yaml.as_str() == Some(expected.as_str()),
+        GuardValue::Bool(expected) => yaml.as_bool() == Some(*expected),
+        GuardValue::Int(expected) => {
+            yaml.as_i64() == Some(*expected)
+                || (*expected >= 0 && yaml.as_u64() == Some(*expected as u64))
+        }
+        GuardValue::Float(expected) => {
+            let Some(expected) = expected.parse::<f64>().ok() else {
+                return false;
+            };
+            yaml.as_f64() == Some(expected)
+        }
+        GuardValue::Null => matches!(yaml, YamlValue::Null),
     }
 }
 

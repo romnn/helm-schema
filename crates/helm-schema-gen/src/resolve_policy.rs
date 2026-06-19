@@ -1,6 +1,6 @@
 use serde_json::{Map, Value};
 
-use helm_schema_ir::{GuardConstraint, ProviderSchemaUse, ValueKind};
+use helm_schema_ir::{GuardConstraint, GuardValue, ProviderSchemaUse, ValueKind};
 
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
@@ -9,9 +9,10 @@ use crate::path_schema::{
     open_fragment_values_schema,
 };
 use crate::schema_model::{
-    add_null_schema, empty_schema, empty_string_schema, is_empty_schema, is_fixed_object_schema,
-    is_object_or_array_schema, is_open_string_map_schema, is_scalar_like_schema, is_scalar_schema,
-    schema_allows_scalar_type, schema_permits_empty_string, schema_type, type_schema,
+    add_null_schema, empty_schema, empty_string_schema, guard_value_to_json, is_empty_schema,
+    is_fixed_object_schema, is_object_or_array_schema, is_open_string_map_schema,
+    is_scalar_like_schema, is_scalar_schema, schema_allows_scalar_type,
+    schema_permits_empty_string, schema_type, type_schema,
 };
 use crate::schema_tree::unknown_object_schema;
 
@@ -131,24 +132,28 @@ impl ResolvePolicy {
 
     pub(crate) fn guard_constraint_schema(&self, constraint: &GuardConstraint) -> Option<Value> {
         match constraint {
-            GuardConstraint::Eq { value } => Some(Value::Object(
-                [(
-                    "anyOf".to_string(),
-                    Value::Array(vec![
-                        Value::Object(
-                            [(
-                                "enum".to_string(),
-                                Value::Array(vec![Value::String(value.clone())]),
-                            )]
-                            .into_iter()
-                            .collect(),
-                        ),
-                        type_schema("string"),
-                    ]),
-                )]
-                .into_iter()
-                .collect(),
-            )),
+            GuardConstraint::Eq { value } => {
+                if matches!(value, GuardValue::Null) {
+                    return Some(empty_schema());
+                }
+                let value = guard_value_to_json(value)?;
+                let value_type = schema_type_for_guard_value(&value)?;
+                Some(Value::Object(
+                    [(
+                        "anyOf".to_string(),
+                        Value::Array(vec![
+                            Value::Object(
+                                [("enum".to_string(), Value::Array(vec![value]))]
+                                    .into_iter()
+                                    .collect(),
+                            ),
+                            type_schema(value_type),
+                        ]),
+                    )]
+                    .into_iter()
+                    .collect(),
+                ))
+            }
             GuardConstraint::TypeIs { schema_type } => match schema_type.as_str() {
                 "array" | "boolean" | "integer" | "number" | "object" | "string" => {
                     Some(type_schema(schema_type))
@@ -353,6 +358,17 @@ impl ResolvePolicy {
         } else {
             merge_two_schemas(base, input.guard_constraint_schema)
         }
+    }
+}
+
+fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
+    match value {
+        Value::String(_) => Some("string"),
+        Value::Bool(_) => Some("boolean"),
+        Value::Number(number) if number.is_i64() || number.is_u64() => Some("integer"),
+        Value::Number(_) => Some("number"),
+        Value::Null => Some("null"),
+        _ => None,
     }
 }
 

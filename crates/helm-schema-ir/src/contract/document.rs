@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{ContractProjection, ContractUse};
-use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan, ValueKind, YamlPath};
+use crate::{ContractProvenance, Guard, GuardValue, ResourceRef, SourceSpan, ValueKind, YamlPath};
 
 /// Stable serialized guard row in the versioned contract document.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -9,8 +9,8 @@ use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan, ValueKind, YamlP
 pub enum ContractDocumentGuard {
     Truthy { path: String },
     Not { path: String },
-    Eq { path: String, value: String },
-    NotEq { path: String, value: String },
+    Eq { path: String, value: GuardValue },
+    NotEq { path: String, value: GuardValue },
     Absent { path: String },
     Or { paths: Vec<String> },
     Range { path: String },

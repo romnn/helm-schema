@@ -1,3 +1,92 @@
+use std::fmt;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Number;
+
+/// Scalar literal used by values-decidable guard comparisons.
+///
+/// Helm `eq` / `ne` conditions can compare against strings, booleans, numbers,
+/// and nil. Keeping the literal typed prevents static analysis from degrading
+/// `eq .Values.enabled false` into a misleading truthiness guard.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum GuardValue {
+    String(String),
+    Bool(bool),
+    Int(i64),
+    Float(String),
+    Null,
+}
+
+impl GuardValue {
+    #[must_use]
+    pub fn string(value: impl Into<String>) -> Self {
+        Self::String(value.into())
+    }
+
+    #[must_use]
+    pub fn float(value: f64) -> Option<Self> {
+        value.is_finite().then(|| Self::Float(value.to_string()))
+    }
+}
+
+impl Serialize for GuardValue {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Self::String(value) => serializer.serialize_str(value),
+            Self::Bool(value) => serializer.serialize_bool(*value),
+            Self::Int(value) => serializer.serialize_i64(*value),
+            Self::Float(value) => {
+                let number = value
+                    .parse::<f64>()
+                    .ok()
+                    .and_then(Number::from_f64)
+                    .ok_or_else(|| serde::ser::Error::custom("invalid float guard value"))?;
+                number.serialize(serializer)
+            }
+            Self::Null => serializer.serialize_none(),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for GuardValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = serde_json::Value::deserialize(deserializer)?;
+        match value {
+            serde_json::Value::String(value) => Ok(Self::String(value)),
+            serde_json::Value::Bool(value) => Ok(Self::Bool(value)),
+            serde_json::Value::Number(value) => {
+                if let Some(value) = value.as_i64() {
+                    Ok(Self::Int(value))
+                } else {
+                    Ok(Self::Float(value.to_string()))
+                }
+            }
+            serde_json::Value::Null => Ok(Self::Null),
+            _ => Err(serde::de::Error::custom(
+                "guard comparison value must be a scalar literal",
+            )),
+        }
+    }
+}
+
+impl fmt::Display for GuardValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::String(value) => value.fmt(f),
+            Self::Bool(value) => value.fmt(f),
+            Self::Int(value) => value.fmt(f),
+            Self::Float(value) => value.fmt(f),
+            Self::Null => f.write_str("null"),
+        }
+    }
+}
+
 /// A guard condition from an `if`, `with`, or `range` block.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Guard {
@@ -5,10 +94,10 @@ pub enum Guard {
     Truthy { path: String },
     /// Negated truthy check: `if not .Values.X`
     Not { path: String },
-    /// Equality check: `if eq .Values.X "value"`
-    Eq { path: String, value: String },
-    /// Inequality check: `if ne .Values.X "value"`
-    NotEq { path: String, value: String },
+    /// Equality check: `if eq .Values.X "value"` / `if eq .Values.X false`.
+    Eq { path: String, value: GuardValue },
+    /// Inequality check: `if ne .Values.X "value"` / `if ne .Values.X false`.
+    NotEq { path: String, value: GuardValue },
     /// Path absence check, used for structural rules where missing values are
     /// semantically distinct from false values.
     Absent { path: String },

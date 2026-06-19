@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::GuardValue;
 use crate::provider_schema_use::ProviderSchemaUse;
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
@@ -7,8 +8,8 @@ use crate::provider_schema_use::ProviderSchemaUse;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConditionalGuard {
     Truthy { path: String },
-    Eq { path: String, value: String },
-    NotEq { path: String, value: String },
+    Eq { path: String, value: GuardValue },
+    NotEq { path: String, value: GuardValue },
     Absent { path: String },
     TypeIs { path: String, schema_type: String },
     Not(Box<ConditionalGuard>),
@@ -41,7 +42,7 @@ pub struct ConditionalPathOverlay {
 pub enum GuardConstraint {
     /// `if eq .Values.X "value"` admits the literal value when the branch
     /// renders.
-    Eq { value: String },
+    Eq { value: GuardValue },
     /// `if typeIs "<json type>" .Values.X` declares the type accepted by the
     /// branch.
     TypeIs { schema_type: String },

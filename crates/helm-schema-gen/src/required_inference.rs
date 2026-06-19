@@ -159,8 +159,8 @@ mod tests {
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::DefineIndex;
     use helm_schema_ir::{
-        ContractIr, ContractUse, Guard, RequiredInferenceSignals, SymbolicIrContext, ValueKind,
-        YamlPath,
+        ContractIr, ContractUse, Guard, GuardValue, RequiredInferenceSignals, SymbolicIrContext,
+        ValueKind, YamlPath,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
@@ -275,7 +275,7 @@ mod tests {
             kind: ValueKind::Scalar,
             guards: vec![Guard::Eq {
                 path: "controller.kind".to_string(),
-                value: "Deployment".to_string(),
+                value: GuardValue::string("Deployment"),
             }],
             resource: None,
             provenance: Vec::new(),

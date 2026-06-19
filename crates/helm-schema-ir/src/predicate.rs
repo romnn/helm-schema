@@ -1,4 +1,4 @@
-use crate::Guard;
+use crate::{Guard, GuardValue};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Predicate {
@@ -13,8 +13,8 @@ pub(crate) enum Predicate {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum PredicateAtom {
     Truthy { path: String },
-    Eq { path: String, value: String },
-    NotEq { path: String, value: String },
+    Eq { path: String, value: GuardValue },
+    NotEq { path: String, value: GuardValue },
     Absent { path: String },
     Range { path: String },
     With { path: String },
@@ -142,7 +142,7 @@ impl PredicateAtom {
 #[cfg(test)]
 mod tests {
     use super::Predicate;
-    use crate::Guard;
+    use crate::{Guard, GuardValue};
 
     #[test]
     fn or_truthy_predicate_projects_to_or_guard() {
@@ -193,7 +193,7 @@ mod tests {
     fn unsupported_negated_predicate_abstains_from_flat_guard_projection() {
         let predicate = Predicate::Not(Box::new(Predicate::from(Guard::Eq {
             path: "mode".to_string(),
-            value: "prod".to_string(),
+            value: GuardValue::string("prod"),
         })));
 
         assert_eq!(predicate.compatibility_guards(), Vec::new());
@@ -203,14 +203,14 @@ mod tests {
     fn not_eq_predicate_projects_to_not_eq_guard() {
         let predicate = Predicate::from(Guard::NotEq {
             path: "mode".to_string(),
-            value: "disabled".to_string(),
+            value: GuardValue::string("disabled"),
         });
 
         assert_eq!(
             predicate.compatibility_guards(),
             vec![Guard::NotEq {
                 path: "mode".to_string(),
-                value: "disabled".to_string(),
+                value: GuardValue::string("disabled"),
             }]
         );
     }
@@ -223,7 +223,7 @@ mod tests {
             }),
             Predicate::from(Guard::Eq {
                 path: "mode".to_string(),
-                value: "prod".to_string(),
+                value: GuardValue::string("prod"),
             }),
         ]);
 

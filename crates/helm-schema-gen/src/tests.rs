@@ -10,8 +10,8 @@ use crate::{
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_core::{ProviderOrigin, ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
-    ContractIr, ContractSchemaSignals, ContractUse, Guard, ProviderSchemaUse, ResourceRef,
-    SymbolicIrContext, ValueKind, YamlPath,
+    ContractIr, ContractSchemaSignals, ContractUse, Guard, GuardValue, ProviderSchemaUse,
+    ResourceRef, SymbolicIrContext, ValueKind, YamlPath,
 };
 use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
@@ -1233,7 +1233,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             kind: ValueKind::Scalar,
             guards: vec![Guard::NotEq {
                 path: "feature.mode".to_string(),
-                value: "disabled".to_string(),
+                value: GuardValue::string("disabled"),
             }],
             resource: None,
             provenance: Vec::new(),
@@ -1299,6 +1299,115 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
 }
 
 #[test]
+fn equal_false_guard_lowers_to_exact_default_aware_condition() {
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Eq {
+                path: "feature.enabled".to_string(),
+                value: GuardValue::Bool(false),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("feature:\n  enabled: false\n")),
+    );
+
+    assert_eq!(
+        schema.pointer("/properties/feature/allOf/0/if/anyOf/1/properties/enabled/enum"),
+        Some(&serde_json::json!([false])),
+        "exact false equality should lower to a typed enum, not truthiness: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "host": 7
+                }
+            })
+        ),
+        "omitted default-false guard should activate the guarded host schema: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "enabled": false,
+                    "host": 7
+                }
+            })
+        ),
+        "explicit false guard should activate the guarded host schema: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "enabled": true,
+                    "host": 7
+                }
+            })
+        ),
+        "explicit true guard should leave the guarded-only host value unconstrained: {schema}"
+    );
+}
+
+#[test]
+fn equal_nil_guard_treats_absent_path_as_matching_nil() {
+    let contract = with_type_hints(
+        ContractIr::from_contract_uses(vec![ContractUse {
+            source_expr: "feature.host".to_string(),
+            path: YamlPath(vec!["data".to_string(), "host".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Eq {
+                path: "feature.tag".to_string(),
+                value: GuardValue::Null,
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        }]),
+        &[("feature.host", "string")],
+    );
+    let schema_signals = schema_signals_for(contract);
+    let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &NoopProvider));
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "host": 7
+                }
+            })
+        ),
+        "missing path should satisfy `eq ... nil` and activate the guarded host schema: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "tag": "present",
+                    "host": 7
+                }
+            })
+        ),
+        "present non-null path should deactivate the nil-guarded host schema: {schema}"
+    );
+}
+
+#[test]
 fn or_boolean_guards_lower_to_any_of_condition() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
@@ -1352,7 +1461,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             kind: ValueKind::Scalar,
             guards: vec![Guard::Eq {
                 path: "mode".to_string(),
-                value: "name".to_string(),
+                value: GuardValue::string("name"),
             }],
             resource: None,
             provenance: Vec::new(),
@@ -1363,7 +1472,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             kind: ValueKind::Fragment,
             guards: vec![Guard::Eq {
                 path: "mode".to_string(),
-                value: "labels".to_string(),
+                value: GuardValue::string("labels"),
             }],
             resource: None,
             provenance: Vec::new(),
@@ -1391,15 +1500,11 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
         .expect("expected root conditionals for mode-switched target path");
     let name_branch = branches
         .iter()
-        .find(|branch| {
-            branch.pointer("/if/properties/mode/enum") == Some(&serde_json::json!(["name"]))
-        })
+        .find(|branch| branch_has_mode_enum(branch, "name"))
         .expect("expected mode=name branch");
     let labels_branch = branches
         .iter()
-        .find(|branch| {
-            branch.pointer("/if/properties/mode/enum") == Some(&serde_json::json!(["labels"]))
-        })
+        .find(|branch| branch_has_mode_enum(branch, "labels"))
         .expect("expected mode=labels branch");
 
     assert_eq!(
@@ -1420,6 +1525,18 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
     );
 }
 
+fn branch_has_mode_enum(branch: &Value, mode: &str) -> bool {
+    branch.pointer("/if/properties/mode/enum") == Some(&serde_json::json!([mode]))
+        || branch
+            .pointer("/if/anyOf")
+            .and_then(Value::as_array)
+            .is_some_and(|clauses| {
+                clauses.iter().any(|clause| {
+                    clause.pointer("/properties/mode/enum") == Some(&serde_json::json!([mode]))
+                })
+            })
+}
+
 #[test]
 fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
     let schema_signals = schema_signals_for(vec![
@@ -1437,7 +1554,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             kind: ValueKind::Fragment,
             guards: vec![Guard::Eq {
                 path: "mode".to_string(),
-                value: "labels".to_string(),
+                value: GuardValue::string("labels"),
             }],
             resource: None,
             provenance: Vec::new(),

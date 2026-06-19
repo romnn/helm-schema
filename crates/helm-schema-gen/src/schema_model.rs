@@ -1,4 +1,5 @@
-use serde_json::{Map, Value};
+use helm_schema_ir::GuardValue;
+use serde_json::{Map, Number, Value};
 
 use crate::merge::{merge_two_schemas, union_schema_list};
 
@@ -6,6 +7,20 @@ pub(crate) fn type_schema(ty: &str) -> Value {
     let mut schema = serde_json::Map::new();
     schema.insert("type".to_string(), Value::String(ty.to_string()));
     Value::Object(schema)
+}
+
+pub(crate) fn guard_value_to_json(value: &GuardValue) -> Option<Value> {
+    match value {
+        GuardValue::String(value) => Some(Value::String(value.clone())),
+        GuardValue::Bool(value) => Some(Value::Bool(*value)),
+        GuardValue::Int(value) => Some(Value::Number((*value).into())),
+        GuardValue::Float(value) => value
+            .parse::<f64>()
+            .ok()
+            .and_then(Number::from_f64)
+            .map(Value::Number),
+        GuardValue::Null => Some(Value::Null),
+    }
 }
 
 pub(crate) fn schema_type(value: &Value) -> Option<&str> {

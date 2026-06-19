@@ -1,9 +1,9 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::Guard;
 use crate::value_path_extraction::{collect_loose_values_paths, values_path_from_expr};
+use crate::{Guard, GuardValue};
 
 #[must_use]
 pub(crate) fn parse_condition_expr(top: &TemplateExpr) -> Vec<Guard> {
@@ -62,16 +62,14 @@ fn parse_structural_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
             let [left, right] = args.as_slice() else {
                 return None;
             };
-            let path = single_loose_path(left).or_else(|| single_loose_path(right))?;
-            let value = first_string_literal(args)?;
+            let (path, value) = comparison_path_and_literal(left, right)?;
             Some(vec![Guard::Eq { path, value }])
         }
         "ne" => {
             let [left, right] = args.as_slice() else {
                 return None;
             };
-            let path = single_loose_path(left).or_else(|| single_loose_path(right))?;
-            let value = first_string_literal(args)?;
+            let (path, value) = comparison_path_and_literal(left, right)?;
             Some(vec![Guard::NotEq { path, value }])
         }
         "typeIs" => {
@@ -101,6 +99,18 @@ fn parse_negated_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
         return single_loose_path(arg).map(|path| vec![Guard::Truthy { path }]);
     }
 
+    if let TemplateExpr::Call { function, args } = expr.deparen()
+        && matches!(function.as_str(), "eq" | "ne")
+        && let [left, right] = args.as_slice()
+        && let Some((path, value)) = comparison_path_and_literal(left, right)
+    {
+        return Some(match function.as_str() {
+            "eq" => vec![Guard::NotEq { path, value }],
+            "ne" => vec![Guard::Eq { path, value }],
+            _ => unreachable!("function is restricted above"),
+        });
+    }
+
     let mut paths = BTreeSet::new();
     collect_loose_values_paths(expr, &mut paths);
     single(&paths).map(|path| vec![Guard::Not { path }])
@@ -120,6 +130,36 @@ fn single_loose_path(expr: &TemplateExpr) -> Option<String> {
     let mut paths = BTreeSet::new();
     collect_loose_values_paths(expr, &mut paths);
     single(&paths)
+}
+
+fn comparison_path_and_literal(
+    left: &TemplateExpr,
+    right: &TemplateExpr,
+) -> Option<(String, GuardValue)> {
+    match (
+        single_loose_path(left),
+        guard_value_literal(left),
+        single_loose_path(right),
+        guard_value_literal(right),
+    ) {
+        (Some(path), None, None, Some(value)) | (None, Some(value), Some(path), None) => {
+            Some((path, value))
+        }
+        _ => None,
+    }
+}
+
+fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {
+    match expr.deparen() {
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+            Some(GuardValue::string(value))
+        }
+        TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
+        TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
+        TemplateExpr::Literal(Literal::Float(value)) => GuardValue::float(*value),
+        TemplateExpr::Literal(Literal::Nil) => Some(GuardValue::Null),
+        _ => None,
+    }
 }
 
 fn dedupe_guards(guards: Vec<Guard>) -> Vec<Guard> {
@@ -164,30 +204,10 @@ fn single(paths: &BTreeSet<String>) -> Option<String> {
     }
 }
 
-fn first_string_literal(exprs: &[TemplateExpr]) -> Option<String> {
-    let mut found = None;
-    for expr in exprs {
-        if found.is_some() {
-            break;
-        }
-        expr.walk(|node| {
-            if found.is_some() {
-                return;
-            }
-            if let TemplateExpr::Literal(lit) = node
-                && let Some(value) = lit.as_string()
-            {
-                found = Some(value.to_string());
-            }
-        });
-    }
-    found
-}
-
 #[cfg(test)]
 mod tests {
     use super::parse_condition_expr;
-    use crate::Guard;
+    use crate::{Guard, GuardValue};
 
     fn parse_condition(text: &str) -> Vec<Guard> {
         let wrapped = format!("{{{{ {text} }}}}");
@@ -262,7 +282,7 @@ mod tests {
             parse_condition(r#"eq .Values.X "value""#),
             vec![Guard::Eq {
                 path: "X".into(),
-                value: "value".into(),
+                value: GuardValue::string("value"),
             }],
         );
     }
@@ -273,7 +293,40 @@ mod tests {
             parse_condition(r#"eq .Values.X ".Values.fake""#),
             vec![Guard::Eq {
                 path: "X".into(),
-                value: ".Values.fake".into(),
+                value: GuardValue::string(".Values.fake"),
+            }],
+        );
+    }
+
+    #[test]
+    fn eq_with_bool_literal_preserves_exact_comparison() {
+        assert_eq!(
+            parse_condition("eq .Values.enabled false"),
+            vec![Guard::Eq {
+                path: "enabled".into(),
+                value: GuardValue::Bool(false),
+            }],
+        );
+    }
+
+    #[test]
+    fn eq_with_int_literal_preserves_exact_comparison() {
+        assert_eq!(
+            parse_condition("eq .Values.replicas 3"),
+            vec![Guard::Eq {
+                path: "replicas".into(),
+                value: GuardValue::Int(3),
+            }],
+        );
+    }
+
+    #[test]
+    fn eq_with_nil_literal_preserves_exact_comparison() {
+        assert_eq!(
+            parse_condition("eq .Values.image.tag nil"),
+            vec![Guard::Eq {
+                path: "image.tag".into(),
+                value: GuardValue::Null,
             }],
         );
     }
@@ -295,7 +348,29 @@ mod tests {
             parse_condition(r#"ne .Values.X "value""#),
             vec![Guard::NotEq {
                 path: "X".into(),
-                value: "value".into(),
+                value: GuardValue::string("value"),
+            }],
+        );
+    }
+
+    #[test]
+    fn not_eq_literal_projects_to_not_eq() {
+        assert_eq!(
+            parse_condition(r#"not (eq .Values.mode "disabled")"#),
+            vec![Guard::NotEq {
+                path: "mode".into(),
+                value: GuardValue::string("disabled"),
+            }],
+        );
+    }
+
+    #[test]
+    fn not_ne_literal_projects_to_eq() {
+        assert_eq!(
+            parse_condition(r#"not (ne .Values.mode "disabled")"#),
+            vec![Guard::Eq {
+                path: "mode".into(),
+                value: GuardValue::string("disabled"),
             }],
         );
     }
@@ -394,7 +469,7 @@ mod tests {
             parse_condition(r#"eq .Values.X "match.*foo""#),
             vec![Guard::Eq {
                 path: "X".into(),
-                value: "match.*foo".into(),
+                value: GuardValue::string("match.*foo"),
             }],
         );
     }
@@ -405,7 +480,7 @@ mod tests {
             parse_condition(r#"eq .Values.X ".Values.fake""#),
             vec![Guard::Eq {
                 path: "X".into(),
-                value: ".Values.fake".into(),
+                value: GuardValue::string(".Values.fake"),
             }],
         );
     }

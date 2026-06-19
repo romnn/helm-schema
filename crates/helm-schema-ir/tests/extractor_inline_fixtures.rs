@@ -15,7 +15,7 @@
 //!     second selector segment, not the root.
 
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
-use helm_schema_ir::{ContractUse, Guard, SymbolicIrContext};
+use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext};
 use indoc::indoc;
 
 fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
@@ -47,7 +47,7 @@ fn range_guard(p: &str) -> Guard {
 fn eq(p: &str, value: &str) -> Guard {
     Guard::Eq {
         path: p.to_string(),
-        value: value.to_string(),
+        value: GuardValue::string(value),
     }
 }
 

@@ -89,7 +89,7 @@ pub use contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSignals, ContractSchemaSignals,
     ContractValuePathFacts, GuardConstraint, MetadataFieldKind,
 };
-pub use contract_types::Guard;
+pub use contract_types::{Guard, GuardValue};
 pub use helm_schema_core::{
     ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
     ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,

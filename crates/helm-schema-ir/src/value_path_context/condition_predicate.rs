@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
+use crate::GuardValue;
 use crate::condition_guards::parse_condition_expr;
 use crate::expression_analysis::type_is_schema_type;
 use crate::predicate::{Predicate, PredicateAtom};
@@ -90,8 +91,10 @@ impl ValuePathContext<'_> {
                 {
                     return out;
                 }
-                let (value, paths) = match (owned_string_literal(left), owned_string_literal(right))
-                {
+                let (value, paths) = match (
+                    owned_guard_value_literal(left),
+                    owned_guard_value_literal(right),
+                ) {
                     (Some(value), None) => (value, self.paths_for_expr(right)),
                     (None, Some(value)) => (value, self.paths_for_expr(left)),
                     _ => return out,
@@ -112,8 +115,10 @@ impl ValuePathContext<'_> {
                 {
                     return out;
                 }
-                let (value, paths) = match (owned_string_literal(left), owned_string_literal(right))
-                {
+                let (value, paths) = match (
+                    owned_guard_value_literal(left),
+                    owned_guard_value_literal(right),
+                ) {
                     (Some(value), None) => (value, self.paths_for_expr(right)),
                     (None, Some(value)) => (value, self.paths_for_expr(left)),
                     _ => return out,
@@ -176,8 +181,8 @@ impl ValuePathContext<'_> {
                 };
                 !matches!(
                     (
-                        borrowed_string_literal(left),
-                        borrowed_string_literal(right)
+                        borrowed_guard_value_literal(left),
+                        borrowed_guard_value_literal(right)
                     ),
                     (Some(_), None) | (None, Some(_))
                 )
@@ -194,8 +199,8 @@ impl ValuePathContext<'_> {
                 };
                 !matches!(
                     (
-                        borrowed_string_literal(left),
-                        borrowed_string_literal(right)
+                        borrowed_guard_value_literal(left),
+                        borrowed_guard_value_literal(right)
                     ),
                     (Some(_), None) | (None, Some(_))
                 )
@@ -293,18 +298,29 @@ fn with_predicates_from_condition_predicate(predicate: Predicate) -> Vec<Predica
     }
 }
 
-fn owned_string_literal(arg: &TemplateExpr) -> Option<String> {
+fn owned_guard_value_literal(arg: &TemplateExpr) -> Option<GuardValue> {
     match arg.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            Some(value.clone())
+            Some(GuardValue::string(value))
         }
+        TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
+        TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
+        TemplateExpr::Literal(Literal::Float(value)) => GuardValue::float(*value),
+        TemplateExpr::Literal(Literal::Nil) => Some(GuardValue::Null),
         _ => None,
     }
 }
 
-fn borrowed_string_literal(arg: &TemplateExpr) -> Option<&str> {
+fn borrowed_guard_value_literal(arg: &TemplateExpr) -> Option<()> {
     match arg.deparen() {
-        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => Some(value),
+        TemplateExpr::Literal(
+            Literal::String(_)
+            | Literal::RawString(_)
+            | Literal::Bool(_)
+            | Literal::Int(_)
+            | Literal::Float(_)
+            | Literal::Nil,
+        ) => Some(()),
         _ => None,
     }
 }
@@ -320,7 +336,7 @@ mod tests {
             Predicate::truthy_path("service.enabled"),
             Predicate::Atom(PredicateAtom::Eq {
                 path: "service.type".to_string(),
-                value: "ClusterIP".to_string(),
+                value: GuardValue::string("ClusterIP"),
             }),
             Predicate::Or(vec![
                 Predicate::truthy_path("service.annotations"),
@@ -342,7 +358,7 @@ mod tests {
                 },
                 Guard::Eq {
                     path: "service.type".to_string(),
-                    value: "ClusterIP".to_string(),
+                    value: GuardValue::string("ClusterIP"),
                 },
                 Guard::With {
                     path: "service.annotations".to_string(),

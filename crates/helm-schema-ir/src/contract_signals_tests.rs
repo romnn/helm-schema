@@ -4,7 +4,7 @@ use crate::contract::{ContractIr, ContractUse};
 use crate::contract_signals::{
     ConditionalGuard, ContractSchemaSignals, GuardConstraint, MetadataFieldKind,
 };
-use crate::{Guard, ResourceRef, ValueKind, YamlPath};
+use crate::{Guard, GuardValue, ResourceRef, ValueKind, YamlPath};
 
 fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
     ContractIr::from_contract_uses(uses).into_schema_signals()
@@ -71,7 +71,7 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
             vec![
                 Guard::Eq {
                     path: "mode".to_string(),
-                    value: "prod".to_string(),
+                    value: GuardValue::string("prod"),
                 },
                 Guard::TypeIs {
                     path: "extraConfig".to_string(),
@@ -110,7 +110,7 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
             ValueKind::Scalar,
             vec![Guard::Eq {
                 path: "ignored.guard".to_string(),
-                value: "ignored".to_string(),
+                value: GuardValue::string("ignored"),
             }],
             None,
         ),
@@ -156,7 +156,7 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
     assert_eq!(
         signals.guard_constraints_by_value_path.get("mode"),
         Some(&vec![GuardConstraint::Eq {
-            value: "prod".to_string(),
+            value: GuardValue::string("prod"),
         }]),
     );
     assert_eq!(
@@ -421,7 +421,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             ValueKind::Fragment,
             vec![Guard::NotEq {
                 path: "resourcesPreset".to_string(),
-                value: "none".to_string(),
+                value: GuardValue::string("none"),
             }],
             None,
         ),
@@ -449,7 +449,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         signals.conditional_path_overlays[2].guards,
         vec![ConditionalGuard::NotEq {
             path: "resourcesPreset".to_string(),
-            value: "none".to_string(),
+            value: GuardValue::string("none"),
         }],
     );
     assert!(
@@ -471,7 +471,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
             ValueKind::Scalar,
             vec![Guard::Eq {
                 path: "mode".to_string(),
-                value: "name".to_string(),
+                value: GuardValue::string("name"),
             }],
             None,
         ),
@@ -481,7 +481,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
             ValueKind::Fragment,
             vec![Guard::Eq {
                 path: "mode".to_string(),
-                value: "labels".to_string(),
+                value: GuardValue::string("labels"),
             }],
             None,
         ),
@@ -497,7 +497,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
             overlay.guards
                 == vec![ConditionalGuard::Eq {
                     path: "mode".to_string(),
-                    value: "name".to_string(),
+                    value: GuardValue::string("name"),
                 }]
                 && overlay.metadata_field_kinds == BTreeSet::from([MetadataFieldKind::Name])
         }),
@@ -508,7 +508,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
             overlay.guards
                 == vec![ConditionalGuard::Eq {
                     path: "mode".to_string(),
-                    value: "labels".to_string(),
+                    value: GuardValue::string("labels"),
                 }]
                 && overlay.metadata_field_kinds == BTreeSet::from([MetadataFieldKind::StringMap])
                 && overlay.value_path_facts.used_as_fragment
@@ -748,7 +748,7 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
             ValueKind::Scalar,
             vec![Guard::Eq {
                 path: "mode".to_string(),
-                value: "strict".to_string(),
+                value: GuardValue::string("strict"),
             }],
             None,
         ),
@@ -767,7 +767,7 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
             ValueKind::Scalar,
             vec![Guard::NotEq {
                 path: "resourcesPreset".to_string(),
-                value: "none".to_string(),
+                value: GuardValue::string("none"),
             }],
             None,
         ),
