@@ -1,12 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::ValueKind;
 use crate::contract::ContractUse;
 use crate::contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
-use crate::{Guard, ValueKind};
 
 use super::classifiers::{
     metadata_field_kind_from_yaml_path, use_is_null_tolerant, use_is_self_guarded,
@@ -24,7 +24,8 @@ pub(crate) fn derive_schema_signals_from_uses(
     for contract_use in uses {
         builder.record(contract_use);
     }
-    builder.finish(type_hints_by_value_path.clone())
+    builder.record_declared_type_hints(type_hints_by_value_path);
+    builder.finish()
 }
 
 #[derive(Default)]
@@ -33,6 +34,7 @@ struct ContractSchemaSignalBuilder {
     path_signals: ContractPathSignals,
     provider_schema_uses: Vec<ProviderSchemaUse>,
     requiredness_by_path: BTreeMap<String, ContractRequirednessEvidence>,
+    type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
     nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
     conditional_overlays_by_path: BTreeMap<String, ConditionalOverlayAccumulator>,
 }
@@ -83,12 +85,9 @@ impl ContractSchemaSignalBuilder {
         self.record_conditional_overlay(contract_use);
     }
 
-    fn finish(
-        mut self,
-        type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
-    ) -> ContractSchemaSignals {
+    fn finish(mut self) -> ContractSchemaSignals {
         self.path_signals.referenced_value_paths.extend(
-            type_hints_by_value_path
+            self.type_hints_by_value_path
                 .keys()
                 .filter(|path| !path.trim().is_empty())
                 .cloned(),
@@ -110,7 +109,7 @@ impl ContractSchemaSignalBuilder {
             &self.path_signals,
             &self.provider_schema_uses,
             &self.requiredness_by_path,
-            &type_hints_by_value_path,
+            &self.type_hints_by_value_path,
             &value_path_facts,
         );
         let conditional_path_overlays = self
@@ -121,7 +120,8 @@ impl ContractSchemaSignalBuilder {
                     .get(&target_value_path)
                     .copied()
                     .unwrap_or_default();
-                let type_hints = type_hints_by_value_path
+                let type_hints = self
+                    .type_hints_by_value_path
                     .get(&target_value_path)
                     .cloned()
                     .unwrap_or_default();
@@ -130,6 +130,26 @@ impl ContractSchemaSignalBuilder {
             .collect();
 
         ContractSchemaSignals::new(schema_evidence_by_value_path, conditional_path_overlays)
+    }
+
+    fn record_declared_type_hints(
+        &mut self,
+        type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
+    ) {
+        for (path, schema_types) in type_hints_by_value_path {
+            if path.trim().is_empty() {
+                continue;
+            }
+            self.type_hints_by_value_path
+                .entry(path.clone())
+                .or_default()
+                .extend(
+                    schema_types
+                        .iter()
+                        .filter(|schema_type| !schema_type.trim().is_empty())
+                        .cloned(),
+                );
+        }
     }
 
     fn record_provider_schema_use(&mut self, contract_use: &ContractUse) {
@@ -146,39 +166,34 @@ impl ContractSchemaSignalBuilder {
 
         self.render_path_facts(&contract_use.source_expr);
         if !contract_use.path.0.is_empty() {
-            let self_range_guarded = contract_use.guards.iter().any(
-                |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
-            );
             self.record_render_use(
                 &contract_use.source_expr,
-                self_range_guarded,
+                contract_use.has_self_range_guard(),
                 Some(use_is_self_guarded(contract_use)),
             );
         }
 
-        for guard in &contract_use.guards {
-            for path in guard.value_paths() {
-                if path.trim().is_empty() || path == contract_use.source_expr {
-                    continue;
-                }
-                self.render_path_facts(path);
-                if !contract_use.path.0.is_empty() {
-                    self.record_render_use(path, matches!(guard, Guard::Range { .. }), None);
-                }
+        let range_guard_paths = contract_use.top_level_range_guard_paths();
+        for path in contract_use.guard_value_paths() {
+            if path.trim().is_empty() || path == contract_use.source_expr {
+                continue;
+            }
+            self.render_path_facts(&path);
+            if !contract_use.path.0.is_empty() {
+                self.record_render_use(&path, range_guard_paths.contains(&path), None);
             }
         }
     }
 
     fn record_empty_source_render_facts(&mut self, contract_use: &ContractUse) {
-        for guard in &contract_use.guards {
-            for path in guard.value_paths() {
-                if path.trim().is_empty() {
-                    continue;
-                }
-                self.render_path_facts(path);
-                if !contract_use.path.0.is_empty() {
-                    self.record_render_use(path, matches!(guard, Guard::Range { .. }), None);
-                }
+        let range_guard_paths = contract_use.top_level_range_guard_paths();
+        for path in contract_use.guard_value_paths() {
+            if path.trim().is_empty() {
+                continue;
+            }
+            self.render_path_facts(&path);
+            if !contract_use.path.0.is_empty() {
+                self.record_render_use(&path, range_guard_paths.contains(&path), None);
             }
         }
     }
@@ -224,24 +239,20 @@ impl ContractSchemaSignalBuilder {
                 .or_default()
                 .insert(field_kind);
         }
-        for guard in &contract_use.guards {
-            for path in guard.value_paths() {
-                if path.trim().is_empty() {
-                    continue;
-                }
-                self.path_signals
-                    .referenced_value_paths
-                    .insert(path.to_string());
-                if matches!(guard, Guard::Range { .. }) {
-                    self.path_signals
-                        .ranged_value_paths
-                        .insert(path.to_string());
-                }
+        for path in contract_use.guard_value_paths() {
+            if path.trim().is_empty() {
+                continue;
             }
-
-            if let Some(predicate) = guard_predicate(guard) {
-                self.record_guard_predicate(predicate);
+            self.path_signals.referenced_value_paths.insert(path);
+        }
+        for path in contract_use.top_level_range_guard_paths() {
+            if path.trim().is_empty() {
+                continue;
             }
+            self.path_signals.ranged_value_paths.insert(path);
+        }
+        for predicate in contract_use.conditional_guard_predicates() {
+            self.record_guard_predicate(predicate);
         }
     }
 
@@ -264,40 +275,17 @@ impl ContractSchemaSignalBuilder {
     }
 
     fn record_requiredness(&mut self, contract_use: &ContractUse) {
-        for guard in &contract_use.guards {
-            match guard {
-                Guard::Not { path } | Guard::Absent { path } | Guard::NotEq { path, .. } => {
-                    self.record_conditionally_optional_path(path);
-                }
-                Guard::Or { paths } => {
-                    for path in paths {
-                        self.record_conditionally_optional_path(path);
-                    }
-                }
-                Guard::AnyOf { alternatives } => {
-                    for alternative in alternatives {
-                        for guard in alternative {
-                            for path in guard.value_paths() {
-                                self.record_conditionally_optional_path(path);
-                            }
-                        }
-                    }
-                }
-                Guard::Default { path } => {
-                    self.record_default_fallback_path(path);
-                }
-                Guard::Truthy { .. }
-                | Guard::Eq { .. }
-                | Guard::Range { .. }
-                | Guard::With { .. }
-                | Guard::TypeIs { .. } => {}
-            }
+        for path in contract_use.conditionally_optional_paths() {
+            self.record_conditionally_optional_path(&path);
+        }
+        for path in contract_use.default_fallback_paths() {
+            self.record_default_fallback_path(&path);
         }
 
         if contract_use.kind == ValueKind::Scalar
             && contract_use.path.0.is_empty()
             && !contract_use.source_expr.trim().is_empty()
-            && use_is_positive_header(contract_use)
+            && contract_use.is_positive_header()
         {
             self.requiredness(&contract_use.source_expr)
                 .is_positive_header = true;
@@ -329,30 +317,20 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        let has_self_range_guard = contract_use.guards.iter().any(
-            |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
-        );
-        let has_pathless_self_default_guard = contract_use.path.0.is_empty()
-            && contract_use
-                .guards
-                .iter()
-                .any(|guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr));
         let info = self.nullable_accumulator(&contract_use.source_expr);
         if !contract_use.path.0.is_empty()
-            || has_self_range_guard
+            || contract_use.has_self_range_guard()
             || contract_use.kind == ValueKind::Fragment
-            || has_pathless_self_default_guard
+            || contract_use.has_pathless_self_default_guard()
         {
             info.has_render_use = true;
             info.has_self_guarded_render_use |= use_is_self_guarded(contract_use);
         }
         info.all_uses_nullable &= use_is_null_tolerant(contract_use);
 
-        for guard in &contract_use.guards {
-            if let Guard::Range { path } = guard
-                && !path.trim().is_empty()
-            {
-                self.nullable_accumulator(path).has_render_use = true;
+        for path in contract_use.top_level_range_guard_paths() {
+            if !path.trim().is_empty() {
+                self.nullable_accumulator(&path).has_render_use = true;
             }
         }
     }
@@ -376,7 +354,7 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        let Some(guards) = lowerable_guard_set(contract_use) else {
+        let Some(guards) = contract_use.lowerable_conditional_guard_set() else {
             accumulator.saw_unsupported = true;
             return;
         };
@@ -442,10 +420,7 @@ impl ConditionalOverlayBranchAccumulator {
         self.used_as_fragment |= contract_use.kind == ValueKind::Fragment;
         self.is_partial_scalar_value_path |= contract_use.kind == ValueKind::PartialScalar;
 
-        let has_self_range_guard = contract_use.guards.iter().any(
-            |guard| matches!(guard, Guard::Range { path } if path == &contract_use.source_expr),
-        );
-        self.has_self_range_guard_render_use |= has_self_range_guard;
+        self.has_self_range_guard_render_use |= contract_use.has_self_range_guard();
 
         if let Some(field_kind) = metadata_field_kind_from_yaml_path(&contract_use.path.0) {
             self.metadata_field_kinds.insert(field_kind);
@@ -547,79 +522,6 @@ fn build_schema_evidence_by_value_path(
         .collect()
 }
 
-fn use_is_positive_header(contract_use: &ContractUse) -> bool {
-    !contract_use.guards.is_empty()
-        && contract_use.guards.iter().all(|guard| match guard {
-            Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
-                path == &contract_use.source_expr
-            }
-            Guard::Not { .. }
-            | Guard::NotEq { .. }
-            | Guard::Absent { .. }
-            | Guard::Or { .. }
-            | Guard::AnyOf { .. }
-            | Guard::Range { .. }
-            | Guard::With { .. }
-            | Guard::Default { .. } => false,
-        })
-}
-
-fn guard_predicate(guard: &Guard) -> Option<ConditionalGuard> {
-    match guard {
-        Guard::Truthy { path } => Some(ConditionalGuard::Truthy { path: path.clone() }),
-        Guard::With { path } => Some(ConditionalGuard::With { path: path.clone() }),
-        Guard::Not { path } => Some(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-            path: path.clone(),
-        }))),
-        Guard::Eq { path, value } => Some(ConditionalGuard::Eq {
-            path: path.clone(),
-            value: value.clone(),
-        }),
-        Guard::NotEq { path, value } => Some(ConditionalGuard::NotEq {
-            path: path.clone(),
-            value: value.clone(),
-        }),
-        Guard::Absent { path } => Some(ConditionalGuard::Absent { path: path.clone() }),
-        Guard::Or { paths } => {
-            let mut alternatives = paths
-                .iter()
-                .map(|path| ConditionalGuard::Truthy { path: path.clone() })
-                .collect::<Vec<_>>();
-            alternatives.sort();
-            alternatives.dedup();
-            (!alternatives.is_empty()).then_some(ConditionalGuard::AnyOf(alternatives))
-        }
-        Guard::AnyOf { alternatives } => {
-            let mut alternatives = alternatives
-                .iter()
-                .map(|alternative| guard_predicate_alternative(alternative))
-                .collect::<Option<Vec<_>>>()?;
-            alternatives.sort();
-            alternatives.dedup();
-            (!alternatives.is_empty()).then_some(ConditionalGuard::AnyOf(alternatives))
-        }
-        Guard::TypeIs { path, schema_type } => Some(ConditionalGuard::TypeIs {
-            path: path.clone(),
-            schema_type: schema_type.clone(),
-        }),
-        Guard::Range { .. } | Guard::Default { .. } => None,
-    }
-}
-
-fn guard_predicate_alternative(alternative: &[Guard]) -> Option<ConditionalGuard> {
-    let mut guards = alternative
-        .iter()
-        .map(guard_predicate)
-        .collect::<Option<Vec<_>>>()?;
-    guards.sort();
-    guards.dedup();
-    match guards.as_slice() {
-        [] => None,
-        [guard] => Some(guard.clone()),
-        _ => Some(ConditionalGuard::AllOf(guards)),
-    }
-}
-
 fn collect_conditional_guard_paths(guard: &ConditionalGuard, paths: &mut BTreeSet<String>) {
     match guard {
         ConditionalGuard::Truthy { path }
@@ -637,103 +539,4 @@ fn collect_conditional_guard_paths(guard: &ConditionalGuard, paths: &mut BTreeSe
             }
         }
     }
-}
-
-fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuard>> {
-    if path_contains_wildcard(&contract_use.source_expr) {
-        return None;
-    }
-
-    let mut guards = Vec::new();
-    for guard in &contract_use.guards {
-        extend_lowerable_guard(guard, &contract_use.source_expr, &mut guards)?;
-    }
-
-    guards.sort();
-    guards.dedup();
-    Some(guards)
-}
-
-fn lowerable_guard_alternative(
-    alternative: &[Guard],
-    target_value_path: &str,
-) -> Option<ConditionalGuard> {
-    let mut guards = Vec::new();
-    for guard in alternative {
-        extend_lowerable_guard(guard, target_value_path, &mut guards)?;
-    }
-    guards.sort();
-    guards.dedup();
-    match guards.as_slice() {
-        [] => None,
-        [guard] => Some(guard.clone()),
-        _ => Some(ConditionalGuard::AllOf(guards)),
-    }
-}
-
-fn extend_lowerable_guard(
-    guard: &Guard,
-    target_value_path: &str,
-    guards: &mut Vec<ConditionalGuard>,
-) -> Option<()> {
-    match guard {
-        Guard::With { .. } => {}
-        Guard::Truthy { path } => guards.push(ConditionalGuard::Truthy {
-            path: lowerable_guard_path(path, target_value_path)?,
-        }),
-        Guard::Eq { path, value } => guards.push(ConditionalGuard::Eq {
-            path: lowerable_guard_path(path, target_value_path)?,
-            value: value.clone(),
-        }),
-        Guard::NotEq { path, value } => guards.push(ConditionalGuard::NotEq {
-            path: lowerable_guard_path(path, target_value_path)?,
-            value: value.clone(),
-        }),
-        Guard::Absent { path } => guards.push(ConditionalGuard::Absent {
-            path: lowerable_guard_path(path, target_value_path)?,
-        }),
-        Guard::TypeIs { path, schema_type } => guards.push(ConditionalGuard::TypeIs {
-            path: lowerable_guard_path(path, target_value_path)?,
-            schema_type: schema_type.clone(),
-        }),
-        Guard::Not { path } => {
-            guards.push(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                path: lowerable_guard_path(path, target_value_path)?,
-            })));
-        }
-        Guard::Or { paths } => {
-            let mut any_of = paths
-                .iter()
-                .map(|path| {
-                    Some(ConditionalGuard::Truthy {
-                        path: lowerable_guard_path(path, target_value_path)?,
-                    })
-                })
-                .collect::<Option<Vec<_>>>()?;
-            any_of.sort();
-            any_of.dedup();
-            guards.push(ConditionalGuard::AnyOf(any_of));
-        }
-        Guard::AnyOf { alternatives } => {
-            let mut any_of = alternatives
-                .iter()
-                .map(|alternative| lowerable_guard_alternative(alternative, target_value_path))
-                .collect::<Option<Vec<_>>>()?;
-            any_of.sort();
-            any_of.dedup();
-            guards.push(ConditionalGuard::AnyOf(any_of));
-        }
-        Guard::Range { .. } => return None,
-        Guard::Default { path } if path == target_value_path => {}
-        Guard::Default { .. } => return None,
-    }
-    Some(())
-}
-
-fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
-    (!path_contains_wildcard(path) && path != target_value_path).then(|| path.to_string())
-}
-
-fn path_contains_wildcard(path: &str) -> bool {
-    path.split('.').any(|segment| segment == "*")
 }

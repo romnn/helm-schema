@@ -2,6 +2,7 @@ mod document;
 mod graph;
 mod projection;
 mod use_claim;
+mod use_semantics;
 
 pub use document::{
     ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,

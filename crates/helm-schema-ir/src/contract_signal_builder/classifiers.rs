@@ -1,4 +1,3 @@
-use crate::Guard;
 use crate::contract::ContractUse;
 use crate::contract_signals::MetadataFieldKind;
 
@@ -34,17 +33,5 @@ pub(super) fn use_is_null_tolerant(use_: &ContractUse) -> bool {
 }
 
 fn use_has_matching_self_guard(use_: &ContractUse) -> bool {
-    use_.guards.iter().any(|guard| match guard {
-        Guard::Truthy { path }
-        | Guard::Eq { path, .. }
-        | Guard::Range { path }
-        | Guard::With { path }
-        | Guard::Default { path } => path == &use_.source_expr,
-        Guard::Not { .. }
-        | Guard::NotEq { .. }
-        | Guard::Absent { .. }
-        | Guard::Or { .. }
-        | Guard::AnyOf { .. }
-        | Guard::TypeIs { .. } => false,
-    })
+    use_.has_matching_self_guard()
 }

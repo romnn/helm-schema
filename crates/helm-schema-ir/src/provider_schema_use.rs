@@ -1,4 +1,3 @@
-use crate::Guard;
 use crate::contract::ContractUse;
 pub use helm_schema_core::ProviderSchemaUse;
 
@@ -27,9 +26,7 @@ pub fn from_contract_use(contract_use: &ContractUse) -> Option<ProviderSchemaUse
 }
 
 fn use_is_self_range_collection(use_: &ContractUse) -> bool {
-    use_.guards
-        .iter()
-        .any(|guard| matches!(guard, Guard::Range { path } if path == &use_.source_expr))
+    use_.has_self_range_guard()
         && use_
             .path
             .0
