@@ -30,8 +30,7 @@ pub use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 pub use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlay, ContractIr, ContractPathSchemaEvidence,
     ContractProvenance, ContractRequirednessEvidence, ContractSchemaSignals, ContractUse,
-    ContractValuePathFacts, Guard, GuardConstraint, MetadataFieldKind, SourceSpan,
-    SymbolicIrContext,
+    ContractValuePathFacts, Guard, MetadataFieldKind, SourceSpan, SymbolicIrContext,
 };
 
 pub mod required_inference {

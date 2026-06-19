@@ -713,7 +713,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         ),
         provider_schema,
         values_yaml_schema,
-        guard_constraint_schema: serde_json::json!({}),
+        guard_predicate_schema: serde_json::json!({}),
         type_hint_schema: serde_json::json!({}),
     });
 

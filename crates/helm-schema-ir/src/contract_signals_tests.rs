@@ -1,9 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::contract::{ContractIr, ContractUse};
-use crate::contract_signals::{
-    ConditionalGuard, ContractSchemaSignals, GuardConstraint, MetadataFieldKind,
-};
+use crate::contract_signals::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind};
 use crate::{Guard, GuardValue, ResourceRef, ValueKind, YamlPath};
 
 fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
@@ -79,7 +77,7 @@ fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
 }
 
 #[test]
-fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
+fn contract_ir_path_signals_collect_references_and_typed_guard_predicates() {
     let signals = signals_for(vec![
         ContractUse::new(
             "podLabels".to_string(),
@@ -195,16 +193,18 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
     assert_eq!(
         evidence
             .get("mode")
-            .map(|evidence| &evidence.guard_constraints),
-        Some(&vec![GuardConstraint::Eq {
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::Eq {
+            path: "mode".to_string(),
             value: GuardValue::string("prod"),
         }]),
     );
     assert_eq!(
         evidence
             .get("extraConfig")
-            .map(|evidence| &evidence.guard_constraints),
-        Some(&vec![GuardConstraint::TypeIs {
+            .map(|evidence| &evidence.guard_predicates),
+        Some(&vec![ConditionalGuard::TypeIs {
+            path: "extraConfig".to_string(),
             schema_type: "string".to_string(),
         }]),
     );

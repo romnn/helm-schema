@@ -1,7 +1,7 @@
 use serde_json::{Map, Value};
 
 use helm_schema_ir::{
-    ContractValuePathFacts, GuardConstraint, GuardValue, ProviderSchemaUse, ValueKind,
+    ConditionalGuard, ContractValuePathFacts, GuardValue, ProviderSchemaUse, ValueKind,
 };
 
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
@@ -44,40 +44,40 @@ impl ValuePathSchemaFacts {
     fn has_explicit_null_scalar_default(
         self,
         type_hint_schema: &Value,
-        guard_constraint_schema: &Value,
+        guard_predicate_schema: &Value,
     ) -> bool {
         self.values_yaml.is_explicit_null
-            && (is_scalar_like_schema(guard_constraint_schema)
+            && (is_scalar_like_schema(guard_predicate_schema)
                 || (!self.contract.has_render_use && is_scalar_like_schema(type_hint_schema)))
     }
 
     fn accepts_null_default(
         self,
         type_hint_schema: &Value,
-        guard_constraint_schema: &Value,
+        guard_predicate_schema: &Value,
     ) -> bool {
         self.contract.is_nullable
-            || self.has_explicit_null_scalar_default(type_hint_schema, guard_constraint_schema)
+            || self.has_explicit_null_scalar_default(type_hint_schema, guard_predicate_schema)
     }
 
     fn preserve_explicit_null_default(
         self,
         type_hint_schema: &Value,
-        guard_constraint_schema: &Value,
+        guard_predicate_schema: &Value,
     ) -> bool {
         self.values_yaml.is_explicit_null
-            && self.accepts_null_default(type_hint_schema, guard_constraint_schema)
+            && self.accepts_null_default(type_hint_schema, guard_predicate_schema)
     }
 
     fn preserve_empty_string_fallback(
         self,
         type_hint_schema: &Value,
-        guard_constraint_schema: &Value,
+        guard_predicate_schema: &Value,
     ) -> bool {
         self.values_yaml.is_empty_string
             && ((self.contract.has_render_use && self.contract.all_render_uses_self_guarded)
                 || is_scalar_like_schema(type_hint_schema)
-                || is_scalar_like_schema(guard_constraint_schema))
+                || is_scalar_like_schema(guard_predicate_schema))
     }
 
     fn empty_map_placeholder_use(self) -> EmptyMapPlaceholderUse {
@@ -100,7 +100,7 @@ pub(crate) struct ValuePathSchemaInputs {
     pub(crate) facts: ValuePathSchemaFacts,
     pub(crate) provider_schema: Value,
     pub(crate) values_yaml_schema: Value,
-    pub(crate) guard_constraint_schema: Value,
+    pub(crate) guard_predicate_schema: Value,
     pub(crate) type_hint_schema: Value,
 }
 
@@ -108,7 +108,7 @@ struct ValuePathMergeInputs {
     facts: ValuePathSchemaFacts,
     provider_schema: Value,
     values_yaml_schema: Value,
-    guard_constraint_schema: Value,
+    guard_predicate_schema: Value,
     type_hint_schema: Value,
     preserve_empty_string_fallback: bool,
 }
@@ -129,9 +129,13 @@ impl ResolvePolicy {
         }
     }
 
-    pub(crate) fn guard_constraint_schema(&self, constraint: &GuardConstraint) -> Option<Value> {
-        match constraint {
-            GuardConstraint::Eq { value } => {
+    pub(crate) fn guard_predicate_schema(
+        &self,
+        value_path: &str,
+        predicate: &ConditionalGuard,
+    ) -> Option<Value> {
+        match predicate {
+            ConditionalGuard::Eq { path, value } if path == value_path => {
                 if matches!(value, GuardValue::Null) {
                     return Some(empty_schema());
                 }
@@ -153,12 +157,22 @@ impl ResolvePolicy {
                     .collect(),
                 ))
             }
-            GuardConstraint::TypeIs { schema_type } => match schema_type.as_str() {
-                "array" | "boolean" | "integer" | "number" | "object" | "string" => {
-                    Some(type_schema(schema_type))
+            ConditionalGuard::TypeIs { path, schema_type } if path == value_path => {
+                match schema_type.as_str() {
+                    "array" | "boolean" | "integer" | "number" | "object" | "string" => {
+                        Some(type_schema(schema_type))
+                    }
+                    _ => None,
                 }
-                _ => None,
-            },
+            }
+            ConditionalGuard::Truthy { .. }
+            | ConditionalGuard::Eq { .. }
+            | ConditionalGuard::NotEq { .. }
+            | ConditionalGuard::Absent { .. }
+            | ConditionalGuard::TypeIs { .. }
+            | ConditionalGuard::Not(_)
+            | ConditionalGuard::AllOf(_)
+            | ConditionalGuard::AnyOf(_) => None,
         }
     }
 
@@ -171,13 +185,13 @@ impl ResolvePolicy {
             facts,
             provider_schema,
             values_yaml_schema,
-            guard_constraint_schema,
+            guard_predicate_schema,
             type_hint_schema,
         } = input;
         let preserve_explicit_null_default_by_contract =
-            facts.preserve_explicit_null_default(&type_hint_schema, &guard_constraint_schema);
+            facts.preserve_explicit_null_default(&type_hint_schema, &guard_predicate_schema);
         let preserve_empty_string_fallback =
-            facts.preserve_empty_string_fallback(&type_hint_schema, &guard_constraint_schema);
+            facts.preserve_empty_string_fallback(&type_hint_schema, &guard_predicate_schema);
         let values_yaml_schema = self.adjust_values_yaml_schema_for_value_path(
             values_yaml_schema,
             facts,
@@ -188,21 +202,21 @@ impl ResolvePolicy {
             provider_schema,
             &values_yaml_schema,
             &type_hint_schema,
-            &guard_constraint_schema,
+            &guard_predicate_schema,
         );
         let partial_scalar_schema = self.partial_scalar_schema_for_value_path(
             facts,
             &provider_schema,
             &type_hint_schema,
-            &guard_constraint_schema,
+            &guard_predicate_schema,
         );
-        let guard_constraint_schema =
-            merge_schema_list(vec![guard_constraint_schema, partial_scalar_schema]);
+        let guard_predicate_schema =
+            merge_schema_list(vec![guard_predicate_schema, partial_scalar_schema]);
         let merged = self.resolve_merged_schema_for_value_path(ValuePathMergeInputs {
             facts,
             provider_schema,
             values_yaml_schema,
-            guard_constraint_schema,
+            guard_predicate_schema,
             type_hint_schema,
             preserve_empty_string_fallback,
         });
@@ -262,12 +276,12 @@ impl ResolvePolicy {
         provider_schema: Value,
         values_yaml_schema: &Value,
         type_hint_schema: &Value,
-        guard_constraint_schema: &Value,
+        guard_predicate_schema: &Value,
     ) -> Value {
         if facts.contract.used_as_fragment
             && is_scalar_schema(values_yaml_schema)
             && (is_scalar_like_schema(type_hint_schema)
-                || is_scalar_like_schema(guard_constraint_schema))
+                || is_scalar_like_schema(guard_predicate_schema))
         {
             self.restrict_to_scalar_domain(provider_schema.clone())
                 .unwrap_or(provider_schema)
@@ -281,12 +295,12 @@ impl ResolvePolicy {
         facts: ValuePathSchemaFacts,
         provider_schema: &Value,
         type_hint_schema: &Value,
-        guard_constraint_schema: &Value,
+        guard_predicate_schema: &Value,
     ) -> Value {
         if facts.contract.is_partial_scalar_value_path
             && is_empty_schema(provider_schema)
             && is_empty_schema(type_hint_schema)
-            && is_empty_schema(guard_constraint_schema)
+            && is_empty_schema(guard_predicate_schema)
             && facts.values_yaml.has_no_schema_evidence
         {
             type_schema("string")
@@ -351,12 +365,12 @@ impl ResolvePolicy {
             merge_two_schemas(base, input.type_hint_schema)
         };
 
-        if is_empty_schema(&input.guard_constraint_schema) {
+        if is_empty_schema(&input.guard_predicate_schema) {
             base
         } else if is_empty_schema(&base) {
-            input.guard_constraint_schema
+            input.guard_predicate_schema
         } else {
-            merge_two_schemas(base, input.guard_constraint_schema)
+            merge_two_schemas(base, input.guard_predicate_schema)
         }
     }
 }

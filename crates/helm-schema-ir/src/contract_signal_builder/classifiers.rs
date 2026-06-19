@@ -1,6 +1,6 @@
 use crate::Guard;
 use crate::contract::ContractUse;
-use crate::contract_signals::{GuardConstraint, MetadataFieldKind};
+use crate::contract_signals::MetadataFieldKind;
 
 pub(super) fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
     let last = path.last()?.as_str();
@@ -14,26 +14,6 @@ pub(super) fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<Meta
         "name" => Some(MetadataFieldKind::Name),
         "namespace" => Some(MetadataFieldKind::Namespace),
         _ => None,
-    }
-}
-
-pub(super) fn guard_constraint_from_guard(guard: &Guard) -> Option<GuardConstraint> {
-    match guard {
-        Guard::Eq { value, .. } => Some(GuardConstraint::Eq {
-            value: value.clone(),
-        }),
-        Guard::TypeIs { schema_type, .. } => Some(GuardConstraint::TypeIs {
-            schema_type: schema_type.clone(),
-        }),
-        Guard::Truthy { .. }
-        | Guard::Not { .. }
-        | Guard::NotEq { .. }
-        | Guard::Absent { .. }
-        | Guard::Or { .. }
-        | Guard::AnyOf { .. }
-        | Guard::Range { .. }
-        | Guard::With { .. }
-        | Guard::Default { .. } => None,
     }
 }
 

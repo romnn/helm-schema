@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::contract_signals::{GuardConstraint, MetadataFieldKind};
+use crate::contract_signals::{ConditionalGuard, MetadataFieldKind};
 
 /// Path-level accumulator derived from normalized contract claims before the
 /// builder finalizes path-local schema evidence.
@@ -10,6 +10,6 @@ pub(super) struct ContractPathSignals {
     pub ranged_value_paths: BTreeSet<String>,
     pub value_paths_used_as_fragment: BTreeSet<String>,
     pub partial_scalar_value_paths: BTreeSet<String>,
-    pub guard_constraints_by_value_path: BTreeMap<String, Vec<GuardConstraint>>,
+    pub guard_predicates_by_value_path: BTreeMap<String, Vec<ConditionalGuard>>,
     pub metadata_fields_by_value_path: BTreeMap<String, BTreeSet<MetadataFieldKind>>,
 }

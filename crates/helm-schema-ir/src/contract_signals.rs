@@ -32,21 +32,6 @@ pub struct ConditionalPathOverlay {
     pub preserve_base_schema: bool,
 }
 
-/// Type-level constraints declared by template guards.
-///
-/// These are contract facts, not JSON Schema fragments. Schema lowering stays
-/// in the generator so the contract layer remains independent from output
-/// format policy.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum GuardConstraint {
-    /// `if eq .Values.X "value"` admits the literal value when the branch
-    /// renders.
-    Eq { value: GuardValue },
-    /// `if typeIs "<json type>" .Values.X` declares the type accepted by the
-    /// branch.
-    TypeIs { schema_type: String },
-}
-
 /// Kubernetes `metadata.*` field shape referenced by a values path.
 ///
 /// The contract layer records the field category structurally from the
@@ -71,7 +56,7 @@ pub struct ContractPathSchemaEvidence {
     pub value_path: String,
     pub is_referenced_value_path: bool,
     pub facts: ContractValuePathFacts,
-    pub guard_constraints: Vec<GuardConstraint>,
+    pub guard_predicates: Vec<ConditionalGuard>,
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     pub type_hints: BTreeSet<String>,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,

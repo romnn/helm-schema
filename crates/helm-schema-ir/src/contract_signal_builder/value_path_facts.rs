@@ -35,7 +35,7 @@ pub(super) fn build_contract_value_path_facts(
     paths.extend(path_signals.ranged_value_paths.iter().cloned());
     paths.extend(path_signals.value_paths_used_as_fragment.iter().cloned());
     paths.extend(path_signals.partial_scalar_value_paths.iter().cloned());
-    paths.extend(path_signals.guard_constraints_by_value_path.keys().cloned());
+    paths.extend(path_signals.guard_predicates_by_value_path.keys().cloned());
     paths.extend(path_signals.metadata_fields_by_value_path.keys().cloned());
     paths.extend(nullable_value_paths.iter().cloned());
     paths.extend(paths_with_referenced_descendants.iter().cloned());

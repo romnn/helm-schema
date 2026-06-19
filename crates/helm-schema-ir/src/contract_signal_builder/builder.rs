@@ -9,8 +9,7 @@ use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
 
 use super::classifiers::{
-    guard_constraint_from_guard, metadata_field_kind_from_yaml_path, use_is_null_tolerant,
-    use_is_self_guarded,
+    metadata_field_kind_from_yaml_path, use_is_null_tolerant, use_is_self_guarded,
 };
 use super::path_signals::ContractPathSignals;
 use super::value_path_facts::{
@@ -239,12 +238,12 @@ impl ContractSchemaSignalBuilder {
                         .insert(path.to_string());
                 }
 
-                if let Some(constraint) = guard_constraint_from_guard(guard) {
+                if let Some(predicate) = path_local_guard_predicate(guard, path) {
                     self.path_signals
-                        .guard_constraints_by_value_path
+                        .guard_predicates_by_value_path
                         .entry(path.to_string())
                         .or_default()
-                        .push(constraint);
+                        .push(predicate);
                 }
             }
         }
@@ -466,7 +465,7 @@ impl ConditionalOverlayBranchAccumulator {
             value_path,
             is_referenced_value_path: true,
             facts,
-            guard_constraints: Vec::new(),
+            guard_predicates: Vec::new(),
             metadata_field_kinds: self.metadata_field_kinds,
             type_hints,
             provider_schema_uses: self.provider_schema_uses,
@@ -506,8 +505,8 @@ fn build_schema_evidence_by_value_path(
                     .get(&value_path)
                     .copied()
                     .unwrap_or_default(),
-                guard_constraints: path_signals
-                    .guard_constraints_by_value_path
+                guard_predicates: path_signals
+                    .guard_predicates_by_value_path
                     .get(&value_path)
                     .cloned()
                     .unwrap_or_default(),
@@ -549,6 +548,32 @@ fn use_is_positive_header(contract_use: &ContractUse) -> bool {
             | Guard::With { .. }
             | Guard::Default { .. } => false,
         })
+}
+
+fn path_local_guard_predicate(guard: &Guard, value_path: &str) -> Option<ConditionalGuard> {
+    match guard {
+        Guard::Eq { path, value } if path == value_path => Some(ConditionalGuard::Eq {
+            path: path.clone(),
+            value: value.clone(),
+        }),
+        Guard::TypeIs { path, schema_type } if path == value_path => {
+            Some(ConditionalGuard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.clone(),
+            })
+        }
+        Guard::Truthy { .. }
+        | Guard::Not { .. }
+        | Guard::Eq { .. }
+        | Guard::NotEq { .. }
+        | Guard::Absent { .. }
+        | Guard::Or { .. }
+        | Guard::AnyOf { .. }
+        | Guard::Range { .. }
+        | Guard::With { .. }
+        | Guard::Default { .. }
+        | Guard::TypeIs { .. } => None,
+    }
 }
 
 fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuard>> {

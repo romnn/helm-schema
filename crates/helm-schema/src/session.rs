@@ -38,7 +38,7 @@ pub struct ValuePathExplanation {
     pub exact_uses: Vec<ContractDocumentUse>,
     pub descendant_uses: Vec<ContractDocumentUse>,
     pub value_path_facts: Option<helm_schema_engine::ContractValuePathFacts>,
-    pub guard_constraints: Vec<helm_schema_engine::GuardConstraint>,
+    pub guard_predicates: Vec<helm_schema_engine::ConditionalGuard>,
     pub metadata_fields: Vec<helm_schema_engine::MetadataFieldKind>,
     pub type_hints: Vec<Value>,
     pub has_default_fallback: bool,
@@ -241,8 +241,8 @@ impl AnalysisSession {
             .map(ContractDocumentUse::from)
             .collect();
         let value_path_facts = evidence.map(|evidence| evidence.facts);
-        let guard_constraints = evidence
-            .map(|evidence| evidence.guard_constraints.clone())
+        let guard_predicates = evidence
+            .map(|evidence| evidence.guard_predicates.clone())
             .unwrap_or_default();
         let metadata_fields = evidence
             .map(|evidence| evidence.metadata_field_kinds.iter().copied().collect())
@@ -267,7 +267,7 @@ impl AnalysisSession {
             exact_uses,
             descendant_uses,
             value_path_facts,
-            guard_constraints,
+            guard_predicates,
             metadata_fields,
             type_hints,
             has_default_fallback,

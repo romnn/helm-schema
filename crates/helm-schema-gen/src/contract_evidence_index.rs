@@ -15,7 +15,7 @@ pub(crate) struct ContractEvidenceIndex {
     provider_schemas_by_value_path: BTreeMap<String, Vec<Arc<ProviderSchemaCandidate>>>,
     type_hint_schema_by_value_path: BTreeMap<String, Value>,
     metadata_schema_by_value_path: BTreeMap<String, Value>,
-    guard_constraint_schema_by_value_path: BTreeMap<String, Value>,
+    guard_predicate_schema_by_value_path: BTreeMap<String, Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -60,13 +60,13 @@ impl ContractEvidenceIndex {
                 Some((path.clone(), merge_schema_list(schemas)))
             })
             .collect();
-        let guard_constraint_schema_by_value_path = schema_evidence_by_path
+        let guard_predicate_schema_by_value_path = schema_evidence_by_path
             .iter()
             .filter_map(|(path, evidence)| {
                 let schemas = evidence
-                    .guard_constraints
+                    .guard_predicates
                     .iter()
-                    .filter_map(|constraint| resolve_policy.guard_constraint_schema(constraint))
+                    .filter_map(|predicate| resolve_policy.guard_predicate_schema(path, predicate))
                     .collect::<Vec<_>>();
                 (!schemas.is_empty()).then(|| (path.clone(), merge_schema_list(schemas)))
             })
@@ -121,7 +121,7 @@ impl ContractEvidenceIndex {
             provider_schemas_by_value_path,
             type_hint_schema_by_value_path,
             metadata_schema_by_value_path,
-            guard_constraint_schema_by_value_path,
+            guard_predicate_schema_by_value_path,
         }
     }
 
@@ -154,8 +154,8 @@ impl ContractEvidenceIndex {
             .unwrap_or_else(crate::schema_model::empty_schema)
     }
 
-    pub(crate) fn take_guard_constraint_schema(&mut self, value_path: &str) -> Value {
-        self.guard_constraint_schema_by_value_path
+    pub(crate) fn take_guard_predicate_schema(&mut self, value_path: &str) -> Value {
+        self.guard_predicate_schema_by_value_path
             .remove(value_path)
             .unwrap_or_else(crate::schema_model::empty_schema)
     }

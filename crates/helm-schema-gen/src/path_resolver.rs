@@ -101,7 +101,7 @@ impl<'a> PathSchemaResolver<'a> {
         let provider_schema = self.provider_schema_for_path(value_path);
         let values_yaml_info = self.path_caches.values_yaml.get(value_path);
         let type_hint_schema = self.evidence_index.take_type_hint_schema(value_path);
-        let guard_constraint_schema = self.evidence_index.take_guard_constraint_schema(value_path);
+        let guard_predicate_schema = self.evidence_index.take_guard_predicate_schema(value_path);
 
         let values_yaml_facts = values_yaml_info
             .map_or_else(ValuesYamlPathFacts::absent, |path_info| path_info.facts());
@@ -115,7 +115,7 @@ impl<'a> PathSchemaResolver<'a> {
                 facts,
                 provider_schema: provider_schema.schema,
                 values_yaml_schema,
-                guard_constraint_schema,
+                guard_predicate_schema,
                 type_hint_schema,
             },
             provider_schema_candidate: provider_schema.provider_schema_candidate,
