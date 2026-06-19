@@ -78,23 +78,20 @@ impl Predicate {
         matches!(self, Self::True | Self::False)
     }
 
-    pub(crate) fn compatibility_guards(&self) -> Vec<Guard> {
+    pub(crate) fn contract_guards(&self) -> Vec<Guard> {
         match self {
             Self::True | Self::False => Vec::new(),
-            Self::Atom(atom) => atom.compatibility_guards(),
-            Self::Not(inner) => negated_compatibility_guards(inner),
-            Self::And(predicates) => predicates
-                .iter()
-                .flat_map(Self::compatibility_guards)
-                .collect(),
-            Self::Or(predicates) => or_compatibility_guards(predicates),
+            Self::Atom(atom) => atom.contract_guards(),
+            Self::Not(inner) => negated_contract_guards(inner),
+            Self::And(predicates) => predicates.iter().flat_map(Self::contract_guards).collect(),
+            Self::Or(predicates) => or_contract_guards(predicates),
         }
     }
 
-    pub(crate) fn compatibility_guard_stack(predicates: &[Self]) -> Vec<Guard> {
+    pub(crate) fn contract_guard_stack(predicates: &[Self]) -> Vec<Guard> {
         let mut guards = Vec::new();
         for predicate in predicates {
-            for guard in predicate.compatibility_guards() {
+            for guard in predicate.contract_guards() {
                 if !guards.contains(&guard) {
                     guards.push(guard);
                 }
@@ -104,7 +101,7 @@ impl Predicate {
     }
 }
 
-fn negated_compatibility_guards(inner: &Predicate) -> Vec<Guard> {
+fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
     match inner {
         Predicate::Atom(PredicateAtom::Truthy { path }) => vec![Guard::Not { path: path.clone() }],
         Predicate::Atom(PredicateAtom::Eq { path, value }) => vec![Guard::NotEq {
@@ -115,15 +112,15 @@ fn negated_compatibility_guards(inner: &Predicate) -> Vec<Guard> {
             path: path.clone(),
             value: value.clone(),
         }],
-        Predicate::Not(inner) => inner.compatibility_guards(),
+        Predicate::Not(inner) => inner.contract_guards(),
         _ => Vec::new(),
     }
 }
 
-fn or_compatibility_guards(predicates: &[Predicate]) -> Vec<Guard> {
+fn or_contract_guards(predicates: &[Predicate]) -> Vec<Guard> {
     let alternatives = predicates
         .iter()
-        .map(Predicate::compatibility_guards)
+        .map(Predicate::contract_guards)
         .collect::<Vec<_>>();
 
     if alternatives.iter().any(Vec::is_empty) {
@@ -148,7 +145,7 @@ fn truthy_or_paths(alternatives: &[Vec<Guard>]) -> Option<Vec<String>> {
 }
 
 impl PredicateAtom {
-    fn compatibility_guards(&self) -> Vec<Guard> {
+    fn contract_guards(&self) -> Vec<Guard> {
         let guard = match self {
             Self::Truthy { path } => Guard::Truthy { path: path.clone() },
             Self::Eq { path, value } => Guard::Eq {
@@ -184,7 +181,7 @@ mod tests {
         });
 
         assert_eq!(
-            predicate.compatibility_guards(),
+            predicate.contract_guards(),
             vec![Guard::Or {
                 paths: vec!["first".to_string(), "second".to_string()]
             }]
@@ -199,7 +196,7 @@ mod tests {
         .negated();
 
         assert_eq!(
-            predicate.compatibility_guards(),
+            predicate.contract_guards(),
             vec![Guard::Not {
                 path: "enabled".to_string()
             }]
@@ -215,7 +212,7 @@ mod tests {
         .negated();
 
         assert_eq!(
-            predicate.compatibility_guards(),
+            predicate.contract_guards(),
             vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]
@@ -230,7 +227,7 @@ mod tests {
         })));
 
         assert_eq!(
-            predicate.compatibility_guards(),
+            predicate.contract_guards(),
             vec![Guard::NotEq {
                 path: "mode".to_string(),
                 value: GuardValue::string("prod"),
@@ -246,7 +243,7 @@ mod tests {
         });
 
         assert_eq!(
-            predicate.compatibility_guards(),
+            predicate.contract_guards(),
             vec![Guard::NotEq {
                 path: "mode".to_string(),
                 value: GuardValue::string("disabled"),
@@ -267,7 +264,7 @@ mod tests {
         ]);
 
         assert_eq!(
-            predicate.compatibility_guards(),
+            predicate.contract_guards(),
             vec![Guard::AnyOf {
                 alternatives: vec![
                     vec![Guard::Truthy {
@@ -283,13 +280,13 @@ mod tests {
     }
 
     #[test]
-    fn compatibility_guard_stack_dedupes_projected_guards() {
+    fn contract_guard_stack_dedupes_projected_guards() {
         let predicate = Predicate::from(Guard::Truthy {
             path: "enabled".to_string(),
         });
 
         assert_eq!(
-            Predicate::compatibility_guard_stack(&[predicate.clone(), predicate]),
+            Predicate::contract_guard_stack(&[predicate.clone(), predicate]),
             vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]

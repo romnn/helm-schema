@@ -30,7 +30,7 @@ pub(super) fn append_document_helper_contract_uses(
         }
         let has_rendered_descendant =
             output_path::values_path_has_descendant(value, &helper_rendered_sources);
-        for extra_guards in meta.compatibility_guard_sets(value) {
+        for extra_guards in meta.contract_guard_sets(value) {
             if only_scalar_helper_outputs
                 && site.can_project_scalar_helper_to_caller_path()
                 && !has_rendered_descendant
@@ -57,7 +57,7 @@ pub(super) fn append_document_helper_contract_uses(
     for output in helper.fragment_output_uses {
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
-        for extra_guards in output.meta.compatibility_guard_sets(&output.source_expr) {
+        for extra_guards in output.meta.contract_guard_sets(&output.source_expr) {
             if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
                 let emit_path =
                     output_path::append_relative_path(site.path(), &output.relative_path);
@@ -100,7 +100,7 @@ pub(super) fn append_document_helper_contract_uses(
     }
 
     for (value, meta) in helper.dependency_values {
-        for extra_guards in meta.compatibility_guard_sets(&value) {
+        for extra_guards in meta.contract_guard_sets(&value) {
             contract.push(context.pathless_contract_use_with_extra_provenance(
                 value.clone(),
                 ValueKind::Scalar,

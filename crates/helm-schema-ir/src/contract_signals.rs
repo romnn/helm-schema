@@ -61,20 +61,6 @@ pub enum MetadataFieldKind {
     Namespace,
 }
 
-/// Path-level facts derived directly from normalized contract claims.
-///
-/// These are the values paths that downstream schema generation must consider,
-/// plus typed guard facts that can be lowered by generator policy.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub(crate) struct ContractPathSignals {
-    pub referenced_value_paths: BTreeSet<String>,
-    pub ranged_value_paths: BTreeSet<String>,
-    pub value_paths_used_as_fragment: BTreeSet<String>,
-    pub partial_scalar_value_paths: BTreeSet<String>,
-    pub guard_constraints_by_value_path: BTreeMap<String, Vec<GuardConstraint>>,
-    pub metadata_fields_by_value_path: BTreeMap<String, BTreeSet<MetadataFieldKind>>,
-}
-
 /// All schema-lowering evidence for one values path.
 ///
 /// The contract layer owns this view so downstream generation can consume one

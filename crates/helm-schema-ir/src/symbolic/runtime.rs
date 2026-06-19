@@ -23,7 +23,7 @@ impl SymbolicWalker<'_> {
         resource: Option<ResourceRef>,
     ) {
         let path = self.document_tracker.rebase_path(path);
-        let guards = self.compatibility_guards();
+        let guards = self.contract_guards();
         let context = ContractUseContext::new(
             &guards,
             &self.scope.locals().chart_value_defaults,

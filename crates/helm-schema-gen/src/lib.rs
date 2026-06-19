@@ -26,7 +26,6 @@ use schema_tree::{
     apply_values_descriptions, ensure_schema_node_at_path_segments, insert_schema_at_path_segments,
     object_schema, open_array_schema, open_object_schema,
 };
-use use_signals::{UseSignals, collect_use_signals};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
@@ -82,20 +81,12 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .values_descriptions
         .unwrap_or(&empty_values_descriptions);
 
-    let signals = collect_use_signals(
-        input
-            .contract_schema_signals
-            .schema_evidence_by_value_path(),
-        input.provider,
-    );
-
     let values_yaml_doc = input
         .values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
         .unwrap_or(YamlValue::Null);
 
     let root_schema = build_root_schema(
-        signals,
         input
             .contract_schema_signals
             .schema_evidence_by_value_path(),
@@ -125,7 +116,6 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
-    signals: UseSignals,
     schema_evidence_by_path: &BTreeMap<String, helm_schema_ir::ContractPathSchemaEvidence>,
     values_yaml_doc: &YamlValue,
     values_descriptions: &BTreeMap<String, String>,
@@ -133,7 +123,7 @@ fn build_root_schema(
     provider: &dyn ResourceSchemaOracle,
 ) -> Value {
     let mut root_schema = object_schema(Map::new());
-    let path_resolver = PathSchemaResolver::new(signals, schema_evidence_by_path, values_yaml_doc);
+    let path_resolver = PathSchemaResolver::new(schema_evidence_by_path, values_yaml_doc, provider);
     let mut resolved_paths = path_resolver.resolve_all();
     let provider_definitions =
         ProviderSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
@@ -311,9 +301,8 @@ fn resolve_overlay_target_schema(
 ) -> Option<Value> {
     let schema_evidence_by_path =
         BTreeMap::from([(overlay.target_value_path.clone(), overlay.evidence.clone())]);
-    let use_signals = collect_use_signals(&schema_evidence_by_path, provider);
     let path_resolver =
-        PathSchemaResolver::new(use_signals, &schema_evidence_by_path, &YamlValue::Null);
+        PathSchemaResolver::new(&schema_evidence_by_path, &YamlValue::Null, provider);
     path_resolver
         .resolve_all()
         .into_iter()

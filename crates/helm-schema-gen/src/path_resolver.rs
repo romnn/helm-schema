@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use helm_schema_core::ResourceSchemaOracle;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
@@ -9,7 +10,7 @@ use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema, type_schema};
-use crate::use_signals::UseSignals;
+use crate::use_signals::{UseSignals, collect_use_signals};
 use crate::values_yaml::{ValuePathCaches, build_value_path_caches};
 
 pub(crate) struct ResolvedPathSchema {
@@ -38,10 +39,11 @@ pub(crate) struct PathSchemaResolver<'a> {
 
 impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
-        signals: UseSignals,
         schema_evidence_by_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
         values_yaml_doc: &YamlValue,
+        provider: &dyn ResourceSchemaOracle,
     ) -> Self {
+        let signals = collect_use_signals(schema_evidence_by_path, provider);
         let pruned_parent_value_paths = schema_evidence_by_path
             .iter()
             .filter_map(|(path, evidence)| {

@@ -80,7 +80,7 @@ impl SymbolicWalker<'_> {
         }
 
         {
-            let guards = self.compatibility_guards();
+            let guards = self.contract_guards();
             let projection_context = ContractUseContext::new(
                 &guards,
                 &self.scope.locals().chart_value_defaults,

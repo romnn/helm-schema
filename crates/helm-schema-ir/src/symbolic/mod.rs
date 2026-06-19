@@ -56,7 +56,7 @@ impl SymbolicIrContext {
     /// contracts should use this method and derive schema facts with
     /// [`ContractIr::into_schema_signals`]. Fixture and external inspection
     /// output should first call [`ContractIr::project`] and then explicitly
-    /// convert the projection to compatibility DTO rows.
+    /// convert the projection to inspection DTO rows.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
         self.generate_contract_ir_with_provenance(src, None, defines, &[])
     }
@@ -235,8 +235,8 @@ impl<'a> SymbolicWalker<'a> {
         std::mem::take(&mut self.contract)
     }
 
-    fn compatibility_guards(&self) -> Vec<Guard> {
-        self.scope.compatibility_guards()
+    fn contract_guards(&self) -> Vec<Guard> {
+        self.scope.contract_guards()
     }
 
     fn current_dot_binding(&self) -> Option<HelperBinding> {

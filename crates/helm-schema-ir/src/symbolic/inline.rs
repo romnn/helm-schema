@@ -113,9 +113,9 @@ impl SymbolicWalker<'_> {
             contract.extend_type_hints(helper_summary.type_hints);
         }
         self.contract.append(contract);
-        let outer_guards = self.compatibility_guards();
+        let outer_guards = self.contract_guards();
         for (value, meta) in helper_summary.dependency_meta {
-            for extra_guards in meta.compatibility_guard_sets(&value) {
+            for extra_guards in meta.contract_guard_sets(&value) {
                 let mut guards = outer_guards.clone();
                 for guard in extra_guards {
                     if !guards.contains(&guard) {

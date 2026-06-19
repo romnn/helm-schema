@@ -16,8 +16,8 @@ pub(crate) struct ConditionActionPlan {
 }
 
 impl ConditionActionPlan {
-    pub(crate) fn compatibility_guards(&self) -> Vec<crate::Guard> {
-        self.predicate.compatibility_guards()
+    pub(crate) fn contract_guards(&self) -> Vec<crate::Guard> {
+        self.predicate.contract_guards()
     }
 }
 

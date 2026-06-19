@@ -63,7 +63,7 @@ impl DocumentOutput {
             let emit_kind = site.direct_value_kind();
             let mut guard_sets = local_output_meta
                 .get(&value)
-                .map(|meta| meta.compatibility_guard_sets(&value))
+                .map(|meta| meta.contract_guard_sets(&value))
                 .unwrap_or_else(|| vec![Vec::new()]);
             for extra_guards in &mut guard_sets {
                 if default_fallback_values.contains(&value)

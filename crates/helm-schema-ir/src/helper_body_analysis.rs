@@ -263,7 +263,7 @@ mod tests {
             .output
             .get("signoz.serviceAccount.name")
             .expect("service account name output metadata");
-        let guard_sets = meta.compatibility_guard_sets("signoz.serviceAccount.name");
+        let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
 
         assert!(
             guard_sets.contains(&vec![

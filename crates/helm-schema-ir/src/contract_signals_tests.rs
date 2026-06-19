@@ -212,11 +212,11 @@ fn contract_ir_path_signals_collect_references_and_typed_guard_constraints() {
         !evidence
             .get("ignored.guard")
             .is_some_and(|evidence| evidence.is_referenced_value_path),
-        "empty-source compatibility rows should not seed schema paths",
+        "empty-source inspection rows should not seed schema paths",
     );
     assert!(
         !evidence.contains_key(""),
-        "empty-source compatibility rows should not seed metadata facts",
+        "empty-source inspection rows should not seed metadata facts",
     );
 }
 

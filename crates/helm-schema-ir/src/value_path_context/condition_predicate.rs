@@ -348,7 +348,7 @@ mod tests {
         let with_predicate = Predicate::all(with_predicates_from_condition_predicate(predicate));
 
         assert_eq!(
-            with_predicate.compatibility_guards(),
+            with_predicate.contract_guards(),
             vec![
                 Guard::With {
                     path: "service.enabled".to_string(),

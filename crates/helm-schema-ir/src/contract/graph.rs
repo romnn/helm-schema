@@ -98,7 +98,7 @@ impl ContractIr {
     }
 
     /// Add declared input-type hints for values paths without projecting them
-    /// as compatibility rows.
+    /// as inspection rows.
     pub fn add_type_hint(&mut self, path: impl Into<String>, schema_type: impl Into<String>) {
         let path = path.into();
         let schema_type = schema_type.into();

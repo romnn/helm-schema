@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::contract_signals::{ContractPathSignals, ContractValuePathFacts};
+use crate::contract_signals::ContractValuePathFacts;
+
+use super::path_signals::ContractPathSignals;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct RenderPathFacts {

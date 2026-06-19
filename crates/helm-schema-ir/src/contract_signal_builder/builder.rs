@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::contract_signals::{
-    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence, ContractPathSignals,
+    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
@@ -12,6 +12,7 @@ use super::classifiers::{
     guard_constraint_from_guard, metadata_field_kind_from_yaml_path, use_is_null_tolerant,
     use_is_self_guarded,
 };
+use super::path_signals::ContractPathSignals;
 use super::value_path_facts::{
     RenderPathFacts, build_contract_value_path_facts, collect_paths_with_descendants,
 };

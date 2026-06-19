@@ -58,8 +58,8 @@ impl SymbolicScopeState {
         );
     }
 
-    pub(crate) fn compatibility_guards(&self) -> Vec<Guard> {
-        Predicate::compatibility_guard_stack(&self.predicates)
+    pub(crate) fn contract_guards(&self) -> Vec<Guard> {
+        Predicate::contract_guard_stack(&self.predicates)
     }
 
     pub(crate) fn predicates(&self) -> &[Predicate] {
@@ -115,7 +115,7 @@ mod tests {
         state.join_branch_outcomes(&entry, vec![branch]);
 
         assert_eq!(
-            state.compatibility_guards(),
+            state.contract_guards(),
             vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]

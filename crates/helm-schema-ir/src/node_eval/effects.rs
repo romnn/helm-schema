@@ -58,7 +58,7 @@ pub(super) fn apply_if_condition_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
-    let guards = plan.compatibility_guards();
+    let guards = plan.contract_guards();
     for value in plan.bound_values {
         sink.emit_contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
@@ -83,9 +83,9 @@ pub(super) fn apply_with_condition_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: ConditionActionPlan,
 ) {
-    let guards = plan.compatibility_guards();
+    let guards = plan.contract_guards();
     // Push the With predicate before emitting header scalar uses so the
-    // projected compatibility guards on those uses include `Guard::With`.
+    // emitted contract guards on those uses include `Guard::With`.
     // The schema generator uses that marker to identify with-header reads.
     for guard in &guards {
         sink.push_predicate_if_absent(Predicate::from(guard.clone()));

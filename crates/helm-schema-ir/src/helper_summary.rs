@@ -74,7 +74,7 @@ impl HelperOutputMeta {
         }
     }
 
-    pub(crate) fn compatibility_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
+    pub(crate) fn contract_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
         let predicate_branches = if self.predicates.is_empty() {
             vec![BTreeSet::new()]
         } else {
@@ -82,9 +82,8 @@ impl HelperOutputMeta {
         };
         let mut guard_sets = Vec::new();
         for predicate_branch in predicate_branches {
-            let mut guards = Predicate::compatibility_guard_stack(
-                &predicate_branch.into_iter().collect::<Vec<_>>(),
-            );
+            let mut guards =
+                Predicate::contract_guard_stack(&predicate_branch.into_iter().collect::<Vec<_>>());
             if self.defaulted {
                 let default_guard = Guard::Default {
                     path: source_expr.to_string(),
@@ -424,7 +423,7 @@ mod tests {
     use crate::{Guard, ValueKind, YamlPath};
 
     #[test]
-    fn helper_output_meta_projects_predicates_at_compatibility_boundary() {
+    fn helper_output_meta_projects_predicates_to_contract_guard_sets() {
         let meta = HelperOutputMeta {
             predicates: BTreeSet::from([BTreeSet::from([Predicate::Not(Box::new(
                 Predicate::Atom(PredicateAtom::Truthy {
@@ -436,7 +435,7 @@ mod tests {
         };
 
         assert_eq!(
-            meta.compatibility_guard_sets("serviceAccount.name"),
+            meta.contract_guard_sets("serviceAccount.name"),
             vec![vec![
                 Guard::Not {
                     path: "feature.enabled".to_string(),
@@ -474,7 +473,7 @@ mod tests {
         };
 
         assert_eq!(
-            meta.compatibility_guard_sets("serviceAccount.name"),
+            meta.contract_guard_sets("serviceAccount.name"),
             vec![
                 vec![
                     Guard::Truthy {
