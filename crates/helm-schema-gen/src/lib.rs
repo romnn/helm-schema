@@ -87,12 +87,9 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .unwrap_or(YamlValue::Null);
 
     let root_schema = build_root_schema(
-        input
-            .contract_schema_signals
-            .schema_evidence_by_value_path(),
+        input.contract_schema_signals,
         &values_yaml_doc,
         values_descriptions,
-        input.contract_schema_signals.conditional_path_overlays(),
         input.provider,
     );
 
@@ -116,21 +113,20 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
-    schema_evidence_by_path: &BTreeMap<String, helm_schema_ir::ContractPathSchemaEvidence>,
+    contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
     values_descriptions: &BTreeMap<String, String>,
-    conditional_path_overlays: &[ConditionalPathOverlay],
     provider: &dyn ResourceSchemaOracle,
 ) -> Value {
     let mut root_schema = object_schema(Map::new());
-    let path_resolver = PathSchemaResolver::new(schema_evidence_by_path, values_yaml_doc, provider);
+    let path_resolver = PathSchemaResolver::new(contract_schema_signals, values_yaml_doc, provider);
     let mut resolved_paths = path_resolver.resolve_all();
     let provider_definitions =
         ProviderSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
 
     let conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
-        conditional_path_overlays,
+        contract_schema_signals.conditional_path_overlays(),
         values_yaml_doc,
         provider,
     );
@@ -299,14 +295,7 @@ fn resolve_overlay_target_schema(
     overlay: &ConditionalPathOverlay,
     provider: &dyn ResourceSchemaOracle,
 ) -> Option<Value> {
-    let schema_evidence_by_path =
-        BTreeMap::from([(overlay.target_value_path.clone(), overlay.evidence.clone())]);
-    let path_resolver =
-        PathSchemaResolver::new(&schema_evidence_by_path, &YamlValue::Null, provider);
-    path_resolver
-        .resolve_all()
-        .into_iter()
-        .find(|resolved| resolved.value_path == overlay.target_value_path)
+    PathSchemaResolver::resolve_single_path_evidence(&overlay.evidence, &YamlValue::Null, provider)
         .map(|resolved| resolved.schema)
 }
 
