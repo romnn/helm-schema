@@ -826,7 +826,7 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
 }
 
 #[test]
-fn contract_ir_required_inference_signals_are_typed_header_facts() {
+fn contract_ir_requiredness_evidence_is_path_local() {
     let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(
             "feature.enabled".to_string(),
@@ -894,29 +894,54 @@ fn contract_ir_required_inference_signals_are_typed_header_facts() {
             None,
         ),
     ])
-    .into_required_inference_signals();
+    .into_schema_signals();
 
-    assert_eq!(
-        signals.positive_header_paths,
-        BTreeSet::from(["feature.enabled".to_string(), "mode".to_string()])
+    let evidence = &signals.schema_evidence_by_value_path;
+
+    assert!(
+        evidence
+            .get("feature.enabled")
+            .is_some_and(|evidence| evidence.requiredness.is_positive_header)
     );
-    assert_eq!(
-        signals.conditionally_optional_paths,
-        BTreeSet::from([
-            "optional".to_string(),
-            "resourcesPreset".to_string(),
-            "either.primary".to_string(),
-            "either.fallback".to_string(),
-        ])
+    assert!(
+        evidence
+            .get("mode")
+            .is_some_and(|evidence| evidence.requiredness.is_positive_header)
     );
-    assert_eq!(
-        signals.default_fallback_paths,
-        BTreeSet::from(["defaulted".to_string()])
+    assert!(
+        evidence
+            .get("optional")
+            .is_some_and(|evidence| evidence.requiredness.is_conditionally_optional)
+    );
+    assert!(
+        evidence
+            .get("resourcesPreset")
+            .is_some_and(|evidence| evidence.requiredness.is_conditionally_optional)
+    );
+    assert!(
+        evidence
+            .get("either.primary")
+            .is_some_and(|evidence| evidence.requiredness.is_conditionally_optional)
+    );
+    assert!(
+        evidence
+            .get("either.fallback")
+            .is_some_and(|evidence| evidence.requiredness.is_conditionally_optional)
+    );
+    assert!(
+        evidence
+            .get("defaulted")
+            .is_some_and(|evidence| evidence.requiredness.has_default_fallback)
+    );
+    assert!(
+        evidence
+            .get("ranged")
+            .is_some_and(|evidence| !evidence.requiredness.is_positive_header)
     );
 }
 
 #[test]
-fn contract_ir_required_inference_signals_ignore_pathless_scalar_non_headers() {
+fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
     let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(
             "rendered.value".to_string(),
@@ -935,11 +960,14 @@ fn contract_ir_required_inference_signals_ignore_pathless_scalar_non_headers() {
             None,
         ),
     ])
-    .into_required_inference_signals();
+    .into_schema_signals();
 
     assert!(
-        signals.positive_header_paths.is_empty(),
-        "plain pathless scalar uses must not be treated as positive header facts: {:?}",
-        signals.positive_header_paths
+        signals
+            .schema_evidence_by_value_path
+            .values()
+            .all(|evidence| !evidence.requiredness.is_positive_header),
+        "plain pathless scalar uses must not be treated as positive header facts: {:#?}",
+        signals.schema_evidence_by_value_path
     );
 }

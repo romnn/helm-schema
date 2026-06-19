@@ -303,7 +303,7 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
 }
 
 #[test]
-fn transitive_library_helper_default_flows_into_required_inference_signals()
+fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 -> color_eyre::eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -381,13 +381,16 @@ fn transitive_library_helper_default_flows_into_required_inference_signals()
         .cloned()
         .collect::<Vec<_>>();
 
+    let evidence = collection
+        .contract_schema_signals
+        .schema_evidence_by_value_path
+        .get("app.nameOverride")
+        .unwrap_or_else(|| {
+            panic!("missing schema evidence for app.nameOverride; uses={name_override_uses:#?}")
+        });
     assert!(
-        collection
-            .required_inference_signals
-            .default_fallback_paths
-            .contains("app.nameOverride"),
-        "transitive library helper default should become a structural contract signal, got fallback_paths={:?}; uses={name_override_uses:#?}",
-        collection.required_inference_signals.default_fallback_paths,
+        evidence.requiredness.has_default_fallback,
+        "transitive library helper default should become path-local contract evidence, got evidence={evidence:#?}; uses={name_override_uses:#?}",
     );
 
     Ok(())

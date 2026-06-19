@@ -65,7 +65,6 @@ mod printf_eval;
 mod provenance;
 mod provider_schema_use;
 mod range_action_plan;
-pub mod required_inference;
 mod resource_identity;
 mod static_file_template;
 mod symbolic;
@@ -87,7 +86,8 @@ pub use contract::{
 };
 pub use contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence, ContractPathSignals,
-    ContractSchemaSignals, ContractValuePathFacts, GuardConstraint, MetadataFieldKind,
+    ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, GuardConstraint,
+    MetadataFieldKind,
 };
 pub use contract_types::{Guard, GuardValue};
 pub use helm_schema_core::{
@@ -99,7 +99,6 @@ pub use helper_discovery::{
     extract_helper_calls_from_ast_body, extract_helper_calls_from_ast_excluding_defines,
 };
 pub use provenance::{ContractProvenance, SourceSpan};
-pub use required_inference::RequiredInferenceSignals;
 pub use symbolic::SymbolicIrContext;
 
 #[cfg(test)]

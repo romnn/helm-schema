@@ -1,7 +1,5 @@
 use helm_schema_engine::helpers::DefineIndex;
-use helm_schema_engine::{
-    ContractIr, ContractSchemaSignals, RequiredInferenceSignals, SymbolicIrContext,
-};
+use helm_schema_engine::{ContractIr, ContractSchemaSignals, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
@@ -13,7 +11,6 @@ use crate::error::CliResult;
 pub(crate) struct ChartAnalysis {
     pub(crate) contract: ContractIr,
     pub(crate) contract_schema_signals: ContractSchemaSignals,
-    pub(crate) required_inference_signals: RequiredInferenceSignals,
     pub(crate) local_schema_universe: LocalSchemaUniverse,
 }
 
@@ -59,12 +56,10 @@ pub(crate) fn analyze_charts(
     seed_top_level_values_yaml_keys(&mut contract, values_yaml);
 
     let contract_schema_signals = contract.clone().into_schema_signals();
-    let required_inference_signals = contract.clone().into_required_inference_signals();
 
     Ok(ChartAnalysis {
         contract,
         contract_schema_signals,
-        required_inference_signals,
         local_schema_universe,
     })
 }

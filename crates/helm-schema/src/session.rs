@@ -46,7 +46,6 @@ pub struct ValuePathExplanation {
 
 pub(crate) struct PreparedSession {
     pub(crate) analysis: Analysis,
-    pub(crate) required_inference_signals: helm_schema_engine::RequiredInferenceSignals,
     pub(crate) values_yaml: Option<String>,
     pub(crate) values_descriptions: BTreeMap<String, String>,
     pub(crate) subchart_value_prefixes: Vec<Vec<String>>,
@@ -73,7 +72,6 @@ impl PreparedSession {
                 schema_signals: chart_analysis.contract_schema_signals,
                 local_schemas: chart_analysis.local_schema_universe,
             },
-            required_inference_signals: chart_analysis.required_inference_signals,
             values_yaml,
             values_descriptions,
             subchart_value_prefixes: charts
@@ -260,9 +258,11 @@ impl AnalysisSession {
             })
             .unwrap_or_default();
         let has_default_fallback = prepared
-            .required_inference_signals
-            .default_fallback_paths
-            .contains(&normalized_path);
+            .analysis
+            .schema_signals
+            .schema_evidence_by_value_path
+            .get(&normalized_path)
+            .is_some_and(|evidence| evidence.requiredness.has_default_fallback);
 
         Ok(ValuePathExplanation {
             path: normalized_path,
@@ -366,8 +366,10 @@ pub(crate) fn generate_schema_from_resolved_contract(
     if opts.infer_required {
         required_inference::apply(
             &mut schema,
-            &prepared.required_inference_signals,
-            &prepared.analysis.schema_signals.value_path_facts,
+            &prepared
+                .analysis
+                .schema_signals
+                .schema_evidence_by_value_path,
             prepared.values_yaml.as_deref(),
         );
     }

@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::contract::ContractUse;
 use crate::contract_signals::{
     ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence, ContractPathSignals,
-    ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
+    ContractRequirednessEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
 };
 use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use crate::{Guard, ValueKind};
@@ -32,6 +32,7 @@ struct ContractSchemaSignalBuilder {
     render_facts_by_path: BTreeMap<String, RenderPathFacts>,
     path_signals: ContractPathSignals,
     provider_schema_uses: Vec<ProviderSchemaUse>,
+    requiredness_by_path: BTreeMap<String, ContractRequirednessEvidence>,
     nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
     conditional_overlays_by_path: BTreeMap<String, ConditionalOverlayAccumulator>,
 }
@@ -77,6 +78,7 @@ impl ContractSchemaSignalBuilder {
         self.record_provider_schema_use(contract_use);
         self.record_render_facts(contract_use);
         self.record_path_signals(contract_use);
+        self.record_requiredness(contract_use);
         self.record_nullable_path(contract_use);
         self.record_conditional_overlay(contract_use);
     }
@@ -107,6 +109,7 @@ impl ContractSchemaSignalBuilder {
         let schema_evidence_by_value_path = build_schema_evidence_by_value_path(
             &self.path_signals,
             &self.provider_schema_uses,
+            &self.requiredness_by_path,
             &type_hints_by_value_path,
             &value_path_facts,
         );
@@ -253,6 +256,67 @@ impl ContractSchemaSignalBuilder {
                 }
             }
         }
+    }
+
+    fn record_requiredness(&mut self, contract_use: &ContractUse) {
+        for guard in &contract_use.guards {
+            match guard {
+                Guard::Not { path } | Guard::Absent { path } | Guard::NotEq { path, .. } => {
+                    self.record_conditionally_optional_path(path);
+                }
+                Guard::Or { paths } => {
+                    for path in paths {
+                        self.record_conditionally_optional_path(path);
+                    }
+                }
+                Guard::AnyOf { alternatives } => {
+                    for alternative in alternatives {
+                        for guard in alternative {
+                            for path in guard.value_paths() {
+                                self.record_conditionally_optional_path(path);
+                            }
+                        }
+                    }
+                }
+                Guard::Default { path } => {
+                    self.record_default_fallback_path(path);
+                }
+                Guard::Truthy { .. }
+                | Guard::Eq { .. }
+                | Guard::Range { .. }
+                | Guard::With { .. }
+                | Guard::TypeIs { .. } => {}
+            }
+        }
+
+        if contract_use.kind == ValueKind::Scalar
+            && contract_use.path.0.is_empty()
+            && !contract_use.source_expr.trim().is_empty()
+            && use_is_positive_header(contract_use)
+        {
+            self.requiredness(&contract_use.source_expr)
+                .is_positive_header = true;
+        }
+    }
+
+    fn record_conditionally_optional_path(&mut self, path: &str) {
+        if path.trim().is_empty() {
+            return;
+        }
+        self.requiredness(path).is_conditionally_optional = true;
+    }
+
+    fn record_default_fallback_path(&mut self, path: &str) {
+        if path.trim().is_empty() {
+            return;
+        }
+        self.requiredness(path).has_default_fallback = true;
+    }
+
+    fn requiredness(&mut self, path: &str) -> &mut ContractRequirednessEvidence {
+        self.requiredness_by_path
+            .entry(path.to_string())
+            .or_default()
     }
 
     fn record_nullable_path(&mut self, contract_use: &ContractUse) {
@@ -414,6 +478,7 @@ impl ConditionalOverlayBranchAccumulator {
             metadata_field_kinds: self.metadata_field_kinds,
             type_hints,
             provider_schema_uses: self.provider_schema_uses,
+            requiredness: ContractRequirednessEvidence::default(),
         }
     }
 }
@@ -421,6 +486,7 @@ impl ConditionalOverlayBranchAccumulator {
 fn build_schema_evidence_by_value_path(
     path_signals: &ContractPathSignals,
     provider_schema_uses: &[ProviderSchemaUse],
+    requiredness_by_path: &BTreeMap<String, ContractRequirednessEvidence>,
     type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
     value_path_facts: &BTreeMap<String, ContractValuePathFacts>,
 ) -> BTreeMap<String, ContractPathSchemaEvidence> {
@@ -436,6 +502,7 @@ fn build_schema_evidence_by_value_path(
     paths.extend(value_path_facts.keys().cloned());
     paths.extend(type_hints_by_value_path.keys().cloned());
     paths.extend(provider_uses_by_path.keys().cloned());
+    paths.extend(requiredness_by_path.keys().cloned());
 
     paths
         .into_iter()
@@ -465,10 +532,31 @@ fn build_schema_evidence_by_value_path(
                     .get(&value_path)
                     .cloned()
                     .unwrap_or_default(),
+                requiredness: requiredness_by_path
+                    .get(&value_path)
+                    .copied()
+                    .unwrap_or_default(),
             };
             (value_path, evidence)
         })
         .collect()
+}
+
+fn use_is_positive_header(contract_use: &ContractUse) -> bool {
+    !contract_use.guards.is_empty()
+        && contract_use.guards.iter().all(|guard| match guard {
+            Guard::Truthy { path } | Guard::Eq { path, .. } | Guard::TypeIs { path, .. } => {
+                path == &contract_use.source_expr
+            }
+            Guard::Not { .. }
+            | Guard::NotEq { .. }
+            | Guard::Absent { .. }
+            | Guard::Or { .. }
+            | Guard::AnyOf { .. }
+            | Guard::Range { .. }
+            | Guard::With { .. }
+            | Guard::Default { .. } => false,
+        })
 }
 
 fn lowerable_guard_set(contract_use: &ContractUse) -> Option<Vec<ConditionalGuard>> {

@@ -89,6 +89,7 @@ pub struct ContractPathSchemaEvidence {
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     pub type_hints: BTreeSet<String>,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
+    pub requiredness: ContractRequirednessEvidence,
 }
 
 /// Contract-derived facts consumed by core values-schema generation.
@@ -125,4 +126,16 @@ pub struct ContractValuePathFacts {
     pub all_render_uses_self_guarded: bool,
     pub has_self_range_guard_render_use: bool,
     pub is_nullable: bool,
+}
+
+/// Path-local evidence consumed by the optional `--infer-required` post-pass.
+///
+/// These are still static-analysis facts, not a decision that the path must be
+/// required. The generator combines them with render-use facts and chart
+/// defaults before mutating the JSON Schema.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ContractRequirednessEvidence {
+    pub is_positive_header: bool,
+    pub is_conditionally_optional: bool,
+    pub has_default_fallback: bool,
 }

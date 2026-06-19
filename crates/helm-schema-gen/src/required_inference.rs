@@ -6,27 +6,25 @@
 //! unconditionally and never accesses via a `default` fallback.
 //!
 //! Why this is heuristic:
-//!   - "unconditionally referenced" relies on contract-level header-use
-//!     projection, which can misfire on empty-body `if not`/`if or` blocks.
+//!   - Helm truthiness in a positive header is not by itself proof that a
+//!     value is user-required.
 //!
 //! The schemadiff tool already strips `required` arrays from both
 //! sides before diffing — the only place this feature's output is
 //! user-visible is the CLI's `--infer-required` flag. If the heuristic
 //! ever proves more trouble than it's worth, deleting this file plus
-//! the matching modules in `helm-schema-ir` and `helm-schema-cli` is
-//! the entire rip surface.
+//! the matching CLI module is the entire rip surface.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_ir::{ContractValuePathFacts, RequiredInferenceSignals};
+use helm_schema_ir::ContractPathSchemaEvidence;
 use serde_json::Value;
 
 #[derive(Debug, Default, Clone, Copy)]
 struct RequiredInferencePolicy;
 
 struct RequiredInferenceInputs<'a> {
-    signals: &'a RequiredInferenceSignals,
-    value_path_facts: &'a std::collections::BTreeMap<String, ContractValuePathFacts>,
+    schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
     explicit_default_value_paths: &'a BTreeSet<String>,
 }
 
@@ -39,19 +37,13 @@ struct RequiredInferenceInputs<'a> {
 /// by the chart and must not be inferred as user-required, even if they also
 /// appear in positive guard headers.
 ///
-/// `signals` should come from [`helm_schema_ir::ContractIr`]'s dedicated
-/// `into_required_inference_signals` projection, not from a second pass over
-/// raw compatibility rows.
-///
 pub fn apply_required_inference(
     schema: &mut Value,
-    signals: &RequiredInferenceSignals,
-    value_path_facts: &std::collections::BTreeMap<String, ContractValuePathFacts>,
+    schema_evidence_by_value_path: &BTreeMap<String, ContractPathSchemaEvidence>,
     explicit_default_value_paths: &BTreeSet<String>,
 ) {
     let paths = RequiredInferencePolicy.required_paths(RequiredInferenceInputs {
-        signals,
-        value_path_facts,
+        schema_evidence_by_value_path,
         explicit_default_value_paths,
     });
     for path in paths {
@@ -69,11 +61,12 @@ pub fn apply_required_inference(
 impl RequiredInferencePolicy {
     fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
         let mut required: BTreeSet<String> = BTreeSet::new();
-        for path in &input.signals.positive_header_paths {
-            if input.signals.default_fallback_paths.contains(path)
-                || input.signals.conditionally_optional_paths.contains(path)
+        for (path, evidence) in input.schema_evidence_by_value_path {
+            if !evidence.requiredness.is_positive_header
+                || evidence.requiredness.has_default_fallback
+                || evidence.requiredness.is_conditionally_optional
                 || input.explicit_default_value_paths.contains(path)
-                || !path_has_non_self_guarded_render_use(path, input.value_path_facts)
+                || !has_non_self_guarded_render_use(evidence)
             {
                 continue;
             }
@@ -83,15 +76,11 @@ impl RequiredInferencePolicy {
     }
 }
 
-fn path_has_non_self_guarded_render_use(
-    path: &str,
-    value_path_facts: &std::collections::BTreeMap<String, ContractValuePathFacts>,
-) -> bool {
-    value_path_facts.get(path).is_some_and(|facts| {
-        facts.has_render_use
-            && !facts.has_self_guarded_render_use
-            && !facts.all_render_uses_self_guarded
-    })
+fn has_non_self_guarded_render_use(evidence: &ContractPathSchemaEvidence) -> bool {
+    let facts = evidence.facts;
+    facts.has_render_use
+        && !facts.has_self_guarded_render_use
+        && !facts.all_render_uses_self_guarded
 }
 
 /// Locate `path`'s parent object schema and add the leaf segment to its
@@ -159,8 +148,7 @@ mod tests {
     use crate::{ValuesSchemaInput, generate_values_schema};
     use helm_schema_ast::DefineIndex;
     use helm_schema_ir::{
-        ContractIr, ContractUse, Guard, GuardValue, RequiredInferenceSignals, SymbolicIrContext,
-        ValueKind, YamlPath,
+        ContractIr, ContractUse, Guard, GuardValue, SymbolicIrContext, ValueKind, YamlPath,
     };
     use helm_schema_k8s::KubernetesJsonSchemaProvider;
 
@@ -177,21 +165,15 @@ mod tests {
         ContractIr::from_contract_uses(uses)
     }
 
-    fn required_inference_signals_for(contract: &ContractIr) -> RequiredInferenceSignals {
-        contract.clone().into_required_inference_signals()
-    }
-
     fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
         let contract = parse_contract(src);
-        let required_signals = required_inference_signals_for(&contract);
         let schema_signals = contract.into_schema_signals();
         let mut schema = generate_values_schema(
             ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
         );
         apply_required_inference(
             &mut schema,
-            &required_signals,
-            &schema_signals.value_path_facts,
+            &schema_signals.schema_evidence_by_value_path,
             &BTreeSet::new(),
         );
         schema
@@ -219,15 +201,13 @@ mod tests {
                 provenance: Vec::new(),
             },
         ]);
-        let required_signals = required_inference_signals_for(&contract);
         let schema_signals = contract.into_schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
         apply_required_inference(
             &mut schema,
-            &required_signals,
-            &schema_signals.value_path_facts,
+            &schema_signals.schema_evidence_by_value_path,
             &BTreeSet::new(),
         );
 
@@ -248,15 +228,13 @@ mod tests {
             resource: None,
             provenance: Vec::new(),
         }]);
-        let required_signals = required_inference_signals_for(&contract);
         let schema_signals = contract.into_schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
         apply_required_inference(
             &mut schema,
-            &required_signals,
-            &schema_signals.value_path_facts,
+            &schema_signals.schema_evidence_by_value_path,
             &BTreeSet::new(),
         );
 
@@ -280,7 +258,6 @@ mod tests {
             resource: None,
             provenance: Vec::new(),
         }]);
-        let required_signals = required_inference_signals_for(&contract);
         let schema_signals = contract.into_schema_signals();
         let mut schema =
             generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
@@ -289,8 +266,7 @@ mod tests {
 
         apply_required_inference(
             &mut schema,
-            &required_signals,
-            &schema_signals.value_path_facts,
+            &schema_signals.schema_evidence_by_value_path,
             &explicit_default_value_paths,
         );
 

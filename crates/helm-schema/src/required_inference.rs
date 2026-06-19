@@ -4,7 +4,6 @@
 //!
 //!   - this file
 //!   - `helm-schema-gen/src/required_inference.rs`
-//!   - `helm-schema-ir/src/required_inference.rs`
 //!   - the `infer_required` field on [`crate::ChartArgs`] and
 //!     [`crate::GenerateOptions`]
 //!   - the conditional call in
@@ -14,7 +13,7 @@
 //!
 //! Nothing in the core schema-generation pipeline depends on anything here.
 
-use helm_schema_engine::{ContractValuePathFacts, RequiredInferenceSignals};
+use helm_schema_engine::ContractPathSchemaEvidence;
 use serde_json::Value;
 use tracing::instrument;
 
@@ -23,22 +22,18 @@ use crate::values_roots;
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally.
 ///
-/// `required_inference_signals` comes from the contract's dedicated
-/// required-inference compatibility projection.
 /// `values_yaml` is the composed values.yaml (used to re-derive explicit chart
 /// defaults — those must not be marked required).
 #[instrument(skip_all)]
 pub(crate) fn apply(
     schema: &mut Value,
-    required_inference_signals: &RequiredInferenceSignals,
-    value_path_facts: &std::collections::BTreeMap<String, ContractValuePathFacts>,
+    schema_evidence_by_value_path: &std::collections::BTreeMap<String, ContractPathSchemaEvidence>,
     values_yaml: Option<&str>,
 ) {
     let explicit_value_paths = values_roots::explicit_value_paths(values_yaml);
     helm_schema_engine::required_inference::apply_required_inference(
         schema,
-        required_inference_signals,
-        value_path_facts,
+        schema_evidence_by_value_path,
         &explicit_value_paths,
     );
 }
