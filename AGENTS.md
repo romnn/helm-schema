@@ -69,6 +69,37 @@ The standard for helm-schema should be:
 
 That is the bar that keeps helm-schema aligned with its purpose: a smart, typed, template-aware static analyzer for Helm charts, not a pile of ad hoc text heuristics.
 
+## Design goal: simplicity by deletion
+
+Precision is the primary goal, but the preferred way to reach that precision is
+through a design with fewer moving parts, fewer parallel representations, and
+fewer compatibility layers.
+
+This matters because helm-schema has historically accumulated multiple partial
+models for the same idea: line-driven trackers beside parser-backed structure,
+parallel helper/fragment value shapes, generator-side reassembly of facts that
+the IR already knew, and fallback layers that survived long after the precise
+path was available. That kind of architecture makes correctness harder to
+reason about, not easier.
+
+The standard should be:
+
+- prefer one semantic model over multiple projections of the same fact
+- prefer immutable precomputed structure over mutable incremental state where possible
+- prefer parser-backed structural models over line-shape or text-shape recovery
+- prefer deleting obsolete fallback paths once the structural path is good enough
+- prefer a small, explicit bounded fallback over a stack of overlapping rescue heuristics
+
+In practice, when choosing between two designs with similar correctness:
+
+- choose the one with fewer representations to keep in sync
+- choose the one that removes code rather than adding another layer
+- choose the one whose invariants can be explained in terms of the parsed
+  language structure rather than incidental source layout
+
+If a new abstraction does not make the system both easier to reason about and
+more structurally correct, it is probably the wrong abstraction.
+
 ### `values.schema.json` is output, not inference evidence
 
 helm-schema generates a `values.schema.json`-shaped artifact, but it must not

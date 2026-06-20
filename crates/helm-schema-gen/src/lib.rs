@@ -122,7 +122,11 @@ fn build_root_schema(
         let schema = match conditional_targets.get(resolved_path.value_path.as_str()) {
             Some(target) if target.preserve_base_schema => resolved_path.schema,
             Some(target) if target.open_fragment_base_schema => {
-                open_fragment_base_schema(&resolved_path.schema)
+                if resolved_path.provider_schema_candidate.is_some() {
+                    resolved_path.schema
+                } else {
+                    open_fragment_base_schema(&resolved_path.schema)
+                }
             }
             Some(_) => crate::schema_model::empty_schema(),
             None => resolved_path.schema,

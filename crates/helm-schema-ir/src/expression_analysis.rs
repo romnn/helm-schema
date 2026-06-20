@@ -252,4 +252,20 @@ mod tests {
             want: Some("serviceAccount.name".to_string()),
         );
     }
+
+    #[test]
+    fn set_default_chart_paths_ignores_unrelated_default_inside_set_rhs() {
+        let exprs = parse_expr_text(
+            r#"$_ := set .serviceAccount "name" (printf "%s" (.other | default "fallback"))"#,
+        );
+
+        sim_assert_eq!(
+            have: set_default_chart_paths_for_exprs(
+                &exprs,
+                None,
+                Some(&AbstractValue::ValuesPath(String::new()))
+            ),
+            want: BTreeSet::new(),
+        );
+    }
 }

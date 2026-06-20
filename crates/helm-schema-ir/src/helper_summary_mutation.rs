@@ -75,9 +75,13 @@ pub(crate) fn merge_local_default_paths(
     mut base: HashMap<String, BTreeSet<String>>,
     other: HashMap<String, BTreeSet<String>>,
 ) -> HashMap<String, BTreeSet<String>> {
-    for (key, paths) in other {
-        base.entry(key).or_default().extend(paths);
-    }
+    base.retain(|key, base_paths| {
+        let Some(other_paths) = other.get(key) else {
+            return false;
+        };
+        base_paths.extend(other_paths.iter().cloned());
+        true
+    });
     base
 }
 
@@ -149,5 +153,39 @@ mod tests {
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
 
         assert!(analysis.suppress_roots.is_empty());
+    }
+
+    #[test]
+    fn merge_local_default_paths_intersects_branch_presence() {
+        let base = HashMap::from([
+            (
+                "serviceAccount".to_string(),
+                BTreeSet::from(["left.default".to_string()]),
+            ),
+            (
+                "leftOnly".to_string(),
+                BTreeSet::from(["left.only".to_string()]),
+            ),
+        ]);
+        let other = HashMap::from([
+            (
+                "serviceAccount".to_string(),
+                BTreeSet::from(["right.default".to_string()]),
+            ),
+            (
+                "rightOnly".to_string(),
+                BTreeSet::from(["right.only".to_string()]),
+            ),
+        ]);
+
+        let merged = super::merge_local_default_paths(base, other);
+
+        sim_assert_eq!(
+            have: merged,
+            want: HashMap::from([(
+                "serviceAccount".to_string(),
+                BTreeSet::from(["left.default".to_string(), "right.default".to_string()])
+            )])
+        );
     }
 }

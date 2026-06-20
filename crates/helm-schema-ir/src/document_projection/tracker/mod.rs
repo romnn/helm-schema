@@ -884,14 +884,18 @@ ports:
             .expect("extra ingress render action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
+        let rendered_context = tracker
+            .attribution
+            .virtual_indent_context_for_node(action, 4);
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "ingress"],
-            "current={:?} mapping={:?} context={:?}",
+            "current={:?} mapping={:?} context={:?} rendered={:?}",
             tracker.path_for_node(action).0,
             tracker.path_at_mapping_entry_indent(action, 4).0,
-            tracker.context_for_node(action)
+            tracker.context_for_node(action),
+            rendered_context
         );
     }
 
@@ -1063,6 +1067,71 @@ ports:
             ],
             "context={:?}",
             tracker.context_for_node(range)
+        );
+    }
+
+    #[test]
+    fn tracker_keeps_metadata_name_path_after_top_level_helper_include() {
+        let source = r#"{{- include "synth.defaultValues" . }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name | quote }}
+"#;
+        let tree = parse_template(source);
+        let defines = DefineIndex::new();
+        let mut tracker = DocumentTracker::new(source, &defines);
+        tracker.reset_for_tree(&tree);
+
+        let mut actions = Vec::new();
+        output_nodes_containing(
+            tree.root_node(),
+            source,
+            ".Values.serviceAccount.name",
+            &mut actions,
+        );
+        let action = actions
+            .into_iter()
+            .next()
+            .expect("serviceAccount.name output");
+        drive_tracker_until(&mut tracker, tree.root_node(), action);
+
+        sim_assert_eq!(
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec!["metadata", "name"],
+            "current={:?} context={:?}",
+            tracker.path_for_node(action).0,
+            tracker.context_for_node(action)
+        );
+        assert!(tracker.output_entire_scalar_value(action));
+    }
+
+    #[test]
+    fn tracker_attributes_signoz_storage_class_scalar_include_to_pvc_spec_container() {
+        let source = include_str!(
+            "../../../../../testdata/charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml"
+        );
+        let tree = parse_template(source);
+        let defines = DefineIndex::new();
+        let mut tracker = DocumentTracker::new(source, &defines);
+        tracker.reset_for_tree(&tree);
+
+        let mut actions = Vec::new();
+        output_nodes_containing(
+            tree.root_node(),
+            source,
+            "common.storage.class",
+            &mut actions,
+        );
+        let action = actions.into_iter().next().expect("storage class include");
+        drive_tracker_until(&mut tracker, tree.root_node(), action);
+        sim_assert_eq!(
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
+            "current={:?} mapping={:?} context={:?}",
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 8).0,
+            tracker.context_for_node(action)
         );
     }
 

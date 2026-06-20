@@ -354,4 +354,65 @@ mod tests {
             want: Some(&BTreeSet::from(["string".to_string()]))
         );
     }
+
+    #[test]
+    fn storage_class_helper_projects_storage_class_name_relative_path() {
+        let source = include_str!(
+            "../../../testdata/charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_storage.tpl"
+        );
+        let mut defines = DefineIndex::new();
+        defines
+            .add_source(&TreeSitterParser, source)
+            .expect("define source");
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries);
+        let resolution = BoundHelperCallResolution {
+            bindings: HashMap::from([
+                (
+                    "persistence".to_string(),
+                    crate::abstract_value::AbstractValue::ValuesPath("persistence".to_string()),
+                ),
+                (
+                    "global".to_string(),
+                    crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
+                ),
+            ]),
+            helper_body_dot: Some(crate::abstract_value::AbstractValue::Dict(
+                [
+                    (
+                        "persistence".to_string(),
+                        crate::abstract_value::AbstractValue::ValuesPath("persistence".to_string()),
+                    ),
+                    (
+                        "global".to_string(),
+                        crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+            )),
+            helper_fragment_dot: None,
+        };
+        let mut seen = HashSet::new();
+
+        let summary =
+            interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
+        let outputs = summary.fragment_output_uses();
+
+        assert!(
+            outputs.iter().any(|output| {
+                output.source_expr == "global.storageClass"
+                    && output.relative_path.0 == ["storageClassName".to_string()]
+            }),
+            "expected global.storageClass to project to storageClassName, got {outputs:#?}"
+        );
+        assert!(
+            outputs.iter().any(|output| {
+                output.source_expr == "persistence.storageClass"
+                    && output.relative_path.0 == ["storageClassName".to_string()]
+            }),
+            "expected persistence.storageClass to project to storageClassName, got {outputs:#?}"
+        );
+    }
 }

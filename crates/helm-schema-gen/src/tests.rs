@@ -14,7 +14,7 @@ use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, ContractValuePathFacts, Guard, GuardValue,
     ProviderSchemaUse, ResourceRef, SymbolicIrContext, ValueKind, YamlPath,
 };
-use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
+use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 use test_util::prelude::sim_assert_eq;
 
 fn provider() -> KubernetesJsonSchemaProvider {
@@ -409,6 +409,341 @@ impl ResourceSchemaOracle for NoopProvider {
     fn has_resource(&self, _resource: &ResourceRef) -> bool {
         false
     }
+}
+
+#[test]
+fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
+    let src = test_util::read_testdata("charts/surveyor/templates/serviceMonitor.yaml");
+    let mut idx = DefineIndex::new();
+    idx.add_source(
+        &TreeSitterParser,
+        &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
+    )
+    .expect("helpers parse");
+    let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let schema_signals = contract.into_schema_signals();
+    let values_yaml: serde_yaml::Value =
+        serde_yaml::from_str(&test_util::read_testdata("charts/surveyor/values.yaml"))
+            .expect("values yaml");
+    let provider = Chain::new(vec![
+        Box::new(CrdsCatalogSchemaProvider::new().with_allow_download(true)),
+        Box::new(
+            KubernetesJsonSchemaProvider::new("v1.35.0")
+                .with_allow_download(true)
+                .with_api_version_guess(true),
+        ),
+    ])
+    .with_inference_enabled(true);
+    let resolved =
+        crate::path_resolver::PathSchemaResolver::new(&schema_signals, &values_yaml, &provider)
+            .resolve_all();
+    let resolved_metric_relabelings = resolved
+        .iter()
+        .find(|path| path.value_path == "serviceMonitor.metricRelabelings")
+        .expect("resolved metricRelabelings");
+    assert!(
+        resolved_metric_relabelings
+            .provider_schema_candidate
+            .is_some(),
+        "metricRelabelings should preserve exact provider schema candidate"
+    );
+    let mut index = crate::contract_evidence_index::ContractEvidenceIndex::from_contract_signals(
+        &schema_signals,
+        &provider,
+    );
+
+    let evidence = index
+        .take_path_evidence("serviceMonitor.metricRelabelings")
+        .expect("metricRelabelings evidence");
+    assert!(
+        !evidence.provider_schemas.is_empty(),
+        "metricRelabelings should keep CRD provider schema evidence"
+    );
+    let provider_schema = evidence
+        .provider_schemas
+        .first()
+        .expect("provider schema")
+        .schema();
+    assert_eq!(
+        provider_schema.get("type").and_then(Value::as_str),
+        Some("array"),
+        "metricRelabelings provider schema should stay array-shaped: {provider_schema}"
+    );
+    assert_eq!(
+        provider_schema
+            .pointer("/items/properties/action/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "metricRelabelings provider schema should keep relabel config item shape: {provider_schema}"
+    );
+    let overlay = schema_signals
+        .evidence_for("serviceMonitor.metricRelabelings")
+        .and_then(|evidence| evidence.conditional_overlays.first())
+        .expect("metricRelabelings conditional overlay");
+    assert!(
+        !overlay.evidence.provider_schema_uses.is_empty(),
+        "metricRelabelings conditional overlay should keep CRD provider schema uses"
+    );
+    let resolved_overlay = crate::path_resolver::PathSchemaResolver::resolve_single_path_evidence(
+        &overlay
+            .evidence
+            .as_path_evidence("serviceMonitor.metricRelabelings"),
+        &serde_yaml::from_str("null\n").expect("yaml null"),
+        &provider,
+    )
+    .expect("resolved overlay schema");
+    assert_eq!(
+        resolved_overlay.schema.get("type").and_then(Value::as_str),
+        Some("array"),
+        "resolved overlay schema should stay array-shaped: {}",
+        resolved_overlay.schema
+    );
+    assert_eq!(
+        resolved_overlay
+            .schema
+            .pointer("/items/properties/action/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "resolved overlay schema should keep relabel config item shape: {}",
+        resolved_overlay.schema
+    );
+
+    let generated = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &provider).with_values_yaml(Some(
+            &test_util::read_testdata("charts/surveyor/values.yaml"),
+        )),
+    );
+    let metric_relabelings = generated
+        .pointer("/properties/serviceMonitor/properties/metricRelabelings")
+        .expect("generated metricRelabelings property");
+    assert_eq!(
+        metric_relabelings.get("type").and_then(Value::as_str),
+        Some("array"),
+        "generated metricRelabelings schema should stay array-shaped: {generated}"
+    );
+    assert_eq!(
+        metric_relabelings
+            .pointer("/items/properties/action/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "generated metricRelabelings item schema should stay precise: {generated}"
+    );
+}
+
+#[test]
+fn zalando_extra_envs_keeps_podspec_envvar_shape() {
+    let src =
+        test_util::read_testdata("charts/zalando-postgres-operator/templates/deployment.yaml");
+    let mut idx = DefineIndex::new();
+    idx.add_source(
+        &TreeSitterParser,
+        &test_util::read_testdata("charts/zalando-postgres-operator/templates/_helpers.tpl"),
+    )
+    .expect("helpers parse");
+    let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let schema_signals = contract.into_schema_signals();
+    let values_yaml: serde_yaml::Value = serde_yaml::from_str(&test_util::read_testdata(
+        "charts/zalando-postgres-operator/values.yaml",
+    ))
+    .expect("values yaml");
+    let provider = production_chain_provider();
+
+    let resolved =
+        crate::path_resolver::PathSchemaResolver::new(&schema_signals, &values_yaml, &provider)
+            .resolve_all();
+    let resolved_extra_envs = resolved
+        .iter()
+        .find(|path| path.value_path == "extraEnvs")
+        .expect("resolved extraEnvs");
+    assert!(
+        resolved_extra_envs.provider_schema_candidate.is_some(),
+        "extraEnvs should preserve provider schema candidate"
+    );
+    assert_eq!(
+        resolved_extra_envs
+            .schema
+            .get("type")
+            .and_then(Value::as_str),
+        Some("array"),
+        "extraEnvs should stay array-shaped: {}",
+        resolved_extra_envs.schema
+    );
+    assert_eq!(
+        resolved_extra_envs
+            .schema
+            .pointer("/items/properties/name/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "extraEnvs should keep EnvVar item shape: {}",
+        resolved_extra_envs.schema
+    );
+
+    let generated = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &provider).with_values_yaml(Some(
+            &test_util::read_testdata("charts/zalando-postgres-operator/values.yaml"),
+        )),
+    );
+    let extra_envs = generated
+        .pointer("/properties/extraEnvs")
+        .expect("generated extraEnvs property");
+    assert_eq!(
+        extra_envs.get("type").and_then(Value::as_str),
+        Some("array"),
+        "generated extraEnvs should stay array-shaped: {extra_envs}"
+    );
+    assert_eq!(
+        extra_envs
+            .pointer("/items/properties/name/type")
+            .and_then(Value::as_str),
+        Some("string"),
+        "generated extraEnvs should keep EnvVar item shape: {extra_envs}"
+    );
+}
+
+#[test]
+fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
+    let helpers = indoc! {r#"
+        {{- define "synth.defaultValues" }}
+        {{- with .Values }}
+        {{- $_ := set .serviceAccount "name" (printf "%s" (.other | default "fallback")) }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        {{- include "synth.defaultValues" . }}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: {{ .Values.serviceAccount.name | quote }}
+    "#};
+
+    let ir = parse_ir_with_helpers(src, helpers);
+    let projection = ir.clone().project();
+    let guarded_target_uses: Vec<_> = projection
+        .uses()
+        .iter()
+        .filter(|use_| {
+            use_.source_expr == "serviceAccount.name"
+                && use_.path.0 == ["metadata".to_string(), "name".to_string()]
+        })
+        .collect();
+    assert!(
+        !guarded_target_uses.is_empty(),
+        "expected a rendered use for serviceAccount.name, got {ir:?}"
+    );
+    assert!(
+        guarded_target_uses.iter().all(|use_| {
+            !use_.guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    Guard::Default { path } if path == "serviceAccount.name"
+                )
+            })
+        }),
+        "unrelated default must not mark serviceAccount.name as defaulted: {guarded_target_uses:#?}"
+    );
+}
+
+#[test]
+fn guarded_fragment_array_provider_schema_stays_precise() {
+    #[derive(Debug)]
+    struct RelabelingsProvider;
+
+    impl ResourceSchemaOracle for RelabelingsProvider {
+        fn schema_fragment_for_use(
+            &self,
+            use_: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            (use_.value_path == "serviceMonitor.metricRelabelings"
+                && use_.path.0
+                    == [
+                        "spec".to_string(),
+                        "endpoints[*]".to_string(),
+                        "metricRelabelings".to_string(),
+                    ])
+            .then(|| {
+                ProviderSchemaFragment::new(serde_json::json!({
+                    "description": "provider relabelings",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "action": { "type": "string" }
+                        },
+                        "additionalProperties": false
+                    }
+                }))
+            })
+        }
+
+        fn schema_fragment_for_resource_path(
+            &self,
+            _resource: &ResourceRef,
+            _path: &YamlPath,
+        ) -> Option<ProviderSchemaFragment> {
+            None
+        }
+
+        fn origin(&self) -> ProviderOrigin {
+            ProviderOrigin::DefaultCatalog
+        }
+
+        fn has_resource(&self, _resource: &ResourceRef) -> bool {
+            true
+        }
+    }
+
+    let uses = vec![
+        ContractUse {
+            source_expr: "serviceMonitor.metricRelabelings".to_string(),
+            path: YamlPath(Vec::new()),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Truthy {
+                path: "serviceMonitor.enabled".to_string(),
+            }],
+            resource: Some(ResourceRef {
+                api_version: "monitoring.coreos.com/v1".to_string(),
+                kind: "ServiceMonitor".to_string(),
+                api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
+            }),
+            provenance: Vec::new(),
+        },
+        ContractUse {
+            source_expr: "serviceMonitor.metricRelabelings".to_string(),
+            path: YamlPath(vec![
+                "spec".to_string(),
+                "endpoints[*]".to_string(),
+                "metricRelabelings".to_string(),
+            ]),
+            kind: ValueKind::Fragment,
+            guards: vec![Guard::Truthy {
+                path: "serviceMonitor.enabled".to_string(),
+            }],
+            resource: Some(ResourceRef {
+                api_version: "monitoring.coreos.com/v1".to_string(),
+                kind: "ServiceMonitor".to_string(),
+                api_version_candidates: Vec::new(),
+                api_version_branches: Vec::new(),
+            }),
+            provenance: Vec::new(),
+        },
+    ];
+
+    let schema_signals = schema_signals_for(uses);
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &RelabelingsProvider)
+            .with_values_yaml(Some("serviceMonitor:\n  metricRelabelings: []\n")),
+    );
+
+    let then_schema = schema
+        .pointer("/properties/serviceMonitor/properties/metricRelabelings")
+        .expect("metricRelabelings property");
+    sim_assert_eq!(have: then_schema.get("type").and_then(Value::as_str), want: Some("array"));
+    sim_assert_eq!(
+        have: then_schema.pointer("/items/properties/action/type").and_then(Value::as_str),
+        want: Some("string")
+    );
 }
 
 #[test]
