@@ -188,15 +188,15 @@ mod tests {
 
         let cloud = output.pointer("/properties/cloud").expect("cloud schema");
         sim_assert_eq!(
-            cloud,
-            &serde_json::json!({
+            have: cloud,
+            want: &serde_json::json!({
                 "$ref": "#/$defs/schema1"
             }),
             "prepared override refs should replace inferred constraints with bundled refs"
         );
         sim_assert_eq!(
-            output.pointer("/$defs/schema1"),
-            Some(&serde_json::json!({
+            have: output.pointer("/$defs/schema1"),
+            want: Some(&serde_json::json!({
                 "enum": [null, "azure", "minikube"]
             })),
             "prepared override refs should carry resolved content under $defs"
@@ -253,8 +253,8 @@ mod tests {
 
         let cloud = output.pointer("/properties/cloud").expect("cloud schema");
         sim_assert_eq!(
-            cloud,
-            &serde_json::json!({
+            have: cloud,
+            want: &serde_json::json!({
                 "enum": [null, "azure", "minikube"]
             }),
             "fully inlined export refs should replace inferred constraints after dereferencing"
@@ -298,10 +298,10 @@ mod tests {
                 .expect("apply output pipeline");
 
         sim_assert_eq!(
-            output
+            have: output
                 .pointer("/properties/cloud/$ref")
                 .and_then(Value::as_str),
-            Some("./shared.json#/definitions/cloud"),
+            want: Some("./shared.json#/definitions/cloud"),
         );
 
         fs::remove_dir_all(&temp_dir).expect("remove temp dir");

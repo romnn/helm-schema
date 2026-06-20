@@ -290,8 +290,8 @@ data:
         let range = find_kind(tree.root_node(), "range_action").expect("range action");
 
         sim_assert_eq!(
-            range_body_mapping_entry_indent_from_source(range, source),
-            Some(2)
+            have: range_body_mapping_entry_indent_from_source(range, source),
+            want: Some(2)
         );
     }
 

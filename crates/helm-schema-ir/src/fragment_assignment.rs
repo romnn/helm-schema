@@ -226,7 +226,7 @@ fn apply_abstract_local_set_mutations_from_exprs(
     let mut env = crate::eval_env::EvalEnv::from_fragment_context(local_bindings, current_dot);
     let mut applied = false;
     for expr in exprs {
-        applied |= apply_local_set_mutations_expr(&expr, &mut env);
+        applied |= apply_local_set_mutations_expr(expr, &mut env);
     }
     if !applied {
         return false;

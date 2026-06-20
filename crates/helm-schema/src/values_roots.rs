@@ -95,8 +95,8 @@ a: 1
         ));
 
         sim_assert_eq!(
-            paths,
-            BTreeSet::from(["a".to_string(), "quoted".to_string(), "z".to_string()])
+            have: paths,
+            want: BTreeSet::from(["a".to_string(), "quoted".to_string(), "z".to_string()])
         );
     }
 
@@ -122,8 +122,8 @@ items:
         ));
 
         sim_assert_eq!(
-            paths,
-            BTreeSet::from([
+            have: paths,
+            want: BTreeSet::from([
                 "controller".to_string(),
                 "controller.admissionWebhooks".to_string(),
                 "controller.admissionWebhooks.enabled".to_string(),

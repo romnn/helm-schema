@@ -10,7 +10,7 @@ use test_util::prelude::sim_assert_eq;
 
 fn single_expr(action: &str) -> TemplateExpr {
     let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
-    sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+    sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
     exprs.into_iter().next().expect("expression exists")
 }
 
@@ -43,15 +43,15 @@ fn printf_exact_rendering_only_accepts_supported_string_formats() {
     let values = [BTreeSet::from(["x".to_string()])];
 
     sim_assert_eq!(
-        render_printf_string_sets("prefix-%s-%%", &values),
-        Some(BTreeSet::from(["prefix-x-%".to_string()]))
+        have: render_printf_string_sets("prefix-%s-%%", &values),
+        want: Some(BTreeSet::from(["prefix-x-%".to_string()]))
     );
-    sim_assert_eq!(render_printf_string_sets("%d", &values), None);
+    sim_assert_eq!(have: render_printf_string_sets("%d", &values), want: None);
     sim_assert_eq!(
-        render_printf_string_sets("literal", &[BTreeSet::from(["unused".to_string()])]),
-        None
+        have: render_printf_string_sets("literal", &[BTreeSet::from(["unused".to_string()])]),
+        want: None
     );
-    sim_assert_eq!(render_printf_string_sets("%s-%s", &values), None);
+    sim_assert_eq!(have: render_printf_string_sets("%s-%s", &values), want: None);
 }
 
 #[test]
@@ -60,8 +60,8 @@ fn integer_index_on_values_path_descends_array_item_wildcard() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::ValuesPath(
+        have: result.value,
+        want: Some(AbstractValue::ValuesPath(
             "sentinel.externalAccess.service.loadBalancerIP.*".to_string()
         ))
     );
@@ -79,8 +79,8 @@ fn integer_index_on_known_list_stays_positional() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::StringSet(BTreeSet::from([
+        have: result.value,
+        want: Some(AbstractValue::StringSet(BTreeSet::from([
             "scope".to_string()
         ])))
     );
@@ -107,8 +107,8 @@ fn set_call_updates_local_key_with_assigned_literal() {
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        env.locals.get("config"),
-        Some(&AbstractValue::Overlay {
+        have: env.locals.get("config"),
+        want: Some(&AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
                 AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
@@ -142,8 +142,8 @@ fn set_call_inside_throwaway_assignment_updates_local_key() {
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        env.locals.get("config"),
-        Some(&AbstractValue::Overlay {
+        have: env.locals.get("config"),
+        want: Some(&AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
                 AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
@@ -172,8 +172,8 @@ fn set_call_preserves_assigned_value_path() {
 
     let result = eval_expr(&single_expr(r#"$config.name"#), &env);
     sim_assert_eq!(
-        result.effects.reads,
-        BTreeSet::from(["generatedName".to_string()])
+        have: result.effects.reads,
+        want: BTreeSet::from(["generatedName".to_string()])
     );
 }
 
@@ -198,8 +198,8 @@ fn selector_on_local_dict_records_only_selected_child_reads() {
     let result = eval_expr(&expr, &env);
 
     sim_assert_eq!(
-        result.effects.reads,
-        BTreeSet::from(["serviceAccount.annotations".to_string()])
+        have: result.effects.reads,
+        want: BTreeSet::from(["serviceAccount.annotations".to_string()])
     );
 }
 
@@ -231,8 +231,8 @@ fn pipeline_ternary_returns_value_branches_not_condition() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::ValuesPath("config".to_string()))
+        have: result.value,
+        want: Some(AbstractValue::ValuesPath("config".to_string()))
     );
 }
 
@@ -242,8 +242,8 @@ fn base64_pipeline_preserves_source_path() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::ValuesPath("auth.password".to_string()))
+        have: result.value,
+        want: Some(AbstractValue::ValuesPath("auth.password".to_string()))
     );
 }
 
@@ -260,8 +260,8 @@ fn uniq_pipeline_preserves_local_list_items() {
     let result = eval_expr(&expr, &env);
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::List(vec![AbstractValue::ValuesPath(
+        have: result.value,
+        want: Some(AbstractValue::List(vec![AbstractValue::ValuesPath(
             "image.pullSecrets.*".to_string(),
         )]))
     );
@@ -273,8 +273,8 @@ fn split_list_preserves_equal_length_segment_positions() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::List(vec![
+        have: result.value,
+        want: Some(AbstractValue::List(vec![
             AbstractValue::StringSet(BTreeSet::from(["auth".to_string()])),
             AbstractValue::StringSet(BTreeSet::from(["password".to_string()])),
         ]))
@@ -287,8 +287,8 @@ fn split_list_keeps_mixed_length_path_candidates_atomic() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        result.value,
-        Some(AbstractValue::List(vec![AbstractValue::StringSet(
+        have: result.value,
+        want: Some(AbstractValue::List(vec![AbstractValue::StringSet(
             BTreeSet::from([
                 "auth.password".to_string(),
                 "global.auth.password".to_string(),
@@ -301,8 +301,8 @@ fn split_list_keeps_mixed_length_path_candidates_atomic() {
 fn first_and_reverse_preserve_list_structure() {
     let first = eval_expr(&single_expr(r#"first (list "a" "b")"#), &EvalEnv::default());
     sim_assert_eq!(
-        first.value,
-        Some(AbstractValue::StringSet(BTreeSet::from(["a".to_string()])))
+        have: first.value,
+        want: Some(AbstractValue::StringSet(BTreeSet::from(["a".to_string()])))
     );
 
     let reverse = eval_expr(
@@ -310,8 +310,8 @@ fn first_and_reverse_preserve_list_structure() {
         &EvalEnv::default(),
     );
     sim_assert_eq!(
-        reverse.value,
-        Some(AbstractValue::List(vec![
+        have: reverse.value,
+        want: Some(AbstractValue::List(vec![
             AbstractValue::StringSet(BTreeSet::from(["b".to_string()])),
             AbstractValue::StringSet(BTreeSet::from(["a".to_string()])),
         ]))

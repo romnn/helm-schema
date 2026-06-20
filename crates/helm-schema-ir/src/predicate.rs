@@ -182,8 +182,8 @@ mod tests {
         });
 
         sim_assert_eq!(
-            predicate.contract_guards(),
-            vec![Guard::Or {
+            have: predicate.contract_guards(),
+            want: vec![Guard::Or {
                 paths: vec!["first".to_string(), "second".to_string()]
             }]
         );
@@ -197,8 +197,8 @@ mod tests {
         .negated();
 
         sim_assert_eq!(
-            predicate.contract_guards(),
-            vec![Guard::Not {
+            have: predicate.contract_guards(),
+            want: vec![Guard::Not {
                 path: "enabled".to_string()
             }]
         );
@@ -213,8 +213,8 @@ mod tests {
         .negated();
 
         sim_assert_eq!(
-            predicate.contract_guards(),
-            vec![Guard::Truthy {
+            have: predicate.contract_guards(),
+            want: vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]
         );
@@ -228,8 +228,8 @@ mod tests {
         })));
 
         sim_assert_eq!(
-            predicate.contract_guards(),
-            vec![Guard::NotEq {
+            have: predicate.contract_guards(),
+            want: vec![Guard::NotEq {
                 path: "mode".to_string(),
                 value: GuardValue::string("prod"),
             }]
@@ -244,8 +244,8 @@ mod tests {
         });
 
         sim_assert_eq!(
-            predicate.contract_guards(),
-            vec![Guard::NotEq {
+            have: predicate.contract_guards(),
+            want: vec![Guard::NotEq {
                 path: "mode".to_string(),
                 value: GuardValue::string("disabled"),
             }]
@@ -265,8 +265,8 @@ mod tests {
         ]);
 
         sim_assert_eq!(
-            predicate.contract_guards(),
-            vec![Guard::AnyOf {
+            have: predicate.contract_guards(),
+            want: vec![Guard::AnyOf {
                 alternatives: vec![
                     vec![Guard::Truthy {
                         path: "first".to_string(),
@@ -287,8 +287,8 @@ mod tests {
         });
 
         sim_assert_eq!(
-            Predicate::contract_guard_stack(&[predicate.clone(), predicate]),
-            vec![Guard::Truthy {
+            have: Predicate::contract_guard_stack(&[predicate.clone(), predicate]),
+            want: vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]
         );

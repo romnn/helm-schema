@@ -119,8 +119,8 @@ fn inference_outcome_local_override_authoritative() {
             origin,
             ..
         } => {
-            sim_assert_eq!(api_version, "g/v1alpha1");
-            sim_assert_eq!(origin, ProviderOrigin::LocalOverride);
+            sim_assert_eq!(have: api_version, want: "g/v1alpha1");
+            sim_assert_eq!(have: origin, want: ProviderOrigin::LocalOverride);
         }
         other => panic!("expected Resolved from override; got {other:?}"),
     }
@@ -162,7 +162,7 @@ fn inference_outcome_ambiguous_when_two_non_override_disagree() {
     ];
     match aggregate(candidates) {
         ApiVersionInferenceOutcome::Ambiguous { candidates } => {
-            sim_assert_eq!(candidates.len(), 2);
+            sim_assert_eq!(have: candidates.len(), want: 2);
         }
         other => panic!("expected Ambiguous; got {other:?}"),
     }
@@ -177,7 +177,7 @@ fn inference_outcome_single_global_candidate_resolves() {
     }];
     match aggregate(candidates) {
         ApiVersionInferenceOutcome::Resolved { api_version, .. } => {
-            sim_assert_eq!(api_version, "g/v1");
+            sim_assert_eq!(have: api_version, want: "g/v1");
         }
         other => panic!("expected Resolved; got {other:?}"),
     }
@@ -203,8 +203,8 @@ fn inference_local_override_wins_over_online_probe() {
             origin,
             ..
         } => {
-            sim_assert_eq!(api_version, "a/v1");
-            sim_assert_eq!(origin, ProviderOrigin::LocalOverride);
+            sim_assert_eq!(have: api_version, want: "a/v1");
+            sim_assert_eq!(have: origin, want: ProviderOrigin::LocalOverride);
         }
         other => panic!("expected Resolved from override; got {other:?}"),
     }
@@ -232,10 +232,10 @@ fn api_version_guess_aggregates_across_providers() {
             source,
             ..
         } => {
-            sim_assert_eq!(api_version, "x/v1");
+            sim_assert_eq!(have: api_version, want: "x/v1");
             sim_assert_eq!(
-                source,
-                InferenceSource::Shortlist,
+                have: source,
+                want: InferenceSource::Shortlist,
                 "Shortlist must win over LocalCacheScan"
             );
         }
@@ -427,8 +427,8 @@ fn api_version_guess_cache_scan_ignores_stale_unconfigured_crd_source() {
 fn shortlist_does_not_resolve_pod_disruption_budget() {
     use helm_schema_k8s::inference::shortlist::canonical_api_version_for_kind;
     sim_assert_eq!(
-        canonical_api_version_for_kind("PodDisruptionBudget"),
-        None,
+        have: canonical_api_version_for_kind("PodDisruptionBudget"),
+        want: None,
         "PodDisruptionBudget must NOT be on the shortlist; it would cause AmbiguousApiVersion when auto-fallback populates v1beta1 in cache"
     );
 }
@@ -478,8 +478,8 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() {
     match outcome {
         ApiVersionInferenceOutcome::Resolved { api_version, .. } => {
             sim_assert_eq!(
-                api_version,
-                "policy/v1",
+                have: api_version,
+                want: "policy/v1",
                 "inference must resolve to current policy/v1, not the auto-fallback's v1beta1; candidates={candidates:?}"
             );
         }
@@ -579,8 +579,8 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         _ => None,
     });
     sim_assert_eq!(
-        inferred,
-        Some((
+        have: inferred,
+        want: Some((
             "ServiceMonitor".to_string(),
             "monitoring.coreos.com/v1".to_string()
         )),
@@ -714,8 +714,8 @@ fn api_version_guess_online_probe_kind_scoped() {
     let unknown = provider.infer_api_version_candidates("TotallyUnknownKindXYZ");
     let after = mock.total_calls();
     sim_assert_eq!(
-        after,
-        baseline,
+        have: after,
+        want: baseline,
         "tier 3 must NOT fire for kinds not in the extended shortlist"
     );
     assert!(
@@ -750,8 +750,8 @@ fn chain_caches_api_version_inference_by_kind() {
     let second = chain.schema_fragment_for_use(&use_);
     assert!(second.is_some(), "second lookup must still resolve");
     sim_assert_eq!(
-        mock.calls_for(service_monitor_url),
-        calls_after_first_lookup,
+        have: mock.calls_for(service_monitor_url),
+        want: calls_after_first_lookup,
         "repeated uses of the same kind must reuse the chain inference cache"
     );
 }

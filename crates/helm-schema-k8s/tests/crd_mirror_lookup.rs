@@ -45,7 +45,7 @@ fn crd_has_resource_does_not_speculatively_download() {
     };
     let owns = provider.has_resource(&resource);
     assert!(!owns);
-    sim_assert_eq!(mock.total_calls(), 0, "has_resource must not fetch");
+    sim_assert_eq!(have: mock.total_calls(), want: 0, "has_resource must not fetch");
 }
 
 #[test]
@@ -327,13 +327,13 @@ fn crd_negative_cache_per_source() {
     let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     sim_assert_eq!(
-        mock.calls_for(default_url),
-        1,
+        have: mock.calls_for(default_url),
+        want: 1,
         "default 404 must be cached negatively"
     );
     sim_assert_eq!(
-        mock.calls_for(&mirror_resource_url),
-        1,
+        have: mock.calls_for(&mirror_resource_url),
+        want: 1,
         "mirror 404 must be cached negatively independently"
     );
 }
@@ -383,7 +383,7 @@ fn crd_diagnostic_json_format() {
         locations_tried: vec!["url-a".to_string()],
     };
     let json = format_diagnostic_json(&diagnostic).expect("serialize");
-    sim_assert_eq!(json.lines().count(), 1, "JSON output must be a single line");
+    sim_assert_eq!(have: json.lines().count(), want: 1, "JSON output must be a single line");
     let parsed: Diagnostic = serde_json::from_str(&json).expect("round-trip");
     assert!(matches!(parsed, Diagnostic::CrdVersionNotFound { .. }));
 }

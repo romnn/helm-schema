@@ -592,7 +592,7 @@ mod tests {
         .schema()
         .clone();
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 
     #[test]
@@ -658,18 +658,18 @@ mod tests {
         )
         .expect("lazy descent should contain path");
 
-        sim_assert_eq!(actual.location().filename(), "defs.json");
+        sim_assert_eq!(have: actual.location().filename(), want: "defs.json");
         sim_assert_eq!(
-            actual.location().pointer(),
-            "/definitions/Container/properties/env"
+            have: actual.location().pointer(),
+            want: "/definitions/Container/properties/env"
         );
         sim_assert_eq!(
-            actual.source_schema(),
-            &json!({ "$ref": "#/definitions/StringMap" })
+            have: actual.source_schema(),
+            want: &json!({ "$ref": "#/definitions/StringMap" })
         );
         sim_assert_eq!(
-            actual.schema(),
-            &json!({
+            have: actual.schema(),
+            want: &json!({
                 "type": "object",
                 "additionalProperties": {
                     "type": "string"

@@ -116,24 +116,24 @@ mod tests {
             .pointer("/properties/oauth2-proxy/properties/global")
             .expect("child global schema");
         sim_assert_eq!(
-            child_global
+            have: child_global
                 .pointer("/properties/kube-score~1ignore/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "shared global property should be mirrored into child global: {child_global}"
         );
         sim_assert_eq!(
-            child_global
+            have: child_global
                 .pointer("/properties/imageRegistry/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "child global-specific properties should be preserved: {child_global}"
         );
         sim_assert_eq!(
-            child_global
+            have: child_global
                 .get("additionalProperties")
                 .and_then(Value::as_bool),
-            Some(true),
+            want: Some(true),
             "shared open-global policy should be mirrored into child global: {child_global}"
         );
 
@@ -141,24 +141,24 @@ mod tests {
             .pointer("/properties/oauth2-proxy/properties/redis/properties/global")
             .expect("nested global schema");
         sim_assert_eq!(
-            nested_global
+            have: nested_global
                 .pointer("/properties/kube-score~1ignore/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "shared global property should be mirrored into nested child global: {nested_global}"
         );
         sim_assert_eq!(
-            nested_global
+            have: nested_global
                 .pointer("/properties/storageClass/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "nested child global-specific properties should be preserved: {nested_global}"
         );
         sim_assert_eq!(
-            nested_global
+            have: nested_global
                 .get("additionalProperties")
                 .and_then(Value::as_bool),
-            Some(true),
+            want: Some(true),
             "shared open-global policy should be mirrored into nested child global: {nested_global}"
         );
     }

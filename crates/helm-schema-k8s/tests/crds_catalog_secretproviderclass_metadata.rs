@@ -24,8 +24,8 @@ fn secretproviderclass_metadata_name_uses_objectmeta_string_schema() {
         .into_schema();
 
     sim_assert_eq!(
-        schema.get("type").and_then(serde_json::Value::as_str),
-        Some("string"),
+        have: schema.get("type").and_then(serde_json::Value::as_str),
+        want: Some("string"),
         "metadata.name should use the standard objectmeta string schema, got {schema}"
     );
 }
@@ -43,10 +43,10 @@ fn secretproviderclass_metadata_labels_use_objectmeta_string_map() {
         .into_schema();
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "metadata.labels should use the standard objectmeta string-map schema, got {schema}"
     );
 }
@@ -64,10 +64,10 @@ fn secretproviderclass_metadata_annotations_use_objectmeta_string_map() {
         .into_schema();
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "metadata.annotations should use the standard objectmeta string-map schema, got {schema}"
     );
 }

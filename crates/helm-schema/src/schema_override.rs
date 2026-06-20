@@ -140,7 +140,7 @@ mod tests {
             "required": ["a", "b"]
         });
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 
     #[test]
@@ -167,7 +167,7 @@ mod tests {
             }
         });
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 
     #[test]
@@ -206,7 +206,7 @@ mod tests {
             }
         });
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 
     #[test]
@@ -245,7 +245,7 @@ mod tests {
             }
         });
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 
     #[test]
@@ -261,12 +261,12 @@ mod tests {
         mark_refs_for_replacement(&mut value);
 
         sim_assert_eq!(
-            value["properties"]["cloud"][REPLACE_MARKER],
-            serde_json::json!(true)
+            have: value["properties"]["cloud"][REPLACE_MARKER],
+            want: serde_json::json!(true)
         );
         sim_assert_eq!(
-            value["properties"]["appV"][REPLACE_MARKER],
-            serde_json::json!(true)
+            have: value["properties"]["appV"][REPLACE_MARKER],
+            want: serde_json::json!(true)
         );
         assert!(value["properties"]["common"].get(REPLACE_MARKER).is_none());
     }
@@ -294,6 +294,6 @@ mod tests {
             }
         });
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 }

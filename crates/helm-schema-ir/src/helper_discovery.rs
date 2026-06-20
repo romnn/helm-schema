@@ -302,15 +302,15 @@ mod tests {
         "#};
 
         let blocks = extract_define_blocks(src);
-        sim_assert_eq!(blocks.len(), 2);
-        sim_assert_eq!(blocks[0].name, "outer");
-        sim_assert_eq!(blocks[1].name, "inner");
-        sim_assert_eq!(&src[blocks[0].body_range.clone()], blocks[0].body);
-        sim_assert_eq!(&src[blocks[1].body_range.clone()], blocks[1].body);
+        sim_assert_eq!(have: blocks.len(), want: 2);
+        sim_assert_eq!(have: blocks[0].name, want: "outer");
+        sim_assert_eq!(have: blocks[1].name, want: "inner");
+        sim_assert_eq!(have: &src[blocks[0].body_range.clone()], want: blocks[0].body);
+        sim_assert_eq!(have: &src[blocks[1].body_range.clone()], want: blocks[1].body);
         assert!(blocks[0].body.contains("before"));
         assert!(blocks[0].body.contains("after"));
         assert!(blocks[0].body.contains(r#"{{- define "inner" -}}"#));
-        sim_assert_eq!(blocks[1].body.trim(), "inside");
+        sim_assert_eq!(have: blocks[1].body.trim(), want: "inside");
     }
 
     #[test]
@@ -323,51 +323,51 @@ mod tests {
         "#};
 
         let blocks = extract_define_blocks(src);
-        sim_assert_eq!(blocks.len(), 1);
-        sim_assert_eq!(blocks[0].name, "x");
+        sim_assert_eq!(have: blocks.len(), want: 1);
+        sim_assert_eq!(have: blocks[0].name, want: "x");
         assert!(blocks[0].body.contains("should not terminate"));
         sim_assert_eq!(
-            &src[blocks[0].byte_range.clone()],
-            src.get(blocks[0].byte_range.clone()).unwrap_or("")
+            have: &src[blocks[0].byte_range.clone()],
+            want: src.get(blocks[0].byte_range.clone()).unwrap_or("")
         );
     }
 
     #[test]
     fn extracts_real_include_call() {
         let src = r#"{{ include "common.labels" . }}"#;
-        sim_assert_eq!(extract_helper_calls(src), vec!["common.labels".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["common.labels".to_string()]);
     }
 
     #[test]
     fn extracts_real_template_call() {
         let src = r#"{{ template "common.labels" . }}"#;
-        sim_assert_eq!(extract_helper_calls(src), vec!["common.labels".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["common.labels".to_string()]);
     }
 
     #[test]
     fn skips_helm_comment_call() {
         let src = r#"{{/* include "common.fake" */}}{{ include "common.real" . }}"#;
-        sim_assert_eq!(extract_helper_calls(src), vec!["common.real".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["common.real".to_string()]);
     }
 
     #[test]
     fn skips_call_inside_double_quoted_string() {
         let src = r#"{{ "include \"common.fake\"" | quote }}{{ include "common.real" . }}"#;
-        sim_assert_eq!(extract_helper_calls(src), vec!["common.real".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["common.real".to_string()]);
     }
 
     #[test]
     fn skips_call_inside_backtick_raw_string() {
         let src = "{{ `include \"common.fake\"` | quote }}{{ include \"common.real\" . }}";
-        sim_assert_eq!(extract_helper_calls(src), vec!["common.real".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["common.real".to_string()]);
     }
 
     #[test]
     fn multiple_real_calls_in_one_action() {
         let src = r#"{{ include "a" . }}{{ include "b" . }}"#;
         sim_assert_eq!(
-            extract_helper_calls(src),
-            vec!["a".to_string(), "b".to_string()],
+            have: extract_helper_calls(src),
+            want: vec!["a".to_string(), "b".to_string()],
         );
     }
 
@@ -375,21 +375,21 @@ mod tests {
     fn dedup_preserves_first_occurrence_order() {
         let src = r#"{{ include "a" . }}{{ include "b" . }}{{ include "a" . }}"#;
         sim_assert_eq!(
-            extract_helper_calls(src),
-            vec!["a".to_string(), "b".to_string()],
+            have: extract_helper_calls(src),
+            want: vec!["a".to_string(), "b".to_string()],
         );
     }
 
     #[test]
     fn extracts_helper_inside_control_flow_body() {
         let src = r#"{{ if .X }}{{ include "deep" . }}{{ end }}"#;
-        sim_assert_eq!(extract_helper_calls(src), vec!["deep".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["deep".to_string()]);
     }
 
     #[test]
     fn extracts_helper_inside_range_destructure_header() {
         let src = r#"{{ range $i, $v := include "src" . }}{{ end }}"#;
-        sim_assert_eq!(extract_helper_calls(src), vec!["src".to_string()]);
+        sim_assert_eq!(have: extract_helper_calls(src), want: vec!["src".to_string()]);
     }
 
     #[test]
@@ -403,8 +403,8 @@ mod tests {
         let ast = TreeSitterParser.parse(src).expect("parse");
 
         sim_assert_eq!(
-            extract_helper_calls_from_ast_excluding_defines(&ast),
-            vec!["direct".to_string()]
+            have: extract_helper_calls_from_ast_excluding_defines(&ast),
+            want: vec!["direct".to_string()]
         );
     }
 
@@ -426,8 +426,8 @@ mod tests {
         };
 
         sim_assert_eq!(
-            extract_helper_calls_from_ast_body(body),
-            vec!["guard".to_string(), "body".to_string()]
+            have: extract_helper_calls_from_ast_body(body),
+            want: vec!["guard".to_string(), "body".to_string()]
         );
     }
 
@@ -442,8 +442,8 @@ mod tests {
         let ast = TreeSitterParser.parse(src).expect("parse");
 
         sim_assert_eq!(
-            extract_helper_calls_from_ast_excluding_defines(&ast),
-            vec!["helper.name".to_string()]
+            have: extract_helper_calls_from_ast_excluding_defines(&ast),
+            want: vec!["helper.name".to_string()]
         );
     }
 }

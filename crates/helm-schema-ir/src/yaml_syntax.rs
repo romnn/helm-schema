@@ -48,9 +48,9 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
         return None;
     }
 
-    let mut chars = after.chars();
+    let chars = after.chars();
     let mut key = String::new();
-    while let Some(ch) = chars.next() {
+    for ch in chars {
         if ch == ':' {
             return finalize_yaml_key(key.trim().to_string());
         }
@@ -126,25 +126,25 @@ mod tests {
     #[test]
     fn parse_yaml_key_handles_plain_and_quoted_keys() {
         sim_assert_eq!(
-            parse_yaml_key("metadata.name: value").map(ParsedYamlKey::into_key),
-            Some("metadata.name".to_string())
+            have: parse_yaml_key("metadata.name: value").map(ParsedYamlKey::into_key),
+            want: Some("metadata.name".to_string())
         );
         sim_assert_eq!(
-            parse_yaml_key(r#""app.kubernetes.io/name": value"#).map(ParsedYamlKey::into_key),
-            Some("app.kubernetes.io/name".to_string())
+            have: parse_yaml_key(r#""app.kubernetes.io/name": value"#).map(ParsedYamlKey::into_key),
+            want: Some("app.kubernetes.io/name".to_string())
         );
         sim_assert_eq!(
-            parse_yaml_key("'it''s': value").map(ParsedYamlKey::into_key),
-            Some("it's".to_string())
+            have: parse_yaml_key("'it''s': value").map(ParsedYamlKey::into_key),
+            want: Some("it's".to_string())
         );
     }
 
     #[test]
     fn first_mapping_colon_skips_templates_and_quoted_scalars() {
         let line = r#"{{ printf "not:a:key" }}: value"#;
-        sim_assert_eq!(first_mapping_colon_offset(line), Some(24));
+        sim_assert_eq!(have: first_mapping_colon_offset(line), want: Some(24));
 
         let line = r#""not:a:key": value"#;
-        sim_assert_eq!(first_mapping_colon_offset(line), Some(11));
+        sim_assert_eq!(have: first_mapping_colon_offset(line), want: Some(11));
     }
 }

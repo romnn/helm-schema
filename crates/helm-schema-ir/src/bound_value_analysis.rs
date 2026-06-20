@@ -419,8 +419,8 @@ mod tests {
     #[test]
     fn parse_get_binding_detects_declaration_from_ast() {
         sim_assert_eq!(
-            parse_get_binding(r#"{{- $value := get $.Values.config $key -}}"#),
-            Some(GetBindingPlan {
+            have: parse_get_binding(r#"{{- $value := get $.Values.config $key -}}"#),
+            want: Some(GetBindingPlan {
                 variable: "value".to_string(),
                 kind: AssignmentKind::Declaration,
                 binding: GetBinding {
@@ -434,8 +434,8 @@ mod tests {
     #[test]
     fn parse_get_binding_detects_assignment_from_ast() {
         sim_assert_eq!(
-            parse_get_binding(r#"{{- $value = get .Values.config $key -}}"#),
-            Some(GetBindingPlan {
+            have: parse_get_binding(r#"{{- $value = get .Values.config $key -}}"#),
+            want: Some(GetBindingPlan {
                 variable: "value".to_string(),
                 kind: AssignmentKind::Assignment,
                 binding: GetBinding {
@@ -449,8 +449,8 @@ mod tests {
     #[test]
     fn parse_literal_list_range_detects_variable_definition_from_ast() {
         sim_assert_eq!(
-            parse_literal_list_range(r#"$scope := list "frontend" "backend""#),
-            Some((
+            have: parse_literal_list_range(r#"$scope := list "frontend" "backend""#),
+            want: Some((
                 "scope".to_string(),
                 vec!["frontend".to_string(), "backend".to_string()]
             ))
@@ -474,12 +474,12 @@ mod tests {
         );
 
         sim_assert_eq!(
-            extract_bound_values(
+            have: extract_bound_values(
                 r#"{{- printf "%s" $config.port -}}"#,
                 &range_domains,
                 &get_bindings
             ),
-            vec![
+            want: vec![
                 "config.backend.port".to_string(),
                 "config.frontend.port".to_string()
             ]
@@ -503,12 +503,12 @@ mod tests {
         );
 
         sim_assert_eq!(
-            extract_bound_values(
+            have: extract_bound_values(
                 r#"or (eq $protocol "nats") $config.enabled"#,
                 &range_domains,
                 &get_bindings
             ),
-            vec!["config.websocket.enabled".to_string()]
+            want: vec!["config.websocket.enabled".to_string()]
         );
     }
 
@@ -529,12 +529,12 @@ mod tests {
         );
 
         sim_assert_eq!(
-            extract_bound_values(
+            have: extract_bound_values(
                 r#"and (eq $protocol "nats") $config.enabled"#,
                 &range_domains,
                 &get_bindings
             ),
-            vec!["config.nats.enabled".to_string()]
+            want: vec!["config.nats.enabled".to_string()]
         );
     }
 }

@@ -33,13 +33,13 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state.restore(snapshot);
 
     sim_assert_eq!(
-        state.fragment_bindings.get("image"),
-        Some(&AbstractValue::ValuesPath("image".to_string()))
+        have: state.fragment_bindings.get("image"),
+        want: Some(&AbstractValue::ValuesPath("image".to_string()))
     );
     assert!(state.range_domains.is_empty());
     sim_assert_eq!(
-        state.chart_value_defaults,
-        ["serviceAccount.name".to_string()].into_iter().collect()
+        have: state.chart_value_defaults,
+        want: ["serviceAccount.name".to_string()].into_iter().collect()
     );
 }
 
@@ -59,8 +59,8 @@ fn local_scope_restores_shadowed_fragment_binding() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.fragment_bindings.get("name"),
-        Some(&AbstractValue::ValuesPath("outer".to_string()))
+        have: state.fragment_bindings.get("name"),
+        want: Some(&AbstractValue::ValuesPath("outer".to_string()))
     );
 }
 
@@ -80,8 +80,8 @@ fn local_scope_keeps_assignment_to_outer_fragment_binding() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.fragment_bindings.get("name"),
-        Some(&AbstractValue::ValuesPath("assigned".to_string()))
+        have: state.fragment_bindings.get("name"),
+        want: Some(&AbstractValue::ValuesPath("assigned".to_string()))
     );
 }
 
@@ -105,8 +105,8 @@ fn local_scope_restores_shadowed_get_binding() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.get_bindings.get("value"),
-        Some(&get_binding("outer", "key"))
+        have: state.get_bindings.get("value"),
+        want: Some(&get_binding("outer", "key"))
     );
 }
 
@@ -130,8 +130,8 @@ fn local_scope_keeps_assignment_to_outer_get_binding() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.get_bindings.get("value"),
-        Some(&get_binding("assigned", "key"))
+        have: state.get_bindings.get("value"),
+        want: Some(&get_binding("assigned", "key"))
     );
 }
 
@@ -154,8 +154,8 @@ fn fragment_assignment_replaces_outer_get_binding() {
 
     assert!(!state.get_bindings.contains_key("value"));
     sim_assert_eq!(
-        state.fragment_bindings.get("value"),
-        Some(&AbstractValue::ValuesPath("assigned".to_string()))
+        have: state.fragment_bindings.get("value"),
+        want: Some(&AbstractValue::ValuesPath("assigned".to_string()))
     );
 }
 
@@ -173,8 +173,8 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
 
     assert!(!state.range_domains.contains_key("key"));
     sim_assert_eq!(
-        state.fragment_bindings.get("key"),
-        Some(&AbstractValue::ValuesPath("outer".to_string()))
+        have: state.fragment_bindings.get("key"),
+        want: Some(&AbstractValue::ValuesPath("outer".to_string()))
     );
 }
 
@@ -196,8 +196,8 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.default_paths.get("name"),
-        Some(&BTreeSet::from(["outer.default".to_string()]))
+        have: state.default_paths.get("name"),
+        want: Some(&BTreeSet::from(["outer.default".to_string()]))
     );
 }
 
@@ -219,8 +219,8 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.default_paths.get("name"),
-        Some(&BTreeSet::from(["assigned.default".to_string()]))
+        have: state.default_paths.get("name"),
+        want: Some(&BTreeSet::from(["assigned.default".to_string()]))
     );
 }
 
@@ -242,8 +242,8 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.output_meta.get("name"),
-        Some(&output_meta("outer.output"))
+        have: state.output_meta.get("name"),
+        want: Some(&output_meta("outer.output"))
     );
 }
 
@@ -265,8 +265,8 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        state.output_meta.get("name"),
-        Some(&output_meta("assigned.output"))
+        have: state.output_meta.get("name"),
+        want: Some(&output_meta("assigned.output"))
     );
 }
 
@@ -294,8 +294,8 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     joined.join_branch_outcomes(&entry_snapshot, vec![first.snapshot(), second.snapshot()]);
 
     sim_assert_eq!(
-        joined.fragment_bindings.get("name"),
-        Some(&AbstractValue::Choice(
+        have: joined.fragment_bindings.get("name"),
+        want: Some(&AbstractValue::Choice(
             [
                 AbstractValue::ValuesPath("first".to_string()),
                 AbstractValue::ValuesPath("second".to_string())
@@ -322,8 +322,8 @@ fn branch_join_intersects_chart_value_defaults() {
     joined.join_branch_outcomes(&entry_snapshot, vec![first.snapshot(), second.snapshot()]);
 
     sim_assert_eq!(
-        joined.chart_value_defaults,
-        ["already.defaulted".to_string()].into_iter().collect()
+        have: joined.chart_value_defaults,
+        want: ["already.defaulted".to_string()].into_iter().collect()
     );
 }
 

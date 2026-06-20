@@ -64,7 +64,7 @@ impl PathSchemaResolver {
         Self {
             evidence_index,
             path_caches,
-            resolve_policy: ResolvePolicy::default(),
+            resolve_policy: ResolvePolicy,
         }
     }
 
@@ -125,7 +125,7 @@ impl PathSchemaResolver {
         Self {
             evidence_index,
             path_caches,
-            resolve_policy: ResolvePolicy::default(),
+            resolve_policy: ResolvePolicy,
         }
     }
 

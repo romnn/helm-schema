@@ -48,5 +48,5 @@ pub fn assert_ir_fixture(case: IrCorpusCase<'_>) {
     let actual = render_ir_case(case);
     let expected: Value = serde_json::from_str(case.expected_fixture).expect("expected ir json");
 
-    sim_assert_eq!(actual, expected);
+    sim_assert_eq!(have: actual, want: expected);
 }

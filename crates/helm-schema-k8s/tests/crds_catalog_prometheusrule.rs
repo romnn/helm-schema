@@ -48,7 +48,7 @@ fn materialize_prometheusrule() {
     let local_materialized =
         debug_materialize_override_schema(&local_provider, &r).expect("materialize");
 
-    sim_assert_eq!(upstream_materialized, local_materialized);
+    sim_assert_eq!(have: upstream_materialized, want: local_materialized);
 }
 
 #[test]
@@ -87,7 +87,7 @@ fn prometheusrule_leaf_schema_rules_items() {
         .schema_fragment_for_resource_path(&r, &path)
         .expect("leaf schema");
 
-    sim_assert_eq!(upstream_leaf.into_schema(), local_leaf.into_schema());
+    sim_assert_eq!(have: upstream_leaf.into_schema(), want: local_leaf.into_schema());
 }
 
 /// `has_resource` reports whether the catalog has the resource's schema

@@ -47,8 +47,8 @@ mod tests {
     fn third_party_crds_yield_relative_path() {
         let r = resource("monitoring.coreos.com/v1", "ServiceMonitor");
         sim_assert_eq!(
-            relative_path_for_resource(&r),
-            Some("monitoring.coreos.com/servicemonitor_v1.json".to_string())
+            have: relative_path_for_resource(&r),
+            want: Some("monitoring.coreos.com/servicemonitor_v1.json".to_string())
         );
     }
 
@@ -76,8 +76,8 @@ mod tests {
             ("apiextensions.k8s.io/v1", "CustomResourceDefinition"),
         ] {
             sim_assert_eq!(
-                relative_path_for_resource(&resource(api_version, kind)),
-                None,
+                have: relative_path_for_resource(&resource(api_version, kind)),
+                want: None,
                 "{api_version}/{kind} must NOT be routed to the CRD catalog"
             );
         }
@@ -94,8 +94,8 @@ mod tests {
             ("extensions/v1beta1", "DaemonSet"),
         ] {
             sim_assert_eq!(
-                relative_path_for_resource(&resource(api_version, kind)),
-                None,
+                have: relative_path_for_resource(&resource(api_version, kind)),
+                want: None,
                 "{api_version}/{kind} must NOT be routed to the CRD catalog"
             );
         }
@@ -110,24 +110,24 @@ mod tests {
     fn k8s_io_crd_groups_yield_relative_path() {
         // VPA — the canonical `.k8s.io`-suffixed CRD.
         sim_assert_eq!(
-            relative_path_for_resource(&resource("autoscaling.k8s.io/v1", "VerticalPodAutoscaler")),
-            Some("autoscaling.k8s.io/verticalpodautoscaler_v1.json".to_string())
+            have: relative_path_for_resource(&resource("autoscaling.k8s.io/v1", "VerticalPodAutoscaler")),
+            want: Some("autoscaling.k8s.io/verticalpodautoscaler_v1.json".to_string())
         );
         // Gateway API — the canonical multi-resource CRD family
         // under `.k8s.io`.
         sim_assert_eq!(
-            relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "HTTPRoute")),
-            Some("gateway.networking.k8s.io/httproute_v1.json".to_string())
+            have: relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "HTTPRoute")),
+            want: Some("gateway.networking.k8s.io/httproute_v1.json".to_string())
         );
         sim_assert_eq!(
-            relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "Gateway")),
-            Some("gateway.networking.k8s.io/gateway_v1.json".to_string())
+            have: relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "Gateway")),
+            want: Some("gateway.networking.k8s.io/gateway_v1.json".to_string())
         );
         // CSI snapshotter — distinct from the built-in
         // `storage.k8s.io` group.
         sim_assert_eq!(
-            relative_path_for_resource(&resource("snapshot.storage.k8s.io/v1", "VolumeSnapshot")),
-            Some("snapshot.storage.k8s.io/volumesnapshot_v1.json".to_string())
+            have: relative_path_for_resource(&resource("snapshot.storage.k8s.io/v1", "VolumeSnapshot")),
+            want: Some("snapshot.storage.k8s.io/volumesnapshot_v1.json".to_string())
         );
     }
 }

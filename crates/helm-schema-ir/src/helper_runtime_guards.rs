@@ -68,8 +68,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            paths,
-            ["signoz.serviceAccount.create".to_string()]
+            have: paths,
+            want: ["signoz.serviceAccount.create".to_string()]
                 .into_iter()
                 .collect(),
             "parsed control expr: {:?}",

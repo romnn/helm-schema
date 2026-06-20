@@ -109,8 +109,8 @@ mod tests {
 
         assert!(schema.get("description").is_none());
         sim_assert_eq!(
-            schema.pointer("/properties/description/type"),
-            Some(&Value::String("string".to_string())),
+            have: schema.pointer("/properties/description/type"),
+            want: Some(&Value::String("string".to_string())),
         );
         assert!(
             schema
@@ -118,8 +118,8 @@ mod tests {
                 .is_none(),
         );
         sim_assert_eq!(
-            schema.pointer("/properties/nested/properties/description/type"),
-            Some(&Value::String("string".to_string())),
+            have: schema.pointer("/properties/nested/properties/description/type"),
+            want: Some(&Value::String("string".to_string())),
         );
         assert!(
             schema
@@ -128,8 +128,8 @@ mod tests {
         );
         assert!(schema.pointer("/$defs/shared/description").is_none());
         sim_assert_eq!(
-            schema.pointer("/items/0/type"),
-            Some(&Value::String("string".to_string())),
+            have: schema.pointer("/items/0/type"),
+            want: Some(&Value::String("string".to_string())),
         );
         assert!(schema.pointer("/items/0/description").is_none());
     }

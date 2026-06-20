@@ -326,12 +326,12 @@ mod tests {
         let candidate = ProviderSchemaCandidate::from_provider_fragment(fragment);
 
         sim_assert_eq!(
-            candidate.source().map(ProviderSchemaSource::pointer),
-            Some("/definitions/Container/properties/env")
+            have: candidate.source().map(ProviderSchemaSource::pointer),
+            want: Some("/definitions/Container/properties/env")
         );
         sim_assert_eq!(
-            candidate.source_definition_schema(),
-            None,
+            have: candidate.source_definition_schema(),
+            want: None,
             "source leaf refs to provider-document siblings are not self-contained at output root"
         );
     }
@@ -371,7 +371,7 @@ mod tests {
 
         let candidate = ProviderSchemaCandidate::from_provider_fragment(fragment);
 
-        sim_assert_eq!(candidate.source_definition_schema(), Some(&source_schema));
+        sim_assert_eq!(have: candidate.source_definition_schema(), want: Some(&source_schema));
     }
 
     #[test]
@@ -394,8 +394,8 @@ mod tests {
                 .expect("internal refs can be relocated under a root definition");
 
         sim_assert_eq!(
-            rewritten.pointer("/properties/labels/$ref"),
-            Some(&Value::String(
+            have: rewritten.pointer("/properties/labels/$ref"),
+            want: Some(&Value::String(
                 "#/$defs/provider~1source~0name/$defs/StringMap".to_string()
             ))
         );
@@ -417,8 +417,8 @@ mod tests {
             .expect("ref-shaped enum data is not schema structure");
 
         sim_assert_eq!(
-            rewritten.pointer("/enum/0/$ref"),
-            Some(&Value::String("#/not/a/schema/ref".to_string()))
+            have: rewritten.pointer("/enum/0/$ref"),
+            want: Some(&Value::String("#/not/a/schema/ref".to_string()))
         );
     }
 
@@ -438,8 +438,8 @@ mod tests {
             .expect("property schemas are traversed independent of property name");
 
         sim_assert_eq!(
-            rewritten.pointer("/properties/enum/$ref"),
-            Some(&Value::String(
+            have: rewritten.pointer("/properties/enum/$ref"),
+            want: Some(&Value::String(
                 "#/$defs/providerSource/$defs/StringValue".to_string()
             ))
         );

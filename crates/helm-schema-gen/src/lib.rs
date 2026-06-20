@@ -783,7 +783,7 @@ fn yaml_value_at_path<'a>(root: &'a YamlValue, value_path: &str) -> Option<&'a Y
         let YamlValue::Mapping(mapping) = current else {
             return None;
         };
-        current = mapping.get(&YamlValue::String(segment.to_string()))?;
+        current = mapping.get(YamlValue::String(segment.to_string()))?;
     }
     Some(current)
 }

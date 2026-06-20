@@ -50,10 +50,7 @@ pub(crate) fn read_to_end_capped(
     subject: impl Into<String>,
 ) -> CliResult<Vec<u8>> {
     let subject = subject.into();
-    let limit_plus_one = limit_bytes
-        .checked_add(1)
-        .unwrap_or(usize::MAX)
-        .min(u64::MAX as usize) as u64;
+    let limit_plus_one = limit_bytes.saturating_add(1).min(u64::MAX as usize) as u64;
     let mut limited = reader.take(limit_plus_one);
     let mut bytes = Vec::new();
     limited.read_to_end(&mut bytes)?;

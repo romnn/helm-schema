@@ -410,16 +410,16 @@ mod tests {
         definitions.insert_into_root(&mut root);
 
         sim_assert_eq!(
-            paths[0].schema,
-            json!({ "$ref": "#/$defs/providerSchema1" })
+            have: paths[0].schema,
+            want: json!({ "$ref": "#/$defs/providerSchema1" })
         );
         sim_assert_eq!(
-            paths[1].schema,
-            json!({ "$ref": "#/$defs/providerSchema1" })
+            have: paths[1].schema,
+            want: json!({ "$ref": "#/$defs/providerSchema1" })
         );
         sim_assert_eq!(
-            root.pointer("/$defs/providerSchema1"),
-            Some(&provider_schema)
+            have: root.pointer("/$defs/providerSchema1"),
+            want: Some(&provider_schema)
         );
     }
 
@@ -434,11 +434,11 @@ mod tests {
         let candidate = sourced_provider_schema_candidate(schema, "/definitions/Metadata");
         let source = candidate.source().expect("provider source should survive");
 
-        sim_assert_eq!(source.origin(), ProviderOrigin::KubernetesOpenApi);
-        sim_assert_eq!(source.source_id(), "default");
-        sim_assert_eq!(source.version(), Some("v1.35.0"));
-        sim_assert_eq!(source.filename(), "io.k8s.api.core.v1.Pod.json");
-        sim_assert_eq!(source.pointer(), "/definitions/Metadata");
+        sim_assert_eq!(have: source.origin(), want: ProviderOrigin::KubernetesOpenApi);
+        sim_assert_eq!(have: source.source_id(), want: "default");
+        sim_assert_eq!(have: source.version(), want: Some("v1.35.0"));
+        sim_assert_eq!(have: source.filename(), want: "io.k8s.api.core.v1.Pod.json");
+        sim_assert_eq!(have: source.pointer(), want: "/definitions/Metadata");
     }
 
     #[test]
@@ -463,16 +463,16 @@ mod tests {
         definitions.insert_into_root(&mut root);
 
         sim_assert_eq!(
-            paths[0].schema,
-            json!({ "$ref": format!("#/$defs/{definition_name}") })
+            have: paths[0].schema,
+            want: json!({ "$ref": format!("#/$defs/{definition_name}") })
         );
         sim_assert_eq!(
-            paths[1].schema,
-            json!({ "$ref": format!("#/$defs/{definition_name}") })
+            have: paths[1].schema,
+            want: json!({ "$ref": format!("#/$defs/{definition_name}") })
         );
         sim_assert_eq!(
-            root.pointer(&format!("/$defs/{definition_name}")),
-            Some(&provider_schema)
+            have: root.pointer(&format!("/$defs/{definition_name}")),
+            want: Some(&provider_schema)
         );
     }
 
@@ -556,12 +556,12 @@ mod tests {
         });
 
         sim_assert_eq!(
-            paths[0].schema,
-            json!({ "$ref": format!("#/$defs/{definition_name}") })
+            have: paths[0].schema,
+            want: json!({ "$ref": format!("#/$defs/{definition_name}") })
         );
         sim_assert_eq!(
-            root.pointer(&format!("/$defs/{definition_name}")),
-            Some(&expected_definition)
+            have: root.pointer(&format!("/$defs/{definition_name}")),
+            want: Some(&expected_definition)
         );
     }
 
@@ -620,8 +620,8 @@ mod tests {
         definitions.insert_into_root(&mut root);
 
         sim_assert_eq!(
-            root.pointer(&format!("/$defs/{definition_name}")),
-            Some(&json!({
+            have: root.pointer(&format!("/$defs/{definition_name}")),
+            want: Some(&json!({
                 "type": "object",
                 "additionalProperties": {
                     "$ref": format!("#/$defs/{definition_name}/$defs/StringMap")
@@ -687,8 +687,8 @@ mod tests {
         definitions.insert_into_root(&mut root);
 
         sim_assert_eq!(
-            root.pointer(&format!("/$defs/{definition_name}")),
-            Some(&provider_schema),
+            have: root.pointer(&format!("/$defs/{definition_name}")),
+            want: Some(&provider_schema),
             "mixed self-contained and provider-document-local source leaves must fall back together"
         );
     }
@@ -731,16 +731,16 @@ mod tests {
         definitions.insert_into_root(&mut root);
 
         sim_assert_eq!(
-            paths[0].schema,
-            json!({ "$ref": "#/$defs/providerSchema1" })
+            have: paths[0].schema,
+            want: json!({ "$ref": "#/$defs/providerSchema1" })
         );
         sim_assert_eq!(
-            paths[1].schema,
-            json!({ "$ref": "#/$defs/providerSchema1" })
+            have: paths[1].schema,
+            want: json!({ "$ref": "#/$defs/providerSchema1" })
         );
         sim_assert_eq!(
-            root.pointer("/$defs/providerSchema1"),
-            Some(&provider_schema)
+            have: root.pointer("/$defs/providerSchema1"),
+            want: Some(&provider_schema)
         );
     }
 
@@ -757,7 +757,7 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        sim_assert_eq!(paths[0].schema, provider_schema);
+        sim_assert_eq!(have: paths[0].schema, want: provider_schema);
         assert!(root.pointer("/$defs").is_none());
     }
 
@@ -782,18 +782,18 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        sim_assert_eq!(paths[0].schema, provider_schema);
+        sim_assert_eq!(have: paths[0].schema, want: provider_schema);
         sim_assert_eq!(
-            paths[1].schema,
-            json!({ "$ref": "#/$defs/providerSchema1" })
+            have: paths[1].schema,
+            want: json!({ "$ref": "#/$defs/providerSchema1" })
         );
         sim_assert_eq!(
-            paths[2].schema,
-            json!({ "$ref": "#/$defs/providerSchema1" })
+            have: paths[2].schema,
+            want: json!({ "$ref": "#/$defs/providerSchema1" })
         );
         sim_assert_eq!(
-            root.pointer("/$defs/providerSchema1"),
-            Some(&provider_schema)
+            have: root.pointer("/$defs/providerSchema1"),
+            want: Some(&provider_schema)
         );
     }
 }

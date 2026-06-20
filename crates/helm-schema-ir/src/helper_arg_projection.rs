@@ -94,7 +94,7 @@ mod tests {
 
     fn single_expr(action: &str) -> TemplateExpr {
         let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
-        sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
         exprs.into_iter().next().expect("expression exists")
     }
 
@@ -132,8 +132,8 @@ mod tests {
     #[test]
     fn dict_argument_projects_string_and_raw_string_keys() {
         sim_assert_eq!(
-            project(r#"dict "name" .serviceAccount.name `raw` .raw"#, None),
-            HashMap::from([
+            have: project(r#"dict "name" .serviceAccount.name `raw` .raw"#, None),
+            want: HashMap::from([
                 (
                     "name".to_string(),
                     AbstractValue::ValuesPath("serviceAccount.name".to_string()),
@@ -168,8 +168,8 @@ mod tests {
         };
 
         sim_assert_eq!(
-            project_expr(&expr, Some(&outer)),
-            HashMap::from([
+            have: project_expr(&expr, Some(&outer)),
+            want: HashMap::from([
                 (
                     "fallback".to_string(),
                     AbstractValue::ValuesPath("override".to_string()),

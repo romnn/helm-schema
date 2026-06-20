@@ -514,8 +514,8 @@ mod tests {
         let result = minimize_schema(schema, &options());
 
         sim_assert_eq!(
-            result.schema,
-            json!({
+            have: result.schema,
+            want: json!({
                 "$defs": {
                     "schema1": {
                         "type": "object",
@@ -534,8 +534,8 @@ mod tests {
                 }
             })
         );
-        sim_assert_eq!(result.stats.definitions_added, 1);
-        sim_assert_eq!(result.stats.replacements, 2);
+        sim_assert_eq!(have: result.stats.definitions_added, want: 1);
+        sim_assert_eq!(have: result.stats.replacements, want: 2);
         assert!(result.stats.bytes_after < result.stats.bytes_before);
     }
 
@@ -559,20 +559,20 @@ mod tests {
 
         let result = minimize_schema(schema, &options());
         sim_assert_eq!(
-            result
+            have: result
                 .schema
                 .pointer("/$defs/schema1/required")
                 .and_then(Value::as_array)
                 .map(Vec::len),
-            Some(2)
+            want: Some(2)
         );
         sim_assert_eq!(
-            result
+            have: result
                 .schema
                 .pointer("/$defs/schema1/enum")
                 .and_then(Value::as_array)
                 .map(Vec::len),
-            Some(2)
+            want: Some(2)
         );
     }
 
@@ -601,8 +601,8 @@ mod tests {
         });
 
         let result = minimize_schema(schema.clone(), &options());
-        sim_assert_eq!(result.schema, schema);
-        sim_assert_eq!(result.stats.replacements, 0);
+        sim_assert_eq!(have: result.schema, want: schema);
+        sim_assert_eq!(have: result.stats.replacements, want: 0);
     }
 
     #[test]
@@ -628,12 +628,12 @@ mod tests {
 
         let result = minimize_schema(schema, &options());
         sim_assert_eq!(
-            result.schema.pointer("/properties/left/$ref"),
-            Some(&Value::String("#/$defs/schema1".to_string()))
+            have: result.schema.pointer("/properties/left/$ref"),
+            want: Some(&Value::String("#/$defs/schema1".to_string()))
         );
         sim_assert_eq!(
-            result.schema.pointer("/properties/right/$ref"),
-            Some(&Value::String("#/$defs/schema1".to_string()))
+            have: result.schema.pointer("/properties/right/$ref"),
+            want: Some(&Value::String("#/$defs/schema1".to_string()))
         );
     }
 
@@ -648,9 +648,9 @@ mod tests {
         });
 
         let result = minimize_schema(schema.clone(), &options());
-        sim_assert_eq!(result.schema, schema);
-        sim_assert_eq!(result.stats.definitions_added, 0);
-        sim_assert_eq!(result.stats.replacements, 0);
+        sim_assert_eq!(have: result.schema, want: schema);
+        sim_assert_eq!(have: result.stats.definitions_added, want: 0);
+        sim_assert_eq!(have: result.stats.replacements, want: 0);
     }
 
     #[test]
@@ -676,8 +676,8 @@ mod tests {
         assert!(result.schema.pointer("/$defs/schema1").is_some());
         assert!(result.schema.pointer("/$defs/schema2").is_some());
         sim_assert_eq!(
-            result.schema.pointer("/properties/left/$ref"),
-            Some(&Value::String("#/$defs/schema2".to_string()))
+            have: result.schema.pointer("/properties/left/$ref"),
+            want: Some(&Value::String("#/$defs/schema2".to_string()))
         );
     }
 }

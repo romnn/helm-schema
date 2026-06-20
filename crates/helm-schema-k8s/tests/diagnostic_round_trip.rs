@@ -73,7 +73,7 @@ fn diagnostic_json_round_trip_per_variant() {
     for d in sample_variants() {
         let json = format_diagnostic_json(&d).expect("serialize");
         let parsed: Diagnostic = serde_json::from_str(&json).expect("round-trip parse");
-        sim_assert_eq!(d, parsed, "round-trip lossy for {d:?}");
+        sim_assert_eq!(have: d, want: parsed, "round-trip lossy for {d:?}");
     }
 }
 
@@ -110,14 +110,14 @@ fn diagnostic_payload_canonicalised_on_insert() {
         hint: None,
     });
     let snapshot = sink.snapshot();
-    sim_assert_eq!(snapshot.len(), 1, "dedupe by key");
+    sim_assert_eq!(have: snapshot.len(), want: 1, "dedupe by key");
     match &snapshot[0] {
         Diagnostic::MissingSchema {
             tried_filenames, ..
         } => {
             sim_assert_eq!(
-                tried_filenames,
-                &vec!["a.json".to_string(), "b.json".to_string()]
+                have: tried_filenames,
+                want: &vec!["a.json".to_string(), "b.json".to_string()]
             );
         }
         other => panic!("unexpected variant: {other:?}"),
@@ -138,8 +138,8 @@ fn diagnostic_dedupe_per_resource() {
         });
     }
     sim_assert_eq!(
-        sink.len(),
-        1,
+        have: sink.len(),
+        want: 1,
         "dedupe by (kind, api_version, resolved_version)"
     );
 }
@@ -159,6 +159,6 @@ fn diagnostic_iteration_order_deterministic() {
                 .collect::<Vec<_>>(),
         );
     }
-    sim_assert_eq!(orders[0], orders[1]);
-    sim_assert_eq!(orders[1], orders[2]);
+    sim_assert_eq!(have: orders[0], want: orders[1]);
+    sim_assert_eq!(have: orders[1], want: orders[2]);
 }

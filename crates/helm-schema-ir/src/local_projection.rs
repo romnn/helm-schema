@@ -121,7 +121,7 @@ pub(crate) fn local_output_meta_from_exprs(
 ) -> BTreeMap<String, HelperOutputMeta> {
     let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
     for expr in exprs {
-        walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+        walk_expr_excluding_helper_call_args(expr, &mut |node| {
             for (path, meta) in local_output_meta_from_expr(node, local_bindings, local_output_meta)
             {
                 out.entry(path).or_default().merge(meta);

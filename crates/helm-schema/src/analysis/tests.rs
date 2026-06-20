@@ -744,8 +744,8 @@ spec:
     );
 
     sim_assert_eq!(
-        schema.map(|fragment| fragment.into_schema()),
-        Some(json!({"type": "integer"}))
+        have: schema.map(|fragment| fragment.into_schema()),
+        want: Some(json!({"type": "integer"}))
     );
 
     Ok(())
@@ -820,8 +820,8 @@ spec:
     );
 
     sim_assert_eq!(
-        schema.map(|fragment| fragment.into_schema()),
-        Some(json!({"type": "integer"}))
+        have: schema.map(|fragment| fragment.into_schema()),
+        want: Some(json!({"type": "integer"}))
     );
 
     Ok(())

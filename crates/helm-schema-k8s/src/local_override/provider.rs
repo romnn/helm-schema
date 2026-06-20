@@ -330,7 +330,7 @@ mod tests {
         let actual = descend_schema_path_expanding_leaf(&root, &path)
             .expect("lazy descent should contain path");
 
-        sim_assert_eq!(actual, expected);
+        sim_assert_eq!(have: actual, want: expected);
     }
 
     #[test]
@@ -358,9 +358,9 @@ mod tests {
         )
         .expect("lazy descent should resolve ref-backed path");
 
-        sim_assert_eq!(leaf.schema(), &json!({ "type": "integer" }));
-        sim_assert_eq!(leaf.source_schema(), Some(&json!({ "type": "integer" })));
-        sim_assert_eq!(leaf.pointer(), Some("/definitions/Spec/properties/size"));
+        sim_assert_eq!(have: leaf.schema(), want: &json!({ "type": "integer" }));
+        sim_assert_eq!(have: leaf.source_schema(), want: Some(&json!({ "type": "integer" })));
+        sim_assert_eq!(have: leaf.pointer(), want: Some("/definitions/Spec/properties/size"));
     }
 
     #[test]
@@ -393,17 +393,17 @@ mod tests {
         .expect("lazy descent should resolve ref-backed leaf");
 
         sim_assert_eq!(
-            leaf.source_schema(),
-            Some(&json!({ "$ref": "#/definitions/StringMap" }))
+            have: leaf.source_schema(),
+            want: Some(&json!({ "$ref": "#/definitions/StringMap" }))
         );
         sim_assert_eq!(
-            leaf.schema(),
-            &json!({
+            have: leaf.schema(),
+            want: &json!({
                 "type": "object",
                 "additionalProperties": { "type": "string" }
             })
         );
-        sim_assert_eq!(leaf.pointer(), Some("/definitions/Spec/properties/labels"));
+        sim_assert_eq!(have: leaf.pointer(), want: Some("/definitions/Spec/properties/labels"));
     }
 
     #[test]
@@ -437,14 +437,14 @@ mod tests {
             &["metadata".to_string(), "name".to_string()],
         )
         .expect("metadata.name should be synthesized from object metadata");
-        sim_assert_eq!(metadata_name, json!({ "type": "string" }));
+        sim_assert_eq!(have: metadata_name, want: json!({ "type": "string" }));
 
         let metadata_name_leaf = descend_schema_path_expanding_leaf_with_root_metadata_source(
             &root,
             &["metadata".to_string(), "name".to_string()],
         )
         .expect("metadata.name should be synthesized from object metadata");
-        sim_assert_eq!(metadata_name_leaf.pointer(), None);
+        sim_assert_eq!(have: metadata_name_leaf.pointer(), want: None);
 
         let metadata_labels = descend_schema_path_expanding_leaf_with_root_metadata(
             &root,
@@ -452,8 +452,8 @@ mod tests {
         )
         .expect("metadata.labels should resolve local refs");
         sim_assert_eq!(
-            metadata_labels,
-            json!({
+            have: metadata_labels,
+            want: json!({
                 "type": "object",
                 "additionalProperties": { "type": "string" }
             })
@@ -464,7 +464,7 @@ mod tests {
             &["spec".to_string(), "replicas".to_string()],
         )
         .expect("non-metadata path should still descend the raw document");
-        sim_assert_eq!(spec_replicas, json!({ "type": "integer" }));
+        sim_assert_eq!(have: spec_replicas, want: json!({ "type": "integer" }));
     }
 
     #[test]
@@ -511,9 +511,9 @@ mod tests {
             .source()
             .expect("local override source should attach");
 
-        sim_assert_eq!(source.origin(), ProviderOrigin::LocalOverride);
-        sim_assert_eq!(source.source_id(), root_dir.display().to_string());
-        sim_assert_eq!(source.filename(), "example.com/widget_v1.json");
-        sim_assert_eq!(source.pointer(), "/definitions/Spec/properties/size");
+        sim_assert_eq!(have: source.origin(), want: ProviderOrigin::LocalOverride);
+        sim_assert_eq!(have: source.source_id(), want: root_dir.display().to_string());
+        sim_assert_eq!(have: source.filename(), want: "example.com/widget_v1.json");
+        sim_assert_eq!(have: source.pointer(), want: "/definitions/Spec/properties/size");
     }
 }

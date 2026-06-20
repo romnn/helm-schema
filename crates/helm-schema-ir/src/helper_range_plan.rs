@@ -70,13 +70,12 @@ pub(crate) fn plan_helper_range_binding(
     );
     let non_exact_variable_binding = if exact_iterations.is_none() && should_bind_non_exact_variable
     {
-        range_variable_name_expr(header.expr()).and_then(|variable| {
+        range_variable_name_expr(header.expr()).zip(
             range_fragment_binding
                 .as_ref()
                 .and_then(AbstractValue::fragment_range_item)
-                .map(|binding| binding.to_context_value())
-                .map(|binding| (variable, binding))
-        })
+                .map(|binding| binding.to_context_value()),
+        )
     } else {
         None
     };

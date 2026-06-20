@@ -130,7 +130,7 @@ fn materialize_expands_refs() {
         }
     });
 
-    sim_assert_eq!(actual, expected);
+    sim_assert_eq!(have: actual, want: expected);
 }
 
 #[test]
@@ -191,7 +191,7 @@ fn leaf_schema() {
         .into_schema();
 
     let expected = serde_json::json!({"type": "string"});
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 #[test]
@@ -252,8 +252,8 @@ fn local_provider_accepts_builtin_k8s_resource_override() {
     let actual = debug_materialize_schema_for_resource(&provider, &r)
         .expect("LocalSchemaProvider must answer for built-in group overrides");
     sim_assert_eq!(
-        actual.get("title").and_then(|v| v.as_str()),
-        Some("LOCAL_OVERRIDE_MARKER"),
+        have: actual.get("title").and_then(|v| v.as_str()),
+        want: Some("LOCAL_OVERRIDE_MARKER"),
         "the local override layer must serve the user's custom schema for built-in K8s kinds; \
          restricting it to CRD-only would silently fall through to the upstream schema"
     );

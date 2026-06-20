@@ -48,12 +48,12 @@ metadata:
         .expect("serviceName use");
 
     sim_assert_eq!(
-        name_use.path,
-        YamlPath(vec!["metadata".to_string(), "name".to_string()])
+        have: name_use.path,
+        want: YamlPath(vec!["metadata".to_string(), "name".to_string()])
     );
     let resource = name_use.resource.as_ref().expect("resource claim");
-    sim_assert_eq!(resource.api_version, "v1");
-    sim_assert_eq!(resource.kind, "Service");
+    sim_assert_eq!(have: resource.api_version, want: "v1");
+    sim_assert_eq!(have: resource.kind, want: "Service");
 }
 
 #[test]
@@ -83,12 +83,12 @@ metadata:
         .expect("serviceName use");
 
     sim_assert_eq!(
-        name_use.path,
-        YamlPath(vec!["metadata".to_string(), "name".to_string()])
+        have: name_use.path,
+        want: YamlPath(vec!["metadata".to_string(), "name".to_string()])
     );
     let resource = name_use.resource.as_ref().expect("resource claim");
-    sim_assert_eq!(resource.api_version, "v1");
-    sim_assert_eq!(resource.kind, "Service");
+    sim_assert_eq!(have: resource.api_version, want: "v1");
+    sim_assert_eq!(have: resource.kind, want: "Service");
 }
 
 #[test]
@@ -120,8 +120,8 @@ metadata:
         .expect("serviceName use");
 
     sim_assert_eq!(
-        name_use.guards,
-        vec![Guard::Truthy {
+        have: name_use.guards,
+        want: vec![Guard::Truthy {
             path: "enabled".to_string()
         }]
     );

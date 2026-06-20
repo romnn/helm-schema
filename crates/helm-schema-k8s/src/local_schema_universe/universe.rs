@@ -328,7 +328,7 @@ mod tests {
                     .pointer("/properties/spec/properties/size")
             });
 
-        sim_assert_eq!(schema, Some(&json!({"type": "integer"})));
+        sim_assert_eq!(have: schema, want: Some(&json!({"type": "integer"})));
     }
 
     #[test]
@@ -383,6 +383,6 @@ mod tests {
                     .pointer("/properties/spec/properties/enabled")
             });
 
-        sim_assert_eq!(schema, Some(&json!({"type": "boolean"})));
+        sim_assert_eq!(have: schema, want: Some(&json!({"type": "boolean"})));
     }
 }

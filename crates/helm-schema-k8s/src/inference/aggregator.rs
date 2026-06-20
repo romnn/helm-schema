@@ -180,8 +180,8 @@ mod tests {
             panic!("expected resolved chart-local CRD candidate, got {outcome:?}");
         };
         sim_assert_eq!(
-            (api_version.as_str(), source, origin),
-            (
+            have: (api_version.as_str(), source, origin),
+            want: (
                 "local.example.com/v1",
                 InferenceSource::ChartLocalCrd,
                 ProviderOrigin::ChartLocalCrd
@@ -213,8 +213,8 @@ mod tests {
             panic!("expected resolved explicit override candidate, got {outcome:?}");
         };
         sim_assert_eq!(
-            (api_version.as_str(), source, origin),
-            (
+            have: (api_version.as_str(), source, origin),
+            want: (
                 "override.example.com/v1",
                 InferenceSource::Shortlist,
                 ProviderOrigin::LocalOverride

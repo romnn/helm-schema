@@ -146,7 +146,7 @@ pub fn values_yaml_as_json_for_path(
 
 pub fn assert_values_json_validates(values_json: &Value, schema: &Value) {
     let errors = validate_json_against_schema(values_json, schema);
-    sim_assert_eq!(errors, Vec::<String>::new());
+    sim_assert_eq!(have: errors, want: Vec::<String>::new());
 }
 
 pub fn assert_chart_values_comments_apply_to_existing_schema_paths(
@@ -166,10 +166,10 @@ pub fn assert_chart_values_comments_apply_to_existing_schema_paths(
         };
         applied += 1;
         sim_assert_eq!(
-            schema_node
+            have: schema_node
                 .get("description")
                 .and_then(serde_json::Value::as_str),
-            Some(expected_description.as_str()),
+            want: Some(expected_description.as_str()),
             "description mismatch for values path {path}"
         );
     }

@@ -322,8 +322,8 @@ mod tests {
             "expected create=false output branch; guard_sets={guard_sets:#?}"
         );
         sim_assert_eq!(
-            summary.type_hints.get("signoz.serviceAccount.name"),
-            Some(&["string".to_string()].into_iter().collect()),
+            have: summary.type_hints.get("signoz.serviceAccount.name"),
+            want: Some(&["string".to_string()].into_iter().collect()),
             "defaulted scalar output should retain string type hint"
         );
         assert!(summary.fragment_output_uses.is_empty());
@@ -358,12 +358,12 @@ mod tests {
         let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
 
         sim_assert_eq!(
-            summary.type_hints.get("image.repository"),
-            Some(&BTreeSet::from(["string".to_string()]))
+            have: summary.type_hints.get("image.repository"),
+            want: Some(&BTreeSet::from(["string".to_string()]))
         );
         sim_assert_eq!(
-            summary.type_hints.get("image.tag"),
-            Some(&BTreeSet::from(["string".to_string()]))
+            have: summary.type_hints.get("image.tag"),
+            want: Some(&BTreeSet::from(["string".to_string()]))
         );
     }
 }

@@ -23,8 +23,8 @@ fn detects_kind_before_api_version() {
     )
     .expect("resource");
 
-    sim_assert_eq!(resource.kind, "NetworkPolicy");
-    sim_assert_eq!(resource.api_version, "networking.k8s.io/v1");
+    sim_assert_eq!(have: resource.kind, want: "NetworkPolicy");
+    sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
 }
 
 #[test]
@@ -49,8 +49,8 @@ fn resolves_helper_returned_api_version() {
     )
     .expect("resource");
 
-    sim_assert_eq!(resource.kind, "Deployment");
-    sim_assert_eq!(resource.api_version, "apps/v1");
+    sim_assert_eq!(have: resource.kind, want: "Deployment");
+    sim_assert_eq!(have: resource.api_version, want: "apps/v1");
     assert!(resource.api_version_candidates.is_empty());
 }
 
@@ -71,22 +71,22 @@ fn preserves_inline_capability_branches() {
     )
     .expect("resource");
 
-    sim_assert_eq!(resource.kind, "PodDisruptionBudget");
-    sim_assert_eq!(resource.api_version, "");
+    sim_assert_eq!(have: resource.kind, want: "PodDisruptionBudget");
+    sim_assert_eq!(have: resource.api_version, want: "");
     sim_assert_eq!(
-        resource.api_version_candidates,
-        vec!["policy/v1".to_string(), "policy/v1beta1".to_string()]
+        have: resource.api_version_candidates,
+        want: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()]
     );
-    sim_assert_eq!(resource.api_version_branches.len(), 2);
+    sim_assert_eq!(have: resource.api_version_branches.len(), want: 2);
     sim_assert_eq!(
-        resource.api_version_branches[0].guard,
-        Some(CapabilityGuard::Has {
+        have: resource.api_version_branches[0].guard,
+        want: Some(CapabilityGuard::Has {
             api: "policy/v1".to_string()
         })
     );
     sim_assert_eq!(
-        resource.api_version_branches[1].body,
-        HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
+        have: resource.api_version_branches[1].body,
+        want: HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
     );
 }
 
@@ -113,20 +113,20 @@ fn mixed_literal_and_nested_branch_preserves_nested_guards() {
     let HelperBranchBody::Nested { branches } = &resource.api_version_branches[0].body else {
         panic!("expected nested branch body");
     };
-    sim_assert_eq!(branches.len(), 3);
+    sim_assert_eq!(have: branches.len(), want: 3);
     sim_assert_eq!(
-        branches[0].body,
-        HelperBranchBody::literals(vec!["policy/v1".to_string()])
+        have: branches[0].body,
+        want: HelperBranchBody::literals(vec!["policy/v1".to_string()])
     );
     sim_assert_eq!(
-        branches[1].guard,
-        Some(CapabilityGuard::Has {
+        have: branches[1].guard,
+        want: Some(CapabilityGuard::Has {
             api: "policy/v1/PodDisruptionBudget".to_string()
         })
     );
     sim_assert_eq!(
-        branches[2].body,
-        HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
+        have: branches[2].body,
+        want: HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
     );
 }
 
@@ -146,8 +146,8 @@ fn capability_guard_without_api_version_does_not_create_empty_branch_resource() 
     )
     .expect("resource");
 
-    sim_assert_eq!(resource.kind, "ConfigMap");
-    sim_assert_eq!(resource.api_version, "v1");
+    sim_assert_eq!(have: resource.kind, want: "ConfigMap");
+    sim_assert_eq!(have: resource.api_version, want: "v1");
     assert!(resource.api_version_candidates.is_empty());
     assert!(resource.api_version_branches.is_empty());
 }

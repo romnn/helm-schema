@@ -233,26 +233,26 @@ mod tests {
 
         let files_without_tests = list_chart_files(&chart_dir, false)?;
         sim_assert_eq!(
-            role_paths(&files_without_tests, FileRole::ManifestTemplate),
-            vec!["deployment.yaml"]
+            have: role_paths(&files_without_tests, FileRole::ManifestTemplate),
+            want: vec!["deployment.yaml"]
         );
         sim_assert_eq!(
-            role_paths(&files_without_tests, FileRole::DefineIndexTemplate),
-            vec!["_helpers.tpl", "deployment.yaml"]
+            have: role_paths(&files_without_tests, FileRole::DefineIndexTemplate),
+            want: vec!["_helpers.tpl", "deployment.yaml"]
         );
         sim_assert_eq!(
-            role_paths(&files_without_tests, FileRole::StaticCrd),
-            vec!["example.yaml"]
+            have: role_paths(&files_without_tests, FileRole::StaticCrd),
+            want: vec!["example.yaml"]
         );
         sim_assert_eq!(
-            role_paths(&files_without_tests, FileRole::FilesGetSource),
-            vec!["config.yaml"]
+            have: role_paths(&files_without_tests, FileRole::FilesGetSource),
+            want: vec!["config.yaml"]
         );
 
         let files_with_tests = list_chart_files(&chart_dir, true)?;
         sim_assert_eq!(
-            role_paths(&files_with_tests, FileRole::ManifestTemplate),
-            vec!["deployment.yaml", "test-job.yaml"]
+            have: role_paths(&files_with_tests, FileRole::ManifestTemplate),
+            want: vec!["deployment.yaml", "test-job.yaml"]
         );
 
         Ok(())

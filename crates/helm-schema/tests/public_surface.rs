@@ -38,7 +38,7 @@ data:
     )?;
 
     let versions = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(1)).ordered();
-    sim_assert_eq!(versions, vec!["v1.35.0".to_string(), "v1.34.0".to_string()]);
+    sim_assert_eq!(have: versions, want: vec!["v1.35.0".to_string(), "v1.34.0".to_string()]);
     assert!(matches!(
         JsonOutputFormat::from_compact(false),
         JsonOutputFormat::Pretty
@@ -63,16 +63,16 @@ data:
     })?;
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/enabled/type")
             .and_then(serde_json::Value::as_str),
-        Some("boolean")
+        want: Some("boolean")
     );
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
-        Some("Whether the config map is enabled")
+        want: Some("Whether the config map is enabled")
     );
 
     Ok(())
@@ -130,7 +130,7 @@ spec:
         "session contract uses should now retain source provenance"
     );
     let contract_document = session.contract_document()?;
-    sim_assert_eq!(contract_document.version, 2);
+    sim_assert_eq!(have: contract_document.version, want: 2);
     assert!(
         !contract_document.uses.is_empty(),
         "session contract document should expose canonical uses"
@@ -149,11 +149,11 @@ spec:
     );
     let generated = session.generated_schema()?;
     sim_assert_eq!(
-        generated
+        have: generated
             .schema
             .pointer("/properties/replicas/type")
             .and_then(serde_json::Value::as_str),
-        Some("integer")
+        want: Some("integer")
     );
 
     Ok(())
@@ -325,7 +325,7 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
     let expected = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
     for _ in 0..100 {
         let actual = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
-        sim_assert_eq!(actual, expected, "contract DTO bytes must be deterministic");
+        sim_assert_eq!(have: actual, want: expected, "contract DTO bytes must be deterministic");
     }
 
     Ok(())
@@ -370,10 +370,10 @@ spec:
     let session = AnalysisSession::new(opts);
     let session_generated = session.generated_schema()?;
 
-    sim_assert_eq!(staged.schema, session_generated.schema);
+    sim_assert_eq!(have: staged.schema, want: session_generated.schema);
     sim_assert_eq!(
-        staged.subchart_value_prefixes,
-        session_generated.subchart_value_prefixes
+        have: staged.subchart_value_prefixes,
+        want: session_generated.subchart_value_prefixes
     );
 
     Ok(())
@@ -524,16 +524,16 @@ data:
     )?;
 
     sim_assert_eq!(
-        emitted
+        have: emitted
             .get("x-helm-schema-generated")
             .and_then(serde_json::Value::as_bool),
-        Some(true)
+        want: Some(true)
     );
     sim_assert_eq!(
-        emitted
+        have: emitted
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
-        Some("Whether the config map is enabled")
+        want: Some("Whether the config map is enabled")
     );
 
     Ok(())
@@ -595,7 +595,7 @@ data:
 
     let explanation = session.explain("kid.enabled")?;
 
-    sim_assert_eq!(explanation.path, "kid.enabled");
+    sim_assert_eq!(have: explanation.path, want: "kid.enabled");
     assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
     assert!(
         explanation
@@ -703,7 +703,7 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
     let json = serde_json::to_value(&document)?;
     let decoded: ContractDocument = serde_json::from_value(json)?;
 
-    sim_assert_eq!(decoded, document);
+    sim_assert_eq!(have: decoded, want: document);
     assert!(
         decoded
             .uses
@@ -921,10 +921,10 @@ data:
         "inference must ignore sibling values.schema.json and use render evidence only: {schema}"
     );
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/mode/type")
             .and_then(serde_json::Value::as_str),
-        Some("string")
+        want: Some("string")
     );
 
     let validator = jsonschema::validator_for(&schema)?;

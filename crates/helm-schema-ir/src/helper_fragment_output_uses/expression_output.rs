@@ -34,6 +34,7 @@ struct FragmentExpressionOutputScope<'a> {
     fallback_paths: &'a BTreeSet<String>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn collect_bound_fragment_output_uses_from_exprs(
     exprs: &[TemplateExpr],
     bindings: &HashMap<String, AbstractValue>,

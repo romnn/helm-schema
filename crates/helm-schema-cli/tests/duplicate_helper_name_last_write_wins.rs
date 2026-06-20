@@ -140,8 +140,8 @@ fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints()
         .expect("/properties/replicas present");
 
     sim_assert_eq!(
-        replicas,
-        &serde_json::json!({}),
+        have: replicas,
+        want: &serde_json::json!({}),
         "losing-define body's integer literal leaked into root.replicas \
          even though AST last-write-wins discards that body; got: {replicas}",
     );

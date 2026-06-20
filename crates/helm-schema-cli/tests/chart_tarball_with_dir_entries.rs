@@ -183,6 +183,6 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         "type": "object"
     });
 
-    sim_assert_eq!(actual, expected);
+    sim_assert_eq!(have: actual, want: expected);
     Ok(())
 }

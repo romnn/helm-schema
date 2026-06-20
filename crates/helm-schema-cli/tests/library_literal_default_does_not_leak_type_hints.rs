@@ -123,8 +123,8 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::
     // After the fix: app.replicas should be `{}` — no type signal
     // (the app's own template doesn't assert a type).
     sim_assert_eq!(
-        app_replicas,
-        &serde_json::json!({}),
+        have: app_replicas,
+        want: &serde_json::json!({}),
         "library-helper literal default leaked across chart boundary: app.replicas = {app_replicas}",
     );
 

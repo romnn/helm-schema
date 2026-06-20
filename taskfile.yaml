@@ -191,13 +191,13 @@ tasks:
   lint:
     desc: "lint cargo workspace"
     cmds:
-      - cargo lint --workspace --all-features {{.CLI_ARGS}}
+      - cargo lint --workspace --all-features --dedup {{.CLI_ARGS}}
       - task: lint:ast-grep
 
   lint:fc:
     desc: "lint cargo workspace for all combinations of features"
     cmds:
-      - cargo fc lint {{.CLI_ARGS}}
+      - cargo fc lint --dedup {{.CLI_ARGS}}
       - task: lint:ast-grep
 
   lint:fix:

@@ -370,8 +370,8 @@ mod tests {
         "#};
         let schema = generate_with_required(src, None);
         sim_assert_eq!(
-            schema.get("required"),
-            Some(&serde_json::json!(["name"])),
+            have: schema.get("required"),
+            want: Some(&serde_json::json!(["name"])),
             "default after required should not suppress required inference, schema={}",
             serde_json::to_string_pretty(&schema).unwrap()
         );

@@ -112,10 +112,10 @@ mod tests {
         .expect("apply output pipeline");
 
         sim_assert_eq!(
-            output
+            have: output
                 .pointer("/properties/fromRef/$ref")
                 .and_then(Value::as_str),
-            Some("./shared.json#/definitions/stringValue"),
+            want: Some("./shared.json#/definitions/stringValue"),
             "reference-preserving output mode should not dereference refs"
         );
     }
@@ -151,17 +151,17 @@ mod tests {
         .expect("apply output pipeline");
 
         sim_assert_eq!(
-            output
+            have: output
                 .pointer("/properties/fromRef/$ref")
                 .and_then(Value::as_str),
-            Some("#/$defs/stringValue"),
+            want: Some("#/$defs/stringValue"),
             "self-contained final output should keep prepared internal refs"
         );
         sim_assert_eq!(
-            output
+            have: output
                 .pointer("/$defs/stringValue/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "prepared definitions should remain available under $defs"
         );
     }
@@ -229,10 +229,10 @@ mod tests {
         .expect("apply output pipeline");
 
         sim_assert_eq!(
-            output
+            have: output
                 .pointer("/properties/fromRef/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "fully inlined export mode should inline prepared internal refs"
         );
         assert!(output.pointer("/properties/fromRef/$ref").is_none());
@@ -259,10 +259,10 @@ mod tests {
         .expect("apply output pipeline");
 
         sim_assert_eq!(
-            output
+            have: output
                 .get(GENERATED_SCHEMA_MARKER_KEY)
                 .and_then(Value::as_bool),
-            Some(true)
+            want: Some(true)
         );
     }
 }

@@ -158,8 +158,8 @@ mod tests {
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
 
         sim_assert_eq!(
-            analysis.suppress_roots,
-            BTreeSet::from(["serviceAccount".to_string()])
+            have: analysis.suppress_roots,
+            want: BTreeSet::from(["serviceAccount".to_string()])
         );
     }
 

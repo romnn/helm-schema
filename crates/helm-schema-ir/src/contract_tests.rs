@@ -24,10 +24,10 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
     let value_uses = contract.project();
     let value_uses = value_uses.uses();
 
-    sim_assert_eq!(value_uses.len(), 1);
+    sim_assert_eq!(have: value_uses.len(), want: 1);
     sim_assert_eq!(
-        value_uses.first().map(|value_use| &value_use.guards),
-        Some(&vec![Guard::Default {
+        have: value_uses.first().map(|value_use| &value_use.guards),
+        want: Some(&vec![Guard::Default {
             path: "serviceAccount.name".to_string(),
         }])
     );
@@ -59,13 +59,13 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
     let value_uses = contract.project();
     let value_uses = value_uses.uses();
 
-    sim_assert_eq!(value_uses.len(), 1);
+    sim_assert_eq!(have: value_uses.len(), want: 1);
     sim_assert_eq!(
-        value_uses
+        have: value_uses
             .first()
             .and_then(|value_use| value_use.resource.as_ref())
             .map(|resource| (resource.api_version.as_str(), resource.kind.as_str())),
-        Some(("v1", "Service"))
+        want: Some(("v1", "Service"))
     );
 }
 
@@ -110,14 +110,14 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     let value_uses = value_uses.uses();
     let value_use = value_uses.first().expect("mapped value use");
 
-    sim_assert_eq!(value_use.source_expr, "subchart.serviceAccount.name");
+    sim_assert_eq!(have: value_use.source_expr, want: "subchart.serviceAccount.name");
     sim_assert_eq!(
-        value_use.path,
-        YamlPath(vec!["metadata".to_string(), "name".to_string()])
+        have: value_use.path,
+        want: YamlPath(vec!["metadata".to_string(), "name".to_string()])
     );
     sim_assert_eq!(
-        value_use.guards,
-        vec![
+        have: value_use.guards,
+        want: vec![
             Guard::Truthy {
                 path: "subchart.serviceAccount.enabled".to_string(),
             },
@@ -150,10 +150,10 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
 
     let projection = contract.project();
     let value_uses = projection.uses();
-    sim_assert_eq!(value_uses.len(), 1);
-    sim_assert_eq!(value_uses[0].source_expr, "extraConfig");
-    sim_assert_eq!(value_uses[0].path, YamlPath(Vec::new()));
-    sim_assert_eq!(value_uses[0].kind, ValueKind::Scalar);
+    sim_assert_eq!(have: value_uses.len(), want: 1);
+    sim_assert_eq!(have: value_uses[0].source_expr, want: "extraConfig");
+    sim_assert_eq!(have: value_uses[0].path, want: YamlPath(Vec::new()));
+    sim_assert_eq!(have: value_uses[0].kind, want: ValueKind::Scalar);
     assert!(value_uses[0].guards.is_empty());
     assert!(value_uses[0].resource.is_none());
 }
@@ -169,16 +169,16 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
 
     let signals = contract.into_schema_signals();
     sim_assert_eq!(
-        signals
+        have: signals
             .evidence_for("subchart.image.tag")
             .map(|evidence| &evidence.type_hints),
-        Some(&["string".to_string()].into_iter().collect())
+        want: Some(&["string".to_string()].into_iter().collect())
     );
     sim_assert_eq!(
-        signals
+        have: signals
             .evidence_for("subchart.image.pullPolicy")
             .map(|evidence| &evidence.type_hints),
-        Some(&["string".to_string()].into_iter().collect())
+        want: Some(&["string".to_string()].into_iter().collect())
     );
     assert!(
         signals
@@ -217,6 +217,6 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
 
     let finalized = contract.clone().finalize();
 
-    sim_assert_eq!(finalized.projection(), &contract.clone().project());
-    sim_assert_eq!(finalized.schema_signals(), &contract.into_schema_signals());
+    sim_assert_eq!(have: finalized.projection(), want: &contract.clone().project());
+    sim_assert_eq!(have: finalized.schema_signals(), want: &contract.into_schema_signals());
 }

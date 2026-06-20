@@ -131,8 +131,8 @@ mod tests {
         let diagnostic = local_override_unreadable(&trace).expect("diagnostic");
 
         sim_assert_eq!(
-            diagnostic,
-            Diagnostic::LocalOverrideUnreadable {
+            have: diagnostic,
+            want: Diagnostic::LocalOverrideUnreadable {
                 kind: "Widget".to_string(),
                 api_version: "example.com/v1".to_string(),
                 override_path: "/tmp/widget.schema.json".to_string(),

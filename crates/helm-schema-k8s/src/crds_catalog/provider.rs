@@ -541,9 +541,9 @@ mod tests {
         };
         let source = schema.source().expect("catalog source should attach");
 
-        sim_assert_eq!(source.origin(), ProviderOrigin::DefaultCatalog);
-        sim_assert_eq!(source.source_id(), default_source_id());
-        sim_assert_eq!(source.filename(), relative_path);
-        sim_assert_eq!(source.pointer(), "/definitions/Spec/properties/size");
+        sim_assert_eq!(have: source.origin(), want: ProviderOrigin::DefaultCatalog);
+        sim_assert_eq!(have: source.source_id(), want: default_source_id());
+        sim_assert_eq!(have: source.filename(), want: relative_path);
+        sim_assert_eq!(have: source.pointer(), want: "/definitions/Spec/properties/size");
     }
 }

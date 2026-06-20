@@ -87,7 +87,7 @@ mod tests {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         };
-        sim_assert_eq!(filename_for_resource(&r), "service-v1.json");
+        sim_assert_eq!(have: filename_for_resource(&r), want: "service-v1.json");
     }
 
     #[test]
@@ -99,8 +99,8 @@ mod tests {
             api_version_branches: Vec::new(),
         };
         sim_assert_eq!(
-            filename_for_resource(&r),
-            "prometheusrule-monitoring-coreos-com-v1.json"
+            have: filename_for_resource(&r),
+            want: "prometheusrule-monitoring-coreos-com-v1.json"
         );
     }
 
@@ -113,8 +113,8 @@ mod tests {
             api_version_branches: Vec::new(),
         };
         sim_assert_eq!(
-            filename_for_resource(&r),
-            "networkpolicy-networking-v1.json"
+            have: filename_for_resource(&r),
+            want: "networkpolicy-networking-v1.json"
         );
     }
 }

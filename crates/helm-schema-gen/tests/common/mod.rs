@@ -168,8 +168,8 @@ pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) {
     let expected: Value =
         serde_json::from_str(case.expected_fixture).expect("expected schema json");
     sim_assert_eq!(
-        actual,
-        expected,
+        have: actual,
+        want: expected,
         "schema fixture mismatch for {}",
         case.dump_stem,
     );
@@ -300,8 +300,8 @@ mod tests {
         });
         let relaxed = relax_schema(&schema);
         sim_assert_eq!(
-            relaxed,
-            serde_json::json!({
+            have: relaxed,
+            want: serde_json::json!({
                 "type": "object",
                 "properties": {
                     "foo": {
@@ -322,6 +322,6 @@ mod tests {
             "additionalProperties": { "type": "string" }
         });
         let relaxed = relax_schema(&schema);
-        sim_assert_eq!(relaxed, schema);
+        sim_assert_eq!(have: relaxed, want: schema);
     }
 }

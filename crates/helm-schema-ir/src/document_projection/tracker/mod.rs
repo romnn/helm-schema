@@ -117,12 +117,11 @@ impl<'a> DocumentTracker<'a> {
         } else {
             self.current_context.output_path.clone()
         };
-        if kind == ValueKind::Fragment {
-            if let Some(last) = path.0.last_mut()
-                && let Some(stripped) = last.strip_suffix("[*]")
-            {
-                *last = stripped.to_string();
-            }
+        if kind == ValueKind::Fragment
+            && let Some(last) = path.0.last_mut()
+            && let Some(stripped) = last.strip_suffix("[*]")
+        {
+            *last = stripped.to_string();
         }
         path
     }
@@ -282,8 +281,8 @@ mod tests {
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
             sim_assert_eq!(
-                context.output_path.0,
-                vec!["livenessProbe", "exec", "command"],
+                have: context.output_path.0,
+                want: vec!["livenessProbe", "exec", "command"],
                 "node kind {}",
                 node.kind()
             );
@@ -314,8 +313,8 @@ mod tests {
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(8));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "template", "spec", "volumes"],
+            have: path.0,
+            want: vec!["spec", "template", "spec", "volumes"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(8).0,
@@ -346,8 +345,8 @@ mod tests {
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(10));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "template", "spec", "containers[*]", "env"],
+            have: path.0,
+            want: vec!["spec", "template", "spec", "containers[*]", "env"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(10).0,
@@ -447,8 +446,8 @@ spec:
             .virtual_indent_context_for_node(action, 12);
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(12));
         sim_assert_eq!(
-            path.0,
-            vec![
+            have: path.0,
+            want: vec![
                 "spec",
                 "template",
                 "spec",
@@ -486,8 +485,8 @@ spec:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(8));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "template", "spec", "hostAliases"],
+            have: path.0,
+            want: vec!["spec", "template", "spec", "hostAliases"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(8).0,
@@ -517,8 +516,8 @@ spec:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(2));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "ipFamilies"],
+            have: path.0,
+            want: vec!["spec", "ipFamilies"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(2).0,
@@ -549,8 +548,8 @@ spec:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
         sim_assert_eq!(
-            path.0,
-            vec!["metadata", "labels"],
+            have: path.0,
+            want: vec!["metadata", "labels"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(4).0,
@@ -581,8 +580,8 @@ spec:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "ports"],
+            have: path.0,
+            want: vec!["spec", "ports"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(4).0,
@@ -608,8 +607,8 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec![
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec![
                 "spec",
                 "template",
                 "spec",
@@ -648,8 +647,8 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec![
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec![
                 "spec",
                 "template",
                 "spec",
@@ -684,8 +683,8 @@ spec:
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
             sim_assert_eq!(
-                context.output_path.0,
-                vec!["env[*]", "value"],
+                have: context.output_path.0,
+                want: vec!["env[*]", "value"],
                 "node kind {}",
                 node.kind()
             );
@@ -713,8 +712,8 @@ spec:
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
             sim_assert_eq!(
-                context.output_path.0,
-                vec!["ports[*]", "port"],
+                have: context.output_path.0,
+                want: vec!["ports[*]", "port"],
                 "node kind {}",
                 node.kind()
             );
@@ -742,8 +741,8 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec!["ports[*]", "port"]
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec!["ports[*]", "port"]
         );
         assert!(tracker.output_entire_scalar_value());
     }
@@ -771,8 +770,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec!["ports[*]", "port"]
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec!["ports[*]", "port"]
         );
         assert!(tracker.output_entire_scalar_value());
     }
@@ -801,8 +800,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec!["env[*]", "valueFrom", "secretKeyRef", "name",]
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec!["env[*]", "valueFrom", "secretKeyRef", "name",]
         );
         assert!(tracker.output_entire_scalar_value());
     }
@@ -828,8 +827,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec![
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec![
                 "spec",
                 "template",
                 "spec",
@@ -875,8 +874,8 @@ ports:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "ingress"],
+            have: path.0,
+            want: vec!["spec", "ingress"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(4).0,
@@ -906,8 +905,8 @@ ports:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
         sim_assert_eq!(
-            path.0,
-            vec!["metadata", "labels"],
+            have: path.0,
+            want: vec!["metadata", "labels"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(4).0,
@@ -937,8 +936,8 @@ ports:
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(6));
         sim_assert_eq!(
-            path.0,
-            vec!["spec", "podSelector", "matchLabels"],
+            have: path.0,
+            want: vec!["spec", "podSelector", "matchLabels"],
             "current={:?} mapping={:?} context={:?}",
             tracker.current_path().0,
             tracker.path_at_mapping_entry_indent(6).0,
@@ -969,8 +968,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.current_path().0,
-            vec![
+            have: tracker.current_path().0,
+            want: vec![
                 "spec",
                 "ingress[*]",
                 "from[*]",
@@ -1006,8 +1005,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.current_path().0,
-            vec![
+            have: tracker.current_path().0,
+            want: vec![
                 "spec",
                 "ingress[*]",
                 "from[*]",
@@ -1042,8 +1041,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), range);
 
         sim_assert_eq!(
-            tracker.path_at_mapping_entry_indent(16).0,
-            vec![
+            have: tracker.path_at_mapping_entry_indent(16).0,
+            want: vec![
                 "spec",
                 "ingress[*]",
                 "from[*]",
@@ -1079,8 +1078,8 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            vec!["spec", "ingress[*]", "ports[*]", "port"]
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: vec!["spec", "ingress[*]", "ports[*]", "port"]
         );
         assert!(
             tracker.output_entire_scalar_value(),
@@ -1117,8 +1116,8 @@ ports:
 
         assert!(tracker.current_context.inside_block_scalar);
         sim_assert_eq!(
-            tracker.output_site_path(action, ValueKind::Scalar, None).0,
-            Vec::<String>::new()
+            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            want: Vec::<String>::new()
         );
         assert!(!tracker.output_entire_scalar_value());
     }
@@ -1142,8 +1141,8 @@ ports:
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
             sim_assert_eq!(
-                context.output_path.0,
-                vec!["env[*]", "value"],
+                have: context.output_path.0,
+                want: vec!["env[*]", "value"],
                 "node kind {}",
                 node.kind()
             );
@@ -1176,8 +1175,8 @@ ports:
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
             sim_assert_eq!(
-                context.output_path.0,
-                vec!["args[*]"],
+                have: context.output_path.0,
+                want: vec!["args[*]"],
                 "node kind {}",
                 node.kind()
             );

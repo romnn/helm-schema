@@ -2,6 +2,9 @@ use std::collections::BTreeSet;
 
 use crate::contract::ContractUse;
 
+// `ContractFact` is a transient by-value fact, never stored en masse, so the
+// size gap between `Use` and `TypeHint` does not justify boxing.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ContractFact {
     Use(ContractUse),

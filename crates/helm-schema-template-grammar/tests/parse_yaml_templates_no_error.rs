@@ -539,8 +539,8 @@ fn parses_all_testdata_yaml_templates_best_effort() {
 
     if only.is_none() {
         sim_assert_eq!(
-            parsed_files,
-            total_files,
+            have: parsed_files,
+            want: total_files,
             "expected to parse all discovered charts/**/templates YAML files (found={total_files}, parsed={parsed_files})"
         );
     }

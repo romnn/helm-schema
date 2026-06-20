@@ -246,8 +246,8 @@ mod tests {
         .expect("serialize contract document");
 
         sim_assert_eq!(
-            actual,
-            json!({
+            have: actual,
+            want: json!({
                 "version": 2,
                 "uses": [{
                     "source_expr": "kid.enabled",
@@ -277,6 +277,6 @@ mod tests {
 
         let decoded: ContractDocument =
             serde_json::from_value(actual).expect("deserialize contract document");
-        sim_assert_eq!(decoded.uses, vec![value_use]);
+        sim_assert_eq!(have: decoded.uses, want: vec![value_use]);
     }
 }

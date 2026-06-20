@@ -55,7 +55,7 @@ pub(crate) fn resolved_default_fallback_paths_for_exprs(
     let env = EvalEnv::from_helper_context(bindings, current_dot);
 
     for expr in exprs {
-        out.extend(eval_expr(&expr, &env).effects.defaults);
+        out.extend(eval_expr(expr, &env).effects.defaults);
     }
 
     out
@@ -185,7 +185,7 @@ mod tests {
 
     fn expr(text: &str) -> TemplateExpr {
         let exprs = parse_expr_text(text);
-        sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
         exprs.into_iter().next().expect("expression exists")
     }
 
@@ -204,12 +204,12 @@ mod tests {
         )]);
 
         sim_assert_eq!(
-            helper_binding_from_expr(
+            have: helper_binding_from_expr(
                 &expr(".ctx.config.name | default \"x\""),
                 Some(&bindings),
                 None
             ),
-            Some(AbstractValue::Choice(
+            want: Some(AbstractValue::Choice(
                 [
                     AbstractValue::ValuesPath("serviceAccount.name".to_string()),
                     AbstractValue::StringSet(["x".to_string()].into_iter().collect()),
@@ -229,8 +229,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            bindings,
-            HashMap::from([
+            have: bindings,
+            want: HashMap::from([
                 ("ctx".to_string(), AbstractValue::RootContext),
                 (
                     "config".to_string(),
@@ -248,8 +248,8 @@ mod tests {
         )]);
 
         sim_assert_eq!(
-            resolve_expr_to_values_path(&expr(".config.name"), Some(&bindings), None),
-            Some("serviceAccount.name".to_string()),
+            have: resolve_expr_to_values_path(&expr(".config.name"), Some(&bindings), None),
+            want: Some("serviceAccount.name".to_string()),
         );
     }
 }

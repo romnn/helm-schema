@@ -274,14 +274,14 @@ spec:
         let schemas =
             local_resource_schemas_from_template_source(source, "/chart/templates/crd.yaml", true)?;
 
-        sim_assert_eq!(schemas.len(), 1);
-        sim_assert_eq!(schemas[0].api_version, "example.com/v1");
-        sim_assert_eq!(schemas[0].kind, "Widget");
+        sim_assert_eq!(have: schemas.len(), want: 1);
+        sim_assert_eq!(have: schemas[0].api_version, want: "example.com/v1");
+        sim_assert_eq!(have: schemas[0].kind, want: "Widget");
         sim_assert_eq!(
-            schemas[0]
+            have: schemas[0]
                 .schema
                 .pointer("/properties/spec/properties/size"),
-            Some(&json!({"type": "integer"}))
+            want: Some(&json!({"type": "integer"}))
         );
 
         Ok(())

@@ -210,8 +210,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            schema.map(ProviderSchemaFragment::into_schema),
-            Some(json!({"type": "integer"}))
+            have: schema.map(ProviderSchemaFragment::into_schema),
+            want: Some(json!({"type": "integer"}))
         );
     }
 
@@ -260,10 +260,10 @@ mod tests {
         };
         let source = schema.source().expect("chart-local source should attach");
 
-        sim_assert_eq!(source.origin(), ProviderOrigin::ChartLocalCrd);
-        sim_assert_eq!(source.source_id(), "chart-static-crd");
-        sim_assert_eq!(source.filename(), "/chart/crds/widgets.yaml");
-        sim_assert_eq!(source.pointer(), "/properties/spec/properties/size");
+        sim_assert_eq!(have: source.origin(), want: ProviderOrigin::ChartLocalCrd);
+        sim_assert_eq!(have: source.source_id(), want: "chart-static-crd");
+        sim_assert_eq!(have: source.filename(), want: "/chart/crds/widgets.yaml");
+        sim_assert_eq!(have: source.pointer(), want: "/properties/spec/properties/size");
     }
 
     #[test]
@@ -272,8 +272,8 @@ mod tests {
             ChartLocalCrdSchemaProvider::new(widget_universe()).with_api_version_guess(true);
 
         sim_assert_eq!(
-            provider.infer_api_version_candidates("Widget"),
-            vec![ApiVersionCandidate {
+            have: provider.infer_api_version_candidates("Widget"),
+            want: vec![ApiVersionCandidate {
                 api_version: "example.com/v1".to_string(),
                 source: InferenceSource::ChartLocalCrd,
                 origin: ProviderOrigin::ChartLocalCrd,

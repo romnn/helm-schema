@@ -132,8 +132,8 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
     // template asserts nothing, and the unused helper contributes
     // nothing because it's never reachable from the app's includes.
     sim_assert_eq!(
-        app_replicas,
-        &serde_json::json!({}),
+        have: app_replicas,
+        want: &serde_json::json!({}),
         "unused-helper signal leaked across helper boundary: app.replicas = {app_replicas}",
     );
 

@@ -323,12 +323,12 @@ mod tests {
         let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
 
         sim_assert_eq!(
-            yaml_pointer(&doc, &["global", "imageRegistry"]),
-            Some(&serde_yaml::Value::String("docker.io".to_string()))
+            have: yaml_pointer(&doc, &["global", "imageRegistry"]),
+            want: Some(&serde_yaml::Value::String("docker.io".to_string()))
         );
         sim_assert_eq!(
-            yaml_pointer(&doc, &["child", "global", "imageRegistry"]),
-            Some(&serde_yaml::Value::String("docker.io".to_string()))
+            have: yaml_pointer(&doc, &["child", "global", "imageRegistry"]),
+            want: Some(&serde_yaml::Value::String("docker.io".to_string()))
         );
 
         Ok(())

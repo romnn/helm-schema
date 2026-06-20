@@ -21,7 +21,7 @@ const SIMPLE_EXPECTED_SEXPR: &str = "\
 fn tree_sitter_ast_simple() {
     let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
     let ast = TreeSitterParser.parse(src).expect("parse");
-    sim_assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
+    sim_assert_eq!(have: ast.to_sexpr(), want: SIMPLE_EXPECTED_SEXPR);
 }
 
 #[test]
@@ -42,16 +42,16 @@ fn tree_sitter_ast_control_flow_headers_are_typed() {
     else {
         panic!("expected one top-level if node");
     };
-    sim_assert_eq!(condition.raw(), ".Values.enabled");
+    sim_assert_eq!(have: condition.raw(), want: ".Values.enabled");
     sim_assert_eq!(
-        condition.expr(),
-        &TemplateExpr::Field(vec!["Values".to_string(), "enabled".to_string()])
+        have: condition.expr(),
+        want: &TemplateExpr::Field(vec!["Values".to_string(), "enabled".to_string()])
     );
 
     let [HelmAst::Range { header, .. }] = then_branch.as_slice() else {
         panic!("expected nested range node");
     };
-    sim_assert_eq!(header.raw(), "$i, $v := include \"items\" .");
+    sim_assert_eq!(have: header.raw(), want: "$i, $v := include \"items\" .");
     let mut saw_include = false;
     header.expr().walk(|expr| {
         if let TemplateExpr::Call { function, args } = expr
@@ -78,7 +78,7 @@ fn template_header_parse_control_normalizes_control_keyword_prefix() {
         "{{- if .Values.signoz.serviceAccount.create -}}",
     ] {
         let header = TemplateHeader::parse_control(raw);
-        sim_assert_eq!(header.expr(), &expected, "raw={raw}");
+        sim_assert_eq!(have: header.expr(), want: &expected, "raw={raw}");
     }
 }
 
@@ -99,7 +99,7 @@ fn tree_sitter_ast_helm_exprs_are_typed() {
     let [HelmAst::HelmExpr { action }] = items.as_slice() else {
         panic!("expected one top-level helm expr");
     };
-    sim_assert_eq!(action.raw(), ".Values.name | quote");
+    sim_assert_eq!(have: action.raw(), want: ".Values.name | quote");
     let [TemplateExpr::Pipeline(stages)] = action.exprs() else {
         panic!("expected one parsed pipeline expression");
     };

@@ -23,7 +23,7 @@ fn materialize_networkpolicy_v1_35() {
     ))
     .expect("parse fixture");
 
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
     ))
     .expect("parse fixture");
 
-    sim_assert_eq!(leaf, expected);
+    sim_assert_eq!(have: leaf, want: expected);
 }
 
 #[test]
@@ -131,10 +131,10 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         .into_schema();
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "expected inferred matchLabels leaf schema, got {schema}"
     );
 }

@@ -66,8 +66,8 @@ fn kind_list_envelope_descends_into_inner_resource() {
 
     let schema = common::generate_schema_with_values_yaml(ir, &chain, Some(KIND_LIST_VALUES));
     sim_assert_eq!(
-        schema.pointer("/properties/host/description"),
-        Some(&Value::String("inner ingress host".to_string())),
+        have: schema.pointer("/properties/host/description"),
+        want: Some(&Value::String("inner ingress host".to_string())),
         "host must be validated through the inner Ingress spec.rules[*].host schema; got {schema}"
     );
 
@@ -82,8 +82,8 @@ fn kind_list_envelope_descends_into_inner_resource() {
         })
         .count();
     sim_assert_eq!(
-        list_missing,
-        0,
+        have: list_missing,
+        want: 0,
         "Chain must not emit MissingSchema(kind=List, ...) for the K8s List envelope; got diagnostics: {snapshot:?}"
     );
 }

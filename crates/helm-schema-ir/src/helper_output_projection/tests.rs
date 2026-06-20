@@ -30,8 +30,8 @@ fn abstract_value_output_meta_preserves_output_set_metadata() {
 
     assert!(meta.contains_key("serviceAccount.name"));
     sim_assert_eq!(
-        meta.get("global.nameOverride"),
-        Some(&HelperOutputMeta {
+        have: meta.get("global.nameOverride"),
+        want: Some(&HelperOutputMeta {
             predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
                 "global.enabled".to_string(),
             )])]),
@@ -80,8 +80,8 @@ fn direct_and_fragment_values_share_structural_output_projection() {
     );
 
     sim_assert_eq!(
-        output_rows(&helper_outputs),
-        vec![
+        have: output_rows(&helper_outputs),
+        want: vec![
             (
                 "containers.name".to_string(),
                 vec![
@@ -100,7 +100,7 @@ fn direct_and_fragment_values_share_structural_output_projection() {
             ),
         ]
     );
-    sim_assert_eq!(output_rows(&fragment_outputs), output_rows(&helper_outputs));
+    sim_assert_eq!(have: output_rows(&fragment_outputs), want: output_rows(&helper_outputs));
 }
 
 #[test]

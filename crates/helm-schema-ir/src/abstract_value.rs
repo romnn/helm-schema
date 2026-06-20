@@ -818,6 +818,7 @@ fn item_path(path: &str) -> String {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn push_output_path(
     outputs: &mut Vec<HelperFragmentOutputUse>,
     path: &str,
@@ -878,7 +879,7 @@ mod tests {
     fn join_is_idempotent() {
         let value = path("image.tag");
 
-        sim_assert_eq!(join(vec![value.clone(), value.clone()]), value);
+        sim_assert_eq!(have: join(vec![value.clone(), value.clone()]), want: value);
     }
 
     #[test]
@@ -887,8 +888,8 @@ mod tests {
         let right = string("nginx");
 
         sim_assert_eq!(
-            join(vec![left.clone(), right.clone()]),
-            join(vec![right, left])
+            have: join(vec![left.clone(), right.clone()]),
+            want: join(vec![right, left])
         );
     }
 
@@ -904,22 +905,22 @@ mod tests {
         ]);
         let right_grouped = join(vec![left, join(vec![middle, right])]);
 
-        sim_assert_eq!(left_grouped, right_grouped);
+        sim_assert_eq!(have: left_grouped, want: right_grouped);
     }
 
     #[test]
     fn top_absorbs_join() {
         sim_assert_eq!(
-            join(vec![path("image.tag"), AbstractValue::Top]),
-            AbstractValue::Top
+            have: join(vec![path("image.tag"), AbstractValue::Top]),
+            want: AbstractValue::Top
         );
     }
 
     #[test]
     fn compatibility_unknown_widens_joins_to_top() {
         sim_assert_eq!(
-            join(vec![path("image.tag"), AbstractValue::Unknown]),
-            AbstractValue::Top
+            have: join(vec![path("image.tag"), AbstractValue::Unknown]),
+            want: AbstractValue::Top
         );
     }
 
@@ -927,14 +928,14 @@ mod tests {
     fn top_inside_choice_absorbs_join() {
         let nested = AbstractValue::Choice(BTreeSet::from([AbstractValue::Top, path("name")]));
 
-        sim_assert_eq!(join(vec![path("image.tag"), nested]), AbstractValue::Top);
+        sim_assert_eq!(have: join(vec![path("image.tag"), nested]), want: AbstractValue::Top);
     }
 
     #[test]
     fn top_propagates_through_descent() {
         sim_assert_eq!(
-            AbstractValue::Top.apply_to_path(&["nested".to_string()]),
-            Some(AbstractValue::Top)
+            have: AbstractValue::Top.apply_to_path(&["nested".to_string()]),
+            want: Some(AbstractValue::Top)
         );
     }
 
@@ -949,8 +950,8 @@ mod tests {
         };
 
         sim_assert_eq!(
-            value.omit_keys(&BTreeSet::from(["enabled".to_string()])),
-            AbstractValue::Overlay {
+            have: value.omit_keys(&BTreeSet::from(["enabled".to_string()])),
+            want: AbstractValue::Overlay {
                 entries: BTreeMap::from([(
                     "timeoutSeconds".to_string(),
                     path("probe.timeoutSeconds")
@@ -967,16 +968,16 @@ mod tests {
             AbstractValue::ValuesPath("podLabels".to_string()),
         )]));
 
-        sim_assert_eq!(value.shallow_paths(), BTreeSet::new());
-        sim_assert_eq!(value.paths(), paths(&["podLabels"]));
+        sim_assert_eq!(have: value.shallow_paths(), want: BTreeSet::new());
+        sim_assert_eq!(have: value.paths(), want: paths(&["podLabels"]));
     }
 
     #[test]
     fn values_root_abstains_from_fragment_path_extraction() {
         let value = AbstractValue::values_root();
 
-        sim_assert_eq!(value.fragment_source_paths(), BTreeSet::new());
-        sim_assert_eq!(value.fragment_rendered_paths(), BTreeSet::new());
+        sim_assert_eq!(have: value.fragment_source_paths(), want: BTreeSet::new());
+        sim_assert_eq!(have: value.fragment_rendered_paths(), want: BTreeSet::new());
     }
 
     #[test]
@@ -986,10 +987,10 @@ mod tests {
             AbstractValue::ValuesPath("podLabels".to_string()),
         )]));
 
-        sim_assert_eq!(value.fragment_source_paths(), BTreeSet::new());
+        sim_assert_eq!(have: value.fragment_source_paths(), want: BTreeSet::new());
         sim_assert_eq!(
-            value.fragment_rendered_paths(),
-            BTreeSet::from(["podLabels".to_string()])
+            have: value.fragment_rendered_paths(),
+            want: BTreeSet::from(["podLabels".to_string()])
         );
     }
 
@@ -1000,10 +1001,10 @@ mod tests {
             AbstractValue::ValuesPath("containers.name".to_string()),
         )]));
 
-        sim_assert_eq!(value.fragment_range_item(), None);
+        sim_assert_eq!(have: value.fragment_range_item(), want: None);
         sim_assert_eq!(
-            value.helper_range_item(),
-            Some(AbstractValue::ValuesPath("containers.name".to_string()))
+            have: value.helper_range_item(),
+            want: Some(AbstractValue::ValuesPath("containers.name".to_string()))
         );
     }
 
@@ -1023,8 +1024,8 @@ mod tests {
         };
 
         sim_assert_eq!(
-            value.output_meta(),
-            BTreeMap::from([
+            have: value.output_meta(),
+            want: BTreeMap::from([
                 (
                     "serviceAccount.name".to_string(),
                     HelperOutputMeta::default()

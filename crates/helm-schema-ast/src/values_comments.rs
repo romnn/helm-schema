@@ -485,7 +485,7 @@ mod tests {
                 "Child docs line 1\nChild docs line 2".to_string(),
             ),
         ]);
-        sim_assert_eq!(descriptions, expected);
+        sim_assert_eq!(have: descriptions, want: expected);
     }
 
     #[test]
@@ -499,8 +499,8 @@ mod tests {
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
         sim_assert_eq!(
-            descriptions.get("global.imageRegistry").map(String::as_str),
-            Some("Image registry docs")
+            have: descriptions.get("global.imageRegistry").map(String::as_str),
+            want: Some("Image registry docs")
         );
         assert!(
             !descriptions.contains_key("global"),
@@ -521,8 +521,8 @@ mod tests {
 
         assert!(!descriptions.contains_key("config.disabled"));
         sim_assert_eq!(
-            descriptions.get("config.enabled").map(String::as_str),
-            Some("Disabled value docs\ndisabled: true")
+            have: descriptions.get("config.enabled").map(String::as_str),
+            want: Some("Disabled value docs\ndisabled: true")
         );
     }
 
@@ -541,14 +541,14 @@ mod tests {
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
         sim_assert_eq!(
-            descriptions.get("ingress.annotations").map(String::as_str),
-            Some(
+            have: descriptions.get("ingress.annotations").map(String::as_str),
+            want: Some(
                 "Ingress annotations\nnginx.ingress.kubernetes.io/rewrite-target: /\ncert-manager.io/cluster-issuer: letsencrypt-prod"
             )
         );
         sim_assert_eq!(
-            descriptions.get("ingress.hosts").map(String::as_str),
-            Some("Ingress hosts")
+            have: descriptions.get("ingress.hosts").map(String::as_str),
+            want: Some("Ingress hosts")
         );
     }
 
@@ -568,10 +568,10 @@ mod tests {
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
         sim_assert_eq!(
-            descriptions.get("ingress.annotations").map(String::as_str),
-            Some("Ingress annotations\nnginx.ingress.kubernetes.io/rewrite-target: /")
+            have: descriptions.get("ingress.annotations").map(String::as_str),
+            want: Some("Ingress annotations\nnginx.ingress.kubernetes.io/rewrite-target: /")
         );
-        sim_assert_eq!(descriptions.get("detached").map(String::as_str), None);
+        sim_assert_eq!(have: descriptions.get("detached").map(String::as_str), want: None);
     }
 
     #[test]
@@ -590,10 +590,10 @@ mod tests {
 
         assert!(!descriptions.contains_key("section.operator"));
         sim_assert_eq!(
-            descriptions
+            have: descriptions
                 .get("section.operator.image")
                 .map(String::as_str),
-            Some("Operator image docs")
+            want: Some("Operator image docs")
         );
     }
 
@@ -618,18 +618,18 @@ mod tests {
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
         sim_assert_eq!(
-            descriptions.get("global.imageRegistry").map(String::as_str),
-            Some("Global Docker image registry")
+            have: descriptions.get("global.imageRegistry").map(String::as_str),
+            want: Some("Global Docker image registry")
         );
         sim_assert_eq!(
-            descriptions
+            have: descriptions
                 .get("global.imagePullSecrets")
                 .map(String::as_str),
-            Some("Global Docker registry secret names as an array")
+            want: Some("Global Docker registry secret names as an array")
         );
         sim_assert_eq!(
-            descriptions.get("auth.enabled").map(String::as_str),
-            Some("Enable password authentication")
+            have: descriptions.get("auth.enabled").map(String::as_str),
+            want: Some("Enable password authentication")
         );
         assert!(
             !descriptions.contains_key("global"),

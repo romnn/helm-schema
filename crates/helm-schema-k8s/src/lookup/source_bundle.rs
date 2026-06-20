@@ -431,7 +431,7 @@ mod tests {
                 root_leaf,
             ),
             |current_location, reference| {
-                sim_assert_eq!(current_location.document(), "source.json");
+                sim_assert_eq!(have: current_location.document(), want: "source.json");
                 (reference == "#/definitions/StringMap").then(|| {
                     SourceBundleNode::new(
                         "source.json",
@@ -446,8 +446,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            bundled,
-            json!({
+            have: bundled,
+            want: json!({
                 "type": "object",
                 "additionalProperties": { "$ref": "#/$defs/StringMap" },
                 "$defs": {
@@ -520,8 +520,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            bundled,
-            json!({
+            have: bundled,
+            want: json!({
                 "type": "object",
                 "properties": {
                     "selector": { "$ref": "#/$defs/Selector" }

@@ -452,16 +452,16 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
         "additionalProperties": false
     });
     sim_assert_eq!(
-        schema.pointer("/properties/first"),
-        Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
+        have: schema.pointer("/properties/first"),
+        want: Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
     );
     sim_assert_eq!(
-        schema.pointer("/properties/second"),
-        Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
+        have: schema.pointer("/properties/second"),
+        want: Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
     );
     sim_assert_eq!(
-        schema.pointer("/$defs/providerSchema1"),
-        Some(&expected_definition)
+        have: schema.pointer("/$defs/providerSchema1"),
+        want: Some(&expected_definition)
     );
 }
 
@@ -490,10 +490,10 @@ fn values_yaml_comments_override_provider_descriptions() {
     );
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/name/description")
             .and_then(Value::as_str),
-        Some("chart description")
+        want: Some("chart description")
     );
 }
 
@@ -524,10 +524,10 @@ fn values_yaml_comments_do_not_create_schema_paths() {
     );
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/name/description")
             .and_then(Value::as_str),
-        Some("name description")
+        want: Some("name description")
     );
     assert!(
         schema.pointer("/properties/commentedOut").is_none(),
@@ -692,7 +692,7 @@ fn base64_encoded_secret_data_does_not_inherit_rendered_byte_format() {
         password: ""
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let direct = schema
         .pointer("/properties/directSecretData")
@@ -738,7 +738,7 @@ fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() 
         rawSecretData: ""
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     let password = schema
         .pointer("/properties/password")
         .expect("password present");
@@ -774,7 +774,7 @@ fn simple_template_schema() {
         replicas: {{ .Values.replicas }}
         {{- end }}
     "};
-    let schema = schema_for(&parse_ir(src));
+    let schema = schema_for(parse_ir(src));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -786,7 +786,7 @@ fn simple_template_schema() {
             "replicas": {}
         }
     });
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 #[test]
@@ -799,7 +799,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         "type": "string"
     });
 
-    let schema = ResolvePolicy::default().resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let schema = ResolvePolicy.resolve_schema_for_value_path(ValuePathSchemaInputs {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts {
                 has_render_use: true,
@@ -843,7 +843,7 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         key: {{ .Values.feature.name }}
         {{- end }}
     "};
-    let schema = schema_for(&parse_ir(src));
+    let schema = schema_for(parse_ir(src));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -860,7 +860,7 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
             }
         }
     });
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 /// A `with`-guarded fragment accepts null for object inputs too: Helm skips
@@ -881,7 +881,7 @@ fn step1_with_fragment_null_default_is_nullable() {
     let values_yaml = indoc! {"
         extraAnnotations:
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let extra = schema
         .pointer("/properties/extraAnnotations")
@@ -909,13 +909,13 @@ fn step1_no_with_fragment_does_not_widen_to_null() {
     let values_yaml = indoc! {"
         nameOverride:
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     // nameOverride should remain `{}` — no signal points to a specific type.
     let name = schema
         .pointer("/properties/nameOverride")
         .expect("nameOverride present");
-    sim_assert_eq!(name, &serde_json::json!({}));
+    sim_assert_eq!(have: name, want: &serde_json::json!({}));
 }
 
 /// Step 2 (prefix form): `default <literal> .Values.X` with null default in
@@ -928,7 +928,7 @@ fn step2_default_prefix_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
     assert!(permits_null(name));
@@ -948,7 +948,7 @@ fn step2_default_pipeline_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
     assert!(permits_null(name));
@@ -963,7 +963,7 @@ fn step2_default_after_intervening_required_call_no_hint() {
     let src = indoc! {r#"
         name: {{ .Values.name | required "name is required" | default "fallback" }}
     "#};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     assert!(
         hints.is_empty(),
         "default after required must not type-hint the original values path, got {hints:?}"
@@ -979,7 +979,7 @@ fn step2_default_non_literal_first_arg_no_hint() {
         {{- $fallback := "x" -}}
         name: {{ default $fallback .Values.name }}
     "#};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     assert!(hints.is_empty(), "expected no hints, got {hints:?}");
 }
 
@@ -989,7 +989,7 @@ fn step2_default_integer_literal() {
     let src = indoc! {r"
         replicas: {{ default 5 .Values.replicas }}
     "};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     let schemas = hints.get("replicas").expect("replicas hint present");
     assert!(
         schemas.contains("integer"),
@@ -1018,7 +1018,7 @@ fn step1_with_or_per_path_guards_enable_null_preservation() {
         primary:
         fallback:
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let primary = schema
         .pointer("/properties/primary")
@@ -1048,7 +1048,7 @@ fn step1_with_fragment_non_null_default_not_widened() {
         extraAnnotations:
           foo: bar
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let extra = schema
         .pointer("/properties/extraAnnotations")
@@ -1077,7 +1077,7 @@ fn nullable_scalar_preserved_for_with_guarded_render_use() {
     let values_yaml = indoc! {"
         priorityClassName:
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let priority = schema
         .pointer("/properties/priorityClassName")
@@ -1184,7 +1184,7 @@ fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
     let values_yaml = indoc! {"
         fullnameOverride: \"\"
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -1225,13 +1225,13 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
         "guarded-only paths should stay open outside the branch that consumes them: {schema}"
     );
     sim_assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/if/properties/enabled/anyOf/0/const"),
-        Some(&serde_json::json!(true)),
+        have: schema.pointer("/properties/feature/allOf/0/if/properties/enabled/anyOf/0/const"),
+        want: Some(&serde_json::json!(true)),
         "guard should lower at the nearest common ancestor, not only at the root: {schema}"
     );
     sim_assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
-        Some(&serde_json::json!("string")),
+        have: schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
+        want: Some(&serde_json::json!("string")),
         "guarded path should reappear under then-branch schema: {schema}"
     );
     assert!(
@@ -1310,13 +1310,13 @@ fn negated_boolean_guard_lowers_to_not_condition() {
     );
 
     sim_assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/anyOf/0/const"),
-        Some(&serde_json::json!(true)),
+        have: schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/anyOf/0/const"),
+        want: Some(&serde_json::json!(true)),
         "negated boolean guards should lower to JSON Schema `not`: {schema}"
     );
     sim_assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
-        Some(&serde_json::json!("string")),
+        have: schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
+        want: Some(&serde_json::json!("string")),
         "negated guard should still reapply the target schema in the then branch: {schema}"
     );
 }
@@ -1419,8 +1419,8 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
     );
 
     sim_assert_eq!(
-        schema.pointer("/properties/feature/allOf/0/if/anyOf/1/properties/enabled/enum"),
-        Some(&serde_json::json!([false])),
+        have: schema.pointer("/properties/feature/allOf/0/if/anyOf/1/properties/enabled/enum"),
+        want: Some(&serde_json::json!([false])),
         "exact false equality should lower to a typed enum, not truthiness: {schema}"
     );
     assert!(
@@ -1531,20 +1531,20 @@ fn or_boolean_guards_lower_to_any_of_condition() {
     );
 
     sim_assert_eq!(
-        schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/anyOf/0/const"),
-        Some(&serde_json::json!(true)),
+        have: schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/anyOf/0/const"),
+        want: Some(&serde_json::json!(true)),
         "disjunctions should lower to anyOf clauses: {schema}"
     );
     sim_assert_eq!(
-        schema.pointer(
+        have: schema.pointer(
             "/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/anyOf/0/const"
         ),
-        Some(&serde_json::json!(true)),
+        want: Some(&serde_json::json!(true)),
         "all boolean branches in the disjunction should be preserved: {schema}"
     );
     sim_assert_eq!(
-        schema.pointer("/allOf/0/then/properties/feature/properties/host/type"),
-        Some(&serde_json::json!("string")),
+        have: schema.pointer("/allOf/0/then/properties/feature/properties/host/type"),
+        want: Some(&serde_json::json!("string")),
         "root-level disjunctions should still apply the guarded target schema: {schema}"
     );
 }
@@ -1679,19 +1679,19 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
         .expect("expected mode=labels branch");
 
     sim_assert_eq!(
-        name_branch.pointer("/then/properties/feature/properties/value/type"),
-        Some(&serde_json::json!("string")),
+        have: name_branch.pointer("/then/properties/feature/properties/value/type"),
+        want: Some(&serde_json::json!("string")),
         "name branch should keep the metadata.name string contract: {schema}"
     );
     sim_assert_eq!(
-        labels_branch.pointer("/then/properties/feature/properties/value/type"),
-        Some(&serde_json::json!("object")),
+        have: labels_branch.pointer("/then/properties/feature/properties/value/type"),
+        want: Some(&serde_json::json!("object")),
         "labels branch should lower to an object contract: {schema}"
     );
     sim_assert_eq!(
-        labels_branch
+        have: labels_branch
             .pointer("/then/properties/feature/properties/value/additionalProperties/type"),
-        Some(&serde_json::json!("string")),
+        want: Some(&serde_json::json!("string")),
         "labels branch should preserve the metadata.labels string-map shape: {schema}"
     );
 }
@@ -1796,14 +1796,14 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
         "the guarded fragment branch should also stay visible on the base path when both variants exist: {schema}"
     );
     sim_assert_eq!(
-        schema.pointer("/allOf/0/then/properties/feature/properties/value/type"),
-        Some(&serde_json::json!("object")),
+        have: schema.pointer("/allOf/0/then/properties/feature/properties/value/type"),
+        want: Some(&serde_json::json!("object")),
         "the guarded branch should still reapply the fragment/object schema: {schema}"
     );
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/allOf/0/then/properties/feature/properties/value/additionalProperties/type"),
-        Some(&serde_json::json!("string")),
+        want: Some(&serde_json::json!("string")),
         "the guarded object branch should preserve metadata.labels string-map shape: {schema}"
     );
 }
@@ -1827,8 +1827,8 @@ fn non_boolean_truthy_guard_does_not_lower_to_if_then_overlay() {
     );
 
     sim_assert_eq!(
-        schema.pointer("/properties/feature/properties/host/type"),
-        Some(&serde_json::json!("string")),
+        have: schema.pointer("/properties/feature/properties/host/type"),
+        want: Some(&serde_json::json!("string")),
         "string-valued truthy guards are not lowered yet and should stay on the wide/base path: {schema}"
     );
     assert!(
@@ -2251,18 +2251,18 @@ fn step_fragment_open_string_map_stays_open() {
         podLabels:
           app: inbucket
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
     sim_assert_eq!(
-        pod_labels
+        have: pod_labels
             .get("additionalProperties")
             .and_then(Value::as_object)
             .and_then(|obj| obj.get("type"))
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "podLabels should stay an open string map, got {pod_labels}"
     );
     assert_ne!(
@@ -2290,16 +2290,16 @@ fn step_fragment_empty_map_default_keeps_open_string_map() {
     let values_yaml = indoc! {"
         annotations: {}
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let annotations = schema
         .pointer("/properties/annotations")
         .expect("annotations present");
     sim_assert_eq!(
-        annotations
+        have: annotations
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "annotations should stay an open string map, got {annotations}"
     );
 }
@@ -2325,21 +2325,21 @@ fn destructured_range_map_input_does_not_become_output_array() {
         environment:
           INBUCKET_LOGLEVEL: debug
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let environment = schema
         .pointer("/properties/environment")
         .expect("environment present");
     sim_assert_eq!(
-        environment.get("type").and_then(Value::as_str),
-        Some("object"),
+        have: environment.get("type").and_then(Value::as_str),
+        want: Some("object"),
         "environment should stay an object-valued input, got {environment}"
     );
     sim_assert_eq!(
-        environment
+        have: environment
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "environment should generalize to an open string map when the chart ranges over its entries, got {environment}"
     );
     assert!(
@@ -2369,16 +2369,16 @@ fn destructured_range_map_with_len_guard_generalizes_to_open_string_map() {
         environment:
           INBUCKET_LOGLEVEL: debug
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let environment = schema
         .pointer("/properties/environment")
         .expect("environment present");
     sim_assert_eq!(
-        environment
+        have: environment
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "len-guarded destructured range should still generalize to an open string map, got {environment}"
     );
 }
@@ -2403,19 +2403,19 @@ fn scalar_item_range_keeps_provider_array_metadata() {
         accessModes:
           - ReadWriteOnce
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let access_modes = schema
         .pointer("/properties/accessModes")
         .expect("accessModes present");
     sim_assert_eq!(
-        access_modes.get("type").and_then(Value::as_str),
-        Some("array"),
+        have: access_modes.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "accessModes should be an array, got {access_modes}"
     );
     sim_assert_eq!(
-        access_modes.pointer("/items/type").and_then(Value::as_str),
-        Some("string"),
+        have: access_modes.pointer("/items/type").and_then(Value::as_str),
+        want: Some("string"),
         "accessModes items should stay strings, got {access_modes}"
     );
     assert!(
@@ -2426,10 +2426,10 @@ fn scalar_item_range_keeps_provider_array_metadata() {
         "accessModes should keep the provider description, got {access_modes}"
     );
     sim_assert_eq!(
-        access_modes
+        have: access_modes
             .pointer("/x-kubernetes-list-type")
             .and_then(Value::as_str),
-        Some("atomic"),
+        want: Some("atomic"),
         "accessModes should keep the provider list metadata, got {access_modes}"
     );
 }
@@ -2467,19 +2467,19 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
             paths:
               - /
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let host_paths = schema
         .pointer("/properties/hosts/items/properties/paths")
         .expect("hosts[].paths present");
     sim_assert_eq!(
-        host_paths.get("type").and_then(Value::as_str),
-        Some("array"),
+        have: host_paths.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "hosts[].paths should stay an array input, got {host_paths}"
     );
     sim_assert_eq!(
-        host_paths.pointer("/items/type").and_then(Value::as_str),
-        Some("string"),
+        have: host_paths.pointer("/items/type").and_then(Value::as_str),
+        want: Some("string"),
         "hosts[].paths items should stay strings, got {host_paths}"
     );
     assert!(
@@ -2520,17 +2520,17 @@ fn scalar_range_with_root_helper_stays_scalar_array() {
         hosts:
           - /
     "};
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let hosts = schema.pointer("/properties/hosts").expect("hosts present");
     sim_assert_eq!(
-        hosts.get("type").and_then(Value::as_str),
-        Some("array"),
+        have: hosts.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "hosts should stay an array, got {hosts}"
     );
     sim_assert_eq!(
-        hosts.pointer("/items/type").and_then(Value::as_str),
-        Some("string"),
+        have: hosts.pointer("/items/type").and_then(Value::as_str),
+        want: Some("string"),
         "hosts items should stay strings, got {hosts}"
     );
     assert!(
@@ -2628,8 +2628,8 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
         .expect("image.pullSecrets present");
 
     sim_assert_eq!(
-        pull_secrets.get("type").and_then(Value::as_str),
-        Some("array"),
+        have: pull_secrets.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "wildcard source path should create an array schema, got {pull_secrets}"
     );
     assert!(
@@ -2637,8 +2637,8 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
         "wildcard source path should not create an empty-object variant, got {pull_secrets}"
     );
     sim_assert_eq!(
-        pull_secrets.pointer("/items/type").and_then(Value::as_str),
-        Some("string"),
+        have: pull_secrets.pointer("/items/type").and_then(Value::as_str),
+        want: Some("string"),
         "source item should inherit the rendered name scalar type, got {pull_secrets}"
     );
 }
@@ -2669,14 +2669,14 @@ fn dict_bound_helper_object_input_stays_object() {
           name: workload
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let service_account = schema
         .pointer("/properties/serviceAccount")
         .expect("serviceAccount present");
     sim_assert_eq!(
-        service_account.get("type").and_then(Value::as_str),
-        Some("object"),
+        have: service_account.get("type").and_then(Value::as_str),
+        want: Some("object"),
         "serviceAccount should remain an object-valued input, got {service_account}"
     );
     assert!(
@@ -2708,7 +2708,7 @@ fn helper_defaulted_bound_name_allows_null() {
           name: ""
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     assert!(
         schema_accepts_instance(
@@ -2756,7 +2756,7 @@ fn helper_direct_boolean_render_keeps_provider_shape() {
           name: workload
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let automount = schema
         .pointer("/properties/serviceAccount/properties/automount")
@@ -2812,12 +2812,12 @@ fn nested_bound_helper_keeps_structured_parent_object() {
           tag: stable
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
     sim_assert_eq!(
-        image.get("type").and_then(Value::as_str),
-        Some("object"),
+        have: image.get("type").and_then(Value::as_str),
+        want: Some("object"),
         "image should stay object-valued, got {image}"
     );
     assert!(
@@ -2825,10 +2825,10 @@ fn nested_bound_helper_keeps_structured_parent_object() {
         "image should not widen to object-or-string, got {image}"
     );
     sim_assert_eq!(
-        image
+        have: image
             .pointer("/properties/registry/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "image.registry should stay string-typed, got {image}"
     );
 }
@@ -2948,7 +2948,7 @@ fn image_pull_secret_fragment_helper_does_not_project_image_root_as_pod_spec() {
           tag: stable
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     for pointer in ["/properties/image", "/properties/clientImage"] {
         let image = schema.pointer(pointer).expect("image root present");
@@ -2960,10 +2960,10 @@ fn image_pull_secret_fragment_helper_does_not_project_image_root_as_pod_spec() {
             "{pointer} should not inherit PodSpec.required from imagePullSecrets, got {image}"
         );
         sim_assert_eq!(
-            image
+            have: image
                 .pointer("/properties/registry/type")
                 .and_then(Value::as_str),
-            Some("string"),
+            want: Some("string"),
             "{pointer}.registry should stay string-typed, got {image}"
         );
     }
@@ -3003,7 +3003,7 @@ fn helper_string_output_conflicts_collapse_to_plain_string() {
         fullnameOverride: custom
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -3039,7 +3039,7 @@ fn template_call_in_scalar_slot_propagates_helper_value_types() {
         fullnameOverride: custom
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -3203,7 +3203,7 @@ fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
         existingSecret: \"\"
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let existing_secret = schema
         .pointer("/properties/existingSecret")
         .expect("existingSecret present");
@@ -3247,7 +3247,7 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
               - memory
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3287,7 +3287,7 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
             }
         }
     });
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 #[test]
@@ -3346,7 +3346,7 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
               - memory
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3379,7 +3379,7 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
             }
         }
     });
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 #[test]
@@ -3404,7 +3404,7 @@ fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
           storageClass:
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3455,7 +3455,7 @@ fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
             }
         }
     });
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 #[test]
@@ -3473,7 +3473,7 @@ fn unconstrained_object_fragment_keeps_nested_maps_open() {
             memory: 200Mi
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3515,7 +3515,7 @@ fn unconstrained_object_fragment_keeps_nested_maps_open() {
             }
         }
     });
-    sim_assert_eq!(schema, expected);
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 /// A destructured `range $k, $v := .` inside an outer `with .Values.X` should
@@ -3546,10 +3546,10 @@ fn with_bound_range_dot_annotations_stay_string_map() {
         .pointer("/properties/annotations")
         .expect("annotations present");
     sim_assert_eq!(
-        annotations
+        have: annotations
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "annotations should stay an open string map, got {annotations}"
     );
 }
@@ -3575,13 +3575,13 @@ fn with_defaulted_object_body_rebinds_dot_to_fallback_path() {
           first: {}
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/globalImage/properties/tag/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "defaulted object in with-body should rebind dot so fallback object fields are attributed, got {schema}"
     );
 }
@@ -3662,10 +3662,10 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
         panic!("exact empty object placeholder variant missing: {parameters}; ir={ir:?}",)
     });
     sim_assert_eq!(
-        empty_variant
+        have: empty_variant
             .get("additionalProperties")
             .and_then(Value::as_bool),
-        Some(false),
+        want: Some(false),
     );
 }
 
@@ -3770,21 +3770,21 @@ fn guard_only_empty_map_default_stays_open_object() {
         config: {}
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let config = schema
         .pointer("/properties/config")
         .expect("config present");
     sim_assert_eq!(
-        config.get("type").and_then(Value::as_str),
-        Some("object"),
+        have: config.get("type").and_then(Value::as_str),
+        want: Some("object"),
         "guard-only empty-map default should keep the values.yaml object evidence, got {config}"
     );
     sim_assert_eq!(
-        config
+        have: config
             .get("additionalProperties")
             .and_then(Value::as_object)
             .map(serde_json::Map::len),
-        Some(0),
+        want: Some(0),
         "guard-only empty-map default should remain open, got {config}"
     );
     assert!(
@@ -3816,14 +3816,14 @@ fn quoted_matchlabels_key_value_stays_string() {
           ingressController:
             namespace: ingress-nginx
     "};
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let namespace = schema
         .pointer("/properties/networkPolicies/properties/ingressController/properties/namespace")
         .expect("namespace present");
     sim_assert_eq!(
-        namespace.get("type").and_then(Value::as_str),
-        Some("string"),
+        have: namespace.get("type").and_then(Value::as_str),
+        want: Some("string"),
         "quoted map-key value should stay string-valued, got {namespace}"
     );
     assert!(
@@ -3848,14 +3848,14 @@ fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
           name: surveyor
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let name = schema
         .pointer("/properties/account/properties/name")
         .expect("account.name present");
 
     sim_assert_eq!(
-        name.get("type").and_then(Value::as_str),
-        Some("string"),
+        have: name.get("type").and_then(Value::as_str),
+        want: Some("string"),
         "mapping-key interpolation should keep account.name string-valued, got {name}"
     );
     assert!(
@@ -3936,10 +3936,10 @@ fn exact_bound_helper_yaml_body_propagates_paths() {
         "helper body should infer ingress.className as string-like, got {schema}"
     );
     sim_assert_eq!(
-        schema
+        have: schema
             .pointer("/properties/ingress/properties/tls/items/properties/secretName/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "helper body should propagate ingress.tls[*].secretName, got {schema}"
     );
     assert!(
@@ -3988,7 +3988,7 @@ fn helper_defaulted_root_service_account_name_allows_null() {
             name:
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     let name = schema
         .pointer("/properties/alertmanager/properties/serviceAccount/properties/name")
         .expect("alertmanager.serviceAccount.name present");
@@ -4342,7 +4342,7 @@ fn helper_default_with_nonliteral_string_fallback_stays_nullable_string() {
           name:
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     let name = schema
         .pointer("/properties/serviceAccount/properties/name")
         .expect("serviceAccount.name present");
@@ -4625,16 +4625,16 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
           cluster: prod
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let pod_annotations = schema
         .pointer("/properties/admintools/properties/podAnnotations")
         .expect("admintools.podAnnotations present");
     sim_assert_eq!(
-        pod_annotations
+        have: pod_annotations
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "admintools.podAnnotations should stay an open string map, got {pod_annotations}"
     );
 
@@ -4642,10 +4642,10 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
         .pointer("/properties/admintools/properties/podLabels")
         .expect("admintools.podLabels present");
     sim_assert_eq!(
-        pod_labels
+        have: pod_labels
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "admintools.podLabels should stay an open string map, got {pod_labels}"
     );
 
@@ -4653,10 +4653,10 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
         .pointer("/properties/additionalAnnotations")
         .expect("additionalAnnotations present");
     sim_assert_eq!(
-        additional_annotations
+        have: additional_annotations
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "additionalAnnotations should stay an open string map, got {additional_annotations}"
     );
 
@@ -4664,10 +4664,10 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
         .pointer("/properties/additionalLabels")
         .expect("additionalLabels present");
     sim_assert_eq!(
-        additional_labels
+        have: additional_labels
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "additionalLabels should stay an open string map, got {additional_labels}"
     );
 }
@@ -4690,7 +4690,7 @@ fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call()
           extra: enabled
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, &helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -4720,7 +4720,7 @@ fn assigned_annotations_fragment_variable_keeps_open_string_map() {
             team: platform
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let annotations = schema
         .pointer("/properties/serviceAccount/properties/annotations")
@@ -4756,7 +4756,7 @@ fn direct_rendered_annotations_helper_keeps_open_string_map() {
           owner: infra
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
@@ -4793,7 +4793,7 @@ fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map()
         podAnnotations: {}
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let pod_annotations = schema
         .pointer("/properties/podAnnotations")
@@ -4839,7 +4839,7 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
           probeCommandTimeout: 2
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     let probe = schema
         .pointer("/properties/livenessProbe")
         .expect("livenessProbe present");
@@ -4874,7 +4874,7 @@ fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
         podLabels: {}
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, &helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -5005,19 +5005,19 @@ fn scalar_slot_rendered_array_keeps_provider_item_schema() {
           loadBalancerSourceRanges: []
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let source_ranges = schema
         .pointer("/properties/service/properties/loadBalancerSourceRanges")
         .expect("service.loadBalancerSourceRanges present");
 
     sim_assert_eq!(
-        source_ranges.get("type").and_then(Value::as_str),
-        Some("array"),
+        have: source_ranges.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "loadBalancerSourceRanges should remain array-valued, got {source_ranges}"
     );
     sim_assert_eq!(
-        source_ranges.pointer("/items/type").and_then(Value::as_str),
-        Some("string"),
+        have: source_ranges.pointer("/items/type").and_then(Value::as_str),
+        want: Some("string"),
         "loadBalancerSourceRanges items should keep the Kubernetes string schema, got {source_ranges}"
     );
 }
@@ -5047,7 +5047,7 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
         podAnnotations: {}
     "#};
 
-    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, &helpers), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
     let pod_labels = schema
         .pointer("/properties/podLabels")
@@ -5086,7 +5086,7 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
         leaderElection: {}
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     assert!(
         permits_type(
@@ -5116,7 +5116,7 @@ fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
           repository: jetstack/cert-manager-acmesolver
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for pointer in [
         "/properties/image/properties/registry",
@@ -5149,7 +5149,7 @@ fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_pat
           repository: jetstack/cert-manager-acmesolver
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for pointer in [
         "/properties/image/properties/registry",
@@ -5312,7 +5312,7 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
             memory: 250Mi
     "};
 
-    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let requests = schema
         .pointer("/properties/resources/properties/requests")
@@ -5383,7 +5383,7 @@ fn step2_default_negative_integer_literal() {
     let src = indoc! {r"
         replicas: {{ default -3 .Values.replicas }}
     "};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     let schemas = hints.get("replicas").expect("replicas hint present");
     assert!(
         schemas.contains("integer"),
@@ -5402,7 +5402,7 @@ fn step2_default_rooted_values_paths_recognised() {
         alias: {{ default "main" $root.Values.alertmanager.aliasOverride }}
         {{- end }}
     "#};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     assert!(
         hints.contains_key("alertmanager.nameOverride"),
         "expected hint for $.Values.alertmanager.nameOverride, got {hints:?}"
@@ -5422,7 +5422,7 @@ fn step2_default_in_yaml_comment_no_hint() {
         # example: {{ default "x" .Values.exampleName }}
         name: actual
     "#};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     assert!(
         hints.is_empty(),
         "YAML comments must not produce hints, got {hints:?}"
@@ -5437,7 +5437,7 @@ fn step2_default_in_helm_comment_no_hint() {
         {{/* default "x" .Values.exampleName */}}
         name: actual
     "#};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     assert!(
         hints.is_empty(),
         "Helm comments must not produce hints, got {hints:?}"
@@ -5453,7 +5453,7 @@ fn step2_default_in_string_literal_no_hint() {
     let src = indoc! {r#"
         docs: {{- "see: default 5 .Values.example" | quote }}
     "#};
-    let hints = type_hints_for(&parse_ir(src));
+    let hints = type_hints_for(parse_ir(src));
     assert!(
         hints.is_empty(),
         "Go-string-literal text must not produce hints, got {hints:?}"

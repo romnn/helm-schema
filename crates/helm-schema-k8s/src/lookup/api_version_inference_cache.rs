@@ -96,6 +96,6 @@ mod tests {
                 ApiVersionInferenceOutcome::Resolved { .. },
             )
         ));
-        sim_assert_eq!(calls.load(Ordering::SeqCst), 1);
+        sim_assert_eq!(have: calls.load(Ordering::SeqCst), want: 1);
     }
 }

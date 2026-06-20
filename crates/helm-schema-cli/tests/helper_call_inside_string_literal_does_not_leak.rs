@@ -114,8 +114,8 @@ fn quoted_string_payload_does_not_create_phantom_helper_edge() -> color_eyre::ey
         .expect("/properties/replicas present");
 
     sim_assert_eq!(
-        replicas,
-        &serde_json::json!({}),
+        have: replicas,
+        want: &serde_json::json!({}),
         "quoted-string payload made common.unusedReplicas look \
          reachable; its literal default leaked into root.replicas \
          as: {replicas}",

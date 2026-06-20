@@ -69,7 +69,6 @@ struct ConditionalOverlayAccumulator {
     saw_unsupported: bool,
 }
 
-#[derive(Default)]
 struct ConditionalOverlayBranchAccumulator {
     provider_schema_uses: Vec<ProviderSchemaUse>,
     metadata_field_kinds: BTreeSet<MetadataFieldKind>,
@@ -80,6 +79,25 @@ struct ConditionalOverlayBranchAccumulator {
     all_uses_nullable: bool,
     used_as_fragment: bool,
     is_partial_scalar_value_path: bool,
+}
+
+impl Default for ConditionalOverlayBranchAccumulator {
+    fn default() -> Self {
+        // `all_render_uses_self_guarded` and `all_uses_nullable` are
+        // "true until contradicted" accumulators, so they must start `true` —
+        // `#[derive(Default)]` would wrongly seed them `false`.
+        Self {
+            provider_schema_uses: Vec::new(),
+            metadata_field_kinds: BTreeSet::new(),
+            has_render_use: false,
+            has_self_guarded_render_use: false,
+            all_render_uses_self_guarded: true,
+            has_self_range_guard_render_use: false,
+            all_uses_nullable: true,
+            used_as_fragment: false,
+            is_partial_scalar_value_path: false,
+        }
+    }
 }
 
 impl Default for NullablePathAccumulator {
@@ -354,10 +372,7 @@ impl ContractSchemaSignalBuilder {
             return;
         };
 
-        let branch = accumulator
-            .branches_by_guards
-            .entry(guards)
-            .or_insert_with(ConditionalOverlayBranchAccumulator::new);
+        let branch = accumulator.branches_by_guards.entry(guards).or_default();
         branch.record_use(contract_use);
     }
 }
@@ -403,20 +418,6 @@ impl ConditionalOverlayAccumulator {
 }
 
 impl ConditionalOverlayBranchAccumulator {
-    fn new() -> Self {
-        Self {
-            provider_schema_uses: Vec::new(),
-            metadata_field_kinds: BTreeSet::new(),
-            has_render_use: false,
-            has_self_guarded_render_use: false,
-            all_render_uses_self_guarded: true,
-            has_self_range_guard_render_use: false,
-            all_uses_nullable: true,
-            used_as_fragment: false,
-            is_partial_scalar_value_path: false,
-        }
-    }
-
     fn record_use(&mut self, contract_use: &ContractUse) {
         self.has_render_use = true;
         self.has_self_guarded_render_use |= use_is_self_guarded(contract_use);

@@ -213,8 +213,8 @@ mod tests {
 
         canonicalize_contract_uses(&mut uses);
 
-        sim_assert_eq!(uses.len(), 1);
-        sim_assert_eq!(uses[0].provenance.len(), 2);
+        sim_assert_eq!(have: uses.len(), want: 1);
+        sim_assert_eq!(have: uses[0].provenance.len(), want: 2);
         assert!(
             uses[0]
                 .provenance

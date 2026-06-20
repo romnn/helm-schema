@@ -21,7 +21,7 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals_in_exprs(
 ) -> HelperSummary {
     let mut analysis = HelperSummary::default();
     for expr in exprs {
-        walk_expr_excluding_helper_call_args(&expr, &mut |node| {
+        walk_expr_excluding_helper_call_args(expr, &mut |node| {
             let TemplateExpr::Call { function, args } = node else {
                 return;
             };

@@ -503,6 +503,7 @@ impl HelperSummaryCache {
     }
 
     #[tracing::instrument(skip_all, fields(helper = name))]
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn summarize_bound_helper_call(
         &self,
         name: &str,
@@ -604,11 +605,11 @@ fn append_structural_expr_key(out: &mut String, expr: &helm_schema_ast::Template
             out.push_str("])");
         }
         TemplateExpr::Variable(variable) => {
-            out.push_str("v");
+            out.push('v');
             append_len_prefixed(out, variable);
         }
         TemplateExpr::Call { function, args } => {
-            out.push_str("c");
+            out.push('c');
             append_len_prefixed(out, function);
             out.push('(');
             for arg in args {
@@ -639,7 +640,7 @@ fn append_structural_expr_key(out: &mut String, expr: &helm_schema_ast::Template
             append_structural_expr_key(out, value);
         }
         TemplateExpr::Unknown(value) => {
-            out.push_str("u");
+            out.push('u');
             append_len_prefixed(out, value);
         }
     }
@@ -682,8 +683,8 @@ mod tests {
         };
 
         sim_assert_eq!(
-            meta.contract_guard_sets("serviceAccount.name"),
-            vec![vec![
+            have: meta.contract_guard_sets("serviceAccount.name"),
+            want: vec![vec![
                 Guard::Not {
                     path: "feature.enabled".to_string(),
                 },
@@ -720,8 +721,8 @@ mod tests {
         };
 
         sim_assert_eq!(
-            meta.contract_guard_sets("serviceAccount.name"),
-            vec![
+            have: meta.contract_guard_sets("serviceAccount.name"),
+            want: vec![
                 vec![
                     Guard::Truthy {
                         path: "component.enabled".to_string(),
@@ -758,7 +759,7 @@ mod tests {
             HelperOutputMeta::default(),
         );
 
-        sim_assert_eq!(summary.fragment_output_uses.len(), 1);
+        sim_assert_eq!(have: summary.fragment_output_uses.len(), want: 1);
     }
 
     #[test]
@@ -779,8 +780,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            summary.project_helper_value(),
-            Some(AbstractValue::Dict(BTreeMap::from([(
+            have: summary.project_helper_value(),
+            want: Some(AbstractValue::Dict(BTreeMap::from([(
                 "app".to_string(),
                 AbstractValue::OutputSet(BTreeMap::from([("podLabels".to_string(), meta)])),
             )])))
@@ -798,8 +799,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            summary.project_fragment_value(),
-            Some(AbstractValue::Dict(BTreeMap::from([(
+            have: summary.project_fragment_value(),
+            want: Some(AbstractValue::Dict(BTreeMap::from([(
                 "app".to_string(),
                 AbstractValue::fragment_output_paths(["podLabels".to_string()]),
             )])))
@@ -814,8 +815,8 @@ mod tests {
         summary.fragment_output.insert("extraEnv".to_string());
 
         sim_assert_eq!(
-            summary.project_fragment_value(),
-            Some(AbstractValue::fragment_output_paths([
+            have: summary.project_fragment_value(),
+            want: Some(AbstractValue::fragment_output_paths([
                 "extraEnv".to_string(),
                 "image.repository".to_string(),
                 "image.tag".to_string(),
@@ -830,8 +831,8 @@ mod tests {
         }
 
         sim_assert_eq!(
-            super::structural_exprs_cache_key(&exprs("include \"name\" .")),
-            super::structural_exprs_cache_key(&exprs("{{ include   \"name\" . }}"))
+            have: super::structural_exprs_cache_key(&exprs("include \"name\" .")),
+            want: super::structural_exprs_cache_key(&exprs("{{ include   \"name\" . }}"))
         );
     }
 }

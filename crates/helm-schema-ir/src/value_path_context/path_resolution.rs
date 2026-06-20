@@ -45,7 +45,7 @@ impl ValuePathContext<'_> {
     pub(crate) fn resolved_values_paths_in_exprs(&self, exprs: &[TemplateExpr]) -> Vec<String> {
         let mut paths = BTreeSet::new();
         for expr in exprs {
-            paths.extend(self.resolved_values_paths_from_expr(&expr));
+            paths.extend(self.resolved_values_paths_from_expr(expr));
         }
         paths.into_iter().collect()
     }

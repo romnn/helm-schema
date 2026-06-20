@@ -134,12 +134,12 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
     let evidence = signals.schema_evidence_by_value_path();
 
     sim_assert_eq!(
-        evidence
+        have: evidence
             .iter()
             .filter(|(_, evidence)| evidence.is_referenced_value_path)
             .map(|(path, _)| path.clone())
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from([
+        want: BTreeSet::from([
             "extraConfig".to_string(),
             "extraEnv".to_string(),
             "image.tag".to_string(),
@@ -150,61 +150,61 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
         ]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .iter()
             .filter(|(_, evidence)| evidence.facts.is_ranged_source)
             .map(|(path, _)| path.clone())
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["extraEnv".to_string()]),
+        want: BTreeSet::from(["extraEnv".to_string()]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .iter()
             .filter(|(_, evidence)| evidence.facts.used_as_fragment)
             .map(|(path, _)| path.clone())
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["podLabels".to_string()]),
+        want: BTreeSet::from(["podLabels".to_string()]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .iter()
             .filter(|(_, evidence)| evidence.facts.is_partial_scalar_value_path)
             .map(|(path, _)| path.clone())
             .collect::<BTreeSet<_>>(),
-        BTreeSet::from(["image.tag".to_string()]),
+        want: BTreeSet::from(["image.tag".to_string()]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("podLabels")
             .map(|evidence| &evidence.metadata_field_kinds),
-        Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
+        want: Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("podName")
             .map(|evidence| &evidence.metadata_field_kinds),
-        Some(&BTreeSet::from([MetadataFieldKind::Name])),
+        want: Some(&BTreeSet::from([MetadataFieldKind::Name])),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("podNamespace")
             .map(|evidence| &evidence.metadata_field_kinds),
-        Some(&BTreeSet::from([MetadataFieldKind::Namespace])),
+        want: Some(&BTreeSet::from([MetadataFieldKind::Namespace])),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("mode")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::Eq {
+        want: Some(&vec![ConditionalGuard::Eq {
             path: "mode".to_string(),
             value: GuardValue::string("prod"),
         }]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("extraConfig")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::TypeIs {
+        want: Some(&vec![ConditionalGuard::TypeIs {
             path: "extraConfig".to_string(),
             schema_type: "string".to_string(),
         }]),
@@ -308,45 +308,45 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
     let evidence = signals.schema_evidence_by_value_path();
 
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.enabled")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::Truthy {
+        want: Some(&vec![ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.config")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::With {
+        want: Some(&vec![ConditionalGuard::With {
             path: "feature.config".to_string(),
         }]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.disabled")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::Not(Box::new(
+        want: Some(&vec![ConditionalGuard::Not(Box::new(
             ConditionalGuard::Truthy {
                 path: "feature.disabled".to_string(),
             },
         ))]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.mode")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::NotEq {
+        want: Some(&vec![ConditionalGuard::NotEq {
             path: "feature.mode".to_string(),
             value: GuardValue::string("off"),
         }]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.name")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![ConditionalGuard::Absent {
+        want: Some(&vec![ConditionalGuard::Absent {
             path: "feature.name".to_string(),
         }]),
     );
@@ -359,16 +359,16 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
         },
     ]);
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.primary")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![disjunction.clone()]),
+        want: Some(&vec![disjunction.clone()]),
     );
     sim_assert_eq!(
-        evidence
+        have: evidence
             .get("feature.secondary")
             .map(|evidence| &evidence.guard_predicates),
-        Some(&vec![disjunction]),
+        want: Some(&vec![disjunction]),
     );
     let nested_disjunction = ConditionalGuard::AnyOf(vec![
         ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
@@ -386,10 +386,10 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
     ]);
     for path in ["feature.managed", "feature.tier", "feature.skip"] {
         sim_assert_eq!(
-            evidence
+            have: evidence
                 .get(path)
                 .map(|evidence| &evidence.guard_predicates),
-            Some(&vec![nested_disjunction.clone()]),
+            want: Some(&vec![nested_disjunction.clone()]),
             "expected the full nested predicate to be preserved for {path}",
         );
     }
@@ -456,12 +456,12 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
     ]);
     let requests = provider_schema_uses_for(&signals);
 
-    sim_assert_eq!(requests.len(), 2, "{requests:#?}");
-    sim_assert_eq!(requests[0].value_path, "containers");
-    sim_assert_eq!(requests[0].kind, ValueKind::Fragment);
+    sim_assert_eq!(have: requests.len(), want: 2, "{requests:#?}");
+    sim_assert_eq!(have: requests[0].value_path, want: "containers");
+    sim_assert_eq!(have: requests[0].kind, want: ValueKind::Fragment);
     assert!(!requests[0].is_self_range_collection);
-    sim_assert_eq!(requests[1].value_path, "ports");
-    sim_assert_eq!(requests[1].kind, ValueKind::Scalar);
+    sim_assert_eq!(have: requests[1].value_path, want: "ports");
+    sim_assert_eq!(have: requests[1].kind, want: ValueKind::Scalar);
     assert!(requests[1].is_self_range_collection);
 }
 
@@ -493,10 +493,10 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
     ]);
 
     sim_assert_eq!(
-        signals
+        have: signals
             .evidence_for("podLabels")
             .map(|evidence| &evidence.metadata_field_kinds),
-        Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
+        want: Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
     );
     assert!(
         signals
@@ -534,15 +534,15 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
     let pod_labels_evidence = signals
         .evidence_for("podLabels")
         .expect("podLabels evidence");
-    sim_assert_eq!(pod_labels_evidence.value_path, "podLabels");
+    sim_assert_eq!(have: pod_labels_evidence.value_path, want: "podLabels");
     sim_assert_eq!(
-        pod_labels_evidence.metadata_field_kinds,
-        BTreeSet::from([MetadataFieldKind::StringMap]),
+        have: pod_labels_evidence.metadata_field_kinds,
+        want: BTreeSet::from([MetadataFieldKind::StringMap]),
         "path evidence should carry metadata lowering facts",
     );
     sim_assert_eq!(
-        pod_labels_evidence.provider_schema_uses.len(),
-        1,
+        have: pod_labels_evidence.provider_schema_uses.len(),
+        want: 1,
         "path evidence should carry provider-schema requests for that path only",
     );
     let service_account_evidence = signals
@@ -562,7 +562,7 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
         !service_account_parent_evidence.is_referenced_value_path,
         "ancestor-only fact rows must not become schema subjects",
     );
-    sim_assert_eq!(provider_schema_uses_for(&signals).len(), 2);
+    sim_assert_eq!(have: provider_schema_uses_for(&signals).len(), want: 2);
 }
 
 #[test]
@@ -585,13 +585,13 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
     let overlays = signals.conditional_path_overlays();
     let overlay = overlays.first().expect("expected conditional overlay");
     sim_assert_eq!(
-        overlay.target_value_path,
-        "feature.host",
+        have: overlay.target_value_path,
+        want: "feature.host",
         "overlay should stay keyed by the values path being lowered"
     );
     sim_assert_eq!(
-        overlay.guards,
-        vec![ConditionalGuard::Truthy {
+        have: overlay.guards,
+        want: vec![ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }],
     );
@@ -604,8 +604,8 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
         "non-metadata target should not carry metadata-field lowering hints"
     );
     sim_assert_eq!(
-        overlay.evidence.facts.has_render_use,
-        true,
+        have: overlay.evidence.facts.has_render_use,
+        want: true,
         "branch-local facts should preserve the target's render-use status"
     );
 }
@@ -630,8 +630,8 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
     let overlays = signals.conditional_path_overlays();
     let overlay = overlays.first().expect("expected conditional overlay");
     sim_assert_eq!(
-        overlay.guards,
-        vec![ConditionalGuard::Truthy {
+        have: overlay.guards,
+        want: vec![ConditionalGuard::Truthy {
             path: "serviceAccount.create".to_string(),
         }],
         "self-default guards should not suppress an otherwise lowerable boolean branch",
@@ -698,7 +698,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
     ]);
 
     let overlays = signals.conditional_path_overlays();
-    sim_assert_eq!(overlays.len(), 4);
+    sim_assert_eq!(have: overlays.len(), want: 4);
     let feature_overlay = overlays
         .iter()
         .find(|overlay| overlay.target_value_path == "feature.host")
@@ -716,14 +716,14 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         .find(|overlay| overlay.target_value_path == "image.tag")
         .expect("image.tag overlay");
     sim_assert_eq!(
-        feature_overlay.guards,
-        vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+        have: feature_overlay.guards,
+        want: vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }))],
     );
     sim_assert_eq!(
-        other_overlay.guards,
-        vec![ConditionalGuard::AnyOf(vec![
+        have: other_overlay.guards,
+        want: vec![ConditionalGuard::AnyOf(vec![
             ConditionalGuard::Truthy {
                 path: "first.enabled".to_string(),
             },
@@ -733,15 +733,15 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ])],
     );
     sim_assert_eq!(
-        preset_overlay.guards,
-        vec![ConditionalGuard::NotEq {
+        have: preset_overlay.guards,
+        want: vec![ConditionalGuard::NotEq {
             path: "resourcesPreset".to_string(),
             value: GuardValue::string("none"),
         }],
     );
     sim_assert_eq!(
-        image_overlay.guards,
-        vec![ConditionalGuard::AnyOf(vec![
+        have: image_overlay.guards,
+        want: vec![ConditionalGuard::AnyOf(vec![
             ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
                 path: "global.imageDisabled".to_string(),
             })),
@@ -790,8 +790,8 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
 
     let overlays = signals.conditional_path_overlays();
     sim_assert_eq!(
-        overlays.len(),
-        2,
+        have: overlays.len(),
+        want: 2,
         "multiple supported guard sets for the same values path should survive as separate overlays"
     );
     assert!(
@@ -853,14 +853,14 @@ fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditio
 
     let overlays = signals.conditional_path_overlays();
     sim_assert_eq!(
-        overlays.len(),
-        1,
+        have: overlays.len(),
+        want: 1,
         "supported guarded branches should survive even when the path also has an unconditional base use: {:?}",
         overlays
     );
     sim_assert_eq!(
-        overlays[0].guards,
-        vec![ConditionalGuard::Truthy {
+        have: overlays[0].guards,
+        want: vec![ConditionalGuard::Truthy {
             path: "feature.enabled".to_string(),
         }],
     );
@@ -912,8 +912,8 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
 
     let overlays = signals.conditional_path_overlays();
     sim_assert_eq!(
-        overlays.len(),
-        2,
+        have: overlays.len(),
+        want: 2,
         "complementary guarded branches should both survive: {:?}",
         overlays
     );
@@ -968,8 +968,8 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
 
     let overlays = signals.conditional_path_overlays();
     sim_assert_eq!(
-        overlays.len(),
-        3,
+        have: overlays.len(),
+        want: 3,
         "the broad shared branch and the complementary sub-branches should all survive: {:?}",
         overlays
     );
@@ -1021,7 +1021,7 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
             .is_some_and(|evidence| evidence.facts.is_nullable),
         "semantic finalization should keep the default-guarded render claim",
     );
-    sim_assert_eq!(provider_schema_uses_for(&direct_signals).len(), 1);
+    sim_assert_eq!(have: provider_schema_uses_for(&direct_signals).len(), want: 1);
     assert!(
         direct_signals
             .evidence_for("podLabels")

@@ -128,6 +128,6 @@ mod tests {
                 },
             )
         ));
-        sim_assert_eq!(provider.calls.load(Ordering::SeqCst), 1);
+        sim_assert_eq!(have: provider.calls.load(Ordering::SeqCst), want: 1);
     }
 }

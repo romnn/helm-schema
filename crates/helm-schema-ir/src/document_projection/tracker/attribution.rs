@@ -329,18 +329,15 @@ fn prefer_context_path(left: YamlPath, right: YamlPath) -> YamlPath {
                 && !path_looks_like_scalar_header_artifact(&right.0)
             {
                 right
-            } else if path_looks_like_scalar_header_artifact(&right.0)
-                && !path_looks_like_scalar_header_artifact(&left.0)
+            } else if (path_looks_like_scalar_header_artifact(&right.0)
+                && !path_looks_like_scalar_header_artifact(&left.0))
+                || (path_has_equivalent_suffix(&left.0, &right.0) && left.0.len() > right.0.len())
             {
                 left
-            } else if path_has_equivalent_suffix(&left.0, &right.0) && left.0.len() > right.0.len()
-            {
-                left
-            } else if path_has_equivalent_suffix(&right.0, &left.0) && right.0.len() > left.0.len()
-            {
-                right
-            } else if right.0.len() > left.0.len()
-                && !path_looks_like_scalar_header_artifact(&right.0)
+            } else if (path_has_equivalent_suffix(&right.0, &left.0)
+                && right.0.len() > left.0.len())
+                || (right.0.len() > left.0.len()
+                    && !path_looks_like_scalar_header_artifact(&right.0))
             {
                 right
             } else {
@@ -870,9 +867,9 @@ fn prefer_more_specific_context_for_local(
 }
 
 fn context_specificity_score(context: &ResolvedNodeContext) -> usize {
-    if path_looks_like_scalar_header_artifact(&context.output_path.0) {
-        0
-    } else if path_is_relative_sequence(&context.output_path.0) {
+    if path_looks_like_scalar_header_artifact(&context.output_path.0)
+        || path_is_relative_sequence(&context.output_path.0)
+    {
         0
     } else {
         context.output_path.0.len()
@@ -1753,7 +1750,7 @@ mod tests {
             .map(|index| placeholder_token(index, 5))
             .collect::<std::collections::BTreeSet<_>>();
 
-        sim_assert_eq!(tokens.len(), 36);
+        sim_assert_eq!(have: tokens.len(), want: 36);
         assert!(tokens.iter().all(|token| token.starts_with("__HS")));
     }
 }

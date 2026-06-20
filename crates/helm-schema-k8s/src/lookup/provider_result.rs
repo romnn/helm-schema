@@ -6,6 +6,9 @@ use super::provider_schema_fragment::ProviderSchemaFragment;
 /// records these outcomes in a lookup trace, projects diagnostics
 /// from final misses, and returns the public
 /// [`crate::lookup::ChainLookupOutcome`].
+// Transient by-value result; the `Found` variant's size does not justify
+// boxing the other (unit) variants.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 pub enum ProviderLookupResult {
     /// Provider owns the resource AND resolved the requested path.

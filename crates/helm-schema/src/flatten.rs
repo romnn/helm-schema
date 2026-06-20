@@ -586,7 +586,7 @@ mod tests {
         let allowed = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
             .retrieve(&uri)
             .expect("file retrieval should succeed");
-        sim_assert_eq!(allowed, json!({ "type": "string" }));
+        sim_assert_eq!(have: allowed, want: json!({ "type": "string" }));
 
         fs::remove_file(&path).expect("remove test schema");
     }

@@ -113,32 +113,32 @@ mod tests {
     fn group_version_probe_uses_canonical_kind_table() {
         let probe = probe("policy/v1").expect("policy/v1 should have a canonical probe");
 
-        sim_assert_eq!(probe.api_version, "policy/v1");
-        sim_assert_eq!(probe.kind, "PodDisruptionBudget");
+        sim_assert_eq!(have: probe.api_version, want: "policy/v1");
+        sim_assert_eq!(have: probe.kind, want: "PodDisruptionBudget");
     }
 
     #[test]
     fn core_version_probe_uses_canonical_kind_table() {
         let probe = probe("v1").expect("core v1 should have a canonical probe");
 
-        sim_assert_eq!(probe.api_version, "v1");
-        sim_assert_eq!(probe.kind, "ConfigMap");
+        sim_assert_eq!(have: probe.api_version, want: "v1");
+        sim_assert_eq!(have: probe.kind, want: "ConfigMap");
     }
 
     #[test]
     fn resource_qualified_probe_bypasses_canonical_kind_table() {
         let probe = probe("policy/v1/PodSecurityPolicy").expect("resource probe should be direct");
 
-        sim_assert_eq!(probe.api_version, "policy/v1");
-        sim_assert_eq!(probe.kind, "PodSecurityPolicy");
+        sim_assert_eq!(have: probe.api_version, want: "policy/v1");
+        sim_assert_eq!(have: probe.kind, want: "PodSecurityPolicy");
     }
 
     #[test]
     fn core_resource_qualified_probe_bypasses_canonical_kind_table() {
         let probe = probe("v1/Secret").expect("core resource probe should be direct");
 
-        sim_assert_eq!(probe.api_version, "v1");
-        sim_assert_eq!(probe.kind, "Secret");
+        sim_assert_eq!(have: probe.api_version, want: "v1");
+        sim_assert_eq!(have: probe.kind, want: "Secret");
     }
 
     #[test]

@@ -64,8 +64,8 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let answer = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
-        answer,
-        None,
+        have: answer,
+        want: None,
         "offline + partial cache + probe target absent must return None (uncertain); \
          got {answer:?}. A partial cache does not prove the probe is absent upstream."
     );
@@ -76,8 +76,8 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     let query = ApiPresenceQuery::parse_helm_literal("v1").expect("parse api presence query");
     let positive = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
-        positive,
-        Some(true),
+        have: positive,
+        want: Some(true),
         "the planted ConfigMap at v1 must be discoverable as Has(\"v1\"); got {positive:?}"
     );
 }
@@ -107,7 +107,7 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() {
 
     let traced = provider.capability_has_query_at_primary_version_traced(&query);
 
-    sim_assert_eq!(traced.answer, None);
+    sim_assert_eq!(have: traced.answer, want: None);
     assert!(
         traced.trace.entries().iter().any(|entry| matches!(
             entry,
@@ -117,7 +117,7 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() {
                 filename,
                 outcome: SourceProbeTraceOutcome::Uncertain,
                 ..
-            } if source_id == &default_source_id()
+            } if source_id == default_source_id()
                 && k8s_version == primary
                 && filename == "horizontalpodautoscaler-autoscaling-v2.json"
         )),
@@ -147,8 +147,8 @@ fn offline_empty_cache_returns_none() {
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let answer = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
-        answer,
-        None,
+        have: answer,
+        want: None,
         "offline + empty cache must return None; got {answer:?}"
     );
 }
@@ -176,8 +176,8 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let first = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
-        first,
-        Some(false),
+        have: first,
+        want: Some(false),
         "online + 404 must be authoritatively absent; got {first:?}"
     );
 
@@ -188,8 +188,8 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
     // — the contract here is "returns the same authoritative answer".
     let second = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
-        second,
-        Some(false),
+        have: second,
+        want: Some(false),
         "second probe in same process must still be authoritatively absent; got {second:?}"
     );
 }
@@ -210,7 +210,7 @@ fn traced_online_404_records_authoritative_absent_source_probe() {
 
     let traced = provider.capability_has_query_at_primary_version_traced(&query);
 
-    sim_assert_eq!(traced.answer, Some(false));
+    sim_assert_eq!(have: traced.answer, want: Some(false));
     assert!(
         traced.trace.entries().iter().any(|entry| matches!(
             entry,
@@ -256,8 +256,8 @@ fn online_200_returns_true_and_caches() {
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let answer = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
-        answer,
-        Some(true),
+        have: answer,
+        want: Some(true),
         "online + fetcher returns schema body must be Some(true); got {answer:?}"
     );
 

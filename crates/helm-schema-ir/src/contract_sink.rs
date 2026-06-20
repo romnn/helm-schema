@@ -192,8 +192,8 @@ mod tests {
             None,
         );
         sim_assert_eq!(
-            rendered.guards,
-            vec![Guard::Default {
+            have: rendered.guards,
+            want: vec![Guard::Default {
                 path: "serviceAccount.name".to_string(),
             }]
         );
@@ -222,6 +222,6 @@ mod tests {
         let contract_use =
             context.pathless_contract_use("image.tag".to_string(), ValueKind::PartialScalar, &[]);
 
-        sim_assert_eq!(contract_use.kind, ValueKind::Scalar);
+        sim_assert_eq!(have: contract_use.kind, want: ValueKind::Scalar);
     }
 }

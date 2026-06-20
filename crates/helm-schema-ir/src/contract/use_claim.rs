@@ -34,14 +34,7 @@ impl ContractUse {
         resource: Option<ResourceRef>,
         provenance: Option<ContractProvenance>,
     ) -> Self {
-        Self::with_provenances(
-            source_expr,
-            path,
-            kind,
-            guards,
-            resource,
-            provenance.into_iter(),
-        )
+        Self::with_provenances(source_expr, path, kind, guards, resource, provenance)
     }
 
     pub(crate) fn with_provenances(

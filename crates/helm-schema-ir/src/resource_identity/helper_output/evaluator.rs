@@ -69,9 +69,7 @@ impl HelperOutputEvaluator {
                     if if_node.is_some() || lone_helper_call.is_some() {
                         return None;
                     }
-                    let Some(callee) = lone_helper_call_callee(action) else {
-                        return None;
-                    };
+                    let callee = lone_helper_call_callee(action)?;
                     lone_helper_call = Some(callee);
                 }
                 _ => return None,

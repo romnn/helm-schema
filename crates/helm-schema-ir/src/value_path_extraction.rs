@@ -167,43 +167,43 @@ mod tests {
     #[test]
     fn root_chain_extracted() {
         sim_assert_eq!(
-            extract_values_paths(".Values.foo.bar"),
-            vec!["foo.bar".to_string()]
+            have: extract_values_paths(".Values.foo.bar"),
+            want: vec!["foo.bar".to_string()]
         );
     }
 
     #[test]
     fn quoted_payload_does_not_create_phantom_path() {
         let text = r#"eq .Values.X ".Values.fake""#;
-        sim_assert_eq!(extract_values_paths(text), vec!["X".to_string()]);
+        sim_assert_eq!(have: extract_values_paths(text), want: vec!["X".to_string()]);
     }
 
     #[test]
     fn rooted_dollar_values_path() {
-        sim_assert_eq!(extract_values_paths("$.Values.X"), vec!["X".to_string()]);
+        sim_assert_eq!(have: extract_values_paths("$.Values.X"), want: vec!["X".to_string()]);
     }
 
     #[test]
     fn rooted_named_variable_values_path() {
         sim_assert_eq!(
-            extract_values_paths("$root.Values.Y"),
-            vec!["Y".to_string()]
+            have: extract_values_paths("$root.Values.Y"),
+            want: vec!["Y".to_string()]
         );
     }
 
     #[test]
     fn nested_selector_chain_keeps_full_values_descendant_path() {
         sim_assert_eq!(
-            extract_values_paths("((.Values.appVersions).airtype).global"),
-            vec!["appVersions.airtype.global".to_string()]
+            have: extract_values_paths("((.Values.appVersions).airtype).global"),
+            want: vec!["appVersions.airtype.global".to_string()]
         );
     }
 
     #[test]
     fn embedded_values_in_helper_context_chain() {
         sim_assert_eq!(
-            extract_values_paths(".context.Values.X"),
-            vec!["X".to_string()],
+            have: extract_values_paths(".context.Values.X"),
+            want: vec!["X".to_string()],
         );
     }
 
@@ -211,16 +211,16 @@ mod tests {
     fn multiple_refs_are_sorted_and_deduped() {
         let text = ".Values.b .Values.a .Values.b";
         sim_assert_eq!(
-            extract_values_paths(text),
-            vec!["a".to_string(), "b".to_string()],
+            have: extract_values_paths(text),
+            want: vec!["a".to_string(), "b".to_string()],
         );
     }
 
     #[test]
     fn wildcard_segment_in_rewritten_path() {
         sim_assert_eq!(
-            extract_values_paths(".Values.someList.*.name"),
-            vec!["someList.*.name".to_string()],
+            have: extract_values_paths(".Values.someList.*.name"),
+            want: vec!["someList.*.name".to_string()],
         );
     }
 
@@ -239,16 +239,16 @@ mod tests {
     #[test]
     fn dot_star_inside_string_literal_does_not_emit_phantom_wildcard_path() {
         sim_assert_eq!(
-            extract_values_paths(r#"eq .Values.X "pattern.*foo""#),
-            vec!["X".to_string()],
+            have: extract_values_paths(r#"eq .Values.X "pattern.*foo""#),
+            want: vec!["X".to_string()],
         );
     }
 
     #[test]
     fn dot_values_substring_inside_string_does_not_emit_phantom() {
         sim_assert_eq!(
-            extract_values_paths(r#"eq .Values.X ".Values.fake""#),
-            vec!["X".to_string()],
+            have: extract_values_paths(r#"eq .Values.X ".Values.fake""#),
+            want: vec!["X".to_string()],
         );
     }
 }

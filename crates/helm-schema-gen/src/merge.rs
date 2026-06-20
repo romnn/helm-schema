@@ -581,16 +581,16 @@ mod tests {
         let merged = merge_two_schemas(open_map, fixed_values_object);
 
         sim_assert_eq!(
-            merged
+            have: merged
                 .pointer("/additionalProperties/type")
                 .and_then(|value| value.as_str()),
-            Some("string"),
+            want: Some("string"),
         );
         sim_assert_eq!(
-            merged
+            have: merged
                 .pointer("/properties/cert-manager.io~1cluster-issuer/type")
                 .and_then(|value| value.as_str()),
-            Some("string"),
+            want: Some("string"),
         );
     }
 
@@ -636,10 +636,10 @@ mod tests {
             "expected nested requests map to stay open, got {merged}",
         );
         sim_assert_eq!(
-            merged
+            have: merged
                 .pointer("/properties/requests/properties/cpu/type")
                 .and_then(|value| value.as_str()),
-            Some("string"),
+            want: Some("string"),
         );
     }
 
@@ -661,21 +661,21 @@ mod tests {
         let merged = merge_two_schemas(provider, values_yaml);
 
         sim_assert_eq!(
-            merged.get("additionalProperties"),
-            None,
+            have: merged.get("additionalProperties"),
+            want: None,
             "preserve-unknown-fields object should stay open, got {merged}"
         );
         sim_assert_eq!(
-            merged
+            have: merged
                 .pointer("/properties/replicas/type")
                 .and_then(serde_json::Value::as_str),
-            Some("integer"),
+            want: Some("integer"),
         );
         sim_assert_eq!(
-            merged
+            have: merged
                 .get("x-kubernetes-preserve-unknown-fields")
                 .and_then(serde_json::Value::as_bool),
-            Some(true),
+            want: Some(true),
         );
     }
 
@@ -747,7 +747,7 @@ mod tests {
 
         let merged = merge_two_schemas(metadata_name, service_account_name);
 
-        sim_assert_eq!(merged, json!({ "type": "string" }));
+        sim_assert_eq!(have: merged, want: json!({ "type": "string" }));
     }
 
     #[test]
@@ -761,15 +761,15 @@ mod tests {
         });
 
         let merged = merge_two_schemas(service_name, plain_string);
-        sim_assert_eq!(merged, json!({ "type": "string", "minLength": 1 }));
+        sim_assert_eq!(have: merged, want: json!({ "type": "string", "minLength": 1 }));
 
         let merged_nullable = merge_two_schemas(
             json!({ "type": "string", "format": "byte" }),
             json!({ "type": "string", "minLength": 1 }),
         );
         sim_assert_eq!(
-            merged_nullable,
-            json!({ "type": "string", "format": "byte", "minLength": 1 })
+            have: merged_nullable,
+            want: json!({ "type": "string", "format": "byte", "minLength": 1 })
         );
     }
 
@@ -783,8 +783,8 @@ mod tests {
         });
 
         sim_assert_eq!(
-            merge_two_schemas(int_or_string.clone(), json!({ "type": "integer" })),
-            int_or_string
+            have: merge_two_schemas(int_or_string.clone(), json!({ "type": "integer" })),
+            want: int_or_string
         );
     }
 
@@ -800,8 +800,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            merged,
-            json!({
+            have: merged,
+            want: json!({
                 "description": "priority",
                 "format": "int32",
                 "type": ["integer", "null"]

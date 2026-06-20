@@ -16,15 +16,15 @@ fn parse(args: &[&str]) -> Result<Cli, String> {
 #[test]
 fn cli_diag_format_text_is_default() {
     let cli = parse(&[]).expect("parse");
-    sim_assert_eq!(cli.diag.diag_format, DiagFormat::Text);
+    sim_assert_eq!(have: cli.diag.diag_format, want: DiagFormat::Text);
 }
 
 #[test]
 fn cli_perf_flags_parse() {
     let cli = parse(&["--trace-output", "/tmp/helm-schema.trace"]).expect("parse");
     sim_assert_eq!(
-        cli.perf.trace_output.as_deref(),
-        Some(std::path::Path::new("/tmp/helm-schema.trace"))
+        have: cli.perf.trace_output.as_deref(),
+        want: Some(std::path::Path::new("/tmp/helm-schema.trace"))
     );
 }
 
@@ -56,8 +56,8 @@ fn cli_output_ref_modes_conflict() {
 fn cli_values_files_flag_is_repeatable() {
     let cli = parse(&["-f", "/tmp/base.yaml", "--values", "/tmp/override.yaml"]).expect("parse");
     sim_assert_eq!(
-        cli.chart.values_files,
-        vec![
+        have: cli.chart.values_files,
+        want: vec![
             std::path::PathBuf::from("/tmp/base.yaml"),
             std::path::PathBuf::from("/tmp/override.yaml")
         ]
@@ -68,8 +68,8 @@ fn cli_values_files_flag_is_repeatable() {
 fn cli_repeated_k8s_version_preserves_order() {
     let cli = parse(&["--k8s-version", "v1.24.0", "--k8s-version", "v1.35.0"]).expect("parse");
     sim_assert_eq!(
-        cli.k8s.k8s_version,
-        vec!["v1.24.0".to_string(), "v1.35.0".to_string()]
+        have: cli.k8s.k8s_version,
+        want: vec!["v1.24.0".to_string(), "v1.35.0".to_string()]
     );
 }
 
@@ -112,8 +112,8 @@ fn k8s_strict_does_not_conflict_with_mirror_flag() {
     .expect("strict + mirror must be accepted at parse time");
     assert!(cli.k8s.strict_k8s_version);
     sim_assert_eq!(
-        cli.k8s.k8s_schema_mirror,
-        vec!["https://example/".to_string()]
+        have: cli.k8s.k8s_schema_mirror,
+        want: vec!["https://example/".to_string()]
     );
 }
 
@@ -127,10 +127,10 @@ fn crd_strict_does_not_conflict_with_mirror_flag() {
     .expect("strict + mirror must be accepted at parse time");
     assert!(cli.crd.strict_crd_version);
     sim_assert_eq!(
-        cli.crd.crd_catalog_mirror,
-        vec!["https://example/".to_string()]
+        have: cli.crd.crd_catalog_mirror,
+        want: vec!["https://example/".to_string()]
     );
-    sim_assert_eq!(cli.crd.lookup_mode(), CrdVersionLookup::Strict);
+    sim_assert_eq!(have: cli.crd.lookup_mode(), want: CrdVersionLookup::Strict);
 }
 
 #[test]
@@ -159,15 +159,15 @@ fn cli_rejects_override_and_cache_dir_same_path() {
 fn k8s_strict_collapses_chain_to_explicit_versions() {
     let cli = parse(&["--strict-k8s-version", "--k8s-version", "v1.35.0"]).expect("parse");
     let window = cli.k8s.resolved_fallback_window().expect("resolve");
-    sim_assert_eq!(window, None, "strict mode must disable auto-fallback");
+    sim_assert_eq!(have: window, want: None, "strict mode must disable auto-fallback");
 }
 
 #[test]
 fn k8s_version_fallback_auto_resolves_to_default_window() {
     let cli = parse(&["--k8s-version-fallback=auto"]).expect("parse");
     let window = cli.k8s.resolved_fallback_window().expect("resolve");
-    sim_assert_eq!(window, Some(helm_schema_cli::cli::DEFAULT_AUTO_WINDOW));
-    sim_assert_eq!(cli.k8s.k8s_version_fallback, Some(K8sVersionFallback::Auto));
+    sim_assert_eq!(have: window, want: Some(helm_schema_cli::cli::DEFAULT_AUTO_WINDOW));
+    sim_assert_eq!(have: cli.k8s.k8s_version_fallback, want: Some(K8sVersionFallback::Auto));
 }
 
 // Pins the auto-fallback policy: charts using policy/v1beta1 (removed
@@ -192,12 +192,12 @@ fn k8s_auto_fallback_default_reaches_v1_24_from_v1_35() {
 fn k8s_version_fallback_explicit_window() {
     let cli = parse(&["--k8s-version-fallback=3"]).expect("parse");
     let window = cli.k8s.resolved_fallback_window().expect("resolve");
-    sim_assert_eq!(window, Some(3));
+    sim_assert_eq!(have: window, want: Some(3));
 }
 
 #[test]
 fn k8s_version_fallback_zero_means_disabled() {
     let cli = parse(&["--k8s-version-fallback=0"]).expect("parse");
     let window = cli.k8s.resolved_fallback_window().expect("resolve");
-    sim_assert_eq!(window, None);
+    sim_assert_eq!(have: window, want: None);
 }

@@ -165,8 +165,8 @@ mod tests {
         let plan = ResourceLookupPlan::for_resource(&resource, &StaticOracle::new());
 
         sim_assert_eq!(
-            planned_api_versions(&plan),
-            vec!["networking.k8s.io/v1", "extensions/v1beta1"]
+            have: planned_api_versions(&plan),
+            want: vec!["networking.k8s.io/v1", "extensions/v1beta1"]
         );
     }
 
@@ -183,7 +183,7 @@ mod tests {
         let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
         let plan = ResourceLookupPlan::for_resource(&resource, &oracle);
 
-        sim_assert_eq!(planned_api_versions(&plan), vec!["networking.k8s.io/v1"]);
+        sim_assert_eq!(have: planned_api_versions(&plan), want: vec!["networking.k8s.io/v1"]);
     }
 
     #[test]
@@ -197,8 +197,8 @@ mod tests {
         let plan = ResourceLookupPlan::for_resource(&resource, &oracle);
 
         sim_assert_eq!(
-            planned_api_versions(&plan),
-            vec!["networking.k8s.io/v1", "extensions/v1beta1"]
+            have: planned_api_versions(&plan),
+            want: vec!["networking.k8s.io/v1", "extensions/v1beta1"]
         );
     }
 
@@ -219,8 +219,8 @@ mod tests {
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &oracle);
 
         sim_assert_eq!(
-            planned_missing_api_versions(&plan),
-            vec!["networking.k8s.io/v1"]
+            have: planned_missing_api_versions(&plan),
+            want: vec!["networking.k8s.io/v1"]
         );
     }
 
@@ -234,8 +234,8 @@ mod tests {
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &StaticOracle::new());
 
         sim_assert_eq!(
-            planned_missing_api_versions(&plan),
-            vec!["extensions/v1beta1", "networking.k8s.io/v1"]
+            have: planned_missing_api_versions(&plan),
+            want: vec!["extensions/v1beta1", "networking.k8s.io/v1"]
         );
     }
 
@@ -250,8 +250,8 @@ mod tests {
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &oracle);
 
         sim_assert_eq!(
-            planned_missing_api_versions(&plan),
-            vec!["extensions/v1beta1", "networking.k8s.io/v1"]
+            have: planned_missing_api_versions(&plan),
+            want: vec!["extensions/v1beta1", "networking.k8s.io/v1"]
         );
     }
 
@@ -261,8 +261,8 @@ mod tests {
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &StaticOracle::new());
 
         sim_assert_eq!(
-            planned_missing_api_versions(&plan),
-            vec!["extensions/v1beta1"]
+            have: planned_missing_api_versions(&plan),
+            want: vec!["extensions/v1beta1"]
         );
     }
 }

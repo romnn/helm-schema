@@ -27,12 +27,12 @@ fn parse_helper_assignment_detects_declaration_from_ast() {
         panic!("parse helper assignment");
     };
 
-    sim_assert_eq!(assignment.variable, "image");
-    sim_assert_eq!(assignment.kind, AssignmentKind::Declaration);
-    sim_assert_eq!(assignment.rhs, ".Values.image.repository");
+    sim_assert_eq!(have: assignment.variable, want: "image");
+    sim_assert_eq!(have: assignment.kind, want: AssignmentKind::Declaration);
+    sim_assert_eq!(have: assignment.rhs, want: ".Values.image.repository");
     sim_assert_eq!(
-        assignment.rhs_expr,
-        TemplateExpr::Field(vec![
+        have: assignment.rhs_expr,
+        want: TemplateExpr::Field(vec![
             "Values".to_string(),
             "image".to_string(),
             "repository".to_string()
@@ -47,12 +47,12 @@ fn parse_helper_assignment_detects_assignment_from_ast() {
         panic!("parse helper assignment");
     };
 
-    sim_assert_eq!(assignment.variable, "image");
-    sim_assert_eq!(assignment.kind, AssignmentKind::Assignment);
-    sim_assert_eq!(assignment.rhs, ".Values.global.image");
+    sim_assert_eq!(have: assignment.variable, want: "image");
+    sim_assert_eq!(have: assignment.kind, want: AssignmentKind::Assignment);
+    sim_assert_eq!(have: assignment.rhs, want: ".Values.global.image");
     sim_assert_eq!(
-        assignment.rhs_expr,
-        TemplateExpr::Field(vec![
+        have: assignment.rhs_expr,
+        want: TemplateExpr::Field(vec![
             "Values".to_string(),
             "global".to_string(),
             "image".to_string()
@@ -90,8 +90,8 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
     ));
 
     sim_assert_eq!(
-        locals.get("config"),
-        Some(&AbstractValue::Overlay {
+        have: locals.get("config"),
+        want: Some(&AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
                 AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),

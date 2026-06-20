@@ -13,7 +13,7 @@ use test_util::prelude::sim_assert_eq;
 
 fn single_expr(action: &str) -> TemplateExpr {
     let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
-    sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+    sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
     exprs.into_iter().next().expect("expression exists")
 }
 
@@ -72,8 +72,8 @@ fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
     )]);
 
     sim_assert_eq!(
-        fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
-        Some(AbstractValue::Dict(BTreeMap::from([(
+        have: fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+        want: Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
         )])))
@@ -89,8 +89,8 @@ fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
     )]);
 
     sim_assert_eq!(
-        fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
-        Some(AbstractValue::Dict(BTreeMap::from([(
+        have: fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+        want: Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
         )])))
@@ -103,8 +103,8 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
     let fragment_locals = context_local();
 
     sim_assert_eq!(
-        fragment_binding_from_outer_expr(&expr, Some(&fragment_locals), None, None),
-        Some(AbstractValue::Dict(BTreeMap::from([(
+        have: fragment_binding_from_outer_expr(&expr, Some(&fragment_locals), None, None),
+        want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             AbstractValue::ValuesPath("serviceAccount.name".to_string()),
         )])))
@@ -119,8 +119,8 @@ fn helper_binding_fragment_local_selector_uses_shared_expression_eval() {
     );
 
     sim_assert_eq!(
-        binding,
-        Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
+        have: binding,
+        want: Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
     );
 }
 
@@ -130,8 +130,8 @@ fn helper_binding_fragment_local_dict_uses_shared_expression_eval() {
         helper_binding_from_fragment_locals(r#"dict "name" $ctx.config.name"#, &context_local());
 
     sim_assert_eq!(
-        binding,
-        Some(AbstractValue::Dict(BTreeMap::from([(
+        have: binding,
+        want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             AbstractValue::ValuesPath("serviceAccount.name".to_string()),
         )])))
@@ -144,8 +144,8 @@ fn helper_binding_fragment_local_index_uses_shared_expression_eval() {
         helper_binding_from_fragment_locals(r#"index $ctx.config "name""#, &context_local());
 
     sim_assert_eq!(
-        binding,
-        Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
+        have: binding,
+        want: Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
     );
 }
 
@@ -206,8 +206,8 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     let mut seen = HashSet::new();
 
     sim_assert_eq!(
-        fragment_binding_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
-        Some(AbstractValue::OutputSet(
+        have: fragment_binding_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
+        want: Some(AbstractValue::OutputSet(
             [(
                 "nameOverride".to_string(),
                 HelperOutputMeta {

@@ -53,5 +53,5 @@ const EXPECTED_SEXPR: &str = r#"(Document
 fn tree_sitter_ast() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
-    sim_assert_eq!(ast.to_sexpr(), EXPECTED_SEXPR.trim_end());
+    sim_assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
 }

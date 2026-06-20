@@ -313,31 +313,31 @@ mod tests {
         let helper = DocumentHelperSummary::from_helper_summary(summary, ValueKind::Fragment);
 
         sim_assert_eq!(
-            helper.output_values,
-            BTreeMap::from([("image.tag".to_string(), meta.clone())])
+            have: helper.output_values,
+            want: BTreeMap::from([("image.tag".to_string(), meta.clone())])
         );
-        sim_assert_eq!(helper.fragment_output_values, vec!["extraEnv".to_string()]);
+        sim_assert_eq!(have: helper.fragment_output_values, want: vec!["extraEnv".to_string()]);
         sim_assert_eq!(
-            helper.dependency_values,
-            BTreeMap::from([
+            have: helper.dependency_values,
+            want: BTreeMap::from([
                 ("global".to_string(), HelperOutputMeta::default()),
                 ("global.image.tag".to_string(), meta),
             ])
         );
         sim_assert_eq!(
-            helper.guard_values,
-            BTreeSet::from(["service.enabled".to_string()])
+            have: helper.guard_values,
+            want: BTreeSet::from(["service.enabled".to_string()])
         );
         sim_assert_eq!(
-            helper.type_hints,
-            BTreeMap::from([(
+            have: helper.type_hints,
+            want: BTreeMap::from([(
                 "image.tag".to_string(),
                 BTreeSet::from(["string".to_string()])
             )])
         );
         sim_assert_eq!(
-            helper.suppress_direct_values,
-            BTreeSet::from([
+            have: helper.suppress_direct_values,
+            want: BTreeSet::from([
                 "extraEnv".to_string(),
                 "global.image.tag".to_string(),
                 "image".to_string(),
@@ -346,8 +346,8 @@ mod tests {
             ])
         );
         sim_assert_eq!(
-            helper.chart_value_defaults,
-            BTreeSet::from(["nameOverride".to_string()])
+            have: helper.chart_value_defaults,
+            want: BTreeSet::from(["nameOverride".to_string()])
         );
     }
 
@@ -388,8 +388,8 @@ mod tests {
         );
 
         sim_assert_eq!(
-            analysis.type_hints,
-            BTreeMap::from([
+            have: analysis.type_hints,
+            want: BTreeMap::from([
                 (
                     "global.service.port".to_string(),
                     BTreeSet::from(["string".to_string()])
@@ -401,8 +401,8 @@ mod tests {
             ])
         );
         sim_assert_eq!(
-            analysis.encoded_output_values,
-            BTreeSet::from([
+            have: analysis.encoded_output_values,
+            want: BTreeSet::from([
                 "global.service.port".to_string(),
                 "service.port".to_string()
             ])

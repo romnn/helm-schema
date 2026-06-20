@@ -48,8 +48,8 @@ mod tests {
         write_schema_json(&mut compact, &schema, JsonOutputFormat::Compact).expect("write compact");
         let compact = String::from_utf8(compact).expect("compact utf8");
         sim_assert_eq!(
-            compact,
-            r#"{"properties":{"name":{"type":"string"}},"type":"object"}"#.to_string() + "\n"
+            have: compact,
+            want: r#"{"properties":{"name":{"type":"string"}},"type":"object"}"#.to_string() + "\n"
         );
     }
 }

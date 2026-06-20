@@ -757,7 +757,7 @@ fn if_else_end_with_yaml_branches() {
 
     let have = parse_fused_template(src);
     let want = SExpr::from_str(want).expect("parse expected");
-    sim_assert_eq!(have, want);
+    sim_assert_eq!(have: have, want: want);
 }
 
 #[test]
@@ -872,7 +872,7 @@ fn redis_prometheus_rule_yaml() {
     let have = parse_fused_template(src);
     let want = SExpr::from_str(want).expect("parse expected");
     println!("{}", have.to_string_pretty());
-    sim_assert_eq!(have, want);
+    sim_assert_eq!(have: have, want: want);
 }
 
 #[test]
@@ -926,7 +926,7 @@ fn else_if_chain_is_nested_if_in_else_branch() {
 
     let have = parse_fused_template(src);
     let want = SExpr::from_str(want).expect("parse expected");
-    sim_assert_eq!(have, want);
+    sim_assert_eq!(have: have, want: want);
 }
 
 #[test]
@@ -958,7 +958,7 @@ fn range_action_body_contains_yaml_and_inline_exprs() {
 
     let have = parse_fused_template(src);
     let want = SExpr::from_str(want).expect("parse expected");
-    sim_assert_eq!(have, want);
+    sim_assert_eq!(have: have, want: want);
 }
 
 #[test]
@@ -980,5 +980,5 @@ fn inline_helm_expr_is_part_of_yaml_structure() {
 
     let have = parse_fused_template(src);
     let want = SExpr::from_str(want).expect("parse expected");
-    sim_assert_eq!(have, want);
+    sim_assert_eq!(have: have, want: want);
 }

@@ -114,14 +114,14 @@ mod tests {
         state.join_branch_outcomes(&entry, vec![branch]);
 
         sim_assert_eq!(
-            state.contract_guards(),
-            vec![Guard::Truthy {
+            have: state.contract_guards(),
+            want: vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]
         );
         sim_assert_eq!(
-            state.current_dot_fragment(),
-            Some(AbstractValue::ValuesPath("root".to_string()))
+            have: state.current_dot_fragment(),
+            want: Some(AbstractValue::ValuesPath("root".to_string()))
         );
     }
 
@@ -146,8 +146,8 @@ mod tests {
         state.join_branch_outcomes(&entry, vec![branch, other_branch]);
 
         sim_assert_eq!(
-            state.locals().range_domains.get("scope"),
-            Some(&vec!["backend".to_string(), "frontend".to_string()])
+            have: state.locals().range_domains.get("scope"),
+            want: Some(&vec!["backend".to_string(), "frontend".to_string()])
         );
     }
 }

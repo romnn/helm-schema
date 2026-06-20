@@ -17,7 +17,7 @@ fn helm_template_render_rbac(
     } else {
         Vec::new()
     };
-    common::helm_template_render_with_args(&chart_dir, Some("templates/rbac.yaml"), &extra_args)
+    common::helm_template_render_with_args(chart_dir, Some("templates/rbac.yaml"), &extra_args)
 }
 
 fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {

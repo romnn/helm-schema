@@ -44,7 +44,7 @@ impl ContractEvidenceIndex {
         schema_evidence_by_path: &BTreeMap<String, ContractPathSchemaEvidence>,
         provider: &dyn ResourceSchemaOracle,
     ) -> Self {
-        let resolve_policy = ResolvePolicy::default();
+        let resolve_policy = ResolvePolicy;
         let referenced_value_paths = schema_evidence_by_path
             .iter()
             .filter(|(_, evidence)| evidence.is_referenced_value_path)
@@ -85,7 +85,7 @@ impl ContractEvidenceIndex {
         evidence: &ContractPathSchemaEvidence,
         provider: &dyn ResourceSchemaOracle,
     ) -> Self {
-        let resolve_policy = ResolvePolicy::default();
+        let resolve_policy = ResolvePolicy;
         let mut provider_schema_cache = HashMap::new();
         let referenced_value_paths = evidence
             .is_referenced_value_path
@@ -334,8 +334,8 @@ mod tests {
             .take_path_evidence("actual")
             .expect("outer path evidence should be indexed");
         sim_assert_eq!(
-            actual.provider_schemas.len(),
-            1,
+            have: actual.provider_schemas.len(),
+            want: 1,
             "provider schema should stay attached to the outer contract evidence path"
         );
         assert!(

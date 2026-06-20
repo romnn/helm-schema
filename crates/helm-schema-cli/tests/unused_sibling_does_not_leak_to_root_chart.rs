@@ -98,8 +98,8 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> color_eyre::eyr
         .expect("/properties/replicas present");
 
     sim_assert_eq!(
-        replicas,
-        &serde_json::json!({}),
+        have: replicas,
+        want: &serde_json::json!({}),
         "unused-sibling-helper integer hint leaked into root.replicas \
          even though the app only includes common.used; got: {replicas}",
     );

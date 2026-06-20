@@ -349,8 +349,8 @@ mod tests {
         let with_predicate = Predicate::all(with_predicates_from_condition_predicate(predicate));
 
         sim_assert_eq!(
-            with_predicate.contract_guards(),
-            vec![
+            have: with_predicate.contract_guards(),
+            want: vec![
                 Guard::With {
                     path: "service.enabled".to_string(),
                 },
@@ -382,8 +382,8 @@ mod tests {
             ]
         );
         sim_assert_eq!(
-            Predicate::all(with_predicates_from_condition_predicate(Predicate::False)),
-            Predicate::False,
+            have: Predicate::all(with_predicates_from_condition_predicate(Predicate::False)),
+            want: Predicate::False,
         );
     }
 
