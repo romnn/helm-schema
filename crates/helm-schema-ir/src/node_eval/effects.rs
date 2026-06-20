@@ -13,9 +13,9 @@ use crate::{Guard, ValueKind, YamlPath};
 pub(crate) trait NodeActionEffectSink: ContractUseSink {
     fn apply_get_binding(&mut self, plan: GetBindingPlan);
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>);
+    fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>);
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>);
+    fn assign_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>);
 
     fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &TemplateExpr);
 
@@ -44,10 +44,10 @@ pub(super) fn apply_assignment_action_plan(
 fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: LocalAssignmentPlan) {
     match plan.kind {
         AssignmentKind::Declaration => {
-            sink.declare_fragment_binding(plan.variable.clone(), plan.fragment_binding);
+            sink.declare_fragment_value(plan.variable.clone(), plan.fragment_value);
         }
         AssignmentKind::Assignment => {
-            sink.assign_fragment_binding(plan.variable.clone(), plan.fragment_binding);
+            sink.assign_fragment_value(plan.variable.clone(), plan.fragment_value);
         }
     }
     sink.refresh_default_paths(&plan.variable, &plan.rhs_expr);

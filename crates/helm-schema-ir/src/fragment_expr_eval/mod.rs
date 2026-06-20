@@ -15,7 +15,7 @@ use bound_helper_resolver::{
     BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_with_bound_helpers,
 };
 
-pub(crate) fn fragment_binding_from_outer_expr(
+pub(crate) fn context_value_from_outer_expr(
     expr: &TemplateExpr,
     outer_locals: Option<&HashMap<String, AbstractValue>>,
     outer: Option<&HashMap<String, AbstractValue>>,
@@ -38,7 +38,7 @@ pub(crate) fn fragment_binding_from_outer_expr(
         .map(|value| value.to_context_value())
 }
 
-pub(crate) fn helper_binding_from_expr_with_fragment_locals(
+pub(crate) fn helper_value_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
     fragment_locals: &HashMap<String, AbstractValue>,
     outer: Option<&HashMap<String, AbstractValue>>,
@@ -63,7 +63,7 @@ pub(crate) fn helper_binding_from_expr_with_fragment_locals(
     .map(|value| value.to_context_value())
 }
 
-pub(crate) fn bindings_for_helper_arg_with_fragment_locals(
+pub(crate) fn values_for_helper_arg_with_fragment_locals(
     arg: Option<&TemplateExpr>,
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
@@ -72,7 +72,7 @@ pub(crate) fn bindings_for_helper_arg_with_fragment_locals(
     seen: &mut HashSet<String>,
 ) -> HashMap<String, AbstractValue> {
     bindings_for_helper_arg_with(arg, outer, |expr| {
-        helper_binding_from_expr_with_fragment_locals(
+        helper_value_from_expr_with_fragment_locals(
             expr,
             fragment_locals,
             outer,
@@ -83,7 +83,7 @@ pub(crate) fn bindings_for_helper_arg_with_fragment_locals(
     })
 }
 
-pub(crate) fn fragment_binding_from_expr(
+pub(crate) fn fragment_value_from_expr(
     expr: &TemplateExpr,
     locals: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,

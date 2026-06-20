@@ -16,13 +16,9 @@ pub(crate) struct DocumentOutput {
 }
 
 impl DocumentOutput {
-    pub(crate) fn new(
-        site_context: DocumentSiteContext,
-        helper_inlined: bool,
-        analysis: DocumentValueAnalysis,
-    ) -> Self {
+    pub(crate) fn new(site_context: DocumentSiteContext, analysis: DocumentValueAnalysis) -> Self {
         Self {
-            site: DocumentSite::new(site_context, helper_inlined),
+            site: DocumentSite::new(site_context),
             analysis,
         }
     }

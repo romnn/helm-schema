@@ -55,6 +55,14 @@ pub struct SchemaCorpusCase<'a> {
     pub dump_stem: &'a str,
 }
 
+#[derive(Clone, Copy)]
+pub struct HelmRenderCase<'a> {
+    pub name: &'a str,
+    pub chart_path: &'a str,
+    pub show_only: Option<&'a str>,
+    pub extra_args: &'a [&'a str],
+}
+
 /// Production-like K8s provider path for chart-level generator tests.
 ///
 /// These tests are meant to approximate what end users run through the CLI,
@@ -239,14 +247,6 @@ pub fn validate_values_yaml(values_yaml: &str, schema: &Value) -> Vec<String> {
     validate_json_against_schema(&json_values, &relaxed)
 }
 
-/// Run `helm template` on a chart directory, optionally showing only a specific template.
-///
-/// Returns `Ok(rendered_yaml)` on success, or `Err(stderr)` on failure.
-/// If `helm` is not installed or the chart can't be rendered, returns an error.
-pub fn helm_template_render(chart_dir: &Path, show_only: Option<&str>) -> Result<String, String> {
-    helm_template_render_with_args(chart_dir, show_only, &[])
-}
-
 pub fn helm_template_render_with_args(
     chart_dir: &Path,
     show_only: Option<&str>,
@@ -275,6 +275,23 @@ pub fn helm_template_render_with_args(
         Err(format!(
             "helm template failed:\nstderr: {stderr}\nstdout: {stdout}"
         ))
+    }
+}
+
+pub fn render_helm_case(case: &HelmRenderCase<'_>) -> Result<String, String> {
+    let chart_dir = test_util::workspace_testdata().join(case.chart_path);
+    helm_template_render_with_args(&chart_dir, case.show_only, case.extra_args)
+}
+
+pub fn assert_helm_render_case(case: &HelmRenderCase<'_>) {
+    let rendered = render_helm_case(case);
+    match &rendered {
+        Ok(yaml) => assert!(
+            !yaml.is_empty(),
+            "helm render produced empty YAML for {}",
+            case.name
+        ),
+        Err(e) => panic!("helm render failed for {}: {e}", case.name),
     }
 }
 

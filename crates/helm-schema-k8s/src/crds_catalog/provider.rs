@@ -7,9 +7,7 @@ use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, crd_cache_path,
-    read_cached_json_doc,
 };
-use crate::cache_write::write_fetched_schema_doc;
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{
     LocalSchemaLeaf, debug_materialize_local_schema,
@@ -23,6 +21,7 @@ use crate::lookup::{
     ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
+use crate::source_cache::{CachedSchemaDocRequest, load_cached_schema_doc};
 
 use super::cross_scan::collect_other_versions;
 use super::mirror_chain::{CrdMirrorChain, CrdSource};
@@ -186,43 +185,31 @@ impl CrdsCatalogSchemaProvider {
     }
 
     fn try_load_from_source(&self, source: &CrdSource, relative_path: &str) -> Option<SchemaDoc> {
-        if let Some(v) = self.read_mem(&source.source_id, relative_path) {
-            return Some(v);
-        }
         let local = crd_cache_path(&self.cache_dir, &source.source_id, relative_path);
-        if local.exists()
-            && let Some(doc) = read_cached_json_doc(&local)
-        {
-            self.write_mem(&source.source_id, relative_path, doc.clone());
-            return Some(doc);
-        }
-        if !self.allow_download {
-            return None;
-        }
-        if self
-            .negative_cache
-            .contains(&source.source_id, "", relative_path)
-        {
-            return None;
-        }
         let url = format!(
             "{}/{}",
             source.base_url.trim_end_matches('/'),
             relative_path
         );
-        match self.fetcher.fetch(&url) {
-            Ok(Some(bytes)) => {
-                let doc = write_fetched_schema_doc(&local, &url, &bytes, self.record_source)?;
-                self.write_mem(&source.source_id, relative_path, doc.clone());
-                Some(doc)
-            }
-            Ok(None) => {
-                self.negative_cache
-                    .record(&source.source_id, "", relative_path);
-                None
-            }
-            Err(_) => None,
-        }
+        load_cached_schema_doc(
+            CachedSchemaDocRequest {
+                local: &local,
+                url: &url,
+                source_id: &source.source_id,
+                cache_namespace: "",
+                cache_key: relative_path,
+                allow_download: self.allow_download,
+                use_cache: true,
+                record_source: self.record_source,
+                fetcher: self.fetcher.as_ref(),
+                negative_cache: &self.negative_cache,
+            },
+            || self.read_mem(&source.source_id, relative_path),
+            |doc| self.write_mem(&source.source_id, relative_path, doc),
+            || false,
+            || {},
+            || {},
+        )
     }
 
     fn read_mem(&self, source_id: &str, relative_path: &str) -> Option<SchemaDoc> {

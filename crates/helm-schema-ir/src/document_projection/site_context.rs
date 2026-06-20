@@ -29,20 +29,20 @@ pub(crate) fn collect_document_site_context(
         ValueKind::Scalar
     };
 
-    let in_mapping_key = tracker.output_in_mapping_key();
+    let in_mapping_key = tracker.output_in_mapping_key(node);
     let path = if in_mapping_key {
         YamlPath(Vec::new())
     } else {
         adjusted_output_path(tracker, node, kind, output_action.fragment_indent_width)
     };
-    let path = tracker.rebase_path(path);
-    let resource = tracker.current_resource().cloned();
+    let path = tracker.rebase_path_for_node(node, path);
+    let resource = tracker.resource_for_node(node).cloned();
 
     DocumentSiteContext {
         kind,
         in_mapping_key,
         in_yaml_comment: document_site_is_yaml_comment_part(source, node),
-        entire_scalar_value: tracker.output_entire_scalar_value(),
+        entire_scalar_value: tracker.output_entire_scalar_value(node),
         path,
         resource,
         source_span: SourceSpan::new(node.start_byte(), node.end_byte()),

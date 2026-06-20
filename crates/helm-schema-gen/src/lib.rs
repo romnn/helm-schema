@@ -7,13 +7,14 @@ mod provider_schema;
 pub mod required_inference;
 mod resolve_policy;
 mod schema_model;
+mod schema_node;
 mod schema_tree;
 mod values_yaml;
 
 use std::collections::BTreeMap;
 
 use helm_schema_core::ResourceSchemaOracle;
-use serde_json::{Map, Value};
+use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::{
@@ -24,6 +25,7 @@ use merge::{merge_schema_list, union_schema_list};
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
 use schema_model::{guard_value_to_json, is_scalar_like_schema, schema_allows_type, type_schema};
+use schema_node::{JsonSchemaType, SchemaNode};
 use schema_tree::{SchemaDocument, draft07_root_document, open_array_schema, open_object_schema};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
@@ -312,7 +314,7 @@ fn resolve_overlay_target_schema(
 fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
     schema.as_object().is_some_and(|object| {
         object.get("type") == Some(&Value::String("object".to_string()))
-            && object.get("additionalProperties") == Some(&Value::Object(Map::new()))
+            && object.get("additionalProperties") == Some(&SchemaNode::empty().into_value())
             && !object.contains_key("properties")
             && !object.contains_key("required")
     })
@@ -404,13 +406,11 @@ fn build_condition_fragment(
         .collect::<Vec<_>>();
 
     if clauses.len() == 1 {
-        clauses.pop().unwrap_or(Value::Object(Map::new()))
+        clauses
+            .pop()
+            .unwrap_or_else(|| SchemaNode::empty().into_value())
     } else {
-        Value::Object(
-            [("allOf".to_string(), Value::Array(clauses))]
-                .into_iter()
-                .collect(),
-        )
+        SchemaNode::all_of(clauses.into_iter().map(SchemaNode::foreign).collect()).into_value()
     }
 }
 
@@ -437,11 +437,7 @@ fn build_single_condition_fragment(
         ConditionalGuard::NotEq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            Value::Object(
-                [("not".to_string(), guard_value_enum_schema(value)?)]
-                    .into_iter()
-                    .collect(),
-            ),
+            SchemaNode::not(SchemaNode::foreign(guard_value_enum_schema(value)?)).into_value(),
             !guard_value_matches_optional_yaml(value, yaml_value_at_path(values_yaml_doc, path)),
         ),
         ConditionalGuard::Absent { path } => {
@@ -450,33 +446,30 @@ fn build_single_condition_fragment(
             if relative_segments.is_empty() {
                 None
             } else {
-                build_required_condition_fragment(&relative_segments, Value::Object(Map::new()))
-                    .map(|present| {
-                        Value::Object([("not".to_string(), present)].into_iter().collect())
-                    })
+                build_required_condition_fragment(
+                    &relative_segments,
+                    SchemaNode::empty().into_value(),
+                )
+                .map(|present| SchemaNode::not(SchemaNode::foreign(present)).into_value())
             }
         }
         ConditionalGuard::TypeIs { path, schema_type } => {
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
-                Value::Object(
-                    [("type".to_string(), Value::String(schema_type.clone()))]
-                        .into_iter()
-                        .collect(),
-                ),
+                SchemaNode::type_named(schema_type).into_value(),
                 yaml_value_at_path(values_yaml_doc, path)
                     .is_some_and(|value| matches_yaml_schema_type(value, schema_type)),
             )
         }
-        ConditionalGuard::Not(inner) => Some(Value::Object(
-            [(
-                "not".to_string(),
-                build_single_condition_fragment(inner, ancestor_segments, values_yaml_doc)?,
-            )]
-            .into_iter()
-            .collect(),
-        )),
+        ConditionalGuard::Not(inner) => Some(
+            SchemaNode::not(SchemaNode::foreign(build_single_condition_fragment(
+                inner,
+                ancestor_segments,
+                values_yaml_doc,
+            )?))
+            .into_value(),
+        ),
         ConditionalGuard::AllOf(guards) => {
             let mut clauses = guards
                 .iter()
@@ -489,11 +482,10 @@ fn build_single_condition_fragment(
             } else if clauses.len() == 1 {
                 clauses.pop()
             } else {
-                Some(Value::Object(
-                    [("allOf".to_string(), Value::Array(clauses))]
-                        .into_iter()
-                        .collect(),
-                ))
+                Some(
+                    SchemaNode::all_of(clauses.into_iter().map(SchemaNode::foreign).collect())
+                        .into_value(),
+                )
             }
         }
         ConditionalGuard::AnyOf(guards) => {
@@ -508,24 +500,17 @@ fn build_single_condition_fragment(
             } else if clauses.len() == 1 {
                 clauses.pop()
             } else {
-                Some(Value::Object(
-                    [("anyOf".to_string(), Value::Array(clauses))]
-                        .into_iter()
-                        .collect(),
-                ))
+                Some(
+                    SchemaNode::any_of(clauses.into_iter().map(SchemaNode::foreign).collect())
+                        .into_value(),
+                )
             }
         }
     }
 }
 
 fn guard_value_enum_schema(value: &GuardValue) -> Option<Value> {
-    guard_value_to_json(value).map(|value| {
-        Value::Object(
-            [("enum".to_string(), Value::Array(vec![value]))]
-                .into_iter()
-                .collect(),
-        )
-    })
+    guard_value_to_json(value).map(|value| SchemaNode::enum_values(vec![value]).into_value())
 }
 
 fn build_leaf_condition_fragment(
@@ -559,69 +544,30 @@ fn build_default_aware_leaf_condition_fragment(
         return Some(explicit);
     }
     let absent =
-        build_required_condition_fragment(&relative_segments, Value::Object(Map::new()))
-            .map(|present| Value::Object([("not".to_string(), present)].into_iter().collect()))?;
-    Some(Value::Object(
-        [("anyOf".to_string(), Value::Array(vec![absent, explicit]))]
-            .into_iter()
-            .collect(),
-    ))
+        build_required_condition_fragment(&relative_segments, SchemaNode::empty().into_value())
+            .map(|present| SchemaNode::not(SchemaNode::foreign(present)).into_value())?;
+    Some(
+        SchemaNode::any_of(vec![
+            SchemaNode::foreign(absent),
+            SchemaNode::foreign(explicit),
+        ])
+        .into_value(),
+    )
 }
 
 fn helm_truthy_condition_schema() -> Value {
-    Value::Object(
-        [(
-            "anyOf".to_string(),
-            Value::Array(vec![
-                Value::Object(
-                    [("const".to_string(), Value::Bool(true))]
-                        .into_iter()
-                        .collect(),
-                ),
-                Value::Object(
-                    [
-                        ("type".to_string(), Value::String("number".to_string())),
-                        (
-                            "not".to_string(),
-                            Value::Object(
-                                [("const".to_string(), Value::Number(0.into()))]
-                                    .into_iter()
-                                    .collect(),
-                            ),
-                        ),
-                    ]
-                    .into_iter()
-                    .collect(),
-                ),
-                Value::Object(
-                    [
-                        ("type".to_string(), Value::String("string".to_string())),
-                        ("minLength".to_string(), Value::Number(1.into())),
-                    ]
-                    .into_iter()
-                    .collect(),
-                ),
-                Value::Object(
-                    [
-                        ("type".to_string(), Value::String("array".to_string())),
-                        ("minItems".to_string(), Value::Number(1.into())),
-                    ]
-                    .into_iter()
-                    .collect(),
-                ),
-                Value::Object(
-                    [
-                        ("type".to_string(), Value::String("object".to_string())),
-                        ("minProperties".to_string(), Value::Number(1.into())),
-                    ]
-                    .into_iter()
-                    .collect(),
-                ),
-            ]),
-        )]
-        .into_iter()
-        .collect(),
-    )
+    SchemaNode::any_of(vec![
+        SchemaNode::const_value(Value::Bool(true)),
+        SchemaNode::typed(JsonSchemaType::Number).typed_keyword(
+            "not",
+            SchemaNode::const_value(Value::Number(0.into())).into_value(),
+        ),
+        SchemaNode::typed(JsonSchemaType::String)
+            .typed_keyword("minLength", Value::Number(1.into())),
+        SchemaNode::array().min_items(1),
+        SchemaNode::object().min_properties(1),
+    ])
+    .into_value()
 }
 
 fn build_required_condition_fragment(
@@ -629,22 +575,17 @@ fn build_required_condition_fragment(
     leaf_schema: Value,
 ) -> Option<Value> {
     let (head, tail) = path_segments.split_first()?;
-    let mut object = Map::new();
-    object.insert("type".to_string(), Value::String("object".to_string()));
-    object.insert(
-        "required".to_string(),
-        Value::Array(vec![Value::String(head.clone())]),
-    );
     let child = if tail.is_empty() {
         leaf_schema
     } else {
         build_required_condition_fragment(tail, leaf_schema)?
     };
-    object.insert(
-        "properties".to_string(),
-        Value::Object(Map::from_iter([(head.clone(), child)])),
-    );
-    Some(Value::Object(object))
+    Some(
+        SchemaNode::object()
+            .require(head.clone())
+            .property(head.clone(), SchemaNode::foreign(child))
+            .into_value(),
+    )
 }
 
 fn build_target_fragment(path_segments: &[String], leaf_schema: Value) -> Value {
@@ -652,24 +593,14 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: Value) -> Value 
         return leaf_schema;
     };
 
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("object".to_string())),
-            (
-                "properties".to_string(),
-                Value::Object(Map::from_iter([(
-                    head.clone(),
-                    if tail.is_empty() {
-                        leaf_schema
-                    } else {
-                        build_target_fragment(tail, leaf_schema)
-                    },
-                )])),
-            ),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    let child = if tail.is_empty() {
+        leaf_schema
+    } else {
+        build_target_fragment(tail, leaf_schema)
+    };
+    SchemaNode::object()
+        .property(head.clone(), SchemaNode::foreign(child))
+        .into_value()
 }
 
 fn split_value_path(path: &str) -> Vec<String> {

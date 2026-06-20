@@ -11,7 +11,6 @@ use crate::{ResourceRef, YamlPath};
 #[derive(Default, Clone, Debug)]
 pub(crate) struct ResourceIdentityIndex {
     spans: Vec<ResourceSpan>,
-    current_span: Option<usize>,
 }
 
 impl ResourceIdentityIndex {
@@ -19,13 +18,30 @@ impl ResourceIdentityIndex {
     pub(crate) fn from_source(source: &str, defines: &DefineIndex) -> Self {
         Self {
             spans: collect_resource_spans(source, defines),
-            current_span: None,
         }
     }
 
-    pub(crate) fn advance_to(&mut self, byte: usize) {
-        self.current_span = self
-            .spans
+    pub(crate) fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
+        self.span_index_at(byte)
+            .and_then(|index| self.spans.get(index))
+            .map(|span| &span.resource)
+    }
+
+    pub(crate) fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {
+        let Some(span) = self
+            .span_index_at(byte)
+            .and_then(|index| self.spans.get(index))
+        else {
+            return path;
+        };
+        if span.path_prefix.is_empty() || !path.0.starts_with(&span.path_prefix) {
+            return path;
+        }
+        YamlPath(path.0[span.path_prefix.len()..].to_vec())
+    }
+
+    fn span_index_at(&self, byte: usize) -> Option<usize> {
+        self.spans
             .iter()
             .enumerate()
             .filter(|(_, span)| span.start <= byte && byte < span.end)
@@ -36,23 +52,7 @@ impl ResourceIdentityIndex {
                     .cmp(&right_len)
                     .then_with(|| right.start.cmp(&left.start))
             })
-            .map(|(index, _)| index);
-    }
-
-    pub(crate) fn current_resource(&self) -> Option<&ResourceRef> {
-        self.current_span
-            .and_then(|index| self.spans.get(index))
-            .map(|span| &span.resource)
-    }
-
-    pub(crate) fn rebase_path(&self, path: YamlPath) -> YamlPath {
-        let Some(span) = self.current_span.and_then(|index| self.spans.get(index)) else {
-            return path;
-        };
-        if span.path_prefix.is_empty() || !path.0.starts_with(&span.path_prefix) {
-            return path;
-        }
-        YamlPath(path.0[span.path_prefix.len()..].to_vec())
+            .map(|(index, _)| index)
     }
 
     #[cfg(test)]

@@ -40,25 +40,20 @@ struct ContractPathAccumulator {
     partial_scalar: bool,
     guard_predicates: Vec<ConditionalGuard>,
     metadata_field_kinds: BTreeSet<MetadataFieldKind>,
-    render: RenderPathFacts,
+    uses: PathUseFactsAccumulator,
     requiredness: ContractRequirednessEvidence,
     type_hints: BTreeSet<String>,
-    nullable: NullablePathAccumulator,
     provider_schema_uses: Vec<ProviderSchemaUse>,
     conditional_overlays: ConditionalOverlayAccumulator,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct RenderPathFacts {
+struct PathUseFactsAccumulator {
     has_render_use: bool,
     has_self_guarded_render_use: bool,
     all_render_uses_self_guarded: bool,
     has_self_range_guard_render_use: bool,
-}
-
-struct NullablePathAccumulator {
-    has_render_use: bool,
-    has_self_guarded_render_use: bool,
+    has_nullable_render_use: bool,
     all_uses_nullable: bool,
 }
 
@@ -72,11 +67,7 @@ struct ConditionalOverlayAccumulator {
 struct ConditionalOverlayBranchAccumulator {
     provider_schema_uses: Vec<ProviderSchemaUse>,
     metadata_field_kinds: BTreeSet<MetadataFieldKind>,
-    has_render_use: bool,
-    has_self_guarded_render_use: bool,
-    all_render_uses_self_guarded: bool,
-    has_self_range_guard_render_use: bool,
-    all_uses_nullable: bool,
+    uses: PathUseFactsAccumulator,
     used_as_fragment: bool,
     is_partial_scalar_value_path: bool,
 }
@@ -89,34 +80,78 @@ impl Default for ConditionalOverlayBranchAccumulator {
         Self {
             provider_schema_uses: Vec::new(),
             metadata_field_kinds: BTreeSet::new(),
-            has_render_use: false,
-            has_self_guarded_render_use: false,
-            all_render_uses_self_guarded: true,
-            has_self_range_guard_render_use: false,
-            all_uses_nullable: true,
+            uses: PathUseFactsAccumulator::default(),
             used_as_fragment: false,
             is_partial_scalar_value_path: false,
         }
     }
 }
 
-impl Default for NullablePathAccumulator {
-    fn default() -> Self {
-        Self {
-            has_render_use: false,
-            has_self_guarded_render_use: false,
-            all_uses_nullable: true,
-        }
-    }
-}
-
-impl Default for RenderPathFacts {
+impl Default for PathUseFactsAccumulator {
     fn default() -> Self {
         Self {
             has_render_use: false,
             has_self_guarded_render_use: false,
             all_render_uses_self_guarded: true,
             has_self_range_guard_render_use: false,
+            has_nullable_render_use: false,
+            all_uses_nullable: true,
+        }
+    }
+}
+
+impl PathUseFactsAccumulator {
+    fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
+        self.has_render_use = true;
+        self.has_self_range_guard_render_use |= range_guarded;
+        if let Some(self_guarded) = self_guarded {
+            self.has_self_guarded_render_use |= self_guarded;
+            self.all_render_uses_self_guarded &= self_guarded;
+        }
+    }
+
+    fn record_nullable_observation(&mut self, nullable: bool) {
+        self.all_uses_nullable &= nullable;
+    }
+
+    fn mark_nullable_render_use(&mut self) {
+        self.has_nullable_render_use = true;
+    }
+
+    fn path_facts(
+        &self,
+        path: &ContractPathAccumulator,
+        has_referenced_descendants: bool,
+    ) -> ContractValuePathFacts {
+        ContractValuePathFacts {
+            has_referenced_descendants,
+            used_as_fragment: path.used_as_fragment,
+            is_ranged_source: path.ranged,
+            is_partial_scalar_value_path: path.partial_scalar,
+            has_render_use: self.has_render_use,
+            has_self_guarded_render_use: self.has_self_guarded_render_use,
+            all_render_uses_self_guarded: self.all_render_uses_self_guarded,
+            has_self_range_guard_render_use: self.has_self_range_guard_render_use,
+            is_nullable: self.has_nullable_render_use && self.all_uses_nullable,
+        }
+    }
+
+    fn overlay_facts(
+        &self,
+        global_facts: ContractValuePathFacts,
+        used_as_fragment: bool,
+        is_partial_scalar_value_path: bool,
+    ) -> ContractValuePathFacts {
+        ContractValuePathFacts {
+            has_referenced_descendants: global_facts.has_referenced_descendants,
+            used_as_fragment,
+            is_ranged_source: false,
+            is_partial_scalar_value_path,
+            has_render_use: self.has_render_use,
+            has_self_guarded_render_use: self.has_self_guarded_render_use,
+            all_render_uses_self_guarded: self.all_render_uses_self_guarded,
+            has_self_range_guard_render_use: self.has_self_range_guard_render_use,
+            is_nullable: self.has_nullable_render_use && self.all_uses_nullable,
         }
     }
 }
@@ -243,13 +278,9 @@ impl ContractSchemaSignalBuilder {
     }
 
     fn record_render_use(&mut self, path: &str, range_guarded: bool, self_guarded: Option<bool>) {
-        let acc = &mut self.path(path).render;
-        acc.has_render_use = true;
-        acc.has_self_range_guard_render_use |= range_guarded;
-        if let Some(self_guarded) = self_guarded {
-            acc.has_self_guarded_render_use |= self_guarded;
-            acc.all_render_uses_self_guarded &= self_guarded;
-        }
+        self.path(path)
+            .uses
+            .record_render_use(range_guarded, self_guarded);
     }
 
     fn record_path_identity(&mut self, contract_use: &ContractUse) {
@@ -337,20 +368,19 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        let info = &mut self.path(&contract_use.source_expr).nullable;
+        let info = &mut self.path(&contract_use.source_expr).uses;
         if !contract_use.path.0.is_empty()
             || contract_use.has_self_range_guard()
             || contract_use.kind == ValueKind::Fragment
             || contract_use.has_pathless_self_default_guard()
         {
-            info.has_render_use = true;
-            info.has_self_guarded_render_use |= use_is_self_guarded(contract_use);
+            info.mark_nullable_render_use();
         }
-        info.all_uses_nullable &= use_is_null_tolerant(contract_use);
+        info.record_nullable_observation(use_is_null_tolerant(contract_use));
 
         for path in contract_use.top_level_range_guard_paths() {
             if !path.trim().is_empty() {
-                self.path(&path).nullable.has_render_use = true;
+                self.path(&path).uses.mark_nullable_render_use();
             }
         }
     }
@@ -379,17 +409,7 @@ impl ContractSchemaSignalBuilder {
 
 impl ContractPathAccumulator {
     fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
-        ContractValuePathFacts {
-            has_referenced_descendants,
-            used_as_fragment: self.used_as_fragment,
-            is_ranged_source: self.ranged,
-            is_partial_scalar_value_path: self.partial_scalar,
-            has_render_use: self.render.has_render_use,
-            has_self_guarded_render_use: self.render.has_self_guarded_render_use,
-            all_render_uses_self_guarded: self.render.all_render_uses_self_guarded,
-            has_self_range_guard_render_use: self.render.has_self_range_guard_render_use,
-            is_nullable: self.nullable.has_render_use && self.nullable.all_uses_nullable,
-        }
+        self.uses.path_facts(self, has_referenced_descendants)
     }
 }
 
@@ -419,14 +439,15 @@ impl ConditionalOverlayAccumulator {
 
 impl ConditionalOverlayBranchAccumulator {
     fn record_use(&mut self, contract_use: &ContractUse) {
-        self.has_render_use = true;
-        self.has_self_guarded_render_use |= use_is_self_guarded(contract_use);
-        self.all_render_uses_self_guarded &= use_is_self_guarded(contract_use);
-        self.all_uses_nullable &= use_is_null_tolerant(contract_use);
+        self.uses.record_render_use(
+            contract_use.has_self_range_guard(),
+            Some(use_is_self_guarded(contract_use)),
+        );
+        self.uses.mark_nullable_render_use();
+        self.uses
+            .record_nullable_observation(use_is_null_tolerant(contract_use));
         self.used_as_fragment |= contract_use.kind == ValueKind::Fragment;
         self.is_partial_scalar_value_path |= contract_use.kind == ValueKind::PartialScalar;
-
-        self.has_self_range_guard_render_use |= contract_use.has_self_range_guard();
 
         if let Some(field_kind) = metadata_field_kind_from_yaml_path(&contract_use.path.0) {
             self.metadata_field_kinds.insert(field_kind);
@@ -444,17 +465,11 @@ impl ConditionalOverlayBranchAccumulator {
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
     ) -> ConditionalOverlayEvidence {
-        let facts = ContractValuePathFacts {
-            has_referenced_descendants: global_facts.has_referenced_descendants,
-            used_as_fragment: self.used_as_fragment,
-            is_ranged_source: false,
-            is_partial_scalar_value_path: self.is_partial_scalar_value_path,
-            has_render_use: self.has_render_use,
-            has_self_guarded_render_use: self.has_self_guarded_render_use,
-            all_render_uses_self_guarded: self.all_render_uses_self_guarded,
-            has_self_range_guard_render_use: self.has_self_range_guard_render_use,
-            is_nullable: self.has_render_use && self.all_uses_nullable,
-        };
+        let facts = self.uses.overlay_facts(
+            global_facts,
+            self.used_as_fragment,
+            self.is_partial_scalar_value_path,
+        );
         ConditionalOverlayEvidence {
             facts,
             metadata_field_kinds: self.metadata_field_kinds,

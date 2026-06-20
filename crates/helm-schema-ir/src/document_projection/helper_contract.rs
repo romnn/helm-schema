@@ -21,9 +21,7 @@ pub(super) fn append_document_helper_contract_uses(
         .collect();
     let mut helper_rendered_sources = structured_fragment_sources.clone();
     helper_rendered_sources.extend(helper.output_values.keys().cloned());
-    helper_rendered_sources.extend(helper.fragment_output_values.iter().cloned());
-    let only_scalar_helper_outputs =
-        helper.fragment_output_values.is_empty() && helper.fragment_output_uses.is_empty();
+    let only_scalar_helper_outputs = helper.fragment_output_uses.is_empty();
 
     for (value, meta) in &helper.output_values {
         if structured_fragment_sources.contains(value) {
@@ -82,26 +80,6 @@ pub(super) fn append_document_helper_contract_uses(
                     &output.meta.provenance,
                 ));
             }
-        }
-    }
-
-    for value in helper.fragment_output_values {
-        if structured_fragment_sources.contains(&value) {
-            continue;
-        }
-        let has_rendered_descendant =
-            output_path::values_path_has_descendant(&value, &helper_rendered_sources);
-        if site.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
-            let emit_kind = encoded_kind(site.kind(), encoded_output_values.contains(&value));
-            contract.push(site.contract_use(
-                context,
-                value,
-                site.path().clone(),
-                emit_kind,
-                Vec::new(),
-            ));
-        } else {
-            contract.push(context.pathless_contract_use(value, site.kind(), &[]));
         }
     }
 

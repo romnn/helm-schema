@@ -8,8 +8,8 @@ use crate::fragment_range_scope::{range_iterable_binding_expr, range_variable_na
 use crate::helper_range_frame::RangeFrame;
 
 pub(crate) struct HelperRangeBindingPlan {
-    range_fragment_binding: Option<AbstractValue>,
-    range_helper_binding: Option<AbstractValue>,
+    range_fragment_value: Option<AbstractValue>,
+    range_helper_value: Option<AbstractValue>,
     exact_iterations: Option<Vec<HelperRangeIteration>>,
     non_exact_variable_binding: Option<(String, AbstractValue)>,
 }
@@ -35,18 +35,18 @@ pub(crate) fn plan_helper_range_binding(
     seen: &mut HashSet<String>,
     non_exact_variable_binding: NonExactRangeVariableBinding,
 ) -> HelperRangeBindingPlan {
-    let range_fragment_binding = range_iterable_binding_expr(
+    let range_fragment_value = range_iterable_binding_expr(
         header.expr(),
         local_bindings,
         current_dot_fragment,
         context,
         seen,
     );
-    let range_helper_binding = range_fragment_binding
+    let range_helper_value = range_fragment_value
         .as_ref()
         .map(AbstractValue::to_context_value);
 
-    let exact_iterations = if let Some(AbstractValue::List(items)) = &range_fragment_binding {
+    let exact_iterations = if let Some(AbstractValue::List(items)) = &range_fragment_value {
         let range_variable = range_variable_name_expr(header.expr());
         Some(
             items
@@ -71,7 +71,7 @@ pub(crate) fn plan_helper_range_binding(
     let non_exact_variable_binding = if exact_iterations.is_none() && should_bind_non_exact_variable
     {
         range_variable_name_expr(header.expr()).zip(
-            range_fragment_binding
+            range_fragment_value
                 .as_ref()
                 .and_then(AbstractValue::fragment_range_item)
                 .map(|binding| binding.to_context_value()),
@@ -81,16 +81,16 @@ pub(crate) fn plan_helper_range_binding(
     };
 
     HelperRangeBindingPlan {
-        range_fragment_binding,
-        range_helper_binding,
+        range_fragment_value,
+        range_helper_value,
         exact_iterations,
         non_exact_variable_binding,
     }
 }
 
 impl HelperRangeBindingPlan {
-    pub(crate) fn range_fragment_binding(&self) -> Option<&AbstractValue> {
-        self.range_fragment_binding.as_ref()
+    pub(crate) fn range_fragment_value(&self) -> Option<&AbstractValue> {
+        self.range_fragment_value.as_ref()
     }
 
     pub(crate) fn take_non_exact_variable_binding(&mut self) -> Option<(String, AbstractValue)> {
@@ -102,14 +102,14 @@ impl HelperRangeBindingPlan {
     }
 
     pub(crate) fn helper_value_body_dot(&self) -> Option<AbstractValue> {
-        self.range_helper_binding
+        self.range_helper_value
             .as_ref()
             .and_then(AbstractValue::helper_range_item)
             .map(|binding| binding.to_context_value())
     }
 
     pub(crate) fn fragment_output_body_dot(&self) -> Option<AbstractValue> {
-        self.range_fragment_binding
+        self.range_fragment_value
             .as_ref()
             .and_then(AbstractValue::fragment_range_item)
             .map(|binding| binding.to_context_value())
@@ -117,7 +117,7 @@ impl HelperRangeBindingPlan {
 
     pub(crate) fn helper_value_frame(&self) -> RangeFrame<HelperRangeIteration> {
         RangeFrame::new(
-            self.range_helper_binding
+            self.range_helper_value
                 .as_ref()
                 .is_some_and(AbstractValue::definitely_nonempty_iterable),
             self.exact_iterations.clone(),
@@ -126,7 +126,7 @@ impl HelperRangeBindingPlan {
 
     pub(crate) fn fragment_output_frame(&self) -> RangeFrame<HelperRangeIteration> {
         RangeFrame::new(
-            self.range_fragment_binding
+            self.range_fragment_value
                 .as_ref()
                 .is_some_and(AbstractValue::definitely_nonempty_iterable),
             self.exact_iterations.clone(),

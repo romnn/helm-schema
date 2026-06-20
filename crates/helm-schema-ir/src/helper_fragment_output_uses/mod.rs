@@ -25,7 +25,7 @@ use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_path_context::computed_with_body_fragment_binding_expr;
+use crate::value_path_context::computed_with_body_fragment_value_expr;
 use crate::{ValueKind, YamlPath};
 
 mod expression_output;
@@ -200,7 +200,7 @@ impl ContractUseSink for FragmentOutputUseRuntime<'_, '_> {
 impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
     fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
+    fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
         if let Some(binding) = binding {
             self.local_bindings.insert(variable, binding);
         } else {
@@ -208,8 +208,8 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
         }
     }
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
-        self.declare_fragment_binding(variable, binding);
+    fn assign_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
+        self.declare_fragment_value(variable, binding);
     }
 
     fn refresh_default_paths(
@@ -248,16 +248,19 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         self.source
     }
 
-    fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
-        self.document_tracker.enter_node(node);
+    fn enter_node(&mut self, _node: tree_sitter::Node<'_>) {}
+
+    fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
+        self.document_tracker.path_for_node(node)
     }
 
-    fn current_document_path(&self) -> YamlPath {
-        self.document_tracker.current_path()
-    }
-
-    fn current_document_path_at_mapping_entry_indent(&self, indent: usize) -> YamlPath {
-        self.document_tracker.path_at_mapping_entry_indent(indent)
+    fn document_path_for_mapping_entry_indent(
+        &self,
+        node: tree_sitter::Node<'_>,
+        indent: usize,
+    ) -> YamlPath {
+        self.document_tracker
+            .path_at_mapping_entry_indent(node, indent)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
@@ -423,7 +426,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let body_dot = computed_with_body_fragment_binding_expr(
+        let body_dot = computed_with_body_fragment_value_expr(
             header.expr(),
             self.bindings,
             self.local_bindings,
@@ -465,7 +468,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         );
         self.collect_destructured_range_fragment_outputs(
             node,
-            range_plan.range_fragment_binding(),
+            range_plan.range_fragment_value(),
             current_path,
         );
 

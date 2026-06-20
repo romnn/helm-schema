@@ -32,26 +32,6 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
     out
 }
 
-#[test]
-fn helm_template_renders_successfully_default_values() {
-    let chart_dir = test_util::workspace_testdata().join("charts/nats-operator");
-    let rendered = helm_template_render_rbac(&chart_dir, false);
-    match &rendered {
-        Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
-        Err(e) => panic!("helm template failed: {e}"),
-    }
-}
-
-#[test]
-fn helm_template_renders_successfully_cluster_scoped() {
-    let chart_dir = test_util::workspace_testdata().join("charts/nats-operator");
-    let rendered = helm_template_render_rbac(&chart_dir, true);
-    match &rendered {
-        Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
-        Err(e) => panic!("helm template failed: {e}"),
-    }
-}
-
 fn validate_rendered_docs(rendered_yaml: &str) {
     let docs = parse_yaml_documents(rendered_yaml);
     assert!(!docs.is_empty(), "rendered YAML contained no documents");

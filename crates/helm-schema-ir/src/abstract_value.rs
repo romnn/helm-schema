@@ -379,7 +379,7 @@ impl AbstractValue {
     }
 
     #[cfg(test)]
-    pub(crate) fn fragment_output_paths(paths: impl IntoIterator<Item = String>) -> Self {
+    pub(crate) fn output_paths(paths: impl IntoIterator<Item = String>) -> Self {
         Self::OutputSet(
             paths
                 .into_iter()

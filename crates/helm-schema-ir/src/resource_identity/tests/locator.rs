@@ -17,16 +17,16 @@ fn resource_locator_keeps_multi_document_resources_separate() {
         spec:
           replicas: {{ .Values.replicas }}
     "#};
-    let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
 
-    locator.advance_to(source.find("first").expect("first marker"));
-    let first = locator.current_resource().expect("first resource");
+    let first_byte = source.find("first").expect("first marker");
+    let first = locator.resource_at(first_byte).expect("first resource");
     sim_assert_eq!(have: first.kind, want: "ConfigMap");
     sim_assert_eq!(have: first.api_version, want: "v1");
     assert!(first.api_version_candidates.is_empty());
 
-    locator.advance_to(source.find("replicas").expect("replicas marker"));
-    let second = locator.current_resource().expect("second resource");
+    let second_byte = source.find("replicas").expect("replicas marker");
+    let second = locator.resource_at(second_byte).expect("second resource");
     sim_assert_eq!(have: second.kind, want: "Deployment");
     sim_assert_eq!(have: second.api_version, want: "apps/v1");
     assert!(second.api_version_candidates.is_empty());
@@ -49,19 +49,19 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
               ports:
                 - port: {{ .Values.port }}
     "#};
-    let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
     sim_assert_eq!(
         have: locator.span_count(),
         want: 2,
         "list envelope should produce one span per inner resource"
     );
 
-    locator.advance_to(source.find("host").expect("host marker"));
-    let ingress = locator.current_resource().expect("ingress resource");
+    let host_byte = source.find("host").expect("host marker");
+    let ingress = locator.resource_at(host_byte).expect("ingress resource");
     sim_assert_eq!(have: ingress.kind, want: "Ingress");
     sim_assert_eq!(have: ingress.api_version, want: "networking.k8s.io/v1");
     sim_assert_eq!(
-        have: locator.rebase_path(crate::YamlPath(vec![
+        have: locator.rebase_path_at(host_byte, crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
             "rules[*]".to_string(),
@@ -74,12 +74,12 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
         ])
     );
 
-    locator.advance_to(source.find("port").expect("port marker"));
-    let service = locator.current_resource().expect("service resource");
+    let port_byte = source.find("port").expect("port marker");
+    let service = locator.resource_at(port_byte).expect("service resource");
     sim_assert_eq!(have: service.kind, want: "Service");
     sim_assert_eq!(have: service.api_version, want: "v1");
     sim_assert_eq!(
-        have: locator.rebase_path(crate::YamlPath(vec![
+        have: locator.rebase_path_at(port_byte, crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
             "ports[*]".to_string(),
@@ -92,9 +92,9 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
         ])
     );
 
-    locator.advance_to(source.find("kind: List").expect("list marker"));
+    let list_byte = source.find("kind: List").expect("list marker");
     assert!(
-        locator.current_resource().is_none(),
+        locator.resource_at(list_byte).is_none(),
         "the transparent list wrapper must not become the current resource"
     );
 }
@@ -113,19 +113,19 @@ fn resource_locator_descends_into_ranged_list_items() {
                 - host: {{ $.Values.host | quote }}
         {{- end }}
     "#};
-    let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
     sim_assert_eq!(
         have: locator.span_count(),
         want: 1,
         "ranged list envelope should produce the inner resource span"
     );
 
-    locator.advance_to(source.find("host").expect("host marker"));
-    let ingress = locator.current_resource().expect("ingress resource");
+    let host_byte = source.find("host").expect("host marker");
+    let ingress = locator.resource_at(host_byte).expect("ingress resource");
     sim_assert_eq!(have: ingress.kind, want: "Ingress");
     sim_assert_eq!(have: ingress.api_version, want: "networking.k8s.io/v1");
     sim_assert_eq!(
-        have: locator.rebase_path(crate::YamlPath(vec![
+        have: locator.rebase_path_at(host_byte, crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
             "rules[*]".to_string(),
@@ -151,19 +151,19 @@ fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
               ports:
                 - port: {{ .Values.port }}
     "#};
-    let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
     sim_assert_eq!(
         have: locator.span_count(),
         want: 1,
         "only the exact kubernetes v1/list envelope should be transparent"
     );
 
-    locator.advance_to(source.find("port").expect("port marker"));
-    let resource = locator.current_resource().expect("outer resource");
+    let port_byte = source.find("port").expect("port marker");
+    let resource = locator.resource_at(port_byte).expect("outer resource");
     sim_assert_eq!(have: resource.kind, want: "List");
     sim_assert_eq!(have: resource.api_version, want: "example.com/v1");
     sim_assert_eq!(
-        have: locator.rebase_path(crate::YamlPath(vec![
+        have: locator.rebase_path_at(port_byte, crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
             "ports[*]".to_string(),

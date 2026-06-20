@@ -14,6 +14,17 @@ use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 use super::SymbolicWalker;
 
 impl SymbolicWalker<'_> {
+    fn current_source_byte(&self) -> Option<usize> {
+        self.current_source_span
+            .and_then(|span| span.start.checked_sub(self.source_offset))
+    }
+
+    fn current_resource(&self) -> Option<ResourceRef> {
+        self.current_source_byte()
+            .and_then(|byte| self.document_tracker.resource_at(byte))
+            .cloned()
+    }
+
     fn push_contract_use_with_resource(
         &mut self,
         source_expr: String,
@@ -22,7 +33,10 @@ impl SymbolicWalker<'_> {
         extra_guards: &[Guard],
         resource: Option<ResourceRef>,
     ) {
-        let path = self.document_tracker.rebase_path(path);
+        let path = match self.current_source_byte() {
+            Some(byte) => self.document_tracker.rebase_path_at(byte, path),
+            None => path,
+        };
         let guards = self.contract_guards();
         let context = ContractUseContext::new(
             &guards,
@@ -54,7 +68,7 @@ impl ContractUseSink for SymbolicWalker<'_> {
             path,
             kind,
             extra_guards,
-            self.document_tracker.current_resource().cloned(),
+            self.current_resource(),
         );
     }
 }
@@ -71,15 +85,19 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
             self.source_offset + node.start_byte(),
             self.source_offset + node.end_byte(),
         ));
-        self.document_tracker.enter_node(node);
     }
 
-    fn current_document_path(&self) -> YamlPath {
-        self.document_tracker.current_path()
+    fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
+        self.document_tracker.path_for_node(node)
     }
 
-    fn current_document_path_at_mapping_entry_indent(&self, indent: usize) -> YamlPath {
-        self.document_tracker.path_at_mapping_entry_indent(indent)
+    fn document_path_for_mapping_entry_indent(
+        &self,
+        node: tree_sitter::Node<'_>,
+        indent: usize,
+    ) -> YamlPath {
+        self.document_tracker
+            .path_at_mapping_entry_indent(node, indent)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
@@ -131,7 +149,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         plan_assignment_action(
             exprs,
             fragment_context,
-            &self.scope.locals().fragment_bindings,
+            &self.scope.locals().fragment_values,
             &self.root_bindings,
             current_dot.as_ref(),
         )
@@ -173,16 +191,16 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         self.scope.locals_mut().apply_get_binding(plan);
     }
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
+    fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.scope
             .locals_mut()
-            .declare_fragment_binding(variable, binding);
+            .declare_fragment_value(variable, binding);
     }
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
+    fn assign_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.scope
             .locals_mut()
-            .assign_fragment_binding(variable, binding);
+            .assign_fragment_value(variable, binding);
     }
 
     fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &helm_schema_ast::TemplateExpr) {

@@ -5,16 +5,6 @@ mod common;
 use common::cases::NATS_SERVICE as CASE;
 
 #[test]
-fn helm_template_renders_successfully() {
-    let chart_dir = test_util::workspace_testdata().join("charts/nats");
-    let rendered = common::helm_template_render(&chart_dir, Some("templates/service.yaml"));
-    match &rendered {
-        Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
-        Err(e) => panic!("helm template failed: {e}"),
-    }
-}
-
-#[test]
 fn schema_keeps_live_service_name_paths_typed() {
     let schema = common::render_schema_case(&CASE);
 

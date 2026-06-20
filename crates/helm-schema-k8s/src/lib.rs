@@ -28,6 +28,7 @@ pub mod local_schema_universe;
 pub mod lookup;
 mod metadata_enrichment;
 mod schema_doc;
+mod source_cache;
 
 pub use builtin_groups::is_k8s_builtin_group;
 pub use cache::{

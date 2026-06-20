@@ -7,8 +7,7 @@ use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, default_source_id,
-    k8s_cache_path, not_found_marker_exists, not_found_marker_path, read_cached_json_doc,
-    write_not_found_marker,
+    k8s_cache_path, not_found_marker_exists, not_found_marker_path, write_not_found_marker,
 };
 use crate::cache_write::write_fetched_schema_doc;
 use crate::diagnostic::DiagnosticSink;
@@ -25,6 +24,7 @@ use crate::lookup::{
     ProviderSchemaSource, SourceProbeTraceOutcome, TracedApiPresenceOutcome,
 };
 use crate::schema_doc::SchemaDoc;
+use crate::source_cache::{CachedSchemaDocRequest, load_cached_schema_doc};
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
@@ -241,47 +241,29 @@ impl KubernetesJsonSchemaProvider {
         filename: &str,
     ) -> Option<SchemaDoc> {
         let local = k8s_cache_path(&self.cache_dir, &source.source_id, version, filename);
-        if self.use_cache {
-            if let Some(v) = self.read_mem_for(&source.source_id, version, filename) {
-                return Some(v);
-            }
-            if local.exists()
-                && let Some(doc) = read_cached_json_doc(&local)
-            {
-                self.write_mem(&source.source_id, version, filename, doc.clone());
-                return Some(doc);
-            }
-            if self
-                .negative_cache
-                .contains(&source.source_id, version, filename)
-                || not_found_marker_exists(&local)
-            {
-                return None;
-            }
-        }
-        if !self.allow_download {
-            return None;
-        }
-
         let url = format!(
             "{}/{version}/{filename}",
             source.base_url.trim_end_matches('/')
         );
-        match self.fetcher.fetch(&url) {
-            Ok(Some(bytes)) => {
-                let doc = write_fetched_schema_doc(&local, &url, &bytes, self.record_source)?;
-                clear_not_found_marker(&local);
-                self.write_mem(&source.source_id, version, filename, doc.clone());
-                Some(doc)
-            }
-            Ok(None) => {
-                self.negative_cache
-                    .record(&source.source_id, version, filename);
-                record_authoritative_not_found(&local);
-                None
-            }
-            Err(_) => None,
-        }
+        load_cached_schema_doc(
+            CachedSchemaDocRequest {
+                local: &local,
+                url: &url,
+                source_id: &source.source_id,
+                cache_namespace: version,
+                cache_key: filename,
+                allow_download: self.allow_download,
+                use_cache: self.use_cache,
+                record_source: self.record_source,
+                fetcher: self.fetcher.as_ref(),
+                negative_cache: &self.negative_cache,
+            },
+            || self.read_mem_for(&source.source_id, version, filename),
+            |doc| self.write_mem(&source.source_id, version, filename, doc),
+            || not_found_marker_exists(&local),
+            || clear_not_found_marker(&local),
+            || record_authoritative_not_found(&local),
+        )
     }
 
     fn read_mem(&self, version: &str, filename: &str) -> Option<SchemaDoc> {

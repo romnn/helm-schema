@@ -178,12 +178,12 @@ where
 {
     let entry = runtime.scope_snapshot();
 
-    let current_path = runtime.current_document_path();
+    let current_path = runtime.document_path_for_node(node);
     let header = range_header_from_source(node, runtime.source());
     let plan = runtime.plan_range_action(node, header.as_ref(), &current_path);
     let range_output_path = plan
         .mapping_entry_indent
-        .map(|indent| runtime.current_document_path_at_mapping_entry_indent(indent))
+        .map(|indent| runtime.document_path_for_mapping_entry_indent(node, indent))
         .unwrap_or_else(|| current_path.clone());
     let iteration_count = runtime.range_iteration_count();
 

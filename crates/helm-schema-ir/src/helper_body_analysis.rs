@@ -5,8 +5,8 @@ use helm_schema_ast::TemplateExpr;
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, bindings_for_helper_arg_with_fragment_locals,
-    fragment_binding_from_outer_expr, helper_binding_from_expr_with_fragment_locals,
+    FragmentEvalContext, context_value_from_outer_expr,
+    helper_value_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
 };
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_tree;
 use crate::helper_summary::HelperSummary;
@@ -34,7 +34,7 @@ pub(crate) fn resolve_bound_helper_call(
     params: ResolveBoundHelperCallParams<'_, '_>,
 ) -> BoundHelperCallResolution {
     let mut binding_seen = params.seen.clone();
-    let mut bindings = bindings_for_helper_arg_with_fragment_locals(
+    let mut bindings = values_for_helper_arg_with_fragment_locals(
         params.arg,
         params.outer_bindings,
         params.current_dot,
@@ -47,7 +47,7 @@ pub(crate) fn resolve_bound_helper_call(
     let mut helper_body_dot = params
         .arg
         .and_then(|expr| {
-            helper_binding_from_expr_with_fragment_locals(
+            helper_value_from_expr_with_fragment_locals(
                 expr,
                 params.fragment_locals,
                 params.outer_bindings,
@@ -59,7 +59,7 @@ pub(crate) fn resolve_bound_helper_call(
         .or_else(|| params.current_dot.cloned());
 
     let mut helper_fragment_dot = params.arg.and_then(|expr| {
-        fragment_binding_from_outer_expr(
+        context_value_from_outer_expr(
             expr,
             Some(params.fragment_locals),
             params.outer_bindings,
@@ -151,22 +151,11 @@ fn attach_helper_body_provenance(
         vec![name.to_string()],
     );
 
-    for meta in analysis.output.values_mut() {
-        meta.add_provenance_site(provenance.clone());
-    }
+    analysis.add_provenance_to_outputs(provenance.clone());
     for output in &mut analysis.fragment_output_uses {
         output.meta.add_provenance_site(provenance.clone());
     }
-    for path in analysis.dependency_paths.clone() {
-        analysis
-            .dependency_meta
-            .entry(path)
-            .or_default()
-            .add_provenance_site(provenance.clone());
-    }
-    for meta in analysis.dependency_meta.values_mut() {
-        meta.add_provenance_site(provenance.clone());
-    }
+    analysis.add_provenance_to_dependencies(provenance);
 }
 
 fn collect_value_facts(
@@ -237,17 +226,13 @@ fn collect_fragment_output_uses(
     );
     fragment_output_uses
         .retain(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty());
-    for source in analysis.output.keys() {
-        analysis.fragment_output.remove(source);
-    }
     let structured_sources: BTreeSet<String> = fragment_output_uses
         .iter()
         .filter(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty())
         .map(|output| output.source_expr.clone())
         .collect();
     for source in &structured_sources {
-        analysis.output.remove(source);
-        analysis.fragment_output.remove(source);
+        analysis.remove_output_path(source);
     }
     analysis.fragment_output_uses.extend(fragment_output_uses);
 }
@@ -293,8 +278,8 @@ mod tests {
 
         let summary =
             interpret_bound_helper_body("serviceAccountName", &resolution, context, &mut seen);
-        let meta = summary
-            .output
+        let output_meta = summary.output_path_meta();
+        let meta = output_meta
             .get("signoz.serviceAccount.name")
             .expect("service account name output metadata");
         let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
@@ -322,7 +307,7 @@ mod tests {
             "expected create=false output branch; guard_sets={guard_sets:#?}"
         );
         sim_assert_eq!(
-            have: summary.type_hints.get("signoz.serviceAccount.name"),
+            have: summary.type_hints().get("signoz.serviceAccount.name"),
             want: Some(&["string".to_string()].into_iter().collect()),
             "defaulted scalar output should retain string type hint"
         );
@@ -358,11 +343,11 @@ mod tests {
         let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
 
         sim_assert_eq!(
-            have: summary.type_hints.get("image.repository"),
+            have: summary.type_hints().get("image.repository"),
             want: Some(&BTreeSet::from(["string".to_string()]))
         );
         sim_assert_eq!(
-            have: summary.type_hints.get("image.tag"),
+            have: summary.type_hints().get("image.tag"),
             want: Some(&BTreeSet::from(["string".to_string()]))
         );
     }

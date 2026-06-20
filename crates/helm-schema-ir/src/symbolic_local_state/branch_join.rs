@@ -16,7 +16,7 @@ pub(super) fn joined_branch_outcomes(
     let mut joined = entry.clone();
     joined.range_domains = join_range_domains(&outcomes);
     joined.get_bindings = join_eq_map(&outcomes, |state| &state.get_bindings);
-    joined.fragment_bindings = join_fragment_bindings(&outcomes);
+    joined.fragment_values = join_fragment_values(&outcomes);
     joined.default_paths = join_set_maps(&outcomes, |state| &state.default_paths);
     joined.output_meta = join_output_meta(&outcomes);
     joined.chart_value_defaults = intersect_chart_defaults(&outcomes);
@@ -74,13 +74,13 @@ fn join_range_domains(outcomes: &[SymbolicLocalState]) -> HashMap<String, Vec<St
     joined
 }
 
-fn join_fragment_bindings(outcomes: &[SymbolicLocalState]) -> HashMap<String, AbstractValue> {
+fn join_fragment_values(outcomes: &[SymbolicLocalState]) -> HashMap<String, AbstractValue> {
     let mut joined = HashMap::new();
-    for variable in outcome_variable_names(outcomes, |state| &state.fragment_bindings) {
+    for variable in outcome_variable_names(outcomes, |state| &state.fragment_values) {
         let mut bindings = Vec::new();
         let mut present_in_all_outcomes = true;
         for outcome in outcomes {
-            let Some(binding) = outcome.fragment_bindings.get(&variable) else {
+            let Some(binding) = outcome.fragment_values.get(&variable) else {
                 present_in_all_outcomes = false;
                 break;
             };

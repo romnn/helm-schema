@@ -44,7 +44,7 @@ pub(crate) fn plan_with_condition(
     ConditionActionPlan {
         predicate: value_path_context.with_condition_predicate_expr(header.expr()),
         bound_values: extract_bound_values_expr(header.expr(), range_domains, get_bindings),
-        dot_binding: value_path_context.with_body_fragment_binding_expr(header.expr()),
+        dot_binding: value_path_context.with_body_fragment_value_expr(header.expr()),
         apply_alternative_predicate: true,
     }
 }

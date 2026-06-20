@@ -87,16 +87,6 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 }
 
 #[test]
-fn helm_template_renders_successfully() {
-    let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
-    let rendered = helm_template_render_hpa(&chart_dir);
-    match &rendered {
-        Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
-        Err(e) => panic!("helm template failed: {e}"),
-    }
-}
-
-#[test]
 fn rendered_hpa_validates_against_upstream_k8s_schema() {
     let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
     let rendered_yaml = helm_template_render_hpa(&chart_dir).expect("helm template");

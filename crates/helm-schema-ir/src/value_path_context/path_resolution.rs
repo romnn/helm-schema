@@ -6,13 +6,13 @@ use crate::abstract_value::AbstractValue;
 use crate::expression_analysis::{
     resolve_expr_to_values_path, resolved_default_fallback_paths_for_exprs,
 };
-use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
+use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
 
-pub(crate) fn computed_with_body_fragment_binding_expr(
+pub(crate) fn computed_with_body_fragment_value_expr(
     expr: &TemplateExpr,
     root_bindings: &HashMap<String, AbstractValue>,
     template_bindings: &HashMap<String, AbstractValue>,
@@ -25,14 +25,14 @@ pub(crate) fn computed_with_body_fragment_binding_expr(
         locals.insert(key.clone(), value.to_context_value());
     }
 
-    fragment_binding_from_outer_expr(
+    context_value_from_outer_expr(
         expr,
         Some(&locals),
         Some(root_bindings),
         current_dot_binding,
     )
     .or_else(|| {
-        fragment_context.fragment_binding_from_expr(
+        fragment_context.fragment_value_from_expr(
             expr,
             template_bindings,
             current_dot_fragment,
@@ -142,28 +142,28 @@ impl ValuePathContext<'_> {
             locals.insert(key.clone(), value.to_context_value());
         }
 
-        let outer_binding = fragment_binding_from_outer_expr(
+        let outer_binding = context_value_from_outer_expr(
             expr,
             Some(&locals),
             Some(self.root_bindings),
             self.current_dot_binding.as_ref(),
         );
-        let fragment_binding =
-            self.fragment_binding_from_expr(expr, self.current_dot_fragment.as_ref());
+        let fragment_value =
+            self.fragment_value_from_expr(expr, self.current_dot_fragment.as_ref());
 
         outer_binding
             .into_iter()
-            .chain(fragment_binding)
+            .chain(fragment_value)
             .flat_map(|binding| binding.fragment_source_paths())
             .filter(|path| !path.trim().is_empty())
             .collect()
     }
 
-    pub(crate) fn with_body_fragment_binding_expr(
+    pub(crate) fn with_body_fragment_value_expr(
         &self,
         expr: &TemplateExpr,
     ) -> Option<AbstractValue> {
-        computed_with_body_fragment_binding_expr(
+        computed_with_body_fragment_value_expr(
             expr,
             self.root_bindings,
             self.template_bindings,
@@ -191,13 +191,13 @@ impl ValuePathContext<'_> {
         self.single_resolved_values_path_expr(expr)
     }
 
-    fn fragment_binding_from_expr(
+    fn fragment_value_from_expr(
         &self,
         expr: &TemplateExpr,
         current_dot: Option<&AbstractValue>,
     ) -> Option<AbstractValue> {
         let mut seen = HashSet::new();
-        self.fragment_context.fragment_binding_from_expr(
+        self.fragment_context.fragment_value_from_expr(
             expr,
             self.template_bindings,
             current_dot,
@@ -219,17 +219,17 @@ impl ValuePathContext<'_> {
             if expr_contains_helper_call(node) {
                 return false;
             }
-            let outer_binding = fragment_binding_from_outer_expr(
+            let outer_binding = context_value_from_outer_expr(
                 node,
                 Some(&locals),
                 Some(self.root_bindings),
                 self.current_dot_binding.as_ref(),
             );
-            let fragment_binding =
-                self.fragment_binding_from_expr(node, self.current_dot_fragment.as_ref());
+            let fragment_value =
+                self.fragment_value_from_expr(node, self.current_dot_fragment.as_ref());
             let resolved_paths = outer_binding
                 .into_iter()
-                .chain(fragment_binding)
+                .chain(fragment_value)
                 .flat_map(|binding| binding.fragment_source_paths())
                 .filter(|path| !path.trim().is_empty())
                 .collect::<BTreeSet<_>>();

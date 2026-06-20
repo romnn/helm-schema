@@ -30,13 +30,13 @@ impl<'a> FragmentEvalContext<'a> {
         self.helper_summaries
     }
 
-    pub(crate) fn fragment_binding_from_expr(
+    pub(crate) fn fragment_value_from_expr(
         &self,
         expr: &TemplateExpr,
         locals: &HashMap<String, AbstractValue>,
         current_dot: Option<&AbstractValue>,
         seen: &mut HashSet<String>,
     ) -> Option<AbstractValue> {
-        super::fragment_binding_from_expr(expr, locals, current_dot, *self, seen)
+        super::fragment_value_from_expr(expr, locals, current_dot, *self, seen)
     }
 }

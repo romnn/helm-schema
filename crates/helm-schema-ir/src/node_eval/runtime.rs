@@ -13,10 +13,14 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn enter_node(&mut self, node: tree_sitter::Node<'_>);
 
-    fn current_document_path(&self) -> YamlPath;
+    fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath;
 
-    fn current_document_path_at_mapping_entry_indent(&self, _indent: usize) -> YamlPath {
-        self.current_document_path()
+    fn document_path_for_mapping_entry_indent(
+        &self,
+        node: tree_sitter::Node<'_>,
+        _indent: usize,
+    ) -> YamlPath {
+        self.document_path_for_node(node)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot;

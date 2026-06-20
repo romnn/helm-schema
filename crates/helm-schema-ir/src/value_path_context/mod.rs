@@ -8,7 +8,7 @@ mod alias_projection;
 mod condition_predicate;
 mod path_resolution;
 
-pub(crate) use path_resolution::computed_with_body_fragment_binding_expr;
+pub(crate) use path_resolution::computed_with_body_fragment_value_expr;
 
 pub(crate) struct ValuePathContext<'a> {
     pub(crate) root_bindings: &'a HashMap<String, AbstractValue>,

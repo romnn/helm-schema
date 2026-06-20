@@ -5,7 +5,7 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBindingPlan, parse_get_binding_from_exprs};
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
-use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_expr};
+use crate::fragment_expr_eval::{FragmentEvalContext, fragment_value_from_expr};
 
 pub(crate) struct AssignmentActionPlan {
     pub(crate) get_binding: Option<GetBindingPlan>,
@@ -15,7 +15,7 @@ pub(crate) struct AssignmentActionPlan {
 pub(crate) struct LocalAssignmentPlan {
     pub(crate) variable: String,
     pub(crate) kind: AssignmentKind,
-    pub(crate) fragment_binding: Option<AbstractValue>,
+    pub(crate) fragment_value: Option<AbstractValue>,
     pub(crate) rhs_expr: TemplateExpr,
 }
 
@@ -33,7 +33,7 @@ pub(crate) fn plan_assignment_action(
         }
         let current_dot = current_dot_binding.map(AbstractValue::to_context_value);
         let mut seen = HashSet::new();
-        let fragment_binding = fragment_binding_from_expr(
+        let fragment_value = fragment_value_from_expr(
             &assignment.rhs_expr,
             &locals,
             current_dot.as_ref(),
@@ -44,7 +44,7 @@ pub(crate) fn plan_assignment_action(
         LocalAssignmentPlan {
             variable: assignment.variable,
             kind: assignment.kind,
-            fragment_binding,
+            fragment_value,
             rhs_expr: assignment.rhs_expr,
         }
     });

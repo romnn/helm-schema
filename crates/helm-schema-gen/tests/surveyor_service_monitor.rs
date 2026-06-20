@@ -34,16 +34,6 @@ fn helm_template_render_service_monitor(chart_dir: &std::path::Path) -> Result<S
 }
 
 #[test]
-fn helm_template_renders_successfully() {
-    let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
-    let rendered = helm_template_render_service_monitor(&chart_dir);
-    match &rendered {
-        Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
-        Err(e) => panic!("helm template failed: {e}"),
-    }
-}
-
-#[test]
 fn rendered_service_monitor_validates_against_crd_schema() {
     let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
     let rendered_yaml = helm_template_render_service_monitor(&chart_dir).expect("helm template");

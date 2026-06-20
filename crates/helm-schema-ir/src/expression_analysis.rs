@@ -24,7 +24,7 @@ pub(crate) fn resolve_expr_to_values_path(
         .and_then(|value| value.unique_path())
 }
 
-pub(crate) fn helper_binding_from_expr(
+pub(crate) fn helper_value_from_expr(
     expr: &TemplateExpr,
     bindings: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
@@ -36,13 +36,13 @@ pub(crate) fn helper_binding_from_expr(
         .map(|value| value.to_context_value())
 }
 
-pub(crate) fn helper_bindings_for_arg(
+pub(crate) fn helper_values_for_arg(
     arg: Option<&TemplateExpr>,
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
 ) -> HashMap<String, AbstractValue> {
     bindings_for_helper_arg_with(arg, outer, |expr| {
-        helper_binding_from_expr(expr, outer, current_dot)
+        helper_value_from_expr(expr, outer, current_dot)
     })
 }
 
@@ -204,7 +204,7 @@ mod tests {
         )]);
 
         sim_assert_eq!(
-            have: helper_binding_from_expr(
+            have: helper_value_from_expr(
                 &expr(".ctx.config.name | default \"x\""),
                 Some(&bindings),
                 None
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn helper_argument_projection_uses_shared_expression_eval() {
-        let bindings = helper_bindings_for_arg(
+        let bindings = helper_values_for_arg(
             Some(&expr(r#"dict "ctx" $ "config" .Values.serviceAccount"#)),
             None,
             None,

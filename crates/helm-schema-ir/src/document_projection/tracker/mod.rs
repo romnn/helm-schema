@@ -19,8 +19,6 @@ pub(crate) struct DocumentTracker<'a> {
     defines: &'a DefineIndex,
     resource_identity: ResourceIdentityIndex,
     attribution: AttributionIndex,
-    current_context: ResolvedNodeContext,
-    current_node_span: Option<(usize, usize)>,
 }
 
 impl<'a> DocumentTracker<'a> {
@@ -30,22 +28,16 @@ impl<'a> DocumentTracker<'a> {
             defines,
             resource_identity: ResourceIdentityIndex::default(),
             attribution: AttributionIndex::default(),
-            current_context: ResolvedNodeContext::default(),
-            current_node_span: None,
         }
     }
 
     pub(crate) fn reset_for_tree(&mut self, tree: &tree_sitter::Tree) {
         self.resource_identity = ResourceIdentityIndex::from_source(self.source, self.defines);
         self.attribution = build_attribution_index(self.source, tree.root_node());
-        self.current_context = ResolvedNodeContext::default();
-        self.current_node_span = None;
     }
 
-    pub(crate) fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
-        self.resource_identity.advance_to(node.start_byte());
-        self.current_node_span = Some((node.start_byte(), node.end_byte()));
-        self.current_context = if is_output_root_kind(node.kind()) {
+    fn context_for_node(&self, node: tree_sitter::Node<'_>) -> ResolvedNodeContext {
+        if is_output_root_kind(node.kind()) {
             self.attribution
                 .output_context_for_node(node)
                 .unwrap_or_default()
@@ -55,47 +47,66 @@ impl<'a> DocumentTracker<'a> {
                 .unwrap_or_default()
         } else {
             ResolvedNodeContext::default()
-        };
+        }
     }
 
-    pub(crate) fn current_path(&self) -> YamlPath {
-        if self.current_context.inside_block_scalar {
+    pub(crate) fn path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
+        let context = self.context_for_node(node);
+        if context.inside_block_scalar {
             return YamlPath(Vec::new());
         }
 
-        self.current_context.current_path.clone()
+        context.current_path
     }
 
-    pub(crate) fn path_at_mapping_entry_indent(&self, indent: usize) -> YamlPath {
-        if self.current_context.inside_block_scalar {
+    pub(crate) fn path_at_mapping_entry_indent(
+        &self,
+        node: tree_sitter::Node<'_>,
+        indent: usize,
+    ) -> YamlPath {
+        let context = self.context_for_node(node);
+        if context.inside_block_scalar {
             return YamlPath(Vec::new());
         }
 
-        if let Some((start, end)) = self.current_node_span
-            && let Some(context) = self
-                .attribution
-                .mapping_entry_context_in_span_at_indent(start, end, indent)
-        {
+        if let Some(context) = self.attribution.mapping_entry_context_in_span_at_indent(
+            node.start_byte(),
+            node.end_byte(),
+            indent,
+        ) {
             return context.mapping_entry_path;
         }
 
-        self.current_context.mapping_entry_path.clone()
+        context.mapping_entry_path
     }
 
-    pub(crate) fn current_resource(&self) -> Option<&ResourceRef> {
-        self.resource_identity.current_resource()
+    pub(crate) fn resource_for_node(&self, node: tree_sitter::Node<'_>) -> Option<&ResourceRef> {
+        self.resource_identity.resource_at(node.start_byte())
     }
 
-    pub(crate) fn rebase_path(&self, path: YamlPath) -> YamlPath {
-        self.resource_identity.rebase_path(path)
+    pub(crate) fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
+        self.resource_identity.resource_at(byte)
     }
 
-    pub(crate) fn output_in_mapping_key(&self) -> bool {
-        self.current_context.in_mapping_key
+    pub(crate) fn rebase_path_for_node(
+        &self,
+        node: tree_sitter::Node<'_>,
+        path: YamlPath,
+    ) -> YamlPath {
+        self.resource_identity
+            .rebase_path_at(node.start_byte(), path)
     }
 
-    pub(crate) fn output_entire_scalar_value(&self) -> bool {
-        self.current_context.entire_scalar_value
+    pub(crate) fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {
+        self.resource_identity.rebase_path_at(byte, path)
+    }
+
+    pub(crate) fn output_in_mapping_key(&self, node: tree_sitter::Node<'_>) -> bool {
+        self.context_for_node(node).in_mapping_key
+    }
+
+    pub(crate) fn output_entire_scalar_value(&self, node: tree_sitter::Node<'_>) -> bool {
+        self.context_for_node(node).entire_scalar_value
     }
 
     pub(crate) fn output_site_path(
@@ -104,7 +115,8 @@ impl<'a> DocumentTracker<'a> {
         kind: ValueKind,
         fragment_indent_width: Option<usize>,
     ) -> YamlPath {
-        if self.current_context.inside_block_scalar {
+        let current_context = self.context_for_node(node);
+        if current_context.inside_block_scalar {
             return YamlPath(Vec::new());
         }
 
@@ -113,9 +125,9 @@ impl<'a> DocumentTracker<'a> {
                 self.attribution
                     .virtual_indent_context_for_node(node, indent)
             });
-            prefer_fragment_output_path(&self.current_context, rendered_context.as_ref())
+            prefer_fragment_output_path(&current_context, rendered_context.as_ref())
         } else {
-            self.current_context.output_path.clone()
+            current_context.output_path.clone()
         };
         if kind == ValueKind::Fragment
             && let Some(last) = path.0.last_mut()
@@ -316,9 +328,9 @@ mod tests {
             have: path.0,
             want: vec!["spec", "template", "spec", "volumes"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(8).0,
-            tracker.current_context.output_path.0,
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 8).0,
+            tracker.context_for_node(action).output_path.0,
         );
     }
 
@@ -348,9 +360,9 @@ mod tests {
             have: path.0,
             want: vec!["spec", "template", "spec", "containers[*]", "env"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(10).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 10).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -455,9 +467,9 @@ spec:
                 "securityContext",
             ],
             "current={:?} mapping={:?} context={:?} rendered={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(12).0,
-            tracker.current_context,
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 12).0,
+            tracker.context_for_node(action),
             rendered_context
         );
     }
@@ -488,9 +500,9 @@ spec:
             have: path.0,
             want: vec!["spec", "template", "spec", "hostAliases"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(8).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 8).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -519,9 +531,9 @@ spec:
             have: path.0,
             want: vec!["spec", "ipFamilies"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(2).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 2).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -551,9 +563,9 @@ spec:
             have: path.0,
             want: vec!["metadata", "labels"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(4).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 4).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -583,9 +595,9 @@ spec:
             have: path.0,
             want: vec!["spec", "ports"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(4).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 4).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -619,11 +631,11 @@ spec:
             "node_kind={} node_text={:?} current={:?} mapping={:?} context={:?}",
             action.kind(),
             action.utf8_text(source.as_bytes()).unwrap_or(""),
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(12).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 12).0,
+            tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value());
+        assert!(tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -659,11 +671,11 @@ spec:
             "node_kind={} node_text={:?} current={:?} mapping={:?} context={:?}",
             action.kind(),
             action.utf8_text(source.as_bytes()).unwrap_or(""),
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(12).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 12).0,
+            tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value());
+        assert!(tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -744,7 +756,7 @@ spec:
             have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
             want: vec!["ports[*]", "port"]
         );
-        assert!(tracker.output_entire_scalar_value());
+        assert!(tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -773,7 +785,7 @@ ports:
             have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
             want: vec!["ports[*]", "port"]
         );
-        assert!(tracker.output_entire_scalar_value());
+        assert!(tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -803,7 +815,7 @@ ports:
             have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
             want: vec!["env[*]", "valueFrom", "secretKeyRef", "name",]
         );
-        assert!(tracker.output_entire_scalar_value());
+        assert!(tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -839,11 +851,11 @@ ports:
                 "name",
             ],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(18).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 18).0,
+            tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value());
+        assert!(tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -877,9 +889,9 @@ ports:
             have: path.0,
             want: vec!["spec", "ingress"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(4).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 4).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -908,9 +920,9 @@ ports:
             have: path.0,
             want: vec!["metadata", "labels"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(4).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 4).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -939,9 +951,9 @@ ports:
             have: path.0,
             want: vec!["spec", "podSelector", "matchLabels"],
             "current={:?} mapping={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.path_at_mapping_entry_indent(6).0,
-            tracker.current_context
+            tracker.path_for_node(action).0,
+            tracker.path_at_mapping_entry_indent(action, 6).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -968,7 +980,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.current_path().0,
+            have: tracker.path_for_node(action).0,
             want: vec![
                 "spec",
                 "ingress[*]",
@@ -977,8 +989,8 @@ ports:
                 "matchLabels",
             ],
             "mapping={:?} context={:?}",
-            tracker.path_at_mapping_entry_indent(16).0,
-            tracker.current_context
+            tracker.path_at_mapping_entry_indent(action, 16).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -1005,7 +1017,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.current_path().0,
+            have: tracker.path_for_node(action).0,
             want: vec![
                 "spec",
                 "ingress[*]",
@@ -1014,8 +1026,8 @@ ports:
                 "matchLabels",
             ],
             "mapping={:?} context={:?}",
-            tracker.path_at_mapping_entry_indent(16).0,
-            tracker.current_context
+            tracker.path_at_mapping_entry_indent(action, 16).0,
+            tracker.context_for_node(action)
         );
     }
 
@@ -1041,7 +1053,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), range);
 
         sim_assert_eq!(
-            have: tracker.path_at_mapping_entry_indent(16).0,
+            have: tracker.path_at_mapping_entry_indent(range, 16).0,
             want: vec![
                 "spec",
                 "ingress[*]",
@@ -1050,7 +1062,7 @@ ports:
                 "matchLabels",
             ],
             "context={:?}",
-            tracker.current_context
+            tracker.context_for_node(range)
         );
     }
 
@@ -1082,10 +1094,10 @@ ports:
             want: vec!["spec", "ingress[*]", "ports[*]", "port"]
         );
         assert!(
-            tracker.output_entire_scalar_value(),
+            tracker.output_entire_scalar_value(action),
             "current={:?} context={:?}",
-            tracker.current_path().0,
-            tracker.current_context.output_path.0
+            tracker.path_for_node(action).0,
+            tracker.context_for_node(action).output_path.0
         );
     }
 
@@ -1114,12 +1126,12 @@ ports:
         let action = actions.into_iter().next().expect("script output action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert!(tracker.current_context.inside_block_scalar);
+        assert!(tracker.context_for_node(action).inside_block_scalar);
         sim_assert_eq!(
             have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
             want: Vec::<String>::new()
         );
-        assert!(!tracker.output_entire_scalar_value());
+        assert!(!tracker.output_entire_scalar_value(action));
     }
 
     #[test]
@@ -1193,7 +1205,6 @@ ports:
         node: tree_sitter::Node<'_>,
         target: tree_sitter::Node<'_>,
     ) -> bool {
-        tracker.enter_node(node);
         if node.id() == target.id() {
             return true;
         }

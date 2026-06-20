@@ -16,7 +16,7 @@ mod tests;
 pub(crate) struct SymbolicLocalState {
     pub(crate) range_domains: HashMap<String, Vec<String>>,
     pub(crate) get_bindings: HashMap<String, GetBinding>,
-    pub(crate) fragment_bindings: HashMap<String, AbstractValue>,
+    pub(crate) fragment_values: HashMap<String, AbstractValue>,
     pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
@@ -39,7 +39,7 @@ struct LocalScopeFrame {
 struct VariableLocalState {
     range_domain: Option<Vec<String>>,
     get_binding: Option<GetBinding>,
-    fragment_binding: Option<AbstractValue>,
+    fragment_value: Option<AbstractValue>,
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
 }
@@ -87,7 +87,7 @@ impl SymbolicLocalState {
         }
     }
 
-    pub(crate) fn declare_fragment_binding(
+    pub(crate) fn declare_fragment_value(
         &mut self,
         variable: String,
         binding: Option<AbstractValue>,
@@ -95,18 +95,18 @@ impl SymbolicLocalState {
         self.record_scope_shadow(&variable);
         self.range_domains.remove(&variable);
         self.get_bindings.remove(&variable);
-        self.set_fragment_binding(variable, binding);
+        self.set_fragment_value(variable, binding);
     }
 
-    pub(crate) fn assign_fragment_binding(
+    pub(crate) fn assign_fragment_value(
         &mut self,
         variable: String,
         binding: Option<AbstractValue>,
     ) {
         if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
-            self.set_fragment_binding(variable, binding);
+            self.set_fragment_value(variable, binding);
         } else {
-            self.declare_fragment_binding(variable, binding);
+            self.declare_fragment_value(variable, binding);
         }
     }
 
@@ -133,7 +133,7 @@ impl SymbolicLocalState {
     pub(crate) fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
         self.record_scope_shadow(&variable);
         self.get_bindings.remove(&variable);
-        self.fragment_bindings.remove(&variable);
+        self.fragment_values.remove(&variable);
         self.default_paths.remove(&variable);
         self.output_meta.remove(&variable);
         self.range_domains.insert(variable, literals);
@@ -162,7 +162,7 @@ impl SymbolicLocalState {
         VariableLocalState {
             range_domain: self.range_domains.get(variable).cloned(),
             get_binding: self.get_bindings.get(variable).cloned(),
-            fragment_binding: self.fragment_bindings.get(variable).cloned(),
+            fragment_value: self.fragment_values.get(variable).cloned(),
             default_paths: self.default_paths.get(variable).cloned(),
             output_meta: self.output_meta.get(variable).cloned(),
         }
@@ -171,7 +171,7 @@ impl SymbolicLocalState {
     fn variable_has_current_value(&self, variable: &str) -> bool {
         self.range_domains.contains_key(variable)
             || self.get_bindings.contains_key(variable)
-            || self.fragment_bindings.contains_key(variable)
+            || self.fragment_values.contains_key(variable)
             || self.default_paths.contains_key(variable)
             || self.output_meta.contains_key(variable)
     }
@@ -179,7 +179,7 @@ impl SymbolicLocalState {
     fn declare_get_binding(&mut self, variable: String, binding: GetBinding) {
         self.record_scope_shadow(&variable);
         self.range_domains.remove(&variable);
-        self.fragment_bindings.remove(&variable);
+        self.fragment_values.remove(&variable);
         self.default_paths.remove(&variable);
         self.output_meta.remove(&variable);
         self.get_bindings.insert(variable, binding);
@@ -188,7 +188,7 @@ impl SymbolicLocalState {
     fn assign_get_binding(&mut self, variable: String, binding: GetBinding) {
         if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
             self.range_domains.remove(&variable);
-            self.fragment_bindings.remove(&variable);
+            self.fragment_values.remove(&variable);
             self.default_paths.remove(&variable);
             self.output_meta.remove(&variable);
             self.get_bindings.insert(variable, binding);
@@ -200,24 +200,20 @@ impl SymbolicLocalState {
     fn restore_variable_state(&mut self, variable: &str, previous: VariableLocalState) {
         restore_map_entry(&mut self.range_domains, variable, previous.range_domain);
         restore_map_entry(&mut self.get_bindings, variable, previous.get_binding);
-        restore_map_entry(
-            &mut self.fragment_bindings,
-            variable,
-            previous.fragment_binding,
-        );
+        restore_map_entry(&mut self.fragment_values, variable, previous.fragment_value);
         restore_map_entry(&mut self.default_paths, variable, previous.default_paths);
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
     }
 
-    fn set_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
+    fn set_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.range_domains.remove(&variable);
         self.get_bindings.remove(&variable);
         self.default_paths.remove(&variable);
         self.output_meta.remove(&variable);
         if let Some(binding) = binding {
-            self.fragment_bindings.insert(variable, binding);
+            self.fragment_values.insert(variable, binding);
         } else {
-            self.fragment_bindings.remove(&variable);
+            self.fragment_values.remove(&variable);
         }
     }
 }

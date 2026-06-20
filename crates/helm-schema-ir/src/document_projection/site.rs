@@ -13,8 +13,7 @@ pub(super) struct DocumentSite {
 }
 
 impl DocumentSite {
-    pub(super) fn new(site_context: DocumentSiteContext, helper_inlined: bool) -> Self {
-        let _ = helper_inlined;
+    pub(super) fn new(site_context: DocumentSiteContext) -> Self {
         Self {
             path: site_context.path,
             kind: site_context.kind,
@@ -91,10 +90,6 @@ impl DocumentSite {
             && !self.path.0.is_empty()
             && self.kind == ValueKind::Scalar
             && self.entire_scalar_value
-    }
-
-    pub(super) fn can_project_fragment_helper_to_caller_path(&self) -> bool {
-        !self.in_mapping_key && !self.path.0.is_empty() && self.kind == ValueKind::Fragment
     }
 
     pub(super) fn can_project_structured_helper_to_caller_path(&self) -> bool {

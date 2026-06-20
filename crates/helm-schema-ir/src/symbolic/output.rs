@@ -27,7 +27,7 @@ impl SymbolicWalker<'_> {
                 exprs,
                 Some(&self.root_bindings),
                 self.current_dot_binding().as_ref(),
-                &self.scope.locals().fragment_bindings,
+                &self.scope.locals().fragment_values,
                 self.fragment_eval_context(),
                 &mut HashSet::new(),
             );
@@ -52,8 +52,9 @@ impl SymbolicWalker<'_> {
         }
         let kind = site_context.kind;
 
-        let helper_inlined =
-            kind == crate::ValueKind::Scalar && self.inline_exact_helper_call(exprs);
+        if kind == crate::ValueKind::Scalar {
+            self.inline_exact_helper_call(exprs);
+        }
 
         let helper_summary = Some(self.summarize_bound_helper_calls_in_exprs(exprs));
         let value_path_context = self.value_path_context();
@@ -91,7 +92,7 @@ impl SymbolicWalker<'_> {
                 )),
                 self.provenance_helper_chain(),
             );
-            DocumentOutput::new(site_context, helper_inlined, output_values)
+            DocumentOutput::new(site_context, output_values)
                 .append_to_contract(&mut self.contract, &projection_context);
         }
     }

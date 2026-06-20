@@ -190,7 +190,7 @@ impl<'a> SymbolicWalker<'a> {
         self
     }
 
-    fn with_helper_bindings(mut self, bindings: HashMap<String, AbstractValue>) -> Self {
+    fn with_helper_values(mut self, bindings: HashMap<String, AbstractValue>) -> Self {
         self.root_bindings = bindings;
         self
     }
@@ -206,7 +206,7 @@ impl<'a> SymbolicWalker<'a> {
     fn value_path_context(&self) -> ValuePathContext<'_> {
         ValuePathContext {
             root_bindings: &self.root_bindings,
-            template_bindings: &self.scope.locals().fragment_bindings,
+            template_bindings: &self.scope.locals().fragment_values,
             template_default_paths: &self.scope.locals().default_paths,
             template_output_meta: &self.scope.locals().output_meta,
             fragment_context: self.fragment_eval_context(),
@@ -257,7 +257,7 @@ impl<'a> SymbolicWalker<'a> {
                 exprs,
                 Some(&self.root_bindings),
                 self.current_dot_binding().as_ref(),
-                &self.scope.locals().fragment_bindings,
+                &self.scope.locals().fragment_values,
                 self.fragment_eval_context(),
                 &mut HashSet::new(),
             )

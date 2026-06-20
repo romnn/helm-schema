@@ -1,12 +1,11 @@
 use helm_schema_ir::GuardValue;
-use serde_json::{Map, Number, Value};
+use serde_json::{Number, Value};
 
 use crate::merge::{merge_two_schemas, union_schema_list};
+use crate::schema_node::{JsonSchemaType, SchemaNode};
 
 pub(crate) fn type_schema(ty: &str) -> Value {
-    let mut schema = serde_json::Map::new();
-    schema.insert("type".to_string(), Value::String(ty.to_string()));
-    Value::Object(schema)
+    SchemaNode::type_named(ty).into_value()
 }
 
 pub(crate) fn guard_value_to_json(value: &GuardValue) -> Option<Value> {
@@ -158,17 +157,9 @@ pub(crate) fn add_null_schema(schema: Value) -> Value {
 }
 
 pub(crate) fn empty_string_schema() -> Value {
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("string".to_string())),
-            (
-                "enum".to_string(),
-                Value::Array(vec![Value::String(String::new())]),
-            ),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    SchemaNode::typed(JsonSchemaType::String)
+        .typed_keyword("enum", Value::Array(vec![Value::String(String::new())]))
+        .into_value()
 }
 
 pub(crate) fn schema_permits_empty_string(schema: &Value) -> bool {
@@ -206,18 +197,9 @@ pub(crate) fn is_empty_schema(value: &Value) -> bool {
 }
 
 pub(crate) fn empty_schema() -> Value {
-    Value::Object(Map::new())
+    SchemaNode::empty().into_value()
 }
 
 pub(crate) fn exact_empty_object_schema() -> Value {
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("object".to_string())),
-            ("properties".to_string(), Value::Object(Map::new())),
-            ("additionalProperties".to_string(), Value::Bool(false)),
-            ("maxProperties".to_string(), Value::Number(0.into())),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    SchemaNode::closed_object().max_properties(0).into_value()
 }

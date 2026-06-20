@@ -29,17 +29,17 @@ pub(crate) fn range_iterable_binding_expr(
         }
         expr => expr,
     };
-    fragment_binding_from_range_value_expr(value, local_bindings, current_dot, context, seen)
+    fragment_value_from_range_value_expr(value, local_bindings, current_dot, context, seen)
 }
 
-fn fragment_binding_from_range_value_expr(
+fn fragment_value_from_range_value_expr(
     value: &TemplateExpr,
     local_bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Option<AbstractValue> {
-    context.fragment_binding_from_expr(value, local_bindings, current_dot, seen)
+    context.fragment_value_from_expr(value, local_bindings, current_dot, seen)
 }
 
 pub(crate) fn range_header_text_from_source(

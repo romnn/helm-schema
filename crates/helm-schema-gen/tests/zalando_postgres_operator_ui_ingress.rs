@@ -7,8 +7,6 @@ use helm_schema_k8s::{
     KubernetesJsonSchemaProvider, kubernetes_openapi::debug_materialize_schema_for_resource,
 };
 use serde::Deserialize;
-use std::path::Path;
-use std::process::Command;
 
 fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
     let mut out = Vec::new();
@@ -22,47 +20,15 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
     out
 }
 
-fn helm_template_render_ingress(chart_dir: &Path) -> Result<String, String> {
-    let mut cmd = Command::new("helm");
-    cmd.arg("template")
-        .arg("test-release")
-        .arg(chart_dir)
-        .arg("--show-only")
-        .arg("templates/ingress.yaml")
-        .arg("--set")
-        .arg("ingress.enabled=true")
-        .arg("--kube-version")
-        .arg("1.29.0");
-
-    let output = cmd
-        .output()
-        .map_err(|e| format!("failed to run helm: {e}"))?;
-
-    if output.status.success() {
-        String::from_utf8(output.stdout).map_err(|e| format!("helm output is not valid UTF-8: {e}"))
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        Err(format!(
-            "helm template failed:\nstderr: {stderr}\nstdout: {stdout}"
-        ))
-    }
-}
-
-#[test]
-fn helm_template_renders_successfully() {
-    let chart_dir = test_util::workspace_testdata().join("charts/zalando-postgres-operator-ui");
-    let rendered = helm_template_render_ingress(&chart_dir);
-    match &rendered {
-        Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
-        Err(e) => panic!("helm template failed: {e}"),
-    }
-}
-
 #[test]
 fn rendered_ingress_validates_against_upstream_k8s_schema() {
     let chart_dir = test_util::workspace_testdata().join("charts/zalando-postgres-operator-ui");
-    let rendered_yaml = helm_template_render_ingress(&chart_dir).expect("helm template");
+    let rendered_yaml = common::helm_template_render_with_args(
+        &chart_dir,
+        Some("templates/ingress.yaml"),
+        &["--set", "ingress.enabled=true", "--kube-version", "1.29.0"],
+    )
+    .expect("helm template");
     let docs = parse_yaml_documents(&rendered_yaml);
     assert!(!docs.is_empty(), "rendered YAML contained no documents");
 

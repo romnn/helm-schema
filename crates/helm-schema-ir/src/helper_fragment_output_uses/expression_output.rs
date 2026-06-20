@@ -127,9 +127,8 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
         .filter(|output| expression_output_use_is_keyed_map_projection(output, &empty_output_path))
         .map(|output| output.source_expr.clone())
         .collect();
-    let nested_scalar_sources: BTreeSet<String> = nested.output.keys().cloned().collect();
-    let nested_has_fragment_outputs =
-        !nested.fragment_output.is_empty() || !nested.fragment_output_uses.is_empty();
+    let nested_scalar_sources: BTreeSet<String> = nested.output_path_meta().into_keys().collect();
+    let nested_has_fragment_outputs = !nested.fragment_output_uses.is_empty();
 
     let expression_output_scope = FragmentExpressionOutputScope {
         bindings,
@@ -158,7 +157,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
         }
         state.outputs.push(output);
     }
-    for (source_expr, meta) in nested.output {
+    for (source_expr, meta) in nested.output_path_meta() {
         if kind == ValueKind::Fragment && nested_has_fragment_outputs {
             continue;
         }
@@ -208,7 +207,7 @@ fn collect_bound_fragment_output_assignment_uses(
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let mut seen_rhs = HashSet::new();
     let mut binding =
-        helper_env.fragment_binding_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs);
+        helper_env.fragment_value_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs);
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let mut rhs_seen = state.seen.clone();
@@ -312,7 +311,7 @@ fn helper_expression_output_uses_from_exprs(
             continue;
         }
         if let Some(binding) =
-            helper_env.helper_binding_from_expr(expr, state.local_bindings, &mut expression_seen)
+            helper_env.helper_value_from_expr(expr, state.local_bindings, &mut expression_seen)
         {
             binding.collect_output_uses(
                 &mut expression_output_uses,

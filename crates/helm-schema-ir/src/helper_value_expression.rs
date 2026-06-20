@@ -12,9 +12,7 @@ use crate::fragment_assignment::{
 };
 use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_summary::HelperOutputMeta;
-use crate::helper_summary_mutation::{
-    extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,
-};
+use crate::helper_summary_mutation::{extend_nested_fragment_render, extend_nested_scalar_render};
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_exprs_in_context, local_bound_paths_from_expr,
@@ -61,17 +59,15 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
-    extend_type_hints(
-        &mut state.analysis.type_hints,
-        resolved_type_hint_paths_for_exprs_with_fragment_locals(
+    state
+        .analysis
+        .add_type_hints(resolved_type_hint_paths_for_exprs_with_fragment_locals(
             exprs,
             Some(bindings),
             current_dot,
             state.local_bindings,
-        ),
-    );
-    extend_type_hints(
-        &mut state.analysis.type_hints,
+        ));
+    state.analysis.add_type_hints(
         resolved_string_transform_paths_for_exprs_with_fragment_locals(
             exprs,
             Some(bindings),
@@ -112,12 +108,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     }
     let nested = helper_env.summarize_calls_in_exprs(exprs, state.local_bindings, state.seen);
     if expression_kind == ValueKind::Fragment {
-        extend_nested_fragment_render(
-            state.analysis,
-            nested,
-            active_output_predicates,
-            expression_kind,
-        );
+        extend_nested_fragment_render(state.analysis, nested, active_output_predicates);
     } else {
         extend_nested_scalar_render(state.analysis, nested, active_output_predicates);
     }
@@ -164,17 +155,15 @@ fn collect_assignment_bound_helper_values(
         return;
     }
 
-    extend_type_hints(
-        &mut state.analysis.type_hints,
-        resolved_type_hint_paths_for_exprs_with_fragment_locals(
+    state
+        .analysis
+        .add_type_hints(resolved_type_hint_paths_for_exprs_with_fragment_locals(
             rhs_exprs,
             Some(bindings),
             current_dot,
             state.local_bindings,
-        ),
-    );
-    extend_type_hints(
-        &mut state.analysis.type_hints,
+        ));
+    state.analysis.add_type_hints(
         resolved_string_transform_paths_for_exprs_with_fragment_locals(
             rhs_exprs,
             Some(bindings),
@@ -197,11 +186,10 @@ fn collect_assignment_bound_helper_values(
         .analysis
         .chart_defaults
         .extend(nested.chart_defaults.clone());
-    extend_type_hints(&mut state.analysis.type_hints, nested.type_hints.clone());
-    state
-        .analysis
-        .dependency_paths
-        .extend(nested.dependency_paths());
+    state.analysis.add_type_hints(nested.type_hints());
+    for path in nested.direct_dependency_paths() {
+        state.analysis.add_dependency_path(path);
+    }
     state
         .analysis
         .add_dependency_meta_map(nested.dependency_meta());
@@ -217,26 +205,13 @@ fn collect_assignment_bound_helper_values(
 
     let mut seen_rhs = HashSet::new();
     if let Some(binding) =
-        helper_env.fragment_binding_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs)
+        helper_env.fragment_value_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs)
     {
         state.local_bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = fallback_paths;
     defaulted_paths.extend(local_fallback_paths);
-    defaulted_paths.extend(
-        nested
-            .output
-            .iter()
-            .filter(|(_path, meta)| meta.defaulted)
-            .map(|(path, _meta)| path.clone()),
-    );
-    defaulted_paths.extend(
-        nested
-            .fragment_output_uses
-            .iter()
-            .filter(|output| output.meta.defaulted)
-            .map(|output| output.source_expr.clone()),
-    );
+    defaulted_paths.extend(nested.defaulted_output_paths());
     if defaulted_paths.is_empty() {
         state.local_default_paths.remove(var);
     } else {

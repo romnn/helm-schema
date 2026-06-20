@@ -1,4 +1,4 @@
-use super::{HelperParseMode, ProviderKind, SchemaCorpusCase};
+use super::{HelmRenderCase, HelperParseMode, ProviderKind, SchemaCorpusCase};
 
 const SURVEYOR_CONFIGMAP_FIXTURE_VALUES: &str = r#"
 nameOverride: ""
@@ -360,4 +360,124 @@ pub const VALUES_VALIDATION_CASES: &[SchemaCorpusCase<'static>] = &[
     ZALANDO_POSTGRES_OPERATOR_DEPLOYMENT,
     ZALANDO_POSTGRES_OPERATOR_UI_INGRESS,
     ZALANDO_POSTGRES_OPERATOR_POSTGRES_POD_PRIORITY_CLASS,
+];
+
+pub const HELM_RENDER_CASES: &[HelmRenderCase<'static>] = &[
+    HelmRenderCase {
+        name: "nats-operator rbac default",
+        chart_path: "charts/nats-operator",
+        show_only: Some("templates/rbac.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "nats-operator rbac cluster scoped",
+        chart_path: "charts/nats-operator",
+        show_only: Some("templates/rbac.yaml"),
+        extra_args: &["--set", "clusterScoped=true"],
+    },
+    HelmRenderCase {
+        name: "nats service account",
+        chart_path: "charts/nats",
+        show_only: Some("templates/service-account.yaml"),
+        extra_args: &["--set", "serviceAccount.enabled=true"],
+    },
+    HelmRenderCase {
+        name: "nats service",
+        chart_path: "charts/nats",
+        show_only: Some("templates/service.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "signoz postgresql secrets",
+        chart_path: "charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql",
+        show_only: Some("templates/secrets.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "signoz zookeeper statefulset",
+        chart_path: "charts/signoz-signoz/charts/clickhouse/charts/zookeeper",
+        show_only: Some("templates/statefulset.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "signoz zookeeper service",
+        chart_path: "charts/signoz-signoz/charts/clickhouse/charts/zookeeper",
+        show_only: Some("templates/svc.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "surveyor configmap",
+        chart_path: "charts/surveyor",
+        show_only: Some("templates/configmap.yaml"),
+        extra_args: &[
+            "--set",
+            "config.jetstream.enabled=true",
+            "--set",
+            "config.jetstream.accounts[0].name=test",
+            "--set",
+            "config.jetstream.accounts[0].username=username",
+            "--set",
+            "config.jetstream.accounts[0].password=password",
+            "--set",
+            "config.jetstream.accounts[0].tls.secret.name=test-user-tls",
+            "--set",
+            "config.jetstream.accounts[0].tls.ca=ca.crt",
+            "--set",
+            "config.jetstream.accounts[0].tls.cert=tls.crt",
+            "--set",
+            "config.jetstream.accounts[0].tls.key=tls.key",
+        ],
+    },
+    HelmRenderCase {
+        name: "surveyor hpa",
+        chart_path: "charts/surveyor",
+        show_only: Some("templates/hpa.yaml"),
+        extra_args: &[
+            "--set",
+            "autoscaling.enabled=true",
+            "--kube-version",
+            "1.24.0",
+        ],
+    },
+    HelmRenderCase {
+        name: "surveyor service monitor",
+        chart_path: "charts/surveyor",
+        show_only: Some("templates/serviceMonitor.yaml"),
+        extra_args: &[
+            "--set",
+            "serviceMonitor.enabled=true",
+            "--kube-version",
+            "1.29.0",
+        ],
+    },
+    HelmRenderCase {
+        name: "zalando postgres operator clusterrolebinding",
+        chart_path: "charts/zalando-postgres-operator",
+        show_only: Some("templates/clusterrolebinding.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "zalando postgres operator clusterrole",
+        chart_path: "charts/zalando-postgres-operator",
+        show_only: Some("templates/clusterrole.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "zalando postgres operator deployment",
+        chart_path: "charts/zalando-postgres-operator",
+        show_only: Some("templates/deployment.yaml"),
+        extra_args: &[],
+    },
+    HelmRenderCase {
+        name: "zalando postgres operator ui ingress",
+        chart_path: "charts/zalando-postgres-operator-ui",
+        show_only: Some("templates/ingress.yaml"),
+        extra_args: &["--set", "ingress.enabled=true", "--kube-version", "1.29.0"],
+    },
+    HelmRenderCase {
+        name: "zalando postgres operator priority class",
+        chart_path: "charts/zalando-postgres-operator",
+        show_only: Some("templates/postgres-pod-priority-class.yaml"),
+        extra_args: &[],
+    },
 ];

@@ -21,7 +21,7 @@ use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_path_context::computed_with_body_fragment_binding_expr;
+use crate::value_path_context::computed_with_body_fragment_value_expr;
 use crate::{ValueKind, YamlPath};
 
 /// Walks a helper body collecting the values and effects it contributes to
@@ -114,9 +114,9 @@ impl HelperValueRuntime<'_, '_> {
             self.context,
             self.seen,
         );
-        self.analysis
-            .guard_paths
-            .extend(branch_guard_paths.iter().cloned());
+        for path in &branch_guard_paths {
+            self.analysis.add_guard_path(path.clone());
+        }
         branch_guard_paths
     }
 
@@ -163,9 +163,9 @@ impl ContractUseSink for HelperValueRuntime<'_, '_> {
 impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
     fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
 
-    fn declare_fragment_binding(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
+    fn declare_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
-    fn assign_fragment_binding(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
+    fn assign_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
     fn refresh_default_paths(
         &mut self,
@@ -204,7 +204,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
 
     fn enter_node(&mut self, _node: tree_sitter::Node<'_>) {}
 
-    fn current_document_path(&self) -> YamlPath {
+    fn document_path_for_node(&self, _node: tree_sitter::Node<'_>) -> YamlPath {
         YamlPath(Vec::new())
     }
 
@@ -340,7 +340,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = current_dot.as_ref().map(AbstractValue::to_context_value);
-        let body_dot = computed_with_body_fragment_binding_expr(
+        let body_dot = computed_with_body_fragment_value_expr(
             header.expr(),
             self.bindings,
             self.local_bindings,

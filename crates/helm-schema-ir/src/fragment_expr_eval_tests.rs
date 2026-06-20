@@ -5,8 +5,8 @@ use helm_schema_ast::{DefineIndex, TemplateExpr, TreeSitterParser, parse_action_
 use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, fragment_binding_from_expr, fragment_binding_from_outer_expr,
-    helper_binding_from_expr_with_fragment_locals,
+    FragmentEvalContext, context_value_from_outer_expr, fragment_value_from_expr,
+    helper_value_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummaryCache};
 use test_util::prelude::sim_assert_eq;
@@ -25,7 +25,7 @@ fn empty_context<'a>(
     FragmentEvalContext::new(defines, define_bodies, helper_summaries)
 }
 
-fn helper_binding_from_fragment_locals(
+fn helper_value_from_fragment_locals(
     action: &str,
     fragment_locals: &HashMap<String, AbstractValue>,
 ) -> Option<AbstractValue> {
@@ -35,7 +35,7 @@ fn helper_binding_from_fragment_locals(
     let helper_summaries = HelperSummaryCache::new();
     let context = empty_context(&defines, &define_bodies, &helper_summaries);
     let mut seen = HashSet::new();
-    helper_binding_from_expr_with_fragment_locals(
+    helper_value_from_expr_with_fragment_locals(
         &expr,
         fragment_locals,
         None,
@@ -72,7 +72,7 @@ fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
     )]);
 
     sim_assert_eq!(
-        have: fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+        have: context_value_from_outer_expr(&expr, None, Some(&root_bindings), None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
@@ -89,7 +89,7 @@ fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
     )]);
 
     sim_assert_eq!(
-        have: fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
+        have: context_value_from_outer_expr(&expr, None, Some(&root_bindings), None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
@@ -103,7 +103,7 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
     let fragment_locals = context_local();
 
     sim_assert_eq!(
-        have: fragment_binding_from_outer_expr(&expr, Some(&fragment_locals), None, None),
+        have: context_value_from_outer_expr(&expr, Some(&fragment_locals), None, None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             AbstractValue::ValuesPath("serviceAccount.name".to_string()),
@@ -112,8 +112,8 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
 }
 
 #[test]
-fn helper_binding_fragment_local_selector_uses_shared_expression_eval() {
-    let binding = helper_binding_from_fragment_locals(
+fn helper_value_fragment_local_selector_uses_shared_expression_eval() {
+    let binding = helper_value_from_fragment_locals(
         r#"$ctx.config.name | toYaml | fromYaml"#,
         &context_local(),
     );
@@ -125,9 +125,9 @@ fn helper_binding_fragment_local_selector_uses_shared_expression_eval() {
 }
 
 #[test]
-fn helper_binding_fragment_local_dict_uses_shared_expression_eval() {
+fn helper_value_fragment_local_dict_uses_shared_expression_eval() {
     let binding =
-        helper_binding_from_fragment_locals(r#"dict "name" $ctx.config.name"#, &context_local());
+        helper_value_from_fragment_locals(r#"dict "name" $ctx.config.name"#, &context_local());
 
     sim_assert_eq!(
         have: binding,
@@ -139,9 +139,9 @@ fn helper_binding_fragment_local_dict_uses_shared_expression_eval() {
 }
 
 #[test]
-fn helper_binding_fragment_local_index_uses_shared_expression_eval() {
+fn helper_value_fragment_local_index_uses_shared_expression_eval() {
     let binding =
-        helper_binding_from_fragment_locals(r#"index $ctx.config "name""#, &context_local());
+        helper_value_from_fragment_locals(r#"index $ctx.config "name""#, &context_local());
 
     sim_assert_eq!(
         have: binding,
@@ -164,7 +164,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
-    let Some(AbstractValue::OutputSet(output_set)) = helper_binding_from_expr_with_fragment_locals(
+    let Some(AbstractValue::OutputSet(output_set)) = helper_value_from_expr_with_fragment_locals(
         &expr,
         &HashMap::new(),
         None,
@@ -206,7 +206,7 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     let mut seen = HashSet::new();
 
     sim_assert_eq!(
-        have: fragment_binding_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
+        have: fragment_value_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
         want: Some(AbstractValue::OutputSet(
             [(
                 "nameOverride".to_string(),

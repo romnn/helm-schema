@@ -112,7 +112,7 @@ pub(crate) fn merge_fragment_locals(
     base
 }
 
-fn shadow_fragment_binding_keys(binding: AbstractValue, keys: BTreeSet<String>) -> AbstractValue {
+fn shadow_fragment_value_keys(binding: AbstractValue, keys: BTreeSet<String>) -> AbstractValue {
     if keys.is_empty() {
         return binding;
     }
@@ -158,7 +158,7 @@ fn local_set_mutation_target_and_keys_from_exprs(
                 return;
             }
             let Some(key_binding) =
-                context.fragment_binding_from_expr(&args[1], local_bindings, current_dot, seen)
+                context.fragment_value_from_expr(&args[1], local_bindings, current_dot, seen)
             else {
                 return;
             };
@@ -212,7 +212,7 @@ pub(crate) fn apply_local_set_mutations_from_exprs(
     let has_mutation = !mutations.is_empty();
     for (var, keys) in mutations {
         if let Some(binding) = local_bindings.remove(&var) {
-            local_bindings.insert(var, shadow_fragment_binding_keys(binding, keys));
+            local_bindings.insert(var, shadow_fragment_value_keys(binding, keys));
         }
     }
     has_mutation
