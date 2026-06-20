@@ -1,11 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde_json::{Map, Value};
+use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::merge::merge_schema_list;
-use crate::schema_model::{empty_schema, is_empty_schema, type_schema};
-use crate::schema_tree::{object_schema, unknown_object_schema};
+use crate::schema_model::{empty_schema, is_empty_schema};
+use crate::schema_node::SchemaNode;
+use crate::schema_tree::unknown_object_schema;
 
 pub(crate) struct ValuesYamlPathInfo {
     pub(crate) schema: Value,
@@ -241,44 +242,41 @@ fn prune_schema_at_relative_path(schema: &mut Value, relative_segments: &[&str])
 }
 
 fn schema_from_yaml_value(value: &YamlValue) -> Value {
+    schema_node_from_yaml_value(value).into_value()
+}
+
+fn schema_node_from_yaml_value(value: &YamlValue) -> SchemaNode {
     match value {
-        YamlValue::Null | YamlValue::Tagged(_) => empty_schema(),
-        YamlValue::Bool(_) => type_schema("boolean"),
+        YamlValue::Null | YamlValue::Tagged(_) => SchemaNode::empty(),
+        YamlValue::Bool(_) => SchemaNode::type_named("boolean"),
         YamlValue::Number(number) => {
             if number.as_i64().is_some() || number.as_u64().is_some() {
-                type_schema("integer")
+                SchemaNode::type_named("integer")
             } else {
-                type_schema("number")
+                SchemaNode::type_named("number")
             }
         }
-        YamlValue::String(_) => type_schema("string"),
+        YamlValue::String(_) => SchemaNode::type_named("string"),
         YamlValue::Sequence(sequence) => {
             let items = if sequence.is_empty() {
                 empty_schema()
             } else {
                 merge_schema_list(sequence.iter().map(schema_from_yaml_value).collect())
             };
-            Value::Object(
-                [
-                    ("type".to_string(), Value::String("array".to_string())),
-                    ("items".to_string(), items),
-                ]
-                .into_iter()
-                .collect(),
-            )
+            SchemaNode::array().items(SchemaNode::foreign(items))
         }
         YamlValue::Mapping(mapping) => {
             if mapping.is_empty() {
-                return unknown_object_schema();
+                return SchemaNode::foreign(unknown_object_schema());
             }
-            let mut properties = Map::new();
+            let mut schema = SchemaNode::closed_object();
             for (key, value) in mapping {
                 let Some(key) = key.as_str() else {
                     continue;
                 };
-                properties.insert(key.to_string(), schema_from_yaml_value(value));
+                schema = schema.property(key.to_string(), schema_node_from_yaml_value(value));
             }
-            object_schema(properties)
+            schema
         }
     }
 }

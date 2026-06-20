@@ -16,6 +16,7 @@ use crate::schema_model::{
     is_scalar_like_schema, is_scalar_schema, schema_allows_scalar_type,
     schema_permits_empty_string, schema_type, type_schema,
 };
+use crate::schema_node::SchemaNode;
 use crate::schema_tree::unknown_object_schema;
 use crate::values_yaml::ValuesYamlPathFacts;
 
@@ -141,21 +142,13 @@ impl ResolvePolicy {
                 }
                 let value = guard_value_to_json(value)?;
                 let value_type = schema_type_for_guard_value(&value)?;
-                Some(Value::Object(
-                    [(
-                        "anyOf".to_string(),
-                        Value::Array(vec![
-                            Value::Object(
-                                [("enum".to_string(), Value::Array(vec![value]))]
-                                    .into_iter()
-                                    .collect(),
-                            ),
-                            type_schema(value_type),
-                        ]),
-                    )]
-                    .into_iter()
-                    .collect(),
-                ))
+                Some(
+                    SchemaNode::any_of(vec![
+                        SchemaNode::enum_values(vec![value]),
+                        SchemaNode::type_named(value_type),
+                    ])
+                    .into_value(),
+                )
             }
             ConditionalGuard::TypeIs { path, schema_type } if path == value_path => {
                 match schema_type.as_str() {
