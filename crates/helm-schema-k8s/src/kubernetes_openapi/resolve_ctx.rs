@@ -512,6 +512,7 @@ fn resolve_direct_ref<F: FnMut(&str) -> Option<SchemaDoc>>(
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use test_util::prelude::sim_assert_eq;
 
     use serde_json::json;
 
@@ -591,7 +592,7 @@ mod tests {
         .schema()
         .clone();
 
-        assert_eq!(actual, expected);
+        sim_assert_eq!(actual, expected);
     }
 
     #[test]
@@ -657,16 +658,16 @@ mod tests {
         )
         .expect("lazy descent should contain path");
 
-        assert_eq!(actual.location().filename(), "defs.json");
-        assert_eq!(
+        sim_assert_eq!(actual.location().filename(), "defs.json");
+        sim_assert_eq!(
             actual.location().pointer(),
             "/definitions/Container/properties/env"
         );
-        assert_eq!(
+        sim_assert_eq!(
             actual.source_schema(),
             &json!({ "$ref": "#/definitions/StringMap" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             actual.schema(),
             &json!({
                 "type": "object",

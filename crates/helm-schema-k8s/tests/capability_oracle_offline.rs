@@ -18,6 +18,7 @@ use helm_schema_k8s::{
     K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry, MockFetcher,
     SourceProbeTraceOutcome, default_source_id,
 };
+use test_util::prelude::sim_assert_eq;
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
     let p = std::env::temp_dir().join(format!(
@@ -62,8 +63,9 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let answer = provider.capability_has_query_at_primary_version(&query);
-    assert_eq!(
-        answer, None,
+    sim_assert_eq!(
+        answer,
+        None,
         "offline + partial cache + probe target absent must return None (uncertain); \
          got {answer:?}. A partial cache does not prove the probe is absent upstream."
     );
@@ -73,7 +75,7 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
     // version is ConfigMap), so the cache layout itself is right.
     let query = ApiPresenceQuery::parse_helm_literal("v1").expect("parse api presence query");
     let positive = provider.capability_has_query_at_primary_version(&query);
-    assert_eq!(
+    sim_assert_eq!(
         positive,
         Some(true),
         "the planted ConfigMap at v1 must be discoverable as Has(\"v1\"); got {positive:?}"
@@ -105,7 +107,7 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() {
 
     let traced = provider.capability_has_query_at_primary_version_traced(&query);
 
-    assert_eq!(traced.answer, None);
+    sim_assert_eq!(traced.answer, None);
     assert!(
         traced.trace.entries().iter().any(|entry| matches!(
             entry,
@@ -144,8 +146,9 @@ fn offline_empty_cache_returns_none() {
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let answer = provider.capability_has_query_at_primary_version(&query);
-    assert_eq!(
-        answer, None,
+    sim_assert_eq!(
+        answer,
+        None,
         "offline + empty cache must return None; got {answer:?}"
     );
 }
@@ -172,7 +175,7 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let first = provider.capability_has_query_at_primary_version(&query);
-    assert_eq!(
+    sim_assert_eq!(
         first,
         Some(false),
         "online + 404 must be authoritatively absent; got {first:?}"
@@ -184,7 +187,7 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
     // made, but the MockFetcher in this codebase doesn't expose that
     // — the contract here is "returns the same authoritative answer".
     let second = provider.capability_has_query_at_primary_version(&query);
-    assert_eq!(
+    sim_assert_eq!(
         second,
         Some(false),
         "second probe in same process must still be authoritatively absent; got {second:?}"
@@ -207,7 +210,7 @@ fn traced_online_404_records_authoritative_absent_source_probe() {
 
     let traced = provider.capability_has_query_at_primary_version_traced(&query);
 
-    assert_eq!(traced.answer, Some(false));
+    sim_assert_eq!(traced.answer, Some(false));
     assert!(
         traced.trace.entries().iter().any(|entry| matches!(
             entry,
@@ -252,7 +255,7 @@ fn online_200_returns_true_and_caches() {
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let answer = provider.capability_has_query_at_primary_version(&query);
-    assert_eq!(
+    sim_assert_eq!(
         answer,
         Some(true),
         "online + fetcher returns schema body must be Some(true); got {answer:?}"

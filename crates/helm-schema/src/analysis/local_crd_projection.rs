@@ -240,6 +240,7 @@ fn literal_json_from_ast(node: &HelmAst) -> Option<Value> {
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::local_resource_schemas_from_template_source;
 
@@ -273,10 +274,10 @@ spec:
         let schemas =
             local_resource_schemas_from_template_source(source, "/chart/templates/crd.yaml", true)?;
 
-        assert_eq!(schemas.len(), 1);
-        assert_eq!(schemas[0].api_version, "example.com/v1");
-        assert_eq!(schemas[0].kind, "Widget");
-        assert_eq!(
+        sim_assert_eq!(schemas.len(), 1);
+        sim_assert_eq!(schemas[0].api_version, "example.com/v1");
+        sim_assert_eq!(schemas[0].kind, "Widget");
+        sim_assert_eq!(
             schemas[0]
                 .schema
                 .pointer("/properties/spec/properties/size"),

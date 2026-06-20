@@ -10,6 +10,7 @@ use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProv
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
+use test_util::prelude::sim_assert_eq;
 
 pub fn build_define_index(
     parser: &dyn HelmParser,
@@ -166,7 +167,7 @@ pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) {
     let actual = render_schema_case(case);
     let expected: Value =
         serde_json::from_str(case.expected_fixture).expect("expected schema json");
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual,
         expected,
         "schema fixture mismatch for {}",
@@ -280,6 +281,7 @@ pub fn helm_template_render_with_args(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn relax_removes_additional_properties_false() {
@@ -297,7 +299,7 @@ mod tests {
             }
         });
         let relaxed = relax_schema(&schema);
-        assert_eq!(
+        sim_assert_eq!(
             relaxed,
             serde_json::json!({
                 "type": "object",
@@ -320,6 +322,6 @@ mod tests {
             "additionalProperties": { "type": "string" }
         });
         let relaxed = relax_schema(&schema);
-        assert_eq!(relaxed, schema);
+        sim_assert_eq!(relaxed, schema);
     }
 }

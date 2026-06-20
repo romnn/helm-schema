@@ -10,6 +10,7 @@ use crate::fragment_assignment::{
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_body_renders_mapping_entries_from_ast;
 use crate::helper_summary::HelperSummaryCache;
+use test_util::prelude::sim_assert_eq;
 
 fn empty_context<'a>(
     defines: &'a DefineIndex,
@@ -26,10 +27,10 @@ fn parse_helper_assignment_detects_declaration_from_ast() {
         panic!("parse helper assignment");
     };
 
-    assert_eq!(assignment.variable, "image");
-    assert_eq!(assignment.kind, AssignmentKind::Declaration);
-    assert_eq!(assignment.rhs, ".Values.image.repository");
-    assert_eq!(
+    sim_assert_eq!(assignment.variable, "image");
+    sim_assert_eq!(assignment.kind, AssignmentKind::Declaration);
+    sim_assert_eq!(assignment.rhs, ".Values.image.repository");
+    sim_assert_eq!(
         assignment.rhs_expr,
         TemplateExpr::Field(vec![
             "Values".to_string(),
@@ -46,10 +47,10 @@ fn parse_helper_assignment_detects_assignment_from_ast() {
         panic!("parse helper assignment");
     };
 
-    assert_eq!(assignment.variable, "image");
-    assert_eq!(assignment.kind, AssignmentKind::Assignment);
-    assert_eq!(assignment.rhs, ".Values.global.image");
-    assert_eq!(
+    sim_assert_eq!(assignment.variable, "image");
+    sim_assert_eq!(assignment.kind, AssignmentKind::Assignment);
+    sim_assert_eq!(assignment.rhs, ".Values.global.image");
+    sim_assert_eq!(
         assignment.rhs_expr,
         TemplateExpr::Field(vec![
             "Values".to_string(),
@@ -88,7 +89,7 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
         &mut seen,
     ));
 
-    assert_eq!(
+    sim_assert_eq!(
         locals.get("config"),
         Some(&AbstractValue::Overlay {
             entries: BTreeMap::from([(

@@ -23,6 +23,7 @@ pub fn write_schema_json(
 mod tests {
     use super::write_schema_json;
     use crate::output_pipeline::JsonOutputFormat;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn json_output_format_controls_pretty_vs_compact_serialization() {
@@ -46,7 +47,7 @@ mod tests {
         let mut compact = Vec::new();
         write_schema_json(&mut compact, &schema, JsonOutputFormat::Compact).expect("write compact");
         let compact = String::from_utf8(compact).expect("compact utf8");
-        assert_eq!(
+        sim_assert_eq!(
             compact,
             r#"{"properties":{"name":{"type":"string"}},"type":"object"}"#.to_string() + "\n"
         );

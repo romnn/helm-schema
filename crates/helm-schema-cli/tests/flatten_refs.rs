@@ -14,6 +14,7 @@ use helm_schema_cli::flatten;
 use helm_schema_cli::schema_override;
 use jsonschema::{Retrieve, Uri};
 use serde_json::Value;
+use test_util::prelude::sim_assert_eq;
 
 const BASE_URI: &str = "file:///chart/";
 
@@ -90,7 +91,7 @@ fn external_refs_can_be_bundled_into_defs() -> color_eyre::eyre::Result<()> {
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -110,15 +111,15 @@ fn repeated_external_refs_share_one_definition() -> color_eyre::eyre::Result<()>
 
     let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
 
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/cloud/$ref"),
         Some(&Value::String("#/$defs/schema1".to_string()))
     );
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/provider/$ref"),
         Some(&Value::String("#/$defs/schema1".to_string()))
     );
-    similar_asserts::assert_eq!(actual.pointer("/$defs/schema1"), Some(&cloud_schema()));
+    sim_assert_eq!(actual.pointer("/$defs/schema1"), Some(&cloud_schema()));
 
     Ok(())
 }
@@ -141,12 +142,12 @@ fn bundled_definition_names_do_not_overwrite_existing_defs() -> color_eyre::eyre
 
     let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
 
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/$defs/schema1"),
         Some(&serde_json::json!({ "type": "number" }))
     );
-    similar_asserts::assert_eq!(actual.pointer("/$defs/schema2"), Some(&cloud_schema()));
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(actual.pointer("/$defs/schema2"), Some(&cloud_schema()));
+    sim_assert_eq!(
         actual.pointer("/properties/cloud/$ref"),
         Some(&Value::String("#/$defs/schema2".to_string()))
     );
@@ -184,15 +185,15 @@ fn bundled_external_document_id_updates_relative_ref_base() -> color_eyre::eyre:
 
     let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
 
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/external/$ref"),
         Some(&Value::String("#/$defs/schema1".to_string()))
     );
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/$defs/schema1/properties/name/$ref"),
         Some(&Value::String("#/$defs/schema2".to_string()))
     );
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/$defs/schema2"),
         Some(&serde_json::json!({ "type": "string" }))
     );
@@ -222,11 +223,11 @@ fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> color_ey
 
     let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
 
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/name/$ref"),
         Some(&Value::String("#/$defs/name".to_string()))
     );
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/cloud/$ref"),
         Some(&Value::String("#/$defs/schema1".to_string()))
     );
@@ -254,13 +255,13 @@ fn bundling_does_not_rewrite_ref_keys_inside_enum_data() -> color_eyre::eyre::Re
 
     let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
 
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/literal/enum/0/$ref"),
         Some(&Value::String(
             "this is data, not a schema reference".to_string()
         ))
     );
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/cloud/$ref"),
         Some(&Value::String("#/$defs/schema1".to_string()))
     );
@@ -309,7 +310,7 @@ fn external_refs_can_be_fully_inlined_for_export() -> color_eyre::eyre::Result<(
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -330,7 +331,7 @@ fn keep_refs_path_preserves_literal_ref_strings() -> color_eyre::eyre::Result<()
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(merged, expected);
+    sim_assert_eq!(merged, expected);
     Ok(())
 }
 
@@ -383,7 +384,7 @@ fn url_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
             "runAsNonRoot": { "type": "boolean" }
         }
     });
-    similar_asserts::assert_eq!(security_context.clone(), expected_security_context);
+    sim_assert_eq!(security_context.clone(), expected_security_context);
 
     // The tolerations array from the fetched podspec must NOT have
     // leaked into our schema. If it does, the dereferencer is inlining
@@ -423,7 +424,7 @@ fn file_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
         flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
 
     let port = actual.pointer("/properties/port").expect("port present");
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         port.clone(),
         serde_json::json!({ "type": "integer", "format": "int32" })
     );
@@ -468,11 +469,11 @@ fn bare_fragment_refs_resolve_within_document() -> color_eyre::eyre::Result<()> 
             "city": { "type": "string" }
         }
     });
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/primary").unwrap().clone(),
         expected_address
     );
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/billing").unwrap().clone(),
         expected_address
     );
@@ -502,7 +503,7 @@ fn rfc6901_pointer_escapes_resolve() -> color_eyre::eyre::Result<()> {
     let actual =
         flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
 
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         actual.pointer("/properties/media").unwrap().clone(),
         serde_json::json!({ "type": "string", "format": "media-range" })
     );

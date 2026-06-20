@@ -17,6 +17,7 @@
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext};
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
     let mut idx = DefineIndex::new();
@@ -79,7 +80,7 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
     let ir = generate(template, "");
 
     let map_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "map").collect();
-    assert_eq!(
+    sim_assert_eq!(
         map_uses.len(),
         2,
         "expected a header scalar use plus a fragment use for `map`; \
@@ -136,7 +137,7 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
         .iter()
         .filter(|u| u.source_expr == "fallbackMap")
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         fallback_map_uses.len(),
         2,
         "expected a header scalar use plus a fragment use for `fallbackMap`; got: {ir:#?}",
@@ -205,7 +206,7 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     // enough to pin exactly one use; a regression that emitted a
     // second wrongly-guarded duplicate would fail this assertion.
     let suffix_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "suffix").collect();
-    assert_eq!(
+    sim_assert_eq!(
         suffix_uses.len(),
         1,
         "expected exactly one `suffix` use inside range body; got: {ir:#?}",
@@ -493,7 +494,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         .iter()
         .filter(|use_| use_.source_expr == "primary")
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         primary_uses.len(),
         1,
         "expected exactly one then-branch use; got {ir:#?}",
@@ -508,7 +509,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         .iter()
         .filter(|use_| use_.source_expr == "fallback")
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         fallback_uses.len(),
         1,
         "expected exactly one else-branch use; got {ir:#?}",
@@ -523,7 +524,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         .iter()
         .filter(|use_| use_.source_expr == "after")
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         after_uses.len(),
         1,
         "expected exactly one post-branch use; got {ir:#?}",
@@ -697,7 +698,7 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
         .iter()
         .filter(|u| u.source_expr == "deeplyNested.fieldName")
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         target_uses.len(),
         1,
         "expected exactly one `deeplyNested.fieldName` use; got: {ir:#?}",
@@ -737,7 +738,7 @@ fn quoted_yaml_key_keeps_concrete_leaf_path() {
 
     let namespace_uses: Vec<&ContractUse> =
         ir.iter().filter(|u| u.source_expr == "namespace").collect();
-    assert_eq!(
+    sim_assert_eq!(
         namespace_uses.len(),
         1,
         "expected exactly one `namespace` use; got: {ir:#?}",
@@ -747,7 +748,7 @@ fn quoted_yaml_key_keeps_concrete_leaf_path() {
         path.contains(&"namespaceSelector".to_string()),
         "quoted YAML key path should still descend through namespaceSelector; got: {path:?}",
     );
-    assert_eq!(
+    sim_assert_eq!(
         path.last().map(String::as_str),
         Some("kubernetes.io/metadata.name"),
         "quoted YAML key should become the concrete leaf path segment; got: {path:?}",
@@ -1128,7 +1129,7 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
         .iter()
         .filter(|u| u.source_expr == "featureFlag")
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         flag_uses.len(),
         1,
         "expected exactly one `featureFlag` use from the helper-context \
@@ -1293,7 +1294,7 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
     // would have emitted from the contamination fall-through.
     let payload_uses: Vec<&ContractUse> =
         ir.iter().filter(|u| u.source_expr == "payload").collect();
-    assert_eq!(
+    sim_assert_eq!(
         payload_uses.len(),
         1,
         "expected exactly one `payload` use inside the if-body; got: {ir:#?}",

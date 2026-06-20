@@ -157,6 +157,7 @@ pub fn debug_materialize_schema_for_resource(
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -208,7 +209,7 @@ mod tests {
             &YamlPath(vec!["spec".to_string(), "size".to_string()]),
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             schema.map(ProviderSchemaFragment::into_schema),
             Some(json!({"type": "integer"}))
         );
@@ -259,10 +260,10 @@ mod tests {
         };
         let source = schema.source().expect("chart-local source should attach");
 
-        assert_eq!(source.origin(), ProviderOrigin::ChartLocalCrd);
-        assert_eq!(source.source_id(), "chart-static-crd");
-        assert_eq!(source.filename(), "/chart/crds/widgets.yaml");
-        assert_eq!(source.pointer(), "/properties/spec/properties/size");
+        sim_assert_eq!(source.origin(), ProviderOrigin::ChartLocalCrd);
+        sim_assert_eq!(source.source_id(), "chart-static-crd");
+        sim_assert_eq!(source.filename(), "/chart/crds/widgets.yaml");
+        sim_assert_eq!(source.pointer(), "/properties/spec/properties/size");
     }
 
     #[test]
@@ -270,7 +271,7 @@ mod tests {
         let provider =
             ChartLocalCrdSchemaProvider::new(widget_universe()).with_api_version_guess(true);
 
-        assert_eq!(
+        sim_assert_eq!(
             provider.infer_api_version_candidates("Widget"),
             vec![ApiVersionCandidate {
                 api_version: "example.com/v1".to_string(),

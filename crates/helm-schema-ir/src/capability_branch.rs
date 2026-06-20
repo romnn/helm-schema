@@ -87,16 +87,17 @@ fn find_capability_has(expr: &TemplateExpr, negated: bool) -> Option<(bool, Stri
 mod tests {
     use super::*;
     use helm_schema_core::{ApiPresenceQuery, CapabilityPresencePredicate};
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn decode_guard_recognises_capability_has() {
-        assert_eq!(
+        sim_assert_eq!(
             decode_guard(".Capabilities.APIVersions.Has \"policy/v1\""),
             CapabilityGuard::Has {
                 api: "policy/v1".to_string(),
             }
         );
-        assert_eq!(
+        sim_assert_eq!(
             decode_guard("$.Capabilities.APIVersions.Has \"networking.k8s.io/v1/Ingress\""),
             CapabilityGuard::Has {
                 api: "networking.k8s.io/v1/Ingress".to_string(),
@@ -106,7 +107,7 @@ mod tests {
 
     #[test]
     fn decode_guard_recognises_negated_capability_has() {
-        assert_eq!(
+        sim_assert_eq!(
             decode_guard("not .Capabilities.APIVersions.Has \"extensions/v1beta1\""),
             CapabilityGuard::NotHas {
                 api: "extensions/v1beta1".to_string(),
@@ -125,7 +126,7 @@ mod tests {
         let guard = CapabilityGuard::Has {
             api: "policy/v1/PodDisruptionBudget".to_string(),
         };
-        assert_eq!(
+        sim_assert_eq!(
             guard.presence_predicate(),
             Some(CapabilityPresencePredicate::Has(
                 ApiPresenceQuery::Resource {

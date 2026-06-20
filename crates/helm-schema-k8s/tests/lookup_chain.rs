@@ -8,6 +8,7 @@ use helm_schema_k8s::{
     ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
 };
 use serde_json::Value;
+use test_util::prelude::sim_assert_eq;
 
 #[derive(Debug)]
 struct FakeProvider {
@@ -127,7 +128,7 @@ fn chain_precedence_local_over_crd_over_k8s() {
     let schema = chain
         .schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()))
         .map(|fragment| fragment.into_schema());
-    assert_eq!(
+    sim_assert_eq!(
         schema,
         Some(Value::String("local".to_string())),
         "LocalOverride wins precedence; CRD and K8s never consulted"
@@ -188,8 +189,9 @@ fn chain_emits_missing_schema_only_at_chain_layer() {
         .into_iter()
         .filter(|d| matches!(d, Diagnostic::MissingSchema { .. }))
         .count();
-    assert_eq!(
-        missing, 1,
+    sim_assert_eq!(
+        missing,
+        1,
         "exactly one MissingSchema, emitted by the chain layer"
     );
 }
@@ -240,8 +242,8 @@ fn chain_local_override_unreadable_does_not_fall_through() {
             _ => None,
         })
         .expect("LocalOverrideUnreadable must be present");
-    assert_eq!(override_unreadable.0, "ServiceMonitor");
-    assert_eq!(override_unreadable.1, "/path/to/override.json");
+    sim_assert_eq!(override_unreadable.0, "ServiceMonitor");
+    sim_assert_eq!(override_unreadable.1, "/path/to/override.json");
     assert!(override_unreadable.2.contains("permission denied"));
     assert!(
         !snapshot
@@ -271,7 +273,7 @@ fn chain_non_override_resource_doc_missing_falls_through() {
     let schema = chain
         .schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()))
         .map(|fragment| fragment.into_schema());
-    assert_eq!(
+    sim_assert_eq!(
         schema,
         Some(Value::String("k8s-wins".to_string())),
         "non-override ResourceDocMissing falls through to next provider"
@@ -321,7 +323,7 @@ fn traced_resolution_records_provider_attempts_until_resolution() {
         })
         .collect();
 
-    assert_eq!(
+    sim_assert_eq!(
         attempts,
         vec![
             (
@@ -384,8 +386,8 @@ fn traced_capability_query_records_provider_attempts_until_answer() {
         })
         .collect();
 
-    assert_eq!(traced.answer, Some(true));
-    assert_eq!(
+    sim_assert_eq!(traced.answer, Some(true));
+    sim_assert_eq!(
         attempts,
         vec![
             (ProviderOrigin::LocalOverride, None),
@@ -424,7 +426,7 @@ fn chain_exposes_provider_kube_version() {
 
     let chain = Chain::new(vec![Box::new(VersionedProvider)]);
 
-    assert_eq!(chain.kube_version(), Some("v1.35.0"));
+    sim_assert_eq!(chain.kube_version(), Some("v1.35.0"));
 }
 
 #[test]
@@ -435,7 +437,7 @@ fn local_provider_emits_local_override_origin() {
     let tmp = std::env::temp_dir().join(format!("helm-schema.local-origin.{}", std::process::id()));
     let _ = std::fs::create_dir_all(&tmp);
     let provider = LocalSchemaProvider::new(&tmp);
-    assert_eq!(provider.origin(), ProviderOrigin::LocalOverride);
+    sim_assert_eq!(provider.origin(), ProviderOrigin::LocalOverride);
 }
 
 // Multi-candidate iteration in schema_fragment_for_use must not emit MissingSchema for
@@ -515,7 +517,7 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
     let schema = chain
         .schema_fragment_for_use(&use_)
         .map(|fragment| fragment.into_schema());
-    assert_eq!(
+    sim_assert_eq!(
         schema,
         Some(Value::String("hit".to_string())),
         "the primary `policy/v1beta1` must resolve via fallback"
@@ -573,7 +575,7 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
             _ => None,
         })
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         missing.len(),
         2,
         "exactly one MissingSchema per candidate when primary is empty; got {missing:?}"
@@ -640,14 +642,15 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
             _ => None,
         })
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         missing.len(),
         1,
         "typed-branch resource must emit exactly ONE MissingSchema (live-branch attribution); got {missing:?}"
     );
-    assert_eq!(missing[0].0, "PodSecurityPolicy");
-    assert_eq!(
-        missing[0].1, "policy/v1beta1",
+    sim_assert_eq!(missing[0].0, "PodSecurityPolicy");
+    sim_assert_eq!(
+        missing[0].1,
+        "policy/v1beta1",
         "attribution must be the else branch's literal when the Has guard evaluates false"
     );
 }
@@ -697,13 +700,14 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
             _ => None,
         })
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         missing.len(),
         1,
         "exactly one MissingSchema; got {missing:?}"
     );
-    assert_eq!(
-        missing[0].1, "policy/v1",
+    sim_assert_eq!(
+        missing[0].1,
+        "policy/v1",
         "attribution must be the if-branch's literal when Has guard evaluates true; the chart really emits this broken apiVersion"
     );
 }
@@ -763,13 +767,14 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
             _ => None,
         })
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         missing.len(),
         1,
         "exactly one MissingSchema; got {missing:?}"
     );
-    assert_eq!(
-        missing[0].1, "b",
+    sim_assert_eq!(
+        missing[0].1,
+        "b",
         "chain must recurse through Nested body to attribute to deepest live literal; got {missing:?}"
     );
 }
@@ -824,9 +829,10 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
             _ => None,
         })
         .collect();
-    assert_eq!(missing.len(), 1);
-    assert_eq!(
-        missing[0], "b_legacy",
+    sim_assert_eq!(missing.len(), 1);
+    sim_assert_eq!(
+        missing[0],
+        "b_legacy",
         "inner Has-B false must pick inner else, not fall back to outer else"
     );
 }
@@ -870,12 +876,12 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
             _ => None,
         })
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         missing.len(),
         1,
         "exactly one MissingSchema; got {missing:?}"
     );
-    assert_eq!(missing[0].1, "policy/v1");
+    sim_assert_eq!(missing[0].1, "policy/v1");
 }
 
 // schema_fragment_for_use must not turn an intentional `Resolved { schema: None }`
@@ -969,8 +975,9 @@ fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_le
         .into_iter()
         .filter(|d| matches!(d, Diagnostic::MissingSchema { .. }))
         .count();
-    assert_eq!(
-        missing_count, 0,
+    sim_assert_eq!(
+        missing_count,
+        0,
         "no MissingSchema must fire when every candidate's outcome is PathUnresolved (ownership claim)"
     );
 }
@@ -1008,12 +1015,12 @@ fn chain_schema_fragment_for_use_total_failure_attributes_to_primary() {
             _ => None,
         })
         .collect();
-    assert_eq!(
+    sim_assert_eq!(
         missing.len(),
         1,
         "exactly one MissingSchema, not one per candidate; got {missing:?}"
     );
-    assert_eq!(
+    sim_assert_eq!(
         missing[0],
         (
             "PodSecurityPolicy".to_string(),

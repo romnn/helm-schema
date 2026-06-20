@@ -3,6 +3,7 @@ use helm_schema_k8s::{
     Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider,
     kubernetes_openapi::debug_materialize_schema_for_resource,
 };
+use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn materialize_networkpolicy_v1_35() {
@@ -22,7 +23,7 @@ fn materialize_networkpolicy_v1_35() {
     ))
     .expect("parse fixture");
 
-    similar_asserts::assert_eq!(schema, expected);
+    sim_assert_eq!(schema, expected);
 }
 
 #[test]
@@ -54,7 +55,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
     ))
     .expect("parse fixture");
 
-    similar_asserts::assert_eq!(leaf, expected);
+    sim_assert_eq!(leaf, expected);
 }
 
 #[test]
@@ -129,7 +130,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         .expect("chain should resolve inferred NetworkPolicy matchLabels schema")
         .into_schema();
 
-    assert_eq!(
+    sim_assert_eq!(
         schema
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),

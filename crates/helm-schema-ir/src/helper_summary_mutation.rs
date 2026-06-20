@@ -140,6 +140,7 @@ pub(crate) fn merge_helper_output_meta_maps(
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeSet, HashMap};
+    use test_util::prelude::sim_assert_eq;
 
     use super::mark_suppressed_roots_for_bound_outputs;
     use crate::abstract_value::AbstractValue;
@@ -156,7 +157,7 @@ mod tests {
 
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
 
-        assert_eq!(
+        sim_assert_eq!(
             analysis.suppress_roots,
             BTreeSet::from(["serviceAccount".to_string()])
         );

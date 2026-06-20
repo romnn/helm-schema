@@ -5,6 +5,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_summary::HelperOutputMeta;
+use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn snapshot_restore_replaces_all_local_state_maps() {
@@ -31,12 +32,12 @@ fn snapshot_restore_replaces_all_local_state_maps() {
 
     state.restore(snapshot);
 
-    assert_eq!(
+    sim_assert_eq!(
         state.fragment_bindings.get("image"),
         Some(&AbstractValue::ValuesPath("image".to_string()))
     );
     assert!(state.range_domains.is_empty());
-    assert_eq!(
+    sim_assert_eq!(
         state.chart_value_defaults,
         ["serviceAccount.name".to_string()].into_iter().collect()
     );
@@ -57,7 +58,7 @@ fn local_scope_restores_shadowed_fragment_binding() {
     );
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.fragment_bindings.get("name"),
         Some(&AbstractValue::ValuesPath("outer".to_string()))
     );
@@ -78,7 +79,7 @@ fn local_scope_keeps_assignment_to_outer_fragment_binding() {
     );
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.fragment_bindings.get("name"),
         Some(&AbstractValue::ValuesPath("assigned".to_string()))
     );
@@ -103,7 +104,7 @@ fn local_scope_restores_shadowed_get_binding() {
     ));
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.get_bindings.get("value"),
         Some(&get_binding("outer", "key"))
     );
@@ -128,7 +129,7 @@ fn local_scope_keeps_assignment_to_outer_get_binding() {
     ));
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.get_bindings.get("value"),
         Some(&get_binding("assigned", "key"))
     );
@@ -152,7 +153,7 @@ fn fragment_assignment_replaces_outer_get_binding() {
     state.exit_local_scope();
 
     assert!(!state.get_bindings.contains_key("value"));
-    assert_eq!(
+    sim_assert_eq!(
         state.fragment_bindings.get("value"),
         Some(&AbstractValue::ValuesPath("assigned".to_string()))
     );
@@ -171,7 +172,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
     state.exit_local_scope();
 
     assert!(!state.range_domains.contains_key("key"));
-    assert_eq!(
+    sim_assert_eq!(
         state.fragment_bindings.get("key"),
         Some(&AbstractValue::ValuesPath("outer".to_string()))
     );
@@ -194,7 +195,7 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     state.set_default_paths("name", BTreeSet::from(["inner.default".to_string()]));
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.default_paths.get("name"),
         Some(&BTreeSet::from(["outer.default".to_string()]))
     );
@@ -217,7 +218,7 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     state.set_default_paths("name", BTreeSet::from(["assigned.default".to_string()]));
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.default_paths.get("name"),
         Some(&BTreeSet::from(["assigned.default".to_string()]))
     );
@@ -240,7 +241,7 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
     state.set_output_meta("name".to_string(), output_meta("inner.output"));
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.output_meta.get("name"),
         Some(&output_meta("outer.output"))
     );
@@ -263,7 +264,7 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
     state.set_output_meta("name".to_string(), output_meta("assigned.output"));
     state.exit_local_scope();
 
-    assert_eq!(
+    sim_assert_eq!(
         state.output_meta.get("name"),
         Some(&output_meta("assigned.output"))
     );
@@ -292,7 +293,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     let mut joined = entry;
     joined.join_branch_outcomes(&entry_snapshot, vec![first.snapshot(), second.snapshot()]);
 
-    assert_eq!(
+    sim_assert_eq!(
         joined.fragment_bindings.get("name"),
         Some(&AbstractValue::Choice(
             [
@@ -320,7 +321,7 @@ fn branch_join_intersects_chart_value_defaults() {
     let mut joined = entry;
     joined.join_branch_outcomes(&entry_snapshot, vec![first.snapshot(), second.snapshot()]);
 
-    assert_eq!(
+    sim_assert_eq!(
         joined.chart_value_defaults,
         ["already.defaulted".to_string()].into_iter().collect()
     );

@@ -262,6 +262,7 @@ fn pipeline_default_expression_schema_type(expr: &TemplateExpr) -> Option<&'stat
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeMap, BTreeSet, HashMap};
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::DefineIndex;
     use helm_schema_ast::parse_action_expressions;
@@ -311,30 +312,30 @@ mod tests {
 
         let helper = DocumentHelperSummary::from_helper_summary(summary, ValueKind::Fragment);
 
-        assert_eq!(
+        sim_assert_eq!(
             helper.output_values,
             BTreeMap::from([("image.tag".to_string(), meta.clone())])
         );
-        assert_eq!(helper.fragment_output_values, vec!["extraEnv".to_string()]);
-        assert_eq!(
+        sim_assert_eq!(helper.fragment_output_values, vec!["extraEnv".to_string()]);
+        sim_assert_eq!(
             helper.dependency_values,
             BTreeMap::from([
                 ("global".to_string(), HelperOutputMeta::default()),
                 ("global.image.tag".to_string(), meta),
             ])
         );
-        assert_eq!(
+        sim_assert_eq!(
             helper.guard_values,
             BTreeSet::from(["service.enabled".to_string()])
         );
-        assert_eq!(
+        sim_assert_eq!(
             helper.type_hints,
             BTreeMap::from([(
                 "image.tag".to_string(),
                 BTreeSet::from(["string".to_string()])
             )])
         );
-        assert_eq!(
+        sim_assert_eq!(
             helper.suppress_direct_values,
             BTreeSet::from([
                 "extraEnv".to_string(),
@@ -344,7 +345,7 @@ mod tests {
                 "service.enabled".to_string(),
             ])
         );
-        assert_eq!(
+        sim_assert_eq!(
             helper.chart_value_defaults,
             BTreeSet::from(["nameOverride".to_string()])
         );
@@ -386,7 +387,7 @@ mod tests {
             None,
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             analysis.type_hints,
             BTreeMap::from([
                 (
@@ -399,7 +400,7 @@ mod tests {
                 )
             ])
         );
-        assert_eq!(
+        sim_assert_eq!(
             analysis.encoded_output_values,
             BTreeSet::from([
                 "global.service.port".to_string(),

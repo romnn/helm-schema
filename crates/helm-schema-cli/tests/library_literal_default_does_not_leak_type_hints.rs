@@ -14,6 +14,7 @@
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 const WRAPPER_CHART_YAML: &str = "\
@@ -121,7 +122,7 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::
     // wrongly typed from the unused library's literal default.
     // After the fix: app.replicas should be `{}` — no type signal
     // (the app's own template doesn't assert a type).
-    assert_eq!(
+    sim_assert_eq!(
         app_replicas,
         &serde_json::json!({}),
         "library-helper literal default leaked across chart boundary: app.replicas = {app_replicas}",

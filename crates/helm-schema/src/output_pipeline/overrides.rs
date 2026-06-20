@@ -108,6 +108,7 @@ fn load_json_file(path: &Path, max_bytes: usize) -> CliResult<Value> {
 mod tests {
     use std::fs;
     use std::path::PathBuf;
+    use test_util::prelude::sim_assert_eq;
 
     use serde_json::Value;
 
@@ -186,14 +187,14 @@ mod tests {
                 .expect("apply output pipeline");
 
         let cloud = output.pointer("/properties/cloud").expect("cloud schema");
-        assert_eq!(
+        sim_assert_eq!(
             cloud,
             &serde_json::json!({
                 "$ref": "#/$defs/schema1"
             }),
             "prepared override refs should replace inferred constraints with bundled refs"
         );
-        assert_eq!(
+        sim_assert_eq!(
             output.pointer("/$defs/schema1"),
             Some(&serde_json::json!({
                 "enum": [null, "azure", "minikube"]
@@ -251,7 +252,7 @@ mod tests {
                 .expect("apply output pipeline");
 
         let cloud = output.pointer("/properties/cloud").expect("cloud schema");
-        assert_eq!(
+        sim_assert_eq!(
             cloud,
             &serde_json::json!({
                 "enum": [null, "azure", "minikube"]
@@ -296,7 +297,7 @@ mod tests {
             apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, &output_options)
                 .expect("apply output pipeline");
 
-        assert_eq!(
+        sim_assert_eq!(
             output
                 .pointer("/properties/cloud/$ref")
                 .and_then(Value::as_str),

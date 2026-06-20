@@ -266,6 +266,7 @@ fn string_map_schema() -> Value {
 mod tests {
     use helm_schema_core::{ProviderOrigin, ProviderSchemaFragment};
     use helm_schema_ir::{ContractValuePathFacts, ResourceRef};
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -332,7 +333,7 @@ mod tests {
         let actual = index
             .take_path_evidence("actual")
             .expect("outer path evidence should be indexed");
-        assert_eq!(
+        sim_assert_eq!(
             actual.provider_schemas.len(),
             1,
             "provider schema should stay attached to the outer contract evidence path"

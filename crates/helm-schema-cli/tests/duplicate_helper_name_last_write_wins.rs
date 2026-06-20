@@ -31,6 +31,7 @@
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 const ROOT_CHART_YAML: &str = "\
@@ -138,7 +139,7 @@ fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints()
         .pointer("/properties/replicas")
         .expect("/properties/replicas present");
 
-    assert_eq!(
+    sim_assert_eq!(
         replicas,
         &serde_json::json!({}),
         "losing-define body's integer literal leaked into root.replicas \

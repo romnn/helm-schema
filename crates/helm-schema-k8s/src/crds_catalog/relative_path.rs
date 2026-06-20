@@ -32,6 +32,7 @@ pub fn relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     fn resource(api_version: &str, kind: &str) -> ResourceRef {
         ResourceRef {
@@ -45,7 +46,7 @@ mod tests {
     #[test]
     fn third_party_crds_yield_relative_path() {
         let r = resource("monitoring.coreos.com/v1", "ServiceMonitor");
-        assert_eq!(
+        sim_assert_eq!(
             relative_path_for_resource(&r),
             Some("monitoring.coreos.com/servicemonitor_v1.json".to_string())
         );
@@ -74,7 +75,7 @@ mod tests {
             ),
             ("apiextensions.k8s.io/v1", "CustomResourceDefinition"),
         ] {
-            assert_eq!(
+            sim_assert_eq!(
                 relative_path_for_resource(&resource(api_version, kind)),
                 None,
                 "{api_version}/{kind} must NOT be routed to the CRD catalog"
@@ -92,7 +93,7 @@ mod tests {
             ("policy/v1beta1", "PodSecurityPolicy"),
             ("extensions/v1beta1", "DaemonSet"),
         ] {
-            assert_eq!(
+            sim_assert_eq!(
                 relative_path_for_resource(&resource(api_version, kind)),
                 None,
                 "{api_version}/{kind} must NOT be routed to the CRD catalog"
@@ -108,23 +109,23 @@ mod tests {
     #[test]
     fn k8s_io_crd_groups_yield_relative_path() {
         // VPA — the canonical `.k8s.io`-suffixed CRD.
-        assert_eq!(
+        sim_assert_eq!(
             relative_path_for_resource(&resource("autoscaling.k8s.io/v1", "VerticalPodAutoscaler")),
             Some("autoscaling.k8s.io/verticalpodautoscaler_v1.json".to_string())
         );
         // Gateway API — the canonical multi-resource CRD family
         // under `.k8s.io`.
-        assert_eq!(
+        sim_assert_eq!(
             relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "HTTPRoute")),
             Some("gateway.networking.k8s.io/httproute_v1.json".to_string())
         );
-        assert_eq!(
+        sim_assert_eq!(
             relative_path_for_resource(&resource("gateway.networking.k8s.io/v1", "Gateway")),
             Some("gateway.networking.k8s.io/gateway_v1.json".to_string())
         );
         // CSI snapshotter — distinct from the built-in
         // `storage.k8s.io` group.
-        assert_eq!(
+        sim_assert_eq!(
             relative_path_for_resource(&resource("snapshot.storage.k8s.io/v1", "VolumeSnapshot")),
             Some("snapshot.storage.k8s.io/volumesnapshot_v1.json".to_string())
         );

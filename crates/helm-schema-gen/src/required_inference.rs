@@ -130,6 +130,7 @@ fn add_to_required_list(node: &mut Value, key: &str) {
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeSet;
+    use test_util::prelude::sim_assert_eq;
 
     use indoc::indoc;
     use serde_json::Value;
@@ -368,7 +369,7 @@ mod tests {
             name: {{ .Values.name | required "name is required" | default "fallback" }}
         "#};
         let schema = generate_with_required(src, None);
-        assert_eq!(
+        sim_assert_eq!(
             schema.get("required"),
             Some(&serde_json::json!(["name"])),
             "default after required should not suppress required inference, schema={}",

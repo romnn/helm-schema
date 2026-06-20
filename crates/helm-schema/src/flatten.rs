@@ -552,6 +552,7 @@ const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use test_util::prelude::sim_assert_eq;
 
     use referencing::uri;
     use serde_json::json;
@@ -585,7 +586,7 @@ mod tests {
         let allowed = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
             .retrieve(&uri)
             .expect("file retrieval should succeed");
-        assert_eq!(allowed, json!({ "type": "string" }));
+        sim_assert_eq!(allowed, json!({ "type": "string" }));
 
         fs::remove_file(&path).expect("remove test schema");
     }

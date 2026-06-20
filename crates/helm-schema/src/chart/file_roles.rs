@@ -192,6 +192,7 @@ fn list_templates_recursive(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     fn role_paths(files: &[ChartFile], role: FileRole) -> Vec<String> {
         let mut paths = files
@@ -231,25 +232,25 @@ mod tests {
         test_util::write(&chart_dir.join("files/config.yaml")?, "answer: 42\n")?;
 
         let files_without_tests = list_chart_files(&chart_dir, false)?;
-        assert_eq!(
+        sim_assert_eq!(
             role_paths(&files_without_tests, FileRole::ManifestTemplate),
             vec!["deployment.yaml"]
         );
-        assert_eq!(
+        sim_assert_eq!(
             role_paths(&files_without_tests, FileRole::DefineIndexTemplate),
             vec!["_helpers.tpl", "deployment.yaml"]
         );
-        assert_eq!(
+        sim_assert_eq!(
             role_paths(&files_without_tests, FileRole::StaticCrd),
             vec!["example.yaml"]
         );
-        assert_eq!(
+        sim_assert_eq!(
             role_paths(&files_without_tests, FileRole::FilesGetSource),
             vec!["config.yaml"]
         );
 
         let files_with_tests = list_chart_files(&chart_dir, true)?;
-        assert_eq!(
+        sim_assert_eq!(
             role_paths(&files_with_tests, FileRole::ManifestTemplate),
             vec!["deployment.yaml", "test-job.yaml"]
         );

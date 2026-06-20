@@ -1,3 +1,4 @@
+use test_util::prelude::sim_assert_eq;
 mod common;
 
 #[test]
@@ -31,7 +32,7 @@ fn bitnami_redis_values_yaml_validates() -> color_eyre::eyre::Result<()> {
 }
 
 fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected: &str) {
-    assert_eq!(
+    sim_assert_eq!(
         schema.pointer(pointer).and_then(serde_json::Value::as_str),
         Some(expected),
         "schema description mismatch at {pointer}"

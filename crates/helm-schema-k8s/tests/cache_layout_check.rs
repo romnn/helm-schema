@@ -2,6 +2,7 @@
 
 use std::fs;
 use std::sync::Arc;
+use test_util::prelude::sim_assert_eq;
 
 use helm_schema_k8s::{
     CACHE_LAYOUT_VERSION, Diagnostic, DiagnosticSink, K8sSchemaProvider,
@@ -61,7 +62,7 @@ fn legacy_cache_layout_is_invalidated_in_alpha() {
         .trim()
         .parse()
         .expect("parse marker");
-    assert_eq!(marker_value, CACHE_LAYOUT_VERSION);
+    sim_assert_eq!(marker_value, CACHE_LAYOUT_VERSION);
 
     // CacheLayoutInvalidated diagnostic was emitted.
     let diagnostics = diagnostics.snapshot();
@@ -148,9 +149,9 @@ fn cache_invalidation_emits_diagnostic() {
             _ => None,
         })
         .expect("CacheLayoutInvalidated must be present");
-    assert_eq!(inv.0, root.display().to_string());
-    assert_eq!(inv.1, None, "legacy layout has no prior marker");
-    assert_eq!(inv.2, CACHE_LAYOUT_VERSION);
+    sim_assert_eq!(inv.0, root.display().to_string());
+    sim_assert_eq!(inv.1, None, "legacy layout has no prior marker");
+    sim_assert_eq!(inv.2, CACHE_LAYOUT_VERSION);
 }
 
 #[test]
@@ -193,9 +194,9 @@ fn forward_incompat_cache_emits_diagnostic() {
             _ => None,
         })
         .expect("CacheLayoutForwardIncompatible must be present");
-    assert_eq!(payload.0, root.display().to_string());
-    assert_eq!(payload.1, CACHE_LAYOUT_VERSION + 999);
-    assert_eq!(payload.2, CACHE_LAYOUT_VERSION);
+    sim_assert_eq!(payload.0, root.display().to_string());
+    sim_assert_eq!(payload.1, CACHE_LAYOUT_VERSION + 999);
+    sim_assert_eq!(payload.2, CACHE_LAYOUT_VERSION);
 }
 
 #[test]
@@ -361,11 +362,12 @@ fn cache_forward_incompat_one_root_does_not_block_other() {
             )
         })
         .count();
-    assert_eq!(
-        k8s_incompat, 1,
+    sim_assert_eq!(
+        k8s_incompat,
+        1,
         "K8s root must emit exactly one forward-incompat"
     );
-    assert_eq!(crd_incompat, 0, "no forward-incompat for CRD root");
+    sim_assert_eq!(crd_incompat, 0, "no forward-incompat for CRD root");
 }
 
 #[test]
@@ -466,7 +468,7 @@ fn cache_layout_version_newer_marker_refuses_mutation() {
         .trim()
         .parse()
         .expect("parse marker");
-    assert_eq!(marker_value, CACHE_LAYOUT_VERSION + 999);
+    sim_assert_eq!(marker_value, CACHE_LAYOUT_VERSION + 999);
 
     let diagnostics = diagnostics.snapshot();
     assert!(

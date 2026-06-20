@@ -659,6 +659,7 @@ fn append_len_prefixed(out: &mut String, value: &str) {
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeMap, BTreeSet};
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::TemplateExpr;
 
@@ -680,7 +681,7 @@ mod tests {
             provenance: Vec::new(),
         };
 
-        assert_eq!(
+        sim_assert_eq!(
             meta.contract_guard_sets("serviceAccount.name"),
             vec![vec![
                 Guard::Not {
@@ -718,7 +719,7 @@ mod tests {
             provenance: Vec::new(),
         };
 
-        assert_eq!(
+        sim_assert_eq!(
             meta.contract_guard_sets("serviceAccount.name"),
             vec![
                 vec![
@@ -757,7 +758,7 @@ mod tests {
             HelperOutputMeta::default(),
         );
 
-        assert_eq!(summary.fragment_output_uses.len(), 1);
+        sim_assert_eq!(summary.fragment_output_uses.len(), 1);
     }
 
     #[test]
@@ -777,7 +778,7 @@ mod tests {
             meta.clone(),
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             summary.project_helper_value(),
             Some(AbstractValue::Dict(BTreeMap::from([(
                 "app".to_string(),
@@ -796,7 +797,7 @@ mod tests {
             HelperOutputMeta::default(),
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             summary.project_fragment_value(),
             Some(AbstractValue::Dict(BTreeMap::from([(
                 "app".to_string(),
@@ -812,7 +813,7 @@ mod tests {
         summary.add_output_meta("image.tag".to_string(), HelperOutputMeta::default());
         summary.fragment_output.insert("extraEnv".to_string());
 
-        assert_eq!(
+        sim_assert_eq!(
             summary.project_fragment_value(),
             Some(AbstractValue::fragment_output_paths([
                 "extraEnv".to_string(),
@@ -828,7 +829,7 @@ mod tests {
             parse_expr_text(text)
         }
 
-        assert_eq!(
+        sim_assert_eq!(
             super::structural_exprs_cache_key(&exprs("include \"name\" .")),
             super::structural_exprs_cache_key(&exprs("{{ include   \"name\" . }}"))
         );

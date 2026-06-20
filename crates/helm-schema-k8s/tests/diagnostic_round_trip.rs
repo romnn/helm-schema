@@ -4,6 +4,7 @@ use helm_schema_k8s::{
     ApiVersionCandidate, Diagnostic, DiagnosticSink, InferenceSource, ProviderOrigin,
     format_diagnostic_json, format_diagnostic_text,
 };
+use test_util::prelude::sim_assert_eq;
 
 fn sample_variants() -> Vec<Diagnostic> {
     vec![
@@ -72,7 +73,7 @@ fn diagnostic_json_round_trip_per_variant() {
     for d in sample_variants() {
         let json = format_diagnostic_json(&d).expect("serialize");
         let parsed: Diagnostic = serde_json::from_str(&json).expect("round-trip parse");
-        assert_eq!(d, parsed, "round-trip lossy for {d:?}");
+        sim_assert_eq!(d, parsed, "round-trip lossy for {d:?}");
     }
 }
 
@@ -109,12 +110,12 @@ fn diagnostic_payload_canonicalised_on_insert() {
         hint: None,
     });
     let snapshot = sink.snapshot();
-    assert_eq!(snapshot.len(), 1, "dedupe by key");
+    sim_assert_eq!(snapshot.len(), 1, "dedupe by key");
     match &snapshot[0] {
         Diagnostic::MissingSchema {
             tried_filenames, ..
         } => {
-            assert_eq!(
+            sim_assert_eq!(
                 tried_filenames,
                 &vec!["a.json".to_string(), "b.json".to_string()]
             );
@@ -136,7 +137,7 @@ fn diagnostic_dedupe_per_resource() {
             resolved_version: "v1.24.0".to_string(),
         });
     }
-    assert_eq!(
+    sim_assert_eq!(
         sink.len(),
         1,
         "dedupe by (kind, api_version, resolved_version)"
@@ -158,6 +159,6 @@ fn diagnostic_iteration_order_deterministic() {
                 .collect::<Vec<_>>(),
         );
     }
-    assert_eq!(orders[0], orders[1]);
-    assert_eq!(orders[1], orders[2]);
+    sim_assert_eq!(orders[0], orders[1]);
+    sim_assert_eq!(orders[1], orders[2]);
 }

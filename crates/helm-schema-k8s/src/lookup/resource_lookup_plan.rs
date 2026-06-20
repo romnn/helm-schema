@@ -103,6 +103,7 @@ fn resource_candidates_with_api_versions(
 #[cfg(test)]
 mod tests {
     use helm_schema_core::{CapabilityGuard, HelperBranch, StaticOracle};
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -163,7 +164,7 @@ mod tests {
         let resource = resource("extensions/v1beta1", &["networking.k8s.io/v1"], Vec::new());
         let plan = ResourceLookupPlan::for_resource(&resource, &StaticOracle::new());
 
-        assert_eq!(
+        sim_assert_eq!(
             planned_api_versions(&plan),
             vec!["networking.k8s.io/v1", "extensions/v1beta1"]
         );
@@ -182,7 +183,7 @@ mod tests {
         let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
         let plan = ResourceLookupPlan::for_resource(&resource, &oracle);
 
-        assert_eq!(planned_api_versions(&plan), vec!["networking.k8s.io/v1"]);
+        sim_assert_eq!(planned_api_versions(&plan), vec!["networking.k8s.io/v1"]);
     }
 
     #[test]
@@ -195,7 +196,7 @@ mod tests {
         let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
         let plan = ResourceLookupPlan::for_resource(&resource, &oracle);
 
-        assert_eq!(
+        sim_assert_eq!(
             planned_api_versions(&plan),
             vec!["networking.k8s.io/v1", "extensions/v1beta1"]
         );
@@ -217,7 +218,7 @@ mod tests {
         let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &oracle);
 
-        assert_eq!(
+        sim_assert_eq!(
             planned_missing_api_versions(&plan),
             vec!["networking.k8s.io/v1"]
         );
@@ -232,7 +233,7 @@ mod tests {
         );
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &StaticOracle::new());
 
-        assert_eq!(
+        sim_assert_eq!(
             planned_missing_api_versions(&plan),
             vec!["extensions/v1beta1", "networking.k8s.io/v1"]
         );
@@ -248,7 +249,7 @@ mod tests {
         let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &oracle);
 
-        assert_eq!(
+        sim_assert_eq!(
             planned_missing_api_versions(&plan),
             vec!["extensions/v1beta1", "networking.k8s.io/v1"]
         );
@@ -259,7 +260,7 @@ mod tests {
         let resource = resource("extensions/v1beta1", &["networking.k8s.io/v1"], Vec::new());
         let plan = MissingSchemaAttributionPlan::for_resource(&resource, &StaticOracle::new());
 
-        assert_eq!(
+        sim_assert_eq!(
             planned_missing_api_versions(&plan),
             vec!["extensions/v1beta1"]
         );

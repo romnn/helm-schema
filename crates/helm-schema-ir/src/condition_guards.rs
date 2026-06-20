@@ -238,6 +238,7 @@ fn single(paths: &BTreeSet<String>) -> Option<String> {
 mod tests {
     use super::parse_condition_expr;
     use crate::{Guard, GuardValue};
+    use test_util::prelude::sim_assert_eq;
 
     fn parse_condition(text: &str) -> Vec<Guard> {
         let wrapped = format!("{{{{ {text} }}}}");
@@ -252,7 +253,7 @@ mod tests {
 
     #[test]
     fn truthy_simple_path() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(".Values.X"),
             vec![Guard::Truthy { path: "X".into() }],
         );
@@ -260,7 +261,7 @@ mod tests {
 
     #[test]
     fn not_simple_path() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("not .Values.X"),
             vec![Guard::Not { path: "X".into() }],
         );
@@ -268,7 +269,7 @@ mod tests {
 
     #[test]
     fn not_with_nested_helper_call() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"not (has (quote .Values.global.logLevel) (list "" (quote "")))"#),
             vec![Guard::Not {
                 path: "global.logLevel".into(),
@@ -278,7 +279,7 @@ mod tests {
 
     #[test]
     fn or_with_two_paths_emits_or_guard() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("or .Values.A .Values.B"),
             vec![Guard::Or {
                 paths: vec!["A".into(), "B".into()],
@@ -288,7 +289,7 @@ mod tests {
 
     #[test]
     fn or_paths_are_sorted() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("or .Values.z .Values.a"),
             vec![Guard::Or {
                 paths: vec!["a".into(), "z".into()],
@@ -298,7 +299,7 @@ mod tests {
 
     #[test]
     fn or_with_nested_helper_calls() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("or (has .Values.A 1) (has .Values.B 2)"),
             vec![Guard::Or {
                 paths: vec!["A".into(), "B".into()],
@@ -308,7 +309,7 @@ mod tests {
 
     #[test]
     fn or_with_equality_preserves_typed_alternative() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"or (eq .Values.mode "prod") .Values.enabled"#),
             vec![Guard::AnyOf {
                 alternatives: vec![
@@ -326,7 +327,7 @@ mod tests {
 
     #[test]
     fn or_with_nested_and_preserves_conjunctive_alternative() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"or (and .Values.a .Values.b) (eq .Values.mode "prod")"#),
             vec![Guard::AnyOf {
                 alternatives: vec![
@@ -345,7 +346,7 @@ mod tests {
 
     #[test]
     fn eq_with_string_literal() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"eq .Values.X "value""#),
             vec![Guard::Eq {
                 path: "X".into(),
@@ -356,7 +357,7 @@ mod tests {
 
     #[test]
     fn eq_with_string_literal_containing_phantom_path() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"eq .Values.X ".Values.fake""#),
             vec![Guard::Eq {
                 path: "X".into(),
@@ -367,7 +368,7 @@ mod tests {
 
     #[test]
     fn eq_with_bool_literal_preserves_exact_comparison() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("eq .Values.enabled false"),
             vec![Guard::Eq {
                 path: "enabled".into(),
@@ -378,7 +379,7 @@ mod tests {
 
     #[test]
     fn eq_with_int_literal_preserves_exact_comparison() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("eq .Values.replicas 3"),
             vec![Guard::Eq {
                 path: "replicas".into(),
@@ -389,7 +390,7 @@ mod tests {
 
     #[test]
     fn eq_with_nil_literal_preserves_exact_comparison() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("eq .Values.image.tag nil"),
             vec![Guard::Eq {
                 path: "image.tag".into(),
@@ -400,7 +401,7 @@ mod tests {
 
     #[test]
     fn eq_compare_two_values_falls_through_to_truthy() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("eq .Values.X .Values.Y"),
             vec![
                 Guard::Truthy { path: "X".into() },
@@ -411,7 +412,7 @@ mod tests {
 
     #[test]
     fn ne_with_string_literal_emits_not_eq() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"ne .Values.X "value""#),
             vec![Guard::NotEq {
                 path: "X".into(),
@@ -422,7 +423,7 @@ mod tests {
 
     #[test]
     fn not_eq_literal_projects_to_not_eq() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"not (eq .Values.mode "disabled")"#),
             vec![Guard::NotEq {
                 path: "mode".into(),
@@ -433,7 +434,7 @@ mod tests {
 
     #[test]
     fn not_ne_literal_projects_to_eq() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"not (ne .Values.mode "disabled")"#),
             vec![Guard::Eq {
                 path: "mode".into(),
@@ -444,7 +445,7 @@ mod tests {
 
     #[test]
     fn and_falls_through_to_per_path_truthy() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("and .Values.A .Values.B"),
             vec![
                 Guard::Truthy { path: "A".into() },
@@ -455,7 +456,7 @@ mod tests {
 
     #[test]
     fn and_with_parens_falls_through_to_per_path_truthy() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("and (.Values.A) (.Values.B)"),
             vec![
                 Guard::Truthy { path: "A".into() },
@@ -466,7 +467,7 @@ mod tests {
 
     #[test]
     fn and_preserves_nested_not_guard() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(
                 "and .Values.prometheus.enabled (not .Values.prometheus.podmonitor.enabled)"
             ),
@@ -483,7 +484,7 @@ mod tests {
 
     #[test]
     fn and_preserves_nested_or_guard() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(
                 "and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw)"
             ),
@@ -500,7 +501,7 @@ mod tests {
 
     #[test]
     fn empty_path_is_falsey_guard() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("empty .Values.service.loadBalancerIP"),
             vec![Guard::Not {
                 path: "service.loadBalancerIP".into()
@@ -510,7 +511,7 @@ mod tests {
 
     #[test]
     fn not_empty_path_is_truthy_guard() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition("not (empty .Values.service.loadBalancerIP)"),
             vec![Guard::Truthy {
                 path: "service.loadBalancerIP".into()
@@ -532,7 +533,7 @@ mod tests {
 
     #[test]
     fn eq_value_preserves_literal_dot_star_substring() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"eq .Values.X "match.*foo""#),
             vec![Guard::Eq {
                 path: "X".into(),
@@ -543,7 +544,7 @@ mod tests {
 
     #[test]
     fn eq_value_preserves_dot_values_substring_inside_string() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_condition(r#"eq .Values.X ".Values.fake""#),
             vec![Guard::Eq {
                 path: "X".into(),

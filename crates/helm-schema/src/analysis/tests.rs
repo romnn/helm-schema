@@ -5,6 +5,7 @@ use vfs::VfsPath;
 
 use super::analyze_charts;
 use crate::chart;
+use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact()
@@ -742,7 +743,7 @@ spec:
         &YamlPath(vec!["spec".to_string(), "size".to_string()]),
     );
 
-    assert_eq!(
+    sim_assert_eq!(
         schema.map(|fragment| fragment.into_schema()),
         Some(json!({"type": "integer"}))
     );
@@ -818,7 +819,7 @@ spec:
         &YamlPath(vec!["spec".to_string(), "size".to_string()]),
     );
 
-    assert_eq!(
+    sim_assert_eq!(
         schema.map(|fragment| fragment.into_schema()),
         Some(json!({"type": "integer"}))
     );

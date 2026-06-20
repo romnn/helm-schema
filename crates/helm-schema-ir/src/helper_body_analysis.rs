@@ -255,6 +255,7 @@ fn collect_fragment_output_uses(
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeSet, HashMap, HashSet};
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::{DefineIndex, TreeSitterParser};
 
@@ -320,7 +321,7 @@ mod tests {
             ]),
             "expected create=false output branch; guard_sets={guard_sets:#?}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             summary.type_hints.get("signoz.serviceAccount.name"),
             Some(&["string".to_string()].into_iter().collect()),
             "defaulted scalar output should retain string type hint"
@@ -356,11 +357,11 @@ mod tests {
 
         let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
 
-        assert_eq!(
+        sim_assert_eq!(
             summary.type_hints.get("image.repository"),
             Some(&BTreeSet::from(["string".to_string()]))
         );
-        assert_eq!(
+        sim_assert_eq!(
             summary.type_hints.get("image.tag"),
             Some(&BTreeSet::from(["string".to_string()]))
         );

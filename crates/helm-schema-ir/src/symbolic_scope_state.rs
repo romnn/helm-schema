@@ -97,6 +97,7 @@ impl SymbolicScopeState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn branch_join_restores_control_state_to_entry() {
@@ -112,13 +113,13 @@ mod tests {
         state.restore(entry.clone());
         state.join_branch_outcomes(&entry, vec![branch]);
 
-        assert_eq!(
+        sim_assert_eq!(
             state.contract_guards(),
             vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]
         );
-        assert_eq!(
+        sim_assert_eq!(
             state.current_dot_fragment(),
             Some(AbstractValue::ValuesPath("root".to_string()))
         );
@@ -144,7 +145,7 @@ mod tests {
         state.restore(entry.clone());
         state.join_branch_outcomes(&entry, vec![branch, other_branch]);
 
-        assert_eq!(
+        sim_assert_eq!(
             state.locals().range_domains.get("scope"),
             Some(&vec!["backend".to_string(), "frontend".to_string()])
         );

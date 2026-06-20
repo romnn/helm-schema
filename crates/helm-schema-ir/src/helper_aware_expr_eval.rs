@@ -272,6 +272,7 @@ fn eval_pipeline_with_helper_calls(
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::parse_action_expressions;
 
@@ -298,7 +299,7 @@ mod tests {
 
     fn single_expr(action: &str) -> TemplateExpr {
         let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
-        assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
         exprs.into_iter().next().expect("expression exists")
     }
 
@@ -309,7 +310,7 @@ mod tests {
 
     #[test]
     fn dict_value_can_be_nested_helper_call() {
-        assert_eq!(
+        sim_assert_eq!(
             eval(r#"dict "name" (include "common.name" .)"#),
             Some(AbstractValue::Dict(BTreeMap::from([(
                 "name".to_string(),
@@ -320,7 +321,7 @@ mod tests {
 
     #[test]
     fn printf_preserves_nested_helper_provenance_path() {
-        assert_eq!(
+        sim_assert_eq!(
             eval(r#"printf "%s-sfx" (include "common.name" .)"#),
             Some(AbstractValue::PathSet(
                 ["nameOverride".to_string()].into_iter().collect()
@@ -330,7 +331,7 @@ mod tests {
 
     #[test]
     fn pipeline_merge_can_consume_nested_helper_call() {
-        assert_eq!(
+        sim_assert_eq!(
             eval(r#"dict "base" "static" | merge (include "common.labels" .)"#),
             Some(AbstractValue::Dict(BTreeMap::from([
                 (
@@ -347,7 +348,7 @@ mod tests {
 
     #[test]
     fn integer_index_on_values_path_uses_array_item_wildcard_with_helper_context() {
-        assert_eq!(
+        sim_assert_eq!(
             eval(r#"dict "value" (index .Values.items 0) "name" (include "common.name" .)"#),
             Some(AbstractValue::Dict(BTreeMap::from([
                 (

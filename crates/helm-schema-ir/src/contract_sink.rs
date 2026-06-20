@@ -169,6 +169,7 @@ fn merge_guards(target: &mut Vec<Guard>, extra_guards: &[Guard]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn contract_use_context_attaches_chart_default_only_to_rendered_paths() {
@@ -190,7 +191,7 @@ mod tests {
             &[],
             None,
         );
-        assert_eq!(
+        sim_assert_eq!(
             rendered.guards,
             vec![Guard::Default {
                 path: "serviceAccount.name".to_string(),
@@ -221,6 +222,6 @@ mod tests {
         let contract_use =
             context.pathless_contract_use("image.tag".to_string(), ValueKind::PartialScalar, &[]);
 
-        assert_eq!(contract_use.kind, ValueKind::Scalar);
+        sim_assert_eq!(contract_use.kind, ValueKind::Scalar);
     }
 }

@@ -408,6 +408,7 @@ fn collect_bound_selector_value(
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use test_util::prelude::sim_assert_eq;
 
     use super::{
         GetBinding, GetBindingPlan, extract_bound_values, parse_get_binding,
@@ -417,7 +418,7 @@ mod tests {
 
     #[test]
     fn parse_get_binding_detects_declaration_from_ast() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_get_binding(r#"{{- $value := get $.Values.config $key -}}"#),
             Some(GetBindingPlan {
                 variable: "value".to_string(),
@@ -432,7 +433,7 @@ mod tests {
 
     #[test]
     fn parse_get_binding_detects_assignment_from_ast() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_get_binding(r#"{{- $value = get .Values.config $key -}}"#),
             Some(GetBindingPlan {
                 variable: "value".to_string(),
@@ -447,7 +448,7 @@ mod tests {
 
     #[test]
     fn parse_literal_list_range_detects_variable_definition_from_ast() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_literal_list_range(r#"$scope := list "frontend" "backend""#),
             Some((
                 "scope".to_string(),
@@ -472,7 +473,7 @@ mod tests {
             },
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             extract_bound_values(
                 r#"{{- printf "%s" $config.port -}}"#,
                 &range_domains,
@@ -501,7 +502,7 @@ mod tests {
             },
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             extract_bound_values(
                 r#"or (eq $protocol "nats") $config.enabled"#,
                 &range_domains,
@@ -527,7 +528,7 @@ mod tests {
             },
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             extract_bound_values(
                 r#"and (eq $protocol "nats") $config.enabled"#,
                 &range_domains,

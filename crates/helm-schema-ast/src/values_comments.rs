@@ -453,6 +453,7 @@ fn node_text<'src>(node: Node<'_>, src: &'src str) -> Option<&'src str> {
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+    use test_util::prelude::sim_assert_eq;
 
     use indoc::indoc;
 
@@ -484,7 +485,7 @@ mod tests {
                 "Child docs line 1\nChild docs line 2".to_string(),
             ),
         ]);
-        similar_asserts::assert_eq!(descriptions, expected);
+        sim_assert_eq!(descriptions, expected);
     }
 
     #[test]
@@ -497,7 +498,7 @@ mod tests {
 
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("global.imageRegistry").map(String::as_str),
             Some("Image registry docs")
         );
@@ -519,7 +520,7 @@ mod tests {
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
         assert!(!descriptions.contains_key("config.disabled"));
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("config.enabled").map(String::as_str),
             Some("Disabled value docs\ndisabled: true")
         );
@@ -539,13 +540,13 @@ mod tests {
 
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("ingress.annotations").map(String::as_str),
             Some(
                 "Ingress annotations\nnginx.ingress.kubernetes.io/rewrite-target: /\ncert-manager.io/cluster-issuer: letsencrypt-prod"
             )
         );
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("ingress.hosts").map(String::as_str),
             Some("Ingress hosts")
         );
@@ -566,11 +567,11 @@ mod tests {
 
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("ingress.annotations").map(String::as_str),
             Some("Ingress annotations\nnginx.ingress.kubernetes.io/rewrite-target: /")
         );
-        assert_eq!(descriptions.get("detached").map(String::as_str), None);
+        sim_assert_eq!(descriptions.get("detached").map(String::as_str), None);
     }
 
     #[test]
@@ -588,7 +589,7 @@ mod tests {
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
         assert!(!descriptions.contains_key("section.operator"));
-        assert_eq!(
+        sim_assert_eq!(
             descriptions
                 .get("section.operator.image")
                 .map(String::as_str),
@@ -616,17 +617,17 @@ mod tests {
 
         let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
 
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("global.imageRegistry").map(String::as_str),
             Some("Global Docker image registry")
         );
-        assert_eq!(
+        sim_assert_eq!(
             descriptions
                 .get("global.imagePullSecrets")
                 .map(String::as_str),
             Some("Global Docker registry secret names as an array")
         );
-        assert_eq!(
+        sim_assert_eq!(
             descriptions.get("auth.enabled").map(String::as_str),
             Some("Enable password authentication")
         );

@@ -199,6 +199,7 @@ impl ContractDocument {
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::{ContractDocument, ContractDocumentGuard, ContractDocumentUse};
     use crate::{ResourceRef, ValueKind, YamlPath};
@@ -244,7 +245,7 @@ mod tests {
         })
         .expect("serialize contract document");
 
-        assert_eq!(
+        sim_assert_eq!(
             actual,
             json!({
                 "version": 2,
@@ -276,6 +277,6 @@ mod tests {
 
         let decoded: ContractDocument =
             serde_json::from_value(actual).expect("deserialize contract document");
-        assert_eq!(decoded.uses, vec![value_use]);
+        sim_assert_eq!(decoded.uses, vec![value_use]);
     }
 }

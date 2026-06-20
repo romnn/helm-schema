@@ -187,6 +187,7 @@ fn path_segments_equivalent(left: &str, right: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use helm_schema_ast::DefineIndex;
+    use test_util::prelude::sim_assert_eq;
 
     use crate::ValueKind;
 
@@ -280,7 +281,7 @@ mod tests {
             let context = attribution
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
-            assert_eq!(
+            sim_assert_eq!(
                 context.output_path.0,
                 vec!["livenessProbe", "exec", "command"],
                 "node kind {}",
@@ -312,7 +313,7 @@ mod tests {
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(8));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "template", "spec", "volumes"],
             "current={:?} mapping={:?} context={:?}",
@@ -344,7 +345,7 @@ mod tests {
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(10));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "template", "spec", "containers[*]", "env"],
             "current={:?} mapping={:?} context={:?}",
@@ -445,7 +446,7 @@ spec:
             .attribution
             .virtual_indent_context_for_node(action, 12);
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(12));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec![
                 "spec",
@@ -484,7 +485,7 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(8));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "template", "spec", "hostAliases"],
             "current={:?} mapping={:?} context={:?}",
@@ -515,7 +516,7 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(2));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "ipFamilies"],
             "current={:?} mapping={:?} context={:?}",
@@ -547,7 +548,7 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["metadata", "labels"],
             "current={:?} mapping={:?} context={:?}",
@@ -579,7 +580,7 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "ports"],
             "current={:?} mapping={:?} context={:?}",
@@ -606,7 +607,7 @@ spec:
             .expect("liveness probe failureThreshold action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec![
                 "spec",
@@ -646,7 +647,7 @@ spec:
             .expect("HTTP proxy value action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec![
                 "spec",
@@ -682,7 +683,7 @@ spec:
             let context = attribution
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
-            assert_eq!(
+            sim_assert_eq!(
                 context.output_path.0,
                 vec!["env[*]", "value"],
                 "node kind {}",
@@ -711,7 +712,7 @@ spec:
             let context = attribution
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
-            assert_eq!(
+            sim_assert_eq!(
                 context.output_path.0,
                 vec!["ports[*]", "port"],
                 "node kind {}",
@@ -740,7 +741,7 @@ spec:
         let action = actions.into_iter().next().expect("output action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec!["ports[*]", "port"]
         );
@@ -769,7 +770,7 @@ ports:
         let action = actions.into_iter().next().expect("output action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec!["ports[*]", "port"]
         );
@@ -799,7 +800,7 @@ ports:
         let action = actions.into_iter().next().expect("required output action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec!["env[*]", "valueFrom", "secretKeyRef", "name",]
         );
@@ -826,7 +827,7 @@ ports:
         let action = actions.into_iter().next().expect("required output action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec![
                 "spec",
@@ -873,7 +874,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "ingress"],
             "current={:?} mapping={:?} context={:?}",
@@ -904,7 +905,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["metadata", "labels"],
             "current={:?} mapping={:?} context={:?}",
@@ -935,7 +936,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         let path = tracker.output_site_path(action, ValueKind::Fragment, Some(6));
-        assert_eq!(
+        sim_assert_eq!(
             path.0,
             vec!["spec", "podSelector", "matchLabels"],
             "current={:?} mapping={:?} context={:?}",
@@ -967,7 +968,7 @@ ports:
             .expect("range value action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.current_path().0,
             vec![
                 "spec",
@@ -1004,7 +1005,7 @@ ports:
             .expect("metrics range value action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.current_path().0,
             vec![
                 "spec",
@@ -1040,7 +1041,7 @@ ports:
         let range = ranges.into_iter().next().expect("range action");
         drive_tracker_until(&mut tracker, tree.root_node(), range);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.path_at_mapping_entry_indent(16).0,
             vec![
                 "spec",
@@ -1077,7 +1078,7 @@ ports:
             .expect("metrics port output action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             vec!["spec", "ingress[*]", "ports[*]", "port"]
         );
@@ -1115,7 +1116,7 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         assert!(tracker.current_context.inside_block_scalar);
-        assert_eq!(
+        sim_assert_eq!(
             tracker.output_site_path(action, ValueKind::Scalar, None).0,
             Vec::<String>::new()
         );
@@ -1140,7 +1141,7 @@ ports:
             let context = attribution
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
-            assert_eq!(
+            sim_assert_eq!(
                 context.output_path.0,
                 vec!["env[*]", "value"],
                 "node kind {}",
@@ -1174,7 +1175,7 @@ ports:
             let context = attribution
                 .output_context_for_node(node)
                 .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
-            assert_eq!(
+            sim_assert_eq!(
                 context.output_path.0,
                 vec!["args[*]"],
                 "node kind {}",

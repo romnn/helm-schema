@@ -178,6 +178,7 @@ fn merge_contract_use_provenance(
 #[cfg(test)]
 mod tests {
     use crate::{ContractProvenance, ContractUse, SourceSpan, ValueKind, YamlPath};
+    use test_util::prelude::sim_assert_eq;
 
     use super::canonicalize_contract_uses;
 
@@ -212,8 +213,8 @@ mod tests {
 
         canonicalize_contract_uses(&mut uses);
 
-        assert_eq!(uses.len(), 1);
-        assert_eq!(uses[0].provenance.len(), 2);
+        sim_assert_eq!(uses.len(), 1);
+        sim_assert_eq!(uses[0].provenance.len(), 2);
         assert!(
             uses[0]
                 .provenance

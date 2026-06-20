@@ -10,6 +10,7 @@ use helm_schema_k8s::{
     cache::{k8s_cache_path, not_found_marker_exists},
     default_source_id,
 };
+use test_util::prelude::sim_assert_eq;
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
     let p = std::env::temp_dir().join(format!(
@@ -144,7 +145,7 @@ fn has_resource_does_not_speculatively_download() {
     };
     let owns = provider.has_resource(&resource);
     assert!(!owns, "empty cache + no downloads → has_resource=false");
-    assert_eq!(
+    sim_assert_eq!(
         mock.total_calls(),
         0,
         "has_resource must not trigger any fetches"
@@ -156,7 +157,7 @@ fn explicit_k8s_version_order_preserved() {
     // No sort: the chain order returned by `K8sVersionChain::ordered`
     // must match the order the user typed.
     let chain = K8sVersionChain::new(vec!["v1.24.0".to_string(), "v1.35.0".to_string()], None);
-    assert_eq!(chain.ordered(), vec!["v1.24.0", "v1.35.0"]);
+    sim_assert_eq!(chain.ordered(), vec!["v1.24.0", "v1.35.0"]);
 }
 
 #[test]
@@ -164,7 +165,7 @@ fn k8s_version_fallback_chain_derivation() {
     // `auto` with default window expands the single explicit version
     // into a 6-element descending chain.
     let chain = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(5));
-    assert_eq!(
+    sim_assert_eq!(
         chain.ordered(),
         vec![
             "v1.35.0", "v1.34.0", "v1.33.0", "v1.32.0", "v1.31.0", "v1.30.0",
@@ -226,10 +227,10 @@ fn resolved_from_fallback_version_payload_fields() {
         })
         .expect("ResolvedFromFallbackVersion must be present");
 
-    assert_eq!(payload.0, "PodDisruptionBudget");
-    assert_eq!(payload.1, "policy/v1beta1");
-    assert_eq!(payload.2, "v1.35.0");
-    assert_eq!(payload.3, "v1.24.0");
+    sim_assert_eq!(payload.0, "PodDisruptionBudget");
+    sim_assert_eq!(payload.1, "policy/v1beta1");
+    sim_assert_eq!(payload.2, "v1.35.0");
+    sim_assert_eq!(payload.3, "v1.24.0");
 }
 
 #[test]
@@ -263,7 +264,7 @@ fn k8s_negative_cache_per_source_and_version() {
     let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
     let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
-    assert_eq!(
+    sim_assert_eq!(
         mock.calls_for(default_url),
         1,
         "default source negative cache prevents retry"
@@ -307,7 +308,7 @@ fn negative_cache_avoids_retry() {
     let _ = counts_unique;
     // Spot-check: the canonical filename is fetched at most once.
     let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
-    assert_eq!(
+    sim_assert_eq!(
         mock.calls_for(url),
         1,
         "negative cache must prevent repeat fetches for the same URL"
@@ -335,7 +336,7 @@ fn persisted_not_found_marker_avoids_cross_process_retry() {
     };
 
     let _ = first_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    assert_eq!(
+    sim_assert_eq!(
         first_fetcher.calls_for(url),
         1,
         "first lookup should fetch once and persist the authoritative 404"
@@ -351,7 +352,7 @@ fn persisted_not_found_marker_avoids_cross_process_retry() {
     .with_fetcher(second_fetcher.clone());
 
     let _ = second_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    assert_eq!(
+    sim_assert_eq!(
         second_fetcher.total_calls(),
         0,
         "persisted not-found marker should avoid a cross-process retry"
@@ -385,7 +386,7 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
     );
 
     let _ = stale_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    assert_eq!(
+    sim_assert_eq!(
         stale_fetcher.calls_for(url),
         1,
         "setup should persist an initial authoritative 404"
@@ -412,7 +413,7 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
         refreshed.is_some(),
         "--no-cache should bypass the stale not-found marker"
     );
-    assert_eq!(
+    sim_assert_eq!(
         refresh_fetcher.calls_for(url),
         1,
         "--no-cache should make a fresh upstream request"
@@ -480,7 +481,7 @@ fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
             .is_none(),
         "--no-cache should accept the fresh authoritative 404"
     );
-    assert_eq!(
+    sim_assert_eq!(
         stale_fetcher.calls_for(url),
         1,
         "--no-cache should re-check upstream once"

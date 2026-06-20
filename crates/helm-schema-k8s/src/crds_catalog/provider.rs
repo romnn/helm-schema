@@ -480,6 +480,7 @@ fn default_crd_schema_cache_dir() -> PathBuf {
 mod tests {
     use helm_schema_core::{ResourceRef, YamlPath};
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
     use crate::cache::default_source_id;
@@ -540,9 +541,9 @@ mod tests {
         };
         let source = schema.source().expect("catalog source should attach");
 
-        assert_eq!(source.origin(), ProviderOrigin::DefaultCatalog);
-        assert_eq!(source.source_id(), default_source_id());
-        assert_eq!(source.filename(), relative_path);
-        assert_eq!(source.pointer(), "/definitions/Spec/properties/size");
+        sim_assert_eq!(source.origin(), ProviderOrigin::DefaultCatalog);
+        sim_assert_eq!(source.source_id(), default_source_id());
+        sim_assert_eq!(source.filename(), relative_path);
+        sim_assert_eq!(source.pointer(), "/definitions/Spec/properties/size");
     }
 }

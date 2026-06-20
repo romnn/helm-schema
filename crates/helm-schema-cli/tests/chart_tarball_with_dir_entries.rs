@@ -22,6 +22,7 @@ use color_eyre::eyre::WrapErr;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 const SUBCHART_NAME: &str = "subchart";
@@ -182,6 +183,6 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }

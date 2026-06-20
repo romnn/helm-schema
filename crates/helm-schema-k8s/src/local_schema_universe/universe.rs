@@ -277,6 +277,7 @@ fn stable_resource_schema_filename(api_version: &str, kind: &str) -> String {
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -327,7 +328,7 @@ mod tests {
                     .pointer("/properties/spec/properties/size")
             });
 
-        assert_eq!(schema, Some(&json!({"type": "integer"})));
+        sim_assert_eq!(schema, Some(&json!({"type": "integer"})));
     }
 
     #[test]
@@ -382,6 +383,6 @@ mod tests {
                     .pointer("/properties/spec/properties/enabled")
             });
 
-        assert_eq!(schema, Some(&json!({"type": "boolean"})));
+        sim_assert_eq!(schema, Some(&json!({"type": "boolean"})));
     }
 }

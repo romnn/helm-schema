@@ -2,6 +2,7 @@ use clap::Parser;
 use color_eyre::eyre::{WrapErr, eyre};
 use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
@@ -44,7 +45,7 @@ fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
     let cli =
         Cli::try_parse_from(["helm-schema", "/tmp/chart"]).map_err(|e| eyre!(e.to_string()))?;
 
-    assert_eq!(cli.k8s.k8s_version, vec!["v1.35.0".to_string()]);
+    sim_assert_eq!(cli.k8s.k8s_version, vec!["v1.35.0".to_string()]);
     assert!(cli.output.output.is_none());
     assert!(!cli.k8s.offline);
     assert!(!cli.k8s.no_k8s_schemas);
@@ -74,7 +75,7 @@ fn override_schema_flag_is_repeatable() -> color_eyre::eyre::Result<()> {
         .iter()
         .map(|p| p.to_string_lossy().into_owned())
         .collect();
-    assert_eq!(paths, vec!["/tmp/shared.json", "/tmp/per-chart.json"]);
+    sim_assert_eq!(paths, vec!["/tmp/shared.json", "/tmp/per-chart.json"]);
 
     Ok(())
 }
@@ -122,7 +123,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
     ))
     .wrap_err("parse expected schema fixture")?;
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -200,13 +201,13 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_ey
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    assert_eq!(
+    sim_assert_eq!(
         actual
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
         Some("Root enabled docs")
     );
-    assert_eq!(
+    sim_assert_eq!(
         actual
             .pointer("/properties/child/properties/image/properties/tag/description")
             .and_then(serde_json::Value::as_str),
@@ -562,19 +563,19 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> color_ey
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    assert_eq!(
+    sim_assert_eq!(
         actual
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
         Some("Layer two enabled docs")
     );
-    assert_eq!(
+    sim_assert_eq!(
         actual
             .pointer("/properties/replicas/description")
             .and_then(serde_json::Value::as_str),
         Some("Layer one replicas docs")
     );
-    assert_eq!(
+    sim_assert_eq!(
         actual
             .pointer("/properties/image/properties/tag/description")
             .and_then(serde_json::Value::as_str),
@@ -695,7 +696,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
       "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -1038,7 +1039,7 @@ spec:
         pod_annotations.get("required").is_none(),
         "podAnnotations should not inherit deployment required fields, got {pod_annotations}"
     );
-    assert_eq!(
+    sim_assert_eq!(
         pod_annotations
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),
@@ -1373,7 +1374,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -1460,7 +1461,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -1618,6 +1619,6 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         "type": "object"
     });
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
     Ok(())
 }

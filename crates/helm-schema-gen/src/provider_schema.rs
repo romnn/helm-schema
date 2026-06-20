@@ -302,6 +302,7 @@ fn escape_json_pointer_segment(segment: &str) -> String {
 mod tests {
     use helm_schema_k8s::ProviderSchemaSource;
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -324,11 +325,11 @@ mod tests {
 
         let candidate = ProviderSchemaCandidate::from_provider_fragment(fragment);
 
-        assert_eq!(
+        sim_assert_eq!(
             candidate.source().map(ProviderSchemaSource::pointer),
             Some("/definitions/Container/properties/env")
         );
-        assert_eq!(
+        sim_assert_eq!(
             candidate.source_definition_schema(),
             None,
             "source leaf refs to provider-document siblings are not self-contained at output root"
@@ -370,7 +371,7 @@ mod tests {
 
         let candidate = ProviderSchemaCandidate::from_provider_fragment(fragment);
 
-        assert_eq!(candidate.source_definition_schema(), Some(&source_schema));
+        sim_assert_eq!(candidate.source_definition_schema(), Some(&source_schema));
     }
 
     #[test]
@@ -392,7 +393,7 @@ mod tests {
             rewrite_internal_refs_for_root_definition(&source_schema, "provider/source~name")
                 .expect("internal refs can be relocated under a root definition");
 
-        assert_eq!(
+        sim_assert_eq!(
             rewritten.pointer("/properties/labels/$ref"),
             Some(&Value::String(
                 "#/$defs/provider~1source~0name/$defs/StringMap".to_string()
@@ -415,7 +416,7 @@ mod tests {
         let rewritten = rewrite_internal_refs_for_root_definition(&source_schema, "providerSource")
             .expect("ref-shaped enum data is not schema structure");
 
-        assert_eq!(
+        sim_assert_eq!(
             rewritten.pointer("/enum/0/$ref"),
             Some(&Value::String("#/not/a/schema/ref".to_string()))
         );
@@ -436,7 +437,7 @@ mod tests {
         let rewritten = rewrite_internal_refs_for_root_definition(&source_schema, "providerSource")
             .expect("property schemas are traversed independent of property name");
 
-        assert_eq!(
+        sim_assert_eq!(
             rewritten.pointer("/properties/enum/$ref"),
             Some(&Value::String(
                 "#/$defs/providerSource/$defs/StringValue".to_string()

@@ -1,6 +1,7 @@
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use helm_schema_ir::{ContractDocument, SymbolicIrContext};
 use serde_json::Value;
+use test_util::prelude::sim_assert_eq;
 
 #[derive(Clone, Copy)]
 pub struct IrCorpusCase<'a> {
@@ -47,5 +48,5 @@ pub fn assert_ir_fixture(case: IrCorpusCase<'_>) {
     let actual = render_ir_case(case);
     let expected: Value = serde_json::from_str(case.expected_fixture).expect("expected ir json");
 
-    similar_asserts::assert_eq!(actual, expected);
+    sim_assert_eq!(actual, expected);
 }

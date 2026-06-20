@@ -51,6 +51,7 @@ fn ensure_json_object(value: &mut Value) -> &mut Map<String, Value> {
 #[cfg(test)]
 mod tests {
     use serde_json::Value;
+    use test_util::prelude::sim_assert_eq;
 
     use super::mirror_global_schema_into_subcharts;
 
@@ -114,21 +115,21 @@ mod tests {
         let child_global = schema
             .pointer("/properties/oauth2-proxy/properties/global")
             .expect("child global schema");
-        assert_eq!(
+        sim_assert_eq!(
             child_global
                 .pointer("/properties/kube-score~1ignore/type")
                 .and_then(Value::as_str),
             Some("string"),
             "shared global property should be mirrored into child global: {child_global}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             child_global
                 .pointer("/properties/imageRegistry/type")
                 .and_then(Value::as_str),
             Some("string"),
             "child global-specific properties should be preserved: {child_global}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             child_global
                 .get("additionalProperties")
                 .and_then(Value::as_bool),
@@ -139,21 +140,21 @@ mod tests {
         let nested_global = schema
             .pointer("/properties/oauth2-proxy/properties/redis/properties/global")
             .expect("nested global schema");
-        assert_eq!(
+        sim_assert_eq!(
             nested_global
                 .pointer("/properties/kube-score~1ignore/type")
                 .and_then(Value::as_str),
             Some("string"),
             "shared global property should be mirrored into nested child global: {nested_global}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             nested_global
                 .pointer("/properties/storageClass/type")
                 .and_then(Value::as_str),
             Some("string"),
             "nested child global-specific properties should be preserved: {nested_global}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             nested_global
                 .get("additionalProperties")
                 .and_then(Value::as_bool),

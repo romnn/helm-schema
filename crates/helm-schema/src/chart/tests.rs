@@ -1,4 +1,5 @@
 use super::*;
+use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn dependency_activation_paths_are_scoped_from_chart_yaml() -> color_eyre::eyre::Result<()> {
@@ -43,11 +44,11 @@ dependencies:
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string()])
         .ok_or_else(|| color_eyre::eyre::eyre!("discover child chart"))?;
-    assert_eq!(
+    sim_assert_eq!(
         child.dependency_activation.condition_paths,
         vec!["kid.enabled".to_string(), "global.kidEnabled".to_string()]
     );
-    assert_eq!(
+    sim_assert_eq!(
         child.dependency_activation.tag_paths,
         vec!["tags.observability".to_string()]
     );
@@ -57,11 +58,11 @@ dependencies:
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string(), "leaf".to_string()])
         .ok_or_else(|| color_eyre::eyre::eyre!("discover nested leaf chart"))?;
-    assert_eq!(
+    sim_assert_eq!(
         leaf.dependency_activation.condition_paths,
         vec!["kid.leaf.enabled".to_string()]
     );
-    assert_eq!(
+    sim_assert_eq!(
         leaf.dependency_activation.tag_paths,
         vec!["tags.nested".to_string()]
     );
@@ -131,7 +132,7 @@ fn vendored_chart_archive_respects_load_budget() -> color_eyre::eyre::Result<()>
                 subject.contains("child.tgz"),
                 "unexpected subject: {subject}"
             );
-            assert_eq!(limit_bytes, 128);
+            sim_assert_eq!(limit_bytes, 128);
         }
         other => panic!("expected load budget error, got {other:?}"),
     }
@@ -195,7 +196,7 @@ fn vendored_chart_archive_respects_expanded_budget() -> color_eyre::eyre::Result
             limit_bytes,
         } => {
             assert!(subject.contains("expanded"));
-            assert_eq!(limit_bytes, 1024);
+            sim_assert_eq!(limit_bytes, 1024);
         }
         other => panic!("expected expanded load budget error, got {other:?}"),
     }
@@ -256,7 +257,7 @@ fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()
             limit_entries,
         } => {
             assert!(subject.contains("child.tgz"));
-            assert_eq!(limit_entries, 2);
+            sim_assert_eq!(limit_entries, 2);
         }
         other => panic!("expected entry budget error, got {other:?}"),
     }
@@ -278,7 +279,7 @@ fn vendored_chart_archive_rejects_unsafe_entry_paths() -> color_eyre::eyre::Resu
             entry_path,
         } => {
             assert!(archive.contains("child.tgz"));
-            assert_eq!(entry_path, "../child/Chart.yaml");
+            sim_assert_eq!(entry_path, "../child/Chart.yaml");
         }
         other => panic!("expected unsafe archive entry error, got {other:?}"),
     }

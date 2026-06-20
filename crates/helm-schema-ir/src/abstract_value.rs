@@ -856,6 +856,7 @@ fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     fn path(value: &str) -> AbstractValue {
         AbstractValue::ValuesPath(value.to_string())
@@ -877,7 +878,7 @@ mod tests {
     fn join_is_idempotent() {
         let value = path("image.tag");
 
-        assert_eq!(join(vec![value.clone(), value.clone()]), value);
+        sim_assert_eq!(join(vec![value.clone(), value.clone()]), value);
     }
 
     #[test]
@@ -885,7 +886,7 @@ mod tests {
         let left = path("image.repository");
         let right = string("nginx");
 
-        assert_eq!(
+        sim_assert_eq!(
             join(vec![left.clone(), right.clone()]),
             join(vec![right, left])
         );
@@ -903,12 +904,12 @@ mod tests {
         ]);
         let right_grouped = join(vec![left, join(vec![middle, right])]);
 
-        assert_eq!(left_grouped, right_grouped);
+        sim_assert_eq!(left_grouped, right_grouped);
     }
 
     #[test]
     fn top_absorbs_join() {
-        assert_eq!(
+        sim_assert_eq!(
             join(vec![path("image.tag"), AbstractValue::Top]),
             AbstractValue::Top
         );
@@ -916,7 +917,7 @@ mod tests {
 
     #[test]
     fn compatibility_unknown_widens_joins_to_top() {
-        assert_eq!(
+        sim_assert_eq!(
             join(vec![path("image.tag"), AbstractValue::Unknown]),
             AbstractValue::Top
         );
@@ -926,12 +927,12 @@ mod tests {
     fn top_inside_choice_absorbs_join() {
         let nested = AbstractValue::Choice(BTreeSet::from([AbstractValue::Top, path("name")]));
 
-        assert_eq!(join(vec![path("image.tag"), nested]), AbstractValue::Top);
+        sim_assert_eq!(join(vec![path("image.tag"), nested]), AbstractValue::Top);
     }
 
     #[test]
     fn top_propagates_through_descent() {
-        assert_eq!(
+        sim_assert_eq!(
             AbstractValue::Top.apply_to_path(&["nested".to_string()]),
             Some(AbstractValue::Top)
         );
@@ -947,7 +948,7 @@ mod tests {
             fallback: Box::new(path("probe")),
         };
 
-        assert_eq!(
+        sim_assert_eq!(
             value.omit_keys(&BTreeSet::from(["enabled".to_string()])),
             AbstractValue::Overlay {
                 entries: BTreeMap::from([(
@@ -966,16 +967,16 @@ mod tests {
             AbstractValue::ValuesPath("podLabels".to_string()),
         )]));
 
-        assert_eq!(value.shallow_paths(), BTreeSet::new());
-        assert_eq!(value.paths(), paths(&["podLabels"]));
+        sim_assert_eq!(value.shallow_paths(), BTreeSet::new());
+        sim_assert_eq!(value.paths(), paths(&["podLabels"]));
     }
 
     #[test]
     fn values_root_abstains_from_fragment_path_extraction() {
         let value = AbstractValue::values_root();
 
-        assert_eq!(value.fragment_source_paths(), BTreeSet::new());
-        assert_eq!(value.fragment_rendered_paths(), BTreeSet::new());
+        sim_assert_eq!(value.fragment_source_paths(), BTreeSet::new());
+        sim_assert_eq!(value.fragment_rendered_paths(), BTreeSet::new());
     }
 
     #[test]
@@ -985,8 +986,8 @@ mod tests {
             AbstractValue::ValuesPath("podLabels".to_string()),
         )]));
 
-        assert_eq!(value.fragment_source_paths(), BTreeSet::new());
-        assert_eq!(
+        sim_assert_eq!(value.fragment_source_paths(), BTreeSet::new());
+        sim_assert_eq!(
             value.fragment_rendered_paths(),
             BTreeSet::from(["podLabels".to_string()])
         );
@@ -999,8 +1000,8 @@ mod tests {
             AbstractValue::ValuesPath("containers.name".to_string()),
         )]));
 
-        assert_eq!(value.fragment_range_item(), None);
-        assert_eq!(
+        sim_assert_eq!(value.fragment_range_item(), None);
+        sim_assert_eq!(
             value.helper_range_item(),
             Some(AbstractValue::ValuesPath("containers.name".to_string()))
         );
@@ -1021,7 +1022,7 @@ mod tests {
             )]))),
         };
 
-        assert_eq!(
+        sim_assert_eq!(
             value.output_meta(),
             BTreeMap::from([
                 (

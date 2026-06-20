@@ -108,6 +108,7 @@ fn strip_replace_markers(value: Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::{REPLACE_MARKER, apply_schema_override, mark_refs_for_replacement};
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn override_merges_objects_and_unions_required() {
@@ -139,7 +140,7 @@ mod tests {
             "required": ["a", "b"]
         });
 
-        similar_asserts::assert_eq!(actual, expected);
+        sim_assert_eq!(actual, expected);
     }
 
     #[test]
@@ -166,7 +167,7 @@ mod tests {
             }
         });
 
-        similar_asserts::assert_eq!(actual, expected);
+        sim_assert_eq!(actual, expected);
     }
 
     #[test]
@@ -205,7 +206,7 @@ mod tests {
             }
         });
 
-        similar_asserts::assert_eq!(actual, expected);
+        sim_assert_eq!(actual, expected);
     }
 
     #[test]
@@ -244,7 +245,7 @@ mod tests {
             }
         });
 
-        similar_asserts::assert_eq!(actual, expected);
+        sim_assert_eq!(actual, expected);
     }
 
     #[test]
@@ -259,11 +260,11 @@ mod tests {
 
         mark_refs_for_replacement(&mut value);
 
-        assert_eq!(
+        sim_assert_eq!(
             value["properties"]["cloud"][REPLACE_MARKER],
             serde_json::json!(true)
         );
-        assert_eq!(
+        sim_assert_eq!(
             value["properties"]["appV"][REPLACE_MARKER],
             serde_json::json!(true)
         );
@@ -293,6 +294,6 @@ mod tests {
             }
         });
 
-        similar_asserts::assert_eq!(actual, expected);
+        sim_assert_eq!(actual, expected);
     }
 }

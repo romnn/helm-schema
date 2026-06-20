@@ -316,6 +316,7 @@ fn source_fingerprint(source: &ProviderSchemaSource) -> String {
 mod tests {
     use helm_schema_k8s::{ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource};
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -408,15 +409,15 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(
+        sim_assert_eq!(
             paths[0].schema,
             json!({ "$ref": "#/$defs/providerSchema1" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             paths[1].schema,
             json!({ "$ref": "#/$defs/providerSchema1" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer("/$defs/providerSchema1"),
             Some(&provider_schema)
         );
@@ -433,11 +434,11 @@ mod tests {
         let candidate = sourced_provider_schema_candidate(schema, "/definitions/Metadata");
         let source = candidate.source().expect("provider source should survive");
 
-        assert_eq!(source.origin(), ProviderOrigin::KubernetesOpenApi);
-        assert_eq!(source.source_id(), "default");
-        assert_eq!(source.version(), Some("v1.35.0"));
-        assert_eq!(source.filename(), "io.k8s.api.core.v1.Pod.json");
-        assert_eq!(source.pointer(), "/definitions/Metadata");
+        sim_assert_eq!(source.origin(), ProviderOrigin::KubernetesOpenApi);
+        sim_assert_eq!(source.source_id(), "default");
+        sim_assert_eq!(source.version(), Some("v1.35.0"));
+        sim_assert_eq!(source.filename(), "io.k8s.api.core.v1.Pod.json");
+        sim_assert_eq!(source.pointer(), "/definitions/Metadata");
     }
 
     #[test]
@@ -461,15 +462,15 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(
+        sim_assert_eq!(
             paths[0].schema,
             json!({ "$ref": format!("#/$defs/{definition_name}") })
         );
-        assert_eq!(
+        sim_assert_eq!(
             paths[1].schema,
             json!({ "$ref": format!("#/$defs/{definition_name}") })
         );
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer(&format!("/$defs/{definition_name}")),
             Some(&provider_schema)
         );
@@ -554,11 +555,11 @@ mod tests {
             }
         });
 
-        assert_eq!(
+        sim_assert_eq!(
             paths[0].schema,
             json!({ "$ref": format!("#/$defs/{definition_name}") })
         );
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer(&format!("/$defs/{definition_name}")),
             Some(&expected_definition)
         );
@@ -618,7 +619,7 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer(&format!("/$defs/{definition_name}")),
             Some(&json!({
                 "type": "object",
@@ -685,7 +686,7 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer(&format!("/$defs/{definition_name}")),
             Some(&provider_schema),
             "mixed self-contained and provider-document-local source leaves must fall back together"
@@ -729,15 +730,15 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(
+        sim_assert_eq!(
             paths[0].schema,
             json!({ "$ref": "#/$defs/providerSchema1" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             paths[1].schema,
             json!({ "$ref": "#/$defs/providerSchema1" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer("/$defs/providerSchema1"),
             Some(&provider_schema)
         );
@@ -756,7 +757,7 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(paths[0].schema, provider_schema);
+        sim_assert_eq!(paths[0].schema, provider_schema);
         assert!(root.pointer("/$defs").is_none());
     }
 
@@ -781,16 +782,16 @@ mod tests {
         let mut root = json!({ "type": "object", "properties": {} });
         definitions.insert_into_root(&mut root);
 
-        assert_eq!(paths[0].schema, provider_schema);
-        assert_eq!(
+        sim_assert_eq!(paths[0].schema, provider_schema);
+        sim_assert_eq!(
             paths[1].schema,
             json!({ "$ref": "#/$defs/providerSchema1" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             paths[2].schema,
             json!({ "$ref": "#/$defs/providerSchema1" })
         );
-        assert_eq!(
+        sim_assert_eq!(
             root.pointer("/$defs/providerSchema1"),
             Some(&provider_schema)
         );

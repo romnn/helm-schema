@@ -79,6 +79,7 @@ fn mark_generated_schema(schema: &mut Value) {
 #[cfg(test)]
 mod tests {
     use serde_json::Value;
+    use test_util::prelude::sim_assert_eq;
 
     use super::GENERATED_SCHEMA_MARKER_KEY;
     use crate::output_pipeline::{
@@ -110,7 +111,7 @@ mod tests {
         )
         .expect("apply output pipeline");
 
-        assert_eq!(
+        sim_assert_eq!(
             output
                 .pointer("/properties/fromRef/$ref")
                 .and_then(Value::as_str),
@@ -149,14 +150,14 @@ mod tests {
         )
         .expect("apply output pipeline");
 
-        assert_eq!(
+        sim_assert_eq!(
             output
                 .pointer("/properties/fromRef/$ref")
                 .and_then(Value::as_str),
             Some("#/$defs/stringValue"),
             "self-contained final output should keep prepared internal refs"
         );
-        assert_eq!(
+        sim_assert_eq!(
             output
                 .pointer("/$defs/stringValue/type")
                 .and_then(Value::as_str),
@@ -227,7 +228,7 @@ mod tests {
         )
         .expect("apply output pipeline");
 
-        assert_eq!(
+        sim_assert_eq!(
             output
                 .pointer("/properties/fromRef/type")
                 .and_then(Value::as_str),
@@ -257,7 +258,7 @@ mod tests {
         )
         .expect("apply output pipeline");
 
-        assert_eq!(
+        sim_assert_eq!(
             output
                 .get(GENERATED_SCHEMA_MARKER_KEY)
                 .and_then(Value::as_bool),

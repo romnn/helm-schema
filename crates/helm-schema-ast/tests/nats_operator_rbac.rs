@@ -1,4 +1,5 @@
 use helm_schema_ast::{HelmParser, TreeSitterParser};
+use test_util::prelude::sim_assert_eq;
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (If ".Values.rbacEnabled"
@@ -289,5 +290,5 @@ fn tree_sitter_ast() {
         eprintln!("{}", ast.to_sexpr());
     }
 
-    similar_asserts::assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
+    sim_assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
 }

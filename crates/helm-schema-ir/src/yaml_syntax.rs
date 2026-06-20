@@ -121,18 +121,19 @@ pub(crate) fn first_mapping_colon_offset(line: &str) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn parse_yaml_key_handles_plain_and_quoted_keys() {
-        assert_eq!(
+        sim_assert_eq!(
             parse_yaml_key("metadata.name: value").map(ParsedYamlKey::into_key),
             Some("metadata.name".to_string())
         );
-        assert_eq!(
+        sim_assert_eq!(
             parse_yaml_key(r#""app.kubernetes.io/name": value"#).map(ParsedYamlKey::into_key),
             Some("app.kubernetes.io/name".to_string())
         );
-        assert_eq!(
+        sim_assert_eq!(
             parse_yaml_key("'it''s': value").map(ParsedYamlKey::into_key),
             Some("it's".to_string())
         );
@@ -141,9 +142,9 @@ mod tests {
     #[test]
     fn first_mapping_colon_skips_templates_and_quoted_scalars() {
         let line = r#"{{ printf "not:a:key" }}: value"#;
-        assert_eq!(first_mapping_colon_offset(line), Some(24));
+        sim_assert_eq!(first_mapping_colon_offset(line), Some(24));
 
         let line = r#""not:a:key": value"#;
-        assert_eq!(first_mapping_colon_offset(line), Some(11));
+        sim_assert_eq!(first_mapping_colon_offset(line), Some(11));
     }
 }

@@ -268,6 +268,7 @@ mod tests {
     use super::{
         mapping_key_text_refs_range_key_variable, range_body_mapping_entry_indent_from_source,
     };
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn templated_mapping_key_text_refs_range_key_variable() {
@@ -288,7 +289,7 @@ data:
         let tree = parse_go_template(source);
         let range = find_kind(tree.root_node(), "range_action").expect("range action");
 
-        assert_eq!(
+        sim_assert_eq!(
             range_body_mapping_entry_indent_from_source(range, source),
             Some(2)
         );

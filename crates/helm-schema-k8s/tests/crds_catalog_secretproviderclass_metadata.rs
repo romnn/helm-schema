@@ -1,5 +1,6 @@
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider};
+use test_util::prelude::sim_assert_eq;
 
 fn resource() -> ResourceRef {
     ResourceRef {
@@ -22,7 +23,7 @@ fn secretproviderclass_metadata_name_uses_objectmeta_string_schema() {
         .expect("metadata.name schema")
         .into_schema();
 
-    assert_eq!(
+    sim_assert_eq!(
         schema.get("type").and_then(serde_json::Value::as_str),
         Some("string"),
         "metadata.name should use the standard objectmeta string schema, got {schema}"
@@ -41,7 +42,7 @@ fn secretproviderclass_metadata_labels_use_objectmeta_string_map() {
         .expect("metadata.labels schema")
         .into_schema();
 
-    assert_eq!(
+    sim_assert_eq!(
         schema
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),
@@ -62,7 +63,7 @@ fn secretproviderclass_metadata_annotations_use_objectmeta_string_map() {
         .expect("metadata.annotations schema")
         .into_schema();
 
-    assert_eq!(
+    sim_assert_eq!(
         schema
             .pointer("/additionalProperties/type")
             .and_then(serde_json::Value::as_str),

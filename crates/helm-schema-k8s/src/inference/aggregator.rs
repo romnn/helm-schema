@@ -142,6 +142,7 @@ fn best_source_candidate(candidates: &[ApiVersionCandidate]) -> ApiVersionCandid
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     fn candidate(
         api_version: &str,
@@ -178,7 +179,7 @@ mod tests {
         else {
             panic!("expected resolved chart-local CRD candidate, got {outcome:?}");
         };
-        assert_eq!(
+        sim_assert_eq!(
             (api_version.as_str(), source, origin),
             (
                 "local.example.com/v1",
@@ -211,7 +212,7 @@ mod tests {
         else {
             panic!("expected resolved explicit override candidate, got {outcome:?}");
         };
-        assert_eq!(
+        sim_assert_eq!(
             (api_version.as_str(), source, origin),
             (
                 "override.example.com/v1",

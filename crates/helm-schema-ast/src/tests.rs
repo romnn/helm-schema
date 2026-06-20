@@ -2,6 +2,7 @@ use crate::{
     DefineIndex, HelmAst, HelmParser, TemplateExpr, TemplateHeader, TreeSitterParser,
     contains_template_action,
 };
+use test_util::prelude::sim_assert_eq;
 
 // ===========================================================================
 // Simple template
@@ -20,7 +21,7 @@ const SIMPLE_EXPECTED_SEXPR: &str = "\
 fn tree_sitter_ast_simple() {
     let src = "{{- if .Values.enabled }}\nfoo: bar\n{{- end }}\n";
     let ast = TreeSitterParser.parse(src).expect("parse");
-    similar_asserts::assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
+    sim_assert_eq!(ast.to_sexpr(), SIMPLE_EXPECTED_SEXPR);
 }
 
 #[test]
@@ -41,8 +42,8 @@ fn tree_sitter_ast_control_flow_headers_are_typed() {
     else {
         panic!("expected one top-level if node");
     };
-    assert_eq!(condition.raw(), ".Values.enabled");
-    assert_eq!(
+    sim_assert_eq!(condition.raw(), ".Values.enabled");
+    sim_assert_eq!(
         condition.expr(),
         &TemplateExpr::Field(vec!["Values".to_string(), "enabled".to_string()])
     );
@@ -50,7 +51,7 @@ fn tree_sitter_ast_control_flow_headers_are_typed() {
     let [HelmAst::Range { header, .. }] = then_branch.as_slice() else {
         panic!("expected nested range node");
     };
-    assert_eq!(header.raw(), "$i, $v := include \"items\" .");
+    sim_assert_eq!(header.raw(), "$i, $v := include \"items\" .");
     let mut saw_include = false;
     header.expr().walk(|expr| {
         if let TemplateExpr::Call { function, args } = expr
@@ -77,7 +78,7 @@ fn template_header_parse_control_normalizes_control_keyword_prefix() {
         "{{- if .Values.signoz.serviceAccount.create -}}",
     ] {
         let header = TemplateHeader::parse_control(raw);
-        assert_eq!(header.expr(), &expected, "raw={raw}");
+        sim_assert_eq!(header.expr(), &expected, "raw={raw}");
     }
 }
 
@@ -98,7 +99,7 @@ fn tree_sitter_ast_helm_exprs_are_typed() {
     let [HelmAst::HelmExpr { action }] = items.as_slice() else {
         panic!("expected one top-level helm expr");
     };
-    assert_eq!(action.raw(), ".Values.name | quote");
+    sim_assert_eq!(action.raw(), ".Values.name | quote");
     let [TemplateExpr::Pipeline(stages)] = action.exprs() else {
         panic!("expected one parsed pipeline expression");
     };

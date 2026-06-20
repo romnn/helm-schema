@@ -81,6 +81,7 @@ mod tests {
     use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
     use helm_schema_ast::{DefineIndex, TreeSitterParser};
     use indoc::indoc;
+    use test_util::prelude::sim_assert_eq;
 
     /// Test helper: extract literals from a Literals-bodied
     /// `HelperBranch`. Panics if the branch is unexpectedly Nested
@@ -107,7 +108,7 @@ mod tests {
             {{- print "apps/v1" -}}
             {{- end -}}
         "#});
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
@@ -166,7 +167,7 @@ mod tests {
     #[test]
     fn unknown_helper_returns_empty() {
         let helpers = DefineIndex::new();
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("nope", &helpers).all_literals(),
             Vec::<String>::new()
         );
@@ -182,7 +183,7 @@ mod tests {
             {{- print "apps/v1" -}}
             {{- end -}}
         "#});
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("outer", &helpers).all_literals(),
             vec!["apps/v1"]
         );
@@ -225,24 +226,24 @@ mod tests {
         let HelperOutput::Branched { branches } = out else {
             panic!("expected Branched; got {out:?}");
         };
-        assert_eq!(branches.len(), 2, "expected 2 branches; got {branches:?}");
+        sim_assert_eq!(branches.len(), 2, "expected 2 branches; got {branches:?}");
         // First branch carries the CapabilityHas guard for the v1 API
         // and yields the modern literal.
-        assert_eq!(
+        sim_assert_eq!(
             branches[0].guard,
             Some(CapabilityGuard::Has {
                 api: "rbac.authorization.k8s.io/v1".to_string(),
             }),
             "branch[0] guard mismatch"
         );
-        assert_eq!(
+        sim_assert_eq!(
             literals_of(&branches[0]),
             vec!["rbac.authorization.k8s.io/v1".to_string()]
         );
         // Second branch is the unguarded fallback yielding the legacy
         // literal.
-        assert_eq!(branches[1].guard, None, "branch[1] should be unguarded");
-        assert_eq!(
+        sim_assert_eq!(branches[1].guard, None, "branch[1] should be unguarded");
+        sim_assert_eq!(
             literals_of(&branches[1]),
             vec!["rbac.authorization.k8s.io/v1beta1".to_string()]
         );
@@ -270,20 +271,20 @@ mod tests {
                 "wrapper helper must preserve branched typed output from delegated callee; got {out:?}"
             );
         };
-        assert_eq!(branches.len(), 2, "expected 2 branches; got {branches:?}");
-        assert_eq!(
+        sim_assert_eq!(branches.len(), 2, "expected 2 branches; got {branches:?}");
+        sim_assert_eq!(
             branches[0].guard,
             Some(CapabilityGuard::Has {
                 api: "rbac.authorization.k8s.io/v1".to_string(),
             }),
             "branch[0] guard must carry the CapabilityHas decoded from the inner helper"
         );
-        assert_eq!(
+        sim_assert_eq!(
             literals_of(&branches[0]),
             vec!["rbac.authorization.k8s.io/v1".to_string()]
         );
-        assert_eq!(branches[1].guard, None);
-        assert_eq!(
+        sim_assert_eq!(branches[1].guard, None);
+        sim_assert_eq!(
             literals_of(&branches[1]),
             vec!["rbac.authorization.k8s.io/v1beta1".to_string()]
         );
@@ -337,8 +338,8 @@ mod tests {
         let HelperOutput::Branched { branches } = out else {
             panic!("multi-level wrapper must preserve branched output; got {out:?}");
         };
-        assert_eq!(branches.len(), 2);
-        assert_eq!(
+        sim_assert_eq!(branches.len(), 2);
+        sim_assert_eq!(
             branches[0].guard,
             Some(CapabilityGuard::Has {
                 api: "policy/v1".to_string()
@@ -386,10 +387,10 @@ mod tests {
         let HelperOutput::Branched { branches } = out else {
             panic!("outer must be Branched; got {out:?}");
         };
-        assert_eq!(branches.len(), 2, "expected 2 outer branches");
+        sim_assert_eq!(branches.len(), 2, "expected 2 outer branches");
 
         // First branch: Has A guard + Nested body (the inner helper's branches).
-        assert_eq!(
+        sim_assert_eq!(
             branches[0].guard,
             Some(CapabilityGuard::Has {
                 api: "A".to_string()
@@ -401,21 +402,21 @@ mod tests {
                 branches[0].body
             );
         };
-        assert_eq!(nested.len(), 2, "inner helper should contribute 2 branches");
-        assert_eq!(
+        sim_assert_eq!(nested.len(), 2, "inner helper should contribute 2 branches");
+        sim_assert_eq!(
             nested[0].guard,
             Some(CapabilityGuard::Has {
                 api: "B".to_string()
             }),
             "nested branch[0] must preserve the inner Has-B guard"
         );
-        assert_eq!(literals_of(&nested[0]), vec!["b".to_string()]);
-        assert_eq!(nested[1].guard, None);
-        assert_eq!(literals_of(&nested[1]), vec!["b_legacy".to_string()]);
+        sim_assert_eq!(literals_of(&nested[0]), vec!["b".to_string()]);
+        sim_assert_eq!(nested[1].guard, None);
+        sim_assert_eq!(literals_of(&nested[1]), vec!["b_legacy".to_string()]);
 
         // Second branch: unguarded else + flat literal payload.
-        assert_eq!(branches[1].guard, None);
-        assert_eq!(literals_of(&branches[1]), vec!["fallback".to_string()]);
+        sim_assert_eq!(branches[1].guard, None);
+        sim_assert_eq!(literals_of(&branches[1]), vec!["fallback".to_string()]);
     }
 
     /// The same nested-branch structure is preserved when the nested branch is
@@ -439,15 +440,15 @@ mod tests {
         let HelperOutput::Branched { branches } = out else {
             panic!("outer must be Branched; got {out:?}");
         };
-        assert_eq!(branches.len(), 2);
+        sim_assert_eq!(branches.len(), 2);
         let HelperBranchBody::Nested { branches: nested } = &branches[0].body else {
             panic!(
                 "inline nested if must produce Nested body; got {:?}",
                 branches[0].body
             );
         };
-        assert_eq!(nested.len(), 2);
-        assert_eq!(
+        sim_assert_eq!(nested.len(), 2);
+        sim_assert_eq!(
             nested[0].guard,
             Some(CapabilityGuard::Has {
                 api: "B".to_string()
@@ -537,7 +538,7 @@ mod tests {
             has_branch.is_some(),
             "expected CapabilityHas branch; got {branches:?}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             literals_of(has_branch.unwrap()),
             vec!["policy/v1".to_string()]
         );
@@ -547,7 +548,7 @@ mod tests {
             else_branch.is_some(),
             "expected unguarded else branch; got {branches:?}"
         );
-        assert_eq!(
+        sim_assert_eq!(
             literals_of(else_branch.unwrap()),
             vec!["policy/v1beta1".to_string()]
         );
@@ -580,7 +581,7 @@ mod tests {
             {{- printf "%s" "apps/v1" -}}
             {{- end -}}
         "#});
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
@@ -594,7 +595,7 @@ mod tests {
             {{- printf "apps/v1" -}}
             {{- end -}}
         "#});
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
@@ -625,7 +626,7 @@ mod tests {
             {{- quote "apps/v1" -}}
             {{- end -}}
         "#});
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );
@@ -656,7 +657,7 @@ mod tests {
             {{- "apps/v1" | quote -}}
             {{- end -}}
         "#});
-        assert_eq!(
+        sim_assert_eq!(
             helper_evaluate("x.apiVersion", &helpers).all_literals(),
             vec!["apps/v1"]
         );

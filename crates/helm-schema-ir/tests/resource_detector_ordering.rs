@@ -15,6 +15,7 @@
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrContext};
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 fn generate(template: &str) -> ContractProjection {
     let idx = DefineIndex::new();
@@ -49,7 +50,7 @@ fn detector_records_both_when_api_version_precedes_kind() {
         .iter()
         .find(|u| u.source_expr == "example")
         .expect("expected a use for `example`");
-    assert_eq!(
+    sim_assert_eq!(
         resource_of(u),
         ("v1".to_string(), "ConfigMap".to_string()),
         "apiVersion-then-kind must yield (v1, ConfigMap)"
@@ -76,7 +77,7 @@ fn detector_records_both_when_kind_precedes_api_version() {
         .iter()
         .find(|u| u.source_expr == "app")
         .expect("expected a use for `app`");
-    assert_eq!(
+    sim_assert_eq!(
         resource_of(u),
         (
             "networking.k8s.io/v1".to_string(),
@@ -110,7 +111,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
         .iter()
         .find(|u| u.source_expr == "first")
         .expect("first use missing");
-    assert_eq!(
+    sim_assert_eq!(
         resource_of(first),
         ("v1".to_string(), "ConfigMap".to_string()),
         "doc 1 must resolve to ConfigMap"
@@ -121,7 +122,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
         .iter()
         .find(|u| u.source_expr == "second")
         .expect("second use missing");
-    assert_eq!(
+    sim_assert_eq!(
         resource_of(second),
         ("v1".to_string(), "Secret".to_string()),
         "doc 2 must independently resolve to Secret regardless of header order"
@@ -147,7 +148,7 @@ fn detector_does_not_capture_templated_api_version() {
         .find(|u| u.source_expr == "example")
         .expect("expected a use for `example`");
     let r = u.resource.as_ref().expect("resource on use");
-    assert_eq!(r.kind, "ConfigMap", "kind must still be captured");
+    sim_assert_eq!(r.kind, "ConfigMap", "kind must still be captured");
     assert!(
         r.api_version.is_empty(),
         "templated apiVersion must NOT be captured as a literal; got {:?}",
@@ -209,13 +210,15 @@ fn detector_collects_api_version_inside_if_after_kind() {
         .find(|u| u.source_expr == "minAvailable")
         .expect("expected a use for `minAvailable`");
     let r = u.resource.as_ref().expect("resource on use");
-    assert_eq!(r.kind, "PodDisruptionBudget");
+    sim_assert_eq!(r.kind, "PodDisruptionBudget");
     // The detector must collect AT LEAST one of the two branches; both
     // valid. The preferred-stability rank puts `policy/v1` first.
-    assert_eq!(
-        r.api_version, "policy/v1",
+    sim_assert_eq!(
+        r.api_version,
+        "policy/v1",
         "preferred apiVersion must be the stable branch; got {:?} (candidates={:?})",
-        r.api_version, r.api_version_candidates
+        r.api_version,
+        r.api_version_candidates
     );
     // The other branch should be in the candidate list.
     assert!(
@@ -252,7 +255,7 @@ fn detector_collects_kind_inside_if_after_api_version() {
         .find(|u| u.source_expr == "rules")
         .expect("expected a use for `rules`");
     let r = u.resource.as_ref().expect("resource on use");
-    assert_eq!(r.api_version, "networking.k8s.io/v1");
+    sim_assert_eq!(r.api_version, "networking.k8s.io/v1");
     // Kind is single-value; the first one wins. Both NetworkPolicy and
     // Ingress are valid; we just need ONE captured (not empty).
     assert!(
@@ -287,8 +290,8 @@ fn detector_handles_loop_wrapped_manifest() {
         .find(|u| u.source_expr == "commonLabels")
         .expect("expected a use for `commonLabels` inside the loop body");
     let r = u.resource.as_ref().expect("resource on loop-body use");
-    assert_eq!(r.kind, "Service");
-    assert_eq!(r.api_version, "v1");
+    sim_assert_eq!(r.kind, "Service");
+    sim_assert_eq!(r.api_version, "v1");
 }
 
 // Pins Finding (round 4) #2 — multi-document with `---` AND template
@@ -321,7 +324,7 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
         .iter()
         .find(|u| u.source_expr == "first")
         .expect("first use missing");
-    assert_eq!(
+    sim_assert_eq!(
         first
             .resource
             .as_ref()
@@ -336,14 +339,17 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
         .find(|u| u.source_expr == "app")
         .expect("app use missing");
     let r = app.resource.as_ref().expect("resource");
-    assert_eq!(
-        r.kind, "NetworkPolicy",
+    sim_assert_eq!(
+        r.kind,
+        "NetworkPolicy",
         "doc 2 must capture kind=NetworkPolicy regardless of header ordering and template actions"
     );
-    assert_eq!(
-        r.api_version, "networking.k8s.io/v1",
+    sim_assert_eq!(
+        r.api_version,
+        "networking.k8s.io/v1",
         "doc 2 must capture the stable apiVersion (preferred over extensions/v1beta1); got {:?} (candidates={:?})",
-        r.api_version, r.api_version_candidates,
+        r.api_version,
+        r.api_version_candidates,
     );
 }
 
@@ -383,9 +389,10 @@ fn detector_resolves_helper_returned_api_version() {
         .find(|u| u.source_expr == "replicas")
         .expect("expected use for `replicas`");
     let r = u.resource.as_ref().expect("resource on use");
-    assert_eq!(r.kind, "Deployment");
-    assert_eq!(
-        r.api_version, "apps/v1",
+    sim_assert_eq!(r.kind, "Deployment");
+    sim_assert_eq!(
+        r.api_version,
+        "apps/v1",
         "helper must resolve to apps/v1; got {:?}",
         r.api_version
     );
@@ -429,7 +436,7 @@ fn detector_resolves_helper_with_if_else_branches() {
         .find(|u| u.source_expr == "roleName")
         .expect("expected use for `roleName`");
     let r = u.resource.as_ref().expect("resource on use");
-    assert_eq!(r.kind, "RoleBinding");
+    sim_assert_eq!(r.kind, "RoleBinding");
     // Capability-gated helper output is resolved by the version-aware lookup
     // chain, so the IR preserves both alternatives without choosing a primary.
     assert!(
@@ -441,8 +448,9 @@ fn detector_resolves_helper_with_if_else_branches() {
         "rbac.authorization.k8s.io/v1".to_string(),
         "rbac.authorization.k8s.io/v1beta1".to_string(),
     ];
-    assert_eq!(
-        r.api_version_candidates, expected,
+    sim_assert_eq!(
+        r.api_version_candidates,
+        expected,
         "both branches must be preserved in source order; got {:?}",
         r.api_version_candidates
     );
@@ -482,7 +490,7 @@ fn detector_resolves_include_returned_api_version() {
         .find(|u| u.source_expr == "maxReplicas")
         .expect("expected use for `maxReplicas`");
     let r = u.resource.as_ref().expect("resource on use");
-    assert_eq!(r.kind, "HorizontalPodAutoscaler");
+    sim_assert_eq!(r.kind, "HorizontalPodAutoscaler");
     // Capability-gated helper output is resolved by the version-aware lookup
     // chain, so the IR preserves both alternatives without choosing a primary.
     assert!(
@@ -490,7 +498,7 @@ fn detector_resolves_include_returned_api_version() {
         "primary must be empty for multi-branch helper; got {:?}",
         r.api_version
     );
-    assert_eq!(
+    sim_assert_eq!(
         r.api_version_candidates,
         vec![
             "autoscaling/v2".to_string(),
@@ -521,8 +529,9 @@ fn detector_primary_is_source_order_not_stability_rank() {
         .find(|u| u.source_expr == "allowPrivilegeEscalation")
         .expect("use missing");
     let r = u.resource.as_ref().expect("resource");
-    assert_eq!(
-        r.api_version, "policy/v1beta1",
+    sim_assert_eq!(
+        r.api_version,
+        "policy/v1beta1",
         "single-apiVersion case must use what the template author wrote, NOT a stability-ranked replacement"
     );
 }
@@ -551,8 +560,9 @@ fn detector_multi_branch_primary_is_first_seen_in_source() {
         .find(|u| u.source_expr == "minAvailable")
         .expect("use missing");
     let r = u.resource.as_ref().expect("resource");
-    assert_eq!(
-        r.api_version, "policy/v1beta1",
+    sim_assert_eq!(
+        r.api_version,
+        "policy/v1beta1",
         "first-seen-in-source must win; the template author put v1beta1 first"
     );
     assert!(
@@ -582,6 +592,6 @@ fn detector_handles_yaml_comment_in_header() {
         .find(|u| u.source_expr == "selector")
         .expect("selector use missing");
     let r = u.resource.as_ref().expect("resource");
-    assert_eq!(r.api_version, "v1");
-    assert_eq!(r.kind, "Service");
+    sim_assert_eq!(r.api_version, "v1");
+    sim_assert_eq!(r.kind, "Service");
 }

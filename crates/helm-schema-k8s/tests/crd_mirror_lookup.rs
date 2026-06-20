@@ -9,6 +9,7 @@ use helm_schema_k8s::{
     Chain, CrdsCatalogSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider, MockFetcher,
     MockResponse, source_id_for_url,
 };
+use test_util::prelude::sim_assert_eq;
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
     let p = std::env::temp_dir().join(format!(
@@ -44,7 +45,7 @@ fn crd_has_resource_does_not_speculatively_download() {
     };
     let owns = provider.has_resource(&resource);
     assert!(!owns);
-    assert_eq!(mock.total_calls(), 0, "has_resource must not fetch");
+    sim_assert_eq!(mock.total_calls(), 0, "has_resource must not fetch");
 }
 
 #[test]
@@ -325,12 +326,12 @@ fn crd_negative_cache_per_source() {
     let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
     let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
-    assert_eq!(
+    sim_assert_eq!(
         mock.calls_for(default_url),
         1,
         "default 404 must be cached negatively"
     );
-    assert_eq!(
+    sim_assert_eq!(
         mock.calls_for(&mirror_resource_url),
         1,
         "mirror 404 must be cached negatively independently"
@@ -382,7 +383,7 @@ fn crd_diagnostic_json_format() {
         locations_tried: vec!["url-a".to_string()],
     };
     let json = format_diagnostic_json(&diagnostic).expect("serialize");
-    assert_eq!(json.lines().count(), 1, "JSON output must be a single line");
+    sim_assert_eq!(json.lines().count(), 1, "JSON output must be a single line");
     let parsed: Diagnostic = serde_json::from_str(&json).expect("round-trip");
     assert!(matches!(parsed, Diagnostic::CrdVersionNotFound { .. }));
 }

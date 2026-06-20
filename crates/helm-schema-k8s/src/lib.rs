@@ -77,6 +77,7 @@ pub fn type_schema(ty: &str) -> Value {
 mod tests {
     use super::*;
     use helm_schema_core::ResourceRef;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn filename_for_core_resource() {
@@ -86,7 +87,7 @@ mod tests {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         };
-        assert_eq!(filename_for_resource(&r), "service-v1.json");
+        sim_assert_eq!(filename_for_resource(&r), "service-v1.json");
     }
 
     #[test]
@@ -97,7 +98,7 @@ mod tests {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         };
-        assert_eq!(
+        sim_assert_eq!(
             filename_for_resource(&r),
             "prometheusrule-monitoring-coreos-com-v1.json"
         );
@@ -111,7 +112,7 @@ mod tests {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         };
-        assert_eq!(
+        sim_assert_eq!(
             filename_for_resource(&r),
             "networkpolicy-networking-v1.json"
         );

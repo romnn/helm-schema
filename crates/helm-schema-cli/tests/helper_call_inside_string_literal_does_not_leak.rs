@@ -20,6 +20,7 @@
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 const ROOT_CHART_YAML: &str = "\
@@ -112,7 +113,7 @@ fn quoted_string_payload_does_not_create_phantom_helper_edge() -> color_eyre::ey
         .pointer("/properties/replicas")
         .expect("/properties/replicas present");
 
-    assert_eq!(
+    sim_assert_eq!(
         replicas,
         &serde_json::json!({}),
         "quoted-string payload made common.unusedReplicas look \

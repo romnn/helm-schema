@@ -1,5 +1,6 @@
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use test_util::prelude::sim_assert_eq;
 
 /// Simple template IR generation test.
 #[test]
@@ -46,13 +47,13 @@ metadata:
         .find(|use_| use_.source_expr == "serviceName")
         .expect("serviceName use");
 
-    assert_eq!(
+    sim_assert_eq!(
         name_use.path,
         YamlPath(vec!["metadata".to_string(), "name".to_string()])
     );
     let resource = name_use.resource.as_ref().expect("resource claim");
-    assert_eq!(resource.api_version, "v1");
-    assert_eq!(resource.kind, "Service");
+    sim_assert_eq!(resource.api_version, "v1");
+    sim_assert_eq!(resource.kind, "Service");
 }
 
 #[test]
@@ -81,13 +82,13 @@ metadata:
         .find(|use_| use_.source_expr == "serviceName")
         .expect("serviceName use");
 
-    assert_eq!(
+    sim_assert_eq!(
         name_use.path,
         YamlPath(vec!["metadata".to_string(), "name".to_string()])
     );
     let resource = name_use.resource.as_ref().expect("resource claim");
-    assert_eq!(resource.api_version, "v1");
-    assert_eq!(resource.kind, "Service");
+    sim_assert_eq!(resource.api_version, "v1");
+    sim_assert_eq!(resource.kind, "Service");
 }
 
 #[test]
@@ -118,7 +119,7 @@ metadata:
         .find(|use_| use_.source_expr == "serviceName")
         .expect("serviceName use");
 
-    assert_eq!(
+    sim_assert_eq!(
         name_use.guards,
         vec![Guard::Truthy {
             path: "enabled".to_string()

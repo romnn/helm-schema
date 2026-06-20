@@ -81,6 +81,7 @@ fn collect_explicit_paths(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn extracts_sorted_top_level_mapping_keys_only() {
@@ -93,7 +94,7 @@ a: 1
 "#,
         ));
 
-        assert_eq!(
+        sim_assert_eq!(
             paths,
             BTreeSet::from(["a".to_string(), "quoted".to_string(), "z".to_string()])
         );
@@ -120,7 +121,7 @@ items:
 "#,
         ));
 
-        assert_eq!(
+        sim_assert_eq!(
             paths,
             BTreeSet::from([
                 "controller".to_string(),

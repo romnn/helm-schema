@@ -1,6 +1,7 @@
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
+use test_util::prelude::sim_assert_eq;
 
 fn is_template_yaml(path: &Path) -> bool {
     let Some(ext) = path.extension().and_then(|s| s.to_str()) else {
@@ -537,8 +538,9 @@ fn parses_all_testdata_yaml_templates_best_effort() {
     }
 
     if only.is_none() {
-        assert_eq!(
-            parsed_files, total_files,
+        sim_assert_eq!(
+            parsed_files,
+            total_files,
             "expected to parse all discovered charts/**/templates YAML files (found={total_files}, parsed={parsed_files})"
         );
     }

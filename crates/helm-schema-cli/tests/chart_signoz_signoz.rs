@@ -1,3 +1,4 @@
+use test_util::prelude::sim_assert_eq;
 mod common;
 
 use color_eyre::eyre::{OptionExt as _, WrapErr as _};
@@ -497,7 +498,7 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
     .wrap_err("parse fixture top_level_keys")?;
     expected_keys.sort();
 
-    similar_asserts::assert_eq!(actual_keys, expected_keys);
+    sim_assert_eq!(actual_keys, expected_keys);
 
     let pointers = fixture
         .get("pointers")
@@ -510,7 +511,7 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
             .ok_or_eyre(format!("schema missing pointer {pointer}"))?
             .clone();
         strip_description_annotations(&mut actual);
-        similar_asserts::assert_eq!(&actual, expected, "schema mismatch at {pointer}");
+        sim_assert_eq!(&actual, expected, "schema mismatch at {pointer}");
     }
 
     Ok(())
@@ -578,7 +579,7 @@ fn schema_accepts_string_type(schema: &Value) -> bool {
 }
 
 fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected: &str) {
-    assert_eq!(
+    sim_assert_eq!(
         schema.pointer(pointer).and_then(serde_json::Value::as_str),
         Some(expected),
         "schema description mismatch at {pointer}"

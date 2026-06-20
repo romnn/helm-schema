@@ -183,21 +183,29 @@ tasks:
         CHART={{.LUUP3_DIR}}/deployment/charts/temporal
         OUTPUT=/tmp/helm-schema-bench-temporal.json
 
+  lint:ast-grep:
+    desc: "lint with ast-grep rules"
+    cmds:
+      - sg scan
+
   lint:
     desc: "lint cargo workspace"
     cmds:
       - cargo lint --workspace --all-features {{.CLI_ARGS}}
+      - task: lint:ast-grep
 
   lint:fc:
     desc: "lint cargo workspace for all combinations of features"
     cmds:
       - cargo fc lint {{.CLI_ARGS}}
+      - task: lint:ast-grep
 
   lint:fix:
     desc: "lint and fix cargo workspace"
     aliases: [fix]
     cmds:
       - cargo fixit --workspace --all-features {{.CLI_ARGS}}
+      - task: lint:ast-grep
 
   lint:actions:
     desc: "lint github actions"

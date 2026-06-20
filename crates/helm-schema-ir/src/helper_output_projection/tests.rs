@@ -5,6 +5,7 @@ use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_summary::HelperOutputMeta;
 use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
+use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn abstract_value_output_meta_preserves_output_set_metadata() {
@@ -28,7 +29,7 @@ fn abstract_value_output_meta_preserves_output_set_metadata() {
     let meta = value.output_meta();
 
     assert!(meta.contains_key("serviceAccount.name"));
-    assert_eq!(
+    sim_assert_eq!(
         meta.get("global.nameOverride"),
         Some(&HelperOutputMeta {
             predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
@@ -78,7 +79,7 @@ fn direct_and_fragment_values_share_structural_output_projection() {
         &defaulted_paths,
     );
 
-    assert_eq!(
+    sim_assert_eq!(
         output_rows(&helper_outputs),
         vec![
             (
@@ -99,7 +100,7 @@ fn direct_and_fragment_values_share_structural_output_projection() {
             ),
         ]
     );
-    assert_eq!(output_rows(&fragment_outputs), output_rows(&helper_outputs));
+    sim_assert_eq!(output_rows(&fragment_outputs), output_rows(&helper_outputs));
 }
 
 #[test]

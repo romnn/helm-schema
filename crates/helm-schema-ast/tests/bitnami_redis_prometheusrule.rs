@@ -1,4 +1,5 @@
 use helm_schema_ast::{HelmParser, TreeSitterParser};
+use test_util::prelude::sim_assert_eq;
 
 const EXPECTED_SEXPR: &str = r#"(Document
   (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
@@ -52,5 +53,5 @@ const EXPECTED_SEXPR: &str = r#"(Document
 fn tree_sitter_ast() {
     let src = test_util::read_testdata("charts/bitnami-redis/templates/prometheusrule.yaml");
     let ast = TreeSitterParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(ast.to_sexpr(), EXPECTED_SEXPR.trim_end());
+    sim_assert_eq!(ast.to_sexpr(), EXPECTED_SEXPR.trim_end());
 }

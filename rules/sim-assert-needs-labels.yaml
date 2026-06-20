@@ -1,0 +1,9 @@
+id: sim-assert-needs-labels
+language: Rust
+severity: warning
+message: "sim_assert_eq! should use labeled arguments: sim_assert_eq!(have: left, want: right)"
+note: "Labels make diffs readable — it is immediately clear which side is 'have' and which is 'want'."
+rule:
+  pattern: sim_assert_eq!($$$ARGS)
+  not:
+    regex: "(?s)sim_assert_eq!\\(\\s*\\w+\\s*:.*"

@@ -12,6 +12,7 @@
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 const ROOT_CHART_YAML: &str = "\
@@ -96,7 +97,7 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> color_eyre::eyr
         .pointer("/properties/replicas")
         .expect("/properties/replicas present");
 
-    assert_eq!(
+    sim_assert_eq!(
         replicas,
         &serde_json::json!({}),
         "unused-sibling-helper integer hint leaked into root.replicas \

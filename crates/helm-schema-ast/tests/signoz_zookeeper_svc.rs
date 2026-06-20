@@ -1,4 +1,5 @@
 use helm_schema_ast::{HelmParser, TreeSitterParser};
+use test_util::prelude::sim_assert_eq;
 
 const TEMPLATE_PATH: &str =
     "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/svc.yaml";
@@ -170,7 +171,7 @@ const EXPECTED_SEXPR: &str = r#"(Document
 fn tree_sitter_ast() {
     let src = test_util::read_testdata(TEMPLATE_PATH);
     let ast = TreeSitterParser.parse(&src).expect("parse");
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(
         have: ast.to_sexpr(),
         want: EXPECTED_SEXPR.trim_end()
     );

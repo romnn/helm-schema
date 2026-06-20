@@ -5,6 +5,7 @@ use helm_schema_k8s::{
     local_override::debug_materialize_schema_for_resource as debug_materialize_override_schema,
 };
 use std::sync::atomic::{AtomicUsize, Ordering};
+use test_util::prelude::sim_assert_eq;
 
 static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
@@ -47,7 +48,7 @@ fn materialize_prometheusrule() {
     let local_materialized =
         debug_materialize_override_schema(&local_provider, &r).expect("materialize");
 
-    similar_asserts::assert_eq!(upstream_materialized, local_materialized);
+    sim_assert_eq!(upstream_materialized, local_materialized);
 }
 
 #[test]
@@ -86,7 +87,7 @@ fn prometheusrule_leaf_schema_rules_items() {
         .schema_fragment_for_resource_path(&r, &path)
         .expect("leaf schema");
 
-    similar_asserts::assert_eq!(upstream_leaf.into_schema(), local_leaf.into_schema());
+    sim_assert_eq!(upstream_leaf.into_schema(), local_leaf.into_schema());
 }
 
 /// `has_resource` reports whether the catalog has the resource's schema

@@ -414,6 +414,7 @@ fn definition_base_name(pointer: &str) -> String {
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -430,7 +431,7 @@ mod tests {
                 root_leaf,
             ),
             |current_location, reference| {
-                assert_eq!(current_location.document(), "source.json");
+                sim_assert_eq!(current_location.document(), "source.json");
                 (reference == "#/definitions/StringMap").then(|| {
                     SourceBundleNode::new(
                         "source.json",
@@ -444,7 +445,7 @@ mod tests {
             },
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             bundled,
             json!({
                 "type": "object",
@@ -518,7 +519,7 @@ mod tests {
             },
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             bundled,
             json!({
                 "type": "object",

@@ -243,6 +243,7 @@ mod tests {
     use super::build_composed_values_yaml;
     use crate::chart::ChartContext;
     use crate::chart::discover_chart_contexts;
+    use test_util::prelude::sim_assert_eq;
     use vfs::VfsPath;
 
     fn yaml_pointer<'a>(
@@ -321,11 +322,11 @@ mod tests {
             .expect("composed values yaml");
         let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
 
-        assert_eq!(
+        sim_assert_eq!(
             yaml_pointer(&doc, &["global", "imageRegistry"]),
             Some(&serde_yaml::Value::String("docker.io".to_string()))
         );
-        assert_eq!(
+        sim_assert_eq!(
             yaml_pointer(&doc, &["child", "global", "imageRegistry"]),
             Some(&serde_yaml::Value::String("docker.io".to_string()))
         );

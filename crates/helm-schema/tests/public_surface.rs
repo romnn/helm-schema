@@ -10,6 +10,7 @@ use helm_schema::{
     diagnostics::DiagnosticSink,
 };
 use serde_json::{Value, json};
+use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 #[test]
@@ -37,7 +38,7 @@ data:
     )?;
 
     let versions = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(1)).ordered();
-    assert_eq!(versions, vec!["v1.35.0".to_string(), "v1.34.0".to_string()]);
+    sim_assert_eq!(versions, vec!["v1.35.0".to_string(), "v1.34.0".to_string()]);
     assert!(matches!(
         JsonOutputFormat::from_compact(false),
         JsonOutputFormat::Pretty
@@ -61,13 +62,13 @@ data:
         },
     })?;
 
-    assert_eq!(
+    sim_assert_eq!(
         schema
             .pointer("/properties/enabled/type")
             .and_then(serde_json::Value::as_str),
         Some("boolean")
     );
-    assert_eq!(
+    sim_assert_eq!(
         schema
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
@@ -129,7 +130,7 @@ spec:
         "session contract uses should now retain source provenance"
     );
     let contract_document = session.contract_document()?;
-    assert_eq!(contract_document.version, 2);
+    sim_assert_eq!(contract_document.version, 2);
     assert!(
         !contract_document.uses.is_empty(),
         "session contract document should expose canonical uses"
@@ -147,7 +148,7 @@ spec:
         "session schema-signal query should expose path-local evidence"
     );
     let generated = session.generated_schema()?;
-    assert_eq!(
+    sim_assert_eq!(
         generated
             .schema
             .pointer("/properties/replicas/type")
@@ -324,7 +325,7 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
     let expected = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
     for _ in 0..100 {
         let actual = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
-        assert_eq!(actual, expected, "contract DTO bytes must be deterministic");
+        sim_assert_eq!(actual, expected, "contract DTO bytes must be deterministic");
     }
 
     Ok(())
@@ -369,8 +370,8 @@ spec:
     let session = AnalysisSession::new(opts);
     let session_generated = session.generated_schema()?;
 
-    similar_asserts::assert_eq!(staged.schema, session_generated.schema);
-    similar_asserts::assert_eq!(
+    sim_assert_eq!(staged.schema, session_generated.schema);
+    sim_assert_eq!(
         staged.subchart_value_prefixes,
         session_generated.subchart_value_prefixes
     );
@@ -522,13 +523,13 @@ data:
         },
     )?;
 
-    assert_eq!(
+    sim_assert_eq!(
         emitted
             .get("x-helm-schema-generated")
             .and_then(serde_json::Value::as_bool),
         Some(true)
     );
-    assert_eq!(
+    sim_assert_eq!(
         emitted
             .pointer("/properties/enabled/description")
             .and_then(serde_json::Value::as_str),
@@ -594,7 +595,7 @@ data:
 
     let explanation = session.explain("kid.enabled")?;
 
-    assert_eq!(explanation.path, "kid.enabled");
+    sim_assert_eq!(explanation.path, "kid.enabled");
     assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
     assert!(
         explanation
@@ -702,7 +703,7 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
     let json = serde_json::to_value(&document)?;
     let decoded: ContractDocument = serde_json::from_value(json)?;
 
-    assert_eq!(decoded, document);
+    sim_assert_eq!(decoded, document);
     assert!(
         decoded
             .uses
@@ -919,7 +920,7 @@ data:
         schema.pointer("/properties/mode/enum").is_none(),
         "inference must ignore sibling values.schema.json and use render evidence only: {schema}"
     );
-    assert_eq!(
+    sim_assert_eq!(
         schema
             .pointer("/properties/mode/type")
             .and_then(serde_json::Value::as_str),

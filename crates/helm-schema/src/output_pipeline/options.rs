@@ -69,10 +69,11 @@ impl JsonOutputFormat {
 #[cfg(test)]
 mod tests {
     use super::ReferenceMode;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn reference_mode_defaults_to_self_contained_output() {
-        assert_eq!(
+        sim_assert_eq!(
             ReferenceMode::from_flags(false, false),
             ReferenceMode::SelfContained
         );
@@ -82,7 +83,7 @@ mod tests {
 
     #[test]
     fn keep_refs_selects_reference_preserving_output() {
-        assert_eq!(
+        sim_assert_eq!(
             ReferenceMode::from_flags(true, false),
             ReferenceMode::PreserveRefs
         );
@@ -92,7 +93,7 @@ mod tests {
 
     #[test]
     fn inline_refs_selects_fully_inlined_export_output() {
-        assert_eq!(
+        sim_assert_eq!(
             ReferenceMode::from_flags(false, true),
             ReferenceMode::FullyInlinedExport
         );

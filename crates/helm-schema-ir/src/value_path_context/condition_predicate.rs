@@ -329,6 +329,7 @@ fn borrowed_guard_value_literal(arg: &TemplateExpr) -> Option<()> {
 mod tests {
     use super::*;
     use crate::Guard;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn with_predicates_preserve_header_projection_semantics() {
@@ -347,7 +348,7 @@ mod tests {
 
         let with_predicate = Predicate::all(with_predicates_from_condition_predicate(predicate));
 
-        assert_eq!(
+        sim_assert_eq!(
             with_predicate.contract_guards(),
             vec![
                 Guard::With {
@@ -380,7 +381,7 @@ mod tests {
                 },
             ]
         );
-        assert_eq!(
+        sim_assert_eq!(
             Predicate::all(with_predicates_from_condition_predicate(Predicate::False)),
             Predicate::False,
         );

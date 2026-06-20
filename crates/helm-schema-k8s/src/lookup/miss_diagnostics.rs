@@ -100,6 +100,7 @@ fn local_override_unreadable(trace: &LookupTrace) -> Option<Diagnostic> {
 #[cfg(test)]
 mod tests {
     use helm_schema_core::YamlPath;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
     use crate::lookup::ProviderLookupResult;
@@ -129,7 +130,7 @@ mod tests {
 
         let diagnostic = local_override_unreadable(&trace).expect("diagnostic");
 
-        assert_eq!(
+        sim_assert_eq!(
             diagnostic,
             Diagnostic::LocalOverrideUnreadable {
                 kind: "Widget".to_string(),

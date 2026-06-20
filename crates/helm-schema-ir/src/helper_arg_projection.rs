@@ -86,6 +86,7 @@ fn bindings_from_merge_args(
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::parse_action_expressions;
 
@@ -93,7 +94,7 @@ mod tests {
 
     fn single_expr(action: &str) -> TemplateExpr {
         let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
-        assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
         exprs.into_iter().next().expect("expression exists")
     }
 
@@ -130,7 +131,7 @@ mod tests {
 
     #[test]
     fn dict_argument_projects_string_and_raw_string_keys() {
-        assert_eq!(
+        sim_assert_eq!(
             project(r#"dict "name" .serviceAccount.name `raw` .raw"#, None),
             HashMap::from([
                 (
@@ -166,7 +167,7 @@ mod tests {
             ],
         };
 
-        assert_eq!(
+        sim_assert_eq!(
             project_expr(&expr, Some(&outer)),
             HashMap::from([
                 (

@@ -173,6 +173,7 @@ impl PredicateAtom {
 mod tests {
     use super::Predicate;
     use crate::{Guard, GuardValue};
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn or_truthy_predicate_projects_to_or_guard() {
@@ -180,7 +181,7 @@ mod tests {
             paths: vec!["first".to_string(), "second".to_string()],
         });
 
-        assert_eq!(
+        sim_assert_eq!(
             predicate.contract_guards(),
             vec![Guard::Or {
                 paths: vec!["first".to_string(), "second".to_string()]
@@ -195,7 +196,7 @@ mod tests {
         })
         .negated();
 
-        assert_eq!(
+        sim_assert_eq!(
             predicate.contract_guards(),
             vec![Guard::Not {
                 path: "enabled".to_string()
@@ -211,7 +212,7 @@ mod tests {
         .negated()
         .negated();
 
-        assert_eq!(
+        sim_assert_eq!(
             predicate.contract_guards(),
             vec![Guard::Truthy {
                 path: "enabled".to_string()
@@ -226,7 +227,7 @@ mod tests {
             value: GuardValue::string("prod"),
         })));
 
-        assert_eq!(
+        sim_assert_eq!(
             predicate.contract_guards(),
             vec![Guard::NotEq {
                 path: "mode".to_string(),
@@ -242,7 +243,7 @@ mod tests {
             value: GuardValue::string("disabled"),
         });
 
-        assert_eq!(
+        sim_assert_eq!(
             predicate.contract_guards(),
             vec![Guard::NotEq {
                 path: "mode".to_string(),
@@ -263,7 +264,7 @@ mod tests {
             }),
         ]);
 
-        assert_eq!(
+        sim_assert_eq!(
             predicate.contract_guards(),
             vec![Guard::AnyOf {
                 alternatives: vec![
@@ -285,7 +286,7 @@ mod tests {
             path: "enabled".to_string(),
         });
 
-        assert_eq!(
+        sim_assert_eq!(
             Predicate::contract_guard_stack(&[predicate.clone(), predicate]),
             vec![Guard::Truthy {
                 path: "enabled".to_string()

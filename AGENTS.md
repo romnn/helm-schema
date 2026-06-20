@@ -104,9 +104,24 @@ Therefore:
 
 ## Schema tests
 
-- Schema integration tests must assert full JSON schema equality using diff-based assertions (e.g. `similar_asserts::assert_eq!(actual, expected)`).
+- Schema integration tests must assert full JSON schema equality using diff-based assertions (e.g. `sim_assert_eq!(actual, expected)`; see "Equality assertions in tests" below).
 - Do not replace full-schema equality with selective assertions of a few fields.
 - Avoid snapshot testing / auto-regeneration; if output changes intentionally, update the full expected schema fixtures explicitly.
+
+## Equality assertions in tests
+
+- Tests must assert equality with `similar_asserts::assert_eq`, **not** the std `assert_eq!`. On failure it prints a readable line-by-line diff instead of dumping two large opaque values — essential for the big JSON schemas this project compares.
+- Import the alias from the `test-util` prelude and call it `sim_assert_eq!`:
+
+  ```rust
+  use test_util::prelude::sim_assert_eq;
+  // ...
+  sim_assert_eq!(actual, expected);
+  ```
+
+  The alias is defined once in `test-util` (`pub use similar_asserts::assert_eq as sim_assert_eq;`) so every crate refers to the same macro. Add `test-util` as a `dev-dependency` (`test-util.workspace = true`) if the crate does not already have it.
+- The import is **per-module**: a `use` in a parent module does not reach child `mod tests { … }` blocks, so each test module (and each integration-test file under `tests/`) needs its own `use test_util::prelude::sim_assert_eq;`.
+- This is enforced by clippy: `clippy.toml` disallows the `std::assert_eq` macro via `disallowed-macros`. The lint only bans the std macro — `similar_asserts::assert_eq` / the `sim_assert_eq` alias is unaffected. It currently surfaces as a warning (it still "shouts" so violations are caught), so do not reintroduce bare `assert_eq!` in tests.
 
 ## Result types
 

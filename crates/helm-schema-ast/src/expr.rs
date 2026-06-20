@@ -594,6 +594,7 @@ fn parse_float_literal(raw: &str) -> Option<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::prelude::sim_assert_eq;
 
     fn first(exprs: &[TemplateExpr]) -> &TemplateExpr {
         exprs.first().expect("at least one expression")
@@ -604,13 +605,13 @@ mod tests {
         let exprs = parse_action_expressions(r#"{{ include "common.labels" . }}"#);
         match first(&exprs) {
             TemplateExpr::Call { function, args } => {
-                assert_eq!(function, "include");
-                assert_eq!(args.len(), 2);
-                assert_eq!(
+                sim_assert_eq!(function, "include");
+                sim_assert_eq!(args.len(), 2);
+                sim_assert_eq!(
                     args[0],
                     TemplateExpr::Literal(Literal::String("common.labels".into()))
                 );
-                assert_eq!(args[1], TemplateExpr::Field(Vec::new()));
+                sim_assert_eq!(args[1], TemplateExpr::Field(Vec::new()));
             }
             other => panic!("expected Call, got {other:?}"),
         }
@@ -621,8 +622,8 @@ mod tests {
         let exprs = parse_action_expressions(r#"{{ template "common.labels" . }}"#);
         match first(&exprs) {
             TemplateExpr::Call { function, args } => {
-                assert_eq!(function, "template");
-                assert_eq!(
+                sim_assert_eq!(function, "template");
+                sim_assert_eq!(
                     args[0],
                     TemplateExpr::Literal(Literal::String("common.labels".into()))
                 );
@@ -645,7 +646,7 @@ mod tests {
         let TemplateExpr::Literal(Literal::String(s)) = &stages[0] else {
             panic!("expected String literal as stage 0, got {:?}", stages[0]);
         };
-        assert_eq!(s, r#"include "X""#);
+        sim_assert_eq!(s, r#"include "X""#);
 
         // Confirm no Call to include exists anywhere in the tree.
         let mut saw_include = false;
@@ -664,9 +665,9 @@ mod tests {
         let exprs = parse_action_expressions(r#"{{ default 5 .Values.replicas }}"#);
         match first(&exprs) {
             TemplateExpr::Call { function, args } => {
-                assert_eq!(function, "default");
-                assert_eq!(args[0], TemplateExpr::Literal(Literal::Int(5)));
-                assert_eq!(
+                sim_assert_eq!(function, "default");
+                sim_assert_eq!(args[0], TemplateExpr::Literal(Literal::Int(5)));
+                sim_assert_eq!(
                     args[1],
                     TemplateExpr::Field(vec!["Values".into(), "replicas".into()])
                 );
@@ -680,16 +681,16 @@ mod tests {
         let exprs = parse_action_expressions(r#"{{ .Values.replicas | default 5 }}"#);
         match first(&exprs) {
             TemplateExpr::Pipeline(stages) => {
-                assert_eq!(stages.len(), 2);
-                assert_eq!(
+                sim_assert_eq!(stages.len(), 2);
+                sim_assert_eq!(
                     stages[0],
                     TemplateExpr::Field(vec!["Values".into(), "replicas".into()])
                 );
                 let TemplateExpr::Call { function, args } = &stages[1] else {
                     panic!("expected default call in stage 1");
                 };
-                assert_eq!(function, "default");
-                assert_eq!(args, &vec![TemplateExpr::Literal(Literal::Int(5))]);
+                sim_assert_eq!(function, "default");
+                sim_assert_eq!(args, &vec![TemplateExpr::Literal(Literal::Int(5))]);
             }
             other => panic!("expected Pipeline, got {other:?}"),
         }
@@ -712,7 +713,7 @@ mod tests {
                 }
             });
         }
-        assert_eq!(include_args, vec!["real".to_string()]);
+        sim_assert_eq!(include_args, vec!["real".to_string()]);
     }
 
     #[test]
@@ -730,7 +731,7 @@ mod tests {
                 }
             });
         }
-        assert_eq!(include_names, vec!["a".to_string(), "b".to_string()]);
+        sim_assert_eq!(include_names, vec!["a".to_string(), "b".to_string()]);
     }
 
     #[test]
@@ -739,7 +740,7 @@ mod tests {
         // Raw string contents are NOT escape-decoded.
         match first(&exprs) {
             TemplateExpr::Literal(Literal::RawString(s)) => {
-                assert_eq!(s, "a\\nb");
+                sim_assert_eq!(s, "a\\nb");
             }
             other => panic!("expected RawString, got {other:?}"),
         }
@@ -751,8 +752,8 @@ mod tests {
         let exprs = parse_action_expressions(r#"{{ $root.Values.foo }}"#);
         match first(&exprs) {
             TemplateExpr::Selector { operand, path } => {
-                assert_eq!(**operand, TemplateExpr::Variable("root".into()));
-                assert_eq!(path, &vec!["Values".to_string(), "foo".to_string()]);
+                sim_assert_eq!(**operand, TemplateExpr::Variable("root".into()));
+                sim_assert_eq!(path, &vec!["Values".to_string(), "foo".to_string()]);
             }
             other => panic!("expected Selector, got {other:?}"),
         }
@@ -764,7 +765,7 @@ mod tests {
         // into a single `Field` with the full path, NOT a five-deep
         // Selector chain.
         let exprs = parse_action_expressions(r#"{{ .A.B.C.D.E }}"#);
-        assert_eq!(
+        sim_assert_eq!(
             first(&exprs),
             &TemplateExpr::Field(vec![
                 "A".into(),
@@ -786,7 +787,7 @@ mod tests {
         // the full `.Values.image.tag` reference instead of just
         // `.Values.image`.
         let exprs = parse_action_expressions(r#"{{ (.Values.image).tag }}"#);
-        assert_eq!(
+        sim_assert_eq!(
             first(&exprs),
             &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
         );
@@ -797,7 +798,7 @@ mod tests {
         // `((.Values.image)).tag` — double parens, still a pure path
         // prefix, still must collapse into a single Field.
         let exprs = parse_action_expressions(r#"{{ ((.Values.image)).tag }}"#);
-        assert_eq!(
+        sim_assert_eq!(
             first(&exprs),
             &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
         );
@@ -809,7 +810,7 @@ mod tests {
         // syntactic grouping; depth doesn't change semantics. Same
         // outcome as the un-parenthesised form.
         let exprs = parse_action_expressions(r#"{{ (((.Values.image))).tag }}"#);
-        assert_eq!(
+        sim_assert_eq!(
             first(&exprs),
             &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
         );
@@ -821,7 +822,7 @@ mod tests {
         // `.image.tag` is appended. Also `.Values.(image).tag` isn't a
         // legal grammar form so we focus on the prefix case here.
         let exprs = parse_action_expressions(r#"{{ (.Values).image.tag }}"#);
-        assert_eq!(
+        sim_assert_eq!(
             first(&exprs),
             &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
         );
@@ -837,7 +838,7 @@ mod tests {
         let exprs = parse_action_expressions(r#"{{ (.Values.image | upper).tag }}"#);
         match first(&exprs) {
             TemplateExpr::Selector { operand, path } => {
-                assert_eq!(path, &vec!["tag".to_string()]);
+                sim_assert_eq!(path, &vec!["tag".to_string()]);
                 assert!(
                     matches!(
                         operand.as_ref(),
@@ -854,7 +855,7 @@ mod tests {
     #[test]
     fn bare_dot_parses_as_empty_field_path() {
         let exprs = parse_action_expressions(r#"{{ . }}"#);
-        assert_eq!(exprs, vec![TemplateExpr::Field(Vec::new())]);
+        sim_assert_eq!(exprs, vec![TemplateExpr::Field(Vec::new())]);
     }
 
     #[test]
@@ -878,12 +879,12 @@ mod tests {
                 TemplateExpr::Call { .. } => "Call",
                 other => panic!("unexpected node for `{src}`: {other:?}"),
             };
-            assert_eq!(kind, expected_kind, "deparen result mismatch for {src}");
+            sim_assert_eq!(kind, expected_kind, "deparen result mismatch for {src}");
             // And the path is the same `["X","Y"]` everywhere.
             let TemplateExpr::Field(path) = first(&exprs).deparen() else {
                 panic!("expected Field after deparen for {src}");
             };
-            assert_eq!(path, &vec!["X".to_string(), "Y".to_string()]);
+            sim_assert_eq!(path, &vec!["X".to_string(), "Y".to_string()]);
         }
     }
 
@@ -919,12 +920,14 @@ mod tests {
                 _ => {}
             });
         }
-        assert_eq!(
-            paren_visits, 1,
+        sim_assert_eq!(
+            paren_visits,
+            1,
             "walk should visit the Parenthesized node exactly once",
         );
-        assert_eq!(
-            inner_call_visits, 1,
+        sim_assert_eq!(
+            inner_call_visits,
+            1,
             "walk should visit the inner `default \"x\" .Values.X` Call exactly once",
         );
     }
@@ -1003,7 +1006,7 @@ mod tests {
         let TemplateExpr::Pipeline(stages) = first(&exprs) else {
             panic!("expected pipeline");
         };
-        assert_eq!(stages.len(), 3);
+        sim_assert_eq!(stages.len(), 3);
         // First adjacent pair (Field, Call("upper")) — not a default.
         assert!(matches!(&stages[1], TemplateExpr::Call { function, .. } if function == "upper"));
         // Second adjacent pair (Call("upper"), Call("default")) — first
@@ -1105,7 +1108,7 @@ mod tests {
         let TemplateExpr::Literal(Literal::String(s)) = first(&exprs) else {
             panic!("expected string literal");
         };
-        assert_eq!(s, r"\u12", "got {s:?}");
+        sim_assert_eq!(s, r"\u12", "got {s:?}");
     }
 
     #[test]
@@ -1115,7 +1118,7 @@ mod tests {
         let TemplateExpr::Literal(Literal::String(s)) = first(&exprs) else {
             panic!("expected string literal");
         };
-        assert_eq!(s, "café 😀");
+        sim_assert_eq!(s, "café 😀");
     }
 
     #[test]
@@ -1127,7 +1130,7 @@ mod tests {
         let TemplateExpr::Literal(Literal::String(s)) = first(&exprs) else {
             panic!("expected string literal");
         };
-        assert_eq!(s, r"\uD800");
+        sim_assert_eq!(s, r"\uD800");
     }
 
     #[test]
@@ -1146,7 +1149,7 @@ mod tests {
         let TemplateExpr::Call { args, .. } = first(&exprs) else {
             panic!("expected Call");
         };
-        assert_eq!(args[0], TemplateExpr::Literal(Literal::Int(-42)));
+        sim_assert_eq!(args[0], TemplateExpr::Literal(Literal::Int(-42)));
     }
 
     #[test]
@@ -1155,6 +1158,6 @@ mod tests {
         let TemplateExpr::Call { args, .. } = first(&exprs) else {
             panic!("expected Call");
         };
-        assert_eq!(args[0], TemplateExpr::Literal(Literal::Int(0xFF)));
+        sim_assert_eq!(args[0], TemplateExpr::Literal(Literal::Int(0xFF)));
     }
 }

@@ -66,6 +66,7 @@ fn strip_schema_or_schema_array_descriptions(value: &mut Value) {
 #[cfg(test)]
 mod tests {
     use serde_json::Value;
+    use test_util::prelude::sim_assert_eq;
 
     use super::strip_schema_descriptions;
 
@@ -107,7 +108,7 @@ mod tests {
         strip_schema_descriptions(&mut schema);
 
         assert!(schema.get("description").is_none());
-        assert_eq!(
+        sim_assert_eq!(
             schema.pointer("/properties/description/type"),
             Some(&Value::String("string".to_string())),
         );
@@ -116,7 +117,7 @@ mod tests {
                 .pointer("/properties/description/description")
                 .is_none(),
         );
-        assert_eq!(
+        sim_assert_eq!(
             schema.pointer("/properties/nested/properties/description/type"),
             Some(&Value::String("string".to_string())),
         );
@@ -126,7 +127,7 @@ mod tests {
                 .is_none(),
         );
         assert!(schema.pointer("/$defs/shared/description").is_none());
-        assert_eq!(
+        sim_assert_eq!(
             schema.pointer("/items/0/type"),
             Some(&Value::String("string".to_string())),
         );

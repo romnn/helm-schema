@@ -37,6 +37,7 @@ impl ApiVersionInferenceCache {
 mod tests {
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_core::{ResourceRef, YamlPath};
 
@@ -95,6 +96,6 @@ mod tests {
                 ApiVersionInferenceOutcome::Resolved { .. },
             )
         ));
-        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        sim_assert_eq!(calls.load(Ordering::SeqCst), 1);
     }
 }

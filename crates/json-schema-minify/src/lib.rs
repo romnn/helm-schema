@@ -482,6 +482,7 @@ const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
 
     use super::*;
 
@@ -512,7 +513,7 @@ mod tests {
 
         let result = minimize_schema(schema, &options());
 
-        similar_asserts::assert_eq!(
+        sim_assert_eq!(
             result.schema,
             json!({
                 "$defs": {
@@ -533,8 +534,8 @@ mod tests {
                 }
             })
         );
-        assert_eq!(result.stats.definitions_added, 1);
-        assert_eq!(result.stats.replacements, 2);
+        sim_assert_eq!(result.stats.definitions_added, 1);
+        sim_assert_eq!(result.stats.replacements, 2);
         assert!(result.stats.bytes_after < result.stats.bytes_before);
     }
 
@@ -557,7 +558,7 @@ mod tests {
         });
 
         let result = minimize_schema(schema, &options());
-        assert_eq!(
+        sim_assert_eq!(
             result
                 .schema
                 .pointer("/$defs/schema1/required")
@@ -565,7 +566,7 @@ mod tests {
                 .map(Vec::len),
             Some(2)
         );
-        assert_eq!(
+        sim_assert_eq!(
             result
                 .schema
                 .pointer("/$defs/schema1/enum")
@@ -600,8 +601,8 @@ mod tests {
         });
 
         let result = minimize_schema(schema.clone(), &options());
-        similar_asserts::assert_eq!(result.schema, schema);
-        assert_eq!(result.stats.replacements, 0);
+        sim_assert_eq!(result.schema, schema);
+        sim_assert_eq!(result.stats.replacements, 0);
     }
 
     #[test]
@@ -626,11 +627,11 @@ mod tests {
         });
 
         let result = minimize_schema(schema, &options());
-        similar_asserts::assert_eq!(
+        sim_assert_eq!(
             result.schema.pointer("/properties/left/$ref"),
             Some(&Value::String("#/$defs/schema1".to_string()))
         );
-        similar_asserts::assert_eq!(
+        sim_assert_eq!(
             result.schema.pointer("/properties/right/$ref"),
             Some(&Value::String("#/$defs/schema1".to_string()))
         );
@@ -647,9 +648,9 @@ mod tests {
         });
 
         let result = minimize_schema(schema.clone(), &options());
-        similar_asserts::assert_eq!(result.schema, schema);
-        assert_eq!(result.stats.definitions_added, 0);
-        assert_eq!(result.stats.replacements, 0);
+        sim_assert_eq!(result.schema, schema);
+        sim_assert_eq!(result.stats.definitions_added, 0);
+        sim_assert_eq!(result.stats.replacements, 0);
     }
 
     #[test]
@@ -674,7 +675,7 @@ mod tests {
         let result = minimize_schema(schema, &options());
         assert!(result.schema.pointer("/$defs/schema1").is_some());
         assert!(result.schema.pointer("/$defs/schema2").is_some());
-        assert_eq!(
+        sim_assert_eq!(
             result.schema.pointer("/properties/left/$ref"),
             Some(&Value::String("#/$defs/schema2".to_string()))
         );

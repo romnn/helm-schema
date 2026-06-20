@@ -2,6 +2,7 @@ use helm_schema_ast::DefineIndex;
 use indoc::indoc;
 
 use super::super::ResourceIdentityIndex;
+use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn resource_locator_keeps_multi_document_resources_separate() {
@@ -20,14 +21,14 @@ fn resource_locator_keeps_multi_document_resources_separate() {
 
     locator.advance_to(source.find("first").expect("first marker"));
     let first = locator.current_resource().expect("first resource");
-    assert_eq!(first.kind, "ConfigMap");
-    assert_eq!(first.api_version, "v1");
+    sim_assert_eq!(first.kind, "ConfigMap");
+    sim_assert_eq!(first.api_version, "v1");
     assert!(first.api_version_candidates.is_empty());
 
     locator.advance_to(source.find("replicas").expect("replicas marker"));
     let second = locator.current_resource().expect("second resource");
-    assert_eq!(second.kind, "Deployment");
-    assert_eq!(second.api_version, "apps/v1");
+    sim_assert_eq!(second.kind, "Deployment");
+    sim_assert_eq!(second.api_version, "apps/v1");
     assert!(second.api_version_candidates.is_empty());
 }
 
@@ -49,7 +50,7 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
                 - port: {{ .Values.port }}
     "#};
     let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
-    assert_eq!(
+    sim_assert_eq!(
         locator.span_count(),
         2,
         "list envelope should produce one span per inner resource"
@@ -57,9 +58,9 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
 
     locator.advance_to(source.find("host").expect("host marker"));
     let ingress = locator.current_resource().expect("ingress resource");
-    assert_eq!(ingress.kind, "Ingress");
-    assert_eq!(ingress.api_version, "networking.k8s.io/v1");
-    assert_eq!(
+    sim_assert_eq!(ingress.kind, "Ingress");
+    sim_assert_eq!(ingress.api_version, "networking.k8s.io/v1");
+    sim_assert_eq!(
         locator.rebase_path(crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
@@ -75,9 +76,9 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
 
     locator.advance_to(source.find("port").expect("port marker"));
     let service = locator.current_resource().expect("service resource");
-    assert_eq!(service.kind, "Service");
-    assert_eq!(service.api_version, "v1");
-    assert_eq!(
+    sim_assert_eq!(service.kind, "Service");
+    sim_assert_eq!(service.api_version, "v1");
+    sim_assert_eq!(
         locator.rebase_path(crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
@@ -113,7 +114,7 @@ fn resource_locator_descends_into_ranged_list_items() {
         {{- end }}
     "#};
     let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
-    assert_eq!(
+    sim_assert_eq!(
         locator.span_count(),
         1,
         "ranged list envelope should produce the inner resource span"
@@ -121,9 +122,9 @@ fn resource_locator_descends_into_ranged_list_items() {
 
     locator.advance_to(source.find("host").expect("host marker"));
     let ingress = locator.current_resource().expect("ingress resource");
-    assert_eq!(ingress.kind, "Ingress");
-    assert_eq!(ingress.api_version, "networking.k8s.io/v1");
-    assert_eq!(
+    sim_assert_eq!(ingress.kind, "Ingress");
+    sim_assert_eq!(ingress.api_version, "networking.k8s.io/v1");
+    sim_assert_eq!(
         locator.rebase_path(crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),
@@ -151,7 +152,7 @@ fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
                 - port: {{ .Values.port }}
     "#};
     let mut locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
-    assert_eq!(
+    sim_assert_eq!(
         locator.span_count(),
         1,
         "only the exact kubernetes v1/list envelope should be transparent"
@@ -159,9 +160,9 @@ fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
 
     locator.advance_to(source.find("port").expect("port marker"));
     let resource = locator.current_resource().expect("outer resource");
-    assert_eq!(resource.kind, "List");
-    assert_eq!(resource.api_version, "example.com/v1");
-    assert_eq!(
+    sim_assert_eq!(resource.kind, "List");
+    sim_assert_eq!(resource.api_version, "example.com/v1");
+    sim_assert_eq!(
         locator.rebase_path(crate::YamlPath(vec![
             "items[*]".to_string(),
             "spec".to_string(),

@@ -181,10 +181,11 @@ pub(crate) fn set_default_chart_paths_for_exprs(
 mod tests {
     use super::*;
     use crate::template_expr_cache::parse_expr_text;
+    use test_util::prelude::sim_assert_eq;
 
     fn expr(text: &str) -> TemplateExpr {
         let exprs = parse_expr_text(text);
-        assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
+        sim_assert_eq!(exprs.len(), 1, "expected exactly one parsed expression");
         exprs.into_iter().next().expect("expression exists")
     }
 
@@ -202,7 +203,7 @@ mod tests {
             ),
         )]);
 
-        assert_eq!(
+        sim_assert_eq!(
             helper_binding_from_expr(
                 &expr(".ctx.config.name | default \"x\""),
                 Some(&bindings),
@@ -227,7 +228,7 @@ mod tests {
             None,
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             bindings,
             HashMap::from([
                 ("ctx".to_string(), AbstractValue::RootContext),
@@ -246,7 +247,7 @@ mod tests {
             AbstractValue::ValuesPath("serviceAccount".to_string()),
         )]);
 
-        assert_eq!(
+        sim_assert_eq!(
             resolve_expr_to_values_path(&expr(".config.name"), Some(&bindings), None),
             Some("serviceAccount.name".to_string()),
         );

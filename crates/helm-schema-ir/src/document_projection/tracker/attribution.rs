@@ -1745,6 +1745,7 @@ pub(super) fn is_output_root_kind(kind: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::placeholder_token;
+    use test_util::prelude::sim_assert_eq;
 
     #[test]
     fn short_placeholder_tokens_remain_distinct_for_dense_inline_actions() {
@@ -1752,7 +1753,7 @@ mod tests {
             .map(|index| placeholder_token(index, 5))
             .collect::<std::collections::BTreeSet<_>>();
 
-        assert_eq!(tokens.len(), 36);
+        sim_assert_eq!(tokens.len(), 36);
         assert!(tokens.iter().all(|token| token.starts_with("__HS")));
     }
 }

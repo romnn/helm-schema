@@ -39,6 +39,7 @@ pub(crate) fn truthy_predicate_for_paths(paths: &BTreeSet<String>) -> Predicate 
 #[cfg(test)]
 mod tests {
     use std::collections::{HashMap, HashSet};
+    use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::DefineIndex;
 
@@ -66,7 +67,7 @@ mod tests {
             &mut seen,
         );
 
-        assert_eq!(
+        sim_assert_eq!(
             paths,
             ["signoz.serviceAccount.create".to_string()]
                 .into_iter()
