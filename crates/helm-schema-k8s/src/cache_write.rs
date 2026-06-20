@@ -2,6 +2,11 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
+use serde_json::Value;
+
+use crate::cache::write_meta_sidecar;
+use crate::schema_doc::SchemaDoc;
+
 pub(crate) fn write_atomic_file(local: &Path, bytes: &[u8]) -> std::io::Result<()> {
     if let Some(parent) = local.parent() {
         fs::create_dir_all(parent)?;
@@ -26,4 +31,19 @@ pub(crate) fn write_atomic_file(local: &Path, bytes: &[u8]) -> std::io::Result<(
             }
         }
     }
+}
+
+pub(crate) fn write_fetched_schema_doc(
+    local: &Path,
+    url: &str,
+    bytes: &[u8],
+    record_source: bool,
+) -> Option<SchemaDoc> {
+    write_atomic_file(local, bytes).ok()?;
+    if record_source {
+        write_meta_sidecar(local, url);
+    }
+    serde_json::from_slice::<Value>(bytes)
+        .ok()
+        .map(SchemaDoc::new)
 }

@@ -14,7 +14,6 @@ use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_has_destructured_variable_definition,
 };
-use crate::helper_output_projection::push_helper_fragment_output;
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
@@ -175,13 +174,12 @@ impl FragmentOutputUseRuntime<'_, '_> {
 
         let meta = HelperOutputMeta::with_predicates(&self.active_output_predicates, false);
         for source_expr in range_binding.fragment_source_paths() {
-            push_helper_fragment_output(
-                self.outputs,
+            self.outputs.push(HelperFragmentOutputUse::new(
                 source_expr,
-                current_path,
+                current_path.clone(),
                 ValueKind::Fragment,
                 meta.clone(),
-            );
+            ));
         }
     }
 }

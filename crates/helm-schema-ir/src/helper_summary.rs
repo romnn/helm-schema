@@ -50,6 +50,11 @@ impl HelperOutputMeta {
             .collect();
     }
 
+    pub(crate) fn with_additional_predicates(mut self, predicates: &BTreeSet<Predicate>) -> Self {
+        self.add_predicates(predicates.iter().cloned());
+        self
+    }
+
     pub(crate) fn merge(&mut self, other: Self) {
         self.predicates.extend(other.predicates);
         self.defaulted |= other.defaulted;
@@ -107,6 +112,39 @@ pub(crate) struct HelperFragmentOutputUse {
     pub(crate) kind: ValueKind,
     pub(crate) encoded: bool,
     pub(crate) meta: HelperOutputMeta,
+}
+
+impl HelperFragmentOutputUse {
+    pub(crate) fn new(
+        source_expr: String,
+        relative_path: YamlPath,
+        kind: ValueKind,
+        meta: HelperOutputMeta,
+    ) -> Self {
+        Self {
+            source_expr,
+            relative_path,
+            kind,
+            encoded: false,
+            meta,
+        }
+    }
+
+    pub(crate) fn with_encoding(
+        source_expr: String,
+        relative_path: YamlPath,
+        kind: ValueKind,
+        encoded: bool,
+        meta: HelperOutputMeta,
+    ) -> Self {
+        Self {
+            source_expr,
+            relative_path,
+            kind,
+            encoded,
+            meta,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -211,13 +249,12 @@ impl HelperSummary {
         kind: ValueKind,
         meta: HelperOutputMeta,
     ) {
-        self.fragment_output_uses.push(HelperFragmentOutputUse {
+        self.fragment_output_uses.push(HelperFragmentOutputUse::new(
             source_expr,
             relative_path,
             kind,
-            encoded: false,
             meta,
-        });
+        ));
     }
 
     pub(crate) fn dependency_paths(&self) -> BTreeSet<String> {
@@ -296,7 +333,7 @@ impl HelperSummary {
     pub(crate) fn project_fragment_value(self) -> Option<AbstractValue> {
         project_summary_value(self, SummaryProjectionKind::FragmentValue)
             .map(|value| value.to_context_value())
-            .and_then(|value| AbstractValue::merge_fragment_bindings(vec![value]))
+            .and_then(|value| AbstractValue::merge_context_values(vec![value]))
     }
 }
 

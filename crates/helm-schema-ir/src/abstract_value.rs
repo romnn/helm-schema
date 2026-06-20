@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::helper_summary::HelperOutputMeta;
-use crate::{ValueKind, YamlPath};
+use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
+use crate::predicate::Predicate;
+use crate::{ValueKind, YamlPath, output_path};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum AbstractValue {
@@ -387,13 +388,13 @@ impl AbstractValue {
         )
     }
 
-    pub(crate) fn merge_fragment_bindings(bindings: Vec<Self>) -> Option<Self> {
+    pub(crate) fn merge_context_values(values: Vec<Self>) -> Option<Self> {
         let mut map = BTreeMap::new();
         let mut non_dict_value_paths = BTreeSet::new();
         let mut non_dict_output_meta: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         let mut non_dict_strings = BTreeSet::new();
 
-        let mut pending = bindings;
+        let mut pending = values;
         while let Some(binding) = pending.pop() {
             match binding {
                 Self::Choice(choices) => pending.extend(choices),
@@ -616,6 +617,160 @@ impl AbstractValue {
         self.for_fragment_output_projection().paths()
     }
 
+    pub(crate) fn collect_output_uses(
+        &self,
+        outputs: &mut Vec<HelperFragmentOutputUse>,
+        relative_path: &YamlPath,
+        kind: ValueKind,
+        active_output_predicates: &BTreeSet<Predicate>,
+        defaulted_paths: &BTreeSet<String>,
+    ) {
+        self.collect_output_uses_with_encoding(
+            outputs,
+            relative_path,
+            kind,
+            &BTreeSet::new(),
+            active_output_predicates,
+            defaulted_paths,
+        );
+    }
+
+    pub(crate) fn collect_fragment_output_uses(
+        &self,
+        outputs: &mut Vec<HelperFragmentOutputUse>,
+        relative_path: &YamlPath,
+        kind: ValueKind,
+        active_output_predicates: &BTreeSet<Predicate>,
+        defaulted_paths: &BTreeSet<String>,
+    ) {
+        self.for_fragment_output_projection().collect_output_uses(
+            outputs,
+            relative_path,
+            kind,
+            active_output_predicates,
+            defaulted_paths,
+        );
+    }
+
+    pub(crate) fn collect_output_uses_with_encoding(
+        &self,
+        outputs: &mut Vec<HelperFragmentOutputUse>,
+        relative_path: &YamlPath,
+        kind: ValueKind,
+        encoded_paths: &BTreeSet<String>,
+        active_output_predicates: &BTreeSet<Predicate>,
+        defaulted_paths: &BTreeSet<String>,
+    ) {
+        match self {
+            Self::ValuesPath(path) => {
+                push_output_path(
+                    outputs,
+                    path,
+                    relative_path,
+                    kind,
+                    None,
+                    encoded_paths,
+                    active_output_predicates,
+                    defaulted_paths,
+                );
+            }
+            Self::PathSet(paths) => {
+                for path in paths {
+                    push_output_path(
+                        outputs,
+                        path,
+                        relative_path,
+                        kind,
+                        None,
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
+            Self::OutputSet(outputs_by_path) => {
+                for (path, meta) in outputs_by_path {
+                    push_output_path(
+                        outputs,
+                        path,
+                        relative_path,
+                        kind,
+                        Some(meta),
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
+            Self::Dict(entries) => {
+                for (key, value) in entries {
+                    let child_path = output_path::append_relative_path(
+                        relative_path,
+                        &YamlPath(vec![key.clone()]),
+                    );
+                    value.collect_output_uses_with_encoding(
+                        outputs,
+                        &child_path,
+                        value.output_child_kind(),
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
+            Self::Overlay { entries, fallback } => {
+                fallback.collect_output_uses_with_encoding(
+                    outputs,
+                    relative_path,
+                    kind,
+                    encoded_paths,
+                    active_output_predicates,
+                    defaulted_paths,
+                );
+                for (key, value) in entries {
+                    let child_path = output_path::append_relative_path(
+                        relative_path,
+                        &YamlPath(vec![key.clone()]),
+                    );
+                    value.collect_output_uses_with_encoding(
+                        outputs,
+                        &child_path,
+                        value.output_child_kind(),
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
+            Self::Choice(choices) => {
+                for choice in choices {
+                    choice.collect_output_uses_with_encoding(
+                        outputs,
+                        relative_path,
+                        kind,
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
+            Self::List(items) => {
+                let item_path = output_path::sequence_item_path(relative_path);
+                for item in items {
+                    item.collect_output_uses_with_encoding(
+                        outputs,
+                        &item_path,
+                        item.output_child_kind(),
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
+            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
+        }
+    }
+
     pub(crate) fn select_fragment_path(&self, path: &[String]) -> Option<Self> {
         self.apply_to_path(path)
             .map(|value| value.to_context_value())
@@ -661,6 +816,41 @@ fn item_path(path: &str) -> String {
     } else {
         format!("{path}.*")
     }
+}
+
+fn push_output_path(
+    outputs: &mut Vec<HelperFragmentOutputUse>,
+    path: &str,
+    relative_path: &YamlPath,
+    kind: ValueKind,
+    meta: Option<&HelperOutputMeta>,
+    encoded_paths: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
+    defaulted_paths: &BTreeSet<String>,
+) {
+    let base_meta = meta.cloned().unwrap_or_default();
+    let meta = HelperOutputMeta {
+        predicates: base_meta.predicates,
+        defaulted: base_meta.defaulted || defaulted_paths.contains(path),
+        provenance: base_meta.provenance,
+    }
+    .with_additional_predicates(active_output_predicates);
+    outputs.push(HelperFragmentOutputUse::with_encoding(
+        path.to_string(),
+        relative_path.clone(),
+        kind,
+        path_is_encoded(path, encoded_paths),
+        meta,
+    ));
+}
+
+fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
+    encoded_paths.iter().any(|encoded_path| {
+        path == encoded_path
+            || path
+                .strip_prefix(encoded_path)
+                .is_some_and(|suffix| suffix.starts_with('.'))
+    })
 }
 
 #[cfg(test)]

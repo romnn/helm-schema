@@ -137,12 +137,7 @@ pub(crate) fn ensure_schema_node_at_path_segments<'a>(
     ensure_object_schema(root);
     let mut current = root;
     for segment in path_segments {
-        ensure_object_schema(current);
-        let properties = current
-            .as_object_mut()
-            .and_then(|object| object.get_mut("properties"))
-            .and_then(Value::as_object_mut)
-            .expect("object schema must have properties");
+        let properties = ensure_object_properties(current);
         current = properties
             .entry(segment.clone())
             .or_insert_with(|| object_schema(Map::new()));
@@ -327,6 +322,35 @@ fn ensure_items_schema(array_schema: &mut Value) -> &mut Value {
         .expect("array schema must have items")
 }
 
+fn ensure_object_properties(value: &mut Value) -> &mut Map<String, Value> {
+    ensure_object_schema(value);
+    value
+        .as_object_mut()
+        .and_then(|object| object.get_mut("properties"))
+        .and_then(Value::as_object_mut)
+        .expect("object schema must have properties")
+}
+
+fn ensure_additional_properties(value: &mut Value) -> &mut Value {
+    ensure_object_schema(value);
+    let obj = value.as_object_mut().expect("object schema");
+    let additional_properties = obj
+        .entry("additionalProperties")
+        .or_insert_with(|| Value::Object(Map::new()));
+    if additional_properties.as_bool() == Some(false) {
+        *additional_properties = Value::Object(Map::new());
+    }
+    additional_properties
+}
+
+fn merge_into_schema_slot(slot: &mut Value, schema: Value) {
+    let existing = std::mem::replace(slot, Value::Null);
+    *slot = match existing {
+        Value::Null => schema,
+        other => merge_two_schemas(other, schema),
+    };
+}
+
 fn clear_exact_empty_constraint_for_descendant(node: &mut Value) {
     if let Value::Object(obj) = node
         && obj.get("maxProperties").and_then(Value::as_u64) == Some(0)
@@ -487,20 +511,9 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
         if path_segments.len() > 1 {
             clear_exact_empty_constraint_for_descendant(node);
         }
-        ensure_object_schema(node);
-        let obj = node.as_object_mut().expect("object schema");
-        let additional_properties = obj
-            .entry("additionalProperties")
-            .or_insert_with(|| Value::Object(Map::new()));
-        if additional_properties.as_bool() == Some(false) {
-            *additional_properties = Value::Object(Map::new());
-        }
+        let additional_properties = ensure_additional_properties(node);
         if path_segments.len() == 1 {
-            let existing = std::mem::replace(additional_properties, Value::Null);
-            *additional_properties = match existing {
-                Value::Null => leaf,
-                other => merge_two_schemas(other, leaf),
-            };
+            merge_into_schema_slot(additional_properties, leaf);
         } else {
             clear_exact_empty_constraint_for_descendant(additional_properties);
             insert_schema_at_parts(additional_properties, &path_segments[1..], leaf);
@@ -519,11 +532,7 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
         ensure_array_schema(node);
         let items = ensure_items_schema(node);
         if path_segments.len() == 1 {
-            let existing = std::mem::replace(items, Value::Null);
-            *items = match existing {
-                Value::Null => leaf,
-                other => merge_two_schemas(other, leaf),
-            };
+            merge_into_schema_slot(items, leaf);
         } else {
             insert_schema_at_parts(items, &path_segments[1..], leaf);
         }
@@ -533,12 +542,7 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
     if path_segments.len() > 1 {
         clear_exact_empty_constraint_for_descendant(node);
     }
-    ensure_object_schema(node);
-    let properties = node
-        .as_object_mut()
-        .and_then(|object| object.get_mut("properties"))
-        .and_then(Value::as_object_mut)
-        .expect("object schema must have properties");
+    let properties = ensure_object_properties(node);
 
     if path_segments.len() == 1 {
         let key = path_segments[0].clone();
@@ -547,8 +551,7 @@ fn insert_schema_at_parts(node: &mut Value, path_segments: &[String], leaf: Valu
                 entry.insert(leaf);
             }
             serde_json::map::Entry::Occupied(mut entry) => {
-                let existing = std::mem::replace(entry.get_mut(), Value::Null);
-                *entry.get_mut() = merge_two_schemas(existing, leaf);
+                merge_into_schema_slot(entry.get_mut(), leaf);
             }
         }
         return;

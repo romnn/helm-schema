@@ -7,7 +7,6 @@ use crate::expression_analysis::resolved_default_fallback_paths_for_exprs;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr, helper_binding_from_expr_with_fragment_locals,
 };
-use crate::helper_output_projection::helper_binding_output_meta;
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::local_projection::local_default_paths_from_exprs;
 use crate::template_expr_analysis::expr_contains_helper_call;
@@ -114,7 +113,7 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
         )
     }
 
-    pub(crate) fn helper_binding_output_meta_from_exprs(
+    pub(crate) fn output_meta_from_exprs(
         &self,
         exprs: &[TemplateExpr],
         local_bindings: &HashMap<String, AbstractValue>,
@@ -124,7 +123,7 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
         let mut seen = seen_seed.clone();
         for expr in exprs {
             if let Some(binding) = self.helper_binding_from_expr(expr, local_bindings, &mut seen) {
-                for (path, meta) in helper_binding_output_meta(&binding) {
+                for (path, meta) in binding.output_meta() {
                     out.entry(path).or_default().merge(meta);
                 }
             }

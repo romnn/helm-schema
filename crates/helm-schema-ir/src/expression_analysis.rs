@@ -189,7 +189,7 @@ mod tests {
     }
 
     #[test]
-    fn helper_binding_projection_uses_shared_expression_eval() {
+    fn helper_value_expression_uses_shared_expression_eval() {
         let bindings = HashMap::from([(
             "ctx".to_string(),
             AbstractValue::Dict(

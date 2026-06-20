@@ -8,9 +8,9 @@ use serde_json::Value;
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, default_source_id,
     k8s_cache_path, not_found_marker_exists, not_found_marker_path, read_cached_json_doc,
-    write_meta_sidecar, write_not_found_marker,
+    write_not_found_marker,
 };
-use crate::cache_write::write_atomic_file;
+use crate::cache_write::write_fetched_schema_doc;
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
@@ -269,11 +269,7 @@ impl KubernetesJsonSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                write_atomic_file(&local, &bytes).ok()?;
-                if self.record_source {
-                    write_meta_sidecar(&local, &url);
-                }
-                let doc = SchemaDoc::new(serde_json::from_slice::<Value>(&bytes).ok()?);
+                let doc = write_fetched_schema_doc(&local, &url, &bytes, self.record_source)?;
                 clear_not_found_marker(&local);
                 self.write_mem(&source.source_id, version, filename, doc.clone());
                 Some(doc)
@@ -517,21 +513,16 @@ impl KubernetesJsonSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                if write_atomic_file(&local, &bytes).is_err() {
-                    // Couldn't persist — we still proved the schema
-                    // exists upstream, but treat as Uncertain so a
-                    // later run probes again rather than locking in
-                    // a cache miss.
-                    return ProbeOutcome::Uncertain;
-                }
-                if self.record_source {
-                    write_meta_sidecar(&local, &url);
-                }
-                let Ok(doc) = serde_json::from_slice::<Value>(&bytes) else {
+                let Some(doc) = write_fetched_schema_doc(&local, &url, &bytes, self.record_source)
+                else {
+                    // Couldn't persist or parse — we still proved the
+                    // schema exists upstream, but treat as Uncertain so
+                    // a later run probes again rather than locking in a
+                    // cache miss.
                     return ProbeOutcome::Uncertain;
                 };
                 clear_not_found_marker(&local);
-                self.write_mem(source_id, version, filename, SchemaDoc::new(doc));
+                self.write_mem(source_id, version, filename, doc);
                 ProbeOutcome::Found
             }
             Ok(None) => {

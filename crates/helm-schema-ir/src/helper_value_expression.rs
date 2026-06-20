@@ -190,11 +190,8 @@ fn collect_assignment_bound_helper_values(
     let local_outputs = local_bound_paths_from_expr(rhs_expr, state.local_bindings);
     let local_meta_by_path =
         local_output_meta_from_exprs(rhs_exprs, state.local_bindings, state.local_output_meta);
-    let result_meta_by_path = helper_env.helper_binding_output_meta_from_exprs(
-        rhs_exprs,
-        state.local_bindings,
-        state.seen,
-    );
+    let result_meta_by_path =
+        helper_env.output_meta_from_exprs(rhs_exprs, state.local_bindings, state.seen);
     let nested = helper_env.summarize_calls_in_exprs(rhs_exprs, state.local_bindings, state.seen);
     state
         .analysis

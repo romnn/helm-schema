@@ -7,9 +7,9 @@ use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, crd_cache_path,
-    read_cached_json_doc, write_meta_sidecar,
+    read_cached_json_doc,
 };
-use crate::cache_write::write_atomic_file;
+use crate::cache_write::write_fetched_schema_doc;
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{
     LocalSchemaLeaf, debug_materialize_local_schema,
@@ -212,11 +212,7 @@ impl CrdsCatalogSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                write_atomic_file(&local, &bytes).ok()?;
-                if self.record_source {
-                    write_meta_sidecar(&local, &url);
-                }
-                let doc = SchemaDoc::new(serde_json::from_slice::<Value>(&bytes).ok()?);
+                let doc = write_fetched_schema_doc(&local, &url, &bytes, self.record_source)?;
                 self.write_mem(&source.source_id, relative_path, doc.clone());
                 Some(doc)
             }

@@ -46,6 +46,7 @@ pub enum HelperParseMode {
 pub struct SchemaCorpusCase<'a> {
     pub template_path: &'a str,
     pub values_path: &'a str,
+    pub fixture_values_yaml: Option<&'a str>,
     pub expected_fixture: &'a str,
     pub define_sources: test_util::DefineSourceSpec<'a>,
     pub provider: ProviderKind<'a>,
@@ -122,8 +123,13 @@ pub fn generate_schema_with_values_yaml(
 }
 
 pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> Value {
-    let values_yaml = test_util::read_testdata(case.values_path);
-    render_schema_case_with_values(case, &values_yaml)
+    match case.fixture_values_yaml {
+        Some(values_yaml) => render_schema_case_with_values(case, values_yaml),
+        None => {
+            let values_yaml = test_util::read_testdata(case.values_path);
+            render_schema_case_with_values(case, &values_yaml)
+        }
+    }
 }
 
 pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: &str) -> Value {

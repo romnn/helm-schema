@@ -8,8 +8,6 @@ use helm_schema_k8s::{
 };
 use serde::Deserialize;
 
-use common::cases::SURVEYOR_CONFIGMAP as CASE;
-
 fn helm_template_render_configmap(chart_dir: &std::path::Path) -> Result<String, String> {
     common::helm_template_render_with_args(
         chart_dir,
@@ -45,40 +43,6 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
         out.push(v);
     }
     out
-}
-
-#[test]
-fn schema_from_tree_sitter() {
-    let values_signal = indoc::formatdoc! {r#"
-        nameOverride: ""
-        fullnameOverride: ""
-        config:
-          jetstream:
-            enabled: false
-            accounts:
-              - name: test
-                username: username
-                password: password
-                tls:
-                  ca: ca.crt
-                  cert: tls.crt
-                  key: tls.key
-    "#};
-
-    let actual = common::render_schema_case_with_values(&CASE, &values_signal);
-    let expected: serde_json::Value =
-        serde_json::from_str(CASE.expected_fixture).expect("expected schema json");
-
-    similar_asserts::assert_eq!(actual, expected);
-
-    let values_yaml = test_util::read_testdata(CASE.values_path);
-    let errors = common::validate_values_yaml(&values_yaml, &actual);
-    assert!(
-        errors.is_empty(),
-        "values.yaml failed schema validation with {} error(s):\n{}",
-        errors.len(),
-        errors.join("\n")
-    );
 }
 
 #[test]

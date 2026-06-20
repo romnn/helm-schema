@@ -9,10 +9,8 @@ use crate::fragment_assignment::{
 };
 use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_output_projection::{
-    HelperOutputExprContext, collect_fragment_binding_output_uses,
-    collect_helper_binding_output_uses, collect_helper_binding_output_uses_from_expr,
-    expression_output_use_is_keyed_map_projection, helper_output_meta_with_predicates,
-    push_helper_fragment_output, static_yaml_fragment_output_path_from_exprs,
+    HelperOutputExprContext, collect_output_uses_from_expr,
+    expression_output_use_is_keyed_map_projection, static_yaml_fragment_output_path_from_exprs,
 };
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_walk_state::FragmentOutputWalkState;
@@ -89,7 +87,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
 
     let mut direct_output_uses = Vec::new();
     for expr in exprs {
-        collect_helper_binding_output_uses_from_expr(
+        collect_output_uses_from_expr(
             expr,
             HelperOutputExprContext {
                 bindings,
@@ -168,8 +166,13 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
         {
             continue;
         }
-        let meta = helper_output_meta_with_predicates(meta, active_output_predicates);
-        push_helper_fragment_output(state.outputs, source_expr, relative_path, kind, meta);
+        let meta = meta.with_additional_predicates(active_output_predicates);
+        state.outputs.push(HelperFragmentOutputUse::new(
+            source_expr,
+            relative_path.clone(),
+            kind,
+            meta,
+        ));
     }
     for nested_output in nested.fragment_output_uses.drain(..) {
         if kind == ValueKind::Fragment
@@ -180,14 +183,15 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
         {
             continue;
         }
-        let meta = helper_output_meta_with_predicates(nested_output.meta, active_output_predicates);
-        push_helper_fragment_output(
-            state.outputs,
+        let meta = nested_output
+            .meta
+            .with_additional_predicates(active_output_predicates);
+        state.outputs.push(HelperFragmentOutputUse::new(
             nested_output.source_expr,
-            &output_path::append_relative_path(relative_path, &nested_output.relative_path),
+            output_path::append_relative_path(relative_path, &nested_output.relative_path),
             nested_output.kind,
             meta,
-        );
+        ));
     }
 }
 
@@ -212,9 +216,7 @@ fn collect_bound_fragment_output_assignment_uses(
         top_level_helper_dependency_paths = nested.dependency_paths();
         if let Some(nested_binding) = nested.project_fragment_value() {
             binding = match binding {
-                Some(binding) => {
-                    AbstractValue::merge_fragment_bindings(vec![binding, nested_binding])
-                }
+                Some(binding) => AbstractValue::merge_context_values(vec![binding, nested_binding]),
                 None => Some(nested_binding),
             };
         }
@@ -235,7 +237,7 @@ fn collect_bound_fragment_output_assignment_uses(
         }
         binding = match binding {
             Some(binding) => {
-                AbstractValue::merge_fragment_bindings(vec![binding, current_dot_fragment.clone()])
+                AbstractValue::merge_context_values(vec![binding, current_dot_fragment.clone()])
             }
             None => Some(current_dot_fragment.clone()),
         };
@@ -283,9 +285,8 @@ fn local_output_uses_from_exprs(
                 _ => None,
             };
             if let Some(binding) = binding {
-                collect_fragment_binding_output_uses(
+                binding.collect_fragment_output_uses(
                     &mut local_output_uses,
-                    &binding,
                     output_path,
                     kind,
                     active_output_predicates,
@@ -312,9 +313,8 @@ fn helper_expression_output_uses_from_exprs(
         if let Some(binding) =
             helper_env.helper_binding_from_expr(expr, state.local_bindings, &mut expression_seen)
         {
-            collect_helper_binding_output_uses(
+            binding.collect_output_uses(
                 &mut expression_output_uses,
-                &binding,
                 scope.output_path,
                 scope.kind,
                 scope.active_output_predicates,
