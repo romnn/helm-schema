@@ -17,9 +17,7 @@ use helm_schema_core::ResourceSchemaOracle;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{
-    ConditionalGuard, ConditionalPathOverlayAtPath, ContractSchemaSignals, GuardValue,
-};
+use helm_schema_ir::{ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue};
 
 use merge::{merge_schema_list, union_schema_list};
 use path_resolver::PathSchemaResolver;
@@ -210,47 +208,57 @@ fn collect_conditional_schemas(
         .iter()
         .map(|resolved| (resolved.value_path.as_str(), &resolved.schema))
         .collect::<BTreeMap<_, _>>();
+    let mut conditionals = Vec::new();
 
-    contract_schema_signals
-        .conditional_path_overlays()
-        .into_iter()
-        .filter_map(|overlay| {
-            let resolved_target = resolved_paths
-                .iter()
-                .find(|resolved| resolved.value_path == overlay.target_value_path)?;
-            let target_segments = split_value_path(&overlay.target_value_path);
+    for (target_value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        let Some(resolved_target) = resolved_paths
+            .iter()
+            .find(|resolved| resolved.value_path == *target_value_path)
+        else {
+            continue;
+        };
+
+        for overlay in &evidence.conditional_overlays {
+            if !guards_supported_for_conditional_lowering(&overlay.guards, &resolved_by_path) {
+                continue;
+            }
+
+            let target_segments = split_value_path(target_value_path);
             let ancestor_segments =
                 conditional_ancestor_segments(&target_segments, &overlay.guards);
             let target_schema = conditional_target_schema(
-                &overlay.target_value_path,
-                &overlay,
+                target_value_path,
+                overlay,
                 values_yaml_doc,
                 provider,
                 resolved_target.values_yaml_schema.clone(),
                 resolved_by_path
-                    .get(overlay.target_value_path.as_str())
+                    .get(target_value_path.as_str())
                     .cloned()
                     .cloned(),
             );
-            guards_supported_for_conditional_lowering(&overlay.guards, &resolved_by_path).then(
-                || ConditionalResolvedSchema {
-                    target_value_path: overlay.target_value_path.clone(),
-                    relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
-                    ancestor_segments,
-                    guards: overlay.guards.clone(),
-                    target_schema,
-                    preserve_base_schema: overlay.preserve_base_schema,
-                    target_is_fragment: overlay.evidence.facts.used_as_fragment,
-                },
-            )
-        })
-        .filter(|conditional| !crate::schema_model::is_empty_schema(&conditional.target_schema))
-        .collect()
+            if crate::schema_model::is_empty_schema(&target_schema) {
+                continue;
+            }
+
+            conditionals.push(ConditionalResolvedSchema {
+                target_value_path: target_value_path.clone(),
+                relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
+                ancestor_segments,
+                guards: overlay.guards.clone(),
+                target_schema,
+                preserve_base_schema: overlay.preserve_base_schema,
+                target_is_fragment: overlay.evidence.facts.used_as_fragment,
+            });
+        }
+    }
+
+    conditionals
 }
 
 fn conditional_target_schema(
     target_value_path: &str,
-    overlay: &ConditionalPathOverlayAtPath,
+    overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
     values_yaml_schema: Value,
@@ -307,7 +315,7 @@ fn schemas_share_scalar_input_domain(left: &Value, right: &Value) -> bool {
 
 fn resolve_overlay_target_schema(
     target_value_path: &str,
-    overlay: &ConditionalPathOverlayAtPath,
+    overlay: &ConditionalPathOverlay,
     provider: &dyn ResourceSchemaOracle,
 ) -> Option<Value> {
     let evidence = overlay.evidence.as_path_evidence(target_value_path);

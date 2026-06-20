@@ -336,10 +336,6 @@ impl HelperSummary {
         self.relevant_paths(HelperPathFacts::is_dependency_relevant)
     }
 
-    pub(crate) fn condition_paths(&self) -> BTreeSet<String> {
-        self.relevant_paths(HelperPathFacts::is_dependency_relevant)
-    }
-
     pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
         let mut out = self.output_path_meta();
         for output in self.fragment_output_uses() {

@@ -241,11 +241,9 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
     );
     let overlays = collection
         .contract_schema_signals()
-        .conditional_path_overlays()
-        .iter()
-        .filter(|overlay| overlay.target_value_path == path)
-        .cloned()
-        .collect::<Vec<_>>();
+        .evidence_for(path)
+        .map(|evidence| evidence.conditional_overlays.clone())
+        .unwrap_or_default();
     assert!(
         overlays.iter().any(|overlay| {
             overlay.guards.iter().any(|guard| {

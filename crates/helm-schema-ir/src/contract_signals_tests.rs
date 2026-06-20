@@ -5,6 +5,14 @@ use crate::contract_signals::{ConditionalGuard, ContractSchemaSignals, MetadataF
 use crate::{Guard, GuardValue, ResourceRef, ValueKind, YamlPath};
 use test_util::prelude::sim_assert_eq;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct FlattenedConditionalOverlay {
+    target_value_path: String,
+    guards: Vec<ConditionalGuard>,
+    evidence: crate::contract_signals::ConditionalOverlayEvidence,
+    preserve_base_schema: bool,
+}
+
 fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
     ContractIr::from_contract_uses(uses).into_schema_signals()
 }
@@ -23,6 +31,25 @@ fn provider_schema_uses_for(signals: &ContractSchemaSignals) -> Vec<&crate::Prov
         .schema_evidence_by_value_path()
         .values()
         .flat_map(|evidence| evidence.provider_schema_uses.iter())
+        .collect()
+}
+
+fn conditional_overlays_for(signals: &ContractSchemaSignals) -> Vec<FlattenedConditionalOverlay> {
+    signals
+        .schema_evidence_by_value_path()
+        .iter()
+        .flat_map(|(target_value_path, evidence)| {
+            evidence
+                .conditional_overlays
+                .iter()
+                .cloned()
+                .map(|overlay| FlattenedConditionalOverlay {
+                    target_value_path: target_value_path.clone(),
+                    guards: overlay.guards,
+                    evidence: overlay.evidence,
+                    preserve_base_schema: overlay.preserve_base_schema,
+                })
+        })
         .collect()
 }
 
@@ -582,7 +609,7 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
         None,
     )]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     let overlay = overlays.first().expect("expected conditional overlay");
     sim_assert_eq!(
         have: overlay.target_value_path,
@@ -627,7 +654,7 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
         None,
     )]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     let overlay = overlays.first().expect("expected conditional overlay");
     sim_assert_eq!(
         have: overlay.guards,
@@ -697,7 +724,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         ),
     ]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     sim_assert_eq!(have: overlays.len(), want: 4);
     let feature_overlay = overlays
         .iter()
@@ -788,7 +815,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
         ),
     ]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     sim_assert_eq!(
         have: overlays.len(),
         want: 2,
@@ -851,7 +878,7 @@ fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditio
         ),
     ]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     sim_assert_eq!(
         have: overlays.len(),
         want: 1,
@@ -910,7 +937,7 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
         ),
     ]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     sim_assert_eq!(
         have: overlays.len(),
         want: 2,
@@ -966,7 +993,7 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
         ),
     ]);
 
-    let overlays = signals.conditional_path_overlays();
+    let overlays = conditional_overlays_for(&signals);
     sim_assert_eq!(
         have: overlays.len(),
         want: 3,

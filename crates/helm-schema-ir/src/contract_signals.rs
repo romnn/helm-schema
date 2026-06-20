@@ -32,15 +32,6 @@ pub struct ConditionalPathOverlay {
     pub preserve_base_schema: bool,
 }
 
-/// Flattened compatibility view of a conditional overlay plus its target path.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ConditionalPathOverlayAtPath {
-    pub target_value_path: String,
-    pub guards: Vec<ConditionalGuard>,
-    pub evidence: ConditionalOverlayEvidence,
-    pub preserve_base_schema: bool,
-}
-
 /// Branch-local evidence for one conditional schema overlay.
 ///
 /// The target path is implicit from the enclosing [`ContractPathSchemaEvidence`]
@@ -141,24 +132,6 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn evidence_for(&self, value_path: &str) -> Option<&ContractPathSchemaEvidence> {
         self.schema_evidence_by_value_path.get(value_path)
-    }
-
-    #[must_use]
-    pub fn conditional_path_overlays(&self) -> Vec<ConditionalPathOverlayAtPath> {
-        self.schema_evidence_by_value_path
-            .iter()
-            .flat_map(|(path, evidence)| {
-                evidence
-                    .conditional_overlays
-                    .iter()
-                    .map(|overlay| ConditionalPathOverlayAtPath {
-                        target_value_path: path.clone(),
-                        guards: overlay.guards.clone(),
-                        evidence: overlay.evidence.clone(),
-                        preserve_base_schema: overlay.preserve_base_schema,
-                    })
-            })
-            .collect()
     }
 }
 

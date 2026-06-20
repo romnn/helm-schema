@@ -28,7 +28,7 @@ pub(crate) fn branch_guard_paths_for_expr(
         local_bindings,
         seen,
     );
-    branch_guard_paths.extend(nested.condition_paths());
+    branch_guard_paths.extend(nested.dependency_paths());
     branch_guard_paths
 }
 
