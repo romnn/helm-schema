@@ -5,6 +5,7 @@ use crate::schema_model::{
     add_null_schema, empty_schema, exact_empty_object_schema, is_fixed_object_schema,
     schema_allows_type, type_schema,
 };
+use crate::schema_node::SchemaNode;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct EmptyMapPlaceholderUse {
@@ -77,9 +78,15 @@ pub(crate) fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value
     };
 
     let merged_value_schema = merge_schema_list(properties.values().cloned().collect());
-    let mut out = object.clone();
-    out.insert("additionalProperties".to_string(), merged_value_schema);
-    Value::Object(out)
+    properties
+        .iter()
+        .fold(
+            SchemaNode::object()
+                .with_empty_properties()
+                .with_additional_properties(SchemaNode::foreign(merged_value_schema)),
+            |schema, (key, value)| schema.property(key.clone(), SchemaNode::foreign(value.clone())),
+        )
+        .into_value()
 }
 
 pub(crate) fn open_fragment_values_schema(schema: Value) -> Value {
@@ -114,13 +121,6 @@ fn open_fragment_values_schema_inner(schema: Value, widen_self: bool) -> Value {
                 return Value::Object(object);
             }
 
-            if let Some(items) = object.remove("items") {
-                object.insert(
-                    "items".to_string(),
-                    open_fragment_values_schema_inner(items, false),
-                );
-            }
-
             let schema_type = object.get("type").and_then(Value::as_str);
             let is_array = schema_type == Some("array");
             let is_scalar = matches!(
@@ -128,7 +128,16 @@ fn open_fragment_values_schema_inner(schema: Value, widen_self: bool) -> Value {
                 Some("boolean" | "integer" | "number" | "string")
             );
             let is_object = schema_type == Some("object");
-            if is_object {
+
+            let schema = if is_array {
+                let items = object
+                    .remove("items")
+                    .map(|items| open_fragment_values_schema_inner(items, false))
+                    .unwrap_or_else(empty_schema);
+                SchemaNode::array()
+                    .items(SchemaNode::foreign(items))
+                    .into_value()
+            } else if is_object {
                 let mut properties = object
                     .remove("properties")
                     .and_then(|value| match value {
@@ -144,13 +153,18 @@ fn open_fragment_values_schema_inner(schema: Value, widen_self: bool) -> Value {
                 } else {
                     merge_schema_list(properties.values().cloned().collect())
                 };
-                if !properties.is_empty() {
-                    object.insert("properties".to_string(), Value::Object(properties));
-                }
-                object.insert("additionalProperties".to_string(), additional_properties);
-            }
+                properties
+                    .into_iter()
+                    .fold(
+                        SchemaNode::object()
+                            .with_additional_properties(SchemaNode::foreign(additional_properties)),
+                        |schema, (key, value)| schema.property(key, SchemaNode::foreign(value)),
+                    )
+                    .into_value()
+            } else {
+                Value::Object(object)
+            };
 
-            let schema = Value::Object(object);
             if widen_self && is_array {
                 union_schema_list(vec![schema, type_schema("null"), type_schema("string")])
             } else if widen_self && is_scalar {

@@ -114,6 +114,12 @@ struct ValuePathMergeInputs {
     preserve_empty_string_fallback: bool,
 }
 
+#[derive(Clone, Copy)]
+enum ForeignSchemaRestriction {
+    Scalar,
+    ScalarCollection,
+}
+
 impl ResolvePolicy {
     pub(crate) fn provider_schema_for_value_use(
         &self,
@@ -124,9 +130,9 @@ impl ResolvePolicy {
             ValueKind::Fragment => Some(schema.clone()),
             ValueKind::PartialScalar => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
-                restrict_schema_to_scalar_collection_domain(schema.clone())
+                ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }
-            ValueKind::Scalar => restrict_schema_to_scalar_domain(schema.clone()),
+            ValueKind::Scalar => ForeignSchemaRestriction::Scalar.apply(schema.clone()),
         }
     }
 
@@ -171,7 +177,7 @@ impl ResolvePolicy {
     }
 
     fn restrict_to_scalar_domain(&self, schema: Value) -> Option<Value> {
-        restrict_schema_to_scalar_domain(schema)
+        ForeignSchemaRestriction::Scalar.apply(schema)
     }
 
     pub(crate) fn resolve_schema_for_value_path(&self, input: ValuePathSchemaInputs) -> Value {
@@ -380,75 +386,74 @@ fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
     }
 }
 
-fn restrict_schema_to_scalar_domain(schema: Value) -> Option<Value> {
-    match schema {
-        Value::Object(mut obj) => {
-            if let Some(variants) = obj.get("anyOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "anyOf",
-                    variants,
-                    restrict_schema_to_scalar_domain,
-                );
-            }
-            if let Some(variants) = obj.get("oneOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "oneOf",
-                    variants,
-                    restrict_schema_to_scalar_domain,
-                );
-            }
-            if let Some(variants) = obj.get("allOf").and_then(Value::as_array).cloned() {
-                let mut scalar_variants = Vec::new();
-                for variant in variants {
-                    scalar_variants.push(restrict_schema_to_scalar_domain(variant)?);
-                }
-                obj.insert("allOf".to_string(), Value::Array(scalar_variants));
-                return Some(Value::Object(obj));
-            }
-
-            if schema_allows_type_object(&obj, "array") {
-                if let Some(items) = obj.remove("items") {
-                    obj.insert(
-                        "items".to_string(),
-                        restrict_schema_to_scalar_domain(items)?,
-                    );
-                }
-                obj.insert("type".to_string(), Value::String("array".to_string()));
-                remove_object_keywords(&mut obj);
-                return Some(Value::Object(obj));
-            }
-
-            match obj.get("type") {
-                Some(Value::String(schema_type)) => {
-                    if scalar_json_type(schema_type) {
-                        Some(Value::Object(obj))
-                    } else {
-                        None
-                    }
-                }
-                Some(Value::Array(schema_types)) => {
-                    let scalar_types: Vec<Value> = schema_types
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .filter(|schema_type| scalar_json_type(schema_type))
-                        .map(|schema_type| Value::String(schema_type.to_string()))
-                        .collect();
-                    if scalar_types.is_empty() {
-                        return None;
-                    }
-                    if scalar_types.len() != schema_types.len() {
-                        obj.insert("type".to_string(), Value::Array(scalar_types));
-                        remove_non_scalar_keywords(&mut obj);
-                    }
-                    Some(Value::Object(obj))
-                }
-                _ if has_non_scalar_keywords(&obj) => None,
-                _ => Some(Value::Object(obj)),
-            }
+impl ForeignSchemaRestriction {
+    fn apply(self, schema: Value) -> Option<Value> {
+        match schema {
+            Value::Object(obj) => self.apply_object(obj),
+            other => match self {
+                Self::Scalar => Some(other),
+                Self::ScalarCollection => None,
+            },
         }
-        other => Some(other),
+    }
+
+    fn apply_object(self, mut obj: Map<String, Value>) -> Option<Value> {
+        if let Some(variants) = obj.get("anyOf").and_then(Value::as_array).cloned() {
+            return restrict_schema_union(obj, "anyOf", variants, |variant| self.apply(variant));
+        }
+        if let Some(variants) = obj.get("oneOf").and_then(Value::as_array).cloned() {
+            return restrict_schema_union(obj, "oneOf", variants, |variant| self.apply(variant));
+        }
+        if let Some(variants) = obj.get("allOf").and_then(Value::as_array).cloned() {
+            let restricted = variants
+                .into_iter()
+                .map(|variant| self.apply(variant))
+                .collect::<Option<Vec<_>>>()?;
+            obj.insert("allOf".to_string(), Value::Array(restricted));
+            return Some(Value::Object(obj));
+        }
+
+        match self {
+            Self::Scalar => self.apply_scalar_object(obj),
+            Self::ScalarCollection => self.apply_scalar_collection_object(obj),
+        }
+    }
+
+    fn apply_scalar_object(self, mut obj: Map<String, Value>) -> Option<Value> {
+        if schema_allows_type_object(&obj, "array") {
+            return rewrite_array_schema(obj, Self::Scalar);
+        }
+
+        match obj.get("type") {
+            Some(Value::String(schema_type)) => {
+                scalar_json_type(schema_type).then_some(Value::Object(obj))
+            }
+            Some(Value::Array(schema_types)) => {
+                let scalar_types: Vec<Value> = schema_types
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .filter(|schema_type| scalar_json_type(schema_type))
+                    .map(|schema_type| Value::String(schema_type.to_string()))
+                    .collect();
+                if scalar_types.is_empty() {
+                    return None;
+                }
+                if scalar_types.len() != schema_types.len() {
+                    obj.insert("type".to_string(), Value::Array(scalar_types));
+                    remove_non_scalar_keywords(&mut obj);
+                }
+                Some(Value::Object(obj))
+            }
+            _ if has_non_scalar_keywords(&obj) => None,
+            _ => Some(Value::Object(obj)),
+        }
+    }
+
+    fn apply_scalar_collection_object(self, obj: Map<String, Value>) -> Option<Value> {
+        if !schema_allows_type_object(&obj, "array") {
+            return None;
+        }
+        rewrite_array_schema(obj, Self::Scalar)
     }
 }
 
@@ -465,66 +470,23 @@ fn schema_allows_type_object(obj: &Map<String, Value>, expected: &str) -> bool {
     }
 }
 
-fn restrict_schema_to_scalar_collection_domain(schema: Value) -> Option<Value> {
-    match schema {
-        Value::Object(mut obj) => {
-            if let Some(variants) = obj.get("anyOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "anyOf",
-                    variants,
-                    restrict_schema_to_scalar_collection_domain,
-                );
-            }
-            if let Some(variants) = obj.get("oneOf").and_then(Value::as_array).cloned() {
-                return restrict_schema_union(
-                    obj,
-                    "oneOf",
-                    variants,
-                    restrict_schema_to_scalar_collection_domain,
-                );
-            }
-            if let Some(variants) = obj.get("allOf").and_then(Value::as_array).cloned() {
-                let mut collection_variants = Vec::new();
-                for variant in variants {
-                    collection_variants.push(restrict_schema_to_scalar_collection_domain(variant)?);
-                }
-                obj.insert("allOf".to_string(), Value::Array(collection_variants));
-                return Some(Value::Object(obj));
-            }
-
-            let is_array_schema = match obj.get("type") {
-                Some(Value::String(schema_type)) => schema_type == "array",
-                Some(Value::Array(schema_types)) => schema_types
-                    .iter()
-                    .filter_map(Value::as_str)
-                    .any(|schema_type| schema_type == "array"),
-                Some(_) => false,
-                None => has_array_keywords(&obj),
-            };
-            if !is_array_schema {
-                return None;
-            }
-
-            if let Some(items) = obj.remove("items") {
-                obj.insert(
-                    "items".to_string(),
-                    restrict_schema_to_scalar_domain(items)?,
-                );
-            }
-            obj.insert("type".to_string(), Value::String("array".to_string()));
-            remove_object_keywords(&mut obj);
-            Some(Value::Object(obj))
-        }
-        _ => None,
+fn rewrite_array_schema(
+    mut obj: Map<String, Value>,
+    item_restriction: ForeignSchemaRestriction,
+) -> Option<Value> {
+    if let Some(items) = obj.remove("items") {
+        obj.insert("items".to_string(), item_restriction.apply(items)?);
     }
+    obj.insert("type".to_string(), Value::String("array".to_string()));
+    remove_object_keywords(&mut obj);
+    Some(Value::Object(obj))
 }
 
 fn restrict_schema_union(
     obj: Map<String, Value>,
     keyword: &str,
     variants: Vec<Value>,
-    restrict: fn(Value) -> Option<Value>,
+    restrict: impl FnMut(Value) -> Option<Value>,
 ) -> Option<Value> {
     let retained_variants: Vec<Value> = variants.into_iter().filter_map(restrict).collect();
     if retained_variants.is_empty() {
@@ -623,5 +585,56 @@ fn remove_object_keywords(obj: &mut Map<String, Value>) {
     ];
     for key in OBJECT_KEYWORDS {
         obj.remove(*key);
+    }
+}
+
+#[cfg(test)]
+mod restriction_tests {
+    use serde_json::json;
+    use test_util::prelude::sim_assert_eq;
+
+    use super::ForeignSchemaRestriction;
+
+    #[test]
+    fn scalar_restriction_keeps_only_scalar_union_variants_and_annotations() {
+        let schema = json!({
+            "description": "provider leaf",
+            "anyOf": [
+                { "type": "string" },
+                { "type": "object", "properties": { "name": { "type": "string" } } }
+            ]
+        });
+
+        sim_assert_eq!(
+            have: ForeignSchemaRestriction::Scalar.apply(schema),
+            want: Some(json!({
+                "description": "provider leaf",
+                "anyOf": [{ "type": "string" }]
+            })),
+        );
+    }
+
+    #[test]
+    fn scalar_collection_restriction_requires_array_and_restricts_items() {
+        let schema = json!({
+            "type": ["array", "object"],
+            "properties": { "name": { "type": "string" } },
+            "items": {
+                "anyOf": [
+                    { "type": "string" },
+                    { "type": "object" }
+                ]
+            }
+        });
+
+        sim_assert_eq!(
+            have: ForeignSchemaRestriction::ScalarCollection.apply(schema),
+            want: Some(json!({
+                "type": "array",
+                "items": {
+                    "anyOf": [{ "type": "string" }]
+                }
+            })),
+        );
     }
 }
