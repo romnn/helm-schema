@@ -4,6 +4,7 @@ use serde_json::{Map, Value};
 
 use crate::merge::{merge_two_schemas, union_schema_list};
 use crate::schema_model::{is_empty_schema, schema_type};
+use crate::schema_node::SchemaNode;
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 
@@ -65,54 +66,26 @@ pub(crate) fn draft07_root_document(root_schema: Value) -> Value {
 }
 
 pub(crate) fn object_schema(properties: Map<String, Value>) -> Value {
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("object".to_string())),
-            ("properties".to_string(), Value::Object(properties)),
-            ("additionalProperties".to_string(), Value::Bool(false)),
-        ]
+    properties
         .into_iter()
-        .collect(),
-    )
+        .fold(SchemaNode::closed_object(), |schema, (key, value)| {
+            schema.property(key, SchemaNode::foreign(value))
+        })
+        .into_value()
 }
 
 pub(crate) fn unknown_object_schema() -> Value {
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("object".to_string())),
-            (
-                "additionalProperties".to_string(),
-                Value::Object(Map::new()),
-            ),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    open_object_schema()
 }
 
 pub(crate) fn open_object_schema() -> Value {
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("object".to_string())),
-            (
-                "additionalProperties".to_string(),
-                Value::Object(Map::new()),
-            ),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    SchemaNode::object()
+        .with_additional_properties(SchemaNode::empty())
+        .into_value()
 }
 
 pub(crate) fn open_array_schema() -> Value {
-    Value::Object(
-        [
-            ("type".to_string(), Value::String("array".to_string())),
-            ("items".to_string(), Value::Object(Map::new())),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    SchemaNode::array().items(SchemaNode::empty()).into_value()
 }
 
 pub(crate) fn insert_schema_at_path_segments(

@@ -7,9 +7,8 @@ use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, default_source_id,
-    k8s_cache_path, not_found_marker_exists, not_found_marker_path, write_not_found_marker,
+    k8s_cache_path, not_found_marker_exists,
 };
-use crate::cache_write::write_fetched_schema_doc;
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
@@ -24,7 +23,7 @@ use crate::lookup::{
     ProviderSchemaSource, SourceProbeTraceOutcome, TracedApiPresenceOutcome,
 };
 use crate::schema_doc::SchemaDoc;
-use crate::source_cache::{CachedSchemaDocRequest, load_cached_schema_doc};
+use crate::source_cache::{AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc};
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
@@ -33,6 +32,14 @@ use super::version_chain::K8sVersionChain;
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
 type MemKey = (String, String, String);
+
+fn mem_key(source_id: &str, version: &str, filename: &str) -> MemKey {
+    (
+        source_id.to_string(),
+        version.to_string(),
+        filename.to_string(),
+    )
+}
 
 /// Composer of fetch + cache + lookup primitives for upstream K8s
 /// OpenAPI schemas. Carries a [`K8sVersionChain`] (Feature B) and a
@@ -76,28 +83,6 @@ impl From<ProbeOutcome> for SourceProbeTraceOutcome {
             ProbeOutcome::AuthoritativelyAbsent => Self::AuthoritativelyAbsent,
             ProbeOutcome::Uncertain => Self::Uncertain,
         }
-    }
-}
-
-fn remove_cache_file_if_present(path: &Path, message: &'static str) {
-    if let Err(err) = fs::remove_file(path)
-        && err.kind() != std::io::ErrorKind::NotFound
-    {
-        tracing::debug!(?err, message);
-    }
-}
-
-fn clear_not_found_marker(schema_path: &Path) {
-    remove_cache_file_if_present(
-        &not_found_marker_path(schema_path),
-        "failed to remove stale k8s schema not-found marker",
-    );
-}
-
-fn record_authoritative_not_found(schema_path: &Path) {
-    remove_cache_file_if_present(schema_path, "failed to remove stale k8s schema cache file");
-    if let Err(err) = write_not_found_marker(schema_path) {
-        tracing::debug!(?err, "failed to write k8s schema not-found marker");
     }
 }
 
@@ -245,7 +230,7 @@ impl KubernetesJsonSchemaProvider {
             "{}/{version}/{filename}",
             source.base_url.trim_end_matches('/')
         );
-        load_cached_schema_doc(
+        load_source_schema_doc(
             CachedSchemaDocRequest {
                 local: &local,
                 url: &url,
@@ -258,35 +243,15 @@ impl KubernetesJsonSchemaProvider {
                 fetcher: self.fetcher.as_ref(),
                 negative_cache: &self.negative_cache,
             },
-            || self.read_mem_for(&source.source_id, version, filename),
-            |doc| self.write_mem(&source.source_id, version, filename, doc),
-            || not_found_marker_exists(&local),
-            || clear_not_found_marker(&local),
-            || record_authoritative_not_found(&local),
+            &self.mem,
+            mem_key(&source.source_id, version, filename),
+            AuthoritativeAbsence::MarkerPath(&local),
         )
     }
 
     fn read_mem(&self, version: &str, filename: &str) -> Option<SchemaDoc> {
-        self.read_mem_for(default_source_id(), version, filename)
-    }
-
-    fn read_mem_for(&self, source_id: &str, version: &str, filename: &str) -> Option<SchemaDoc> {
-        self.mem.read(&(
-            source_id.to_string(),
-            version.to_string(),
-            filename.to_string(),
-        ))
-    }
-
-    fn write_mem(&self, source_id: &str, version: &str, filename: &str, doc: SchemaDoc) {
-        self.mem.write(
-            (
-                source_id.to_string(),
-                version.to_string(),
-                filename.to_string(),
-            ),
-            doc,
-        );
+        self.mem
+            .read(&mem_key(default_source_id(), version, filename))
     }
 
     fn run_layout_check(&self) -> LayoutCheckOutcome {
@@ -460,7 +425,11 @@ impl KubernetesJsonSchemaProvider {
     fn probe_at(&self, source_id: &str, version: &str, filename: &str) -> ProbeOutcome {
         let local = k8s_cache_path(&self.cache_dir, source_id, version, filename);
         if self.use_cache {
-            if self.read_mem_for(source_id, version, filename).is_some() {
+            if self
+                .mem
+                .read(&mem_key(source_id, version, filename))
+                .is_some()
+            {
                 return ProbeOutcome::Found;
             }
             if local.exists() {
@@ -495,21 +464,25 @@ impl KubernetesJsonSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                let Some(doc) = write_fetched_schema_doc(&local, &url, &bytes, self.record_source)
-                else {
+                let Some(doc) = crate::cache_write::write_fetched_schema_doc(
+                    &local,
+                    &url,
+                    &bytes,
+                    self.record_source,
+                ) else {
                     // Couldn't persist or parse — we still proved the
                     // schema exists upstream, but treat as Uncertain so
                     // a later run probes again rather than locking in a
                     // cache miss.
                     return ProbeOutcome::Uncertain;
                 };
-                clear_not_found_marker(&local);
-                self.write_mem(source_id, version, filename, doc);
+                AuthoritativeAbsence::MarkerPath(&local).clear();
+                self.mem.write(mem_key(source_id, version, filename), doc);
                 ProbeOutcome::Found
             }
             Ok(None) => {
                 self.negative_cache.record(source_id, version, filename);
-                record_authoritative_not_found(&local);
+                AuthoritativeAbsence::MarkerPath(&local).record();
                 ProbeOutcome::AuthoritativelyAbsent
             }
             // Network error: uncertain. Don't pollute the negative

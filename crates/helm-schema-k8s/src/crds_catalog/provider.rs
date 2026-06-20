@@ -21,7 +21,7 @@ use crate::lookup::{
     ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
-use crate::source_cache::{CachedSchemaDocRequest, load_cached_schema_doc};
+use crate::source_cache::{AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc};
 
 use super::cross_scan::collect_other_versions;
 use super::mirror_chain::{CrdMirrorChain, CrdSource};
@@ -29,6 +29,10 @@ use super::relative_path::relative_path_for_resource;
 
 /// In-memory cache key: `(source_id, relative_path)`.
 type MemKey = (String, String);
+
+fn mem_key(source_id: &str, relative_path: &str) -> MemKey {
+    (source_id.to_string(), relative_path.to_string())
+}
 
 #[derive(Debug)]
 pub struct CrdsCatalogSchemaProvider {
@@ -191,7 +195,7 @@ impl CrdsCatalogSchemaProvider {
             source.base_url.trim_end_matches('/'),
             relative_path
         );
-        load_cached_schema_doc(
+        load_source_schema_doc(
             CachedSchemaDocRequest {
                 local: &local,
                 url: &url,
@@ -204,22 +208,10 @@ impl CrdsCatalogSchemaProvider {
                 fetcher: self.fetcher.as_ref(),
                 negative_cache: &self.negative_cache,
             },
-            || self.read_mem(&source.source_id, relative_path),
-            |doc| self.write_mem(&source.source_id, relative_path, doc),
-            || false,
-            || {},
-            || {},
+            &self.mem,
+            mem_key(&source.source_id, relative_path),
+            AuthoritativeAbsence::None,
         )
-    }
-
-    fn read_mem(&self, source_id: &str, relative_path: &str) -> Option<SchemaDoc> {
-        self.mem
-            .read(&(source_id.to_string(), relative_path.to_string()))
-    }
-
-    fn write_mem(&self, source_id: &str, relative_path: &str, doc: SchemaDoc) {
-        self.mem
-            .write((source_id.to_string(), relative_path.to_string()), doc);
     }
 
     fn local_owns_resource(&self, resource: &ResourceRef) -> bool {

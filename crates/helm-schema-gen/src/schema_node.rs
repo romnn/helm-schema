@@ -177,6 +177,13 @@ impl SchemaNode {
         }
     }
 
+    pub(crate) fn items(mut self, value: SchemaNode) -> Self {
+        if let Self::Array { items, .. } = &mut self {
+            *items = Some(Box::new(value));
+        }
+        self
+    }
+
     pub(crate) fn min_items(mut self, min: u64) -> Self {
         if let Self::Array { min_items, .. } = &mut self {
             *min_items = Some(min);

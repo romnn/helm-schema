@@ -120,6 +120,12 @@ fn is_standalone_span(start: usize, end: usize, src: &str) -> bool {
         && suffix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
 }
 
+#[derive(Clone, Debug)]
+struct DeindentedYamlFragment {
+    text: String,
+    base_indent: usize,
+}
+
 impl HelmParser for TreeSitterParser {
     #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError> {
@@ -171,31 +177,7 @@ fn is_standalone_template_action(node: tree_sitter::Node<'_>, src: &str) -> bool
     if node.kind() != "template_action" {
         return false;
     }
-    let start = node.start_byte().min(src.len());
-    let end = node.end_byte().min(src.len());
-
-    let bytes = src.as_bytes();
-    let mut line_start = start;
-    while line_start > 0 {
-        if bytes[line_start - 1] == b'\n' {
-            break;
-        }
-        line_start -= 1;
-    }
-
-    let mut line_end = end;
-    while line_end < bytes.len() {
-        if bytes[line_end] == b'\n' {
-            break;
-        }
-        line_end += 1;
-    }
-
-    let prefix = &src[line_start..start];
-    let suffix = &src[end..line_end];
-
-    prefix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
-        && suffix.chars().all(|c| c == ' ' || c == '\t' || c == '\r')
+    is_standalone_span(node.start_byte(), node.end_byte(), src)
 }
 
 fn children_with_field<'a>(node: tree_sitter::Node<'a>, field: &str) -> Vec<tree_sitter::Node<'a>> {
@@ -218,6 +200,10 @@ fn normalize_helm_template_text(raw: &str) -> String {
 }
 
 fn deindent_yaml_fragment(fragment: &str) -> String {
+    deindent_yaml_fragment_with_base(fragment).text
+}
+
+fn deindent_yaml_fragment_with_base(fragment: &str) -> DeindentedYamlFragment {
     let mut min_indent: Option<usize> = None;
     for line in fragment.split_inclusive('\n') {
         let content = line.trim_end_matches(['\n', '\r']);
@@ -239,7 +225,10 @@ fn deindent_yaml_fragment(fragment: &str) -> String {
     }
 
     let Some(min_indent) = min_indent else {
-        return fragment.to_string();
+        return DeindentedYamlFragment {
+            text: fragment.to_string(),
+            base_indent: 0,
+        };
     };
 
     let mut out = String::with_capacity(fragment.len());
@@ -265,42 +254,73 @@ fn deindent_yaml_fragment(fragment: &str) -> String {
         }
         out.push_str(&line[idx..]);
     }
-    out
+    DeindentedYamlFragment {
+        text: out,
+        base_indent: min_indent,
+    }
 }
 
-fn line_indent_at(pos: usize, src: &str) -> usize {
-    let bytes = src.as_bytes();
-    let pos = pos.min(src.len());
-    let mut line_start = pos;
-    while line_start > 0 {
-        if bytes[line_start - 1] == b'\n' {
-            break;
-        }
-        line_start -= 1;
-    }
-    src[line_start..pos]
-        .chars()
-        .take_while(|c| *c == ' ' || *c == '\t')
-        .count()
+fn parse_helm_template_tree(src: &str) -> Option<tree_sitter::Tree> {
+    let language =
+        tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
+    let mut parser = tree_sitter::Parser::new();
+    parser.set_language(&language).ok()?;
+    parser.parse(src, None)
 }
 
-fn pending_open_key_indent(pending: &str) -> Option<usize> {
-    for line in pending.lines().rev() {
-        let line = line.trim_end_matches('\r');
-        if line.trim().is_empty() {
-            continue;
+fn last_relevant_named_child(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .filter(|child| {
+            child.is_named()
+                && !matches!(
+                    child.kind(),
+                    "reserved_directive" | "tag_directive" | "yaml_directive" | "comment"
+                )
+        })
+        .last()
+}
+
+fn trailing_open_mapping_value_indent(node: tree_sitter::Node<'_>) -> Option<usize> {
+    match node.kind() {
+        "document"
+        | "block_node"
+        | "flow_node"
+        | "block_mapping"
+        | "flow_mapping"
+        | "block_sequence"
+        | "flow_sequence"
+        | "block_sequence_item" => {
+            last_relevant_named_child(node).and_then(trailing_open_mapping_value_indent)
         }
-        if line.trim_start().starts_with("{{") {
-            continue;
+        "block_mapping_pair" | "flow_pair" => {
+            let value = node.child_by_field_name("value");
+            match value.and_then(trailing_open_mapping_value_indent) {
+                Some(indent) => Some(indent),
+                None if value.is_none() => node
+                    .child_by_field_name("key")
+                    .map(|key| key.start_position().column),
+                None => None,
+            }
         }
-        let indent = line.chars().take_while(|c| *c == ' ' || *c == '\t').count();
-        let content = line.trim_start();
-        if content.ends_with(':') {
-            return Some(indent);
-        }
-        return None;
+        _ => last_relevant_named_child(node).and_then(trailing_open_mapping_value_indent),
     }
-    None
+}
+
+fn action_continues_pending_yaml_value(pending: &str, action_indent: usize) -> bool {
+    let pending = deindent_yaml_fragment_with_base(pending);
+    if pending.text.trim().is_empty() {
+        return false;
+    }
+
+    let normalized_indent = action_indent.saturating_sub(pending.base_indent);
+    let Some(tree) = parse_helm_template_tree(&pending.text) else {
+        return false;
+    };
+    let Some(indent) = trailing_open_mapping_value_indent(tree.root_node()) else {
+        return false;
+    };
+    normalized_indent > indent
 }
 
 /// Re-parse a YAML fragment using the fused `helm_template` grammar and convert to `HelmAst` nodes.
@@ -310,12 +330,7 @@ fn parse_yaml_items(src: &str) -> Vec<HelmAst> {
         return vec![];
     }
 
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).expect("set language");
-
-    let Some(tree) = parser.parse(&src, None) else {
+    let Some(tree) = parse_helm_template_tree(&src) else {
         return vec![];
     };
 
@@ -541,20 +556,22 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                         continue;
                     }
 
-                    let action_indent = line_indent_at(start, src);
+                    let action_indent = blocks[i].start_position().column;
                     let span_text = &src[start.min(src.len())..end.min(src.len())];
                     let normalized = normalize_helm_template_text(span_text);
                     let action = TemplateAction::parse(normalized);
+                    let is_yaml_value_continuation =
+                        action_continues_pending_yaml_value(&pending, action_indent);
 
-                    if !in_control_flow && action_indent > 0 && is_fragment_injector_action(&action)
+                    if !is_yaml_value_continuation
+                        && !in_control_flow
+                        && action_indent > 0
+                        && is_fragment_injector_action(&action)
                     {
                         i = j + 1;
                         continue;
                     }
 
-                    let open_key_indent = pending_open_key_indent(&pending);
-                    let is_yaml_value_continuation =
-                        open_key_indent.is_some_and(|k| action_indent > k);
                     if !is_yaml_value_continuation {
                         flush_pending(&mut pending, &mut out);
                         out.push(HelmAst::HelmExpr { action });
@@ -600,14 +617,18 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
             flush_pending(&mut pending, &mut out);
             out.push(fuse_control_flow(b, src));
         } else if is_standalone_template_action(b, src) {
-            let open_key_indent = pending_open_key_indent(&pending);
-            let action_indent = line_indent_at(b.start_byte(), src);
-            let is_yaml_value_continuation = open_key_indent.is_some_and(|k| action_indent > k);
+            let action_indent = b.start_position().column;
+            let is_yaml_value_continuation =
+                action_continues_pending_yaml_value(&pending, action_indent);
             let text = b.utf8_text(src.as_bytes()).unwrap_or("");
             let normalized = normalize_helm_template_text(text);
             let action = TemplateAction::parse(normalized);
 
-            if !in_control_flow && action_indent > 0 && is_fragment_injector_action(&action) {
+            if !is_yaml_value_continuation
+                && !in_control_flow
+                && action_indent > 0
+                && is_fragment_injector_action(&action)
+            {
                 // Skip top-level fragment injectors; they typically expand to YAML.
             } else if is_yaml_value_continuation {
                 let r = b.byte_range();
@@ -796,5 +817,23 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> HelmAst {
                 .trim()
                 .to_string(),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::action_continues_pending_yaml_value;
+
+    #[test]
+    fn open_mapping_key_continues_with_structural_fragment_indent() {
+        let pending = "metadata:\n  labels:\n";
+        assert!(action_continues_pending_yaml_value(pending, 4));
+        assert!(!action_continues_pending_yaml_value(pending, 2));
+    }
+
+    #[test]
+    fn open_mapping_key_continues_past_comment_line() {
+        let pending = "metadata:\n  labels:\n  # chart adds labels here\n";
+        assert!(action_continues_pending_yaml_value(pending, 4));
     }
 }
