@@ -115,20 +115,19 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
     );
 
     let mut nested = helper_env.summarize_calls_in_exprs(exprs, state.local_bindings, state.seen);
-    let nested_structured_sources: BTreeSet<String> = nested
-        .fragment_output_uses
+    let nested_fragment_outputs = nested.fragment_output_uses();
+    let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
         .map(|output| output.source_expr.clone())
         .collect();
     let empty_output_path = YamlPath(Vec::new());
-    let nested_descendant_structured_sources: BTreeSet<String> = nested
-        .fragment_output_uses
+    let nested_descendant_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
         .filter(|output| expression_output_use_is_keyed_map_projection(output, &empty_output_path))
         .map(|output| output.source_expr.clone())
         .collect();
     let nested_scalar_sources: BTreeSet<String> = nested.output_path_meta().into_keys().collect();
-    let nested_has_fragment_outputs = !nested.fragment_output_uses.is_empty();
+    let nested_has_fragment_outputs = !nested_fragment_outputs.is_empty();
 
     let expression_output_scope = FragmentExpressionOutputScope {
         bindings,
@@ -174,7 +173,7 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
             meta,
         ));
     }
-    for nested_output in nested.fragment_output_uses.drain(..) {
+    for nested_output in nested.take_fragment_output_uses() {
         if kind == ValueKind::Fragment
             && nested_output.relative_path.0.is_empty()
             && (nested_scalar_sources.contains(&nested_output.source_expr)

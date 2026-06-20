@@ -147,9 +147,37 @@ impl HelperFragmentOutputUse {
     }
 }
 
+#[derive(Clone, Debug)]
+struct HelperStructuredOutput {
+    relative_path: YamlPath,
+    kind: ValueKind,
+    encoded: bool,
+    meta: HelperOutputMeta,
+}
+
+impl HelperStructuredOutput {
+    fn from_output_use(output: HelperFragmentOutputUse) -> Self {
+        Self {
+            relative_path: output.relative_path,
+            kind: output.kind,
+            encoded: output.encoded,
+            meta: output.meta,
+        }
+    }
+
+    fn into_output_use(self, source_expr: String) -> HelperFragmentOutputUse {
+        HelperFragmentOutputUse {
+            source_expr,
+            relative_path: self.relative_path,
+            kind: self.kind,
+            encoded: self.encoded,
+            meta: self.meta,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub(crate) struct HelperSummary {
-    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
     pub(crate) string_output: BTreeSet<String>,
     path_facts: BTreeMap<String, HelperPathFacts>,
     pub(crate) suppress_roots: BTreeSet<String>,
@@ -170,6 +198,7 @@ struct HelperPathFacts {
     dependency: Option<HelperOutputMeta>,
     guard: bool,
     type_hints: BTreeSet<String>,
+    structured_outputs: Vec<HelperStructuredOutput>,
 }
 
 impl HelperPathFacts {
@@ -186,6 +215,7 @@ impl HelperPathFacts {
         }
         self.guard |= other.guard;
         self.type_hints.extend(other.type_hints);
+        self.structured_outputs.extend(other.structured_outputs);
     }
 
     fn is_dependency_relevant(&self) -> bool {
@@ -193,22 +223,17 @@ impl HelperPathFacts {
             || self.dependency.is_some()
             || self.guard
             || !self.type_hints.is_empty()
+            || !self.structured_outputs.is_empty()
     }
 
     fn has_render_output(&self) -> bool {
-        self.output.is_some()
+        self.output.is_some() || !self.structured_outputs.is_empty()
     }
 }
 
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
         self.merge_path_facts(other.path_facts);
-        self.fragment_output_uses.extend(
-            other
-                .fragment_output_uses
-                .into_iter()
-                .filter(|output| !output.source_expr.trim().is_empty()),
-        );
         self.string_output.extend(other.string_output);
         self.suppress_roots.extend(other.suppress_roots);
         self.chart_defaults.extend(other.chart_defaults);
@@ -260,6 +285,41 @@ impl HelperSummary {
         }
     }
 
+    pub(crate) fn add_fragment_output_use(&mut self, output: HelperFragmentOutputUse) {
+        if output.source_expr.trim().is_empty() {
+            return;
+        }
+        self.path_facts
+            .entry(output.source_expr.clone())
+            .or_default()
+            .structured_outputs
+            .push(HelperStructuredOutput::from_output_use(output));
+    }
+
+    pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
+        self.path_facts
+            .iter()
+            .flat_map(|(source_expr, facts)| {
+                facts
+                    .structured_outputs
+                    .iter()
+                    .cloned()
+                    .map(|output| output.into_output_use(source_expr.clone()))
+            })
+            .collect()
+    }
+
+    pub(crate) fn take_fragment_output_uses(&mut self) -> Vec<HelperFragmentOutputUse> {
+        self.path_facts
+            .iter_mut()
+            .flat_map(|(source_expr, facts)| {
+                std::mem::take(&mut facts.structured_outputs)
+                    .into_iter()
+                    .map(|output| output.into_output_use(source_expr.clone()))
+            })
+            .collect()
+    }
+
     pub(crate) fn add_type_hints(&mut self, hints: BTreeMap<String, BTreeSet<String>>) {
         for (path, schema_types) in hints {
             if !path.trim().is_empty() {
@@ -282,13 +342,13 @@ impl HelperSummary {
 
     pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
         let mut out = self.output_path_meta();
-        for output in &self.fragment_output_uses {
+        for output in self.fragment_output_uses() {
             if output.source_expr.trim().is_empty() {
                 continue;
             }
-            out.entry(output.source_expr.clone())
+            out.entry(output.source_expr)
                 .or_default()
-                .merge_ref(&output.meta);
+                .merge(output.meta);
         }
         out
     }
@@ -341,7 +401,6 @@ impl HelperSummary {
         self.path_facts
             .values()
             .any(HelperPathFacts::has_render_output)
-            || !self.fragment_output_uses.is_empty()
     }
 
     pub(crate) fn add_predicates_to_outputs(&mut self, predicates: &BTreeSet<Predicate>) {
@@ -382,10 +441,10 @@ impl HelperSummary {
             }
         }
         out.extend(
-            self.fragment_output_uses
-                .iter()
+            self.fragment_output_uses()
+                .into_iter()
                 .filter(|output| output.meta.defaulted)
-                .map(|output| output.source_expr.clone()),
+                .map(|output| output.source_expr),
         );
         out
     }
@@ -400,19 +459,16 @@ impl HelperSummary {
     }
 
     fn relevant_paths(&self, is_relevant: fn(&HelperPathFacts) -> bool) -> BTreeSet<String> {
-        let mut out: BTreeSet<String> = self
+        let out: BTreeSet<String> = self
             .path_facts
             .iter()
             .filter_map(|(path, facts)| is_relevant(facts).then_some(path.clone()))
             .collect();
-        out.extend(
-            self.fragment_output_uses
-                .iter()
-                .filter(|output| !output.source_expr.trim().is_empty())
-                .map(|output| output.source_expr.clone()),
-        );
-        out.retain(|path| !path.trim().is_empty());
-        remove_ancestor_paths(out)
+        remove_ancestor_paths(
+            out.into_iter()
+                .filter(|path| !path.trim().is_empty())
+                .collect(),
+        )
     }
 
     pub(crate) fn project_helper_value(self) -> Option<AbstractValue> {
@@ -434,7 +490,7 @@ fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
     if !analysis.string_output.is_empty() {
         values.push(AbstractValue::StringSet(analysis.string_output.clone()));
     }
-    for output in analysis.fragment_output_uses.iter().cloned() {
+    for output in analysis.fragment_output_uses() {
         values.push(AbstractValue::for_output_path(
             output.source_expr,
             &output.relative_path,
@@ -455,9 +511,10 @@ fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
 
 fn structured_fragment_sources(analysis: &HelperSummary) -> BTreeSet<String> {
     analysis
-        .fragment_output_uses
+        .path_facts
         .iter()
-        .map(|output| output.source_expr.clone())
+        .filter(|(_path, facts)| !facts.structured_outputs.is_empty())
+        .map(|(path, _facts)| path.clone())
         .collect()
 }
 
@@ -813,16 +870,14 @@ mod tests {
     #[test]
     fn helper_summary_merges_fragment_output_uses() {
         let mut summary = HelperSummary::default();
-        summary
-            .fragment_output_uses
-            .push(HelperFragmentOutputUse::new(
-                "podLabels".to_string(),
-                YamlPath(vec!["app".to_string()]),
-                ValueKind::Fragment,
-                HelperOutputMeta::default(),
-            ));
+        summary.add_fragment_output_use(HelperFragmentOutputUse::new(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            HelperOutputMeta::default(),
+        ));
 
-        sim_assert_eq!(have: summary.fragment_output_uses.len(), want: 1);
+        sim_assert_eq!(have: summary.fragment_output_uses().len(), want: 1);
     }
 
     #[test]
@@ -835,14 +890,12 @@ mod tests {
             provenance: Vec::new(),
         };
         let mut summary = HelperSummary::default();
-        summary
-            .fragment_output_uses
-            .push(HelperFragmentOutputUse::new(
-                "podLabels".to_string(),
-                YamlPath(vec!["app".to_string()]),
-                ValueKind::Fragment,
-                meta.clone(),
-            ));
+        summary.add_fragment_output_use(HelperFragmentOutputUse::new(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            meta.clone(),
+        ));
 
         sim_assert_eq!(
             have: summary.project_helper_value(),
@@ -856,14 +909,12 @@ mod tests {
     #[test]
     fn helper_summary_fragment_projection_preserves_structured_output_path() {
         let mut summary = HelperSummary::default();
-        summary
-            .fragment_output_uses
-            .push(HelperFragmentOutputUse::new(
-                "podLabels".to_string(),
-                YamlPath(vec!["app".to_string()]),
-                ValueKind::Fragment,
-                HelperOutputMeta::default(),
-            ));
+        summary.add_fragment_output_use(HelperFragmentOutputUse::new(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            HelperOutputMeta::default(),
+        ));
 
         sim_assert_eq!(
             have: summary.project_fragment_value(),

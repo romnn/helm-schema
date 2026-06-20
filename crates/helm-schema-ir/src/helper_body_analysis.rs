@@ -152,8 +152,9 @@ fn attach_helper_body_provenance(
     );
 
     analysis.add_provenance_to_outputs(provenance.clone());
-    for output in &mut analysis.fragment_output_uses {
+    for mut output in analysis.take_fragment_output_uses() {
         output.meta.add_provenance_site(provenance.clone());
+        analysis.add_fragment_output_use(output);
     }
     analysis.add_provenance_to_dependencies(provenance);
 }
@@ -234,7 +235,9 @@ fn collect_fragment_output_uses(
     for source in &structured_sources {
         analysis.remove_output_path(source);
     }
-    analysis.fragment_output_uses.extend(fragment_output_uses);
+    for output in fragment_output_uses {
+        analysis.add_fragment_output_use(output);
+    }
 }
 
 #[cfg(test)]
@@ -311,7 +314,7 @@ mod tests {
             want: Some(&["string".to_string()].into_iter().collect()),
             "defaulted scalar output should retain string type hint"
         );
-        assert!(summary.fragment_output_uses.is_empty());
+        assert!(summary.fragment_output_uses().is_empty());
     }
 
     #[test]

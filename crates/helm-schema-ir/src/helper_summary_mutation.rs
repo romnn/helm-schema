@@ -17,7 +17,7 @@ pub(crate) fn extend_nested_scalar_render(
 
 pub(crate) fn extend_nested_fragment_render(
     analysis: &mut HelperSummary,
-    nested: HelperSummary,
+    mut nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
 ) {
     for (output, mut meta) in nested.output_path_meta() {
@@ -28,11 +28,11 @@ pub(crate) fn extend_nested_fragment_render(
     let dependency_meta = nested.dependency_path_meta();
     let guard_paths = nested.guard_paths();
     let type_hints = nested.type_hints();
-    for mut output in nested.fragment_output_uses {
+    for mut output in nested.take_fragment_output_uses() {
         output
             .meta
             .add_predicates(active_output_predicates.iter().cloned());
-        analysis.fragment_output_uses.push(output);
+        analysis.add_fragment_output_use(output);
     }
     for path in direct_dependency_paths {
         analysis.add_dependency_path(path);
@@ -47,8 +47,7 @@ pub(crate) fn extend_nested_fragment_render(
 }
 
 pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut HelperSummary) {
-    let fragment_output_uses = std::mem::take(&mut analysis.fragment_output_uses);
-    for output in fragment_output_uses {
+    for output in analysis.take_fragment_output_uses() {
         analysis.add_output_meta(output.source_expr, output.meta);
     }
 }

@@ -1,4 +1,7 @@
-use super::{HelmRenderCase, HelperParseMode, ProviderKind, SchemaCorpusCase};
+use super::{
+    HelmRenderCase, HelperParseMode, ProviderKind, RenderedManifestValidationCase,
+    RenderedSchemaProviderKind, SchemaBehaviorCase, SchemaCorpusCase, SchemaExpectation,
+};
 
 const SURVEYOR_CONFIGMAP_FIXTURE_VALUES: &str = r#"
 nameOverride: ""
@@ -481,3 +484,268 @@ pub const HELM_RENDER_CASES: &[HelmRenderCase<'static>] = &[
         extra_args: &[],
     },
 ];
+
+pub const BITNAMI_REDIS_PROMETHEUSRULE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: BITNAMI_REDIS_PROMETHEUSRULE,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"metrics":{"enabled":true,"prometheusRule":{"enabled":true,"namespace":7}}}"#,
+            accepted: false,
+            message: "metrics.prometheusRule.namespace must stay namespace/string-like when the PrometheusRule renders",
+        },
+        SchemaExpectation {
+            instance: r#"{"metrics":{"enabled":false,"prometheusRule":{"enabled":true,"namespace":7}}}"#,
+            accepted: true,
+            message: "PrometheusRule-only namespace should remain unconstrained when metrics disables the resource",
+        },
+    ],
+};
+
+pub const CERT_MANAGER_DEPLOYMENT_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: CERT_MANAGER_DEPLOYMENT,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"livenessProbe":{"failureThreshold":"eight"}}"#,
+            accepted: false,
+            message: "livenessProbe.failureThreshold must stay integer-like because livenessProbe.enabled defaults to true",
+        },
+        SchemaExpectation {
+            instance: r#"{"livenessProbe":{"enabled":false,"failureThreshold":"eight"}}"#,
+            accepted: true,
+            message: "disabled livenessProbe fields should remain unconstrained because the template skips them",
+        },
+    ],
+};
+
+pub const CERT_MANAGER_SERVICE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: CERT_MANAGER_SERVICE,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"serviceAnnotations":{"example.com/bad":7}}"#,
+            accepted: false,
+            message: "serviceAnnotations must stay a string map when the Service renders by default",
+        },
+        SchemaExpectation {
+            instance: r#"{"prometheus":{"enabled":false},"serviceAnnotations":{"example.com/bad":7}}"#,
+            accepted: true,
+            message: "serviceAnnotations should be unconstrained when the Service template is disabled",
+        },
+    ],
+};
+
+pub const NATS_SERVICE_ACCOUNT_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: NATS_SERVICE_ACCOUNT,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"serviceAccount":{"enabled":true,"name":7}}"#,
+            accepted: false,
+            message: "serviceAccount.name must stay string-like when ServiceAccount rendering is enabled",
+        },
+        SchemaExpectation {
+            instance: r#"{"serviceAccount":{"enabled":false,"name":7}}"#,
+            accepted: true,
+            message: "serviceAccount.name should remain unconstrained when the ServiceAccount is disabled",
+        },
+    ],
+};
+
+pub const NATS_SERVICE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: NATS_SERVICE,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"service":{"name":7}}"#,
+            accepted: false,
+            message: "service.name must stay string-like when service.enabled defaults to true",
+        },
+        SchemaExpectation {
+            instance: r#"{"nameOverride":7}"#,
+            accepted: false,
+            message: "nameOverride must stay string-like when the Service is rendered by default",
+        },
+        SchemaExpectation {
+            instance: r#"{"service":{"enabled":false,"name":7},"nameOverride":7}"#,
+            accepted: true,
+            message: "service-only name inputs should remain unconstrained when the Service is disabled",
+        },
+    ],
+};
+
+pub const SIGNOZ_ZOOKEEPER_STATEFULSET_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: SIGNOZ_ZOOKEEPER_STATEFULSET,
+    expectations: &[SchemaExpectation {
+        instance: r#"{"containerSecurityContext":{"runAsUser":"root"}}"#,
+        accepted: false,
+        message: "containerSecurityContext.runAsUser must stay integer-like because containerSecurityContext.enabled defaults to true",
+    }],
+};
+
+pub const SIGNOZ_ZOOKEEPER_SVC_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: SIGNOZ_ZOOKEEPER_SVC,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"service":{"ports":{"client":"client-port"}}}"#,
+            accepted: false,
+            message: "service.ports.client must stay integer-like because disableBaseClientPort defaults to false",
+        },
+        SchemaExpectation {
+            instance: r#"{"service":{"disableBaseClientPort":true,"ports":{"client":"client-port"}}}"#,
+            accepted: true,
+            message: "service.ports.client should be unconstrained when disableBaseClientPort removes that Service port",
+        },
+        SchemaExpectation {
+            instance: r#"{"tls":{"client":{"enabled":true}},"service":{"ports":{"tls":"tls-port"}}}"#,
+            accepted: false,
+            message: "service.ports.tls must stay integer-like when tls.client.enabled renders the TLS port",
+        },
+    ],
+};
+
+pub const ZALANDO_POSTGRES_OPERATOR_CLUSTERROLEBINDING_BEHAVIOR: SchemaBehaviorCase<'static> =
+    SchemaBehaviorCase {
+        schema_case: ZALANDO_POSTGRES_OPERATOR_CLUSTERROLEBINDING,
+        expectations: &[
+            SchemaExpectation {
+                instance: r#"{"serviceAccount":{"name":7}}"#,
+                accepted: false,
+                message: "serviceAccount.name must stay string-like when rbac.create defaults to true",
+            },
+            SchemaExpectation {
+                instance: r#"{"rbac":{"create":false},"serviceAccount":{"name":7}}"#,
+                accepted: true,
+                message: "serviceAccount.name should remain unconstrained when ClusterRoleBinding rendering is disabled",
+            },
+        ],
+    };
+
+pub const ZALANDO_POSTGRES_OPERATOR_CLUSTERROLE_BEHAVIOR: SchemaBehaviorCase<'static> =
+    SchemaBehaviorCase {
+        schema_case: ZALANDO_POSTGRES_OPERATOR_CLUSTERROLE,
+        expectations: &[
+            SchemaExpectation {
+                instance: r#"{"serviceAccount":{"name":7}}"#,
+                accepted: false,
+                message: "serviceAccount.name must stay string-like when rbac.create defaults to true",
+            },
+            SchemaExpectation {
+                instance: r#"{"rbac":{"create":false},"serviceAccount":{"name":7}}"#,
+                accepted: true,
+                message: "serviceAccount.name should remain unconstrained when ClusterRole rendering is disabled",
+            },
+        ],
+    };
+
+pub const ZALANDO_POSTGRES_OPERATOR_POSTGRES_POD_PRIORITY_CLASS_BEHAVIOR: SchemaBehaviorCase<
+    'static,
+> = SchemaBehaviorCase {
+    schema_case: ZALANDO_POSTGRES_OPERATOR_POSTGRES_POD_PRIORITY_CLASS,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"podPriorityClassName":{"name":7}}"#,
+            accepted: false,
+            message: "podPriorityClassName.name must stay string-like when create defaults to true",
+        },
+        SchemaExpectation {
+            instance: r#"{"podPriorityClassName":{"priority":"high"}}"#,
+            accepted: false,
+            message: "podPriorityClassName.priority must stay integer-like when create defaults to true",
+        },
+        SchemaExpectation {
+            instance: r#"{"podPriorityClassName":{"create":false,"name":7,"priority":"high"}}"#,
+            accepted: true,
+            message: "PriorityClass fields should remain unconstrained when PriorityClass rendering is disabled",
+        },
+    ],
+};
+
+pub const RENDERED_NATS_OPERATOR_RBAC_DEFAULT: RenderedManifestValidationCase<'static> =
+    RenderedManifestValidationCase {
+        render: HelmRenderCase {
+            name: "nats-operator rbac default validation",
+            chart_path: "charts/nats-operator",
+            show_only: Some("templates/rbac.yaml"),
+            extra_args: &[],
+        },
+        provider: RenderedSchemaProviderKind::K8s("v1.35.0"),
+    };
+
+pub const RENDERED_NATS_OPERATOR_RBAC_CLUSTER_SCOPED: RenderedManifestValidationCase<'static> =
+    RenderedManifestValidationCase {
+        render: HelmRenderCase {
+            name: "nats-operator rbac cluster scoped validation",
+            chart_path: "charts/nats-operator",
+            show_only: Some("templates/rbac.yaml"),
+            extra_args: &["--set", "clusterScoped=true"],
+        },
+        provider: RenderedSchemaProviderKind::K8s("v1.35.0"),
+    };
+
+pub const RENDERED_SURVEYOR_CONFIGMAP: RenderedManifestValidationCase<'static> =
+    RenderedManifestValidationCase {
+        render: HelmRenderCase {
+            name: "surveyor configmap validation",
+            chart_path: "charts/surveyor",
+            show_only: Some("templates/configmap.yaml"),
+            extra_args: &[
+                "--set",
+                "config.jetstream.enabled=true",
+                "--set",
+                "config.jetstream.accounts[0].name=test",
+                "--set",
+                "config.jetstream.accounts[0].username=username",
+                "--set",
+                "config.jetstream.accounts[0].password=password",
+                "--set",
+                "config.jetstream.accounts[0].tls.secret.name=test-user-tls",
+                "--set",
+                "config.jetstream.accounts[0].tls.ca=ca.crt",
+                "--set",
+                "config.jetstream.accounts[0].tls.cert=tls.crt",
+                "--set",
+                "config.jetstream.accounts[0].tls.key=tls.key",
+            ],
+        },
+        provider: RenderedSchemaProviderKind::K8s("v1.35.0"),
+    };
+
+pub const RENDERED_SURVEYOR_HPA: RenderedManifestValidationCase<'static> =
+    RenderedManifestValidationCase {
+        render: HelmRenderCase {
+            name: "surveyor hpa validation",
+            chart_path: "charts/surveyor",
+            show_only: Some("templates/hpa.yaml"),
+            extra_args: &[
+                "--set",
+                "autoscaling.enabled=true",
+                "--kube-version",
+                "1.24.0",
+            ],
+        },
+        provider: RenderedSchemaProviderKind::K8s("v1.24.0"),
+    };
+
+pub const RENDERED_SURVEYOR_SERVICE_MONITOR: RenderedManifestValidationCase<'static> =
+    RenderedManifestValidationCase {
+        render: HelmRenderCase {
+            name: "surveyor service monitor validation",
+            chart_path: "charts/surveyor",
+            show_only: Some("templates/serviceMonitor.yaml"),
+            extra_args: &[
+                "--set",
+                "serviceMonitor.enabled=true",
+                "--kube-version",
+                "1.29.0",
+            ],
+        },
+        provider: RenderedSchemaProviderKind::CrdCatalog,
+    };
+
+pub const RENDERED_ZALANDO_POSTGRES_OPERATOR_UI_INGRESS: RenderedManifestValidationCase<'static> =
+    RenderedManifestValidationCase {
+        render: HelmRenderCase {
+            name: "zalando postgres operator ui ingress validation",
+            chart_path: "charts/zalando-postgres-operator-ui",
+            show_only: Some("templates/ingress.yaml"),
+            extra_args: &["--set", "ingress.enabled=true", "--kube-version", "1.29.0"],
+        },
+        provider: RenderedSchemaProviderKind::K8s("v1.35.0"),
+    };

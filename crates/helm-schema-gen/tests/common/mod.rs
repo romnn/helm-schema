@@ -5,8 +5,13 @@ pub mod cases;
 use helm_schema_ast::{DefineIndex, HelmParser};
 use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
-use helm_schema_ir::ContractIr;
-use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
+use helm_schema_ir::{ContractIr, ResourceRef};
+use helm_schema_k8s::{
+    Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider,
+    crds_catalog::debug_materialize_schema_for_resource as debug_materialize_crd_schema_for_resource,
+    kubernetes_openapi::debug_materialize_schema_for_resource as debug_materialize_k8s_schema_for_resource,
+};
+use serde::Deserialize;
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
@@ -61,6 +66,31 @@ pub struct HelmRenderCase<'a> {
     pub chart_path: &'a str,
     pub show_only: Option<&'a str>,
     pub extra_args: &'a [&'a str],
+}
+
+#[derive(Clone, Copy)]
+pub enum RenderedSchemaProviderKind<'a> {
+    K8s(&'a str),
+    CrdCatalog,
+}
+
+#[derive(Clone, Copy)]
+pub struct RenderedManifestValidationCase<'a> {
+    pub render: HelmRenderCase<'a>,
+    pub provider: RenderedSchemaProviderKind<'a>,
+}
+
+#[derive(Clone, Copy)]
+pub struct SchemaExpectation<'a> {
+    pub instance: &'a str,
+    pub accepted: bool,
+    pub message: &'a str,
+}
+
+#[derive(Clone, Copy)]
+pub struct SchemaBehaviorCase<'a> {
+    pub schema_case: SchemaCorpusCase<'a>,
+    pub expectations: &'a [SchemaExpectation<'a>],
 }
 
 /// Production-like K8s provider path for chart-level generator tests.
@@ -293,6 +323,94 @@ pub fn assert_helm_render_case(case: &HelmRenderCase<'_>) {
         ),
         Err(e) => panic!("helm render failed for {}: {e}", case.name),
     }
+}
+
+pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) {
+    let schema = render_schema_case(&case.schema_case);
+    for expectation in case.expectations {
+        let instance: Value =
+            serde_json::from_str(expectation.instance).expect("behavior instance JSON");
+        let accepted = schema_accepts_instance(&schema, &instance);
+        assert_eq!(
+            accepted, expectation.accepted,
+            "{}: {}. schema={schema}",
+            case.schema_case.dump_stem, expectation.message
+        );
+    }
+}
+
+pub fn parse_yaml_documents(yaml: &str) -> Vec<Value> {
+    let mut out = Vec::new();
+    for doc in serde_yaml::Deserializer::from_str(yaml) {
+        let value = Value::deserialize(doc).expect("parse YAML document as JSON");
+        if value.is_null() {
+            continue;
+        }
+        out.push(value);
+    }
+    out
+}
+
+pub fn assert_rendered_manifest_validation_case(case: &RenderedManifestValidationCase<'_>) {
+    let rendered_yaml = render_helm_case(&case.render)
+        .unwrap_or_else(|err| panic!("helm render failed for {}: {err}", case.render.name));
+    let docs = parse_yaml_documents(&rendered_yaml);
+    assert!(
+        !docs.is_empty(),
+        "rendered YAML contained no documents for {}",
+        case.render.name
+    );
+
+    for doc in docs {
+        let api_version = doc
+            .get("apiVersion")
+            .and_then(|value| value.as_str())
+            .expect("manifest missing apiVersion");
+        let kind = doc
+            .get("kind")
+            .and_then(|value| value.as_str())
+            .expect("manifest missing kind");
+        let resource = ResourceRef {
+            api_version: api_version.to_string(),
+            kind: kind.to_string(),
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        };
+        let schema = materialized_schema_for_rendered_resource(case.provider, &resource)
+            .unwrap_or_else(|| panic!("load schema for rendered {api_version}/{kind}"));
+        let errors = validate_json_against_schema(&doc, &schema);
+        assert!(
+            errors.is_empty(),
+            "rendered {api_version}/{kind} for {} failed schema validation with {} error(s):\n{}",
+            case.render.name,
+            errors.len(),
+            errors.join("\n")
+        );
+    }
+}
+
+fn materialized_schema_for_rendered_resource(
+    provider: RenderedSchemaProviderKind<'_>,
+    resource: &ResourceRef,
+) -> Option<Value> {
+    let schema = match provider {
+        RenderedSchemaProviderKind::K8s(version) => {
+            let provider = KubernetesJsonSchemaProvider::new(version).with_allow_download(true);
+            debug_materialize_k8s_schema_for_resource(&provider, resource)?
+        }
+        RenderedSchemaProviderKind::CrdCatalog => {
+            let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+            debug_materialize_crd_schema_for_resource(&provider, resource)?
+        }
+    };
+
+    Some(match schema {
+        Value::Object(mut object) => {
+            let _ = object.remove("$schema");
+            Value::Object(object)
+        }
+        other => other,
+    })
 }
 
 #[cfg(test)]

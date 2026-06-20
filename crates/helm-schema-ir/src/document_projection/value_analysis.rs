@@ -35,6 +35,7 @@ pub(super) struct DocumentHelperSummary {
 
 impl DocumentHelperSummary {
     fn from_helper_summary(summary: HelperSummary) -> Self {
+        let fragment_output_uses = summary.fragment_output_uses();
         let mut suppress_direct_values = summary.dependency_paths();
         suppress_direct_values.extend(summary.suppress_roots.iter().cloned());
         let mut dependency_values = summary.dependency_path_meta();
@@ -48,7 +49,7 @@ impl DocumentHelperSummary {
 
         Self {
             output_values,
-            fragment_output_uses: summary.fragment_output_uses,
+            fragment_output_uses,
             dependency_values,
             guard_values,
             type_hints,
@@ -287,14 +288,12 @@ mod tests {
             provenance: Vec::new(),
         };
         summary.add_output_meta("image.tag".to_string(), meta.clone());
-        summary
-            .fragment_output_uses
-            .push(crate::helper_summary::HelperFragmentOutputUse::new(
-                "extraEnv".to_string(),
-                crate::YamlPath(Vec::new()),
-                ValueKind::Fragment,
-                HelperOutputMeta::default(),
-            ));
+        summary.add_fragment_output_use(crate::helper_summary::HelperFragmentOutputUse::new(
+            "extraEnv".to_string(),
+            crate::YamlPath(Vec::new()),
+            ValueKind::Fragment,
+            HelperOutputMeta::default(),
+        ));
         summary.add_dependency_path("global".to_string());
         summary.add_dependency_meta_map(BTreeMap::from([(
             "global.image.tag".to_string(),
