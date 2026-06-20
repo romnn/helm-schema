@@ -8,18 +8,7 @@ use helm_schema_k8s::{
 };
 use serde::Deserialize;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/surveyor/templates/configmap.yaml",
-    values_path: "charts/surveyor/values.yaml",
-    expected_fixture: include_str!("fixtures/surveyor_configmap.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &["charts/surveyor/templates/_helpers.tpl"],
-        helper_template_dirs: &[],
-        file_sources: &[],
-    },
-    provider: common::ProviderKind::K8s("v1.35.0"),
-    dump_stem: "surveyor.configmap",
-};
+use common::cases::SURVEYOR_CONFIGMAP as CASE;
 
 fn helm_template_render_configmap(chart_dir: &std::path::Path) -> Result<String, String> {
     common::helm_template_render_with_args(
@@ -76,7 +65,7 @@ fn schema_from_tree_sitter() {
                   key: tls.key
     "#};
 
-    let actual = common::render_schema_case_with_values_strict_helpers(&CASE, &values_signal);
+    let actual = common::render_schema_case_with_values(&CASE, &values_signal);
     let expected: serde_json::Value =
         serde_json::from_str(CASE.expected_fixture).expect("expected schema json");
 

@@ -2,28 +2,7 @@
 
 mod common;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/svc.yaml",
-    values_path: "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/values.yaml",
-    expected_fixture: include_str!("fixtures/signoz_zookeeper_svc.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &[
-            "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl",
-        ],
-        helper_template_dirs: &[(
-            "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates",
-            "tpl",
-        )],
-        file_sources: &[],
-    },
-    provider: common::ProviderKind::K8s("v1.35.0"),
-    dump_stem: "signoz-zookeeper-svc",
-};
-
-#[test]
-fn schema_from_tree_sitter() {
-    common::assert_schema_fixture(&CASE);
-}
+use common::cases::SIGNOZ_ZOOKEEPER_SVC as CASE;
 
 #[test]
 fn helm_template_renders_successfully() {
@@ -34,11 +13,6 @@ fn helm_template_renders_successfully() {
         Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
         Err(e) => panic!("helm template failed: {e}"),
     }
-}
-
-#[test]
-fn schema_validates_values_yaml() {
-    common::assert_values_yaml_validates(&CASE);
 }
 
 #[test]

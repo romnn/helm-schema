@@ -6,7 +6,6 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary_projection::helper_summary_condition_paths;
 use crate::local_projection::{
     direct_bound_paths_from_expr_in_context, local_bound_paths_from_expr,
 };
@@ -29,7 +28,7 @@ pub(crate) fn branch_guard_paths_for_expr(
         local_bindings,
         seen,
     );
-    branch_guard_paths.extend(helper_summary_condition_paths(&nested));
+    branch_guard_paths.extend(nested.condition_paths());
     branch_guard_paths
 }
 

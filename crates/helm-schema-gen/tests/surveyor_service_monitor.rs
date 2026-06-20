@@ -8,19 +8,6 @@ use helm_schema_k8s::{
 };
 use serde::Deserialize;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/surveyor/templates/serviceMonitor.yaml",
-    values_path: "charts/surveyor/values.yaml",
-    expected_fixture: include_str!("fixtures/surveyor_service_monitor.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &["charts/surveyor/templates/_helpers.tpl"],
-        helper_template_dirs: &[],
-        file_sources: &[],
-    },
-    provider: common::ProviderKind::CrdK8s("v1.35.0"),
-    dump_stem: "surveyor.service-monitor",
-};
-
 fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
     let mut out = Vec::new();
     for doc in serde_yaml::Deserializer::from_str(yaml) {
@@ -44,23 +31,6 @@ fn helm_template_render_service_monitor(chart_dir: &std::path::Path) -> Result<S
             "1.29.0",
         ],
     )
-}
-
-#[test]
-fn schema_from_tree_sitter() {
-    let actual = common::render_schema_case_strict_helpers(&CASE);
-    let expected: serde_json::Value =
-        serde_json::from_str(CASE.expected_fixture).expect("expected schema json");
-    similar_asserts::assert_eq!(actual, expected);
-
-    let values_yaml = test_util::read_testdata(CASE.values_path);
-    let errors = common::validate_values_yaml(&values_yaml, &actual);
-    assert!(
-        errors.is_empty(),
-        "values.yaml failed schema validation with {} error(s):\n{}",
-        errors.len(),
-        errors.join("\n")
-    );
 }
 
 #[test]

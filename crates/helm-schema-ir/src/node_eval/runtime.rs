@@ -13,8 +13,6 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn enter_node(&mut self, node: tree_sitter::Node<'_>);
 
-    fn ingest_text_up_to(&mut self, end_byte: usize);
-
     fn current_document_path(&self) -> YamlPath;
 
     fn current_document_path_at_mapping_entry_indent(&self, _indent: usize) -> YamlPath {

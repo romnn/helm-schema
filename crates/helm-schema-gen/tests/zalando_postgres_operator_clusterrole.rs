@@ -2,23 +2,7 @@
 
 mod common;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/zalando-postgres-operator/templates/clusterrole.yaml",
-    values_path: "charts/zalando-postgres-operator/values.yaml",
-    expected_fixture: include_str!("fixtures/zalando_postgres_operator_clusterrole.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &["charts/zalando-postgres-operator/templates/_helpers.tpl"],
-        helper_template_dirs: &[],
-        file_sources: &[],
-    },
-    provider: common::ProviderKind::K8s("v1.35.0"),
-    dump_stem: "zalando-postgres-operator.clusterrole",
-};
-
-#[test]
-fn schema_from_tree_sitter() {
-    common::assert_schema_fixture(&CASE);
-}
+use common::cases::ZALANDO_POSTGRES_OPERATOR_CLUSTERROLE as CASE;
 
 #[test]
 fn helm_template_renders_successfully() {
@@ -28,11 +12,6 @@ fn helm_template_renders_successfully() {
         Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
         Err(e) => panic!("helm template failed: {e}"),
     }
-}
-
-#[test]
-fn schema_validates_values_yaml() {
-    common::assert_values_yaml_validates(&CASE);
 }
 
 #[test]

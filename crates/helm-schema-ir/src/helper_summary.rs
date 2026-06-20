@@ -220,6 +220,74 @@ impl HelperSummary {
         });
     }
 
+    pub(crate) fn dependency_paths(&self) -> BTreeSet<String> {
+        let mut out: BTreeSet<String> = self
+            .output
+            .keys()
+            .chain(self.dependency_paths.iter())
+            .chain(self.dependency_meta.keys())
+            .chain(self.guard_paths.iter())
+            .chain(self.fragment_output.iter())
+            .chain(self.type_hints.keys())
+            .cloned()
+            .collect();
+        out.extend(
+            self.fragment_output_uses
+                .iter()
+                .filter(|output| !output.source_expr.trim().is_empty())
+                .map(|output| output.source_expr.clone()),
+        );
+        out.retain(|path| !path.trim().is_empty());
+        remove_ancestor_paths(out)
+    }
+
+    pub(crate) fn condition_paths(&self) -> BTreeSet<String> {
+        let mut out: BTreeSet<String> = self
+            .output
+            .keys()
+            .chain(self.dependency_meta.keys())
+            .chain(self.guard_paths.iter())
+            .chain(self.fragment_output.iter())
+            .chain(self.type_hints.keys())
+            .cloned()
+            .collect();
+        out.extend(
+            self.fragment_output_uses
+                .iter()
+                .filter(|output| !output.source_expr.trim().is_empty())
+                .map(|output| output.source_expr.clone()),
+        );
+        out.retain(|path| !path.trim().is_empty());
+        remove_ancestor_paths(out)
+    }
+
+    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = self.output.clone();
+        for output in &self.fragment_output_uses {
+            if output.source_expr.trim().is_empty() {
+                continue;
+            }
+            out.entry(output.source_expr.clone())
+                .or_default()
+                .merge_ref(&output.meta);
+        }
+        for path in &self.fragment_output {
+            if path.trim().is_empty() {
+                continue;
+            }
+            out.entry(path.clone()).or_default();
+        }
+        out
+    }
+
+    pub(crate) fn dependency_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = self.dependency_meta.clone();
+        for (path, meta) in self.output_meta() {
+            out.entry(path).or_default().merge(meta);
+        }
+        out
+    }
+
     pub(crate) fn project_helper_value(self) -> Option<AbstractValue> {
         project_summary_value(self, SummaryProjectionKind::HelperValue)
             .map(|value| value.to_context_value())
@@ -302,6 +370,14 @@ fn rendered_sources(
     rendered_sources.extend(analysis.fragment_output.iter().cloned());
     rendered_sources.extend(analysis.output.keys().cloned());
     rendered_sources
+}
+
+fn remove_ancestor_paths(paths: BTreeSet<String>) -> BTreeSet<String> {
+    paths
+        .iter()
+        .filter(|path| !output_path::values_path_has_descendant(path, &paths))
+        .cloned()
+        .collect()
 }
 
 pub(crate) struct HelperSummaryCache {

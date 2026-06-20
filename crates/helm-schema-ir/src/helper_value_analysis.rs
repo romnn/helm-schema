@@ -204,8 +204,6 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
 
     fn enter_node(&mut self, _node: tree_sitter::Node<'_>) {}
 
-    fn ingest_text_up_to(&mut self, _end_byte: usize) {}
-
     fn current_document_path(&self) -> YamlPath {
         YamlPath(Vec::new())
     }

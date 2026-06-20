@@ -15,7 +15,6 @@ use crate::helper_output_projection::{
     push_helper_fragment_output, static_yaml_fragment_output_path_from_exprs,
 };
 use crate::helper_summary::HelperFragmentOutputUse;
-use crate::helper_summary_projection::helper_summary_dependency_paths;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_exprs_in_context, local_rendered_paths_from_exprs,
@@ -210,7 +209,7 @@ fn collect_bound_fragment_output_assignment_uses(
         let mut rhs_seen = state.seen.clone();
         let nested =
             helper_env.summarize_calls_in_exprs(rhs_exprs, state.local_bindings, &mut rhs_seen);
-        top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
+        top_level_helper_dependency_paths = nested.dependency_paths();
         if let Some(nested_binding) = nested.project_fragment_value() {
             binding = match binding {
                 Some(binding) => {

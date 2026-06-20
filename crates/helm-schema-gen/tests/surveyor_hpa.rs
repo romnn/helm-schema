@@ -9,25 +9,17 @@ use helm_schema_k8s::{
 };
 use serde::Deserialize;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/surveyor/templates/hpa.yaml",
-    values_path: "charts/surveyor/values.yaml",
-    expected_fixture: include_str!("fixtures/surveyor_hpa.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &["charts/surveyor/templates/_helpers.tpl"],
-        helper_template_dirs: &[],
-        file_sources: &[],
-    },
-    provider: common::ProviderKind::K8s("v1.24.0"),
-    dump_stem: "surveyor.hpa",
-};
+use common::cases::SURVEYOR_HPA as CASE;
 
 #[test]
 fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let src = test_util::read_testdata(CASE.template_path);
     let values_yaml = test_util::read_testdata(CASE.values_path);
-    let idx =
-        common::build_define_index_strict(&helm_schema_ast::TreeSitterParser, CASE.define_sources);
+    let idx = common::build_define_index(
+        &helm_schema_ast::TreeSitterParser,
+        CASE.define_sources,
+        CASE.helper_parse_mode,
+    );
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
 
     let diagnostics = DiagnosticSink::new();
@@ -95,11 +87,6 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
 }
 
 #[test]
-fn schema_from_tree_sitter() {
-    common::assert_schema_fixture_strict_helpers(&CASE);
-}
-
-#[test]
 fn helm_template_renders_successfully() {
     let chart_dir = test_util::workspace_testdata().join("charts/surveyor");
     let rendered = helm_template_render_hpa(&chart_dir);
@@ -107,11 +94,6 @@ fn helm_template_renders_successfully() {
         Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
         Err(e) => panic!("helm template failed: {e}"),
     }
-}
-
-#[test]
-fn schema_validates_values_yaml() {
-    common::assert_values_yaml_validates_strict_helpers(&CASE);
 }
 
 #[test]

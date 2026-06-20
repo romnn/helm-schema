@@ -86,8 +86,6 @@ impl<'a> DocumentTracker<'a> {
         self.resource_identity.current_resource()
     }
 
-    pub(crate) fn ingest_text_up_to(&mut self, _target: usize) {}
-
     pub(crate) fn rebase_path(&self, path: YamlPath) -> YamlPath {
         self.resource_identity.rebase_path(path)
     }
@@ -1196,9 +1194,6 @@ ports:
         target: tree_sitter::Node<'_>,
     ) -> bool {
         tracker.enter_node(node);
-        if matches!(node.kind(), "text" | "yaml_no_injection_text") {
-            tracker.ingest_text_up_to(node.end_byte());
-        }
         if node.id() == target.id() {
             return true;
         }

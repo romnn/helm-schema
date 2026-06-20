@@ -8,7 +8,6 @@ use crate::expression_analysis::resolved_string_transform_paths_for_exprs_with_f
 use crate::expression_analysis::resolved_type_hint_paths_for_exprs_with_fragment_locals;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::insert_type_hint;
-use crate::helper_summary_projection::helper_summary_dependency_paths;
 use crate::literal_schema_type::expression_schema_type;
 use crate::output_path;
 use crate::value_path_context::ValuePathContext;
@@ -37,7 +36,7 @@ pub(super) struct DocumentHelperSummary {
 
 impl DocumentHelperSummary {
     fn from_helper_summary(summary: HelperSummary, output_kind: ValueKind) -> Self {
-        let mut suppress_direct_values = helper_summary_dependency_paths(&summary);
+        let mut suppress_direct_values = summary.dependency_paths();
         suppress_direct_values.extend(summary.suppress_roots.iter().cloned());
         let mut dependency_values: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
         for path in summary.dependency_paths {

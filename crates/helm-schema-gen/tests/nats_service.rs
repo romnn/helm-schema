@@ -2,28 +2,7 @@
 
 mod common;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/nats/templates/service.yaml",
-    values_path: "charts/nats/values.yaml",
-    expected_fixture: include_str!("fixtures/nats_service.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &[
-            "charts/nats/templates/_helpers.tpl",
-            "charts/nats/templates/_jsonpatch.tpl",
-            "charts/nats/templates/_tplYaml.tpl",
-            "charts/nats/templates/_toPrettyRawJson.tpl",
-        ],
-        helper_template_dirs: &[],
-        file_sources: &[("files/service.yaml", "charts/nats/files/service.yaml")],
-    },
-    provider: common::ProviderKind::K8s("v1.35.0"),
-    dump_stem: "nats-service",
-};
-
-#[test]
-fn schema_from_tree_sitter() {
-    common::assert_schema_fixture(&CASE);
-}
+use common::cases::NATS_SERVICE as CASE;
 
 #[test]
 fn helm_template_renders_successfully() {
@@ -33,11 +12,6 @@ fn helm_template_renders_successfully() {
         Ok(yaml) => assert!(!yaml.is_empty(), "rendered YAML is empty"),
         Err(e) => panic!("helm template failed: {e}"),
     }
-}
-
-#[test]
-fn schema_validates_values_yaml() {
-    common::assert_values_yaml_validates(&CASE);
 }
 
 #[test]

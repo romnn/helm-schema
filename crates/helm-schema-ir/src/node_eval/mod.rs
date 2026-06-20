@@ -18,9 +18,7 @@ where
     runtime.enter_node(node);
 
     match classify_node_action(node) {
-        NodeActionKind::Text => {
-            runtime.ingest_text_up_to(node.end_byte());
-        }
+        NodeActionKind::Text => {}
         NodeActionKind::Suppressed => {}
         NodeActionKind::Assignment => {
             control_flow::eval_assignment_node(runtime, node);

@@ -15,9 +15,6 @@ use crate::helper_summary::HelperOutputMeta;
 use crate::helper_summary_mutation::{
     extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,
 };
-use crate::helper_summary_projection::{
-    helper_dependency_meta_from_summary, helper_summary_dependency_paths,
-};
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_exprs_in_context, local_bound_paths_from_expr,
@@ -207,10 +204,10 @@ fn collect_assignment_bound_helper_values(
     state
         .analysis
         .dependency_paths
-        .extend(helper_summary_dependency_paths(&nested));
+        .extend(nested.dependency_paths());
     state
         .analysis
-        .add_dependency_meta_map(helper_dependency_meta_from_summary(&nested));
+        .add_dependency_meta_map(nested.dependency_meta());
 
     let rhs_output_meta = rhs_output_meta(
         &local_outputs,

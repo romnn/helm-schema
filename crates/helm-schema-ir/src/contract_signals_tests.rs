@@ -77,7 +77,7 @@ fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
 }
 
 #[test]
-fn contract_ir_path_signals_collect_references_and_typed_guard_predicates() {
+fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
     let signals = signals_for(vec![
         ContractUse::new(
             "podLabels".to_string(),

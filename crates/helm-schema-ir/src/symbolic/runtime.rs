@@ -74,10 +74,6 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         self.document_tracker.enter_node(node);
     }
 
-    fn ingest_text_up_to(&mut self, end_byte: usize) {
-        self.document_tracker.ingest_text_up_to(end_byte);
-    }
-
     fn current_document_path(&self) -> YamlPath {
         self.document_tracker.current_path()
     }

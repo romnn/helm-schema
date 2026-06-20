@@ -9,6 +9,7 @@ use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, crd_cache_path,
     read_cached_json_doc, write_meta_sidecar,
 };
+use crate::cache_write::write_atomic_file;
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{
     LocalSchemaLeaf, debug_materialize_local_schema,
@@ -211,7 +212,7 @@ impl CrdsCatalogSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                write_atomic(&local, &bytes).ok()?;
+                write_atomic_file(&local, &bytes).ok()?;
                 if self.record_source {
                     write_meta_sidecar(&local, &url);
                 }
@@ -435,32 +436,6 @@ impl helm_schema_core::ResourceSchemaOracle for CrdsCatalogSchemaProvider {
 
     fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
         <Self as K8sSchemaProvider>::has_resource(self, resource)
-    }
-}
-
-fn write_atomic(local: &Path, bytes: &[u8]) -> std::io::Result<()> {
-    if let Some(parent) = local.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    let tmp = local.with_extension(format!("json.tmp.{}.{}", std::process::id(), unique));
-    {
-        let mut f = fs::File::create(&tmp)?;
-        std::io::Write::write_all(&mut f, bytes)?;
-    }
-    match fs::rename(&tmp, local) {
-        Ok(()) => Ok(()),
-        Err(err) => {
-            if local.exists() {
-                let _ = fs::remove_file(&tmp);
-                Ok(())
-            } else {
-                Err(err)
-            }
-        }
     }
 }
 

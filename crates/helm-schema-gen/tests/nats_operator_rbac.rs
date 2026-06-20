@@ -8,19 +8,6 @@ use helm_schema_k8s::{
 };
 use serde::Deserialize;
 
-const CASE: common::SchemaCorpusCase<'static> = common::SchemaCorpusCase {
-    template_path: "charts/nats-operator/templates/rbac.yaml",
-    values_path: "charts/nats-operator/values.yaml",
-    expected_fixture: include_str!("fixtures/nats_operator_rbac.schema.json"),
-    define_sources: test_util::DefineSourceSpec {
-        helper_templates: &["charts/nats-operator/templates/_helpers.tpl"],
-        helper_template_dirs: &[],
-        file_sources: &[],
-    },
-    provider: common::ProviderKind::K8s("v1.35.0"),
-    dump_stem: "nats-operator.rbac",
-};
-
 fn helm_template_render_rbac(
     chart_dir: &std::path::Path,
     cluster_scoped: bool,
@@ -43,16 +30,6 @@ fn parse_yaml_documents(yaml: &str) -> Vec<serde_json::Value> {
         out.push(v);
     }
     out
-}
-
-#[test]
-fn schema_from_tree_sitter() {
-    common::assert_schema_fixture(&CASE);
-}
-
-#[test]
-fn schema_validates_values_yaml() {
-    common::assert_values_yaml_validates(&CASE);
 }
 
 #[test]

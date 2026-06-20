@@ -12,10 +12,6 @@ use crate::provider_schema_use::{ProviderSchemaUse, from_contract_use};
 use super::classifiers::{
     metadata_field_kind_from_yaml_path, use_is_null_tolerant, use_is_self_guarded,
 };
-use super::path_signals::ContractPathSignals;
-use super::value_path_facts::{
-    RenderPathFacts, build_contract_value_path_facts, collect_paths_with_descendants,
-};
 
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
@@ -33,13 +29,31 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
 
 #[derive(Default)]
 struct ContractSchemaSignalBuilder {
-    render_facts_by_path: BTreeMap<String, RenderPathFacts>,
-    path_signals: ContractPathSignals,
+    paths: BTreeMap<String, ContractPathAccumulator>,
+}
+
+#[derive(Default)]
+struct ContractPathAccumulator {
+    referenced: bool,
+    ranged: bool,
+    used_as_fragment: bool,
+    partial_scalar: bool,
+    guard_predicates: Vec<ConditionalGuard>,
+    metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    render: RenderPathFacts,
+    requiredness: ContractRequirednessEvidence,
+    type_hints: BTreeSet<String>,
+    nullable: NullablePathAccumulator,
     provider_schema_uses: Vec<ProviderSchemaUse>,
-    requiredness_by_path: BTreeMap<String, ContractRequirednessEvidence>,
-    type_hints_by_value_path: BTreeMap<String, BTreeSet<String>>,
-    nullable_by_path: BTreeMap<String, NullablePathAccumulator>,
-    conditional_overlays_by_path: BTreeMap<String, ConditionalOverlayAccumulator>,
+    conditional_overlays: ConditionalOverlayAccumulator,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RenderPathFacts {
+    has_render_use: bool,
+    has_self_guarded_render_use: bool,
+    all_render_uses_self_guarded: bool,
+    has_self_range_guard_render_use: bool,
 }
 
 struct NullablePathAccumulator {
@@ -78,77 +92,95 @@ impl Default for NullablePathAccumulator {
     }
 }
 
+impl Default for RenderPathFacts {
+    fn default() -> Self {
+        Self {
+            has_render_use: false,
+            has_self_guarded_render_use: false,
+            all_render_uses_self_guarded: true,
+            has_self_range_guard_render_use: false,
+        }
+    }
+}
+
 impl ContractSchemaSignalBuilder {
     fn record(&mut self, contract_use: &ContractUse) {
         self.record_provider_schema_use(contract_use);
         self.record_render_facts(contract_use);
-        self.record_path_signals(contract_use);
+        self.record_path_identity(contract_use);
         self.record_requiredness(contract_use);
         self.record_nullable_path(contract_use);
         self.record_conditional_overlay(contract_use);
     }
 
     fn finish(mut self) -> ContractSchemaSignals {
-        self.path_signals.referenced_value_paths.extend(
-            self.type_hints_by_value_path
-                .keys()
-                .filter(|path| !path.trim().is_empty())
-                .cloned(),
-        );
-        let paths_with_referenced_descendants =
-            collect_paths_with_descendants(&self.path_signals.referenced_value_paths);
-        let nullable_value_paths = self
-            .nullable_by_path
-            .into_iter()
-            .filter_map(|(path, acc)| (acc.has_render_use && acc.all_uses_nullable).then_some(path))
+        let referenced_paths = self
+            .paths
+            .iter()
+            .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
             .collect();
-        let value_path_facts = build_contract_value_path_facts(
-            &self.render_facts_by_path,
-            &self.path_signals,
-            &nullable_value_paths,
-            &paths_with_referenced_descendants,
-        );
-        let conditional_overlays_by_path = self
-            .conditional_overlays_by_path
-            .into_iter()
-            .map(|(target_value_path, accumulator)| {
-                let global_facts = value_path_facts
-                    .get(&target_value_path)
-                    .copied()
-                    .unwrap_or_default();
-                let type_hints = self
-                    .type_hints_by_value_path
-                    .get(&target_value_path)
-                    .cloned()
-                    .unwrap_or_default();
+        let paths_with_referenced_descendants = collect_paths_with_descendants(&referenced_paths);
+        for path in &paths_with_referenced_descendants {
+            self.path(path);
+        }
+
+        let value_path_facts = self
+            .paths
+            .iter()
+            .map(|(path, acc)| {
                 (
-                    target_value_path.clone(),
-                    accumulator.finish(global_facts, type_hints),
+                    path.clone(),
+                    acc.facts(paths_with_referenced_descendants.contains(path)),
                 )
             })
-            .collect();
-        let schema_evidence_by_value_path = build_schema_evidence_by_value_path(
-            &self.path_signals,
-            &self.provider_schema_uses,
-            &self.requiredness_by_path,
-            &self.type_hints_by_value_path,
-            &value_path_facts,
-            &conditional_overlays_by_path,
-        );
+            .collect::<BTreeMap<_, _>>();
 
+        let schema_evidence_by_value_path = self
+            .paths
+            .into_iter()
+            .map(|(value_path, acc)| {
+                let facts = value_path_facts
+                    .get(&value_path)
+                    .copied()
+                    .unwrap_or_default();
+                let conditional_overlays = acc
+                    .conditional_overlays
+                    .finish(facts, acc.type_hints.clone());
+                let evidence = ContractPathSchemaEvidence {
+                    value_path: value_path.clone(),
+                    is_referenced_value_path: acc.referenced,
+                    facts,
+                    guard_predicates: acc.guard_predicates,
+                    metadata_field_kinds: acc.metadata_field_kinds,
+                    type_hints: acc.type_hints,
+                    provider_schema_uses: acc.provider_schema_uses,
+                    requiredness: acc.requiredness,
+                    conditional_overlays,
+                };
+                (value_path, evidence)
+            })
+            .collect();
         ContractSchemaSignals::new(schema_evidence_by_value_path)
     }
 
     fn record_declared_type_hint(&mut self, type_hint: &ContractTypeHint) {
-        self.type_hints_by_value_path
-            .entry(type_hint.value_path.clone())
-            .or_default()
+        let acc = self.path(&type_hint.value_path);
+        acc.type_hints
             .extend(type_hint.schema_types.iter().cloned());
+        if !type_hint.value_path.trim().is_empty() {
+            acc.referenced = true;
+        }
+    }
+
+    fn path(&mut self, path: &str) -> &mut ContractPathAccumulator {
+        self.paths.entry(path.to_string()).or_default()
     }
 
     fn record_provider_schema_use(&mut self, contract_use: &ContractUse) {
         if let Some(provider_use) = from_contract_use(contract_use) {
-            self.provider_schema_uses.push(provider_use);
+            self.path(&provider_use.value_path)
+                .provider_schema_uses
+                .push(provider_use);
         }
     }
 
@@ -158,7 +190,7 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        self.render_path_facts(&contract_use.source_expr);
+        self.path(&contract_use.source_expr);
         if !contract_use.path.0.is_empty() {
             self.record_render_use(
                 &contract_use.source_expr,
@@ -172,7 +204,7 @@ impl ContractSchemaSignalBuilder {
             if path.trim().is_empty() || path == contract_use.source_expr {
                 continue;
             }
-            self.render_path_facts(&path);
+            self.path(&path);
             if !contract_use.path.0.is_empty() {
                 self.record_render_use(&path, range_guard_paths.contains(&path), None);
             }
@@ -185,21 +217,15 @@ impl ContractSchemaSignalBuilder {
             if path.trim().is_empty() {
                 continue;
             }
-            self.render_path_facts(&path);
+            self.path(&path);
             if !contract_use.path.0.is_empty() {
                 self.record_render_use(&path, range_guard_paths.contains(&path), None);
             }
         }
     }
 
-    fn render_path_facts(&mut self, path: &str) -> &mut RenderPathFacts {
-        self.render_facts_by_path
-            .entry(path.to_string())
-            .or_default()
-    }
-
     fn record_render_use(&mut self, path: &str, range_guarded: bool, self_guarded: Option<bool>) {
-        let acc = self.render_path_facts(path);
+        let acc = &mut self.path(path).render;
         acc.has_render_use = true;
         acc.has_self_range_guard_render_use |= range_guarded;
         if let Some(self_guarded) = self_guarded {
@@ -208,42 +234,33 @@ impl ContractSchemaSignalBuilder {
         }
     }
 
-    fn record_path_signals(&mut self, contract_use: &ContractUse) {
+    fn record_path_identity(&mut self, contract_use: &ContractUse) {
         if contract_use.source_expr.trim().is_empty() {
             return;
         }
 
-        self.path_signals
-            .referenced_value_paths
-            .insert(contract_use.source_expr.clone());
+        let source_acc = self.path(&contract_use.source_expr);
+        source_acc.referenced = true;
         if contract_use.kind == ValueKind::Fragment {
-            self.path_signals
-                .value_paths_used_as_fragment
-                .insert(contract_use.source_expr.clone());
+            source_acc.used_as_fragment = true;
         }
         if contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty() {
-            self.path_signals
-                .partial_scalar_value_paths
-                .insert(contract_use.source_expr.clone());
+            source_acc.partial_scalar = true;
         }
         if let Some(field_kind) = metadata_field_kind_from_yaml_path(&contract_use.path.0) {
-            self.path_signals
-                .metadata_fields_by_value_path
-                .entry(contract_use.source_expr.clone())
-                .or_default()
-                .insert(field_kind);
+            source_acc.metadata_field_kinds.insert(field_kind);
         }
         for path in contract_use.guard_value_paths() {
             if path.trim().is_empty() {
                 continue;
             }
-            self.path_signals.referenced_value_paths.insert(path);
+            self.path(&path).referenced = true;
         }
         for path in contract_use.top_level_range_guard_paths() {
             if path.trim().is_empty() {
                 continue;
             }
-            self.path_signals.ranged_value_paths.insert(path);
+            self.path(&path).ranged = true;
         }
         for predicate in contract_use.conditional_guard_predicates() {
             self.record_guard_predicate(predicate);
@@ -257,11 +274,7 @@ impl ContractSchemaSignalBuilder {
             if path.trim().is_empty() {
                 continue;
             }
-            let predicates = self
-                .path_signals
-                .guard_predicates_by_value_path
-                .entry(path)
-                .or_default();
+            let predicates = &mut self.path(&path).guard_predicates;
             if !predicates.contains(&predicate) {
                 predicates.push(predicate.clone());
             }
@@ -281,7 +294,8 @@ impl ContractSchemaSignalBuilder {
             && !contract_use.source_expr.trim().is_empty()
             && contract_use.is_positive_header()
         {
-            self.requiredness(&contract_use.source_expr)
+            self.path(&contract_use.source_expr)
+                .requiredness
                 .is_positive_header = true;
         }
     }
@@ -290,20 +304,14 @@ impl ContractSchemaSignalBuilder {
         if path.trim().is_empty() {
             return;
         }
-        self.requiredness(path).is_conditionally_optional = true;
+        self.path(path).requiredness.is_conditionally_optional = true;
     }
 
     fn record_default_fallback_path(&mut self, path: &str) {
         if path.trim().is_empty() {
             return;
         }
-        self.requiredness(path).has_default_fallback = true;
-    }
-
-    fn requiredness(&mut self, path: &str) -> &mut ContractRequirednessEvidence {
-        self.requiredness_by_path
-            .entry(path.to_string())
-            .or_default()
+        self.path(path).requiredness.has_default_fallback = true;
     }
 
     fn record_nullable_path(&mut self, contract_use: &ContractUse) {
@@ -311,7 +319,7 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        let info = self.nullable_accumulator(&contract_use.source_expr);
+        let info = &mut self.path(&contract_use.source_expr).nullable;
         if !contract_use.path.0.is_empty()
             || contract_use.has_self_range_guard()
             || contract_use.kind == ValueKind::Fragment
@@ -324,13 +332,9 @@ impl ContractSchemaSignalBuilder {
 
         for path in contract_use.top_level_range_guard_paths() {
             if !path.trim().is_empty() {
-                self.nullable_accumulator(&path).has_render_use = true;
+                self.path(&path).nullable.has_render_use = true;
             }
         }
-    }
-
-    fn nullable_accumulator(&mut self, path: &str) -> &mut NullablePathAccumulator {
-        self.nullable_by_path.entry(path.to_string()).or_default()
     }
 
     fn record_conditional_overlay(&mut self, contract_use: &ContractUse) {
@@ -338,10 +342,7 @@ impl ContractSchemaSignalBuilder {
             return;
         }
 
-        let accumulator = self
-            .conditional_overlays_by_path
-            .entry(contract_use.source_expr.clone())
-            .or_default();
+        let accumulator = &mut self.path(&contract_use.source_expr).conditional_overlays;
 
         if contract_use.guards.is_empty() {
             accumulator.has_unconditional_peer_use = true;
@@ -358,6 +359,22 @@ impl ContractSchemaSignalBuilder {
             .entry(guards)
             .or_insert_with(ConditionalOverlayBranchAccumulator::new);
         branch.record_use(contract_use);
+    }
+}
+
+impl ContractPathAccumulator {
+    fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
+        ContractValuePathFacts {
+            has_referenced_descendants,
+            used_as_fragment: self.used_as_fragment,
+            is_ranged_source: self.ranged,
+            is_partial_scalar_value_path: self.partial_scalar,
+            has_render_use: self.render.has_render_use,
+            has_self_guarded_render_use: self.render.has_self_guarded_render_use,
+            all_render_uses_self_guarded: self.render.all_render_uses_self_guarded,
+            has_self_range_guard_render_use: self.render.has_self_range_guard_render_use,
+            is_nullable: self.nullable.has_render_use && self.nullable.all_uses_nullable,
+        }
     }
 }
 
@@ -446,71 +463,6 @@ impl ConditionalOverlayBranchAccumulator {
     }
 }
 
-fn build_schema_evidence_by_value_path(
-    path_signals: &ContractPathSignals,
-    provider_schema_uses: &[ProviderSchemaUse],
-    requiredness_by_path: &BTreeMap<String, ContractRequirednessEvidence>,
-    type_hints_by_value_path: &BTreeMap<String, BTreeSet<String>>,
-    value_path_facts: &BTreeMap<String, ContractValuePathFacts>,
-    conditional_overlays_by_path: &BTreeMap<String, Vec<ConditionalPathOverlay>>,
-) -> BTreeMap<String, ContractPathSchemaEvidence> {
-    let mut provider_uses_by_path: BTreeMap<String, Vec<ProviderSchemaUse>> = BTreeMap::new();
-    for provider_use in provider_schema_uses {
-        provider_uses_by_path
-            .entry(provider_use.value_path.clone())
-            .or_default()
-            .push(provider_use.clone());
-    }
-
-    let mut paths = BTreeSet::new();
-    paths.extend(value_path_facts.keys().cloned());
-    paths.extend(type_hints_by_value_path.keys().cloned());
-    paths.extend(provider_uses_by_path.keys().cloned());
-    paths.extend(requiredness_by_path.keys().cloned());
-    paths.extend(conditional_overlays_by_path.keys().cloned());
-
-    paths
-        .into_iter()
-        .map(|value_path| {
-            let evidence = ContractPathSchemaEvidence {
-                value_path: value_path.clone(),
-                is_referenced_value_path: path_signals.referenced_value_paths.contains(&value_path),
-                facts: value_path_facts
-                    .get(&value_path)
-                    .copied()
-                    .unwrap_or_default(),
-                guard_predicates: path_signals
-                    .guard_predicates_by_value_path
-                    .get(&value_path)
-                    .cloned()
-                    .unwrap_or_default(),
-                metadata_field_kinds: path_signals
-                    .metadata_fields_by_value_path
-                    .get(&value_path)
-                    .cloned()
-                    .unwrap_or_default(),
-                type_hints: type_hints_by_value_path
-                    .get(&value_path)
-                    .cloned()
-                    .unwrap_or_default(),
-                provider_schema_uses: provider_uses_by_path
-                    .get(&value_path)
-                    .cloned()
-                    .unwrap_or_default(),
-                requiredness: requiredness_by_path
-                    .get(&value_path)
-                    .copied()
-                    .unwrap_or_default(),
-                conditional_overlays: conditional_overlays_by_path
-                    .get(&value_path)
-                    .cloned()
-                    .unwrap_or_default(),
-            };
-            (value_path, evidence)
-        })
-        .collect()
-}
-
 fn collect_conditional_guard_paths(guard: &ConditionalGuard, paths: &mut BTreeSet<String>) {
     match guard {
         ConditionalGuard::Truthy { path }
@@ -528,4 +480,19 @@ fn collect_conditional_guard_paths(guard: &ConditionalGuard, paths: &mut BTreeSe
             }
         }
     }
+}
+
+fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for path in paths {
+        let mut segments: Vec<&str> = path
+            .split('.')
+            .filter(|segment| !segment.is_empty())
+            .collect();
+        while segments.len() > 1 {
+            segments.pop();
+            out.insert(segments.join("."));
+        }
+    }
+    out
 }

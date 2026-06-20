@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub mod cases;
+
 use helm_schema_ast::{DefineIndex, HelmParser};
 use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
@@ -12,27 +14,13 @@ use std::process::Command;
 pub fn build_define_index(
     parser: &dyn HelmParser,
     spec: test_util::DefineSourceSpec<'_>,
-) -> DefineIndex {
-    build_define_index_with_mode(parser, spec, false)
-}
-
-pub fn build_define_index_strict(
-    parser: &dyn HelmParser,
-    spec: test_util::DefineSourceSpec<'_>,
-) -> DefineIndex {
-    build_define_index_with_mode(parser, spec, true)
-}
-
-fn build_define_index_with_mode(
-    parser: &dyn HelmParser,
-    spec: test_util::DefineSourceSpec<'_>,
-    strict_helper_parse: bool,
+    helper_parse_mode: HelperParseMode,
 ) -> DefineIndex {
     let loaded = spec.load();
     let mut idx = DefineIndex::new();
     for source in loaded.helper_templates {
         let result = idx.add_source(parser, &source);
-        if strict_helper_parse {
+        if helper_parse_mode == HelperParseMode::Strict {
             result.expect("helper source should parse");
         }
     }
@@ -48,6 +36,12 @@ pub enum ProviderKind<'a> {
     CrdK8s(&'a str),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HelperParseMode {
+    Lenient,
+    Strict,
+}
+
 #[derive(Clone, Copy)]
 pub struct SchemaCorpusCase<'a> {
     pub template_path: &'a str,
@@ -55,6 +49,7 @@ pub struct SchemaCorpusCase<'a> {
     pub expected_fixture: &'a str,
     pub define_sources: test_util::DefineSourceSpec<'a>,
     pub provider: ProviderKind<'a>,
+    pub helper_parse_mode: HelperParseMode,
     pub dump_stem: &'a str,
 }
 
@@ -63,7 +58,6 @@ pub struct SchemaCorpusCase<'a> {
 /// These tests are meant to approximate what end users run through the CLI,
 /// so they use the chain layer plus apiVersion inference instead of the older
 /// single-provider shortcut.
-#[allow(dead_code)]
 pub fn production_k8s_chain(version: &str) -> Chain {
     let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
         .with_allow_download(true)
@@ -76,7 +70,6 @@ pub fn production_k8s_chain(version: &str) -> Chain {
 /// This keeps real-world CRD-consuming chart tests on the same resolution path
 /// as the CLI while leaving lower-layer provider-specific tests free to pin a
 /// single provider when that is the actual subject under test.
-#[allow(dead_code)]
 pub fn production_crd_k8s_chain(version: &str) -> Chain {
     let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
     let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
@@ -133,32 +126,12 @@ pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> Value {
     render_schema_case_with_values(case, &values_yaml)
 }
 
-pub fn render_schema_case_strict_helpers(case: &SchemaCorpusCase<'_>) -> Value {
-    let values_yaml = test_util::read_testdata(case.values_path);
-    render_schema_case_with_values_strict_helpers(case, &values_yaml)
-}
-
 pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: &str) -> Value {
-    render_schema_case_with_values_and_mode(case, values_yaml, false)
-}
-
-pub fn render_schema_case_with_values_strict_helpers(
-    case: &SchemaCorpusCase<'_>,
-    values_yaml: &str,
-) -> Value {
-    render_schema_case_with_values_and_mode(case, values_yaml, true)
-}
-
-fn render_schema_case_with_values_and_mode(
-    case: &SchemaCorpusCase<'_>,
-    values_yaml: &str,
-    strict_helper_parse: bool,
-) -> Value {
     let src = test_util::read_testdata(case.template_path);
-    let idx = build_define_index_with_mode(
+    let idx = build_define_index(
         &helm_schema_ast::TreeSitterParser,
         case.define_sources,
-        strict_helper_parse,
+        case.helper_parse_mode,
     );
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = match case.provider {
@@ -187,31 +160,17 @@ pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) {
     let actual = render_schema_case(case);
     let expected: Value =
         serde_json::from_str(case.expected_fixture).expect("expected schema json");
-    similar_asserts::assert_eq!(actual, expected);
-}
-
-pub fn assert_schema_fixture_strict_helpers(case: &SchemaCorpusCase<'_>) {
-    let actual = render_schema_case_strict_helpers(case);
-    let expected: Value =
-        serde_json::from_str(case.expected_fixture).expect("expected schema json");
-    similar_asserts::assert_eq!(actual, expected);
+    similar_asserts::assert_eq!(
+        actual,
+        expected,
+        "schema fixture mismatch for {}",
+        case.dump_stem,
+    );
 }
 
 pub fn assert_values_yaml_validates(case: &SchemaCorpusCase<'_>) {
     let values_yaml = test_util::read_testdata(case.values_path);
     let schema = render_schema_case_with_values(case, &values_yaml);
-    let errors = validate_values_yaml(&values_yaml, &schema);
-    assert!(
-        errors.is_empty(),
-        "values.yaml failed schema validation with {} error(s):\n{}",
-        errors.len(),
-        errors.join("\n")
-    );
-}
-
-pub fn assert_values_yaml_validates_strict_helpers(case: &SchemaCorpusCase<'_>) {
-    let values_yaml = test_util::read_testdata(case.values_path);
-    let schema = render_schema_case_with_values_strict_helpers(case, &values_yaml);
     let errors = validate_values_yaml(&values_yaml, &schema);
     assert!(
         errors.is_empty(),
@@ -273,7 +232,6 @@ pub fn validate_values_yaml(values_yaml: &str, schema: &Value) -> Vec<String> {
     validate_json_against_schema(&json_values, &relaxed)
 }
 
-#[allow(dead_code)]
 /// Run `helm template` on a chart directory, optionally showing only a specific template.
 ///
 /// Returns `Ok(rendered_yaml)` on success, or `Err(stderr)` on failure.

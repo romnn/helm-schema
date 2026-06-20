@@ -10,6 +10,7 @@ use crate::cache::{
     k8s_cache_path, not_found_marker_exists, not_found_marker_path, read_cached_json_doc,
     write_meta_sidecar, write_not_found_marker,
 };
+use crate::cache_write::write_atomic_file;
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
@@ -268,7 +269,7 @@ impl KubernetesJsonSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                write_atomic(&local, &bytes).ok()?;
+                write_atomic_file(&local, &bytes).ok()?;
                 if self.record_source {
                     write_meta_sidecar(&local, &url);
                 }
@@ -516,7 +517,7 @@ impl KubernetesJsonSchemaProvider {
         );
         match self.fetcher.fetch(&url) {
             Ok(Some(bytes)) => {
-                if write_atomic(&local, &bytes).is_err() {
+                if write_atomic_file(&local, &bytes).is_err() {
                     // Couldn't persist — we still proved the schema
                     // exists upstream, but treat as Uncertain so a
                     // later run probes again rather than locking in
@@ -813,32 +814,6 @@ impl helm_schema_core::ResourceSchemaOracle for KubernetesJsonSchemaProvider {
 
     fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
         <Self as K8sSchemaProvider>::has_resource(self, resource)
-    }
-}
-
-fn write_atomic(local: &Path, bytes: &[u8]) -> std::io::Result<()> {
-    if let Some(parent) = local.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    let tmp = local.with_extension(format!("json.tmp.{}.{}", std::process::id(), unique));
-    {
-        let mut f = fs::File::create(&tmp)?;
-        std::io::Write::write_all(&mut f, bytes)?;
-    }
-    match fs::rename(&tmp, local) {
-        Ok(()) => Ok(()),
-        Err(err) => {
-            if local.exists() {
-                remove_cache_file_if_present(&tmp, "failed to remove stale k8s schema temp file");
-                Ok(())
-            } else {
-                Err(err)
-            }
-        }
     }
 }
 

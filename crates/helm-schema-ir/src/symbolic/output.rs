@@ -8,7 +8,6 @@ use crate::document_projection::{
     DocumentOutput, collect_document_site_context, collect_document_value_analysis_from_exprs,
 };
 use crate::helper_summary::HelperOutputMeta;
-use crate::helper_summary_projection::helper_output_meta_from_summary;
 
 use super::SymbolicWalker;
 
@@ -32,7 +31,7 @@ impl SymbolicWalker<'_> {
                 self.fragment_eval_context(),
                 &mut HashSet::new(),
             );
-        for (path, meta) in helper_output_meta_from_summary(&analysis) {
+        for (path, meta) in analysis.output_meta() {
             out.entry(path).or_default().merge(meta);
         }
         out

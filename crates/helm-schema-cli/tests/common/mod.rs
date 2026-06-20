@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -105,17 +107,14 @@ pub fn generate_chart_schema_for_path(
         .wrap_err("generate schema")
 }
 
-#[allow(dead_code)]
 pub fn generate_chart_schema(chart: &str) -> std::result::Result<Value, Report> {
     generate_chart_schema_for_path(chart)
 }
 
-#[allow(dead_code)]
 pub fn assert_chart_values_yaml_validates(chart: &str) -> std::result::Result<(), Report> {
     assert_chart_values_yaml_validates_for_path(chart)
 }
 
-#[allow(dead_code)]
 pub fn assert_chart_values_yaml_validates_for_path(
     chart_relative_path: &str,
 ) -> std::result::Result<(), Report> {
@@ -131,12 +130,10 @@ pub fn assert_chart_values_yaml_validates_for_path(
     Ok(())
 }
 
-#[allow(dead_code)]
 pub fn values_yaml_as_json(chart: &str) -> std::result::Result<Value, Report> {
     values_yaml_as_json_for_path(chart)
 }
 
-#[allow(dead_code)]
 pub fn values_yaml_as_json_for_path(
     chart_relative_path: &str,
 ) -> std::result::Result<Value, Report> {
@@ -146,13 +143,11 @@ pub fn values_yaml_as_json_for_path(
     Ok(drop_nulls(&values_json))
 }
 
-#[allow(dead_code)]
 pub fn assert_values_json_validates(values_json: &Value, schema: &Value) {
     let errors = validate_json_against_schema(values_json, schema);
     similar_asserts::assert_eq!(errors, Vec::<String>::new());
 }
 
-#[allow(dead_code)]
 pub fn assert_chart_values_comments_apply_to_existing_schema_paths(
     chart: &str,
     schema: &Value,
@@ -200,7 +195,6 @@ fn schema_node_for_values_path<'schema>(
     Some(current)
 }
 
-#[allow(dead_code)]
 pub fn assert_generated_schema_accepts_helm_samples_for_path(
     chart_relative_path: &str,
     schema: &Value,
@@ -227,7 +221,6 @@ pub fn assert_generated_schema_accepts_helm_samples_for_path(
     Ok(())
 }
 
-#[allow(dead_code)]
 pub fn assert_generated_schema_accepts_helm_samples(
     chart: &str,
     schema: &Value,
