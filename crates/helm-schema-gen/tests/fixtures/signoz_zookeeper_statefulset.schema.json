@@ -409,130 +409,6 @@
             ]
           },
           {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "podSecurityContext": {
-            "properties": {
-              "fsGroup": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
             "anyOf": [
               {
                 "not": {
@@ -4855,7 +4731,9 @@
         "enabled": {
           "type": "boolean"
         },
-        "fsGroup": {}
+        "fsGroup": {
+          "type": "integer"
+        }
       },
       "type": "object"
     },

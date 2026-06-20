@@ -41,6 +41,31 @@
           "type": "with"
         },
         {
+          "path": "acmesolver.image.digest",
+          "type": "truthy"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.digest"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        },
+        {
           "path": "acmesolver.image.registry",
           "type": "truthy"
         }
@@ -58,10 +83,41 @@
         {
           "path": "acmesolver.image",
           "type": "with"
+        },
+        {
+          "path": "acmesolver.image.registry",
+          "type": "truthy"
         }
       ],
-      "kind": "Scalar",
-      "path": [],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.registry"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
       "resource": {
         "api_version": "apps/v1",
         "kind": "Deployment"

@@ -379,12 +379,7 @@ impl AbstractValue {
         }
     }
 
-    #[cfg_attr(not(test), allow(dead_code))]
-    pub(crate) fn is_values_root(&self) -> bool {
-        matches!(self, Self::ValuesPath(path) if path.is_empty())
-    }
-
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[cfg(test)]
     pub(crate) fn fragment_output_paths(paths: impl IntoIterator<Item = String>) -> Self {
         Self::OutputSet(
             paths

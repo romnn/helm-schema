@@ -1,43 +1,19 @@
-use crate::fragment_classification::is_fragment_exprs;
-use crate::template_expr_cache::parse_expr_text;
-
 pub(crate) struct ParsedYamlKey {
     key: String,
-    scalar_value_present: bool,
-    starts_block_scalar: bool,
 }
 
 impl ParsedYamlKey {
     pub(crate) fn into_key(self) -> String {
         self.key
     }
-
-    pub(crate) fn scalar_value_present(&self) -> bool {
-        self.scalar_value_present
-    }
-
-    pub(crate) fn starts_block_scalar(&self) -> bool {
-        self.starts_block_scalar
-    }
 }
 
 pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
-    fn finalize_yaml_key(key: String, rest: &str) -> Option<ParsedYamlKey> {
+    fn finalize_yaml_key(key: String) -> Option<ParsedYamlKey> {
         if key.is_empty() {
             return None;
         }
-        let rest = rest.trim_start();
-        let rest = rest.strip_prefix(':').unwrap_or(rest);
-        let rest = rest.trim_start();
-        let starts_block_scalar = rest.starts_with('|') || rest.starts_with('>');
-        let is_template_fragment =
-            rest.starts_with("{{") && is_fragment_exprs(&parse_expr_text(rest));
-        let is_block = rest.is_empty() || starts_block_scalar || is_template_fragment;
-        Some(ParsedYamlKey {
-            key,
-            scalar_value_present: !is_block,
-            starts_block_scalar,
-        })
+        Some(ParsedYamlKey { key })
     }
 
     let after = after.trim_end();
@@ -60,8 +36,11 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
                     key.push('\'');
                 }
                 (_, ch) if ch == quote => {
-                    let rest = &quoted[(idx + ch.len_utf8())..];
-                    return finalize_yaml_key(key, rest);
+                    return quoted[(idx + ch.len_utf8())..]
+                        .trim_start()
+                        .starts_with(':')
+                        .then(|| finalize_yaml_key(key))
+                        .flatten();
                 }
                 _ => key.push(ch),
             }
@@ -73,7 +52,7 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
     let mut key = String::new();
     while let Some(ch) = chars.next() {
         if ch == ':' {
-            return finalize_yaml_key(key.trim().to_string(), chars.as_str());
+            return finalize_yaml_key(key.trim().to_string());
         }
         if ch.is_whitespace() {
             return None;
@@ -85,12 +64,6 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
         return None;
     }
     None
-}
-
-pub(crate) fn source_line_starts_block_scalar(after: &str) -> bool {
-    let after = after.trim_start();
-    let after = after.strip_prefix("- ").unwrap_or(after);
-    parse_yaml_key(after).is_some_and(|key| key.starts_block_scalar)
 }
 
 pub(crate) fn first_mapping_colon_offset(line: &str) -> Option<usize> {

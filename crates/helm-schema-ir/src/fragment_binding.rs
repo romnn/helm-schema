@@ -31,17 +31,12 @@ pub(crate) fn remove_paths(
     binding.remove_fragment_paths(remove)
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
+#[cfg(test)]
 pub(crate) fn values_root() -> FragmentBinding {
     AbstractValue::values_root()
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
+#[cfg(test)]
 pub(crate) fn output_set(paths: BTreeSet<String>) -> FragmentBinding {
     AbstractValue::fragment_output_paths(paths)
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-pub(crate) fn is_values_root(binding: &FragmentBinding) -> bool {
-    binding.is_values_root()
 }
