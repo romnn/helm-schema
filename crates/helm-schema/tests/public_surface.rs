@@ -6,10 +6,10 @@ use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs,
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
     AnalysisSession,
-    contract::{ContractDocument, ContractDocumentGuard},
+    contract::{ContractDocument, ContractDocumentGuard, ValueKind},
     diagnostics::DiagnosticSink,
 };
-use serde_json::json;
+use serde_json::{Value, json};
 use vfs::VfsPath;
 
 #[test]
@@ -156,6 +156,114 @@ spec:
     );
 
     Ok(())
+}
+
+#[test]
+fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc::indoc! {"
+            web:
+              enabled: true
+              containerSecurityContext: {}
+              securityContext: {}
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/deployment.yaml")?,
+        indoc::indoc! {r#"
+            {{- if .Values.web.enabled -}}
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: root
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: web
+                      image: example
+                      {{- with .Values.web.containerSecurityContext }}
+                      securityContext:
+                        {{- toYaml . | nindent 12 }}
+                      {{- end }}
+                  {{- with .Values.web.securityContext }}
+                  securityContext:
+                    {{- toYaml . | nindent 8 }}
+                  {{- end }}
+            {{- end }}
+        "#},
+    )?;
+
+    let session = AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            ..Default::default()
+        },
+    });
+
+    let contract = session.contract_document()?;
+    assert!(
+        contract.uses.iter().any(|use_| {
+            use_.source_expr == "web.containerSecurityContext"
+                && use_.kind == ValueKind::Fragment
+                && use_.path.0
+                    == [
+                        "spec".to_string(),
+                        "template".to_string(),
+                        "spec".to_string(),
+                        "containers[*]".to_string(),
+                        "securityContext".to_string(),
+                    ]
+        }),
+        "expected containerSecurityContext to render at container securityContext; uses={:#?}",
+        contract.uses
+    );
+
+    let schema = session.generated_schema()?.schema;
+    let web_schema = schema
+        .pointer("/properties/web")
+        .unwrap_or_else(|| panic!("missing web schema: {schema}"));
+    assert!(
+        !contains_required_property(web_schema, "containers"),
+        "web schema must not require PodSpec containers under security contexts: {web_schema}"
+    );
+
+    Ok(())
+}
+
+fn contains_required_property(schema: &Value, property: &str) -> bool {
+    match schema {
+        Value::Object(object) => {
+            object
+                .get("required")
+                .and_then(Value::as_array)
+                .is_some_and(|required| {
+                    required
+                        .iter()
+                        .any(|value| value.as_str() == Some(property))
+                })
+                || object
+                    .values()
+                    .any(|value| contains_required_property(value, property))
+        }
+        Value::Array(values) => values
+            .iter()
+            .any(|value| contains_required_property(value, property)),
+        _ => false,
+    }
 }
 
 #[test]
@@ -328,12 +436,17 @@ data:
         "resolved contract must not ingest sibling values.schema.json as inference evidence: {}",
         resolved.schema
     );
-    assert_eq!(
+    assert!(
         resolved
             .schema
-            .pointer("/properties/mode/type")
-            .and_then(serde_json::Value::as_str),
-        Some("string")
+            .pointer("/allOf")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|branches| branches.iter().any(|branch| branch
+                .pointer("/then/properties/mode/type")
+                .and_then(serde_json::Value::as_str)
+                == Some("string"))),
+        "resolved contract should keep guarded render evidence in a branch: {}",
+        resolved.schema
     );
     assert!(
         resolved

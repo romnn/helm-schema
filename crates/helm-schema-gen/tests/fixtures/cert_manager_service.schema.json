@@ -124,142 +124,6 @@
       },
       "then": {
         "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "anyOf": [
-                            {
-                              "const": true
-                            },
-                            {
-                              "not": {
-                                "const": 0
-                              },
-                              "type": "number"
-                            },
-                            {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            {
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "minProperties": 1,
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
           "namespace": {
             "anyOf": [
               {
@@ -549,7 +413,11 @@
       "type": "string"
     },
     "fullnameOverride": {
-      "type": "string"
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "global": {
       "additionalProperties": false,
@@ -565,7 +433,13 @@
       },
       "type": "object"
     },
-    "nameOverride": {},
+    "nameOverride": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "namespace": {},
     "prometheus": {
       "additionalProperties": false,
@@ -724,14 +598,10 @@
       "x-kubernetes-list-type": "atomic"
     },
     "serviceIPFamilyPolicy": {
-      "anyOf": [
-        {
-          "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "serviceLabels": {

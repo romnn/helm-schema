@@ -2,9 +2,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::expr_eval::apply_local_set_mutations_expr;
-use crate::fragment_binding::{self, FragmentBinding};
-use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
 #[cfg(test)]
@@ -98,11 +97,14 @@ fn assignment_rhs_text(text: &str, kind: AssignmentKind) -> Option<String> {
 }
 
 pub(crate) fn merge_fragment_locals(
-    mut base: HashMap<String, FragmentBinding>,
-    other: HashMap<String, FragmentBinding>,
-) -> HashMap<String, FragmentBinding> {
+    mut base: HashMap<String, AbstractValue>,
+    other: HashMap<String, AbstractValue>,
+) -> HashMap<String, AbstractValue> {
     for (key, value) in other {
-        let merged = fragment_binding::union(base.remove(&key), Some(value));
+        let merged = match base.remove(&key) {
+            Some(existing) => AbstractValue::choice(vec![existing, value]),
+            None => Some(value),
+        };
         if let Some(merged) = merged {
             base.insert(key, merged);
         }
@@ -110,26 +112,23 @@ pub(crate) fn merge_fragment_locals(
     base
 }
 
-fn shadow_fragment_binding_keys(
-    binding: FragmentBinding,
-    keys: BTreeSet<String>,
-) -> FragmentBinding {
+fn shadow_fragment_binding_keys(binding: AbstractValue, keys: BTreeSet<String>) -> AbstractValue {
     if keys.is_empty() {
         return binding;
     }
-    let new_entries: BTreeMap<String, FragmentBinding> = keys
+    let new_entries: BTreeMap<String, AbstractValue> = keys
         .into_iter()
-        .map(|key| (key, FragmentBinding::Unknown))
+        .map(|key| (key, AbstractValue::Unknown))
         .collect();
     match binding {
-        FragmentBinding::Overlay {
+        AbstractValue::Overlay {
             mut entries,
             fallback,
         } => {
             entries.extend(new_entries);
-            FragmentBinding::Overlay { entries, fallback }
+            AbstractValue::Overlay { entries, fallback }
         }
-        other => FragmentBinding::Overlay {
+        other => AbstractValue::Overlay {
             entries: new_entries,
             fallback: Box::new(other),
         },
@@ -138,8 +137,8 @@ fn shadow_fragment_binding_keys(
 
 fn local_set_mutation_target_and_keys_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Vec<(String, BTreeSet<String>)> {
@@ -163,7 +162,7 @@ fn local_set_mutation_target_and_keys_from_exprs(
             else {
                 return;
             };
-            let keys = fragment_strings(&key_binding);
+            let keys = key_binding.strings();
             if !keys.is_empty() {
                 out.push((var.clone(), keys));
             }
@@ -175,8 +174,8 @@ fn local_set_mutation_target_and_keys_from_exprs(
 #[cfg(test)]
 pub(crate) fn apply_local_set_mutations(
     text: &str,
-    local_bindings: &mut HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
+    local_bindings: &mut HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
@@ -192,8 +191,8 @@ pub(crate) fn apply_local_set_mutations(
 
 pub(crate) fn apply_local_set_mutations_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &mut HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
+    local_bindings: &mut HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
@@ -221,8 +220,8 @@ pub(crate) fn apply_local_set_mutations_from_exprs(
 
 fn apply_abstract_local_set_mutations_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &mut HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
+    local_bindings: &mut HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
 ) -> bool {
     let mut env = crate::eval_env::EvalEnv::from_fragment_context(local_bindings, current_dot);
     let mut applied = false;
@@ -235,11 +234,7 @@ fn apply_abstract_local_set_mutations_from_exprs(
 
     let mut converted = HashMap::new();
     for (name, value) in env.locals {
-        if let Some(binding) = value.to_fragment_binding() {
-            converted.insert(name, binding);
-        } else if let Some(binding) = local_bindings.get(&name) {
-            converted.insert(name, binding.clone());
-        }
+        converted.insert(name, value.to_context_value());
     }
     *local_bindings = converted;
     true

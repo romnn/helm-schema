@@ -219,7 +219,10 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -232,7 +235,10 @@
           "template_path": "<inline:6>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
       "source_expr": "fullnameOverride"
     },
     {
@@ -527,6 +533,205 @@
           "type": "truthy"
         },
         {
+          "path": "commonLabels",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.name"
+          ],
+          "span": {
+            "end": 283,
+            "start": 205
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
+            "end": 1396,
+            "start": 1194
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
+            "end": 1172,
+            "start": 303
+          },
+          "template_path": "<inline:8>"
+        }
+      ],
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "metrics.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "metrics.prometheusRule.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "commonLabels",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.name"
+          ],
+          "span": {
+            "end": 283,
+            "start": 205
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
+            "end": 1396,
+            "start": 1194
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
+            "end": 1172,
+            "start": 303
+          },
+          "template_path": "<inline:8>"
+        }
+      ],
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "metrics.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "metrics.prometheusRule.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.name"
+          ],
+          "span": {
+            "end": 283,
+            "start": 205
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
+            "end": 1172,
+            "start": 303
+          },
+          "template_path": "<inline:8>"
+        }
+      ],
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "metrics.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "metrics.prometheusRule.enabled",
+          "type": "truthy"
+        },
+        {
           "path": "fullnameOverride",
           "type": "not"
         },
@@ -540,7 +745,10 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -551,202 +759,6 @@
             "start": 774
           },
           "template_path": "<inline:6>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 283,
-            "start": 205
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1396,
-            "start": 1194
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 1172,
-            "start": 303
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 283,
-            "start": 205
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 829,
-            "start": 474
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1396,
-            "start": 1194
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 1172,
-            "start": 303
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "metrics.prometheusRule.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 283,
-            "start": 205
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 1172,
-            "start": 303
-          },
-          "template_path": "<inline:8>"
         }
       ],
       "resource": {

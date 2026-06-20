@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
-use crate::fragment_binding::FragmentBinding;
 use crate::helper_summary::HelperOutputMeta;
 
 mod branch_join;
@@ -16,7 +16,7 @@ mod tests;
 pub(crate) struct SymbolicLocalState {
     pub(crate) range_domains: HashMap<String, Vec<String>>,
     pub(crate) get_bindings: HashMap<String, GetBinding>,
-    pub(crate) fragment_bindings: HashMap<String, FragmentBinding>,
+    pub(crate) fragment_bindings: HashMap<String, AbstractValue>,
     pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
@@ -39,7 +39,7 @@ struct LocalScopeFrame {
 struct VariableLocalState {
     range_domain: Option<Vec<String>>,
     get_binding: Option<GetBinding>,
-    fragment_binding: Option<FragmentBinding>,
+    fragment_binding: Option<AbstractValue>,
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
 }
@@ -90,7 +90,7 @@ impl SymbolicLocalState {
     pub(crate) fn declare_fragment_binding(
         &mut self,
         variable: String,
-        binding: Option<FragmentBinding>,
+        binding: Option<AbstractValue>,
     ) {
         self.record_scope_shadow(&variable);
         self.range_domains.remove(&variable);
@@ -101,7 +101,7 @@ impl SymbolicLocalState {
     pub(crate) fn assign_fragment_binding(
         &mut self,
         variable: String,
-        binding: Option<FragmentBinding>,
+        binding: Option<AbstractValue>,
     ) {
         if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
             self.set_fragment_binding(variable, binding);
@@ -209,7 +209,7 @@ impl SymbolicLocalState {
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
     }
 
-    fn set_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
+    fn set_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.range_domains.remove(&variable);
         self.get_bindings.remove(&variable);
         self.default_paths.remove(&variable);

@@ -1,10 +1,10 @@
 use helm_schema_ast::TemplateHeader;
 
+use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::contract_sink::{ContractUseContext, ContractUseSink};
-use crate::fragment_binding::FragmentBinding;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime};
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
@@ -177,13 +177,13 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         self.scope.locals_mut().apply_get_binding(plan);
     }
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
+    fn declare_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.scope
             .locals_mut()
             .declare_fragment_binding(variable, binding);
     }
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
+    fn assign_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.scope
             .locals_mut()
             .assign_fragment_binding(variable, binding);
@@ -213,7 +213,7 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         self.scope.push_predicate_if_absent(predicate);
     }
 
-    fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
+    fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
         self.scope.push_dot_binding(binding);
     }
 

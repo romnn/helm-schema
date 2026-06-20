@@ -1,7 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::fragment_binding::FragmentBinding;
-use crate::helper_binding::HelperBinding;
 use crate::helper_summary::HelperOutputMeta;
 use crate::{ValueKind, YamlPath};
 
@@ -545,22 +543,36 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn from_helper_binding(binding: &HelperBinding) -> Self {
-        binding.clone()
+    pub(crate) fn to_context_value(&self) -> Self {
+        match self {
+            Self::Top => Self::Unknown,
+            other => other.clone(),
+        }
     }
 
-    pub(crate) fn from_fragment_binding(binding: &FragmentBinding) -> Self {
-        binding.clone()
+    pub(crate) fn to_current_dot_context_value(&self) -> Option<Self> {
+        match self {
+            Self::ValuesPath(path) => Some(Self::ValuesPath(path.clone())),
+            Self::RootContext => Some(Self::RootContext),
+            Self::Top
+            | Self::Unknown
+            | Self::Dict(_)
+            | Self::List(_)
+            | Self::Overlay { .. }
+            | Self::StringSet(_)
+            | Self::PathSet(_)
+            | Self::OutputSet(_)
+            | Self::Choice(_) => None,
+        }
     }
 
-    /// Project a fragment binding for rendered-output attribution.
+    /// Project a value for rendered-output attribution.
     ///
     /// An empty values-root path means the whole values document is available as
-    /// data, not
-    /// that the output path is the whole values document. Output attribution
-    /// therefore abstains instead of inventing a root source path.
-    pub(crate) fn from_fragment_output_binding(binding: &FragmentBinding) -> Self {
-        match binding {
+    /// data, not that the output path is the whole values document. Output
+    /// attribution therefore abstains instead of inventing a root source path.
+    pub(crate) fn for_fragment_output_projection(&self) -> Self {
+        match self {
             Self::ValuesPath(path) if path.is_empty() => Self::Unknown,
             Self::ValuesPath(path) => Self::ValuesPath(path.clone()),
             Self::RootContext => Self::RootContext,
@@ -571,29 +583,42 @@ impl AbstractValue {
             Self::PathSet(paths) => Self::PathSet(paths.clone()),
             Self::Dict(map) => Self::Dict(
                 map.iter()
-                    .map(|(key, value)| (key.clone(), Self::from_fragment_output_binding(value)))
+                    .map(|(key, value)| (key.clone(), value.for_fragment_output_projection()))
                     .collect(),
             ),
             Self::List(items) => Self::List(
                 items
                     .iter()
-                    .map(Self::from_fragment_output_binding)
+                    .map(Self::for_fragment_output_projection)
                     .collect(),
             ),
             Self::Overlay { entries, fallback } => Self::Overlay {
                 entries: entries
                     .iter()
-                    .map(|(key, value)| (key.clone(), Self::from_fragment_output_binding(value)))
+                    .map(|(key, value)| (key.clone(), value.for_fragment_output_projection()))
                     .collect(),
-                fallback: Box::new(Self::from_fragment_output_binding(fallback)),
+                fallback: Box::new(fallback.for_fragment_output_projection()),
             },
             Self::Choice(choices) => Self::Choice(
                 choices
                     .iter()
-                    .map(Self::from_fragment_output_binding)
+                    .map(Self::for_fragment_output_projection)
                     .collect::<BTreeSet<_>>(),
             ),
         }
+    }
+
+    pub(crate) fn fragment_source_paths(&self) -> BTreeSet<String> {
+        self.for_fragment_output_projection().shallow_paths()
+    }
+
+    pub(crate) fn fragment_rendered_paths(&self) -> BTreeSet<String> {
+        self.for_fragment_output_projection().paths()
+    }
+
+    pub(crate) fn select_fragment_path(&self, path: &[String]) -> Option<Self> {
+        self.apply_to_path(path)
+            .map(|value| value.to_context_value())
     }
 
     pub(crate) fn for_output_path(
@@ -627,20 +652,6 @@ impl AbstractValue {
             | Self::PathSet(_)
             | Self::Choice(_) => ValueKind::Scalar,
         }
-    }
-
-    pub(crate) fn to_helper_binding(&self) -> Option<HelperBinding> {
-        Some(match self {
-            Self::Top => Self::Unknown,
-            other => other.clone(),
-        })
-    }
-
-    pub(crate) fn to_fragment_binding(&self) -> Option<FragmentBinding> {
-        Some(match self {
-            Self::Top => Self::Unknown,
-            other => other.clone(),
-        })
     }
 }
 
@@ -767,6 +778,28 @@ mod tests {
 
         assert_eq!(value.shallow_paths(), BTreeSet::new());
         assert_eq!(value.paths(), paths(&["podLabels"]));
+    }
+
+    #[test]
+    fn values_root_abstains_from_fragment_path_extraction() {
+        let value = AbstractValue::values_root();
+
+        assert_eq!(value.fragment_source_paths(), BTreeSet::new());
+        assert_eq!(value.fragment_rendered_paths(), BTreeSet::new());
+    }
+
+    #[test]
+    fn fragment_paths_stay_shallow_while_rendered_paths_descend_structures() {
+        let value = AbstractValue::Dict(BTreeMap::from([(
+            "metadata".to_string(),
+            AbstractValue::ValuesPath("podLabels".to_string()),
+        )]));
+
+        assert_eq!(value.fragment_source_paths(), BTreeSet::new());
+        assert_eq!(
+            value.fragment_rendered_paths(),
+            BTreeSet::from(["podLabels".to_string()])
+        );
     }
 
     #[test]

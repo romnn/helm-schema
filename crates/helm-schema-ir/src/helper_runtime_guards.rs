@@ -2,11 +2,10 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::eval_env::EvalEnv;
-use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_binding::HelperBinding;
 use crate::helper_summary_projection::helper_summary_condition_paths;
 use crate::local_projection::{
     direct_bound_paths_from_expr_in_context, local_bound_paths_from_expr,
@@ -15,9 +14,9 @@ use crate::predicate::Predicate;
 
 pub(crate) fn branch_guard_paths_for_expr(
     expr: &TemplateExpr,
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
-    local_bindings: &HashMap<String, FragmentBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> BTreeSet<String> {
@@ -44,9 +43,9 @@ mod tests {
 
     use helm_schema_ast::DefineIndex;
 
+    use crate::abstract_value::AbstractValue;
     use crate::define_body_cache::DefineBodyCache;
     use crate::fragment_expr_eval::FragmentEvalContext;
-    use crate::helper_binding::HelperBinding;
     use crate::helper_summary::HelperSummaryCache;
     use helm_schema_ast::TemplateHeader;
 
@@ -61,7 +60,7 @@ mod tests {
         let mut seen = HashSet::new();
         let paths = branch_guard_paths_for_expr(
             header.expr(),
-            &HashMap::<String, HelperBinding>::new(),
+            &HashMap::<String, AbstractValue>::new(),
             None,
             &HashMap::new(),
             FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries),

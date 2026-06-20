@@ -5,8 +5,6 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
-use crate::fragment_binding::FragmentBinding;
-use crate::helper_binding::HelperBinding;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::expr_contains_helper_call;
@@ -14,8 +12,8 @@ use crate::{ValueKind, YamlPath, output_path};
 
 #[derive(Clone, Copy)]
 pub(crate) struct HelperOutputExprContext<'a> {
-    pub(crate) bindings: &'a HashMap<String, HelperBinding>,
-    pub(crate) current_dot: Option<&'a HelperBinding>,
+    pub(crate) bindings: &'a HashMap<String, AbstractValue>,
+    pub(crate) current_dot: Option<&'a AbstractValue>,
     pub(crate) relative_path: &'a YamlPath,
     pub(crate) kind: ValueKind,
     pub(crate) active_output_predicates: &'a BTreeSet<Predicate>,
@@ -49,28 +47,49 @@ pub(crate) fn push_helper_fragment_output(
     kind: ValueKind,
     meta: HelperOutputMeta,
 ) {
+    push_helper_fragment_output_with_encoding(
+        outputs,
+        source_expr,
+        relative_path,
+        kind,
+        false,
+        meta,
+    );
+}
+
+pub(crate) fn push_helper_fragment_output_with_encoding(
+    outputs: &mut Vec<HelperFragmentOutputUse>,
+    source_expr: String,
+    relative_path: &YamlPath,
+    kind: ValueKind,
+    encoded: bool,
+    meta: HelperOutputMeta,
+) {
     outputs.push(HelperFragmentOutputUse {
         source_expr,
         relative_path: relative_path.clone(),
         kind,
+        encoded,
         meta,
     });
 }
 
 pub(crate) fn collect_fragment_binding_output_uses(
     outputs: &mut Vec<HelperFragmentOutputUse>,
-    binding: &FragmentBinding,
+    binding: &AbstractValue,
     relative_path: &YamlPath,
     kind: ValueKind,
     active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
-    let value = AbstractValue::from_fragment_output_binding(binding);
+    let value = binding.for_fragment_output_projection();
+    let encoded_paths = BTreeSet::new();
     collect_abstract_output_uses(
         outputs,
         &value,
         relative_path,
         kind,
+        &encoded_paths,
         active_output_predicates,
         defaulted_paths,
     );
@@ -87,11 +106,13 @@ pub(crate) fn collect_helper_binding_output_uses_from_expr(
 
     let env = EvalEnv::from_helper_context(Some(context.bindings), context.current_dot);
     if let Some(value) = eval_expr(expr, &env).value {
+        let encoded_paths = collect_encoded_output_paths_from_expr(expr, &env);
         collect_abstract_output_uses(
             outputs,
             &value,
             context.relative_path,
             context.kind,
+            &encoded_paths,
             context.active_output_predicates,
             context.defaulted_paths,
         );
@@ -126,18 +147,20 @@ pub(crate) fn collect_helper_binding_output_uses_from_expr(
 
 pub(crate) fn collect_helper_binding_output_uses(
     outputs: &mut Vec<HelperFragmentOutputUse>,
-    binding: &HelperBinding,
+    binding: &AbstractValue,
     relative_path: &YamlPath,
     kind: ValueKind,
     active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
-    let value = AbstractValue::from_helper_binding(binding);
+    let value = binding.clone();
+    let encoded_paths = BTreeSet::new();
     collect_abstract_output_uses(
         outputs,
         &value,
         relative_path,
         kind,
+        &encoded_paths,
         active_output_predicates,
         defaulted_paths,
     );
@@ -148,6 +171,7 @@ fn collect_abstract_output_uses(
     value: &AbstractValue,
     relative_path: &YamlPath,
     kind: ValueKind,
+    encoded_paths: &BTreeSet<String>,
     active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
@@ -159,6 +183,7 @@ fn collect_abstract_output_uses(
                 relative_path,
                 kind,
                 None,
+                encoded_paths,
                 active_output_predicates,
                 defaulted_paths,
             );
@@ -171,6 +196,7 @@ fn collect_abstract_output_uses(
                     relative_path,
                     kind,
                     None,
+                    encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
                 );
@@ -184,6 +210,7 @@ fn collect_abstract_output_uses(
                     relative_path,
                     kind,
                     Some(meta),
+                    encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
                 );
@@ -198,6 +225,7 @@ fn collect_abstract_output_uses(
                     value,
                     &child_path,
                     value.output_child_kind(),
+                    encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
                 );
@@ -209,6 +237,7 @@ fn collect_abstract_output_uses(
                 fallback,
                 relative_path,
                 kind,
+                encoded_paths,
                 active_output_predicates,
                 defaulted_paths,
             );
@@ -220,6 +249,7 @@ fn collect_abstract_output_uses(
                     value,
                     &child_path,
                     value.output_child_kind(),
+                    encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
                 );
@@ -232,6 +262,7 @@ fn collect_abstract_output_uses(
                     choice,
                     relative_path,
                     kind,
+                    encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
                 );
@@ -245,6 +276,7 @@ fn collect_abstract_output_uses(
                     item,
                     &item_path,
                     item.output_child_kind(),
+                    encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
                 );
@@ -263,6 +295,7 @@ fn push_output_path(
     relative_path: &YamlPath,
     kind: ValueKind,
     meta: Option<&HelperOutputMeta>,
+    encoded_paths: &BTreeSet<String>,
     active_output_predicates: &BTreeSet<Predicate>,
     defaulted_paths: &BTreeSet<String>,
 ) {
@@ -275,11 +308,103 @@ fn push_output_path(
         },
         active_output_predicates,
     );
-    push_helper_fragment_output(outputs, path.to_string(), relative_path, kind, meta);
+    push_helper_fragment_output_with_encoding(
+        outputs,
+        path.to_string(),
+        relative_path,
+        kind,
+        path_is_encoded(path, encoded_paths),
+        meta,
+    );
+}
+
+fn collect_encoded_output_paths_from_expr(expr: &TemplateExpr, env: &EvalEnv) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    append_encoded_output_paths_from_expr(expr, env, &mut out);
+    out
+}
+
+fn append_encoded_output_paths_from_expr(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    out: &mut BTreeSet<String>,
+) {
+    match expr.deparen() {
+        TemplateExpr::Call { function, args } => {
+            if function == "b64enc" {
+                for arg in args {
+                    append_expr_value_paths(arg, env, out);
+                }
+            }
+            for arg in args {
+                append_encoded_output_paths_from_expr(arg, env, out);
+            }
+        }
+        TemplateExpr::Pipeline(stages) => {
+            append_pipeline_encoded_output_paths(stages, env, out);
+        }
+        TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
+            append_encoded_output_paths_from_expr(operand, env, out);
+        }
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            append_encoded_output_paths_from_expr(value, env, out);
+        }
+        TemplateExpr::Literal(_)
+        | TemplateExpr::Field(_)
+        | TemplateExpr::Variable(_)
+        | TemplateExpr::Unknown(_) => {}
+    }
+}
+
+fn append_pipeline_encoded_output_paths(
+    stages: &[TemplateExpr],
+    env: &EvalEnv,
+    out: &mut BTreeSet<String>,
+) {
+    let mut prefix: Vec<TemplateExpr> = Vec::new();
+    for stage in stages {
+        let current = stage.deparen();
+        if let TemplateExpr::Call { function, args } = current {
+            for arg in args {
+                append_encoded_output_paths_from_expr(arg, env, out);
+            }
+            if function == "b64enc" {
+                if !prefix.is_empty() {
+                    let prefix_expr = if prefix.len() == 1 {
+                        prefix[0].clone()
+                    } else {
+                        TemplateExpr::Pipeline(prefix.clone())
+                    };
+                    append_expr_value_paths(&prefix_expr, env, out);
+                }
+                for arg in args {
+                    append_expr_value_paths(arg, env, out);
+                }
+            }
+        } else {
+            append_encoded_output_paths_from_expr(current, env, out);
+        }
+        prefix.push(stage.clone());
+    }
+}
+
+fn append_expr_value_paths(expr: &TemplateExpr, env: &EvalEnv, out: &mut BTreeSet<String>) {
+    if let Some(value) = eval_expr(expr, env).value {
+        out.extend(value.paths().into_iter().filter(|path| !path.is_empty()));
+    }
+}
+
+fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
+    encoded_paths.iter().any(|encoded_path| {
+        path == encoded_path
+            || path
+                .strip_prefix(encoded_path)
+                .is_some_and(|suffix| suffix.starts_with('.'))
+    })
 }
 
 pub(crate) fn helper_binding_output_meta(
-    binding: &HelperBinding,
+    binding: &AbstractValue,
 ) -> BTreeMap<String, HelperOutputMeta> {
-    AbstractValue::from_helper_binding(binding).output_meta()
+    binding.clone().output_meta()
 }

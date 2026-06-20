@@ -2,14 +2,11 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::expression_analysis::{
     resolve_expr_to_values_path, resolved_default_fallback_paths_for_exprs,
 };
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::fragment_source_paths;
 use crate::fragment_expr_eval::{FragmentEvalContext, fragment_binding_from_outer_expr};
-use crate::helper_binding::HelperBinding;
-use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::value_path_extraction::values_path_from_expr;
 
@@ -17,15 +14,15 @@ use super::ValuePathContext;
 
 pub(crate) fn computed_with_body_fragment_binding_expr(
     expr: &TemplateExpr,
-    root_bindings: &HashMap<String, HelperBinding>,
-    template_bindings: &HashMap<String, FragmentBinding>,
+    root_bindings: &HashMap<String, AbstractValue>,
+    template_bindings: &HashMap<String, AbstractValue>,
     fragment_context: FragmentEvalContext<'_>,
-    current_dot_fragment: Option<&FragmentBinding>,
-    current_dot_binding: Option<&HelperBinding>,
-) -> Option<FragmentBinding> {
+    current_dot_fragment: Option<&AbstractValue>,
+    current_dot_binding: Option<&AbstractValue>,
+) -> Option<AbstractValue> {
     let mut locals = template_bindings.clone();
     for (key, value) in root_bindings {
-        locals.insert(key.clone(), helper_to_fragment_binding(value));
+        locals.insert(key.clone(), value.to_context_value());
     }
 
     fragment_binding_from_outer_expr(
@@ -142,7 +139,7 @@ impl ValuePathContext<'_> {
 
         let mut locals = self.template_bindings.clone();
         for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), helper_to_fragment_binding(value));
+            locals.insert(key.clone(), value.to_context_value());
         }
 
         let outer_binding = fragment_binding_from_outer_expr(
@@ -157,7 +154,7 @@ impl ValuePathContext<'_> {
         outer_binding
             .into_iter()
             .chain(fragment_binding)
-            .flat_map(|binding| fragment_source_paths(&binding))
+            .flat_map(|binding| binding.fragment_source_paths())
             .filter(|path| !path.trim().is_empty())
             .collect()
     }
@@ -165,7 +162,7 @@ impl ValuePathContext<'_> {
     pub(crate) fn with_body_fragment_binding_expr(
         &self,
         expr: &TemplateExpr,
-    ) -> Option<FragmentBinding> {
+    ) -> Option<AbstractValue> {
         computed_with_body_fragment_binding_expr(
             expr,
             self.root_bindings,
@@ -197,8 +194,8 @@ impl ValuePathContext<'_> {
     fn fragment_binding_from_expr(
         &self,
         expr: &TemplateExpr,
-        current_dot: Option<&FragmentBinding>,
-    ) -> Option<FragmentBinding> {
+        current_dot: Option<&AbstractValue>,
+    ) -> Option<AbstractValue> {
         let mut seen = HashSet::new();
         self.fragment_context.fragment_binding_from_expr(
             expr,
@@ -214,7 +211,7 @@ impl ValuePathContext<'_> {
     ) -> BTreeSet<String> {
         let mut locals = self.template_bindings.clone();
         for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), helper_to_fragment_binding(value));
+            locals.insert(key.clone(), value.to_context_value());
         }
 
         let mut paths = BTreeSet::new();
@@ -233,7 +230,7 @@ impl ValuePathContext<'_> {
             let resolved_paths = outer_binding
                 .into_iter()
                 .chain(fragment_binding)
-                .flat_map(|binding| fragment_source_paths(&binding))
+                .flat_map(|binding| binding.fragment_source_paths())
                 .filter(|path| !path.trim().is_empty())
                 .collect::<BTreeSet<_>>();
             let found = !resolved_paths.is_empty();
@@ -279,7 +276,7 @@ where
     }
 }
 
-fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, HelperBinding>) -> bool {
+fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, AbstractValue>) -> bool {
     match expr {
         TemplateExpr::Parenthesized(inner) => is_direct_path_expr(inner, bindings),
         TemplateExpr::Field(_) => true,

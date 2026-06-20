@@ -61,6 +61,18 @@
         {
           "path": "podPriorityClassName.create",
           "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "podPriorityClassName.create",
+          "type": "truthy"
         },
         {
           "path": "nameOverride",
@@ -68,7 +80,11 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -81,7 +97,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "scheduling.k8s.io/v1",
+        "kind": "PriorityClass"
+      },
       "source_expr": "nameOverride"
     },
     {

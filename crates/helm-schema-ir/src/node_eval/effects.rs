@@ -1,11 +1,11 @@
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::fragment_assignment::AssignmentKind;
-use crate::fragment_binding::FragmentBinding;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
@@ -13,9 +13,9 @@ use crate::{Guard, ValueKind, YamlPath};
 pub(crate) trait NodeActionEffectSink: ContractUseSink {
     fn apply_get_binding(&mut self, plan: GetBindingPlan);
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
+    fn declare_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>);
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>);
+    fn assign_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>);
 
     fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &TemplateExpr);
 
@@ -23,7 +23,7 @@ pub(crate) trait NodeActionEffectSink: ContractUseSink {
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
-    fn push_dot_binding(&mut self, binding: Option<FragmentBinding>);
+    fn push_dot_binding(&mut self, binding: Option<AbstractValue>);
 
     fn insert_range_domain(&mut self, variable: String, literals: Vec<String>);
 }

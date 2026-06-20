@@ -2027,9 +2027,7 @@
         "template",
         "spec",
         "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "fieldRef"
+        "env"
       ],
       "provenance": [
         {
@@ -2481,44 +2479,6 @@
           "span": {
             "end": 2222,
             "start": 2011
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceAccount.create",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.serviceAccountName"
-          ],
-          "span": {
-            "end": 1528,
-            "start": 1323
           },
           "template_path": "<inline:0>"
         }
@@ -3150,6 +3110,40 @@
       ],
       "kind": "Scalar",
       "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        }
+      ],
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
         "spec",
         "serviceName"
       ],
@@ -3194,6 +3188,56 @@
         "containers[*]",
         "env[*]",
         "value"
+      ],
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "serviceAccount.create",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.serviceAccountName"
+          ],
+          "span": {
+            "end": 1528,
+            "start": 1323
+          },
+          "template_path": "<inline:0>"
+        }
       ],
       "resource": {
         "api_version": "",
@@ -3434,6 +3478,37 @@
     {
       "guards": [
         {
+          "path": "volumePermissions.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "persistence.enabled",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.imageRegistry"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.imageRegistry"
+    },
+    {
+      "guards": [
+        {
           "path": "global",
           "type": "truthy"
         },
@@ -3447,7 +3522,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -3470,23 +3551,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "global.imageRegistry"
-    },
-    {
-      "guards": [
-        {
-          "path": "volumePermissions.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "persistence.enabled",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "global.imageRegistry"
     },
     {
@@ -3513,7 +3585,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -3536,22 +3614,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "global.imageRegistry"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "global.imageRegistry"
     },
     {
@@ -3905,6 +3975,21 @@
     {
       "guards": [
         {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "image.digest"
+    },
+    {
+      "guards": [
+        {
           "path": "global.imageRegistry",
           "type": "truthy"
         },
@@ -3918,7 +4003,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -3941,7 +4032,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.digest"
     },
     {
@@ -3952,7 +4050,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -3975,22 +4079,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "image.digest"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.digest"
     },
     {
@@ -4258,6 +4354,21 @@
     {
       "guards": [
         {
+          "paths": [
+            "tls.client.enabled",
+            "tls.quorum.enabled"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "image.registry"
+    },
+    {
+      "guards": [
+        {
           "path": "global.imageRegistry",
           "type": "truthy"
         },
@@ -4267,7 +4378,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -4290,22 +4407,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "image.registry"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "tls.client.enabled",
-            "tls.quorum.enabled"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.registry"
     },
     {
@@ -4369,7 +4478,13 @@
     {
       "guards": [],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -4392,7 +4507,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.repository"
     },
     {
@@ -4407,7 +4529,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -4430,7 +4558,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.repository"
     },
     {
@@ -4544,7 +4679,13 @@
     {
       "guards": [],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -4567,7 +4708,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.tag"
     },
     {
@@ -4582,7 +4730,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -4605,7 +4759,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "image.tag"
     },
     {
@@ -4747,8 +4908,7 @@
         "spec",
         "template",
         "spec",
-        "initContainers[*]",
-        "volumeMounts"
+        "initContainers"
       ],
       "provenance": [
         {
@@ -5465,52 +5625,6 @@
     {
       "guards": [
         {
-          "path": "serviceAccount.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1048,
-            "start": 681
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.serviceAccountName"
-          ],
-          "span": {
-            "end": 1528,
-            "start": 1323
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
           "path": "tls.client.enabled",
           "type": "truthy"
         },
@@ -6079,6 +6193,48 @@
             "start": 114
           },
           "template_path": "<inline:8>"
+        }
+      ],
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
         }
       ],
       "resource": {
@@ -6757,6 +6913,64 @@
     {
       "guards": [
         {
+          "path": "serviceAccount.create",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1048,
+            "start": 681
+          },
+          "template_path": "<inline:6>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.serviceAccountName"
+          ],
+          "span": {
+            "end": 1528,
+            "start": 1323
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
           "path": "fullnameOverride",
           "type": "not"
         },
@@ -6816,6 +7030,40 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.namespace"
+          ],
+          "span": {
+            "end": 1207,
+            "start": 1075
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "namespaceOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "namespace"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -8161,7 +8409,7 @@
       "kind": "Fragment",
       "path": [
         "spec",
-        "volumeClaimTemplates[*]",
+        "volumeClaimTemplates",
         "spec",
         "selector"
       ],
@@ -9429,7 +9677,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -9442,7 +9695,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "serviceAccount.name"
     },
     {
@@ -9457,7 +9717,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -9470,7 +9735,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "serviceAccount.name"
     },
     {
@@ -9504,8 +9776,7 @@
         "spec",
         "template",
         "spec",
-        "containers[*]",
-        "volumeMounts"
+        "containers"
       ],
       "provenance": [
         {
@@ -11850,7 +12121,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -11873,7 +12150,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.digest"
     },
     {
@@ -11892,7 +12176,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -11915,7 +12205,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.digest"
     },
     {
@@ -12036,7 +12333,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -12059,7 +12362,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.registry"
     },
     {
@@ -12074,7 +12384,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -12097,7 +12413,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.repository"
     },
     {
@@ -12120,7 +12443,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -12143,7 +12472,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.repository"
     },
     {
@@ -12158,7 +12494,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -12181,7 +12523,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.tag"
     },
     {
@@ -12204,7 +12553,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -12227,7 +12582,14 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "",
+        "api_version_candidates": [
+          "apps/v1beta1",
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "volumePermissions.image.tag"
     },
     {

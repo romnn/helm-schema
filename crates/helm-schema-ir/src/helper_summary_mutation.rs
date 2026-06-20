@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::helper_binding::HelperBinding;
+use crate::abstract_value::AbstractValue;
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::output_path;
 use crate::predicate::Predicate;
@@ -73,7 +73,7 @@ pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut Help
 
 pub(crate) fn mark_suppressed_roots_for_bound_outputs(
     analysis: &mut HelperSummary,
-    bindings: &HashMap<String, HelperBinding>,
+    bindings: &HashMap<String, AbstractValue>,
 ) {
     let rendered_sources: BTreeSet<String> = analysis
         .output
@@ -82,7 +82,7 @@ pub(crate) fn mark_suppressed_roots_for_bound_outputs(
         .cloned()
         .collect();
     for binding in bindings.values() {
-        let HelperBinding::ValuesPath(root) = binding else {
+        let AbstractValue::ValuesPath(root) = binding else {
             continue;
         };
         if output_path::values_path_has_descendant(root, &rendered_sources) {
@@ -142,7 +142,7 @@ mod tests {
     use std::collections::{BTreeSet, HashMap};
 
     use super::mark_suppressed_roots_for_bound_outputs;
-    use crate::helper_binding::HelperBinding;
+    use crate::abstract_value::AbstractValue;
     use crate::helper_summary::HelperSummary;
 
     #[test]
@@ -151,7 +151,7 @@ mod tests {
         analysis.add_output("serviceAccount.name".to_string(), &BTreeSet::new(), false);
         let bindings = HashMap::from([(
             "config".to_string(),
-            HelperBinding::ValuesPath("serviceAccount".to_string()),
+            AbstractValue::ValuesPath("serviceAccount".to_string()),
         )]);
 
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
@@ -168,7 +168,7 @@ mod tests {
         analysis.add_output("serviceAccount".to_string(), &BTreeSet::new(), false);
         let bindings = HashMap::from([(
             "config".to_string(),
-            HelperBinding::ValuesPath("serviceAccount".to_string()),
+            AbstractValue::ValuesPath("serviceAccount".to_string()),
         )]);
 
         mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);

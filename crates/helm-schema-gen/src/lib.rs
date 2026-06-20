@@ -20,10 +20,10 @@ use helm_schema_ir::{
     ConditionalGuard, ConditionalPathOverlayAtPath, ContractSchemaSignals, GuardValue,
 };
 
-use merge::union_schema_list;
+use merge::{merge_schema_list, union_schema_list};
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
-use schema_model::{guard_value_to_json, schema_allows_type, type_schema};
+use schema_model::{guard_value_to_json, is_scalar_like_schema, schema_allows_type, type_schema};
 use schema_tree::{SchemaDocument, draft07_root_document, open_array_schema, open_object_schema};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
@@ -209,7 +209,7 @@ fn collect_conditional_schemas(
         .conditional_path_overlays()
         .into_iter()
         .filter_map(|overlay| {
-            resolved_paths
+            let resolved_target = resolved_paths
                 .iter()
                 .find(|resolved| resolved.value_path == overlay.target_value_path)?;
             let target_segments = split_value_path(&overlay.target_value_path);
@@ -220,6 +220,7 @@ fn collect_conditional_schemas(
                 &overlay,
                 values_yaml_doc,
                 provider,
+                resolved_target.values_yaml_schema.clone(),
                 resolved_by_path
                     .get(overlay.target_value_path.as_str())
                     .cloned()
@@ -246,6 +247,7 @@ fn conditional_target_schema(
     overlay: &ConditionalPathOverlayAtPath,
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
+    values_yaml_schema: Value,
     resolved_fallback: Option<Value>,
 ) -> Value {
     let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider)
@@ -256,6 +258,12 @@ fn conditional_target_schema(
     else {
         return branch_schema;
     };
+    let branch_schema =
+        if should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema) {
+            merge_schema_list(vec![branch_schema, values_yaml_schema])
+        } else {
+            branch_schema
+        };
     if !active_by_defaults {
         if let Some(fallback) = resolved_fallback
             && is_placeholder_fragment_object_schema(&branch_schema)
@@ -277,6 +285,18 @@ fn conditional_target_schema(
     } else {
         resolved_fallback.unwrap_or(branch_schema)
     }
+}
+
+fn should_merge_values_yaml_into_conditional_branch(
+    branch_schema: &Value,
+    values_yaml_schema: &Value,
+) -> bool {
+    crate::schema_model::is_empty_schema(branch_schema)
+        || schemas_share_scalar_input_domain(branch_schema, values_yaml_schema)
+}
+
+fn schemas_share_scalar_input_domain(left: &Value, right: &Value) -> bool {
+    is_scalar_like_schema(left) && is_scalar_like_schema(right)
 }
 
 fn resolve_overlay_target_schema(

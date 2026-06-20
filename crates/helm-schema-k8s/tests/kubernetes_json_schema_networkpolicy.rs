@@ -58,6 +58,47 @@ fn networkpolicy_leaf_schema_matchlabels() {
 }
 
 #[test]
+fn deployment_container_security_context_leaf_is_not_pod_spec() {
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+
+    let r = ResourceRef {
+        api_version: "apps/v1".to_string(),
+        kind: "Deployment".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+
+    let path = YamlPath(vec![
+        "spec".to_string(),
+        "template".to_string(),
+        "spec".to_string(),
+        "containers[*]".to_string(),
+        "securityContext".to_string(),
+    ]);
+
+    let leaf = provider
+        .schema_fragment_for_resource_path(&r, &path)
+        .expect("container securityContext leaf schema")
+        .into_schema();
+
+    assert!(
+        leaf.pointer("/properties/allowPrivilegeEscalation")
+            .is_some(),
+        "expected container securityContext schema, got {leaf}"
+    );
+    assert!(
+        leaf.pointer("/required")
+            .and_then(serde_json::Value::as_array)
+            .is_none_or(|required| {
+                !required
+                    .iter()
+                    .any(|value| value.as_str() == Some("containers"))
+            }),
+        "container securityContext must not inherit PodSpec.required.containers: {leaf}"
+    );
+}
+
+#[test]
 fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_allow_download(true)

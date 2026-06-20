@@ -2,11 +2,11 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
+use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
 use crate::fragment_assignment::{
     AssignmentKind, apply_local_set_mutations, parse_helper_assignment,
 };
-use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_body_renders_mapping_entries_from_ast;
 use crate::helper_summary::HelperSummaryCache;
@@ -63,14 +63,14 @@ fn parse_helper_assignment_detects_assignment_from_ast() {
 fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
     let mut locals = HashMap::from([(
         "config".to_string(),
-        FragmentBinding::Dict(BTreeMap::from([
+        AbstractValue::Dict(BTreeMap::from([
             (
                 "name".to_string(),
-                FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
             ),
             (
                 "annotations".to_string(),
-                FragmentBinding::ValuesPath("serviceAccount.annotations".to_string()),
+                AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
             ),
         ])),
     )]);
@@ -90,19 +90,19 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
 
     assert_eq!(
         locals.get("config"),
-        Some(&FragmentBinding::Overlay {
+        Some(&AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
-                FragmentBinding::StringSet(BTreeSet::from(["generated".to_string()])),
+                AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
             )]),
-            fallback: Box::new(FragmentBinding::Dict(BTreeMap::from([
+            fallback: Box::new(AbstractValue::Dict(BTreeMap::from([
                 (
                     "name".to_string(),
-                    FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+                    AbstractValue::ValuesPath("serviceAccount.name".to_string()),
                 ),
                 (
                     "annotations".to_string(),
-                    FragmentBinding::ValuesPath("serviceAccount.annotations".to_string()),
+                    AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
                 ),
             ]))),
         })

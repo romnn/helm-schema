@@ -36,6 +36,7 @@ impl DocumentOutput {
         let DocumentValueAnalysis {
             default_fallback_values,
             values,
+            encoded_output_values,
             type_hints,
             local_output_meta,
             bound_values,
@@ -59,8 +60,13 @@ impl DocumentOutput {
             let default_guard = Guard::Default {
                 path: value.clone(),
             };
+            let provider_path_suppressed = encoded_output_values.contains(&value);
             let emit_path = site.direct_value_path(&value);
-            let emit_kind = site.direct_value_kind();
+            let emit_kind = if provider_path_suppressed {
+                ValueKind::PartialScalar
+            } else {
+                site.direct_value_kind()
+            };
             let mut guard_sets = local_output_meta
                 .get(&value)
                 .map(|meta| meta.contract_guard_sets(&value))
@@ -92,7 +98,13 @@ impl DocumentOutput {
         }
 
         contract.extend_type_hints(type_hints);
-        append_document_helper_contract_uses(helper, &site, contract, context);
+        append_document_helper_contract_uses(
+            helper,
+            &encoded_output_values,
+            &site,
+            contract,
+            context,
+        );
     }
 }
 

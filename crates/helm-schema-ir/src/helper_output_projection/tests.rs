@@ -4,8 +4,7 @@ use super::{
     collect_fragment_binding_output_uses, collect_helper_binding_output_uses,
     helper_binding_output_meta,
 };
-use crate::fragment_binding::{self, FragmentBinding};
-use crate::helper_binding::HelperBinding;
+use crate::abstract_value::AbstractValue;
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_summary::HelperOutputMeta;
 use crate::predicate::Predicate;
@@ -13,12 +12,12 @@ use crate::{ValueKind, YamlPath};
 
 #[test]
 fn helper_binding_output_meta_preserves_output_set_metadata() {
-    let binding = HelperBinding::Overlay {
+    let binding = AbstractValue::Overlay {
         entries: BTreeMap::from([(
             "name".to_string(),
-            HelperBinding::ValuesPath("serviceAccount.name".to_string()),
+            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
         )]),
-        fallback: Box::new(HelperBinding::OutputSet(BTreeMap::from([(
+        fallback: Box::new(AbstractValue::OutputSet(BTreeMap::from([(
             "global.nameOverride".to_string(),
             HelperOutputMeta {
                 predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
@@ -47,19 +46,19 @@ fn helper_binding_output_meta_preserves_output_set_metadata() {
 
 #[test]
 fn helper_and_fragment_bindings_share_structural_output_projection() {
-    let helper_binding = HelperBinding::List(vec![
-        HelperBinding::Dict(BTreeMap::from([(
+    let helper_binding = AbstractValue::List(vec![
+        AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            HelperBinding::ValuesPath("containers.name".to_string()),
+            AbstractValue::ValuesPath("containers.name".to_string()),
         )])),
-        HelperBinding::PathSet(BTreeSet::from(["containers.image".to_string()])),
+        AbstractValue::PathSet(BTreeSet::from(["containers.image".to_string()])),
     ]);
-    let fragment_binding = FragmentBinding::List(vec![
-        FragmentBinding::Dict(BTreeMap::from([(
+    let fragment_binding = AbstractValue::List(vec![
+        AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            FragmentBinding::ValuesPath("containers.name".to_string()),
+            AbstractValue::ValuesPath("containers.name".to_string()),
         )])),
-        FragmentBinding::PathSet(BTreeSet::from(["containers.image".to_string()])),
+        AbstractValue::PathSet(BTreeSet::from(["containers.image".to_string()])),
     ]);
     let relative_path = YamlPath(vec!["spec".to_string(), "containers".to_string()]);
     let predicates = BTreeSet::from([Predicate::truthy_path("containers.enabled".to_string())]);
@@ -111,9 +110,9 @@ fn helper_and_fragment_bindings_share_structural_output_projection() {
 
 #[test]
 fn nested_fragment_values_root_still_abstains_from_output_projection() {
-    let fragment_binding = FragmentBinding::Dict(BTreeMap::from([(
+    let fragment_binding = AbstractValue::Dict(BTreeMap::from([(
         "values".to_string(),
-        fragment_binding::values_root(),
+        AbstractValue::values_root(),
     )]));
     let mut outputs = Vec::new();
 

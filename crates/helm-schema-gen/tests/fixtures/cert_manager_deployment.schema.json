@@ -110,39 +110,27 @@
           "additionalProperties": false,
           "properties": {
             "digest": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "pullPolicy": {
               "type": "string"
             },
             "registry": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "repository": {
               "type": "string"
             },
             "tag": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             }
           },
@@ -911,13 +899,9 @@
       "type": "boolean"
     },
     "clusterResourceNamespace": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "config": {
@@ -1093,13 +1077,9 @@
       "type": "boolean"
     },
     "dns01RecursiveNameservers": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "dns01RecursiveNameserversOnly": {
@@ -1113,58 +1093,181 @@
       "type": "boolean"
     },
     "extraArgs": {
-      "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-      "items": {
-        "type": "string"
-      },
-      "type": "array",
-      "x-kubernetes-list-type": "atomic"
-    },
-    "extraEnv": {
       "anyOf": [
-        {
-          "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
-          "properties": {
-            "apiVersion": {
-              "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
-              "type": "string"
-            },
-            "fieldPath": {
-              "description": "Path of the field to select in the specified API version.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "fieldPath"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
         {
           "items": {},
           "type": "array"
-        }
-      ]
-    },
-    "featureGates": {
-      "anyOf": [
+        },
         {
           "type": "null"
         },
         {
           "type": "string"
         }
+      ]
+    },
+    "extraEnv": {
+      "description": "List of environment variables to set in the container. Cannot be updated.",
+      "items": {
+        "description": "EnvVar represents an environment variable present in a Container.",
+        "properties": {
+          "name": {
+            "description": "Name of the environment variable. May consist of any printable ASCII characters except '='.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+            "type": "string"
+          },
+          "valueFrom": {
+            "description": "EnvVarSource represents a source for the value of an EnvVar.",
+            "properties": {
+              "configMapKeyRef": {
+                "description": "Selects a key from a ConfigMap.",
+                "properties": {
+                  "key": {
+                    "description": "The key to select.",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                    "type": "string"
+                  },
+                  "optional": {
+                    "description": "Specify whether the ConfigMap or its key must be defined",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object",
+                "x-kubernetes-map-type": "atomic"
+              },
+              "fieldRef": {
+                "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
+                "properties": {
+                  "apiVersion": {
+                    "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
+                    "type": "string"
+                  },
+                  "fieldPath": {
+                    "description": "Path of the field to select in the specified API version.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "fieldPath"
+                ],
+                "type": "object",
+                "x-kubernetes-map-type": "atomic"
+              },
+              "fileKeyRef": {
+                "description": "FileKeySelector selects a key of the env file.",
+                "properties": {
+                  "key": {
+                    "description": "The key within the env file. An invalid key will prevent the pod from starting. The keys defined within a source may consist of any printable ASCII characters except '='. During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.",
+                    "type": "string"
+                  },
+                  "optional": {
+                    "description": "Specify whether the file or its key must be defined. If the file or key does not exist, then the env var is not published. If optional is set to true and the specified key does not exist, the environment variable will not be set in the Pod's containers.\n\nIf optional is set to false and the specified key does not exist, an error will be returned during Pod creation.",
+                    "type": "boolean"
+                  },
+                  "path": {
+                    "description": "The path within the volume from which to select the file. Must be relative and may not contain the '..' path or start with '..'.",
+                    "type": "string"
+                  },
+                  "volumeName": {
+                    "description": "The name of the volume mount containing the env file.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "volumeName",
+                  "path",
+                  "key"
+                ],
+                "type": "object",
+                "x-kubernetes-map-type": "atomic"
+              },
+              "resourceFieldRef": {
+                "description": "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
+                "properties": {
+                  "containerName": {
+                    "description": "Container name: required for volumes, optional for env vars",
+                    "type": "string"
+                  },
+                  "divisor": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "resource": {
+                    "description": "Required: resource to select",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "resource"
+                ],
+                "type": "object",
+                "x-kubernetes-map-type": "atomic"
+              },
+              "secretKeyRef": {
+                "description": "SecretKeySelector selects a key of a Secret.",
+                "properties": {
+                  "key": {
+                    "description": "The key of the secret to select from.  Must be a valid secret key.",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                    "type": "string"
+                  },
+                  "optional": {
+                    "description": "Specify whether the Secret or its key must be defined",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object",
+                "x-kubernetes-map-type": "atomic"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "type": "array",
+      "x-kubernetes-list-map-keys": [
+        "name"
+      ],
+      "x-kubernetes-list-type": "map",
+      "x-kubernetes-patch-merge-key": "name",
+      "x-kubernetes-patch-strategy": "merge"
+    },
+    "featureGates": {
+      "type": [
+        "string",
+        "null"
       ]
     },
     "fullnameOverride": {
-      "anyOf": [
-        {
-          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "global": {
@@ -1190,36 +1293,24 @@
           "additionalProperties": false,
           "properties": {
             "leaseDuration": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "namespace": {
               "type": "string"
             },
             "renewDeadline": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "retryPeriod": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             }
           },
@@ -1249,14 +1340,10 @@
           "type": "object"
         },
         "priorityClassName": {
-          "anyOf": [
-            {
-              "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": [
+            "string",
+            "null"
           ]
         },
         "rbac": {
@@ -1311,51 +1398,49 @@
       "x-kubernetes-patch-strategy": "merge"
     },
     "http_proxy": {
-      "anyOf": [
-        {
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "https_proxy": {
-      "anyOf": [
-        {
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "image": {
       "additionalProperties": false,
       "properties": {
         "digest": {
-          "type": "string"
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "pullPolicy": {
           "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
           "type": "string"
         },
         "registry": {
-          "type": "string"
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "repository": {
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
           "type": "string"
         },
         "tag": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
@@ -1365,33 +1450,21 @@
       "additionalProperties": {},
       "properties": {
         "defaultIssuerGroup": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "defaultIssuerKind": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "defaultIssuerName": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
@@ -1714,46 +1787,30 @@
       "type": "object"
     },
     "maxConcurrentChallenges": {
-      "anyOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        }
+      "type": [
+        "integer",
+        "null"
       ]
     },
     "nameOverride": {
-      "anyOf": [
-        {
-          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "namespace": {
-      "anyOf": [
-        {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "no_proxy": {
-      "anyOf": [
-        {
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "nodeSelector": {
@@ -1819,14 +1876,10 @@
       "type": "object"
     },
     "podDnsPolicy": {
-      "anyOf": [
-        {
-          "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "podLabels": {
@@ -2095,20 +2148,139 @@
     },
     "serviceAccount": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "create": {}
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "create": {
+                      "anyOf": [
+                        {
+                          "const": true
+                        },
+                        {
+                          "not": {
+                            "const": 0
+                          },
+                          "type": "number"
+                        },
+                        {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        {
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        {
+                          "minProperties": 1,
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "create": {
           "type": "boolean"
         },
-        "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "name": {}
       },
       "type": "object"
     },

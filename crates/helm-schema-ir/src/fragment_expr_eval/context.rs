@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
+use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
-use crate::fragment_binding::FragmentBinding;
 use crate::helper_summary::HelperSummaryCache;
 
 #[derive(Clone, Copy)]
@@ -33,10 +33,10 @@ impl<'a> FragmentEvalContext<'a> {
     pub(crate) fn fragment_binding_from_expr(
         &self,
         expr: &TemplateExpr,
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
+        locals: &HashMap<String, AbstractValue>,
+        current_dot: Option<&AbstractValue>,
         seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
+    ) -> Option<AbstractValue> {
         super::fragment_binding_from_expr(expr, locals, current_dot, *self, seen)
     }
 }

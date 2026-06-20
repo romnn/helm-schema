@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use helm_schema_ast::TemplateHeader;
 
+use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values_expr};
-use crate::fragment_binding::FragmentBinding;
 use crate::predicate::Predicate;
 use crate::value_path_context::ValuePathContext;
 
@@ -11,7 +11,7 @@ use crate::value_path_context::ValuePathContext;
 pub(crate) struct ConditionActionPlan {
     pub(crate) predicate: Predicate,
     pub(crate) bound_values: Vec<String>,
-    pub(crate) dot_binding: Option<FragmentBinding>,
+    pub(crate) dot_binding: Option<AbstractValue>,
     pub(crate) apply_alternative_predicate: bool,
 }
 

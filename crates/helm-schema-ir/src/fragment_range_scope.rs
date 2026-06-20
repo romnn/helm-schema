@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, TreeSitterParser};
 
-use crate::fragment_binding::FragmentBinding;
+use crate::abstract_value::AbstractValue;
 use crate::fragment_classification::is_fragment_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::template_expr_cache::parse_expr_text;
@@ -18,11 +18,11 @@ pub(crate) fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
 
 pub(crate) fn range_iterable_binding_expr(
     expr: &TemplateExpr,
-    local_bindings: &HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-) -> Option<FragmentBinding> {
+) -> Option<AbstractValue> {
     let value = match expr.deparen() {
         TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
             value.as_ref()
@@ -34,11 +34,11 @@ pub(crate) fn range_iterable_binding_expr(
 
 fn fragment_binding_from_range_value_expr(
     value: &TemplateExpr,
-    local_bindings: &HashMap<String, FragmentBinding>,
-    current_dot: Option<&FragmentBinding>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-) -> Option<FragmentBinding> {
+) -> Option<AbstractValue> {
     context.fragment_binding_from_expr(value, local_bindings, current_dot, seen)
 }
 

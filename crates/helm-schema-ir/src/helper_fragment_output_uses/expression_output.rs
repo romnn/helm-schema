@@ -2,15 +2,12 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::fragment_binding::{self, FragmentBinding};
-use crate::fragment_binding_projection::{fragment_source_paths, select_fragment_binding};
 use crate::fragment_classification::is_fragment_exprs;
-use crate::helper_binding::HelperBinding;
-use crate::helper_binding_projection::project_fragment_binding;
 use crate::helper_output_projection::{
     HelperOutputExprContext, collect_fragment_binding_output_uses,
     collect_helper_binding_output_uses, collect_helper_binding_output_uses_from_expr,
@@ -32,8 +29,8 @@ use crate::template_expr_analysis::{
 use crate::{ValueKind, YamlPath};
 
 struct FragmentExpressionOutputScope<'a> {
-    bindings: &'a HashMap<String, HelperBinding>,
-    current_dot: Option<&'a HelperBinding>,
+    bindings: &'a HashMap<String, AbstractValue>,
+    current_dot: Option<&'a AbstractValue>,
     output_path: &'a YamlPath,
     kind: ValueKind,
     active_output_predicates: &'a BTreeSet<Predicate>,
@@ -42,9 +39,9 @@ struct FragmentExpressionOutputScope<'a> {
 
 pub(super) fn collect_bound_fragment_output_uses_from_exprs(
     exprs: &[TemplateExpr],
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
-    current_dot_fragment: Option<&FragmentBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    current_dot_fragment: Option<&AbstractValue>,
     relative_path: &YamlPath,
     output_kind: ValueKind,
     active_output_predicates: &BTreeSet<Predicate>,
@@ -198,9 +195,9 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
 fn collect_bound_fragment_output_assignment_uses(
     var: &str,
     rhs_expr: &TemplateExpr,
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
-    current_dot_fragment: Option<&FragmentBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    current_dot_fragment: Option<&AbstractValue>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     let rhs_exprs = std::slice::from_ref(rhs_expr);
@@ -214,9 +211,11 @@ fn collect_bound_fragment_output_assignment_uses(
         let nested =
             helper_env.summarize_calls_in_exprs(rhs_exprs, state.local_bindings, &mut rhs_seen);
         top_level_helper_dependency_paths = helper_summary_dependency_paths(&nested);
-        if let Some(nested_binding) = project_fragment_binding(nested) {
+        if let Some(nested_binding) = nested.project_fragment_value() {
             binding = match binding {
-                Some(binding) => fragment_binding::merge_all(vec![binding, nested_binding]),
+                Some(binding) => {
+                    AbstractValue::merge_fragment_bindings(vec![binding, nested_binding])
+                }
                 None => Some(nested_binding),
             };
         }
@@ -225,19 +224,19 @@ fn collect_bound_fragment_output_assignment_uses(
         && let Some(current_dot_fragment) = current_dot_fragment
         && matches!(
             current_dot_fragment,
-            FragmentBinding::Dict(_) | FragmentBinding::Overlay { .. }
+            AbstractValue::Dict(_) | AbstractValue::Overlay { .. }
         )
     {
-        let current_item_paths = fragment_source_paths(current_dot_fragment);
+        let current_item_paths = current_dot_fragment.fragment_source_paths();
         let mut internal_item_paths = current_item_paths;
         internal_item_paths.extend(top_level_helper_dependency_paths);
         if !internal_item_paths.is_empty() {
-            binding = binding
-                .and_then(|binding| fragment_binding::remove_paths(binding, &internal_item_paths));
+            binding =
+                binding.and_then(|binding| binding.remove_fragment_paths(&internal_item_paths));
         }
         binding = match binding {
             Some(binding) => {
-                fragment_binding::merge_all(vec![binding, current_dot_fragment.clone()])
+                AbstractValue::merge_fragment_bindings(vec![binding, current_dot_fragment.clone()])
             }
             None => Some(current_dot_fragment.clone()),
         };
@@ -264,7 +263,7 @@ fn local_output_uses_from_exprs(
     kind: ValueKind,
     active_output_predicates: &BTreeSet<Predicate>,
     local_fallback_paths: &BTreeSet<String>,
-    local_bindings: &HashMap<String, FragmentBinding>,
+    local_bindings: &HashMap<String, AbstractValue>,
 ) -> Vec<HelperFragmentOutputUse> {
     let mut local_output_uses = Vec::new();
     for expr in exprs {
@@ -280,7 +279,7 @@ fn local_output_uses_from_exprs(
                     }
                     local_bindings
                         .get(var)
-                        .and_then(|binding| select_fragment_binding(binding, path))
+                        .and_then(|binding| binding.select_fragment_path(path))
                 }
                 _ => None,
             };

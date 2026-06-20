@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::SymbolicLocalState;
+use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
-use crate::fragment_binding::FragmentBinding;
 use crate::helper_summary::HelperOutputMeta;
 
 #[test]
@@ -11,7 +11,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "image".to_string(),
-        Some(FragmentBinding::ValuesPath("image".to_string())),
+        Some(AbstractValue::ValuesPath("image".to_string())),
     );
     state
         .chart_value_defaults
@@ -21,7 +21,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
 
     state.declare_fragment_binding(
         "image".to_string(),
-        Some(FragmentBinding::ValuesPath("otherImage".to_string())),
+        Some(AbstractValue::ValuesPath("otherImage".to_string())),
     );
     state.insert_range_domain("key".to_string(), vec!["a".to_string()]);
     state
@@ -33,7 +33,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
 
     assert_eq!(
         state.fragment_bindings.get("image"),
-        Some(&FragmentBinding::ValuesPath("image".to_string()))
+        Some(&AbstractValue::ValuesPath("image".to_string()))
     );
     assert!(state.range_domains.is_empty());
     assert_eq!(
@@ -47,19 +47,19 @@ fn local_scope_restores_shadowed_fragment_binding() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
 
     state.enter_local_scope();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("inner".to_string())),
+        Some(AbstractValue::ValuesPath("inner".to_string())),
     );
     state.exit_local_scope();
 
     assert_eq!(
         state.fragment_bindings.get("name"),
-        Some(&FragmentBinding::ValuesPath("outer".to_string()))
+        Some(&AbstractValue::ValuesPath("outer".to_string()))
     );
 }
 
@@ -68,19 +68,19 @@ fn local_scope_keeps_assignment_to_outer_fragment_binding() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
 
     state.enter_local_scope();
     state.assign_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("assigned".to_string())),
+        Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
     state.exit_local_scope();
 
     assert_eq!(
         state.fragment_bindings.get("name"),
-        Some(&FragmentBinding::ValuesPath("assigned".to_string()))
+        Some(&AbstractValue::ValuesPath("assigned".to_string()))
     );
 }
 
@@ -147,14 +147,14 @@ fn fragment_assignment_replaces_outer_get_binding() {
     state.enter_local_scope();
     state.assign_fragment_binding(
         "value".to_string(),
-        Some(FragmentBinding::ValuesPath("assigned".to_string())),
+        Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
     state.exit_local_scope();
 
     assert!(!state.get_bindings.contains_key("value"));
     assert_eq!(
         state.fragment_bindings.get("value"),
-        Some(&FragmentBinding::ValuesPath("assigned".to_string()))
+        Some(&AbstractValue::ValuesPath("assigned".to_string()))
     );
 }
 
@@ -163,7 +163,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "key".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
 
     state.enter_local_scope();
@@ -173,7 +173,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
     assert!(!state.range_domains.contains_key("key"));
     assert_eq!(
         state.fragment_bindings.get("key"),
-        Some(&FragmentBinding::ValuesPath("outer".to_string()))
+        Some(&AbstractValue::ValuesPath("outer".to_string()))
     );
 }
 
@@ -182,14 +182,14 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_default_paths("name", BTreeSet::from(["outer.default".to_string()]));
 
     state.enter_local_scope();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("inner".to_string())),
+        Some(AbstractValue::ValuesPath("inner".to_string())),
     );
     state.set_default_paths("name", BTreeSet::from(["inner.default".to_string()]));
     state.exit_local_scope();
@@ -205,14 +205,14 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_default_paths("name", BTreeSet::from(["outer.default".to_string()]));
 
     state.enter_local_scope();
     state.assign_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("assigned".to_string())),
+        Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
     state.set_default_paths("name", BTreeSet::from(["assigned.default".to_string()]));
     state.exit_local_scope();
@@ -228,14 +228,14 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_output_meta("name".to_string(), output_meta("outer.output"));
 
     state.enter_local_scope();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("inner".to_string())),
+        Some(AbstractValue::ValuesPath("inner".to_string())),
     );
     state.set_output_meta("name".to_string(), output_meta("inner.output"));
     state.exit_local_scope();
@@ -251,14 +251,14 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
     let mut state = SymbolicLocalState::default();
     state.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("outer".to_string())),
+        Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_output_meta("name".to_string(), output_meta("outer.output"));
 
     state.enter_local_scope();
     state.assign_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("assigned".to_string())),
+        Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
     state.set_output_meta("name".to_string(), output_meta("assigned.output"));
     state.exit_local_scope();
@@ -274,19 +274,19 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     let mut entry = SymbolicLocalState::default();
     entry.declare_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("entry".to_string())),
+        Some(AbstractValue::ValuesPath("entry".to_string())),
     );
     let entry_snapshot = entry.snapshot();
 
     let mut first = entry.clone();
     first.assign_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("first".to_string())),
+        Some(AbstractValue::ValuesPath("first".to_string())),
     );
     let mut second = entry.clone();
     second.assign_fragment_binding(
         "name".to_string(),
-        Some(FragmentBinding::ValuesPath("second".to_string())),
+        Some(AbstractValue::ValuesPath("second".to_string())),
     );
 
     let mut joined = entry;
@@ -294,10 +294,10 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
 
     assert_eq!(
         joined.fragment_bindings.get("name"),
-        Some(&FragmentBinding::Choice(
+        Some(&AbstractValue::Choice(
             [
-                FragmentBinding::ValuesPath("first".to_string()),
-                FragmentBinding::ValuesPath("second".to_string())
+                AbstractValue::ValuesPath("first".to_string()),
+                AbstractValue::ValuesPath("second".to_string())
             ]
             .into_iter()
             .collect()

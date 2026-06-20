@@ -9,6 +9,7 @@ use super::value_analysis::DocumentHelperSummary;
 
 pub(super) fn append_document_helper_contract_uses(
     helper: DocumentHelperSummary,
+    encoded_output_values: &BTreeSet<String>,
     site: &DocumentSite,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
@@ -31,6 +32,7 @@ pub(super) fn append_document_helper_contract_uses(
         let has_rendered_descendant =
             output_path::values_path_has_descendant(value, &helper_rendered_sources);
         for extra_guards in meta.contract_guard_sets(value) {
+            let emit_kind = encoded_kind(site.kind(), encoded_output_values.contains(value));
             if only_scalar_helper_outputs
                 && site.can_project_scalar_helper_to_caller_path()
                 && !has_rendered_descendant
@@ -39,7 +41,7 @@ pub(super) fn append_document_helper_contract_uses(
                     context,
                     value.clone(),
                     site.path().clone(),
-                    site.kind(),
+                    emit_kind,
                     extra_guards,
                     &meta.provenance,
                 ));
@@ -58,6 +60,9 @@ pub(super) fn append_document_helper_contract_uses(
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
         for extra_guards in output.meta.contract_guard_sets(&output.source_expr) {
+            let output_encoded =
+                output.encoded || encoded_output_values.contains(&output.source_expr);
+            let emit_kind = encoded_kind(output.kind, output_encoded);
             if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
                 let emit_path =
                     output_path::append_relative_path(site.path(), &output.relative_path);
@@ -65,14 +70,14 @@ pub(super) fn append_document_helper_contract_uses(
                     context,
                     output.source_expr.clone(),
                     emit_path,
-                    output.kind,
+                    emit_kind,
                     extra_guards,
                     &output.meta.provenance,
                 ));
             } else {
                 contract.push(context.pathless_contract_use_with_extra_provenance(
                     output.source_expr.clone(),
-                    output.kind,
+                    emit_kind,
                     &extra_guards,
                     &output.meta.provenance,
                 ));
@@ -87,11 +92,12 @@ pub(super) fn append_document_helper_contract_uses(
         let has_rendered_descendant =
             output_path::values_path_has_descendant(&value, &helper_rendered_sources);
         if site.can_project_fragment_helper_to_caller_path() && !has_rendered_descendant {
+            let emit_kind = encoded_kind(site.kind(), encoded_output_values.contains(&value));
             contract.push(site.contract_use(
                 context,
                 value,
                 site.path().clone(),
-                site.kind(),
+                emit_kind,
                 Vec::new(),
             ));
         } else {
@@ -115,4 +121,12 @@ pub(super) fn append_document_helper_contract_uses(
     }
 
     contract.extend_type_hints(helper.type_hints);
+}
+
+fn encoded_kind(kind: ValueKind, encoded: bool) -> ValueKind {
+    if encoded {
+        ValueKind::PartialScalar
+    } else {
+        kind
+    }
 }

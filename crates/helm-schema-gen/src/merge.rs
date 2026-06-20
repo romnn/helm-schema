@@ -69,6 +69,17 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
         return a;
     }
 
+    if union_contains_schema(&a, &b) {
+        return a;
+    }
+    if union_contains_schema(&b, &a) {
+        return b;
+    }
+
+    if let Some(merged) = try_merge_nullable_scalar_schema(&a, &b) {
+        return merged;
+    }
+
     if let Some(merged) = try_merge_compatible(&a, &b) {
         return merged;
     }
@@ -116,6 +127,49 @@ fn flatten_union_variants(v: Value) -> Vec<Value> {
         }
     }
     vec![v]
+}
+
+fn union_contains_schema(union: &Value, candidate: &Value) -> bool {
+    union_variants(union).is_some_and(|variants| {
+        variants
+            .iter()
+            .any(|variant| variant == candidate || union_contains_schema(variant, candidate))
+    })
+}
+
+fn union_variants(schema: &Value) -> Option<&Vec<Value>> {
+    let object = schema.as_object()?;
+    object
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .or_else(|| object.get("oneOf").and_then(Value::as_array))
+}
+
+fn try_merge_nullable_scalar_schema(a: &Value, b: &Value) -> Option<Value> {
+    match (schema_type(a), schema_type(b)) {
+        (Some("null"), Some(scalar_type)) => nullable_scalar_schema(b, scalar_type),
+        (Some(scalar_type), Some("null")) => nullable_scalar_schema(a, scalar_type),
+        _ => None,
+    }
+}
+
+fn nullable_scalar_schema(schema: &Value, scalar_type: &str) -> Option<Value> {
+    if !matches!(scalar_type, "boolean" | "integer" | "number" | "string") {
+        return None;
+    }
+
+    let mut object = schema.as_object()?.clone();
+    if object.contains_key("enum") || object.contains_key("const") {
+        return None;
+    }
+    object.insert(
+        "type".to_string(),
+        Value::Array(vec![
+            Value::String(scalar_type.to_string()),
+            Value::String("null".to_string()),
+        ]),
+    );
+    Some(Value::Object(object))
 }
 
 fn collapse_compatible_variants(variants: Vec<Value>) -> Vec<Value> {
@@ -715,6 +769,42 @@ mod tests {
         assert_eq!(
             merged_nullable,
             json!({ "type": "string", "format": "byte", "minLength": 1 })
+        );
+    }
+
+    #[test]
+    fn merge_union_with_contained_variant_is_idempotent() {
+        let int_or_string = json!({
+            "oneOf": [
+                { "type": "string" },
+                { "type": "integer" }
+            ]
+        });
+
+        assert_eq!(
+            merge_two_schemas(int_or_string.clone(), json!({ "type": "integer" })),
+            int_or_string
+        );
+    }
+
+    #[test]
+    fn merge_scalar_schema_with_null_keeps_nullable_scalar_schema_compact() {
+        let merged = merge_two_schemas(
+            json!({
+                "description": "priority",
+                "format": "int32",
+                "type": "integer"
+            }),
+            json!({ "type": "null" }),
+        );
+
+        assert_eq!(
+            merged,
+            json!({
+                "description": "priority",
+                "format": "int32",
+                "type": ["integer", "null"]
+            })
         );
     }
 

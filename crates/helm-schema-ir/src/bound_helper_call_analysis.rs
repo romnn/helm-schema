@@ -2,9 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::fragment_binding::FragmentBinding;
+use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_binding::HelperBinding;
 use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
@@ -14,9 +13,9 @@ use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
 
 pub(crate) fn analyze_bound_helper_calls_with_fragment_locals_in_exprs(
     exprs: &[TemplateExpr],
-    bindings: Option<&HashMap<String, HelperBinding>>,
-    current_dot: Option<&HelperBinding>,
-    fragment_locals: &HashMap<String, FragmentBinding>,
+    bindings: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    fragment_locals: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperSummary {
@@ -51,9 +50,9 @@ pub(crate) fn analyze_bound_helper_calls_with_fragment_locals_in_exprs(
 pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
     name: &str,
     arg: Option<&TemplateExpr>,
-    outer_bindings: Option<&HashMap<String, HelperBinding>>,
-    current_dot: Option<&HelperBinding>,
-    fragment_locals: &HashMap<String, FragmentBinding>,
+    outer_bindings: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    fragment_locals: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperSummary {

@@ -2,13 +2,13 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Write;
 
+use crate::abstract_value::AbstractValue;
 use crate::bound_helper_call_analysis::{
     analyze_bound_helper_call_with_fragment_locals,
     analyze_bound_helper_calls_with_fragment_locals_in_exprs,
 };
-use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_binding::HelperBinding;
+use crate::output_path;
 use crate::predicate::Predicate;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 
@@ -105,6 +105,7 @@ pub(crate) struct HelperFragmentOutputUse {
     pub(crate) source_expr: String,
     pub(crate) relative_path: YamlPath,
     pub(crate) kind: ValueKind,
+    pub(crate) encoded: bool,
     pub(crate) meta: HelperOutputMeta,
 }
 
@@ -214,9 +215,93 @@ impl HelperSummary {
             source_expr,
             relative_path,
             kind,
+            encoded: false,
             meta,
         });
     }
+
+    pub(crate) fn project_helper_value(self) -> Option<AbstractValue> {
+        project_summary_value(self, SummaryProjectionKind::HelperValue)
+            .map(|value| value.to_context_value())
+    }
+
+    pub(crate) fn project_fragment_value(self) -> Option<AbstractValue> {
+        project_summary_value(self, SummaryProjectionKind::FragmentValue)
+            .map(|value| value.to_context_value())
+            .and_then(|value| AbstractValue::merge_fragment_bindings(vec![value]))
+    }
+}
+
+#[derive(Clone, Copy)]
+enum SummaryProjectionKind {
+    HelperValue,
+    FragmentValue,
+}
+
+fn project_summary_value(
+    analysis: HelperSummary,
+    kind: SummaryProjectionKind,
+) -> Option<AbstractValue> {
+    let structured_sources = structured_fragment_sources(&analysis);
+    let rendered_sources = rendered_sources(&analysis, &structured_sources);
+
+    let mut values = Vec::new();
+    if !analysis.string_output.is_empty() {
+        values.push(AbstractValue::StringSet(analysis.string_output));
+    }
+    for output in analysis.fragment_output_uses {
+        values.push(AbstractValue::for_output_path(
+            output.source_expr,
+            &output.relative_path,
+            output.meta,
+        ));
+    }
+    for source in analysis.fragment_output {
+        if !structured_sources.contains(&source)
+            && !output_path::values_path_has_descendant(&source, &rendered_sources)
+        {
+            values.push(fragment_output_value(source, kind));
+        }
+    }
+    for (source, meta) in analysis.output {
+        if !structured_sources.contains(&source)
+            && !output_path::values_path_has_descendant(&source, &rendered_sources)
+        {
+            values.push(AbstractValue::OutputSet(
+                [(source, meta)].into_iter().collect(),
+            ));
+        }
+    }
+    AbstractValue::merge_all(values)
+}
+
+fn fragment_output_value(source: String, kind: SummaryProjectionKind) -> AbstractValue {
+    match kind {
+        SummaryProjectionKind::HelperValue => {
+            AbstractValue::PathSet([source].into_iter().collect())
+        }
+        SummaryProjectionKind::FragmentValue => {
+            AbstractValue::OutputSet([(source, Default::default())].into_iter().collect())
+        }
+    }
+}
+
+fn structured_fragment_sources(analysis: &HelperSummary) -> BTreeSet<String> {
+    analysis
+        .fragment_output_uses
+        .iter()
+        .map(|output| output.source_expr.clone())
+        .collect()
+}
+
+fn rendered_sources(
+    analysis: &HelperSummary,
+    structured_sources: &BTreeSet<String>,
+) -> BTreeSet<String> {
+    let mut rendered_sources = structured_sources.clone();
+    rendered_sources.extend(analysis.fragment_output.iter().cloned());
+    rendered_sources.extend(analysis.output.keys().cloned());
+    rendered_sources
 }
 
 pub(crate) struct HelperSummaryCache {
@@ -227,18 +312,18 @@ pub(crate) struct HelperSummaryCache {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct BoundHelperCallsCacheKey {
     exprs: String,
-    current_dot: Option<HelperBinding>,
-    root_bindings: BTreeMap<String, HelperBinding>,
-    fragment_locals: BTreeMap<String, FragmentBinding>,
+    current_dot: Option<AbstractValue>,
+    root_bindings: BTreeMap<String, AbstractValue>,
+    fragment_locals: BTreeMap<String, AbstractValue>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct BoundHelperCallCacheKey {
     name: String,
     arg: String,
-    current_dot: Option<HelperBinding>,
-    outer_bindings: BTreeMap<String, HelperBinding>,
-    fragment_locals: BTreeMap<String, FragmentBinding>,
+    current_dot: Option<AbstractValue>,
+    outer_bindings: BTreeMap<String, AbstractValue>,
+    fragment_locals: BTreeMap<String, AbstractValue>,
     seen: BTreeSet<String>,
 }
 
@@ -253,9 +338,9 @@ impl HelperSummaryCache {
     pub(crate) fn summarize_bound_helper_calls_in_exprs(
         &self,
         exprs: &[helm_schema_ast::TemplateExpr],
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        fragment_locals: &HashMap<String, FragmentBinding>,
+        bindings: Option<&HashMap<String, AbstractValue>>,
+        current_dot: Option<&AbstractValue>,
+        fragment_locals: &HashMap<String, AbstractValue>,
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> HelperSummary {
@@ -270,12 +355,12 @@ impl HelperSummaryCache {
             );
         }
 
-        let root_bindings_key: BTreeMap<String, HelperBinding> = bindings
+        let root_bindings_key: BTreeMap<String, AbstractValue> = bindings
             .into_iter()
             .flatten()
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
-        let fragment_locals_key: BTreeMap<String, FragmentBinding> = fragment_locals
+        let fragment_locals_key: BTreeMap<String, AbstractValue> = fragment_locals
             .iter()
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
@@ -309,18 +394,18 @@ impl HelperSummaryCache {
         &self,
         name: &str,
         arg: Option<&helm_schema_ast::TemplateExpr>,
-        outer_bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        fragment_locals: &HashMap<String, FragmentBinding>,
+        outer_bindings: Option<&HashMap<String, AbstractValue>>,
+        current_dot: Option<&AbstractValue>,
+        fragment_locals: &HashMap<String, AbstractValue>,
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> HelperSummary {
-        let outer_bindings_key: BTreeMap<String, HelperBinding> = outer_bindings
+        let outer_bindings_key: BTreeMap<String, AbstractValue> = outer_bindings
             .into_iter()
             .flatten()
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
-        let fragment_locals_key: BTreeMap<String, FragmentBinding> = fragment_locals
+        let fragment_locals_key: BTreeMap<String, AbstractValue> = fragment_locals
             .iter()
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
@@ -460,11 +545,12 @@ fn append_len_prefixed(out: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use helm_schema_ast::TemplateExpr;
 
     use super::{HelperOutputMeta, HelperSummary};
+    use crate::abstract_value::AbstractValue;
     use crate::predicate::{Predicate, PredicateAtom};
     use crate::template_expr_cache::parse_expr_text;
     use crate::{Guard, ValueKind, YamlPath};
@@ -559,6 +645,68 @@ mod tests {
         );
 
         assert_eq!(summary.fragment_output_uses.len(), 1);
+    }
+
+    #[test]
+    fn helper_summary_helper_projection_preserves_structured_output_metadata() {
+        let meta = HelperOutputMeta {
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+                "enabled".to_string(),
+            )])]),
+            defaulted: true,
+            provenance: Vec::new(),
+        };
+        let mut summary = HelperSummary::default();
+        summary.add_fragment_output_use(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            meta.clone(),
+        );
+
+        assert_eq!(
+            summary.project_helper_value(),
+            Some(AbstractValue::Dict(BTreeMap::from([(
+                "app".to_string(),
+                AbstractValue::OutputSet(BTreeMap::from([("podLabels".to_string(), meta)])),
+            )])))
+        );
+    }
+
+    #[test]
+    fn helper_summary_fragment_projection_preserves_structured_output_path() {
+        let mut summary = HelperSummary::default();
+        summary.add_fragment_output_use(
+            "podLabels".to_string(),
+            YamlPath(vec!["app".to_string()]),
+            ValueKind::Fragment,
+            HelperOutputMeta::default(),
+        );
+
+        assert_eq!(
+            summary.project_fragment_value(),
+            Some(AbstractValue::Dict(BTreeMap::from([(
+                "app".to_string(),
+                AbstractValue::fragment_output_paths(["podLabels".to_string()]),
+            )])))
+        );
+    }
+
+    #[test]
+    fn helper_summary_fragment_projection_merges_scalar_outputs_into_one_output_set() {
+        let mut summary = HelperSummary::default();
+        summary.add_output_meta("image.repository".to_string(), HelperOutputMeta::default());
+        summary.add_output_meta("image.tag".to_string(), HelperOutputMeta::default());
+        summary.fragment_output.insert("extraEnv".to_string());
+
+        assert_eq!(
+            summary.project_fragment_value(),
+            Some(AbstractValue::fragment_output_paths([
+                "extraEnv".to_string(),
+                "image.repository".to_string(),
+                "image.tag".to_string(),
+            ]))
+        );
     }
 
     #[test]

@@ -2,16 +2,13 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateHeader;
 
+use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::fragment_assignment::merge_fragment_locals;
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::fragment_to_helper_binding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_binding::HelperBinding;
-use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
@@ -33,8 +30,8 @@ use crate::{ValueKind, YamlPath};
 pub(crate) fn collect_bound_helper_values_from_tree(
     node: tree_sitter::Node<'_>,
     source: &str,
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     let mut runtime = HelperValueRuntime {
@@ -56,10 +53,10 @@ pub(crate) fn collect_bound_helper_values_from_tree(
 
 struct HelperValueRuntime<'context, 'state> {
     source: &'state str,
-    bindings: &'state HashMap<String, HelperBinding>,
-    dot_stack: Vec<Option<HelperBinding>>,
+    bindings: &'state HashMap<String, AbstractValue>,
+    dot_stack: Vec<Option<AbstractValue>>,
     active_output_predicates: BTreeSet<Predicate>,
-    local_bindings: &'state mut HashMap<String, FragmentBinding>,
+    local_bindings: &'state mut HashMap<String, AbstractValue>,
     local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
     local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'context>,
@@ -71,7 +68,7 @@ struct HelperValueRuntime<'context, 'state> {
 
 #[derive(Clone)]
 struct HelperValueSnapshot {
-    local_bindings: HashMap<String, FragmentBinding>,
+    local_bindings: HashMap<String, AbstractValue>,
     local_default_paths: HashMap<String, BTreeSet<String>>,
     local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     dot_stack_len: usize,
@@ -79,12 +76,12 @@ struct HelperValueSnapshot {
 }
 
 impl HelperValueRuntime<'_, '_> {
-    fn current_dot(&self) -> Option<&HelperBinding> {
+    fn current_dot(&self) -> Option<&AbstractValue> {
         self.dot_stack.last().and_then(Option::as_ref)
     }
 
-    fn current_dot_fragment(&self) -> Option<FragmentBinding> {
-        self.current_dot().map(helper_to_fragment_binding)
+    fn current_dot_fragment(&self) -> Option<AbstractValue> {
+        self.current_dot().map(AbstractValue::to_context_value)
     }
 
     fn collect_expression(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
@@ -166,9 +163,9 @@ impl ContractUseSink for HelperValueRuntime<'_, '_> {
 impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
     fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
 
-    fn declare_fragment_binding(&mut self, _variable: String, _binding: Option<FragmentBinding>) {}
+    fn declare_fragment_binding(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
-    fn assign_fragment_binding(&mut self, _variable: String, _binding: Option<FragmentBinding>) {}
+    fn assign_fragment_binding(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
     fn refresh_default_paths(
         &mut self,
@@ -190,9 +187,9 @@ impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
         }
     }
 
-    fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
+    fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
         self.dot_stack
-            .push(binding.and_then(|binding| fragment_to_helper_binding(&binding)));
+            .push(binding.map(|binding| binding.to_context_value()));
     }
 
     fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}
@@ -344,7 +341,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
-        let current_dot_fragment = current_dot.as_ref().map(helper_to_fragment_binding);
+        let current_dot_fragment = current_dot.as_ref().map(AbstractValue::to_context_value);
         let body_dot = computed_with_body_fragment_binding_expr(
             header.expr(),
             self.bindings,

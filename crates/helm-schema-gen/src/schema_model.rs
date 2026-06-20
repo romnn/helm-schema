@@ -34,37 +34,6 @@ pub(crate) fn is_scalar_schema(value: &Value) -> bool {
     )
 }
 
-pub(crate) fn is_string_like_schema(value: &Value) -> bool {
-    if schema_type(value) == Some("string") {
-        return true;
-    }
-
-    let Some(object) = value.as_object() else {
-        return false;
-    };
-
-    if let Some(Value::Array(values)) = object.get("enum") {
-        return !values.is_empty()
-            && values
-                .iter()
-                .all(|value| matches!(value, Value::String(_) | Value::Null));
-    }
-
-    if let Some(Value::Array(types)) = object.get("type") {
-        return types
-            .iter()
-            .all(|value| matches!(value.as_str(), Some("string" | "null")));
-    }
-
-    for key in ["anyOf", "oneOf"] {
-        if let Some(Value::Array(variants)) = object.get(key) {
-            return !variants.is_empty() && variants.iter().all(is_string_like_schema);
-        }
-    }
-
-    false
-}
-
 pub(crate) fn is_scalar_like_schema(value: &Value) -> bool {
     if is_scalar_schema(value) {
         return true;

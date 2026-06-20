@@ -634,10 +634,23 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    // The subchart's slot mirrors `global` because at Helm render time
-    // the root's effective `global` is propagated into every subchart's
-    // `.Values`. Same shape on both sides of the tree.
     let global_schema = serde_json::json!({
+      "additionalProperties": false,
+      "properties": {
+        "bar": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    });
+    let child_global_defaults_schema = serde_json::json!({
       "additionalProperties": false,
       "properties": {
         "bar": {
@@ -656,9 +669,16 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
           "additionalProperties": false,
           "properties": {
             "foo": {
-              "type": "integer"
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
-            "global": global_schema,
+            "global": child_global_defaults_schema,
             "persistence": {
               "additionalProperties": false,
               "properties": {
@@ -1344,10 +1364,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
                         "type": "object"
                     },
                     "name": {
-                        "anyOf": [
-                            { "type": "null" },
-                            { "type": "string" }
-                        ]
+                        "type": ["string", "null"]
                     }
                 },
                 "type": "object"
@@ -1427,10 +1444,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
         "additionalProperties": false,
         "properties": {
             "other": {
-                "anyOf": [
-                    { "type": "null" },
-                    { "type": "string" }
-                ]
+                "type": ["string", "null"]
             },
             "serviceAccount": {
                 "additionalProperties": false,
@@ -1595,16 +1609,10 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         "additionalProperties": false,
         "properties": {
             "fullnameOverride": {
-                "anyOf": [
-                    { "type": "null" },
-                    { "type": "string" }
-                ]
+                "type": ["string", "null"]
             },
             "nameOverride": {
-                "anyOf": [
-                    { "type": "null" },
-                    { "type": "string" }
-                ]
+                "type": ["string", "null"]
             }
         },
         "type": "object"

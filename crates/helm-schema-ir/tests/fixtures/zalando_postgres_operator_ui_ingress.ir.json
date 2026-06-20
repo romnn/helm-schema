@@ -445,34 +445,6 @@
           "type": "truthy"
         },
         {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.name"
-          ],
-          "span": {
-            "end": 198,
-            "start": 120
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "ingress.enabled",
-          "type": "truthy"
-        },
-        {
           "path": "fullnameOverride",
           "type": "not"
         },
@@ -495,6 +467,45 @@
           "span": {
             "end": 851,
             "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "api_version_candidates": [
+          "networking.k8s.io/v1beta1",
+          "extensions/v1beta1"
+        ],
+        "kind": "Ingress"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "ingress.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.name"
+          ],
+          "span": {
+            "end": 198,
+            "start": 120
           },
           "template_path": "<inline:0>"
         }

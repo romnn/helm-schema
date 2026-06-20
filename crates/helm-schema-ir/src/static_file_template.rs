@@ -2,14 +2,13 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::fragment_strings;
+use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct StaticFileTemplate {
     pub(crate) path: String,
-    pub(crate) dot: Option<FragmentBinding>,
+    pub(crate) dot: Option<AbstractValue>,
 }
 
 #[derive(Clone, Debug)]
@@ -51,7 +50,7 @@ pub(crate) fn collect_template_requests<F>(
     resolve_fragment_binding: &mut F,
     requests: &mut BTreeSet<StaticFileTemplate>,
 ) where
-    F: FnMut(&TemplateExpr) -> Option<FragmentBinding>,
+    F: FnMut(&TemplateExpr) -> Option<AbstractValue>,
 {
     if let TemplateExpr::Call { function, args } = expr
         && function == "tpl"
@@ -94,7 +93,7 @@ pub(crate) fn collect_template_requests<F>(
 
 pub(crate) fn collect_template_requests_from_helper(
     name: &str,
-    helper_dot: Option<&FragmentBinding>,
+    helper_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
 ) -> BTreeSet<StaticFileTemplate> {
     let Some(body) = context.defines.get(name) else {
@@ -123,14 +122,14 @@ fn collect_files_get_paths<F>(
     resolve_fragment_binding: &mut F,
     out: &mut BTreeSet<String>,
 ) where
-    F: FnMut(&TemplateExpr) -> Option<FragmentBinding>,
+    F: FnMut(&TemplateExpr) -> Option<AbstractValue>,
 {
     if let TemplateExpr::Call { function, args } = expr
         && is_static_files_get_call(function)
         && let Some(path_arg) = args.first()
         && let Some(binding) = resolve_fragment_binding(path_arg)
     {
-        out.extend(fragment_strings(&binding));
+        out.extend(binding.strings());
     }
 
     match expr {

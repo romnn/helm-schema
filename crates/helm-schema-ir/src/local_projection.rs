@@ -2,13 +2,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::{
-    fragment_rendered_paths, fragment_source_paths, select_fragment_binding,
-};
-use crate::helper_binding::HelperBinding;
 use crate::helper_summary::HelperOutputMeta;
 use crate::template_expr_analysis::{
     expr_contains_helper_call, walk_expr_excluding_helper_call_args,
@@ -16,8 +12,8 @@ use crate::template_expr_analysis::{
 
 pub(crate) fn direct_bound_paths_from_exprs_in_context(
     exprs: &[TemplateExpr],
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
 ) -> BTreeSet<String> {
     let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
     exprs
@@ -44,15 +40,15 @@ pub(crate) fn direct_bound_paths_from_expr_in_context(
 
 pub(crate) fn local_rendered_paths_from_exprs(
     exprs: &[TemplateExpr],
-    locals: &HashMap<String, FragmentBinding>,
+    locals: &HashMap<String, AbstractValue>,
 ) -> BTreeSet<String> {
-    local_paths_from_exprs(exprs, locals, fragment_rendered_paths)
+    local_paths_from_exprs(exprs, locals, AbstractValue::fragment_rendered_paths)
 }
 
 fn local_paths_from_exprs(
     exprs: &[TemplateExpr],
-    locals: &HashMap<String, FragmentBinding>,
-    extract_paths: fn(&FragmentBinding) -> BTreeSet<String>,
+    locals: &HashMap<String, AbstractValue>,
+    extract_paths: fn(&AbstractValue) -> BTreeSet<String>,
 ) -> BTreeSet<String> {
     exprs
         .iter()
@@ -62,15 +58,15 @@ fn local_paths_from_exprs(
 
 pub(crate) fn local_bound_paths_from_expr(
     expr: &TemplateExpr,
-    locals: &HashMap<String, FragmentBinding>,
+    locals: &HashMap<String, AbstractValue>,
 ) -> BTreeSet<String> {
-    local_paths_from_expr(expr, locals, fragment_source_paths)
+    local_paths_from_expr(expr, locals, AbstractValue::fragment_source_paths)
 }
 
 fn local_paths_from_expr(
     expr: &TemplateExpr,
-    locals: &HashMap<String, FragmentBinding>,
-    extract_paths: fn(&FragmentBinding) -> BTreeSet<String>,
+    locals: &HashMap<String, AbstractValue>,
+    extract_paths: fn(&AbstractValue) -> BTreeSet<String>,
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     walk_expr_excluding_helper_call_args(expr, &mut |node| match node {
@@ -87,7 +83,7 @@ fn local_paths_from_expr(
                 return;
             }
             if let Some(binding) = locals.get(var)
-                && let Some(bound) = select_fragment_binding(binding, path)
+                && let Some(bound) = binding.select_fragment_path(path)
             {
                 out.extend(extract_paths(&bound));
             }
@@ -120,7 +116,7 @@ pub(crate) fn local_default_paths_from_exprs(
 
 pub(crate) fn local_output_meta_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, FragmentBinding>,
+    local_bindings: &HashMap<String, AbstractValue>,
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
 ) -> BTreeMap<String, HelperOutputMeta> {
     let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
@@ -137,7 +133,7 @@ pub(crate) fn local_output_meta_from_exprs(
 
 fn local_output_meta_from_expr(
     expr: &TemplateExpr,
-    local_bindings: &HashMap<String, FragmentBinding>,
+    local_bindings: &HashMap<String, AbstractValue>,
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
 ) -> BTreeMap<String, HelperOutputMeta> {
     match expr {
@@ -154,10 +150,10 @@ fn local_output_meta_from_expr(
             let Some(binding) = local_bindings.get(var) else {
                 return BTreeMap::new();
             };
-            let Some(bound) = select_fragment_binding(binding, path) else {
+            let Some(bound) = binding.select_fragment_path(path) else {
                 return BTreeMap::new();
             };
-            let selected_paths = fragment_source_paths(&bound);
+            let selected_paths = bound.fragment_source_paths();
             local_output_meta
                 .get(var)
                 .into_iter()

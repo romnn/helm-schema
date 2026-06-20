@@ -3,25 +3,17 @@
   "additionalProperties": false,
   "properties": {
     "fullnameOverride": {
-      "anyOf": [
-        {
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "nameOverride": {
-      "anyOf": [
-        {
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": [
+        "string",
+        "null"
       ]
     },
     "podPriorityClassName": {
@@ -145,11 +137,15 @@
           "then": {
             "properties": {
               "priority": {
-                "description": "value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.",
-                "format": "int32",
-                "type": [
-                  "integer",
-                  "null"
+                "anyOf": [
+                  {
+                    "description": "value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               }
             },

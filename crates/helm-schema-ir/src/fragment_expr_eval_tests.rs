@@ -2,13 +2,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, TreeSitterParser, parse_action_expressions};
 
+use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
-use crate::fragment_binding::{self, FragmentBinding};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr, fragment_binding_from_outer_expr,
     helper_binding_from_expr_with_fragment_locals,
 };
-use crate::helper_binding::HelperBinding;
 use crate::helper_summary::{HelperOutputMeta, HelperSummaryCache};
 
 fn single_expr(action: &str) -> TemplateExpr {
@@ -27,8 +26,8 @@ fn empty_context<'a>(
 
 fn helper_binding_from_fragment_locals(
     action: &str,
-    fragment_locals: &HashMap<String, FragmentBinding>,
-) -> Option<HelperBinding> {
+    fragment_locals: &HashMap<String, AbstractValue>,
+) -> Option<AbstractValue> {
     let expr = single_expr(action);
     let defines = DefineIndex::new();
     let define_bodies = DefineBodyCache::new(&defines);
@@ -45,12 +44,12 @@ fn helper_binding_from_fragment_locals(
     )
 }
 
-fn context_local() -> HashMap<String, FragmentBinding> {
+fn context_local() -> HashMap<String, AbstractValue> {
     HashMap::from([(
         "ctx".to_string(),
-        FragmentBinding::Dict(BTreeMap::from([(
+        AbstractValue::Dict(BTreeMap::from([(
             "config".to_string(),
-            FragmentBinding::ValuesPath("serviceAccount".to_string()),
+            AbstractValue::ValuesPath("serviceAccount".to_string()),
         )])),
     )])
 }
@@ -68,14 +67,14 @@ fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
     let expr = single_expr(".");
     let root_bindings = HashMap::from([(
         "Values".to_string(),
-        HelperBinding::ValuesPath(String::new()),
+        AbstractValue::ValuesPath(String::new()),
     )]);
 
     assert_eq!(
         fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
-        Some(FragmentBinding::Dict(BTreeMap::from([(
+        Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
-            fragment_binding::values_root(),
+            AbstractValue::values_root(),
         )])))
     );
 }
@@ -85,14 +84,14 @@ fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
     let expr = single_expr("$");
     let root_bindings = HashMap::from([(
         "Values".to_string(),
-        HelperBinding::ValuesPath(String::new()),
+        AbstractValue::ValuesPath(String::new()),
     )]);
 
     assert_eq!(
         fragment_binding_from_outer_expr(&expr, None, Some(&root_bindings), None),
-        Some(FragmentBinding::Dict(BTreeMap::from([(
+        Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
-            fragment_binding::values_root(),
+            AbstractValue::values_root(),
         )])))
     );
 }
@@ -104,9 +103,9 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
 
     assert_eq!(
         fragment_binding_from_outer_expr(&expr, Some(&fragment_locals), None, None),
-        Some(FragmentBinding::Dict(BTreeMap::from([(
+        Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            FragmentBinding::ValuesPath("serviceAccount.name".to_string()),
+            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
         )])))
     );
 }
@@ -120,7 +119,7 @@ fn helper_binding_fragment_local_selector_uses_shared_expression_eval() {
 
     assert_eq!(
         binding,
-        Some(HelperBinding::ValuesPath("serviceAccount.name".to_string()))
+        Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
     );
 }
 
@@ -131,9 +130,9 @@ fn helper_binding_fragment_local_dict_uses_shared_expression_eval() {
 
     assert_eq!(
         binding,
-        Some(HelperBinding::Dict(BTreeMap::from([(
+        Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            HelperBinding::ValuesPath("serviceAccount.name".to_string()),
+            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
         )])))
     );
 }
@@ -145,7 +144,7 @@ fn helper_binding_fragment_local_index_uses_shared_expression_eval() {
 
     assert_eq!(
         binding,
-        Some(HelperBinding::ValuesPath("serviceAccount.name".to_string()))
+        Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
     );
 }
 
@@ -164,7 +163,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
-    let Some(HelperBinding::OutputSet(output_set)) = helper_binding_from_expr_with_fragment_locals(
+    let Some(AbstractValue::OutputSet(output_set)) = helper_binding_from_expr_with_fragment_locals(
         &expr,
         &HashMap::new(),
         None,
@@ -207,7 +206,7 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
 
     assert_eq!(
         fragment_binding_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
-        Some(FragmentBinding::OutputSet(
+        Some(AbstractValue::OutputSet(
             [(
                 "nameOverride".to_string(),
                 HelperOutputMeta {

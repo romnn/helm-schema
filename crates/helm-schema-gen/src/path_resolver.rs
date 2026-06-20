@@ -11,7 +11,7 @@ use crate::contract_evidence_index::{ContractEvidenceIndex, IndexedContractPathE
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
-use crate::schema_model::{empty_schema, is_empty_schema, is_string_like_schema, type_schema};
+use crate::schema_model::{empty_schema, is_empty_schema};
 use crate::values_yaml::{
     ValuePathCaches, ValuesYamlPathFacts, ValuesYamlPathInfo, build_value_path_caches,
 };
@@ -20,6 +20,7 @@ pub(crate) struct ResolvedPathSchema {
     pub(crate) value_path: String,
     pub(crate) path_segments: Vec<String>,
     pub(crate) schema: Value,
+    pub(crate) values_yaml_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
@@ -104,6 +105,9 @@ impl PathSchemaResolver {
             value_path,
             path_segments,
             schema: merged,
+            values_yaml_schema: values_yaml_info
+                .map(|path_info| path_info.schema.clone())
+                .unwrap_or_else(empty_schema),
             provider_schema_candidate,
         })
     }
@@ -158,13 +162,7 @@ impl PathSchemaResolver {
             [schema] => Some(schema.clone()),
             _ => None,
         };
-        let provider_schema = if provider_schemas.len() > 1
-            && provider_schemas
-                .iter()
-                .all(|schema| is_string_like_schema(schema.schema()))
-        {
-            type_schema("string")
-        } else if let Some(provider_schema) = single_provider_schema.as_deref() {
+        let provider_schema = if let Some(provider_schema) = single_provider_schema.as_deref() {
             provider_schema.schema().clone()
         } else {
             merge_schema_list(

@@ -1,14 +1,12 @@
 use crate::Guard;
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::fragment_to_current_dot_helper_binding;
-use crate::helper_binding::HelperBinding;
+use crate::abstract_value::AbstractValue;
 use crate::predicate::Predicate;
 use crate::symbolic_local_state::{SymbolicLocalState, SymbolicLocalStateSnapshot};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SymbolicScopeState {
     predicates: Vec<Predicate>,
-    dot_stack: Vec<Option<FragmentBinding>>,
+    dot_stack: Vec<Option<AbstractValue>>,
     locals: SymbolicLocalState,
 }
 
@@ -20,7 +18,7 @@ pub(crate) struct SymbolicScopeSnapshot {
 }
 
 impl SymbolicScopeState {
-    pub(crate) fn reset_control(&mut self, predicates: &[Predicate], dot: Option<FragmentBinding>) {
+    pub(crate) fn reset_control(&mut self, predicates: &[Predicate], dot: Option<AbstractValue>) {
         self.predicates = predicates.to_vec();
         self.dot_stack.clear();
         if let Some(dot) = dot {
@@ -72,18 +70,18 @@ impl SymbolicScopeState {
         }
     }
 
-    pub(crate) fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
+    pub(crate) fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
         self.dot_stack.push(binding);
     }
 
-    pub(crate) fn current_dot_binding(&self) -> Option<HelperBinding> {
+    pub(crate) fn current_dot_binding(&self) -> Option<AbstractValue> {
         self.dot_stack
             .last()
             .and_then(|binding| binding.as_ref())
-            .and_then(fragment_to_current_dot_helper_binding)
+            .and_then(AbstractValue::to_current_dot_context_value)
     }
 
-    pub(crate) fn current_dot_fragment(&self) -> Option<FragmentBinding> {
+    pub(crate) fn current_dot_fragment(&self) -> Option<AbstractValue> {
         self.dot_stack.last().cloned().flatten()
     }
 
@@ -104,11 +102,11 @@ mod tests {
     fn branch_join_restores_control_state_to_entry() {
         let mut state = SymbolicScopeState::default();
         state.push_predicate_if_absent(Predicate::truthy_path("enabled"));
-        state.push_dot_binding(Some(FragmentBinding::ValuesPath("root".to_string())));
+        state.push_dot_binding(Some(AbstractValue::ValuesPath("root".to_string())));
         let entry = state.snapshot();
 
         state.push_predicate_if_absent(Predicate::truthy_path("branch"));
-        state.push_dot_binding(Some(FragmentBinding::ValuesPath("branch".to_string())));
+        state.push_dot_binding(Some(AbstractValue::ValuesPath("branch".to_string())));
         let branch = state.snapshot();
 
         state.restore(entry.clone());
@@ -122,7 +120,7 @@ mod tests {
         );
         assert_eq!(
             state.current_dot_fragment(),
-            Some(FragmentBinding::ValuesPath("root".to_string()))
+            Some(AbstractValue::ValuesPath("root".to_string()))
         );
     }
 

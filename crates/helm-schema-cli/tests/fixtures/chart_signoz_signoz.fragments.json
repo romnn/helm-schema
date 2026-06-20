@@ -9,13 +9,9 @@
           "type": "object"
         },
         "className": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "enabled": {
@@ -56,7 +52,9 @@
             "additionalProperties": false,
             "properties": {
               "hosts": {
-                "items": {},
+                "items": {
+                  "type": "string"
+                },
                 "type": "array"
               },
               "secretName": {}
@@ -71,25 +69,15 @@
     "/properties/clickhouse/properties/clickhouseOperator/properties/image": {
       "additionalProperties": false,
       "properties": {
-        "pullPolicy": {
-          "type": "string"
-        },
+        "pullPolicy": {},
         "registry": {
-          "type": "string"
-        },
-        "repository": {
-          "type": "string"
-        },
-        "tag": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
-        }
+        },
+        "repository": {},
+        "tag": {}
       },
       "type": "object"
     },
@@ -152,13 +140,9 @@
           "type": "object"
         },
         "className": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "enabled": {
@@ -199,7 +183,9 @@
             "additionalProperties": false,
             "properties": {
               "hosts": {
-                "items": {},
+                "items": {
+                  "type": "string"
+                },
                 "type": "array"
               },
               "secretName": {}
@@ -306,13 +292,9 @@
           "type": "boolean"
         },
         "name": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
@@ -345,31 +327,21 @@
           ]
         },
         "password": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "postgresPassword": {
           "type": "string"
         },
         "replicationPassword": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
-        "replicationUsername": {
-          "type": "string"
-        },
+        "replicationUsername": {},
         "secretKeys": {
           "additionalProperties": false,
           "properties": {
@@ -463,9 +435,7 @@
         "hostKey": {
           "type": "string"
         },
-        "name": {
-          "type": "string"
-        },
+        "name": {},
         "passwordKey": {
           "type": "string"
         },

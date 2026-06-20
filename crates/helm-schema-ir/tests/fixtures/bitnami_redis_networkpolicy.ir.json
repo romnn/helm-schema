@@ -303,7 +303,7 @@
       "path": [
         "spec",
         "ingress[*]",
-        "from[*]",
+        "from",
         "podSelector",
         "matchLabels"
       ],
@@ -399,34 +399,6 @@
           "type": "truthy"
         },
         {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1226,
-            "start": 774
-          },
-          "template_path": "<inline:6>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
           "path": "networkPolicy.allowExternal",
           "type": "not"
         }
@@ -466,6 +438,40 @@
         }
       ],
       "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "networkPolicy.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1226,
+            "start": 774
+          },
+          "template_path": "<inline:6>"
+        }
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
       "source_expr": "fullnameOverride"
     },
     {
@@ -629,42 +635,6 @@
           "type": "truthy"
         },
         {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1226,
-            "start": 774
-          },
-          "template_path": "<inline:6>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
           "path": "networkPolicy.allowExternal",
           "type": "not"
         },
@@ -892,6 +862,48 @@
           "type": "truthy"
         },
         {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1226,
+            "start": 774
+          },
+          "template_path": "<inline:6>"
+        }
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "networkPolicy.enabled",
+          "type": "truthy"
+        },
+        {
           "path": "networkPolicy.allowExternalEgress",
           "type": "not"
         },
@@ -1026,7 +1038,7 @@
       "path": [
         "spec",
         "ingress[*]",
-        "from[*]",
+        "from",
         "podSelector",
         "matchLabels",
         "app.kubernetes.io/name"
@@ -1078,7 +1090,7 @@
       "path": [
         "spec",
         "ingress[*]",
-        "from[*]",
+        "from",
         "podSelector",
         "matchLabels",
         "app.kubernetes.io/name"
@@ -1335,8 +1347,7 @@
       "kind": "Fragment",
       "path": [
         "spec",
-        "egress[*]",
-        "to"
+        "egress"
       ],
       "provenance": [
         {
@@ -1389,8 +1400,7 @@
       "kind": "Fragment",
       "path": [
         "spec",
-        "ingress[*]",
-        "from"
+        "ingress"
       ],
       "provenance": [
         {

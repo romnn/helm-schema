@@ -8,12 +8,11 @@ use std::rc::Rc;
 use helm_schema_ast::DefineIndex;
 
 use crate::Guard;
+use crate::abstract_value::AbstractValue;
 use crate::contract::ContractIr;
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_projection::DocumentTracker;
-use crate::fragment_binding::FragmentBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_binding::HelperBinding;
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
@@ -120,7 +119,7 @@ struct SymbolicWalker<'a> {
     ir_context: SymbolicIrContext,
     contract: ContractIr,
     seed_predicates: Vec<Predicate>,
-    seed_dot: Option<FragmentBinding>,
+    seed_dot: Option<AbstractValue>,
     no_output_depth: usize,
     document_tracker: DocumentTracker<'a>,
     current_source_span: Option<crate::SourceSpan>,
@@ -130,7 +129,7 @@ struct SymbolicWalker<'a> {
     scope: SymbolicScopeState,
 
     inline_helpers_in_fragments: bool,
-    root_bindings: HashMap<String, HelperBinding>,
+    root_bindings: HashMap<String, AbstractValue>,
 }
 
 impl<'a> SymbolicWalker<'a> {
@@ -168,7 +167,7 @@ impl<'a> SymbolicWalker<'a> {
         self
     }
 
-    fn with_initial_dot_binding(mut self, dot: Option<FragmentBinding>) -> Self {
+    fn with_initial_dot_binding(mut self, dot: Option<AbstractValue>) -> Self {
         self.seed_dot = dot;
         self
     }
@@ -191,7 +190,7 @@ impl<'a> SymbolicWalker<'a> {
         self
     }
 
-    fn with_helper_bindings(mut self, bindings: HashMap<String, HelperBinding>) -> Self {
+    fn with_helper_bindings(mut self, bindings: HashMap<String, AbstractValue>) -> Self {
         self.root_bindings = bindings;
         self
     }
@@ -239,11 +238,11 @@ impl<'a> SymbolicWalker<'a> {
         self.scope.contract_guards()
     }
 
-    fn current_dot_binding(&self) -> Option<HelperBinding> {
+    fn current_dot_binding(&self) -> Option<AbstractValue> {
         self.scope.current_dot_binding()
     }
 
-    fn current_dot_fragment(&self) -> Option<FragmentBinding> {
+    fn current_dot_fragment(&self) -> Option<AbstractValue> {
         self.scope.current_dot_fragment()
     }
 

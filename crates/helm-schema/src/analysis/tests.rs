@@ -98,6 +98,98 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
 }
 
 #[test]
+fn signoz_clickhouse_operator_image_helper_type_hints_flow_into_contract_schema_signals()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("signoz-signoz");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
+    let path = "clickhouse.clickhouseOperator.image.repository";
+
+    assert!(
+        collection
+            .contract_schema_signals()
+            .evidence_for(path)
+            .is_some_and(|evidence| evidence.type_hints.contains("string")),
+        "expected structural contract type hint for {path}; contract_hints={:?}",
+        collection
+            .contract_schema_signals()
+            .schema_evidence_by_value_path(),
+    );
+
+    Ok(())
+}
+
+#[test]
+fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("signoz-signoz");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(None),
+    )?;
+    let projection = collection.contract.clone().project();
+    let path = "signoz.smtpVars.existingSecret.name";
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == path)
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
+        uses.iter().any(|use_| {
+            use_.path.0
+                == [
+                    "spec".to_string(),
+                    "template".to_string(),
+                    "spec".to_string(),
+                    "containers[*]".to_string(),
+                    "env[*]".to_string(),
+                    "valueFrom".to_string(),
+                    "secretKeyRef".to_string(),
+                    "name".to_string(),
+                ]
+                && use_.resource.as_ref().is_some_and(|resource| {
+                    resource.api_version == "apps/v1" && resource.kind == "StatefulSet"
+                })
+        }),
+        "expected render use for {path} at secretKeyRef.name; uses={uses:#?}",
+    );
+    let signals = collection.contract_schema_signals();
+    let evidence = signals
+        .evidence_for(path)
+        .unwrap_or_else(|| panic!("missing schema evidence for {path}; uses={uses:#?}"));
+    assert!(
+        evidence.is_referenced_value_path,
+        "expected {path} to be a referenced value path; evidence={evidence:#?}; uses={uses:#?}",
+    );
+    assert!(
+        !evidence.provider_schema_uses.is_empty(),
+        "expected {path} to carry provider schema uses; evidence={evidence:#?}; uses={uses:#?}",
+    );
+
+    Ok(())
+}
+
+#[test]
 fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_guards()
 -> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()

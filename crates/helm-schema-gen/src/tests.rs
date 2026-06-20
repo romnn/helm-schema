@@ -645,6 +645,17 @@ fn permits_type(schema: &Value, ty: &str) -> bool {
         .is_some_and(|variants| variants.iter().any(|variant| permits_type(variant, ty)))
 }
 
+fn schema_has_format(schema: &Value, format: &str) -> bool {
+    if schema.get("format").and_then(Value::as_str) == Some(format) {
+        return true;
+    }
+    ["anyOf", "oneOf", "allOf"]
+        .into_iter()
+        .filter_map(|key| schema.get(key).and_then(Value::as_array))
+        .flatten()
+        .any(|variant| schema_has_format(variant, format))
+}
+
 fn permits_empty_string(schema: &Value) -> bool {
     if let Some(variants) = schema.get("anyOf").and_then(Value::as_array) {
         return variants.iter().any(permits_empty_string);
@@ -662,6 +673,95 @@ fn permits_empty_string(schema: &Value) -> bool {
         .get("minLength")
         .and_then(Value::as_u64)
         .is_none_or(|min_length| min_length == 0)
+}
+
+#[test]
+fn base64_encoded_secret_data_does_not_inherit_rendered_byte_format() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: example
+        data:
+          direct: {{ .Values.directSecretData }}
+          encoded: {{ .Values.password | b64enc | quote }}
+    "};
+    let values_yaml = indoc! {r#"
+        directSecretData: ""
+        password: ""
+    "#};
+
+    let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
+
+    let direct = schema
+        .pointer("/properties/directSecretData")
+        .expect("directSecretData present");
+    assert!(
+        schema_has_format(direct, "byte"),
+        "direct Secret.data input should keep provider byte format, got {direct}; schema={schema}"
+    );
+
+    let password = schema
+        .pointer("/properties/password")
+        .expect("password present");
+    assert!(
+        permits_type(password, "string"),
+        "encoded input should remain string-like, got {password}; schema={schema}"
+    );
+    assert!(
+        !schema_has_format(password, "byte"),
+        "pre-encoded chart input must not inherit rendered Secret.data byte format, got {password}; schema={schema}"
+    );
+}
+
+#[test]
+fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() {
+    let helpers = indoc! {r#"
+        {{- define "sample.passwordData" -}}
+        {{- if .Values.password }}
+        password: {{ .Values.password | b64enc | quote }}
+        {{- end }}
+        raw: {{ .Values.rawSecretData }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: example
+        data:
+          {{- include "sample.passwordData" . | nindent 2 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        password: ""
+        rawSecretData: ""
+    "#};
+
+    let schema = schema_for_values_yaml(&parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let password = schema
+        .pointer("/properties/password")
+        .expect("password present");
+
+    assert!(
+        permits_type(password, "string"),
+        "encoded helper input should remain string-like, got {password}; schema={schema}"
+    );
+    assert!(
+        permits_null(password),
+        "truthy-guarded encoded helper input should allow null, got {password}; schema={schema}"
+    );
+    assert!(
+        !schema_has_format(password, "byte"),
+        "pre-encoded helper input must not inherit rendered Secret.data byte format, got {password}; schema={schema}"
+    );
+
+    let raw = schema
+        .pointer("/properties/rawSecretData")
+        .expect("rawSecretData present");
+    assert!(
+        schema_has_format(raw, "byte"),
+        "unencoded sibling helper input should still inherit Secret.data byte format, got {raw}; schema={schema}"
+    );
 }
 
 /// Simple template produces correct schema structure.
@@ -830,15 +930,10 @@ fn step2_default_prefix_string_literal_is_nullable_string() {
     let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
-    let variants = name
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .expect("expected anyOf union for nullable-string");
     assert!(permits_null(name));
     assert!(
-        variants
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("string"))
+        permits_type(name, "string"),
+        "default fallback should keep the string branch, got {name}"
     );
 }
 
@@ -855,15 +950,10 @@ fn step2_default_pipeline_string_literal_is_nullable_string() {
     let schema = schema_for_values_yaml(&parse_ir(src), Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
-    let variants = name
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .expect("expected anyOf union for nullable-string");
     assert!(permits_null(name));
     assert!(
-        variants
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("string"))
+        permits_type(name, "string"),
+        "default fallback should keep the string branch, got {name}"
     );
 }
 
@@ -991,15 +1081,9 @@ fn nullable_scalar_preserved_for_with_guarded_render_use() {
     let priority = schema
         .pointer("/properties/priorityClassName")
         .expect("priorityClassName present");
-    let variants = priority
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .expect("expected nullable priorityClassName union");
     assert!(permits_null(priority));
     assert!(
-        variants
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("string")),
+        permits_type(priority, "string"),
         "priorityClassName should also accept the provider string type, got {priority}"
     );
 }
@@ -1035,15 +1119,9 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
     let node_port = schema
         .pointer("/properties/service/properties/ports/properties/smtp/properties/nodePort")
         .expect("service.ports.smtp.nodePort present");
-    let variants = node_port
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .unwrap_or_else(|| panic!("expected nullable nodePort union, got {node_port}"));
     assert!(permits_null(node_port));
     assert!(
-        variants
-            .iter()
-            .any(|v| v.get("type").and_then(Value::as_str) == Some("integer")),
+        permits_type(node_port, "integer"),
         "nodePort should also accept the provider integer type, got {node_port}"
     );
 }
@@ -1617,6 +1695,53 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
     );
 }
 
+#[test]
+fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
+    let schema_signals = schema_signals_for(vec![ContractUse {
+        source_expr: "feature.value".to_string(),
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Eq {
+            path: "mode".to_string(),
+            value: GuardValue::string("enabled"),
+        }],
+        resource: None,
+        provenance: Vec::new(),
+    }]);
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider)
+            .with_values_yaml(Some("mode: disabled\nfeature:\n  value: false\n")),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "mode": "enabled",
+                "feature": {
+                    "value": false
+                }
+            })
+        ),
+        "inactive scalar branch should preserve scalar values.yaml input evidence: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "mode": "enabled",
+                "feature": {
+                    "value": {
+                        "label": "example"
+                    }
+                }
+            })
+        ),
+        "scalar branch must not become open to unrelated object input: {schema}"
+    );
+}
+
 fn branch_has_mode_enum(branch: &Value, mode: &str) -> bool {
     branch.pointer("/if/properties/mode/enum") == Some(&serde_json::json!([mode]))
         || branch
@@ -1908,6 +2033,42 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
         assert!(
             object_variant_with_property(image, property).is_some(),
             "image.{property} should be attributed through helper-local assignments, got {image}; ir={ir:?}"
+        );
+    }
+}
+
+#[test]
+fn helper_local_printf_aliases_flow_into_contract_type_hints() {
+    let helpers = indoc! {r#"
+        {{- define "common.image" -}}
+        {{- $registryName := .imageRoot.registry -}}
+        {{- $repositoryName := .imageRoot.repository -}}
+        {{- $tag := default .imageRoot.version .imageRoot.tag | toString -}}
+        {{- if $registryName -}}
+          {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+        {{- else -}}
+          {{- printf "%s:%s" $repositoryName $tag -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              containers:
+                - name: app
+                  image: {{ template "common.image" (dict "imageRoot" .Values.image) }}
+    "#};
+
+    let hints = type_hints_for(parse_ir_with_helpers(src, helpers));
+    for path in ["image.registry", "image.repository", "image.tag"] {
+        assert!(
+            hints
+                .get(path)
+                .is_some_and(|types| types.contains("string")),
+            "expected helper-local printf alias to add a string type hint for {path}, got {hints:?}"
         );
     }
 }
@@ -2850,14 +3011,8 @@ fn helper_string_output_conflicts_collapse_to_plain_string() {
         permits_null(fullname),
         "truthy-gated helper output should still accept null, got {fullname}"
     );
-    let variants = fullname
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .expect("expected nullable string union");
     assert!(
-        variants
-            .iter()
-            .any(|variant| variant.get("type").and_then(Value::as_str) == Some("string")),
+        permits_type(fullname, "string"),
         "helper-derived scalar outputs should still include a string branch, got {fullname}"
     );
 }
@@ -2888,10 +3043,13 @@ fn template_call_in_scalar_slot_propagates_helper_value_types() {
     let fullname = schema
         .pointer("/properties/fullnameOverride")
         .expect("fullnameOverride present");
-    assert_eq!(
-        fullname,
-        &serde_json::json!({ "type": "string" }),
-        "template calls in scalar slots should propagate helper value types, got {fullname}"
+    assert!(
+        permits_null(fullname),
+        "truthy-gated template helper output should still accept null, got {fullname}"
+    );
+    assert!(
+        permits_type(fullname, "string"),
+        "template calls in scalar slots should propagate helper string types, got {fullname}"
     );
 }
 
@@ -3991,6 +4149,85 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
             })
         ),
         "guarded fragment base should stay open after inserting guard descendants, got {schema}"
+    );
+}
+
+#[test]
+fn referenced_empty_string_child_survives_parent_pruning() {
+    let mut contract = ContractIr::from_contract_uses(vec![
+        ContractUse {
+            source_expr: "signoz.smtpVars.existingSecret.fromKey".to_string(),
+            path: YamlPath(vec!["env[*]".to_string(), "valueFrom".to_string()]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Truthy {
+                path: "signoz.smtpVars.enabled".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        },
+        ContractUse {
+            source_expr: "signoz.smtpVars.existingSecret.name".to_string(),
+            path: YamlPath(vec![
+                "env[*]".to_string(),
+                "valueFrom".to_string(),
+                "secretKeyRef".to_string(),
+                "name".to_string(),
+            ]),
+            kind: ValueKind::Scalar,
+            guards: vec![Guard::Truthy {
+                path: "signoz.smtpVars.enabled".to_string(),
+            }],
+            resource: None,
+            provenance: Vec::new(),
+        },
+    ]);
+    contract.push_pathless_scalar("signoz");
+    contract.add_type_hint("signoz.smtpVars.enabled", "boolean");
+
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
+            Some(indoc! {r#"
+                signoz:
+                  smtpVars:
+                    enabled: false
+                    existingSecret:
+                      name: ""
+                      fromKey: ""
+            "#}),
+        ),
+    );
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz": {
+                    "smtpVars": {
+                        "enabled": true,
+                        "existingSecret": {
+                            "name": 7
+                        }
+                    }
+                }
+            })
+        ),
+        "active guarded child path should keep its own values.yaml scalar schema after parent pruning, got {schema}",
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz": {
+                    "smtpVars": {
+                        "enabled": false,
+                        "existingSecret": {
+                            "name": 7
+                        }
+                    }
+                }
+            })
+        ),
+        "inactive guarded child path should not be constrained by branch-local evidence, got {schema}",
     );
 }
 

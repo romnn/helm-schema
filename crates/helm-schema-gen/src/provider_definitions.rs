@@ -327,6 +327,7 @@ mod tests {
                 .map(std::string::ToString::to_string)
                 .collect(),
             provider_schema_candidate: Some(ProviderSchemaCandidate::new(schema.clone())),
+            values_yaml_schema: crate::schema_model::empty_schema(),
             schema,
         }
     }
@@ -383,6 +384,7 @@ mod tests {
                 schema.clone(),
                 pointer,
             )),
+            values_yaml_schema: crate::schema_model::empty_schema(),
             schema,
         }
     }
@@ -509,6 +511,7 @@ mod tests {
                         source_schema.clone(),
                     ),
                 ),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
             ResolvedPathSchema {
@@ -521,6 +524,7 @@ mod tests {
                         source_schema.clone(),
                     ),
                 ),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: json!({
                     "type": "object",
                     "properties": {
@@ -590,6 +594,7 @@ mod tests {
                         bundled_source_schema.clone(),
                     ),
                 ),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
             ResolvedPathSchema {
@@ -603,6 +608,7 @@ mod tests {
                         bundled_source_schema,
                     ),
                 ),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
         ];
@@ -656,6 +662,7 @@ mod tests {
                         internal_ref_source_schema,
                     ),
                 ),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
             ResolvedPathSchema {
@@ -668,6 +675,7 @@ mod tests {
                         provider_local_ref_schema,
                     ),
                 ),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
         ];
@@ -701,6 +709,7 @@ mod tests {
                     provider_schema.clone(),
                     "/definitions/First",
                 )),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
             ResolvedPathSchema {
@@ -710,6 +719,7 @@ mod tests {
                     provider_schema.clone(),
                     "/definitions/Second",
                 )),
+                values_yaml_schema: crate::schema_model::empty_schema(),
                 schema: provider_schema.clone(),
             },
         ];

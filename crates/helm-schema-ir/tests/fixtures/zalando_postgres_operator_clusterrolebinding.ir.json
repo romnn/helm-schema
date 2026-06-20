@@ -149,6 +149,18 @@
         {
           "path": "rbac.create",
           "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "rbac.create",
+          "type": "truthy"
         },
         {
           "path": "nameOverride",
@@ -156,7 +168,11 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -169,7 +185,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
       "source_expr": "nameOverride"
     },
     {

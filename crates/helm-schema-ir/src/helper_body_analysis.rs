@@ -3,12 +3,11 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::ValueKind;
-use crate::fragment_binding::FragmentBinding;
+use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, bindings_for_helper_arg_with_fragment_locals,
     fragment_binding_from_outer_expr, helper_binding_from_expr_with_fragment_locals,
 };
-use crate::helper_binding::HelperBinding;
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_tree;
 use crate::helper_summary::HelperSummary;
 use crate::helper_value_analysis::collect_bound_helper_values_from_tree;
@@ -16,17 +15,17 @@ use crate::helper_walk_state::{FragmentOutputWalkState, HelperValuesWalkState};
 use crate::{ContractProvenance, SourceSpan};
 
 pub(crate) struct BoundHelperCallResolution {
-    pub(crate) bindings: HashMap<String, HelperBinding>,
-    pub(crate) helper_body_dot: Option<HelperBinding>,
-    pub(crate) helper_fragment_dot: Option<FragmentBinding>,
+    pub(crate) bindings: HashMap<String, AbstractValue>,
+    pub(crate) helper_body_dot: Option<AbstractValue>,
+    pub(crate) helper_fragment_dot: Option<AbstractValue>,
 }
 
 pub(crate) struct ResolveBoundHelperCallParams<'a, 'context> {
     pub(crate) helper_name: &'a str,
     pub(crate) arg: Option<&'a TemplateExpr>,
-    pub(crate) outer_bindings: Option<&'a HashMap<String, HelperBinding>>,
-    pub(crate) current_dot: Option<&'a HelperBinding>,
-    pub(crate) fragment_locals: &'a HashMap<String, FragmentBinding>,
+    pub(crate) outer_bindings: Option<&'a HashMap<String, AbstractValue>>,
+    pub(crate) current_dot: Option<&'a AbstractValue>,
+    pub(crate) fragment_locals: &'a HashMap<String, AbstractValue>,
     pub(crate) context: FragmentEvalContext<'context>,
     pub(crate) seen: &'a HashSet<String>,
 }
@@ -87,22 +86,22 @@ fn helper_uses_large_config_arg(name: &str) -> bool {
     name.starts_with("opentelemetry-collector.apply")
 }
 
-fn abstract_config_binding(binding: HelperBinding) -> HelperBinding {
+fn abstract_config_binding(binding: AbstractValue) -> AbstractValue {
     let paths = binding.paths();
     if paths.is_empty() {
-        HelperBinding::Top
+        AbstractValue::Top
     } else {
-        HelperBinding::PathSet(paths)
+        AbstractValue::PathSet(paths)
     }
 }
 
-fn abstract_config_entry_in_binding(binding: HelperBinding) -> HelperBinding {
+fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
     match binding {
-        HelperBinding::Dict(mut entries) => {
+        AbstractValue::Dict(mut entries) => {
             if let Some(config) = entries.remove("config") {
                 entries.insert("config".to_string(), abstract_config_binding(config));
             }
-            HelperBinding::Dict(entries)
+            AbstractValue::Dict(entries)
         }
         other => other,
     }
@@ -209,7 +208,7 @@ fn collect_fragment_output_uses(
     resolution: &BoundHelperCallResolution,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    helper_fragment_locals: &mut HashMap<String, FragmentBinding>,
+    helper_fragment_locals: &mut HashMap<String, AbstractValue>,
     analysis: &mut HelperSummary,
 ) {
     let (Some(src), Some(tree)) = (
@@ -255,7 +254,7 @@ fn collect_fragment_output_uses(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::{BTreeSet, HashMap, HashSet};
 
     use helm_schema_ast::{DefineIndex, TreeSitterParser};
 
@@ -327,5 +326,43 @@ mod tests {
             "defaulted scalar output should retain string type hint"
         );
         assert!(summary.fragment_output_uses.is_empty());
+    }
+
+    #[test]
+    fn helper_body_summary_resolves_string_hints_through_local_aliases() {
+        let source = r#"
+            {{- define "image" -}}
+            {{- $repositoryName := .imageRoot.repository -}}
+            {{- $tag := .imageRoot.tag | toString -}}
+            {{- printf "%s:%s" $repositoryName $tag -}}
+            {{- end -}}
+        "#;
+        let mut defines = DefineIndex::new();
+        defines
+            .add_source(&TreeSitterParser, source)
+            .expect("define source");
+        let define_bodies = DefineBodyCache::new(&defines);
+        let helper_summaries = HelperSummaryCache::new();
+        let context = FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries);
+        let resolution = BoundHelperCallResolution {
+            bindings: HashMap::from([(
+                "imageRoot".to_string(),
+                crate::abstract_value::AbstractValue::ValuesPath("image".to_string()),
+            )]),
+            helper_body_dot: None,
+            helper_fragment_dot: None,
+        };
+        let mut seen = HashSet::new();
+
+        let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
+
+        assert_eq!(
+            summary.type_hints.get("image.repository"),
+            Some(&BTreeSet::from(["string".to_string()]))
+        );
+        assert_eq!(
+            summary.type_hints.get("image.tag"),
+            Some(&BTreeSet::from(["string".to_string()]))
+        );
     }
 }

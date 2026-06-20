@@ -2,29 +2,26 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::abstract_value::AbstractValue;
 use crate::expression_analysis::resolved_default_fallback_paths_for_exprs;
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::fragment_strings;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_binding_from_expr, helper_binding_from_expr_with_fragment_locals,
 };
-use crate::helper_binding::HelperBinding;
-use crate::helper_binding_projection::{helper_strings, helper_to_fragment_binding};
 use crate::helper_output_projection::helper_binding_output_meta;
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::local_projection::local_default_paths_from_exprs;
 use crate::template_expr_analysis::expr_contains_helper_call;
 
 pub(crate) struct BoundHelperEnv<'bindings, 'context> {
-    bindings: &'bindings HashMap<String, HelperBinding>,
-    current_dot: Option<&'bindings HelperBinding>,
+    bindings: &'bindings HashMap<String, AbstractValue>,
+    current_dot: Option<&'bindings AbstractValue>,
     context: FragmentEvalContext<'context>,
 }
 
 impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
     pub(crate) fn new(
-        bindings: &'bindings HashMap<String, HelperBinding>,
-        current_dot: Option<&'bindings HelperBinding>,
+        bindings: &'bindings HashMap<String, AbstractValue>,
+        current_dot: Option<&'bindings AbstractValue>,
         context: FragmentEvalContext<'context>,
     ) -> Self {
         Self {
@@ -34,8 +31,8 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
         }
     }
 
-    pub(crate) fn current_dot_fragment(&self) -> Option<FragmentBinding> {
-        self.current_dot.map(helper_to_fragment_binding)
+    pub(crate) fn current_dot_fragment(&self) -> Option<AbstractValue> {
+        self.current_dot.map(AbstractValue::to_context_value)
     }
 
     pub(crate) fn external_default_fallback_paths_in_exprs(
@@ -56,7 +53,7 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
     pub(crate) fn summarize_calls_in_exprs(
         &self,
         exprs: &[TemplateExpr],
-        local_bindings: &HashMap<String, FragmentBinding>,
+        local_bindings: &HashMap<String, AbstractValue>,
         seen: &mut HashSet<String>,
     ) -> HelperSummary {
         self.context
@@ -74,9 +71,9 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
     pub(crate) fn helper_binding_from_expr(
         &self,
         expr: &TemplateExpr,
-        local_bindings: &HashMap<String, FragmentBinding>,
+        local_bindings: &HashMap<String, AbstractValue>,
         seen: &mut HashSet<String>,
-    ) -> Option<HelperBinding> {
+    ) -> Option<AbstractValue> {
         helper_binding_from_expr_with_fragment_locals(
             expr,
             local_bindings,
@@ -90,9 +87,9 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
     pub(crate) fn fragment_binding_from_expr(
         &self,
         expr: &TemplateExpr,
-        local_bindings: &HashMap<String, FragmentBinding>,
+        local_bindings: &HashMap<String, AbstractValue>,
         seen: &mut HashSet<String>,
-    ) -> Option<FragmentBinding> {
+    ) -> Option<AbstractValue> {
         let current_dot_fragment = self.current_dot_fragment();
         if !expr_contains_helper_call(expr)
             && let Some(binding) = fragment_binding_from_expr(
@@ -106,7 +103,7 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
             return Some(binding);
         }
         if let Some(binding) = self.helper_binding_from_expr(expr, local_bindings, seen) {
-            return Some(helper_to_fragment_binding(&binding));
+            return Some(binding.to_context_value());
         }
         fragment_binding_from_expr(
             expr,
@@ -120,7 +117,7 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
     pub(crate) fn helper_binding_output_meta_from_exprs(
         &self,
         exprs: &[TemplateExpr],
-        local_bindings: &HashMap<String, FragmentBinding>,
+        local_bindings: &HashMap<String, AbstractValue>,
         seen_seed: &HashSet<String>,
     ) -> BTreeMap<String, HelperOutputMeta> {
         let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
@@ -138,19 +135,19 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
     pub(crate) fn string_outputs_from_exprs(
         &self,
         exprs: &[TemplateExpr],
-        local_bindings: &HashMap<String, FragmentBinding>,
+        local_bindings: &HashMap<String, AbstractValue>,
         seen_seed: &HashSet<String>,
     ) -> BTreeSet<String> {
         let mut strings = BTreeSet::new();
         let mut seen = seen_seed.clone();
         for expr in exprs {
             if let Some(binding) = self.helper_binding_from_expr(expr, local_bindings, &mut seen) {
-                strings.extend(helper_strings(&binding));
+                strings.extend(binding.strings());
                 continue;
             }
             if let Some(binding) = self.fragment_binding_from_expr(expr, local_bindings, &mut seen)
             {
-                strings.extend(fragment_strings(&binding));
+                strings.extend(binding.strings());
             }
         }
         strings

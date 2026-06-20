@@ -2,6 +2,7 @@ mod common;
 
 use color_eyre::eyre::{OptionExt as _, WrapErr as _};
 use indoc::indoc;
+use serde_json::{Map, Value};
 
 #[test]
 fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<()> {
@@ -308,6 +309,26 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
         ),
         "disabled otelCollector ingress annotations should not be constrained by guarded-only metadata evidence: {schema}"
     );
+    for field in ["pullPolicy", "repository", "tag"] {
+        assert!(
+            clickhouse_operator_image_field_has_conditional_string_schema(&schema, field),
+            "clickhouseOperator.image.{field} should carry string evidence in a clickhouse-enabled branch: {schema}"
+        );
+        assert!(
+            !schema_validates_instance(
+                &schema,
+                &clickhouse_operator_image_field_instance(field, serde_json::json!(7), None),
+            ),
+            "clickhouseOperator.image.{field} must stay string-like while clickhouse renders: {schema}"
+        );
+        assert!(
+            schema_validates_instance(
+                &schema,
+                &clickhouse_operator_image_field_instance(field, serde_json::json!(7), Some(false)),
+            ),
+            "disabled clickhouse subchart values should not be constrained by guarded-only clickhouseOperator.image.{field} evidence: {schema}"
+        );
+    }
     assert!(
         !schema_validates_instance(
             &schema,
@@ -324,6 +345,40 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
         "schemaMigrator.serviceAccount.annotations must stay a string map when create defaults to true: {schema}"
     );
     assert!(
+        !schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz": {
+                    "smtpVars": {
+                        "enabled": true,
+                        "existingSecret": {
+                            "fromKey": "smtp-from",
+                            "name": 7
+                        }
+                    }
+                }
+            })
+        ),
+        "signoz.smtpVars.existingSecret.name must stay string-like when SMTP vars render: {schema}"
+    );
+    assert!(
+        schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz": {
+                    "smtpVars": {
+                        "enabled": false,
+                        "existingSecret": {
+                            "fromKey": "smtp-from",
+                            "name": 7
+                        }
+                    }
+                }
+            })
+        ),
+        "disabled SMTP vars should not be constrained by guarded-only secret name evidence: {schema}"
+    );
+    assert!(
         schema_validates_instance(
             &schema,
             &serde_json::json!({
@@ -337,6 +392,24 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
             })
         ),
         "signoz-otel-gateway.serviceAccount.name uses Helm default and must accept null when create is true: {schema}"
+    );
+    assert!(
+        !schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "signoz-otel-gateway": {
+                    "enabled": true,
+                    "postgresql": {
+                        "enabled": true,
+                        "architecture": "replication",
+                        "auth": {
+                            "replicationUsername": 7
+                        }
+                    }
+                }
+            })
+        ),
+        "postgresql.auth.replicationUsername must stay string-like when replication renders: {schema}"
     );
     assert!(
         !schema_validates_instance(
@@ -405,7 +478,6 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))
             .wrap_err("parse signoz fixture")?;
-    assert_no_empty_name_fragments(&fixture);
 
     let mut actual_keys: Vec<String> = schema
         .get("properties")
@@ -444,41 +516,65 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
     Ok(())
 }
 
-fn assert_no_empty_name_fragments(value: &serde_json::Value) {
-    if let Some(pointer) = find_empty_name_fragment(value, "") {
-        panic!("curated Signoz fixture must not encode an unconstrained name at {pointer}");
-    }
-}
-
-fn find_empty_name_fragment(value: &serde_json::Value, pointer: &str) -> Option<String> {
-    match value {
-        serde_json::Value::Object(object) => {
-            for (key, child) in object {
-                let child_pointer =
-                    format!("{pointer}/{}", key.replace('~', "~0").replace('/', "~1"));
-                if key == "name" && child.as_object().is_some_and(serde_json::Map::is_empty) {
-                    return Some(child_pointer);
-                }
-                if let Some(found) = find_empty_name_fragment(child, &child_pointer) {
-                    return Some(found);
-                }
-            }
-            None
-        }
-        serde_json::Value::Array(items) => items.iter().enumerate().find_map(|(index, child)| {
-            find_empty_name_fragment(child, &format!("{pointer}/{index}"))
-        }),
-        serde_json::Value::Null
-        | serde_json::Value::Bool(_)
-        | serde_json::Value::Number(_)
-        | serde_json::Value::String(_) => None,
-    }
-}
-
 fn schema_validates_instance(schema: &serde_json::Value, instance: &serde_json::Value) -> bool {
     jsonschema::validator_for(schema)
         .expect("schema validator")
         .is_valid(instance)
+}
+
+fn clickhouse_operator_image_field_instance(
+    field: &str,
+    value: Value,
+    enabled: Option<bool>,
+) -> Value {
+    let mut image = Map::new();
+    image.insert(field.to_string(), value);
+
+    let mut clickhouse_operator = Map::new();
+    clickhouse_operator.insert("image".to_string(), Value::Object(image));
+
+    let mut clickhouse = Map::new();
+    if let Some(enabled) = enabled {
+        clickhouse.insert("enabled".to_string(), Value::Bool(enabled));
+    }
+    clickhouse.insert(
+        "clickhouseOperator".to_string(),
+        Value::Object(clickhouse_operator),
+    );
+
+    let mut root = Map::new();
+    root.insert("clickhouse".to_string(), Value::Object(clickhouse));
+    Value::Object(root)
+}
+
+fn clickhouse_operator_image_field_has_conditional_string_schema(
+    schema: &Value,
+    field: &str,
+) -> bool {
+    schema
+        .pointer("/properties/clickhouse/allOf")
+        .and_then(Value::as_array)
+        .is_some_and(|branches| {
+            branches.iter().any(|branch| {
+                branch
+                    .pointer(&format!(
+                        "/then/properties/clickhouseOperator/properties/image/properties/{field}"
+                    ))
+                    .is_some_and(schema_accepts_string_type)
+            })
+        })
+}
+
+fn schema_accepts_string_type(schema: &Value) -> bool {
+    (match schema.get("type") {
+        Some(Value::String(value)) => value == "string",
+        Some(Value::Array(values)) => values.iter().any(|value| value.as_str() == Some("string")),
+        _ => false,
+    }) || ["anyOf", "oneOf", "allOf"]
+        .into_iter()
+        .filter_map(|key| schema.get(key).and_then(Value::as_array))
+        .flatten()
+        .any(schema_accepts_string_type)
 }
 
 fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected: &str) {

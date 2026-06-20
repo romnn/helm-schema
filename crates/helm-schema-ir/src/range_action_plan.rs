@@ -1,8 +1,8 @@
 use helm_schema_ast::TemplateHeader;
 
 use crate::YamlPath;
+use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
-use crate::fragment_binding::FragmentBinding;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_mapping_entry_indent_from_source,
     range_body_renders_mapping_entries_from_ast,
@@ -19,7 +19,7 @@ pub(crate) struct RangeActionPlan {
     pub(crate) emit_header_use: bool,
     pub(crate) renders_mapping_entries: bool,
     pub(crate) mapping_entry_indent: Option<usize>,
-    pub(crate) dot_binding: Option<FragmentBinding>,
+    pub(crate) dot_binding: Option<AbstractValue>,
     pub(crate) apply_dot_binding: bool,
 }
 
@@ -38,10 +38,7 @@ impl RangeActionPlan {
         }
     }
 
-    pub(crate) fn dot_binding(
-        dot_binding: Option<FragmentBinding>,
-        apply_dot_binding: bool,
-    ) -> Self {
+    pub(crate) fn dot_binding(dot_binding: Option<AbstractValue>, apply_dot_binding: bool) -> Self {
         Self {
             dot_binding,
             apply_dot_binding,
@@ -98,7 +95,7 @@ pub(crate) fn plan_range_action(
             .last()
             .is_some_and(|segment| !segment.ends_with("[*]"));
     let dot_binding =
-        direct_iterable_header_path.map(|path| FragmentBinding::ValuesPath(format!("{path}.*")));
+        direct_iterable_header_path.map(|path| AbstractValue::ValuesPath(format!("{path}.*")));
     let literal_range = parse_literal_list_range_expr(header.expr());
 
     RangeActionPlan {

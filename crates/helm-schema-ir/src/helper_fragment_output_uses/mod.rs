@@ -2,20 +2,18 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateHeader;
 
+use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::document_projection::{DocumentTracker, collect_document_site_context};
 use crate::fragment_assignment::{apply_local_set_mutations_from_exprs, merge_fragment_locals};
-use crate::fragment_binding::FragmentBinding;
-use crate::fragment_binding_projection::{fragment_source_paths, fragment_to_helper_binding};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_has_destructured_variable_definition,
 };
-use crate::helper_binding::HelperBinding;
 use crate::helper_output_projection::push_helper_fragment_output;
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
@@ -39,9 +37,9 @@ use expression_output::collect_bound_fragment_output_uses_from_exprs;
 pub(crate) fn collect_bound_fragment_output_uses_from_tree(
     tree: &tree_sitter::Tree,
     source: &str,
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
-    current_dot_fragment: Option<&FragmentBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    current_dot_fragment: Option<&AbstractValue>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     let mut document_tracker = DocumentTracker::new(source, state.context.defines);
@@ -66,11 +64,11 @@ pub(crate) fn collect_bound_fragment_output_uses_from_tree(
 
 struct FragmentOutputUseRuntime<'context, 'state> {
     source: &'state str,
-    bindings: &'state HashMap<String, HelperBinding>,
-    dot_stack: Vec<Option<HelperBinding>>,
-    dot_fragment_stack: Vec<Option<FragmentBinding>>,
+    bindings: &'state HashMap<String, AbstractValue>,
+    dot_stack: Vec<Option<AbstractValue>>,
+    dot_fragment_stack: Vec<Option<AbstractValue>>,
     active_output_predicates: BTreeSet<Predicate>,
-    local_bindings: &'state mut HashMap<String, FragmentBinding>,
+    local_bindings: &'state mut HashMap<String, AbstractValue>,
     local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
@@ -82,7 +80,7 @@ struct FragmentOutputUseRuntime<'context, 'state> {
 
 #[derive(Clone)]
 struct FragmentOutputUseSnapshot {
-    local_bindings: HashMap<String, FragmentBinding>,
+    local_bindings: HashMap<String, AbstractValue>,
     local_default_paths: HashMap<String, BTreeSet<String>>,
     dot_stack_len: usize,
     dot_fragment_stack_len: usize,
@@ -90,11 +88,11 @@ struct FragmentOutputUseSnapshot {
 }
 
 impl FragmentOutputUseRuntime<'_, '_> {
-    fn current_dot(&self) -> Option<&HelperBinding> {
+    fn current_dot(&self) -> Option<&AbstractValue> {
         self.dot_stack.last().and_then(Option::as_ref)
     }
 
-    fn current_dot_fragment(&self) -> Option<&FragmentBinding> {
+    fn current_dot_fragment(&self) -> Option<&AbstractValue> {
         self.dot_fragment_stack.last().and_then(Option::as_ref)
     }
 
@@ -162,7 +160,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
     fn collect_destructured_range_fragment_outputs(
         &mut self,
         node: tree_sitter::Node<'_>,
-        range_binding: Option<&FragmentBinding>,
+        range_binding: Option<&AbstractValue>,
         current_path: &YamlPath,
     ) {
         if !range_has_destructured_variable_definition(node)
@@ -176,7 +174,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
         };
 
         let meta = HelperOutputMeta::with_predicates(&self.active_output_predicates, false);
-        for source_expr in fragment_source_paths(range_binding) {
+        for source_expr in range_binding.fragment_source_paths() {
             push_helper_fragment_output(
                 self.outputs,
                 source_expr,
@@ -204,7 +202,7 @@ impl ContractUseSink for FragmentOutputUseRuntime<'_, '_> {
 impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
     fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
 
-    fn declare_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
+    fn declare_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
         if let Some(binding) = binding {
             self.local_bindings.insert(variable, binding);
         } else {
@@ -212,7 +210,7 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
         }
     }
 
-    fn assign_fragment_binding(&mut self, variable: String, binding: Option<FragmentBinding>) {
+    fn assign_fragment_binding(&mut self, variable: String, binding: Option<AbstractValue>) {
         self.declare_fragment_binding(variable, binding);
     }
 
@@ -236,10 +234,10 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
         }
     }
 
-    fn push_dot_binding(&mut self, binding: Option<FragmentBinding>) {
+    fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
         self.dot_fragment_stack.push(binding.clone());
         self.dot_stack
-            .push(binding.and_then(|binding| fragment_to_helper_binding(&binding)));
+            .push(binding.map(|binding| binding.to_context_value()));
     }
 
     fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}
@@ -262,6 +260,10 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
 
     fn current_document_path(&self) -> YamlPath {
         self.document_tracker.current_path()
+    }
+
+    fn current_document_path_at_mapping_entry_indent(&self, indent: usize) -> YamlPath {
+        self.document_tracker.path_at_mapping_entry_indent(indent)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {

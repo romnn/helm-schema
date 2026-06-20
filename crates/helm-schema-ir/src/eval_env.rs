@@ -1,8 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::abstract_value::AbstractValue;
-use crate::fragment_binding::FragmentBinding;
-use crate::helper_binding::HelperBinding;
 
 /// Abstract interpreter environment for Helm expression evaluation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -24,18 +22,16 @@ impl EvalEnv {
     }
 
     pub(crate) fn from_helper_context(
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
+        bindings: Option<&HashMap<String, AbstractValue>>,
+        current_dot: Option<&AbstractValue>,
     ) -> Self {
         Self {
-            dot: current_dot.map(AbstractValue::from_helper_binding),
+            dot: current_dot.cloned(),
             root_fields: bindings
                 .map(|bindings| {
                     bindings
                         .iter()
-                        .map(|(name, binding)| {
-                            (name.clone(), AbstractValue::from_helper_binding(binding))
-                        })
+                        .map(|(name, binding)| (name.clone(), binding.clone()))
                         .collect()
                 })
                 .unwrap_or_default(),
@@ -45,30 +41,28 @@ impl EvalEnv {
     }
 
     pub(crate) fn from_helper_context_with_fragment_locals(
-        bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
-        fragment_locals: &HashMap<String, FragmentBinding>,
+        bindings: Option<&HashMap<String, AbstractValue>>,
+        current_dot: Option<&AbstractValue>,
+        fragment_locals: &HashMap<String, AbstractValue>,
     ) -> Self {
         let mut env = Self::from_helper_context(bindings, current_dot);
         env.locals = fragment_locals
             .iter()
-            .map(|(name, binding)| (name.clone(), AbstractValue::from_fragment_binding(binding)))
+            .map(|(name, binding)| (name.clone(), binding.clone()))
             .collect();
         env
     }
 
     pub(crate) fn from_outer_fragment_expr_context(
-        fragment_locals: Option<&HashMap<String, FragmentBinding>>,
-        root_bindings: Option<&HashMap<String, HelperBinding>>,
-        current_dot: Option<&HelperBinding>,
+        fragment_locals: Option<&HashMap<String, AbstractValue>>,
+        root_bindings: Option<&HashMap<String, AbstractValue>>,
+        current_dot: Option<&AbstractValue>,
     ) -> Self {
         let root_fields = root_bindings
             .map(|bindings| {
                 bindings
                     .iter()
-                    .map(|(name, binding)| {
-                        (name.clone(), AbstractValue::from_helper_binding(binding))
-                    })
+                    .map(|(name, binding)| (name.clone(), binding.clone()))
                     .collect()
             })
             .unwrap_or_default();
@@ -76,9 +70,7 @@ impl EvalEnv {
             .map(|locals| {
                 locals
                     .iter()
-                    .map(|(name, binding)| {
-                        (name.clone(), AbstractValue::from_fragment_binding(binding))
-                    })
+                    .map(|(name, binding)| (name.clone(), binding.clone()))
                     .collect()
             })
             .unwrap_or_default();
@@ -87,13 +79,11 @@ impl EvalEnv {
                 AbstractValue::Dict(
                     bindings
                         .iter()
-                        .map(|(name, binding)| {
-                            (name.clone(), AbstractValue::from_helper_binding(binding))
-                        })
+                        .map(|(name, binding)| (name.clone(), binding.clone()))
                         .collect(),
                 )
             })
-            .or_else(|| current_dot.map(AbstractValue::from_helper_binding));
+            .or_else(|| current_dot.cloned());
         Self {
             dot,
             root_fields,
@@ -103,15 +93,15 @@ impl EvalEnv {
     }
 
     pub(crate) fn from_fragment_context(
-        locals: &HashMap<String, FragmentBinding>,
-        current_dot: Option<&FragmentBinding>,
+        locals: &HashMap<String, AbstractValue>,
+        current_dot: Option<&AbstractValue>,
     ) -> Self {
         let locals: HashMap<String, AbstractValue> = locals
             .iter()
-            .map(|(name, binding)| (name.clone(), AbstractValue::from_fragment_binding(binding)))
+            .map(|(name, binding)| (name.clone(), binding.clone()))
             .collect();
         Self {
-            dot: current_dot.map(AbstractValue::from_fragment_binding),
+            dot: current_dot.cloned(),
             root_fields: locals.clone(),
             locals,
             allow_field_root_lookup: false,

@@ -544,7 +544,8 @@
         "template",
         "spec",
         "containers[*]",
-        "args"
+        "args",
+        "containers"
       ],
       "resource": {
         "api_version": "apps/v1",
@@ -580,9 +581,7 @@
         "template",
         "spec",
         "containers[*]",
-        "env[*]",
-        "valueFrom",
-        "fieldRef"
+        "env"
       ],
       "resource": {
         "api_version": "apps/v1",
@@ -636,12 +635,34 @@
     {
       "guards": [
         {
-          "path": "fullnameOverride",
+          "paths": [
+            "config",
+            "volumes"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "config",
           "type": "truthy"
         }
       ],
       "kind": "Scalar",
       "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -654,7 +675,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "fullnameOverride"
     },
     {
@@ -669,7 +693,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -692,26 +721,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "config",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "fullnameOverride"
     },
     {
@@ -1360,7 +1373,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -1373,7 +1392,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "image.digest"
     },
     {
@@ -1411,7 +1433,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -1424,7 +1452,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "image.registry"
     },
     {
@@ -1439,7 +1470,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -1452,7 +1489,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "image.repository"
     },
     {
@@ -1467,7 +1507,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -1480,7 +1526,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "image.repository"
     },
     {
@@ -1499,7 +1548,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -1512,7 +1567,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "image.tag"
     },
     {
@@ -1863,6 +1921,230 @@
       "source_expr": "maxConcurrentChallenges"
     },
     {
+      "guards": [],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "config",
+            "volumes"
+          ],
+          "type": "or"
+        },
+        {
+          "path": "config",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.name"
+          ],
+          "span": {
+            "end": 190,
+            "start": 112
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.name"
+          ],
+          "span": {
+            "end": 190,
+            "start": 112
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 767,
+            "start": 400
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "selector",
+        "matchLabels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.name"
+          ],
+          "span": {
+            "end": 190,
+            "start": 112
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "metadata",
+        "labels",
+        "app"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.name"
+          ],
+          "span": {
+            "end": 190,
+            "start": 112
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.name"
+          ],
+          "span": {
+            "end": 190,
+            "start": 112
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
       "guards": [
         {
           "path": "serviceAccount.create",
@@ -1882,7 +2164,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -1905,63 +2192,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 767,
-            "start": 400
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.name"
-          ],
-          "span": {
-            "end": 190,
-            "start": 112
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "nameOverride"
     },
     {
@@ -2473,7 +2707,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -2486,7 +2725,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "serviceAccount.name"
     },
     {
@@ -2501,7 +2743,12 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -2514,7 +2761,10 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
       "source_expr": "serviceAccount.name"
     },
     {

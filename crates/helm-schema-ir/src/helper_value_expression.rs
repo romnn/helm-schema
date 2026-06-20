@@ -1,17 +1,16 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::ValueKind;
+use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::expression_analysis::{
-    resolved_string_transform_paths_for_exprs, resolved_type_hint_paths_for_exprs,
-    set_default_chart_paths_for_exprs,
+    resolved_string_transform_paths_for_exprs_with_fragment_locals,
+    resolved_type_hint_paths_for_exprs_with_fragment_locals, set_default_chart_paths_for_exprs,
 };
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::fragment_classification::is_fragment_exprs;
-use crate::helper_binding::HelperBinding;
-use crate::helper_binding_projection::helper_to_fragment_binding;
 use crate::helper_summary::HelperOutputMeta;
 use crate::helper_summary_mutation::{
     extend_nested_fragment_render, extend_nested_scalar_render, extend_type_hints,
@@ -29,8 +28,8 @@ use helm_schema_ast::TemplateExpr;
 
 pub(crate) fn collect_helper_value_expression_from_exprs(
     exprs: &[TemplateExpr],
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
@@ -47,7 +46,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         return;
     }
 
-    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
+    let current_dot_fragment = current_dot.map(AbstractValue::to_context_value);
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations_from_exprs(
         exprs,
@@ -67,11 +66,21 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_type_hint_paths_for_exprs(exprs, Some(bindings), current_dot),
+        resolved_type_hint_paths_for_exprs_with_fragment_locals(
+            exprs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+        ),
     );
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_string_transform_paths_for_exprs(exprs, Some(bindings), current_dot),
+        resolved_string_transform_paths_for_exprs_with_fragment_locals(
+            exprs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+        ),
     );
     let local_outputs = local_rendered_paths_from_exprs(exprs, state.local_bindings);
     let local_fallback_paths =
@@ -123,8 +132,8 @@ fn collect_assignment_bound_helper_values(
     var: &str,
     rhs_expr: &helm_schema_ast::TemplateExpr,
     full_exprs: &[helm_schema_ast::TemplateExpr],
-    bindings: &HashMap<String, HelperBinding>,
-    current_dot: Option<&HelperBinding>,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
@@ -133,7 +142,7 @@ fn collect_assignment_bound_helper_values(
         set_default_chart_paths_for_exprs(full_exprs, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);
 
-    let current_dot_fragment = current_dot.map(helper_to_fragment_binding);
+    let current_dot_fragment = current_dot.map(AbstractValue::to_context_value);
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations_from_exprs(
         full_exprs,
@@ -160,11 +169,21 @@ fn collect_assignment_bound_helper_values(
 
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_type_hint_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
+        resolved_type_hint_paths_for_exprs_with_fragment_locals(
+            rhs_exprs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+        ),
     );
     extend_type_hints(
         &mut state.analysis.type_hints,
-        resolved_string_transform_paths_for_exprs(rhs_exprs, Some(bindings), current_dot),
+        resolved_string_transform_paths_for_exprs_with_fragment_locals(
+            rhs_exprs,
+            Some(bindings),
+            current_dot,
+            state.local_bindings,
+        ),
     );
 
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);

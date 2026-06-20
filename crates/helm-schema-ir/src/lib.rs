@@ -29,8 +29,6 @@ mod expr_function_catalog;
 mod expr_pipeline_eval;
 mod expression_analysis;
 mod fragment_assignment;
-mod fragment_binding;
-mod fragment_binding_projection;
 mod fragment_classification;
 mod fragment_expr_eval;
 #[cfg(test)]
@@ -40,8 +38,6 @@ mod fragment_range_scope;
 mod fragment_scope_eval_tests;
 mod helper_arg_projection;
 mod helper_aware_expr_eval;
-mod helper_binding;
-mod helper_binding_projection;
 mod helper_body_analysis;
 mod helper_discovery;
 mod helper_fragment_output_uses;

@@ -2,22 +2,22 @@ use std::collections::HashMap;
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::helper_binding::HelperBinding;
+use crate::abstract_value::AbstractValue;
 use crate::template_expr_analysis::is_merge_function;
 
 pub(crate) fn bindings_for_helper_arg_with(
     arg: Option<&TemplateExpr>,
-    outer: Option<&HashMap<String, HelperBinding>>,
-    mut eval_binding: impl FnMut(&TemplateExpr) -> Option<HelperBinding>,
-) -> HashMap<String, HelperBinding> {
+    outer: Option<&HashMap<String, AbstractValue>>,
+    mut eval_binding: impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
+) -> HashMap<String, AbstractValue> {
     bindings_for_helper_arg_inner(arg, outer, &mut eval_binding)
 }
 
 fn bindings_for_helper_arg_inner(
     arg: Option<&TemplateExpr>,
-    outer: Option<&HashMap<String, HelperBinding>>,
-    eval_binding: &mut impl FnMut(&TemplateExpr) -> Option<HelperBinding>,
-) -> HashMap<String, HelperBinding> {
+    outer: Option<&HashMap<String, AbstractValue>>,
+    eval_binding: &mut impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
+) -> HashMap<String, AbstractValue> {
     let Some(arg) = arg else {
         return HashMap::new();
     };
@@ -40,8 +40,8 @@ fn bindings_for_helper_arg_inner(
 
 fn bindings_from_dict_args(
     args: &[TemplateExpr],
-    eval_binding: &mut impl FnMut(&TemplateExpr) -> Option<HelperBinding>,
-) -> HashMap<String, HelperBinding> {
+    eval_binding: &mut impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
+) -> HashMap<String, AbstractValue> {
     let mut bindings = HashMap::new();
     let mut index = 0usize;
     while index + 1 < args.len() {
@@ -50,7 +50,7 @@ fn bindings_from_dict_args(
             index += 1;
             continue;
         };
-        let binding = eval_binding(&args[index + 1]).unwrap_or(HelperBinding::Unknown);
+        let binding = eval_binding(&args[index + 1]).unwrap_or(AbstractValue::Unknown);
         bindings.insert(key.clone(), binding);
         index += 2;
     }
@@ -59,18 +59,18 @@ fn bindings_from_dict_args(
 
 fn bindings_from_merge_args(
     args: &[TemplateExpr],
-    outer: Option<&HashMap<String, HelperBinding>>,
-    eval_binding: &mut impl FnMut(&TemplateExpr) -> Option<HelperBinding>,
-) -> HashMap<String, HelperBinding> {
+    outer: Option<&HashMap<String, AbstractValue>>,
+    eval_binding: &mut impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
+) -> HashMap<String, AbstractValue> {
     let mut merged = HashMap::new();
     for arg in args {
         match eval_binding(arg) {
-            Some(HelperBinding::Dict(map)) => {
+            Some(AbstractValue::Dict(map)) => {
                 for (key, value) in map {
                     merged.insert(key, value);
                 }
             }
-            Some(HelperBinding::RootContext) => {
+            Some(AbstractValue::RootContext) => {
                 if let Some(outer) = outer {
                     for (key, value) in outer {
                         merged.insert(key.clone(), value.clone());
@@ -99,29 +99,29 @@ mod tests {
 
     fn project(
         action: &str,
-        outer: Option<&HashMap<String, HelperBinding>>,
-    ) -> HashMap<String, HelperBinding> {
+        outer: Option<&HashMap<String, AbstractValue>>,
+    ) -> HashMap<String, AbstractValue> {
         let expr = single_expr(action);
         project_expr(&expr, outer)
     }
 
     fn project_expr(
         expr: &TemplateExpr,
-        outer: Option<&HashMap<String, HelperBinding>>,
-    ) -> HashMap<String, HelperBinding> {
+        outer: Option<&HashMap<String, AbstractValue>>,
+    ) -> HashMap<String, AbstractValue> {
         bindings_for_helper_arg_with(Some(expr), outer, |expr| match expr {
-            TemplateExpr::Field(path) => Some(HelperBinding::ValuesPath(path.join("."))),
-            TemplateExpr::Variable(var) if var.is_empty() => Some(HelperBinding::RootContext),
+            TemplateExpr::Field(path) => Some(AbstractValue::ValuesPath(path.join("."))),
+            TemplateExpr::Variable(var) if var.is_empty() => Some(AbstractValue::RootContext),
             TemplateExpr::Call { function, .. } if function == "fallback" => {
-                Some(HelperBinding::Dict(BTreeMap::from([(
+                Some(AbstractValue::Dict(BTreeMap::from([(
                     "fallback".to_string(),
-                    HelperBinding::ValuesPath("fallback.value".to_string()),
+                    AbstractValue::ValuesPath("fallback.value".to_string()),
                 )])))
             }
             TemplateExpr::Call { function, .. } if function == "overrideMap" => {
-                Some(HelperBinding::Dict(BTreeMap::from([(
+                Some(AbstractValue::Dict(BTreeMap::from([(
                     "fallback".to_string(),
-                    HelperBinding::ValuesPath("override".to_string()),
+                    AbstractValue::ValuesPath("override".to_string()),
                 )])))
             }
             _ => None,
@@ -135,11 +135,11 @@ mod tests {
             HashMap::from([
                 (
                     "name".to_string(),
-                    HelperBinding::ValuesPath("serviceAccount.name".to_string()),
+                    AbstractValue::ValuesPath("serviceAccount.name".to_string()),
                 ),
                 (
                     "raw".to_string(),
-                    HelperBinding::ValuesPath("raw".to_string()),
+                    AbstractValue::ValuesPath("raw".to_string()),
                 ),
             ])
         );
@@ -149,7 +149,7 @@ mod tests {
     fn merge_argument_preserves_ordered_overwrite_and_root_context_expansion() {
         let outer = HashMap::from([(
             "root".to_string(),
-            HelperBinding::ValuesPath("root.value".to_string()),
+            AbstractValue::ValuesPath("root.value".to_string()),
         )]);
         let expr = TemplateExpr::Call {
             function: "merge".to_string(),
@@ -171,11 +171,11 @@ mod tests {
             HashMap::from([
                 (
                     "fallback".to_string(),
-                    HelperBinding::ValuesPath("override".to_string()),
+                    AbstractValue::ValuesPath("override".to_string()),
                 ),
                 (
                     "root".to_string(),
-                    HelperBinding::ValuesPath("root.value".to_string()),
+                    AbstractValue::ValuesPath("root.value".to_string()),
                 ),
             ])
         );
