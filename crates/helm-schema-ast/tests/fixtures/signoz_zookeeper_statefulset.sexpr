@@ -1,11 +1,4 @@
-use helm_schema_ast::{HelmParser, TreeSitterParser};
-use test_util::prelude::sim_assert_eq;
-
-const TEMPLATE_PATH: &str =
-    "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml";
-
-#[allow(clippy::too_many_lines)]
-const EXPECTED_SEXPR: &str = r#"(Document
+(Document
   (Mapping
     (Pair
       (Scalar "apiVersion")
@@ -1385,15 +1378,3 @@ const EXPECTED_SEXPR: &str = r#"(Document
                 (Pair
                   (Scalar "selector")
                   (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.persistence.dataLogDir.selector \"context\" $) | nindent 10"))))))))))
-
-"#;
-
-#[test]
-fn tree_sitter_ast() {
-    let src = test_util::read_testdata(TEMPLATE_PATH);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
-    if std::env::var("AST_DUMP").is_ok() {
-        eprintln!("{}", ast.to_sexpr());
-    }
-    sim_assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
-}

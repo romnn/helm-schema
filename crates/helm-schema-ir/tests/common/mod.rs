@@ -3,6 +3,8 @@ use helm_schema_ir::{ContractDocument, SymbolicIrContext};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
+pub mod cases;
+
 #[derive(Clone, Copy)]
 pub struct IrCorpusCase<'a> {
     pub template_path: &'a str,

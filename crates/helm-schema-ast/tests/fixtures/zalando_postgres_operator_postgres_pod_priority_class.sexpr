@@ -1,7 +1,4 @@
-use helm_schema_ast::{HelmParser, TreeSitterParser};
-use test_util::prelude::sim_assert_eq;
-
-const EXPECTED_SEXPR: &str = r#"(Document
+(Document
   (If ".Values.podPriorityClassName.create"
     (then
       (Mapping
@@ -46,18 +43,4 @@ const EXPECTED_SEXPR: &str = r#"(Document
           (Scalar "false"))
         (Pair
           (Scalar "value")
-          (HelmExpr ".Values.podPriorityClassName.priority"))))))"#;
-
-#[test]
-fn tree_sitter_ast() {
-    let src = test_util::read_testdata(
-        "charts/zalando-postgres-operator/templates/postgres-pod-priority-class.yaml",
-    );
-    let ast = TreeSitterParser.parse(&src).expect("parse");
-
-    if std::env::var("AST_DUMP").is_ok() {
-        eprintln!("{}", ast.to_sexpr());
-    }
-
-    sim_assert_eq!(have: ast.to_sexpr(), want: EXPECTED_SEXPR.trim_end());
-}
+          (HelmExpr ".Values.podPriorityClassName.priority"))))))
