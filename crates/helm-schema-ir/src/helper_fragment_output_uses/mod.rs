@@ -15,17 +15,17 @@ use crate::fragment_range_scope::{
     range_has_destructured_variable_definition,
 };
 use crate::helper_range_frame::RangeFrame;
-use crate::helper_range_plan::{
-    HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
+use crate::helper_range_plan::{HelperRangeIteration, NonExactRangeVariableBinding};
+use crate::helper_runtime_plan::{
+    HelperRangeDotSource, HelperRuntimeSemantics, helper_if_condition_plan,
+    helper_range_runtime_plan, helper_with_condition_plan,
 };
-use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_summary_mutation::merge_local_default_paths;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_path_context::computed_with_body_fragment_value_expr;
 use crate::{ValueKind, YamlPath};
 
 mod expression_output;
@@ -87,6 +87,13 @@ struct FragmentOutputUseSnapshot {
 }
 
 impl FragmentOutputUseRuntime<'_, '_> {
+    const SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
+        record_guard_paths: false,
+        apply_alternative_predicate: false,
+        non_exact_range_variable_binding: NonExactRangeVariableBinding::Skip,
+        range_dot_source: HelperRangeDotSource::FragmentValue,
+    };
+
     fn current_dot(&self) -> Option<&AbstractValue> {
         self.dot_stack.last().and_then(Option::as_ref)
     }
@@ -121,18 +128,6 @@ impl FragmentOutputUseRuntime<'_, '_> {
             &active_output_predicates,
             &mut state,
         );
-    }
-
-    fn branch_guard_paths(&mut self, header: &TemplateHeader) -> BTreeSet<String> {
-        let current_dot = self.current_dot().cloned();
-        branch_guard_paths_for_expr(
-            header.expr(),
-            self.bindings,
-            current_dot.as_ref(),
-            self.local_bindings,
-            self.context,
-            self.seen,
-        )
     }
 
     fn merge_outcome_maps(&mut self, outcomes: Vec<FragmentOutputUseSnapshot>) {
@@ -413,33 +408,35 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     }
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
-        let branch_guard_paths = self.branch_guard_paths(header);
-        ConditionActionPlan {
-            predicate: truthy_predicate_for_paths(&branch_guard_paths),
-            bound_values: Vec::new(),
-            dot_binding: None,
-            apply_alternative_predicate: false,
-        }
+        let current_dot = self.current_dot().cloned();
+        helper_if_condition_plan(
+            header,
+            self.bindings,
+            current_dot.as_ref(),
+            self.local_bindings,
+            self.context,
+            self.seen,
+            Self::SEMANTICS,
+        )
+        .action
     }
 
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
-        let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let body_dot = computed_with_body_fragment_value_expr(
-            header.expr(),
+        let plan = helper_with_condition_plan(
+            header,
             self.bindings,
+            current_dot.as_ref(),
+            current_dot_fragment.as_ref(),
             self.local_bindings,
             self.context,
-            current_dot_fragment.as_ref(),
-            current_dot.as_ref(),
+            self.seen,
+            Self::SEMANTICS,
         );
-        ConditionActionPlan {
-            predicate: truthy_predicate_for_paths(&branch_guard_paths),
-            bound_values: Vec::new(),
-            dot_binding: body_dot,
-            apply_alternative_predicate: false,
-        }
+        self.active_output_predicates
+            .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
+        plan.action
     }
 
     fn plan_range_action(
@@ -448,35 +445,26 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         header: Option<&TemplateHeader>,
         current_path: &YamlPath,
     ) -> RangeActionPlan {
-        let Some(header) = header else {
-            self.range_frames.push(RangeFrame::unknown());
-            return RangeActionPlan::empty();
-        };
-        let branch_guard_paths = self.branch_guard_paths(header);
-        self.active_output_predicates
-            .extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
-
-        let mut seen_range_binding = HashSet::new();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let range_plan = plan_helper_range_binding(
+        let mut seen_range_binding = self.seen.clone();
+        let plan = helper_range_runtime_plan(
             header,
-            self.local_bindings,
+            self.bindings,
+            self.current_dot(),
             current_dot_fragment.as_ref(),
+            self.local_bindings,
             self.context,
             &mut seen_range_binding,
-            NonExactRangeVariableBinding::Skip,
+            Self::SEMANTICS,
         );
+        self.active_output_predicates
+            .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
         self.collect_destructured_range_fragment_outputs(
             node,
-            range_plan.range_fragment_value(),
+            plan.range_fragment_value.as_ref(),
             current_path,
         );
-
-        self.range_frames.push(range_plan.fragment_output_frame());
-
-        RangeActionPlan::dot_binding(
-            range_plan.fragment_output_body_dot(),
-            range_plan.apply_dot_binding(),
-        )
+        self.range_frames.push(plan.frame);
+        plan.action
     }
 }

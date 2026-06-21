@@ -45,6 +45,7 @@ mod helper_output_projection;
 mod helper_range_frame;
 mod helper_range_plan;
 mod helper_runtime_guards;
+mod helper_runtime_plan;
 mod helper_summary;
 mod helper_summary_mutation;
 mod helper_value_analysis;

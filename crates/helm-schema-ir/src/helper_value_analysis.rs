@@ -10,10 +10,11 @@ use crate::contract_sink::ContractUseSink;
 use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_range_frame::RangeFrame;
-use crate::helper_range_plan::{
-    HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
+use crate::helper_range_plan::{HelperRangeIteration, NonExactRangeVariableBinding};
+use crate::helper_runtime_plan::{
+    HelperRangeDotSource, HelperRuntimeSemantics, helper_if_condition_plan,
+    helper_range_runtime_plan, helper_with_condition_plan,
 };
-use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
 use crate::helper_value_expression::collect_helper_value_expression_from_exprs;
@@ -21,7 +22,6 @@ use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::value_path_context::computed_with_body_fragment_value_expr;
 use crate::{ValueKind, YamlPath};
 
 /// Walks a helper body collecting the values and effects it contributes to
@@ -76,6 +76,13 @@ struct HelperValueSnapshot {
 }
 
 impl HelperValueRuntime<'_, '_> {
+    const SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
+        record_guard_paths: true,
+        apply_alternative_predicate: true,
+        non_exact_range_variable_binding: NonExactRangeVariableBinding::Bind,
+        range_dot_source: HelperRangeDotSource::HelperValue,
+    };
+
     fn current_dot(&self) -> Option<&AbstractValue> {
         self.dot_stack.last().and_then(Option::as_ref)
     }
@@ -104,20 +111,13 @@ impl HelperValueRuntime<'_, '_> {
         );
     }
 
-    fn branch_guard_paths(&mut self, header: &TemplateHeader) -> BTreeSet<String> {
-        let current_dot = self.current_dot().cloned();
-        let branch_guard_paths = branch_guard_paths_for_expr(
-            header.expr(),
-            self.bindings,
-            current_dot.as_ref(),
-            self.local_bindings,
-            self.context,
-            self.seen,
-        );
-        for path in &branch_guard_paths {
+    fn record_guard_paths(&mut self, guard_paths: &BTreeSet<String>) {
+        if !Self::SEMANTICS.record_guard_paths {
+            return;
+        }
+        for path in guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
-        branch_guard_paths
     }
 
     fn merge_outcome_maps(&mut self, outcomes: Vec<HelperValueSnapshot>) {
@@ -327,33 +327,35 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     }
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
-        let branch_guard_paths = self.branch_guard_paths(header);
-        ConditionActionPlan {
-            predicate: truthy_predicate_for_paths(&branch_guard_paths),
-            bound_values: Vec::new(),
-            dot_binding: None,
-            apply_alternative_predicate: true,
-        }
+        let current_dot = self.current_dot().cloned();
+        let plan = helper_if_condition_plan(
+            header,
+            self.bindings,
+            current_dot.as_ref(),
+            self.local_bindings,
+            self.context,
+            self.seen,
+            Self::SEMANTICS,
+        );
+        self.record_guard_paths(&plan.guard_paths);
+        plan.action
     }
 
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
-        let branch_guard_paths = self.branch_guard_paths(header);
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = current_dot.as_ref().map(AbstractValue::to_context_value);
-        let body_dot = computed_with_body_fragment_value_expr(
-            header.expr(),
+        let plan = helper_with_condition_plan(
+            header,
             self.bindings,
+            current_dot.as_ref(),
+            current_dot_fragment.as_ref(),
             self.local_bindings,
             self.context,
-            current_dot_fragment.as_ref(),
-            current_dot.as_ref(),
+            self.seen,
+            Self::SEMANTICS,
         );
-        ConditionActionPlan {
-            predicate: truthy_predicate_for_paths(&branch_guard_paths),
-            bound_values: Vec::new(),
-            dot_binding: body_dot,
-            apply_alternative_predicate: true,
-        }
+        self.record_guard_paths(&plan.guard_paths);
+        plan.action
     }
 
     fn plan_range_action(
@@ -362,32 +364,25 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         header: Option<&TemplateHeader>,
         _current_path: &YamlPath,
     ) -> RangeActionPlan {
-        let Some(header) = header else {
-            self.range_frames.push(RangeFrame::unknown());
-            return RangeActionPlan::empty();
-        };
-        let branch_guard_paths = self.branch_guard_paths(header);
-        self.active_output_predicates
-            .extend(branch_guard_paths.into_iter().map(Predicate::truthy_path));
-
         let current_dot_fragment = self.current_dot_fragment();
-        let mut seen_range = HashSet::new();
-        let mut range_plan = plan_helper_range_binding(
+        let mut seen_range = self.seen.clone();
+        let plan = helper_range_runtime_plan(
             header,
-            self.local_bindings,
+            self.bindings,
+            self.current_dot(),
             current_dot_fragment.as_ref(),
+            self.local_bindings,
             self.context,
             &mut seen_range,
-            NonExactRangeVariableBinding::Bind,
+            Self::SEMANTICS,
         );
-        if let Some((variable, binding)) = range_plan.take_non_exact_variable_binding() {
+        self.record_guard_paths(&plan.guard_paths);
+        self.active_output_predicates
+            .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
+        if let Some((variable, binding)) = plan.non_exact_variable_binding {
             self.local_bindings.insert(variable, binding);
         }
-        self.range_frames.push(range_plan.helper_value_frame());
-
-        RangeActionPlan::dot_binding(
-            range_plan.helper_value_body_dot(),
-            range_plan.apply_dot_binding(),
-        )
+        self.range_frames.push(plan.frame);
+        plan.action
     }
 }
