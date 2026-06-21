@@ -1,9 +1,10 @@
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use helm_schema_ir::{
     ConditionalGuard, ContractValuePathFacts, GuardValue, ProviderSchemaUse, ValueKind,
 };
 
+use crate::foreign_schema::{ForeignSchemaObject, ForeignSchemaTypeField};
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
     EmptyMapPlaceholderUse, empty_map_placeholder_has_structural_object_use,
@@ -388,102 +389,90 @@ fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
 
 impl ForeignSchemaRestriction {
     fn apply(self, schema: Value) -> Option<Value> {
-        match schema {
-            Value::Object(obj) => self.apply_object(obj),
-            other => match self {
+        match ForeignSchemaObject::from_value(schema) {
+            Ok(schema) => self.apply_object(schema),
+            Err(other) => match self {
                 Self::Scalar => Some(other),
                 Self::ScalarCollection => None,
             },
         }
     }
 
-    fn apply_object(self, mut obj: Map<String, Value>) -> Option<Value> {
-        if let Some(variants) = obj.get("anyOf").and_then(Value::as_array).cloned() {
-            return restrict_schema_union(obj, "anyOf", variants, |variant| self.apply(variant));
+    fn apply_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
+        if let Some(variants) = schema.union_variants("anyOf") {
+            return restrict_schema_union(schema, "anyOf", variants, |variant| self.apply(variant));
         }
-        if let Some(variants) = obj.get("oneOf").and_then(Value::as_array).cloned() {
-            return restrict_schema_union(obj, "oneOf", variants, |variant| self.apply(variant));
+        if let Some(variants) = schema.union_variants("oneOf") {
+            return restrict_schema_union(schema, "oneOf", variants, |variant| self.apply(variant));
         }
-        if let Some(variants) = obj.get("allOf").and_then(Value::as_array).cloned() {
+        if let Some(variants) = schema.union_variants("allOf") {
             let restricted = variants
                 .into_iter()
                 .map(|variant| self.apply(variant))
                 .collect::<Option<Vec<_>>>()?;
-            obj.insert("allOf".to_string(), Value::Array(restricted));
-            return Some(Value::Object(obj));
+            schema.set_keyword("allOf", Value::Array(restricted));
+            return Some(schema.into_value());
         }
 
         match self {
-            Self::Scalar => self.apply_scalar_object(obj),
-            Self::ScalarCollection => self.apply_scalar_collection_object(obj),
+            Self::Scalar => self.apply_scalar_object(schema),
+            Self::ScalarCollection => self.apply_scalar_collection_object(schema),
         }
     }
 
-    fn apply_scalar_object(self, mut obj: Map<String, Value>) -> Option<Value> {
-        if schema_allows_type_object(&obj, "array") {
-            return rewrite_array_schema(obj, Self::Scalar);
+    fn apply_scalar_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
+        if schema.allows_type("array") {
+            return rewrite_array_schema(schema, Self::Scalar);
         }
 
-        match obj.get("type") {
-            Some(Value::String(schema_type)) => {
-                scalar_json_type(schema_type).then_some(Value::Object(obj))
+        match schema.type_field() {
+            ForeignSchemaTypeField::Single(schema_type) => {
+                scalar_json_type(&schema_type).then(|| schema.into_value())
             }
-            Some(Value::Array(schema_types)) => {
-                let scalar_types: Vec<Value> = schema_types
-                    .iter()
-                    .filter_map(Value::as_str)
+            ForeignSchemaTypeField::Multiple(schema_types) => {
+                let scalar_types: Vec<String> = schema_types
+                    .into_iter()
                     .filter(|schema_type| scalar_json_type(schema_type))
-                    .map(|schema_type| Value::String(schema_type.to_string()))
                     .collect();
                 if scalar_types.is_empty() {
                     return None;
                 }
-                if scalar_types.len() != schema_types.len() {
-                    obj.insert("type".to_string(), Value::Array(scalar_types));
-                    remove_non_scalar_keywords(&mut obj);
+                if let ForeignSchemaTypeField::Multiple(original_types) = schema.type_field()
+                    && scalar_types.len() != original_types.len()
+                {
+                    schema.set_type_variants(scalar_types);
+                    schema.strip_non_scalar_keywords();
                 }
-                Some(Value::Object(obj))
+                Some(schema.into_value())
             }
-            _ if has_non_scalar_keywords(&obj) => None,
-            _ => Some(Value::Object(obj)),
+            ForeignSchemaTypeField::Absent if schema.has_non_scalar_keywords() => None,
+            ForeignSchemaTypeField::Absent => Some(schema.into_value()),
+            ForeignSchemaTypeField::Unsupported => Some(schema.into_value()),
         }
     }
 
-    fn apply_scalar_collection_object(self, obj: Map<String, Value>) -> Option<Value> {
-        if !schema_allows_type_object(&obj, "array") {
+    fn apply_scalar_collection_object(self, schema: ForeignSchemaObject) -> Option<Value> {
+        if !schema.allows_type("array") {
             return None;
         }
-        rewrite_array_schema(obj, Self::Scalar)
-    }
-}
-
-fn schema_allows_type_object(obj: &Map<String, Value>, expected: &str) -> bool {
-    match obj.get("type") {
-        Some(Value::String(schema_type)) => schema_type == expected,
-        Some(Value::Array(schema_types)) => schema_types
-            .iter()
-            .filter_map(Value::as_str)
-            .any(|schema_type| schema_type == expected),
-        Some(_) => false,
-        None if expected == "array" => has_array_keywords(obj),
-        None => false,
+        rewrite_array_schema(schema, Self::Scalar)
     }
 }
 
 fn rewrite_array_schema(
-    mut obj: Map<String, Value>,
+    mut schema: ForeignSchemaObject,
     item_restriction: ForeignSchemaRestriction,
 ) -> Option<Value> {
-    if let Some(items) = obj.remove("items") {
-        obj.insert("items".to_string(), item_restriction.apply(items)?);
+    if let Some(items) = schema.take_items() {
+        schema.set_items(item_restriction.apply(items)?);
     }
-    obj.insert("type".to_string(), Value::String("array".to_string()));
-    remove_object_keywords(&mut obj);
-    Some(Value::Object(obj))
+    schema.set_type_string("array");
+    schema.strip_object_keywords();
+    Some(schema.into_value())
 }
 
 fn restrict_schema_union(
-    obj: Map<String, Value>,
+    schema: ForeignSchemaObject,
     keyword: &str,
     variants: Vec<Value>,
     restrict: impl FnMut(Value) -> Option<Value>,
@@ -493,22 +482,9 @@ fn restrict_schema_union(
         return None;
     }
 
-    let mut out = retain_schema_annotations(obj);
-    out.insert(keyword.to_string(), Value::Array(retained_variants));
-    Some(Value::Object(out))
-}
-
-fn retain_schema_annotations(obj: Map<String, Value>) -> Map<String, Value> {
-    obj.into_iter()
-        .filter(|(key, _)| is_schema_annotation_keyword(key))
-        .collect()
-}
-
-fn is_schema_annotation_keyword(key: &str) -> bool {
-    matches!(
-        key,
-        "description" | "title" | "default" | "examples" | "deprecated" | "readOnly" | "writeOnly"
-    )
+    let mut annotations = schema.into_annotations_only();
+    annotations.set_keyword(keyword, Value::Array(retained_variants));
+    Some(annotations.into_value())
 }
 
 fn scalar_json_type(schema_type: &str) -> bool {
@@ -516,76 +492,6 @@ fn scalar_json_type(schema_type: &str) -> bool {
         schema_type,
         "string" | "number" | "integer" | "boolean" | "null"
     )
-}
-
-fn has_non_scalar_keywords(obj: &Map<String, Value>) -> bool {
-    const NON_SCALAR_KEYWORDS: &[&str] = &[
-        "additionalItems",
-        "additionalProperties",
-        "contains",
-        "items",
-        "maxItems",
-        "maxProperties",
-        "minItems",
-        "minProperties",
-        "patternProperties",
-        "prefixItems",
-        "properties",
-        "propertyNames",
-        "required",
-        "uniqueItems",
-    ];
-    NON_SCALAR_KEYWORDS.iter().any(|key| obj.contains_key(*key))
-}
-
-fn has_array_keywords(obj: &Map<String, Value>) -> bool {
-    const ARRAY_KEYWORDS: &[&str] = &[
-        "additionalItems",
-        "contains",
-        "items",
-        "maxItems",
-        "minItems",
-        "prefixItems",
-        "uniqueItems",
-    ];
-    ARRAY_KEYWORDS.iter().any(|key| obj.contains_key(*key))
-}
-
-fn remove_non_scalar_keywords(obj: &mut Map<String, Value>) {
-    const NON_SCALAR_KEYWORDS: &[&str] = &[
-        "additionalItems",
-        "additionalProperties",
-        "contains",
-        "items",
-        "maxItems",
-        "maxProperties",
-        "minItems",
-        "minProperties",
-        "patternProperties",
-        "prefixItems",
-        "properties",
-        "propertyNames",
-        "required",
-        "uniqueItems",
-    ];
-    for key in NON_SCALAR_KEYWORDS {
-        obj.remove(*key);
-    }
-}
-
-fn remove_object_keywords(obj: &mut Map<String, Value>) {
-    const OBJECT_KEYWORDS: &[&str] = &[
-        "additionalProperties",
-        "maxProperties",
-        "minProperties",
-        "patternProperties",
-        "properties",
-        "propertyNames",
-        "required",
-    ];
-    for key in OBJECT_KEYWORDS {
-        obj.remove(*key);
-    }
 }
 
 #[cfg(test)]

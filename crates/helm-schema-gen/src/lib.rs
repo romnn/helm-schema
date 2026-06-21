@@ -1,4 +1,5 @@
 mod contract_evidence_index;
+mod foreign_schema;
 mod merge;
 mod path_resolver;
 mod path_schema;
