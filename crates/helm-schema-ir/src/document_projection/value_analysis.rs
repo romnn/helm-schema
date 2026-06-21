@@ -46,11 +46,11 @@ impl DocumentHelperSummary {
 
         for (path, mut facts) in summary.into_path_facts() {
             let mut has_dependency = false;
-            if let Some(meta) = facts.output.take() {
+            if let Some(meta) = facts.take_output_meta() {
                 output_values.insert(path.clone(), meta);
                 has_dependency = true;
             }
-            if let Some(meta) = facts.dependency.take() {
+            if let Some(meta) = facts.take_dependency_meta() {
                 dependency_values.insert(path.clone(), meta);
                 has_dependency = true;
             }

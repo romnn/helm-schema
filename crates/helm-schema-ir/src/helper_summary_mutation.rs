@@ -19,11 +19,11 @@ pub(crate) fn extend_nested_scalar_render(
         .extend(nested.chart_defaults.iter().cloned());
 
     for (path, mut facts) in nested.into_path_facts() {
-        if let Some(mut meta) = facts.output.take() {
+        if let Some(mut meta) = facts.take_output_meta() {
             meta.add_predicates(active_output_predicates.iter().cloned());
             analysis.merge_output_meta(path.clone(), meta);
         }
-        if let Some(meta) = facts.dependency.take() {
+        if let Some(meta) = facts.take_dependency_meta() {
             analysis.merge_dependency_meta(path.clone(), meta);
         }
         if facts.guard {
@@ -55,14 +55,14 @@ pub(crate) fn extend_nested_fragment_render(
         .extend(nested.chart_defaults.iter().cloned());
 
     for (path, mut facts) in nested.into_path_facts() {
-        if let Some(mut meta) = facts.output.take() {
+        if let Some(mut meta) = facts.take_output_meta() {
             meta.add_predicates(active_output_predicates.iter().cloned());
             analysis.merge_output_meta(path.clone(), meta);
         }
-        if facts.dependency.is_some() {
+        if facts.has_dependency_meta() {
             analysis.add_dependency_path(path.clone());
         }
-        if let Some(meta) = facts.dependency.take() {
+        if let Some(meta) = facts.take_dependency_meta() {
             analysis.merge_dependency_meta(path.clone(), meta);
         }
         if facts.guard {

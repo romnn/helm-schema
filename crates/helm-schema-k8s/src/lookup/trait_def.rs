@@ -1,10 +1,9 @@
 use helm_schema_core::{
     ApiPresenceQuery, ProviderOrigin, ProviderSchemaFragment, ProviderSchemaUse, ResourceRef,
-    YamlPath,
+    YamlPath, schema_fragment_for_use_across_ordered_versions,
 };
 
 use crate::diagnostic::Diagnostic;
-use crate::filename::ordered_api_versions_for_resource;
 use crate::inference::candidate::ApiVersionCandidate;
 
 use super::provider_result::ProviderLookupResult;
@@ -22,19 +21,9 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// ask `schema_fragment_for_resource_path` for each. The `Chain` overrides
     /// this to layer fallback / inference / typed diagnostics on top.
     fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
-        let resource = &use_.resource;
-        for v in ordered_api_versions_for_resource(resource) {
-            let candidate = ResourceRef {
-                api_version: v.to_string(),
-                kind: resource.kind.clone(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            };
-            if let Some(fragment) = self.schema_fragment_for_resource_path(&candidate, &use_.path) {
-                return Some(fragment);
-            }
-        }
-        None
+        schema_fragment_for_use_across_ordered_versions(use_, |resource, path| {
+            self.schema_fragment_for_resource_path(resource, path)
+        })
     }
 
     /// Provider-owned schema fragment for a specific resource type + YAML path.
