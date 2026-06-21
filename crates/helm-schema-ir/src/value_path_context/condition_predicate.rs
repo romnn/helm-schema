@@ -1,10 +1,9 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 
-use crate::GuardValue;
-use crate::condition_guards::parse_condition_expr;
-use crate::expression_analysis::type_is_schema_type;
+use crate::condition_guards::{guard_value_literal, parse_condition_expr};
+use crate::expr_function_catalog::type_is_schema_type;
 use crate::predicate::{Predicate, PredicateAtom};
 use crate::value_path_extraction::values_path_from_expr;
 
@@ -91,10 +90,7 @@ impl ValuePathContext<'_> {
                 {
                     return out;
                 }
-                let (value, paths) = match (
-                    owned_guard_value_literal(left),
-                    owned_guard_value_literal(right),
-                ) {
+                let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
                     (Some(value), None) => (value, self.paths_for_expr(right)),
                     (None, Some(value)) => (value, self.paths_for_expr(left)),
                     _ => return out,
@@ -115,10 +111,7 @@ impl ValuePathContext<'_> {
                 {
                     return out;
                 }
-                let (value, paths) = match (
-                    owned_guard_value_literal(left),
-                    owned_guard_value_literal(right),
-                ) {
+                let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
                     (Some(value), None) => (value, self.paths_for_expr(right)),
                     (None, Some(value)) => (value, self.paths_for_expr(left)),
                     _ => return out,
@@ -180,10 +173,7 @@ impl ValuePathContext<'_> {
                     return true;
                 };
                 !matches!(
-                    (
-                        borrowed_guard_value_literal(left),
-                        borrowed_guard_value_literal(right)
-                    ),
+                    (guard_value_literal(left), guard_value_literal(right)),
                     (Some(_), None) | (None, Some(_))
                 )
             }
@@ -198,10 +188,7 @@ impl ValuePathContext<'_> {
                     return true;
                 };
                 !matches!(
-                    (
-                        borrowed_guard_value_literal(left),
-                        borrowed_guard_value_literal(right)
-                    ),
+                    (guard_value_literal(left), guard_value_literal(right)),
                     (Some(_), None) | (None, Some(_))
                 )
             }
@@ -298,37 +285,10 @@ fn with_predicates_from_condition_predicate(predicate: Predicate) -> Vec<Predica
     }
 }
 
-fn owned_guard_value_literal(arg: &TemplateExpr) -> Option<GuardValue> {
-    match arg.deparen() {
-        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            Some(GuardValue::string(value))
-        }
-        TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
-        TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
-        TemplateExpr::Literal(Literal::Float(value)) => GuardValue::float(*value),
-        TemplateExpr::Literal(Literal::Nil) => Some(GuardValue::Null),
-        _ => None,
-    }
-}
-
-fn borrowed_guard_value_literal(arg: &TemplateExpr) -> Option<()> {
-    match arg.deparen() {
-        TemplateExpr::Literal(
-            Literal::String(_)
-            | Literal::RawString(_)
-            | Literal::Bool(_)
-            | Literal::Int(_)
-            | Literal::Float(_)
-            | Literal::Nil,
-        ) => Some(()),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Guard;
+    use crate::{Guard, GuardValue};
     use test_util::prelude::sim_assert_eq;
 
     #[test]

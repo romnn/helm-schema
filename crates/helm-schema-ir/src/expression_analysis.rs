@@ -4,7 +4,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{eval_expr, type_is_schema_type as eval_type_is_schema_type};
+use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::value_path_extraction::values_path_from_expr;
 
@@ -116,10 +116,6 @@ fn resolved_string_transform_paths_for_exprs_in_env(
         }
     }
     out
-}
-
-pub(crate) fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
-    eval_type_is_schema_type(expr)
 }
 
 /// Extract Values-rooted paths that helper-body text declares as chart-level

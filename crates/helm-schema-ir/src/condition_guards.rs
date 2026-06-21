@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
+use crate::expr_function_catalog::type_is_schema_type;
 use crate::value_path_extraction::{collect_loose_values_paths, values_path_from_expr};
 use crate::{Guard, GuardValue};
 
@@ -179,7 +180,7 @@ fn comparison_path_and_literal(
     }
 }
 
-fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {
+pub(crate) fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
             Some(GuardValue::string(value))
@@ -204,26 +205,6 @@ fn extend_unique_guards(out: &mut Vec<Guard>, guards: Vec<Guard>) {
             out.push(guard);
         }
     }
-}
-
-fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
-    let TemplateExpr::Literal(
-        helm_schema_ast::Literal::String(type_name)
-        | helm_schema_ast::Literal::RawString(type_name),
-    ) = expr?.deparen()
-    else {
-        return None;
-    };
-    let schema_type = match type_name.as_str() {
-        "bool" | "boolean" => "boolean",
-        "float64" | "number" => "number",
-        "int" | "int64" | "integer" => "integer",
-        "list" | "slice" | "array" => "array",
-        "map" | "dict" | "object" => "object",
-        "string" => "string",
-        _ => return None,
-    };
-    Some(schema_type.to_string())
 }
 
 fn single(paths: &BTreeSet<String>) -> Option<String> {

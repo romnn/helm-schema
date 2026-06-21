@@ -5,9 +5,7 @@ use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::eval_call;
 pub(crate) use crate::expr_call_eval::{apply_index_segment, path_segment_options};
-pub(crate) use crate::expr_function_catalog::{
-    pipeline_preserves_current, transform_source_arg, type_is_schema_type,
-};
+pub(crate) use crate::expr_function_catalog::{pipeline_preserves_current, transform_source_arg};
 use crate::expr_pipeline_eval::eval_pipeline;
 pub(crate) use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
 
