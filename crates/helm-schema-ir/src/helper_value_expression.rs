@@ -11,7 +11,7 @@ use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::helper_summary::HelperOutputMeta;
-use crate::helper_summary_mutation::{extend_nested_fragment_render, extend_nested_scalar_render};
+use crate::helper_summary_mutation::{NestedRenderMode, extend_nested_render};
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_exprs_in_context, local_bound_paths_from_expr,
@@ -111,9 +111,19 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     }
     let nested = helper_env.summarize_calls_in_exprs(exprs, &state.locals.bindings, state.seen);
     if expression_kind == ValueKind::Fragment {
-        extend_nested_fragment_render(state.analysis, nested, active_output_predicates);
+        extend_nested_render(
+            state.analysis,
+            nested,
+            active_output_predicates,
+            NestedRenderMode::Fragment,
+        );
     } else {
-        extend_nested_scalar_render(state.analysis, nested, active_output_predicates);
+        extend_nested_render(
+            state.analysis,
+            nested,
+            active_output_predicates,
+            NestedRenderMode::Scalar,
+        );
     }
     let set_default_paths = set_default_chart_paths_for_exprs(exprs, Some(bindings), current_dot);
     state.analysis.chart_defaults.extend(set_default_paths);

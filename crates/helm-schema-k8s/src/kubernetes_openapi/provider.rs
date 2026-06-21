@@ -6,8 +6,8 @@ use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, default_source_id,
-    k8s_cache_path, not_found_marker_exists,
+    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, k8s_cache_path,
+    not_found_marker_exists,
 };
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
@@ -76,6 +76,13 @@ enum ProbeOutcome {
     Found,
     AuthoritativelyAbsent,
     Uncertain,
+}
+
+struct LoadedK8sSchemaDoc {
+    source: K8sSource,
+    version: String,
+    filename: String,
+    doc: SchemaDoc,
 }
 
 impl From<ProbeOutcome> for SourceProbeTraceOutcome {
@@ -178,10 +185,7 @@ impl KubernetesJsonSchemaProvider {
     /// Provider-facing entry point: walk `(version, mirror)` and
     /// return the first source that owns the resource.
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
-    fn load_resource_doc(
-        &self,
-        resource: &ResourceRef,
-    ) -> Option<(String, String, String, SchemaDoc)> {
+    fn load_resource_doc(&self, resource: &ResourceRef) -> Option<LoadedK8sSchemaDoc> {
         if resource.api_version.trim().is_empty() {
             return None;
         }
@@ -198,22 +202,14 @@ impl KubernetesJsonSchemaProvider {
 
         for version in self.versions.ordered() {
             for filename in &candidates {
-                if let Some(v) = self.read_mem(&version, filename) {
-                    return Some((
-                        default_source_id().to_string(),
-                        version.clone(),
-                        filename.clone(),
-                        v,
-                    ));
-                }
                 for source in &self.mirrors.sources {
                     if let Some(doc) = self.try_load_from_source(source, &version, filename) {
-                        return Some((
-                            source.source_id.clone(),
-                            version.clone(),
-                            filename.clone(),
+                        return Some(LoadedK8sSchemaDoc {
+                            source: source.clone(),
+                            version: version.clone(),
+                            filename: filename.clone(),
                             doc,
-                        ));
+                        });
                     }
                 }
             }
@@ -248,11 +244,6 @@ impl KubernetesJsonSchemaProvider {
         )
     }
 
-    fn read_mem(&self, version: &str, filename: &str) -> Option<SchemaDoc> {
-        self.mem
-            .read(&mem_key(default_source_id(), version, filename))
-    }
-
     fn run_layout_check(&self) -> LayoutCheckOutcome {
         self.layout_checker.check_and_prepare(
             &self.cache_dir,
@@ -261,31 +252,23 @@ impl KubernetesJsonSchemaProvider {
         )
     }
 
-    fn loader_for_source(
-        &self,
-        source_id: String,
-        version: String,
-    ) -> impl FnMut(&str) -> Option<SchemaDoc> + '_ {
-        move |filename: &str| {
-            let source = self
-                .mirrors
-                .sources
-                .iter()
-                .find(|s| s.source_id == source_id)
-                .cloned()?;
-            self.try_load_from_source(&source, &version, filename)
-        }
-    }
-
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str(), path_len = path.0.len()))]
     fn schema_fragment_for_resource_path_uncached(
         &self,
         resource: &ResourceRef,
         path: &YamlPath,
     ) -> Option<(String, Option<ProviderSchemaFragment>)> {
-        let (source_id, version, filename, root) = self.load_resource_doc(resource)?;
-        let loader = self.loader_for_source(source_id.clone(), version.clone());
-        let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
+        let LoadedK8sSchemaDoc {
+            source,
+            version,
+            filename,
+            doc,
+        } = self.load_resource_doc(resource)?;
+        let mut ctx = ResolveCtx::new(
+            |next_filename| self.try_load_from_source(&source, &version, next_filename),
+            filename.clone(),
+            doc,
+        );
         let root_doc = ctx.doc(&filename)?.clone();
         let schema_node = descend_schema_path_expanding_leaf_with_location(
             &mut ctx, &filename, &root_doc, &path.0,
@@ -293,7 +276,7 @@ impl KubernetesJsonSchemaProvider {
         let fragment =
             schema_node.map(|schema_node| {
                 let source = ProviderSchemaSource::kubernetes_openapi(
-                    source_id.clone(),
+                    source.source_id.clone(),
                     version.clone(),
                     schema_node.location().filename(),
                     schema_node.location().pointer(),
@@ -630,9 +613,17 @@ pub fn debug_materialize_schema_for_resource(
     provider: &KubernetesJsonSchemaProvider,
     resource: &ResourceRef,
 ) -> Option<Value> {
-    let (source_id, version, filename, root) = provider.load_resource_doc(resource)?;
-    let loader = provider.loader_for_source(source_id, version);
-    let mut ctx = ResolveCtx::new(loader, filename.clone(), root);
+    let LoadedK8sSchemaDoc {
+        source,
+        version,
+        filename,
+        doc,
+    } = provider.load_resource_doc(resource)?;
+    let mut ctx = ResolveCtx::new(
+        |next_filename| provider.try_load_from_source(&source, &version, next_filename),
+        filename.clone(),
+        doc,
+    );
     let root_doc = ctx.doc(&filename)?.clone();
     let (_, expanded) = super::resolve_ctx::expand_schema_node(&mut ctx, &filename, &root_doc, 0);
     Some(expanded)

@@ -3,50 +3,22 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::predicate::Predicate;
 
-pub(crate) fn extend_nested_scalar_render(
-    analysis: &mut HelperSummary,
-    nested: HelperSummary,
-    active_output_predicates: &BTreeSet<Predicate>,
-) {
-    analysis
-        .string_output
-        .extend(nested.string_output.iter().cloned());
-    analysis
-        .suppress_roots
-        .extend(nested.suppress_roots.iter().cloned());
-    analysis
-        .chart_defaults
-        .extend(nested.chart_defaults.iter().cloned());
-
-    for (path, mut facts) in nested.into_path_facts() {
-        if let Some(mut meta) = facts.take_output_meta() {
-            meta.add_predicates(active_output_predicates.iter().cloned());
-            analysis.merge_output_meta(path.clone(), meta);
-        }
-        if let Some(meta) = facts.take_dependency_meta() {
-            analysis.merge_dependency_meta(path.clone(), meta);
-        }
-        if facts.guard {
-            analysis.add_guard_path(path.clone());
-        }
-        let type_hints = std::mem::take(&mut facts.type_hints);
-        if !type_hints.is_empty() {
-            analysis.merge_type_hints(path.clone(), type_hints);
-        }
-        for mut output in facts.take_fragment_output_uses(&path) {
-            output
-                .meta
-                .add_predicates(active_output_predicates.iter().cloned());
-            analysis.merge_output_meta(output.source_expr, output.meta);
-        }
-    }
+pub(crate) enum NestedRenderMode {
+    Scalar,
+    Fragment,
 }
 
-pub(crate) fn extend_nested_fragment_render(
+pub(crate) fn extend_nested_render(
     analysis: &mut HelperSummary,
     nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
+    mode: NestedRenderMode,
 ) {
+    if matches!(mode, NestedRenderMode::Scalar) {
+        analysis
+            .string_output
+            .extend(nested.string_output.iter().cloned());
+    }
     analysis
         .suppress_roots
         .extend(nested.suppress_roots.iter().cloned());
@@ -54,29 +26,33 @@ pub(crate) fn extend_nested_fragment_render(
         .chart_defaults
         .extend(nested.chart_defaults.iter().cloned());
 
-    for (path, mut facts) in nested.into_path_facts() {
-        if let Some(mut meta) = facts.take_output_meta() {
+    for entry in nested.into_path_entries() {
+        let path = entry.path;
+        if let Some(mut meta) = entry.output_meta {
             meta.add_predicates(active_output_predicates.iter().cloned());
             analysis.merge_output_meta(path.clone(), meta);
         }
-        if facts.has_dependency_meta() {
-            analysis.add_dependency_path(path.clone());
-        }
-        if let Some(meta) = facts.take_dependency_meta() {
+        if let Some(meta) = entry.dependency_meta {
             analysis.merge_dependency_meta(path.clone(), meta);
         }
-        if facts.guard {
+        if entry.guard {
             analysis.add_guard_path(path.clone());
         }
-        let type_hints = std::mem::take(&mut facts.type_hints);
-        if !type_hints.is_empty() {
-            analysis.merge_type_hints(path.clone(), type_hints);
+        if !entry.type_hints.is_empty() {
+            analysis.merge_type_hints(path.clone(), entry.type_hints);
         }
-        for mut output in facts.take_fragment_output_uses(&path) {
+        for mut output in entry.fragment_output_uses {
             output
                 .meta
                 .add_predicates(active_output_predicates.iter().cloned());
-            analysis.add_fragment_output_use(output);
+            match mode {
+                NestedRenderMode::Scalar => {
+                    analysis.merge_output_meta(output.source_expr, output.meta);
+                }
+                NestedRenderMode::Fragment => {
+                    analysis.add_fragment_output_use(output);
+                }
+            }
         }
     }
 }

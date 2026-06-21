@@ -44,28 +44,27 @@ impl DocumentHelperSummary {
         let mut type_hints = BTreeMap::new();
         let mut suppress_direct_values = BTreeSet::new();
 
-        for (path, mut facts) in summary.into_path_facts() {
+        for entry in summary.into_path_entries() {
+            let path = entry.path;
             let mut has_dependency = false;
-            if let Some(meta) = facts.take_output_meta() {
+            if let Some(meta) = entry.output_meta {
                 output_values.insert(path.clone(), meta);
                 has_dependency = true;
             }
-            if let Some(meta) = facts.take_dependency_meta() {
+            if let Some(meta) = entry.dependency_meta {
                 dependency_values.insert(path.clone(), meta);
                 has_dependency = true;
             }
-            if facts.guard {
+            if entry.guard {
                 guard_values.insert(path.clone());
                 has_dependency = true;
             }
-            let path_type_hints = std::mem::take(&mut facts.type_hints);
-            if !path_type_hints.is_empty() {
-                type_hints.insert(path.clone(), path_type_hints);
+            if !entry.type_hints.is_empty() {
+                type_hints.insert(path.clone(), entry.type_hints);
                 has_dependency = true;
             }
-            let path_fragment_outputs = facts.take_fragment_output_uses(&path);
-            if !path_fragment_outputs.is_empty() {
-                fragment_output_uses.extend(path_fragment_outputs);
+            if !entry.fragment_output_uses.is_empty() {
+                fragment_output_uses.extend(entry.fragment_output_uses);
                 has_dependency = true;
             }
             if has_dependency {

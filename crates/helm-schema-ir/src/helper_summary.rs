@@ -192,6 +192,15 @@ pub(crate) struct HelperSummary {
     pub(crate) chart_defaults: BTreeSet<String>,
 }
 
+pub(crate) struct HelperPathEntry {
+    pub(crate) path: String,
+    pub(crate) output_meta: Option<HelperOutputMeta>,
+    pub(crate) dependency_meta: Option<HelperOutputMeta>,
+    pub(crate) guard: bool,
+    pub(crate) type_hints: BTreeSet<String>,
+    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HelperPathMetaRole {
     Output,
@@ -236,16 +245,6 @@ impl HelperPathFacts {
             .collect()
     }
 
-    pub(crate) fn take_fragment_output_uses(
-        &mut self,
-        source_expr: &str,
-    ) -> Vec<HelperFragmentOutputUse> {
-        std::mem::take(&mut self.structured_outputs)
-            .into_iter()
-            .map(|output| output.into_output_use(source_expr.to_string()))
-            .collect()
-    }
-
     fn merge_meta(&mut self, role: HelperPathMetaRole, meta: HelperOutputMeta) {
         self.meta_by_role.entry(role).or_default().merge(meta);
     }
@@ -270,16 +269,18 @@ impl HelperPathFacts {
         self.meta_by_role.contains_key(&role)
     }
 
-    pub(crate) fn take_output_meta(&mut self) -> Option<HelperOutputMeta> {
-        self.take_meta(HelperPathMetaRole::Output)
-    }
-
-    pub(crate) fn take_dependency_meta(&mut self) -> Option<HelperOutputMeta> {
-        self.take_meta(HelperPathMetaRole::Dependency)
-    }
-
-    pub(crate) fn has_dependency_meta(&self) -> bool {
-        self.has_meta_role(HelperPathMetaRole::Dependency)
+    fn into_entry(mut self, path: String) -> HelperPathEntry {
+        HelperPathEntry {
+            fragment_output_uses: std::mem::take(&mut self.structured_outputs)
+                .into_iter()
+                .map(|output| output.into_output_use(path.clone()))
+                .collect(),
+            output_meta: self.take_meta(HelperPathMetaRole::Output),
+            dependency_meta: self.take_meta(HelperPathMetaRole::Dependency),
+            guard: self.guard,
+            type_hints: self.type_hints,
+            path,
+        }
     }
 }
 
@@ -367,7 +368,12 @@ impl HelperSummary {
     pub(crate) fn take_fragment_output_uses(&mut self) -> Vec<HelperFragmentOutputUse> {
         self.path_facts
             .iter_mut()
-            .flat_map(|(source_expr, facts)| facts.take_fragment_output_uses(source_expr))
+            .flat_map(|(source_expr, facts)| {
+                std::mem::take(&mut facts.structured_outputs)
+                    .into_iter()
+                    .map(|output| output.into_output_use(source_expr.clone()))
+                    .collect::<Vec<_>>()
+            })
             .collect()
     }
 
@@ -509,8 +515,10 @@ impl HelperSummary {
         out
     }
 
-    pub(crate) fn into_path_facts(self) -> BTreeMap<String, HelperPathFacts> {
+    pub(crate) fn into_path_entries(self) -> impl Iterator<Item = HelperPathEntry> {
         self.path_facts
+            .into_iter()
+            .map(|(path, facts)| facts.into_entry(path))
     }
 
     pub(crate) fn mark_suppressed_roots_for_bound_outputs(
