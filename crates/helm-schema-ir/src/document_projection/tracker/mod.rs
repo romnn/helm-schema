@@ -19,6 +19,13 @@ pub(crate) struct DocumentTracker<'a> {
     attribution: AttributionIndex,
 }
 
+pub(crate) struct DocumentOutputSlot {
+    pub(crate) path: YamlPath,
+    pub(crate) resource: Option<ResourceRef>,
+    pub(crate) in_mapping_key: bool,
+    pub(crate) entire_scalar_value: bool,
+}
+
 impl<'a> DocumentTracker<'a> {
     pub(crate) fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
         Self {
@@ -78,42 +85,47 @@ impl<'a> DocumentTracker<'a> {
         context.mapping_entry_path
     }
 
-    pub(crate) fn resource_for_node(&self, node: tree_sitter::Node<'_>) -> Option<&ResourceRef> {
-        self.resource_identity.resource_at(node.start_byte())
-    }
-
     pub(crate) fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
         self.resource_identity.resource_at(byte)
-    }
-
-    pub(crate) fn rebase_path_for_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-        path: YamlPath,
-    ) -> YamlPath {
-        self.resource_identity
-            .rebase_path_at(node.start_byte(), path)
     }
 
     pub(crate) fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {
         self.resource_identity.rebase_path_at(byte, path)
     }
 
-    pub(crate) fn output_in_mapping_key(&self, node: tree_sitter::Node<'_>) -> bool {
-        self.context_for_node(node).in_mapping_key
-    }
-
-    pub(crate) fn output_entire_scalar_value(&self, node: tree_sitter::Node<'_>) -> bool {
-        self.context_for_node(node).entire_scalar_value
-    }
-
-    pub(crate) fn output_site_path(
+    pub(crate) fn output_slot_for_node(
         &self,
         node: tree_sitter::Node<'_>,
         kind: ValueKind,
         fragment_indent_width: Option<usize>,
-    ) -> YamlPath {
+    ) -> DocumentOutputSlot {
         let current_context = self.context_for_node(node);
+        let path = if current_context.in_mapping_key {
+            YamlPath(Vec::new())
+        } else {
+            self.output_site_path_from_context(node, kind, fragment_indent_width, &current_context)
+        };
+
+        DocumentOutputSlot {
+            path: self
+                .resource_identity
+                .rebase_path_at(node.start_byte(), path),
+            resource: self
+                .resource_identity
+                .resource_at(node.start_byte())
+                .cloned(),
+            in_mapping_key: current_context.in_mapping_key,
+            entire_scalar_value: current_context.entire_scalar_value,
+        }
+    }
+
+    fn output_site_path_from_context(
+        &self,
+        node: tree_sitter::Node<'_>,
+        kind: ValueKind,
+        fragment_indent_width: Option<usize>,
+        current_context: &ResolvedNodeContext,
+    ) -> YamlPath {
         if current_context.inside_block_scalar {
             return YamlPath(Vec::new());
         }
@@ -324,7 +336,9 @@ mod tests {
             .expect("fragment action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(8));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(8))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "template", "spec", "volumes"],
@@ -356,7 +370,9 @@ mod tests {
             .expect("extraEnv render action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(10));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(10))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "template", "spec", "containers[*]", "env"],
@@ -457,7 +473,9 @@ spec:
         let rendered_context = tracker
             .attribution
             .virtual_indent_context_for_node(action, 12);
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(12));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(12))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec![
@@ -496,7 +514,9 @@ spec:
             .expect("host aliases render action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(8));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(8))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "template", "spec", "hostAliases"],
@@ -527,7 +547,9 @@ spec:
             .expect("serviceIPFamilies render action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(2));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(2))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "ipFamilies"],
@@ -559,7 +581,9 @@ spec:
             .expect("commonLabels render action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(4))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["metadata", "labels"],
@@ -591,7 +615,9 @@ spec:
             .expect("extraPorts render action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(4))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "ports"],
@@ -620,7 +646,10 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec![
                 "spec",
                 "template",
@@ -636,7 +665,11 @@ spec:
             tracker.path_at_mapping_entry_indent(action, 12).0,
             tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -660,7 +693,10 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec![
                 "spec",
                 "template",
@@ -676,7 +712,11 @@ spec:
             tracker.path_at_mapping_entry_indent(action, 12).0,
             tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -754,10 +794,17 @@ spec:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec!["ports[*]", "port"]
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -783,10 +830,17 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec!["ports[*]", "port"]
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -813,10 +867,17 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec!["env[*]", "valueFrom", "secretKeyRef", "name",]
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -840,7 +901,10 @@ ports:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec![
                 "spec",
                 "template",
@@ -856,7 +920,11 @@ ports:
             tracker.path_at_mapping_entry_indent(action, 18).0,
             tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -888,7 +956,9 @@ ports:
         let rendered_context = tracker
             .attribution
             .virtual_indent_context_for_node(action, 4);
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(4))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "ingress"],
@@ -920,7 +990,9 @@ ports:
         let action = actions.into_iter().next().expect("standard labels action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(4));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(4))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["metadata", "labels"],
@@ -951,7 +1023,9 @@ ports:
         let action = actions.into_iter().next().expect("match labels action");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
-        let path = tracker.output_site_path(action, ValueKind::Fragment, Some(6));
+        let path = tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(6))
+            .path;
         sim_assert_eq!(
             have: path.0,
             want: vec!["spec", "podSelector", "matchLabels"],
@@ -1098,13 +1172,20 @@ metadata:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec!["metadata", "name"],
             "current={:?} context={:?}",
             tracker.path_for_node(action).0,
             tracker.context_for_node(action)
         );
-        assert!(tracker.output_entire_scalar_value(action));
+        assert!(
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]
@@ -1127,7 +1208,10 @@ metadata:
         let action = actions.into_iter().next().expect("storage class include");
         drive_tracker_until(&mut tracker, tree.root_node(), action);
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
             "current={:?} mapping={:?} context={:?}",
             tracker.path_for_node(action).0,
@@ -1160,11 +1244,16 @@ metadata:
         drive_tracker_until(&mut tracker, tree.root_node(), action);
 
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: vec!["spec", "ingress[*]", "ports[*]", "port"]
         );
         assert!(
-            tracker.output_entire_scalar_value(action),
+            tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value,
             "current={:?} context={:?}",
             tracker.path_for_node(action).0,
             tracker.context_for_node(action).output_path.0
@@ -1198,10 +1287,17 @@ metadata:
 
         assert!(tracker.context_for_node(action).inside_block_scalar);
         sim_assert_eq!(
-            have: tracker.output_site_path(action, ValueKind::Scalar, None).0,
+            have: tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .path
+                .0,
             want: Vec::<String>::new()
         );
-        assert!(!tracker.output_entire_scalar_value(action));
+        assert!(
+            !tracker
+                .output_slot_for_node(action, ValueKind::Scalar, None)
+                .entire_scalar_value
+        );
     }
 
     #[test]

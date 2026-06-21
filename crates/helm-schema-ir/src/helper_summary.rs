@@ -760,7 +760,7 @@ mod tests {
 
     use super::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
     use crate::abstract_value::AbstractValue;
-    use crate::predicate::{Predicate, PredicateAtom};
+    use crate::predicate::Predicate;
     use crate::template_expr_cache::parse_expr_text;
     use crate::{Guard, ValueKind, YamlPath};
 
@@ -768,9 +768,7 @@ mod tests {
     fn helper_output_meta_projects_predicates_to_contract_guard_sets() {
         let meta = HelperOutputMeta {
             predicates: BTreeSet::from([BTreeSet::from([Predicate::Not(Box::new(
-                Predicate::Atom(PredicateAtom::Truthy {
-                    path: "feature.enabled".to_string(),
-                }),
+                Predicate::truthy_path("feature.enabled"),
             ))])]),
             defaulted: true,
             provenance: Vec::new(),
@@ -794,20 +792,12 @@ mod tests {
         let meta = HelperOutputMeta {
             predicates: BTreeSet::from([
                 BTreeSet::from([
-                    Predicate::Atom(PredicateAtom::Truthy {
-                        path: "feature.enabled".to_string(),
-                    }),
-                    Predicate::Atom(PredicateAtom::Truthy {
-                        path: "component.enabled".to_string(),
-                    }),
+                    Predicate::truthy_path("feature.enabled"),
+                    Predicate::truthy_path("component.enabled"),
                 ]),
                 BTreeSet::from([
-                    Predicate::Not(Box::new(Predicate::Atom(PredicateAtom::Truthy {
-                        path: "feature.enabled".to_string(),
-                    }))),
-                    Predicate::Atom(PredicateAtom::Truthy {
-                        path: "component.enabled".to_string(),
-                    }),
+                    Predicate::truthy_path("feature.enabled").negated(),
+                    Predicate::truthy_path("component.enabled"),
                 ]),
             ]),
             defaulted: true,

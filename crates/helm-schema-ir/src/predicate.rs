@@ -1,60 +1,34 @@
-use crate::{Guard, GuardValue};
+use crate::Guard;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Predicate {
     True,
     False,
-    Atom(PredicateAtom),
+    Guard(Guard),
     Not(Box<Predicate>),
     And(Vec<Predicate>),
     Or(Vec<Predicate>),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum PredicateAtom {
-    Truthy { path: String },
-    Eq { path: String, value: GuardValue },
-    NotEq { path: String, value: GuardValue },
-    Absent { path: String },
-    Range { path: String },
-    With { path: String },
-    Default { path: String },
-    TypeIs { path: String, schema_type: String },
-}
-
 impl From<Guard> for Predicate {
     fn from(guard: Guard) -> Self {
         match guard {
-            Guard::Truthy { path } => Self::Atom(PredicateAtom::Truthy { path }),
-            Guard::Not { path } => Self::Not(Box::new(Self::Atom(PredicateAtom::Truthy { path }))),
-            Guard::Eq { path, value } => Self::Atom(PredicateAtom::Eq { path, value }),
-            Guard::NotEq { path, value } => Self::Atom(PredicateAtom::NotEq { path, value }),
-            Guard::Absent { path } => Self::Atom(PredicateAtom::Absent { path }),
-            Guard::Or { paths } => Self::Or(
-                paths
-                    .into_iter()
-                    .map(|path| Self::Atom(PredicateAtom::Truthy { path }))
-                    .collect(),
-            ),
+            Guard::Not { path } => Self::Not(Box::new(Self::truthy_path(path))),
+            Guard::Or { paths } => Self::Or(paths.into_iter().map(Self::truthy_path).collect()),
             Guard::AnyOf { alternatives } => Self::Or(
                 alternatives
                     .into_iter()
                     .map(|alternative| Self::all(alternative.into_iter().map(Self::from).collect()))
                     .collect(),
             ),
-            Guard::Range { path } => Self::Atom(PredicateAtom::Range { path }),
-            Guard::With { path } => Self::Atom(PredicateAtom::With { path }),
-            Guard::Default { path } => Self::Atom(PredicateAtom::Default { path }),
-            Guard::TypeIs { path, schema_type } => {
-                Self::Atom(PredicateAtom::TypeIs { path, schema_type })
-            }
+            guard => Self::Guard(guard),
         }
     }
 }
 
 impl Predicate {
     pub(crate) fn truthy_path(path: impl Into<String>) -> Self {
-        Self::Atom(PredicateAtom::Truthy { path: path.into() })
+        Self::Guard(Guard::Truthy { path: path.into() })
     }
 
     pub(crate) fn all(predicates: Vec<Self>) -> Self {
@@ -81,7 +55,7 @@ impl Predicate {
     pub(crate) fn contract_guards(&self) -> Vec<Guard> {
         match self {
             Self::True | Self::False => Vec::new(),
-            Self::Atom(atom) => atom.contract_guards(),
+            Self::Guard(guard) => vec![guard.clone()],
             Self::Not(inner) => negated_contract_guards(inner),
             Self::And(predicates) => predicates.iter().flat_map(Self::contract_guards).collect(),
             Self::Or(predicates) => or_contract_guards(predicates),
@@ -103,12 +77,12 @@ impl Predicate {
 
 fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
     match inner {
-        Predicate::Atom(PredicateAtom::Truthy { path }) => vec![Guard::Not { path: path.clone() }],
-        Predicate::Atom(PredicateAtom::Eq { path, value }) => vec![Guard::NotEq {
+        Predicate::Guard(Guard::Truthy { path }) => vec![Guard::Not { path: path.clone() }],
+        Predicate::Guard(Guard::Eq { path, value }) => vec![Guard::NotEq {
             path: path.clone(),
             value: value.clone(),
         }],
-        Predicate::Atom(PredicateAtom::NotEq { path, value }) => vec![Guard::Eq {
+        Predicate::Guard(Guard::NotEq { path, value }) => vec![Guard::Eq {
             path: path.clone(),
             value: value.clone(),
         }],
@@ -142,31 +116,6 @@ fn truthy_or_paths(alternatives: &[Vec<Guard>]) -> Option<Vec<String>> {
             _ => None,
         })
         .collect()
-}
-
-impl PredicateAtom {
-    fn contract_guards(&self) -> Vec<Guard> {
-        let guard = match self {
-            Self::Truthy { path } => Guard::Truthy { path: path.clone() },
-            Self::Eq { path, value } => Guard::Eq {
-                path: path.clone(),
-                value: value.clone(),
-            },
-            Self::NotEq { path, value } => Guard::NotEq {
-                path: path.clone(),
-                value: value.clone(),
-            },
-            Self::Absent { path } => Guard::Absent { path: path.clone() },
-            Self::Range { path } => Guard::Range { path: path.clone() },
-            Self::With { path } => Guard::With { path: path.clone() },
-            Self::Default { path } => Guard::Default { path: path.clone() },
-            Self::TypeIs { path, schema_type } => Guard::TypeIs {
-                path: path.clone(),
-                schema_type: schema_type.clone(),
-            },
-        };
-        vec![guard]
-    }
 }
 
 #[cfg(test)]

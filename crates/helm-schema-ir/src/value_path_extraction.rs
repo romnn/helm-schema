@@ -3,18 +3,29 @@ use std::collections::BTreeSet;
 /// If `expr` is a `.Values.X.Y...` reference rooted at the current context or
 /// a root variable, return the dotted path with the leading `Values.` stripped.
 pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
+    values_path_from_expr_with(expr, ValuesPathMode::Rooted)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ValuesPathMode {
+    Rooted,
+    AnyValuesSegment,
+}
+
+fn values_path_from_expr_with(
+    expr: &helm_schema_ast::TemplateExpr,
+    mode: ValuesPathMode,
+) -> Option<String> {
     use helm_schema_ast::TemplateExpr as E;
 
     let expr = expr.deparen();
     match expr {
-        E::Field(path) => values_path_from_segments(path),
-        E::Selector { operand, path } => {
-            if let Some(base) = values_path_from_expr(operand) {
+        E::Field(path) => values_path_from_segments(path, mode),
+        E::Selector { operand, path } if mode == ValuesPathMode::Rooted => {
+            if let Some(base) = values_path_from_expr_with(operand, mode) {
                 let suffix = path.join(".");
                 return Some(if suffix.is_empty() {
                     base
-                } else if base.is_empty() {
-                    suffix
                 } else {
                     format!("{base}.{suffix}")
                 });
@@ -22,7 +33,10 @@ pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Opt
             if !matches!(operand.as_ref(), E::Variable(_)) {
                 return None;
             }
-            values_path_from_segments(path)
+            values_path_from_segments(path, mode)
+        }
+        E::Selector { path, .. } => {
+            values_path_from_segments(path, ValuesPathMode::AnyValuesSegment)
         }
         E::Literal(_)
         | E::Variable(_)
@@ -35,14 +49,21 @@ pub(crate) fn values_path_from_expr(expr: &helm_schema_ast::TemplateExpr) -> Opt
     }
 }
 
-fn values_path_from_segments(segments: &[String]) -> Option<String> {
-    let mut iter = segments.iter();
-    let head = iter.next()?;
-    if head != "Values" {
+fn values_path_from_segments(segments: &[String], mode: ValuesPathMode) -> Option<String> {
+    let tail = match mode {
+        ValuesPathMode::Rooted => {
+            let (head, tail) = segments.split_first()?;
+            (head == "Values").then_some(tail)?
+        }
+        ValuesPathMode::AnyValuesSegment => {
+            let values_index = segments.iter().position(|segment| segment == "Values")?;
+            &segments[values_index + 1..]
+        }
+    };
+    if tail.is_empty() {
         return None;
     }
-    let tail: Vec<String> = iter.cloned().collect();
-    if tail.is_empty() {
+    if mode == ValuesPathMode::AnyValuesSegment && tail.first()?.as_str() == "*" {
         return None;
     }
     Some(tail.join("."))
@@ -64,7 +85,7 @@ pub(crate) fn collect_loose_values_paths(
     out: &mut BTreeSet<String>,
 ) {
     expr.walk(|node| {
-        if let Some(path) = values_path_from_expr_loose(node) {
+        if let Some(path) = values_path_from_expr_with(node, ValuesPathMode::AnyValuesSegment) {
             out.insert(path);
         }
     });
@@ -141,22 +162,6 @@ fn restore_segments(segments: &mut [String]) {
             "*".clone_into(segment);
         }
     }
-}
-
-fn values_path_from_expr_loose(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
-    use helm_schema_ast::TemplateExpr as E;
-
-    let expr = expr.deparen();
-    let segments: &[String] = match expr {
-        E::Field(path) | E::Selector { path, .. } => path,
-        _ => return None,
-    };
-    let values_index = segments.iter().position(|segment| segment == "Values")?;
-    let tail = &segments[values_index + 1..];
-    if tail.first()?.as_str() == "*" {
-        return None;
-    }
-    Some(tail.join("."))
 }
 
 #[cfg(test)]

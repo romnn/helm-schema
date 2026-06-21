@@ -126,22 +126,15 @@ pub(crate) fn collect_document_site_context(
         ValueKind::Scalar
     };
 
-    let in_mapping_key = tracker.output_in_mapping_key(node);
-    let path = if in_mapping_key {
-        YamlPath(Vec::new())
-    } else {
-        adjusted_output_path(tracker, node, kind, output_action.fragment_indent_width)
-    };
-    let path = tracker.rebase_path_for_node(node, path);
-    let resource = tracker.resource_for_node(node).cloned();
+    let slot = tracker.output_slot_for_node(node, kind, output_action.fragment_indent_width);
 
     DocumentSiteContext {
         kind,
-        in_mapping_key,
+        in_mapping_key: slot.in_mapping_key,
         in_yaml_comment: document_site_is_yaml_comment_part(source, node),
-        entire_scalar_value: tracker.output_entire_scalar_value(node),
-        path,
-        resource,
+        entire_scalar_value: slot.entire_scalar_value,
+        path: slot.path,
+        resource: slot.resource,
         source_span: SourceSpan::new(node.start_byte(), node.end_byte()),
     }
 }
@@ -172,15 +165,6 @@ fn output_action_shape_from_exprs(exprs: &[TemplateExpr]) -> OutputActionAnalysi
         is_fragment: exprs.iter().any(TemplateExpr::renders_yaml_fragment),
         fragment_indent_width: DocumentTracker::fragment_indent_width_for_exprs(exprs),
     }
-}
-
-fn adjusted_output_path(
-    tracker: &DocumentTracker<'_>,
-    node: tree_sitter::Node<'_>,
-    kind: ValueKind,
-    fragment_indent_width: Option<usize>,
-) -> YamlPath {
-    tracker.output_site_path(node, kind, fragment_indent_width)
 }
 
 fn enclosing_action_text(source: &str, node: tree_sitter::Node<'_>) -> Option<String> {

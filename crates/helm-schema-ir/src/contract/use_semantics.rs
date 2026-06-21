@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 
+use crate::Guard;
 use crate::contract_signals::ConditionalGuard;
-use crate::predicate::{Predicate, PredicateAtom};
+use crate::predicate::Predicate;
 
 use super::ContractUse;
 
@@ -22,7 +23,7 @@ impl ContractUse {
         self.predicate_stack()
             .into_iter()
             .filter_map(|predicate| match predicate {
-                Predicate::Atom(PredicateAtom::Range { path }) => Some(path),
+                Predicate::Guard(Guard::Range { path }) => Some(path),
                 _ => None,
             })
             .collect()
@@ -65,7 +66,7 @@ impl ContractUse {
         self.predicate_stack()
             .into_iter()
             .filter_map(|predicate| match predicate {
-                Predicate::Atom(PredicateAtom::Default { path }) => Some(path),
+                Predicate::Guard(Guard::Default { path }) => Some(path),
                 _ => None,
             })
             .collect()
@@ -80,7 +81,7 @@ impl ContractUse {
     pub(crate) fn has_self_range_guard(&self) -> bool {
         self.predicate_stack()
             .into_iter()
-            .any(|predicate| matches!(predicate, Predicate::Atom(PredicateAtom::Range { path }) if path == self.source_expr))
+            .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == self.source_expr))
     }
 
     pub(crate) fn has_pathless_self_default_guard(&self) -> bool {
@@ -88,7 +89,7 @@ impl ContractUse {
             && self
                 .predicate_stack()
                 .into_iter()
-                .any(|predicate| matches!(predicate, Predicate::Atom(PredicateAtom::Default { path }) if path == self.source_expr))
+                .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == self.source_expr))
     }
 
     pub(crate) fn is_positive_header(&self) -> bool {
@@ -103,17 +104,10 @@ impl ContractUse {
 fn collect_predicate_value_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
     match predicate {
         Predicate::True | Predicate::False => {}
-        Predicate::Atom(
-            PredicateAtom::Truthy { path }
-            | PredicateAtom::Eq { path, .. }
-            | PredicateAtom::NotEq { path, .. }
-            | PredicateAtom::Absent { path }
-            | PredicateAtom::Range { path }
-            | PredicateAtom::With { path }
-            | PredicateAtom::Default { path }
-            | PredicateAtom::TypeIs { path, .. },
-        ) => {
-            out.insert(path.clone());
+        Predicate::Guard(guard) => {
+            for path in guard.value_paths() {
+                out.insert(path.to_string());
+            }
         }
         Predicate::Not(inner) => collect_predicate_value_paths(inner, out),
         Predicate::And(predicates) | Predicate::Or(predicates) => {
@@ -127,29 +121,27 @@ fn collect_predicate_value_paths(predicate: &Predicate, out: &mut BTreeSet<Strin
 fn predicate_to_conditional_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
     match predicate {
         Predicate::True | Predicate::False => None,
-        Predicate::Atom(PredicateAtom::Truthy { path }) => {
+        Predicate::Guard(Guard::Truthy { path }) => {
             Some(ConditionalGuard::Truthy { path: path.clone() })
         }
-        Predicate::Atom(PredicateAtom::With { path }) => {
+        Predicate::Guard(Guard::With { path }) => {
             Some(ConditionalGuard::With { path: path.clone() })
         }
-        Predicate::Atom(PredicateAtom::Eq { path, value }) => Some(ConditionalGuard::Eq {
+        Predicate::Guard(Guard::Eq { path, value }) => Some(ConditionalGuard::Eq {
             path: path.clone(),
             value: value.clone(),
         }),
-        Predicate::Atom(PredicateAtom::NotEq { path, value }) => Some(ConditionalGuard::NotEq {
+        Predicate::Guard(Guard::NotEq { path, value }) => Some(ConditionalGuard::NotEq {
             path: path.clone(),
             value: value.clone(),
         }),
-        Predicate::Atom(PredicateAtom::Absent { path }) => {
+        Predicate::Guard(Guard::Absent { path }) => {
             Some(ConditionalGuard::Absent { path: path.clone() })
         }
-        Predicate::Atom(PredicateAtom::TypeIs { path, schema_type }) => {
-            Some(ConditionalGuard::TypeIs {
-                path: path.clone(),
-                schema_type: schema_type.clone(),
-            })
-        }
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) => Some(ConditionalGuard::TypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
+        }),
         Predicate::Not(inner) => Some(ConditionalGuard::Not(Box::new(
             predicate_to_conditional_guard(inner)?,
         ))),
@@ -175,7 +167,8 @@ fn predicate_to_conditional_guard(predicate: &Predicate) -> Option<ConditionalGu
             guards.dedup();
             (!guards.is_empty()).then_some(ConditionalGuard::AnyOf(guards))
         }
-        Predicate::Atom(PredicateAtom::Range { .. } | PredicateAtom::Default { .. }) => None,
+        Predicate::Guard(Guard::Range { .. } | Guard::Default { .. }) => None,
+        Predicate::Guard(Guard::Not { .. } | Guard::Or { .. } | Guard::AnyOf { .. }) => None,
     }
 }
 
@@ -186,30 +179,30 @@ fn extend_lowerable_predicate(
 ) -> Option<()> {
     match predicate {
         Predicate::True | Predicate::False => return None,
-        Predicate::Atom(PredicateAtom::With { .. }) => {}
-        Predicate::Atom(PredicateAtom::Truthy { path }) => {
+        Predicate::Guard(Guard::With { .. }) => {}
+        Predicate::Guard(Guard::Truthy { path }) => {
             out.push(ConditionalGuard::Truthy {
                 path: lowerable_guard_path(path, target_value_path)?,
             });
         }
-        Predicate::Atom(PredicateAtom::Eq { path, value }) => {
+        Predicate::Guard(Guard::Eq { path, value }) => {
             out.push(ConditionalGuard::Eq {
                 path: lowerable_guard_path(path, target_value_path)?,
                 value: value.clone(),
             });
         }
-        Predicate::Atom(PredicateAtom::NotEq { path, value }) => {
+        Predicate::Guard(Guard::NotEq { path, value }) => {
             out.push(ConditionalGuard::NotEq {
                 path: lowerable_guard_path(path, target_value_path)?,
                 value: value.clone(),
             });
         }
-        Predicate::Atom(PredicateAtom::Absent { path }) => {
+        Predicate::Guard(Guard::Absent { path }) => {
             out.push(ConditionalGuard::Absent {
                 path: lowerable_guard_path(path, target_value_path)?,
             });
         }
-        Predicate::Atom(PredicateAtom::TypeIs { path, schema_type }) => {
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) => {
             out.push(ConditionalGuard::TypeIs {
                 path: lowerable_guard_path(path, target_value_path)?,
                 schema_type: schema_type.clone(),
@@ -235,9 +228,12 @@ fn extend_lowerable_predicate(
             guards.dedup();
             out.push(ConditionalGuard::AnyOf(guards));
         }
-        Predicate::Atom(PredicateAtom::Range { .. }) => return None,
-        Predicate::Atom(PredicateAtom::Default { path }) if path == target_value_path => {}
-        Predicate::Atom(PredicateAtom::Default { .. }) => return None,
+        Predicate::Guard(Guard::Range { .. }) => return None,
+        Predicate::Guard(Guard::Default { path }) if path == target_value_path => {}
+        Predicate::Guard(Guard::Default { .. }) => return None,
+        Predicate::Guard(Guard::Not { .. } | Guard::Or { .. } | Guard::AnyOf { .. }) => {
+            return None;
+        }
     }
     Some(())
 }
@@ -274,11 +270,11 @@ fn lowerable_single_predicate(
 
 fn collect_conditionally_optional_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
     match predicate {
-        Predicate::Atom(PredicateAtom::NotEq { path, .. } | PredicateAtom::Absent { path }) => {
+        Predicate::Guard(Guard::NotEq { path, .. } | Guard::Absent { path }) => {
             out.insert(path.clone());
         }
         Predicate::Not(inner) => match inner.as_ref() {
-            Predicate::Atom(PredicateAtom::Truthy { path }) => {
+            Predicate::Guard(Guard::Truthy { path }) => {
                 out.insert(path.clone());
             }
             _ => collect_conditionally_optional_paths(inner, out),
@@ -295,13 +291,16 @@ fn collect_conditionally_optional_paths(predicate: &Predicate, out: &mut BTreeSe
         }
         Predicate::True
         | Predicate::False
-        | Predicate::Atom(
-            PredicateAtom::Truthy { .. }
-            | PredicateAtom::Eq { .. }
-            | PredicateAtom::Range { .. }
-            | PredicateAtom::With { .. }
-            | PredicateAtom::Default { .. }
-            | PredicateAtom::TypeIs { .. },
+        | Predicate::Guard(
+            Guard::Truthy { .. }
+            | Guard::Eq { .. }
+            | Guard::Range { .. }
+            | Guard::With { .. }
+            | Guard::Default { .. }
+            | Guard::TypeIs { .. }
+            | Guard::Not { .. }
+            | Guard::Or { .. }
+            | Guard::AnyOf { .. },
         ) => {}
     }
 }
@@ -309,12 +308,12 @@ fn collect_conditionally_optional_paths(predicate: &Predicate, out: &mut BTreeSe
 fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool {
     matches!(
         predicate,
-        Predicate::Atom(
-            PredicateAtom::Truthy { path }
-                | PredicateAtom::Eq { path, .. }
-                | PredicateAtom::Range { path }
-                | PredicateAtom::With { path }
-                | PredicateAtom::Default { path }
+        Predicate::Guard(
+            Guard::Truthy { path }
+                | Guard::Eq { path, .. }
+                | Guard::Range { path }
+                | Guard::With { path }
+                | Guard::Default { path }
         ) if path == source_expr
     )
 }
@@ -322,9 +321,9 @@ fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool 
 fn predicate_is_positive_header(predicate: &Predicate, source_expr: &str) -> bool {
     matches!(
         predicate,
-        Predicate::Atom(PredicateAtom::Truthy { path }
-            | PredicateAtom::Eq { path, .. }
-            | PredicateAtom::TypeIs { path, .. }) if path == source_expr
+        Predicate::Guard(Guard::Truthy { path }
+            | Guard::Eq { path, .. }
+            | Guard::TypeIs { path, .. }) if path == source_expr
     )
 }
 
