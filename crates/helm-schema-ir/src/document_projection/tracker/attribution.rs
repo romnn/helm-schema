@@ -1337,6 +1337,8 @@ fn enclosing_template_action_span(mut node: tree_sitter::Node<'_>) -> (usize, us
 
 fn sanitize_output_action(sanitized: &mut [u8], start: usize, end: usize, token: &str) {
     if action_is_root_standalone_line(sanitized, start, end)
+        || (action_is_standalone_line(sanitized, start, end)
+            && action_may_inject_yaml_structure(sanitized, start, end))
         || action_uses_structural_indent_filter(sanitized, start, end)
     {
         blank_range(sanitized, start, end);
@@ -1356,6 +1358,17 @@ fn action_uses_structural_indent_filter(sanitized: &[u8], start: usize, end: usi
         .any(expr_uses_indent_filter)
         && (action_is_standalone_line(sanitized, start, end)
             || action_is_inline_mapping_value(sanitized, start))
+}
+
+fn action_may_inject_yaml_structure(sanitized: &[u8], start: usize, end: usize) -> bool {
+    let Ok(text) =
+        std::str::from_utf8(&sanitized[start.min(sanitized.len())..end.min(sanitized.len())])
+    else {
+        return false;
+    };
+    parse_action_expressions(text)
+        .iter()
+        .any(TemplateExpr::may_inject_yaml_structure)
 }
 
 fn action_structural_indent_width(sanitized: &[u8], start: usize, end: usize) -> Option<usize> {

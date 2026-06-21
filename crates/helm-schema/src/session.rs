@@ -232,19 +232,17 @@ impl AnalysisSession {
     pub fn explain(&self, path: &str) -> CliResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
         let finalized_contract = self.finalized_contract()?;
-        let projection = finalized_contract.projection();
+        let uses = finalized_contract.uses();
         let schema_signals = finalized_contract.schema_signals();
         let evidence = schema_signals.evidence_for(&normalized_path);
 
-        let exact_uses = projection
-            .uses()
+        let exact_uses = uses
             .iter()
             .filter(|use_| use_.source_expr == normalized_path)
             .cloned()
             .map(ContractDocumentUse::from)
             .collect();
-        let descendant_uses = projection
-            .uses()
+        let descendant_uses = uses
             .iter()
             .filter(|use_| {
                 use_.source_expr

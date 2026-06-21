@@ -7,7 +7,7 @@
 //!   - the `infer_required` field on [`crate::ChartArgs`] and
 //!     [`crate::GenerateOptions`]
 //!   - the conditional call in
-//!     `generation::generate_values_schema_for_chart_output`
+//!     `AnalysisSession::generated_schema`
 //!   - the six `infer_required_*` / `library_*` integration test
 //!     files under `crates/helm-schema-cli/tests/`.
 //!

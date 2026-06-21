@@ -12,10 +12,7 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
 
 pub use cli::Cli;
-pub use helm_schema::generation::{
-    GenerateOptions, generate_values_schema_for_chart,
-    generate_values_schema_for_chart_with_diagnostics,
-};
+pub use helm_schema::generation::{GenerateOptions, generate_values_schema_for_chart};
 pub use helm_schema::provider::ProviderOptions;
 pub use helm_schema::{CliError, flatten, schema_override};
 

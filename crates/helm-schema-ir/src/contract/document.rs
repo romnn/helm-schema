@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ContractProjection, ContractUse};
+use super::ContractUse;
 use crate::{ContractProvenance, Guard, GuardValue, ResourceRef, SourceSpan, ValueKind, YamlPath};
 
 /// Stable serialized guard row in the versioned contract document.
@@ -184,14 +184,10 @@ impl ContractDocument {
     pub const VERSION: u32 = 2;
 
     #[must_use]
-    pub fn from_projection(projection: ContractProjection) -> Self {
+    pub fn from_contract_uses(uses: Vec<ContractUse>) -> Self {
         Self {
             version: Self::VERSION,
-            uses: projection
-                .into_contract_uses()
-                .into_iter()
-                .map(ContractDocumentUse::from)
-                .collect(),
+            uses: uses.into_iter().map(ContractDocumentUse::from).collect(),
         }
     }
 }

@@ -1,7 +1,5 @@
 use color_eyre::eyre;
-use helm_schema::generation::{
-    GenerateOptions, generate_values_schema_for_chart, generate_values_schema_for_chart_output,
-};
+use helm_schema::generation::{GenerateOptions, generate_values_schema_for_chart};
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
@@ -366,8 +364,8 @@ spec:
         },
     };
 
-    let staged = generate_values_schema_for_chart_output(&opts, None)?;
     let session = AnalysisSession::new(opts);
+    let staged = session.generated_schema()?;
     let session_generated = session.generated_schema()?;
 
     sim_assert_eq!(have: staged.schema, want: session_generated.schema);

@@ -1,17 +1,16 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
-use helm_schema_core::ResourceSchemaOracle;
-use serde_json::Value;
+use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
+use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ContractPathSchemaEvidence, ContractSchemaSignals};
+use helm_schema_ir::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
-use crate::contract_evidence_index::{ContractEvidenceIndex, IndexedContractPathEvidence};
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
-use crate::schema_model::{empty_schema, is_empty_schema};
+use crate::schema_model::{empty_schema, is_empty_schema, type_schema};
 use crate::values_yaml::{
     ValuePathCaches, ValuesYamlPathFacts, ValuesYamlPathInfo, build_value_path_caches,
 };
@@ -29,43 +28,63 @@ struct ProviderSchemaForPath {
     provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
+struct IndexedPathSchemaEvidence {
+    contract: ContractPathSchemaEvidence,
+    provider_schemas: Vec<Arc<ProviderSchemaCandidate>>,
+    type_hint_schema: Value,
+    metadata_schema: Value,
+    guard_predicate_schema: Value,
+}
+
 struct PathSchemaEvidence {
     policy_inputs: ValuePathSchemaInputs,
     provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
-pub(crate) struct PathSchemaResolver {
-    evidence_index: ContractEvidenceIndex,
-    path_caches: ValuePathCaches,
-    resolve_policy: ResolvePolicy,
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ProviderSchemaLookupKey {
+    resource: ResourceRef,
+    path: YamlPath,
+    kind: ValueKind,
+    is_self_range_collection: bool,
 }
 
-impl PathSchemaResolver {
+pub(crate) struct PathSchemaResolver<'a> {
+    schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
+    referenced_value_paths: BTreeSet<String>,
+    path_caches: ValuePathCaches,
+    resolve_policy: ResolvePolicy,
+    provider: &'a dyn ResourceSchemaOracle,
+    provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<ProviderSchemaCandidate>>>,
+}
+
+impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
-        contract_signals: &ContractSchemaSignals,
+        contract_signals: &'a ContractSchemaSignals,
         values_yaml_doc: &YamlValue,
-        provider: &dyn ResourceSchemaOracle,
+        provider: &'a dyn ResourceSchemaOracle,
     ) -> Self {
-        let schema_evidence_by_path = contract_signals.schema_evidence_by_value_path();
-        let evidence_index =
-            ContractEvidenceIndex::from_contract_signals(contract_signals, provider);
-        let pruned_parent_value_paths = schema_evidence_by_path
+        let schema_evidence_by_value_path = contract_signals.schema_evidence_by_value_path();
+        let referenced_value_paths = schema_evidence_by_value_path
+            .iter()
+            .filter(|(_, evidence)| evidence.is_referenced_value_path)
+            .map(|(path, _)| path.clone())
+            .collect();
+        let pruned_parent_value_paths = schema_evidence_by_value_path
             .iter()
             .filter_map(|(path, evidence)| {
                 (evidence.facts.has_referenced_descendants && !evidence.facts.used_as_fragment)
                     .then_some(path.clone())
             })
             .collect();
-        let path_caches = build_value_path_caches(
+
+        Self::from_schema_evidence(
+            schema_evidence_by_value_path,
+            referenced_value_paths,
             values_yaml_doc,
-            evidence_index.referenced_value_paths(),
-            &pruned_parent_value_paths,
-        );
-        Self {
-            evidence_index,
-            path_caches,
-            resolve_policy: ResolvePolicy,
-        }
+            pruned_parent_value_paths,
+            provider,
+        )
     }
 
     pub(crate) fn resolve_single_path_evidence(
@@ -73,14 +92,58 @@ impl PathSchemaResolver {
         values_yaml_doc: &YamlValue,
         provider: &dyn ResourceSchemaOracle,
     ) -> Option<ResolvedPathSchema> {
-        let evidence_index = ContractEvidenceIndex::from_path_evidence(evidence, provider);
-        let mut resolver =
-            Self::from_evidence_index(evidence_index, values_yaml_doc, BTreeSet::new());
-        resolver.resolve_path(evidence.value_path.clone())
+        let referenced_value_paths = evidence
+            .is_referenced_value_path
+            .then(|| evidence.value_path.clone())
+            .into_iter()
+            .collect::<BTreeSet<_>>();
+        let path_caches =
+            build_value_path_caches(values_yaml_doc, &referenced_value_paths, &BTreeSet::new());
+        let path_segments = path_caches.path_segments.get(&evidence.value_path)?.clone();
+        let values_yaml_info = path_caches.values_yaml.get(&evidence.value_path);
+        let mut provider_schema_cache = HashMap::new();
+        let indexed_evidence = index_path_evidence(
+            evidence.clone(),
+            provider,
+            &ResolvePolicy,
+            &mut provider_schema_cache,
+        );
+        let PathSchemaEvidence {
+            policy_inputs,
+            provider_schema_candidate,
+        } = Self::path_schema_evidence(indexed_evidence, values_yaml_info);
+        let resolve_policy = ResolvePolicy;
+        let schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
+        let provider_schema_candidate = provider_schema_candidate
+            .filter(|provider_schema| provider_schema.survives_as(&schema));
+
+        Some(ResolvedPathSchema {
+            value_path: evidence.value_path.clone(),
+            path_segments,
+            schema,
+            values_yaml_schema: values_yaml_info
+                .map(|path_info| path_info.schema.clone())
+                .unwrap_or_else(empty_schema),
+            provider_schema_candidate,
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn provider_schemas_for_path_evidence(
+        evidence: &ContractPathSchemaEvidence,
+        provider: &'a dyn ResourceSchemaOracle,
+    ) -> Vec<Arc<ProviderSchemaCandidate>> {
+        let mut provider_schema_cache = HashMap::new();
+        provider_schemas_for_path_evidence(
+            evidence,
+            provider,
+            &ResolvePolicy,
+            &mut provider_schema_cache,
+        )
     }
 
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
-        let referenced_value_paths = self.evidence_index.take_referenced_value_paths();
+        let referenced_value_paths = std::mem::take(&mut self.referenced_value_paths);
         referenced_value_paths
             .into_iter()
             .filter_map(|value_path| self.resolve_path(value_path))
@@ -89,7 +152,11 @@ impl PathSchemaResolver {
 
     fn resolve_path(&mut self, value_path: String) -> Option<ResolvedPathSchema> {
         let path_segments = self.path_caches.path_segments.get(&value_path)?.clone();
-        let evidence = self.evidence_index.take_path_evidence(&value_path)?;
+        let evidence = self
+            .schema_evidence_by_value_path
+            .get(&value_path)
+            .cloned()
+            .map(|evidence| self.index_path_evidence(evidence))?;
         let values_yaml_info = self.path_caches.values_yaml.get(&value_path);
         let PathSchemaEvidence {
             policy_inputs,
@@ -112,25 +179,42 @@ impl PathSchemaResolver {
         })
     }
 
-    fn from_evidence_index(
-        evidence_index: ContractEvidenceIndex,
+    fn from_schema_evidence(
+        schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
+        referenced_value_paths: BTreeSet<String>,
         values_yaml_doc: &YamlValue,
         pruned_parent_value_paths: BTreeSet<String>,
+        provider: &'a dyn ResourceSchemaOracle,
     ) -> Self {
         let path_caches = build_value_path_caches(
             values_yaml_doc,
-            evidence_index.referenced_value_paths(),
+            &referenced_value_paths,
             &pruned_parent_value_paths,
         );
         Self {
-            evidence_index,
+            schema_evidence_by_value_path,
+            referenced_value_paths,
             path_caches,
             resolve_policy: ResolvePolicy,
+            provider,
+            provider_schema_cache: HashMap::new(),
         }
     }
 
+    fn index_path_evidence(
+        &mut self,
+        evidence: ContractPathSchemaEvidence,
+    ) -> IndexedPathSchemaEvidence {
+        index_path_evidence(
+            evidence,
+            self.provider,
+            &self.resolve_policy,
+            &mut self.provider_schema_cache,
+        )
+    }
+
     fn path_schema_evidence(
-        evidence: IndexedContractPathEvidence,
+        evidence: IndexedPathSchemaEvidence,
         values_yaml_info: Option<&ValuesYamlPathInfo>,
     ) -> PathSchemaEvidence {
         let provider_schema =
@@ -183,4 +267,132 @@ impl PathSchemaResolver {
             provider_schema_candidate,
         }
     }
+}
+
+fn provider_schemas_for_path_evidence(
+    evidence: &ContractPathSchemaEvidence,
+    provider: &dyn ResourceSchemaOracle,
+    resolve_policy: &ResolvePolicy,
+    provider_schema_cache: &mut HashMap<
+        ProviderSchemaLookupKey,
+        Option<Arc<ProviderSchemaCandidate>>,
+    >,
+) -> Vec<Arc<ProviderSchemaCandidate>> {
+    let mut provider_schemas = Vec::new();
+
+    for provider_use in &evidence.provider_schema_uses {
+        let lookup_key = ProviderSchemaLookupKey {
+            resource: provider_use.resource.clone(),
+            path: provider_use.path.clone(),
+            kind: provider_use.kind,
+            is_self_range_collection: provider_use.is_self_range_collection,
+        };
+        let schema = match provider_schema_cache.entry(lookup_key) {
+            std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                let schema = lookup_provider_schema(provider, provider_use, resolve_policy);
+                entry.insert(schema.clone());
+                schema
+            }
+        };
+        if let Some(schema) = schema
+            && !provider_schemas
+                .iter()
+                .any(|existing| Arc::ptr_eq(existing, &schema))
+        {
+            provider_schemas.push(schema);
+        }
+    }
+
+    provider_schemas
+}
+
+fn index_path_evidence(
+    evidence: ContractPathSchemaEvidence,
+    provider: &dyn ResourceSchemaOracle,
+    resolve_policy: &ResolvePolicy,
+    provider_schema_cache: &mut HashMap<
+        ProviderSchemaLookupKey,
+        Option<Arc<ProviderSchemaCandidate>>,
+    >,
+) -> IndexedPathSchemaEvidence {
+    let provider_schemas = provider_schemas_for_path_evidence(
+        &evidence,
+        provider,
+        resolve_policy,
+        provider_schema_cache,
+    );
+    let type_hint_schema = if evidence.type_hints.is_empty() {
+        empty_schema()
+    } else {
+        merge_type_hint_schemas(&evidence.type_hints)
+    };
+    let metadata_schema = if evidence.metadata_field_kinds.is_empty() {
+        empty_schema()
+    } else {
+        merge_schema_list(
+            evidence
+                .metadata_field_kinds
+                .iter()
+                .copied()
+                .map(metadata_field_schema)
+                .collect(),
+        )
+    };
+    let guard_predicate_schema = merge_schema_list(
+        evidence
+            .guard_predicates
+            .iter()
+            .filter_map(|predicate| {
+                resolve_policy.guard_predicate_schema(&evidence.value_path, predicate)
+            })
+            .collect(),
+    );
+
+    IndexedPathSchemaEvidence {
+        contract: evidence,
+        provider_schemas,
+        type_hint_schema,
+        metadata_schema,
+        guard_predicate_schema,
+    }
+}
+
+fn lookup_provider_schema(
+    provider: &dyn ResourceSchemaOracle,
+    provider_use: &ProviderSchemaUse,
+    resolve_policy: &ResolvePolicy,
+) -> Option<Arc<ProviderSchemaCandidate>> {
+    provider
+        .schema_fragment_for_use(provider_use)
+        .and_then(|fragment| {
+            fragment.try_map_schema(|schema| {
+                resolve_policy.provider_schema_for_value_use(schema, provider_use)
+            })
+        })
+        .map(ProviderSchemaCandidate::from_provider_fragment)
+        .map(Arc::new)
+}
+
+fn metadata_field_schema(field: MetadataFieldKind) -> Value {
+    match field {
+        MetadataFieldKind::StringMap => string_map_schema(),
+        MetadataFieldKind::Name | MetadataFieldKind::Namespace => type_schema("string"),
+    }
+}
+
+fn merge_type_hint_schemas(schema_types: &BTreeSet<String>) -> Value {
+    merge_schema_list(
+        schema_types
+            .iter()
+            .map(|schema_type| type_schema(schema_type))
+            .collect(),
+    )
+}
+
+fn string_map_schema() -> Value {
+    let mut schema = Map::new();
+    schema.insert("type".to_string(), Value::String("object".to_string()));
+    schema.insert("additionalProperties".to_string(), type_schema("string"));
+    Value::Object(schema)
 }

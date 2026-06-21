@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::contract::fact::ContractFact;
-use crate::contract::{ContractProjection, ContractTypeHint, FinalizedContract};
+use crate::contract::{ContractDocument, ContractTypeHint, FinalizedContract};
 use crate::contract_normalization::normalize_contract_uses;
 use crate::contract_signals::ContractSchemaSignals;
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
@@ -128,17 +128,22 @@ impl ContractIr {
         }
     }
 
-    /// Finalize claims and project them to the inspection DTO artifact.
+    /// Finalize claims once and return the canonical normalized contract.
     #[must_use]
-    pub fn project(self) -> ContractProjection {
-        self.finalize().into_projection()
+    pub fn project(self) -> FinalizedContract {
+        self.finalize()
+    }
+
+    /// Finalize claims and export the stable versioned inspection document.
+    #[must_use]
+    pub fn document(self) -> ContractDocument {
+        self.finalize().document()
     }
 
     /// Finalize claims and derive the typed schema-generation signals.
     ///
     /// Production schema generation should use this method when it does not
-    /// need fixture/inspection rows. [`ContractProjection`] remains the
-    /// explicit DTO projection boundary.
+    /// need fixture/inspection rows or the stable export document.
     #[must_use]
     pub fn into_schema_signals(self) -> ContractSchemaSignals {
         self.finalize().into_schema_signals()

@@ -13,11 +13,11 @@
 //! controls whether resource lookup can run.
 
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
-use helm_schema_ir::{ContractProjection, ContractUse, SymbolicIrContext};
+use helm_schema_ir::{ContractUse, FinalizedContract, SymbolicIrContext};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-fn generate(template: &str) -> ContractProjection {
+fn generate(template: &str) -> FinalizedContract {
     let idx = DefineIndex::new();
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)

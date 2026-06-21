@@ -1,15 +1,15 @@
-use super::{ContractDocument, ContractProjection, ContractTypeHint, ContractUse};
+use super::{ContractDocument, ContractTypeHint, ContractUse};
 use crate::contract_signal_builder::derive_schema_signals_from_contract_parts;
 use crate::contract_signals::ContractSchemaSignals;
 
 /// Finalized contract artifact derived from one canonical normalized contract.
 ///
-/// Both inspection projection and schema-lowering signals come from the same
+/// Stable inspection rows and schema-lowering signals come from the same
 /// normalized contract uses, so downstream callers do not need to re-finalize
-/// a [`super::ContractIr`] separately for each artifact.
+/// a [`super::ContractIr`] separately or hop through another wrapper type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FinalizedContract {
-    projection: ContractProjection,
+    uses: Vec<ContractUse>,
     schema_signals: ContractSchemaSignals,
 }
 
@@ -20,17 +20,16 @@ impl FinalizedContract {
     ) -> Self {
         let schema_signals =
             derive_schema_signals_from_contract_parts(&normalized_uses, &type_hints);
-        let projection = ContractProjection::from_normalized_uses(normalized_uses);
 
         Self {
-            projection,
+            uses: normalized_uses,
             schema_signals,
         }
     }
 
     #[must_use]
-    pub fn projection(&self) -> &ContractProjection {
-        &self.projection
+    pub fn uses(&self) -> &[ContractUse] {
+        &self.uses
     }
 
     #[must_use]
@@ -40,12 +39,12 @@ impl FinalizedContract {
 
     #[must_use]
     pub fn document(&self) -> ContractDocument {
-        self.projection.clone().into_document()
+        ContractDocument::from_contract_uses(self.uses.clone())
     }
 
     #[must_use]
-    pub fn into_projection(self) -> ContractProjection {
-        self.projection
+    pub fn into_uses(self) -> Vec<ContractUse> {
+        self.uses
     }
 
     #[must_use]

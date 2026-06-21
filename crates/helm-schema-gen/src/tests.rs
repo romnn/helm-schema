@@ -447,23 +447,18 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
             .is_some(),
         "metricRelabelings should preserve exact provider schema candidate"
     );
-    let mut index = crate::contract_evidence_index::ContractEvidenceIndex::from_contract_signals(
-        &schema_signals,
-        &provider,
-    );
-
-    let evidence = index
-        .take_path_evidence("serviceMonitor.metricRelabelings")
-        .expect("metricRelabelings evidence");
+    let provider_schemas =
+        crate::path_resolver::PathSchemaResolver::provider_schemas_for_path_evidence(
+            schema_signals
+                .evidence_for("serviceMonitor.metricRelabelings")
+                .expect("metricRelabelings evidence"),
+            &provider,
+        );
     assert!(
-        !evidence.provider_schemas.is_empty(),
+        !provider_schemas.is_empty(),
         "metricRelabelings should keep CRD provider schema evidence"
     );
-    let provider_schema = evidence
-        .provider_schemas
-        .first()
-        .expect("provider schema")
-        .schema();
+    let provider_schema = provider_schemas.first().expect("provider schema").schema();
     assert_eq!(
         provider_schema.get("type").and_then(Value::as_str),
         Some("array"),

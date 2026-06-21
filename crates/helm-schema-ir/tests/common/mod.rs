@@ -1,5 +1,5 @@
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
-use helm_schema_ir::{ContractDocument, SymbolicIrContext};
+use helm_schema_ir::SymbolicIrContext;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
@@ -34,9 +34,9 @@ pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
     let idx = build_define_index(&TreeSitterParser, case.define_sources);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(&src, &idx)
-        .project();
+        .document();
 
-    let actual = serde_json::to_value(ContractDocument::from_projection(ir)).expect("serialize");
+    let actual = serde_json::to_value(ir).expect("serialize");
     if std::env::var(case.dump_env).is_ok() {
         eprintln!(
             "{}",

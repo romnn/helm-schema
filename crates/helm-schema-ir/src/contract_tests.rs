@@ -148,8 +148,8 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
 
     contract.push_pathless_scalar("extraConfig");
 
-    let projection = contract.project();
-    let value_uses = projection.uses();
+    let finalized = contract.project();
+    let value_uses = finalized.uses();
     sim_assert_eq!(have: value_uses.len(), want: 1);
     sim_assert_eq!(have: value_uses[0].source_expr, want: "extraConfig");
     sim_assert_eq!(have: value_uses[0].path, want: YamlPath(Vec::new()));
@@ -193,11 +193,11 @@ fn contract_ir_declared_type_hints_do_not_project_as_contract_rows() {
     let mut contract = ContractIr::default();
     contract.add_type_hint("image.tag", "string");
 
-    let projection = contract.project();
+    let finalized = contract.project();
 
     assert!(
-        projection.uses().is_empty(),
-        "declared type hints should stay internal to the contract artifact: {projection:#?}"
+        finalized.uses().is_empty(),
+        "declared type hints should stay internal to the contract artifact: {finalized:#?}"
     );
 }
 
@@ -217,6 +217,6 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
 
     let finalized = contract.clone().finalize();
 
-    sim_assert_eq!(have: finalized.projection(), want: &contract.clone().project());
+    sim_assert_eq!(have: finalized.uses(), want: contract.clone().project().uses());
     sim_assert_eq!(have: finalized.schema_signals(), want: &contract.into_schema_signals());
 }
