@@ -4,7 +4,7 @@ use helm_schema_ir::{
     ConditionalGuard, ContractValuePathFacts, GuardValue, ProviderSchemaUse, ValueKind,
 };
 
-use crate::foreign_schema::{ForeignSchemaObject, ForeignSchemaTypeField};
+use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
     EmptyMapPlaceholderUse, empty_map_placeholder_has_structural_object_use,
@@ -113,12 +113,6 @@ struct ValuePathMergeInputs {
     guard_predicate_schema: Value,
     type_hint_schema: Value,
     preserve_empty_string_fallback: bool,
-}
-
-#[derive(Clone, Copy)]
-enum ForeignSchemaRestriction {
-    Scalar,
-    ScalarCollection,
 }
 
 impl ResolvePolicy {
@@ -384,163 +378,5 @@ fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
         Value::Number(_) => Some("number"),
         Value::Null => Some("null"),
         _ => None,
-    }
-}
-
-impl ForeignSchemaRestriction {
-    fn apply(self, schema: Value) -> Option<Value> {
-        match ForeignSchemaObject::from_value(schema) {
-            Ok(schema) => self.apply_object(schema),
-            Err(other) => match self {
-                Self::Scalar => Some(other),
-                Self::ScalarCollection => None,
-            },
-        }
-    }
-
-    fn apply_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
-        if let Some(variants) = schema.union_variants("anyOf") {
-            return restrict_schema_union(schema, "anyOf", variants, |variant| self.apply(variant));
-        }
-        if let Some(variants) = schema.union_variants("oneOf") {
-            return restrict_schema_union(schema, "oneOf", variants, |variant| self.apply(variant));
-        }
-        if let Some(variants) = schema.union_variants("allOf") {
-            let restricted = variants
-                .into_iter()
-                .map(|variant| self.apply(variant))
-                .collect::<Option<Vec<_>>>()?;
-            schema.set_keyword("allOf", Value::Array(restricted));
-            return Some(schema.into_value());
-        }
-
-        match self {
-            Self::Scalar => self.apply_scalar_object(schema),
-            Self::ScalarCollection => self.apply_scalar_collection_object(schema),
-        }
-    }
-
-    fn apply_scalar_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
-        if schema.allows_type("array") {
-            return rewrite_array_schema(schema, Self::Scalar);
-        }
-
-        match schema.type_field() {
-            ForeignSchemaTypeField::Single(schema_type) => {
-                scalar_json_type(&schema_type).then(|| schema.into_value())
-            }
-            ForeignSchemaTypeField::Multiple(schema_types) => {
-                let scalar_types: Vec<String> = schema_types
-                    .into_iter()
-                    .filter(|schema_type| scalar_json_type(schema_type))
-                    .collect();
-                if scalar_types.is_empty() {
-                    return None;
-                }
-                if let ForeignSchemaTypeField::Multiple(original_types) = schema.type_field()
-                    && scalar_types.len() != original_types.len()
-                {
-                    schema.set_type_variants(scalar_types);
-                    schema.strip_non_scalar_keywords();
-                }
-                Some(schema.into_value())
-            }
-            ForeignSchemaTypeField::Absent if schema.has_non_scalar_keywords() => None,
-            ForeignSchemaTypeField::Absent => Some(schema.into_value()),
-            ForeignSchemaTypeField::Unsupported => Some(schema.into_value()),
-        }
-    }
-
-    fn apply_scalar_collection_object(self, schema: ForeignSchemaObject) -> Option<Value> {
-        if !schema.allows_type("array") {
-            return None;
-        }
-        rewrite_array_schema(schema, Self::Scalar)
-    }
-}
-
-fn rewrite_array_schema(
-    mut schema: ForeignSchemaObject,
-    item_restriction: ForeignSchemaRestriction,
-) -> Option<Value> {
-    if let Some(items) = schema.take_items() {
-        schema.set_items(item_restriction.apply(items)?);
-    }
-    schema.set_type_string("array");
-    schema.strip_object_keywords();
-    Some(schema.into_value())
-}
-
-fn restrict_schema_union(
-    schema: ForeignSchemaObject,
-    keyword: &str,
-    variants: Vec<Value>,
-    restrict: impl FnMut(Value) -> Option<Value>,
-) -> Option<Value> {
-    let retained_variants: Vec<Value> = variants.into_iter().filter_map(restrict).collect();
-    if retained_variants.is_empty() {
-        return None;
-    }
-
-    let mut annotations = schema.into_annotations_only();
-    annotations.set_keyword(keyword, Value::Array(retained_variants));
-    Some(annotations.into_value())
-}
-
-fn scalar_json_type(schema_type: &str) -> bool {
-    matches!(
-        schema_type,
-        "string" | "number" | "integer" | "boolean" | "null"
-    )
-}
-
-#[cfg(test)]
-mod restriction_tests {
-    use serde_json::json;
-    use test_util::prelude::sim_assert_eq;
-
-    use super::ForeignSchemaRestriction;
-
-    #[test]
-    fn scalar_restriction_keeps_only_scalar_union_variants_and_annotations() {
-        let schema = json!({
-            "description": "provider leaf",
-            "anyOf": [
-                { "type": "string" },
-                { "type": "object", "properties": { "name": { "type": "string" } } }
-            ]
-        });
-
-        sim_assert_eq!(
-            have: ForeignSchemaRestriction::Scalar.apply(schema),
-            want: Some(json!({
-                "description": "provider leaf",
-                "anyOf": [{ "type": "string" }]
-            })),
-        );
-    }
-
-    #[test]
-    fn scalar_collection_restriction_requires_array_and_restricts_items() {
-        let schema = json!({
-            "type": ["array", "object"],
-            "properties": { "name": { "type": "string" } },
-            "items": {
-                "anyOf": [
-                    { "type": "string" },
-                    { "type": "object" }
-                ]
-            }
-        });
-
-        sim_assert_eq!(
-            have: ForeignSchemaRestriction::ScalarCollection.apply(schema),
-            want: Some(json!({
-                "type": "array",
-                "items": {
-                    "anyOf": [{ "type": "string" }]
-                }
-            })),
-        );
     }
 }
