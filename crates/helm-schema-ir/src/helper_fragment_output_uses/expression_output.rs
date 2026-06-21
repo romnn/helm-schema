@@ -47,7 +47,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let mut seen_set = HashSet::new();
     if apply_local_set_mutations_from_exprs(
         exprs,
-        state.local_bindings,
+        &mut state.locals.bindings,
         current_dot_fragment,
         state.context,
         &mut seen_set,
@@ -80,7 +80,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
-    let local_outputs = local_rendered_paths_from_exprs(exprs, state.local_bindings);
+    let local_outputs = local_rendered_paths_from_exprs(exprs, &state.locals.bindings);
     let handled_outputs: BTreeSet<String> = direct_outputs
         .iter()
         .chain(local_outputs.iter())
@@ -105,17 +105,17 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     state.outputs.extend(direct_output_uses);
 
     let local_fallback_paths =
-        helper_env.local_default_fallback_paths_in_exprs(exprs, state.local_default_paths);
+        helper_env.local_default_fallback_paths_in_exprs(exprs, &state.locals.default_paths);
     let local_output_uses = local_output_uses_from_exprs(
         exprs,
         &output_path,
         kind,
         active_output_predicates,
         &local_fallback_paths,
-        state.local_bindings,
+        &state.locals.bindings,
     );
 
-    let mut nested = helper_env.summarize_calls_in_exprs(exprs, state.local_bindings, state.seen);
+    let mut nested = helper_env.summarize_calls_in_exprs(exprs, &state.locals.bindings, state.seen);
     let nested_fragment_outputs = nested.fragment_output_uses();
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
@@ -207,12 +207,12 @@ fn collect_bound_fragment_output_assignment_uses(
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let mut seen_rhs = HashSet::new();
     let mut binding =
-        helper_env.fragment_value_from_expr(rhs_expr, state.local_bindings, &mut seen_rhs);
+        helper_env.fragment_value_from_expr(rhs_expr, &state.locals.bindings, &mut seen_rhs);
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let mut rhs_seen = state.seen.clone();
         let nested =
-            helper_env.summarize_calls_in_exprs(rhs_exprs, state.local_bindings, &mut rhs_seen);
+            helper_env.summarize_calls_in_exprs(rhs_exprs, &state.locals.bindings, &mut rhs_seen);
         top_level_helper_dependency_paths = nested.dependency_paths();
         if let Some(nested_binding) = nested.project_fragment_value() {
             binding = match binding {
@@ -243,17 +243,18 @@ fn collect_bound_fragment_output_assignment_uses(
         };
     }
     if let Some(binding) = binding {
-        state.local_bindings.insert(var.to_string(), binding);
+        state.locals.bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
     defaulted_paths.extend(
-        helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, state.local_default_paths),
+        helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, &state.locals.default_paths),
     );
     if defaulted_paths.is_empty() {
-        state.local_default_paths.remove(var);
+        state.locals.default_paths.remove(var);
     } else {
         state
-            .local_default_paths
+            .locals
+            .default_paths
             .insert(var.to_string(), defaulted_paths);
     }
 }
@@ -311,7 +312,7 @@ fn helper_expression_output_uses_from_exprs(
             continue;
         }
         if let Some(binding) =
-            helper_env.helper_value_from_expr(expr, state.local_bindings, &mut expression_seen)
+            helper_env.helper_value_from_expr(expr, &state.locals.bindings, &mut expression_seen)
         {
             binding.collect_output_uses(
                 &mut expression_output_uses,

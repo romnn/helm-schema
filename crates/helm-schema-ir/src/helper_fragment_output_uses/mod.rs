@@ -20,8 +20,7 @@ use crate::helper_runtime_plan::{
     helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
-use crate::helper_summary_mutation::merge_local_default_paths;
-use crate::helper_walk_state::FragmentOutputWalkState;
+use crate::helper_walk_state::{FragmentOutputWalkState, HelperRuntimeLocals};
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
@@ -54,8 +53,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_tree(
         dot_stack: vec![current_dot.cloned()],
         dot_fragment_stack: vec![current_dot_fragment.cloned()],
         active_output_predicates: BTreeSet::new(),
-        local_bindings: state.local_bindings,
-        local_default_paths: state.local_default_paths,
+        locals: state.locals,
         context: state.context,
         seen: state.seen,
         outputs: state.outputs,
@@ -72,8 +70,7 @@ struct FragmentOutputUseRuntime<'context, 'state> {
     dot_stack: Vec<Option<AbstractValue>>,
     dot_fragment_stack: Vec<Option<AbstractValue>>,
     active_output_predicates: BTreeSet<Predicate>,
-    local_bindings: &'state mut HashMap<String, AbstractValue>,
-    local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
+    locals: &'state mut HelperRuntimeLocals,
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
     outputs: &'state mut Vec<HelperFragmentOutputUse>,
@@ -84,8 +81,7 @@ struct FragmentOutputUseRuntime<'context, 'state> {
 
 #[derive(Clone)]
 struct FragmentOutputUseSnapshot {
-    local_bindings: HashMap<String, AbstractValue>,
-    local_default_paths: HashMap<String, BTreeSet<String>>,
+    locals: HelperRuntimeLocals,
     dot_stack_len: usize,
     dot_fragment_stack_len: usize,
     active_output_predicates: BTreeSet<Predicate>,
@@ -110,8 +106,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
         let current_dot_fragment = self.current_dot_fragment().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
         let mut state = FragmentOutputWalkState {
-            local_bindings: &mut *self.local_bindings,
-            local_default_paths: &mut *self.local_default_paths,
+            locals: &mut *self.locals,
             context: self.context,
             seen: self.seen,
             outputs: self.outputs,
@@ -128,28 +123,20 @@ impl FragmentOutputUseRuntime<'_, '_> {
         );
     }
 
-    fn merge_outcome_maps(&mut self, outcomes: Vec<FragmentOutputUseSnapshot>) {
+    fn merge_outcomes(&mut self, outcomes: Vec<FragmentOutputUseSnapshot>) {
         let mut iter = outcomes.into_iter();
         let Some(first) = iter.next() else {
             return;
         };
-        let mut local_bindings = first.local_bindings;
-        let mut local_default_paths = first.local_default_paths;
+        let mut locals = first.locals;
         for outcome in iter {
-            local_bindings = crate::fragment_assignment::merge_fragment_locals(
-                local_bindings,
-                outcome.local_bindings,
-            );
-            local_default_paths =
-                merge_local_default_paths(local_default_paths, outcome.local_default_paths);
+            locals = locals.merge(outcome.locals);
         }
-        *self.local_bindings = local_bindings;
-        *self.local_default_paths = local_default_paths;
+        *self.locals = locals;
     }
 
-    fn promote_outcome_maps(&mut self, outcome: FragmentOutputUseSnapshot) {
-        *self.local_bindings = outcome.local_bindings;
-        *self.local_default_paths = outcome.local_default_paths;
+    fn promote_outcome(&mut self, outcome: FragmentOutputUseSnapshot) {
+        *self.locals = outcome.locals;
     }
 
     fn collect_destructured_range_fragment_outputs(
@@ -198,9 +185,9 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
 
     fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
         if let Some(binding) = binding {
-            self.local_bindings.insert(variable, binding);
+            self.locals.bindings.insert(variable, binding);
         } else {
-            self.local_bindings.remove(&variable);
+            self.locals.bindings.remove(&variable);
         }
     }
 
@@ -261,8 +248,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
         FragmentOutputUseSnapshot {
-            local_bindings: self.local_bindings.clone(),
-            local_default_paths: self.local_default_paths.clone(),
+            locals: self.locals.clone(),
             dot_stack_len: self.dot_stack.len(),
             dot_fragment_stack_len: self.dot_fragment_stack.len(),
             active_output_predicates: self.active_output_predicates.clone(),
@@ -270,8 +256,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     }
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
-        *self.local_bindings = snapshot.local_bindings;
-        *self.local_default_paths = snapshot.local_default_paths;
+        *self.locals = snapshot.locals;
         self.dot_stack.truncate(snapshot.dot_stack_len);
         self.dot_fragment_stack
             .truncate(snapshot.dot_fragment_stack_len);
@@ -291,7 +276,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         self.dot_fragment_stack
             .truncate(entry.dot_fragment_stack_len);
         self.active_output_predicates = entry.active_output_predicates.clone();
-        self.merge_outcome_maps(outcomes);
+        self.merge_outcomes(outcomes);
     }
 
     fn join_range_scopes(
@@ -309,12 +294,12 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             .is_some_and(|frame| frame.is_definitely_nonempty())
         {
             if let Some(body_outcome) = outcomes.into_iter().next() {
-                self.promote_outcome_maps(body_outcome);
+                self.promote_outcome(body_outcome);
             }
             return;
         }
 
-        self.merge_outcome_maps(outcomes);
+        self.merge_outcomes(outcomes);
     }
 
     fn range_iteration_count(&self) -> usize {
@@ -333,7 +318,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             return;
         };
         if let Some((variable, binding)) = iteration.variable_binding {
-            self.local_bindings.insert(variable, binding);
+            self.locals.bindings.insert(variable, binding);
         }
         self.dot_stack.push(iteration.helper_dot_binding);
         self.dot_fragment_stack.push(iteration.fragment_dot_binding);
@@ -384,10 +369,11 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
 
     fn apply_assignment_side_effects(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) -> bool {
         let mut seen_set = HashSet::new();
+        let current_dot_fragment = self.current_dot_fragment().cloned();
         if crate::fragment_assignment::apply_local_set_mutations_from_exprs(
             exprs,
-            self.local_bindings,
-            self.current_dot_fragment().cloned().as_ref(),
+            &mut self.locals.bindings,
+            current_dot_fragment.as_ref(),
             self.context,
             &mut seen_set,
         ) {
@@ -414,7 +400,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             header,
             self.bindings,
             current_dot.as_ref(),
-            self.local_bindings,
+            &self.locals.bindings,
             self.context,
             self.seen,
             FRAGMENT_SEMANTICS,
@@ -430,7 +416,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.bindings,
             current_dot.as_ref(),
             current_dot_fragment.as_ref(),
-            self.local_bindings,
+            &self.locals.bindings,
             self.context,
             self.seen,
             FRAGMENT_SEMANTICS,
@@ -451,7 +437,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.bindings,
             current_dot.as_ref(),
             current_dot_fragment.as_ref(),
-            self.local_bindings,
+            &self.locals.bindings,
             self.context,
             self.seen,
             FRAGMENT_SEMANTICS,

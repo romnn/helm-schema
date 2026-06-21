@@ -16,9 +16,9 @@ use crate::helper_runtime_plan::{
     helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
-use crate::helper_summary_mutation::{merge_helper_output_meta_maps, merge_local_default_paths};
+use crate::helper_summary_mutation::merge_helper_output_meta_maps;
 use crate::helper_value_expression::collect_helper_value_expression_from_exprs;
-use crate::helper_walk_state::HelperValuesWalkState;
+use crate::helper_walk_state::{HelperRuntimeLocals, HelperValuesWalkState};
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
@@ -44,8 +44,7 @@ pub(crate) fn collect_bound_helper_values_from_tree(
         bindings,
         dot_stack: vec![current_dot.cloned()],
         active_output_predicates: BTreeSet::new(),
-        local_bindings: state.local_bindings,
-        local_default_paths: state.local_default_paths,
+        locals: state.locals,
         local_output_meta: state.local_output_meta,
         context: state.context,
         seen: state.seen,
@@ -61,8 +60,7 @@ struct HelperValueRuntime<'context, 'state> {
     bindings: &'state HashMap<String, AbstractValue>,
     dot_stack: Vec<Option<AbstractValue>>,
     active_output_predicates: BTreeSet<Predicate>,
-    local_bindings: &'state mut HashMap<String, AbstractValue>,
-    local_default_paths: &'state mut HashMap<String, BTreeSet<String>>,
+    locals: &'state mut HelperRuntimeLocals,
     local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
@@ -73,8 +71,7 @@ struct HelperValueRuntime<'context, 'state> {
 
 #[derive(Clone)]
 struct HelperValueSnapshot {
-    local_bindings: HashMap<String, AbstractValue>,
-    local_default_paths: HashMap<String, BTreeSet<String>>,
+    locals: HelperRuntimeLocals,
     local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     dot_stack_len: usize,
     active_output_predicates: BTreeSet<Predicate>,
@@ -93,8 +90,7 @@ impl HelperValueRuntime<'_, '_> {
         let current_dot = self.current_dot().cloned();
         let active_output_predicates = self.active_output_predicates.clone();
         let mut state = HelperValuesWalkState {
-            local_bindings: &mut *self.local_bindings,
-            local_default_paths: &mut *self.local_default_paths,
+            locals: &mut *self.locals,
             local_output_meta: &mut *self.local_output_meta,
             context: self.context,
             seen: self.seen,
@@ -115,32 +111,24 @@ impl HelperValueRuntime<'_, '_> {
         }
     }
 
-    fn merge_outcome_maps(&mut self, outcomes: Vec<HelperValueSnapshot>) {
+    fn merge_outcomes(&mut self, outcomes: Vec<HelperValueSnapshot>) {
         let mut iter = outcomes.into_iter();
         let Some(first) = iter.next() else {
             return;
         };
-        let mut local_bindings = first.local_bindings;
-        let mut local_default_paths = first.local_default_paths;
+        let mut locals = first.locals;
         let mut local_output_meta = first.local_output_meta;
         for outcome in iter {
-            local_bindings = crate::fragment_assignment::merge_fragment_locals(
-                local_bindings,
-                outcome.local_bindings,
-            );
-            local_default_paths =
-                merge_local_default_paths(local_default_paths, outcome.local_default_paths);
+            locals = locals.merge(outcome.locals);
             local_output_meta =
                 merge_helper_output_meta_maps(local_output_meta, outcome.local_output_meta);
         }
-        *self.local_bindings = local_bindings;
-        *self.local_default_paths = local_default_paths;
+        *self.locals = locals;
         *self.local_output_meta = local_output_meta;
     }
 
-    fn promote_outcome_maps(&mut self, outcome: HelperValueSnapshot) {
-        *self.local_bindings = outcome.local_bindings;
-        *self.local_default_paths = outcome.local_default_paths;
+    fn promote_outcome(&mut self, outcome: HelperValueSnapshot) {
+        *self.locals = outcome.locals;
         *self.local_output_meta = outcome.local_output_meta;
     }
 }
@@ -214,8 +202,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
         HelperValueSnapshot {
-            local_bindings: self.local_bindings.clone(),
-            local_default_paths: self.local_default_paths.clone(),
+            locals: self.locals.clone(),
             local_output_meta: self.local_output_meta.clone(),
             dot_stack_len: self.dot_stack.len(),
             active_output_predicates: self.active_output_predicates.clone(),
@@ -223,8 +210,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     }
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
-        *self.local_bindings = snapshot.local_bindings;
-        *self.local_default_paths = snapshot.local_default_paths;
+        *self.locals = snapshot.locals;
         *self.local_output_meta = snapshot.local_output_meta;
         self.dot_stack.truncate(snapshot.dot_stack_len);
         self.active_output_predicates = snapshot.active_output_predicates;
@@ -241,7 +227,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     ) {
         self.dot_stack.truncate(entry.dot_stack_len);
         self.active_output_predicates = entry.active_output_predicates.clone();
-        self.merge_outcome_maps(outcomes);
+        self.merge_outcomes(outcomes);
     }
 
     fn join_range_scopes(
@@ -257,12 +243,12 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             .is_some_and(|frame| frame.is_definitely_nonempty())
         {
             if let Some(body_outcome) = outcomes.into_iter().next() {
-                self.promote_outcome_maps(body_outcome);
+                self.promote_outcome(body_outcome);
             }
             return;
         }
 
-        self.merge_outcome_maps(outcomes);
+        self.merge_outcomes(outcomes);
     }
 
     fn range_iteration_count(&self) -> usize {
@@ -281,7 +267,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             return;
         };
         if let Some((variable, binding)) = iteration.variable_binding {
-            self.local_bindings.insert(variable, binding);
+            self.locals.bindings.insert(variable, binding);
         }
         self.dot_stack.push(iteration.helper_dot_binding);
     }
@@ -336,7 +322,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             header,
             self.bindings,
             current_dot.as_ref(),
-            self.local_bindings,
+            &self.locals.bindings,
             self.context,
             self.seen,
             VALUE_SEMANTICS,
@@ -353,7 +339,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.bindings,
             current_dot.as_ref(),
             current_dot_fragment.as_ref(),
-            self.local_bindings,
+            &self.locals.bindings,
             self.context,
             self.seen,
             VALUE_SEMANTICS,
@@ -375,7 +361,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.bindings,
             current_dot.as_ref(),
             current_dot_fragment.as_ref(),
-            self.local_bindings,
+            &self.locals.bindings,
             self.context,
             self.seen,
             VALUE_SEMANTICS,
@@ -384,7 +370,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         self.active_output_predicates
             .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
         if let Some((variable, binding)) = plan.non_exact_variable_binding {
-            self.local_bindings.insert(variable, binding);
+            self.locals.bindings.insert(variable, binding);
         }
         self.range_frames.push(plan.frame);
         plan.action

@@ -10,7 +10,9 @@ use crate::fragment_expr_eval::{
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_tree;
 use crate::helper_summary::HelperSummary;
 use crate::helper_value_analysis::collect_bound_helper_values_from_tree;
-use crate::helper_walk_state::{FragmentOutputWalkState, HelperValuesWalkState};
+use crate::helper_walk_state::{
+    FragmentOutputWalkState, HelperRuntimeLocals, HelperValuesWalkState,
+};
 use crate::{ContractProvenance, SourceSpan};
 
 pub(crate) struct BoundHelperCallResolution {
@@ -156,16 +158,7 @@ pub(crate) fn interpret_bound_helper_body(
     };
     let mut analysis = HelperSummary::default();
     collect_value_facts(&body, resolution, context, seen, &mut analysis);
-
-    let mut helper_fragment_locals = HashMap::new();
-    collect_fragment_output_uses(
-        &body,
-        resolution,
-        context,
-        seen,
-        &mut helper_fragment_locals,
-        &mut analysis,
-    );
+    collect_fragment_output_uses(&body, resolution, context, seen, &mut analysis);
     body.attach_provenance(&mut analysis);
 
     analysis
@@ -178,12 +171,10 @@ fn collect_value_facts(
     seen: &mut HashSet<String>,
     analysis: &mut HelperSummary,
 ) {
-    let mut local_bindings = HashMap::new();
-    let mut local_default_paths = HashMap::new();
+    let mut locals = HelperRuntimeLocals::default();
     let mut local_output_meta = HashMap::new();
     let mut helper_values_state = HelperValuesWalkState {
-        local_bindings: &mut local_bindings,
-        local_default_paths: &mut local_default_paths,
+        locals: &mut locals,
         local_output_meta: &mut local_output_meta,
         context,
         seen,
@@ -203,14 +194,12 @@ fn collect_fragment_output_uses(
     resolution: &BoundHelperCallResolution,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    helper_fragment_locals: &mut HashMap<String, AbstractValue>,
     analysis: &mut HelperSummary,
 ) {
     let mut fragment_output_uses = Vec::new();
-    let mut local_default_paths = HashMap::new();
+    let mut locals = HelperRuntimeLocals::default();
     let mut fragment_output_state = FragmentOutputWalkState {
-        local_bindings: helper_fragment_locals,
-        local_default_paths: &mut local_default_paths,
+        locals: &mut locals,
         context,
         seen,
         outputs: &mut fragment_output_uses,
