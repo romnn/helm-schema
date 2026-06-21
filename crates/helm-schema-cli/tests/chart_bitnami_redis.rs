@@ -1,11 +1,14 @@
 use test_util::prelude::sim_assert_eq;
-mod common;
+#[path = "common/descriptions.rs"]
+mod descriptions;
+#[path = "common/schema_roundtrip.rs"]
+mod schema_roundtrip;
 
 #[test]
 fn bitnami_redis_values_yaml_validates() -> color_eyre::eyre::Result<()> {
-    let schema = common::generate_chart_schema("bitnami-redis")?;
-    let values_json = common::values_yaml_as_json("bitnami-redis")?;
-    common::assert_values_json_validates(&values_json, &schema);
+    let schema = schema_roundtrip::generate_chart_schema_for_path("bitnami-redis")?;
+    let values_json = schema_roundtrip::values_yaml_as_json_for_path("bitnami-redis")?;
+    schema_roundtrip::assert_values_json_validates(&values_json, &schema);
 
     assert_schema_description(
         &schema,
@@ -22,7 +25,7 @@ fn bitnami_redis_values_yaml_validates() -> color_eyre::eyre::Result<()> {
         "/properties/global/properties/imageRegistry/description",
         "Global Docker image registry",
     );
-    common::assert_chart_values_comments_apply_to_existing_schema_paths(
+    descriptions::assert_chart_values_comments_apply_to_existing_schema_paths(
         "bitnami-redis",
         &schema,
         50,

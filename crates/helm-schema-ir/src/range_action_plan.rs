@@ -11,6 +11,7 @@ use crate::fragment_range_scope::{
 };
 use crate::value_path_context::ValuePathContext;
 
+#[derive(Clone)]
 pub(crate) struct RangeActionPlan {
     pub(crate) has_header: bool,
     pub(crate) source_paths: Vec<String>,

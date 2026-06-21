@@ -21,17 +21,18 @@ pub(crate) enum HelperRangeDotSource {
 
 #[derive(Clone, Copy)]
 pub(crate) struct HelperRuntimeSemantics {
-    pub(crate) record_guard_paths: bool,
     pub(crate) apply_alternative_predicate: bool,
     pub(crate) non_exact_range_variable_binding: NonExactRangeVariableBinding,
     pub(crate) range_dot_source: HelperRangeDotSource,
 }
 
+#[derive(Clone)]
 pub(crate) struct HelperConditionPlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) action: ConditionActionPlan,
 }
 
+#[derive(Clone)]
 pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) action: RangeActionPlan,

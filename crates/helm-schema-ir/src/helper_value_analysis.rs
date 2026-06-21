@@ -2,12 +2,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateHeader;
 
+use crate::YamlPath;
 use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
-use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{HelperRangeIteration, NonExactRangeVariableBinding};
@@ -22,7 +22,12 @@ use crate::helper_walk_state::HelperValuesWalkState;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::{ValueKind, YamlPath};
+
+const VALUE_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
+    apply_alternative_predicate: true,
+    non_exact_range_variable_binding: NonExactRangeVariableBinding::Bind,
+    range_dot_source: HelperRangeDotSource::HelperValue,
+};
 
 /// Walks a helper body collecting the values and effects it contributes to
 /// callers that include/template it.
@@ -76,13 +81,6 @@ struct HelperValueSnapshot {
 }
 
 impl HelperValueRuntime<'_, '_> {
-    const SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
-        record_guard_paths: true,
-        apply_alternative_predicate: true,
-        non_exact_range_variable_binding: NonExactRangeVariableBinding::Bind,
-        range_dot_source: HelperRangeDotSource::HelperValue,
-    };
-
     fn current_dot(&self) -> Option<&AbstractValue> {
         self.dot_stack.last().and_then(Option::as_ref)
     }
@@ -112,9 +110,6 @@ impl HelperValueRuntime<'_, '_> {
     }
 
     fn record_guard_paths(&mut self, guard_paths: &BTreeSet<String>) {
-        if !Self::SEMANTICS.record_guard_paths {
-            return;
-        }
         for path in guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
@@ -129,7 +124,10 @@ impl HelperValueRuntime<'_, '_> {
         let mut local_default_paths = first.local_default_paths;
         let mut local_output_meta = first.local_output_meta;
         for outcome in iter {
-            local_bindings = merge_fragment_locals(local_bindings, outcome.local_bindings);
+            local_bindings = crate::fragment_assignment::merge_fragment_locals(
+                local_bindings,
+                outcome.local_bindings,
+            );
             local_default_paths =
                 merge_local_default_paths(local_default_paths, outcome.local_default_paths);
             local_output_meta =
@@ -148,13 +146,19 @@ impl HelperValueRuntime<'_, '_> {
 }
 
 impl ContractUseSink for HelperValueRuntime<'_, '_> {
-    fn emit_contract_use(&mut self, _source_expr: String, _path: YamlPath, _kind: ValueKind) {}
+    fn emit_contract_use(
+        &mut self,
+        _source_expr: String,
+        _path: YamlPath,
+        _kind: crate::ValueKind,
+    ) {
+    }
 
     fn emit_contract_use_with_extra_guards(
         &mut self,
         _source_expr: String,
         _path: YamlPath,
-        _kind: ValueKind,
+        _kind: crate::ValueKind,
         _extra_guards: &[crate::Guard],
     ) {
     }
@@ -335,7 +339,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.local_bindings,
             self.context,
             self.seen,
-            Self::SEMANTICS,
+            VALUE_SEMANTICS,
         );
         self.record_guard_paths(&plan.guard_paths);
         plan.action
@@ -352,7 +356,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.local_bindings,
             self.context,
             self.seen,
-            Self::SEMANTICS,
+            VALUE_SEMANTICS,
         );
         self.record_guard_paths(&plan.guard_paths);
         plan.action
@@ -364,17 +368,17 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         header: Option<&TemplateHeader>,
         _current_path: &YamlPath,
     ) -> RangeActionPlan {
+        let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment();
-        let mut seen_range = self.seen.clone();
         let plan = helper_range_runtime_plan(
             header,
             self.bindings,
-            self.current_dot(),
+            current_dot.as_ref(),
             current_dot_fragment.as_ref(),
             self.local_bindings,
             self.context,
-            &mut seen_range,
-            Self::SEMANTICS,
+            self.seen,
+            VALUE_SEMANTICS,
         );
         self.record_guard_paths(&plan.guard_paths);
         self.active_output_predicates

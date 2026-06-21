@@ -34,7 +34,7 @@ struct FragmentExpressionOutputScope<'a> {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn collect_bound_fragment_output_uses_from_exprs(
+pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     exprs: &[TemplateExpr],
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,

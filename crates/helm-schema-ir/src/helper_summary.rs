@@ -436,6 +436,13 @@ impl HelperSummary {
             .collect()
     }
 
+    pub(crate) fn inline_dependency_path_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        self.dependency_path_meta()
+            .into_iter()
+            .filter(|(path, _meta)| !self.suppress_roots.contains(path))
+            .collect()
+    }
+
     pub(crate) fn direct_dependency_paths(&self) -> BTreeSet<String> {
         self.path_facts
             .iter()

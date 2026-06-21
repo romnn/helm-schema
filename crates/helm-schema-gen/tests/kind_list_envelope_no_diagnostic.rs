@@ -8,7 +8,8 @@
 //! resource's `spec...` path.
 
 use test_util::prelude::sim_assert_eq;
-mod common;
+#[path = "common/schema_generation.rs"]
+mod schema_generation;
 
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ResourceRef, SymbolicIrContext, YamlPath};
@@ -64,7 +65,8 @@ fn kind_list_envelope_descends_into_inner_resource() {
     let chain =
         Chain::new(vec![Box::new(FakeIngressProvider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let schema = common::generate_schema_with_values_yaml(ir, &chain, Some(KIND_LIST_VALUES));
+    let schema =
+        schema_generation::generate_schema_with_values_yaml(ir, &chain, Some(KIND_LIST_VALUES));
     sim_assert_eq!(
         have: schema.pointer("/properties/host/description"),
         want: Some(&Value::String("inner ingress host".to_string())),

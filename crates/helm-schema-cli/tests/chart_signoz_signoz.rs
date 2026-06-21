@@ -1,5 +1,10 @@
 use test_util::prelude::sim_assert_eq;
-mod common;
+#[path = "common/descriptions.rs"]
+mod descriptions;
+#[path = "common/helm_samples.rs"]
+mod helm_samples;
+#[path = "common/schema_roundtrip.rs"]
+mod schema_roundtrip;
 
 use color_eyre::eyre::{OptionExt as _, WrapErr as _};
 use indoc::indoc;
@@ -7,7 +12,7 @@ use serde_json::{Map, Value};
 
 #[test]
 fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<()> {
-    let schema = common::generate_chart_schema("signoz-signoz")?;
+    let schema = schema_roundtrip::generate_chart_schema_for_path("signoz-signoz")?;
     if std::env::var("SCHEMA_DUMP").is_ok() {
         let path = std::env::temp_dir().join("helm-schema.cli.chart-signoz-signoz.schema.json");
         std::fs::write(
@@ -16,8 +21,8 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
         )
         .wrap_err("write signoz schema dump")?;
     }
-    let values_json = common::values_yaml_as_json("signoz-signoz")?;
-    common::assert_values_json_validates(&values_json, &schema);
+    let values_json = schema_roundtrip::values_yaml_as_json_for_path("signoz-signoz")?;
+    schema_roundtrip::assert_values_json_validates(&values_json, &schema);
     assert_schema_description(
         &schema,
         "/properties/alertmanager/properties/ingress/properties/enabled/description",
@@ -38,27 +43,27 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
         "/properties/alertmanager/properties/ingress/properties/hosts/description",
         "Alertmanager Ingress Host names with their path details",
     );
-    common::assert_chart_values_comments_apply_to_existing_schema_paths(
+    descriptions::assert_chart_values_comments_apply_to_existing_schema_paths(
         "signoz-signoz",
         &schema,
         50,
     )?;
-    common::assert_generated_schema_accepts_helm_samples(
+    helm_samples::assert_generated_schema_accepts_helm_samples_for_path(
         "signoz-signoz",
         &schema,
         &[
-            common::HelmValidationSample {
+            helm_samples::HelmValidationSample {
                 name: "default",
                 values_yaml: None,
             },
-            common::HelmValidationSample {
+            helm_samples::HelmValidationSample {
                 name: "enable-otel-gateway",
                 values_yaml: Some(indoc! {"
                     signoz-otel-gateway:
                       enabled: true
                 "}),
             },
-            common::HelmValidationSample {
+            helm_samples::HelmValidationSample {
                 name: "otel-gateway-empty-service-account-name",
                 values_yaml: Some(indoc! {"
                     signoz-otel-gateway:

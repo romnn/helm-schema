@@ -6,7 +6,7 @@ mod runtime;
 use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 
-use action_kind::{NodeActionKind, classify_node_action};
+pub(crate) use action_kind::{NodeActionKind, classify_node_action};
 
 pub(crate) use effects::NodeActionEffectSink;
 pub(crate) use runtime::NodeEvalRuntime;

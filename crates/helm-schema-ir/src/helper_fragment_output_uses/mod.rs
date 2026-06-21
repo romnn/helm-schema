@@ -8,7 +8,6 @@ use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::contract_sink::ContractUseSink;
 use crate::document_projection::{DocumentTracker, collect_document_site_context};
-use crate::fragment_assignment::{apply_local_set_mutations_from_exprs, merge_fragment_locals};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
@@ -30,7 +29,13 @@ use crate::{ValueKind, YamlPath};
 
 mod expression_output;
 
-use expression_output::collect_bound_fragment_output_uses_from_exprs;
+pub(crate) use expression_output::collect_bound_fragment_output_uses_from_exprs;
+
+const FRAGMENT_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
+    apply_alternative_predicate: false,
+    non_exact_range_variable_binding: NonExactRangeVariableBinding::Skip,
+    range_dot_source: HelperRangeDotSource::FragmentValue,
+};
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_bound_fragment_output_uses_from_tree(
@@ -87,13 +92,6 @@ struct FragmentOutputUseSnapshot {
 }
 
 impl FragmentOutputUseRuntime<'_, '_> {
-    const SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
-        record_guard_paths: false,
-        apply_alternative_predicate: false,
-        non_exact_range_variable_binding: NonExactRangeVariableBinding::Skip,
-        range_dot_source: HelperRangeDotSource::FragmentValue,
-    };
-
     fn current_dot(&self) -> Option<&AbstractValue> {
         self.dot_stack.last().and_then(Option::as_ref)
     }
@@ -138,7 +136,10 @@ impl FragmentOutputUseRuntime<'_, '_> {
         let mut local_bindings = first.local_bindings;
         let mut local_default_paths = first.local_default_paths;
         for outcome in iter {
-            local_bindings = merge_fragment_locals(local_bindings, outcome.local_bindings);
+            local_bindings = crate::fragment_assignment::merge_fragment_locals(
+                local_bindings,
+                outcome.local_bindings,
+            );
             local_default_paths =
                 merge_local_default_paths(local_default_paths, outcome.local_default_paths);
         }
@@ -383,7 +384,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
 
     fn apply_assignment_side_effects(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) -> bool {
         let mut seen_set = HashSet::new();
-        if apply_local_set_mutations_from_exprs(
+        if crate::fragment_assignment::apply_local_set_mutations_from_exprs(
             exprs,
             self.local_bindings,
             self.current_dot_fragment().cloned().as_ref(),
@@ -416,7 +417,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.local_bindings,
             self.context,
             self.seen,
-            Self::SEMANTICS,
+            FRAGMENT_SEMANTICS,
         )
         .action
     }
@@ -424,7 +425,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let plan = helper_with_condition_plan(
+        helper_with_condition_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
@@ -432,11 +433,9 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.local_bindings,
             self.context,
             self.seen,
-            Self::SEMANTICS,
-        );
-        self.active_output_predicates
-            .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
-        plan.action
+            FRAGMENT_SEMANTICS,
+        )
+        .action
     }
 
     fn plan_range_action(
@@ -445,17 +444,17 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         header: Option<&TemplateHeader>,
         current_path: &YamlPath,
     ) -> RangeActionPlan {
+        let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let mut seen_range_binding = self.seen.clone();
         let plan = helper_range_runtime_plan(
             header,
             self.bindings,
-            self.current_dot(),
+            current_dot.as_ref(),
             current_dot_fragment.as_ref(),
             self.local_bindings,
             self.context,
-            &mut seen_range_binding,
-            Self::SEMANTICS,
+            self.seen,
+            FRAGMENT_SEMANTICS,
         );
         self.active_output_predicates
             .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
@@ -464,6 +463,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             plan.range_fragment_value.as_ref(),
             current_path,
         );
+
         self.range_frames.push(plan.frame);
         plan.action
     }

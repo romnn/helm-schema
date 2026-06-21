@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 pub mod cases;
 
 use helm_schema_ast::{DefineIndex, HelmParser};

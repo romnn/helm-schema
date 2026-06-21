@@ -110,7 +110,7 @@ impl SymbolicWalker<'_> {
         }
         self.contract.append(contract);
         let outer_guards = self.contract_guards();
-        for (value, meta) in helper_summary.dependency_path_meta() {
+        for (value, meta) in helper_summary.inline_dependency_path_meta() {
             for extra_guards in meta.contract_guard_sets(&value) {
                 let mut guards = outer_guards.clone();
                 for guard in extra_guards {

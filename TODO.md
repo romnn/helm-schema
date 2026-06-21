@@ -7,3 +7,4 @@
 - use indoc everywhere
 - fix CI
 - setup nice skills and agent files
+- generate tree sitter parser node types as enum for type safety
