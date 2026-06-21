@@ -1,13 +1,11 @@
-mod action_kind;
+mod action;
 mod control_flow;
 mod effects;
 mod runtime;
 
-use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 
-pub(crate) use action_kind::{NodeActionKind, classify_node_action};
-
+use action::{NodeAction, node_action};
 pub(crate) use effects::{
     NodeActionEffectSink, activate_condition_alternative_guards, activate_if_condition_plan,
     activate_range_action_plan, activate_with_condition_plan,
@@ -20,28 +18,27 @@ where
 {
     runtime.enter_node(node);
 
-    match classify_node_action(node) {
-        NodeActionKind::Text => {}
-        NodeActionKind::Suppressed => {}
-        NodeActionKind::Assignment => {
-            control_flow::eval_assignment_node(runtime, node);
+    match node_action(runtime.source(), node) {
+        NodeAction::Text => {}
+        NodeAction::Suppressed => {}
+        NodeAction::Assignment(exprs) => {
+            control_flow::eval_assignment_node(runtime, node, exprs.as_deref());
         }
-        NodeActionKind::If => {
+        NodeAction::If => {
             control_flow::eval_if_node(runtime, node);
         }
-        NodeActionKind::With => {
+        NodeAction::With => {
             control_flow::eval_with_node(runtime, node);
         }
-        NodeActionKind::Range => {
+        NodeAction::Range => {
             control_flow::eval_range_node(runtime, node);
         }
-        NodeActionKind::Output => {
-            if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
-                let exprs = parse_expr_text(text);
+        NodeAction::Output(exprs) => {
+            if let Some(exprs) = exprs {
                 runtime.handle_output_node(node, &exprs);
             }
         }
-        NodeActionKind::Descend => {
+        NodeAction::Descend => {
             eval_children(runtime, node);
         }
     }
