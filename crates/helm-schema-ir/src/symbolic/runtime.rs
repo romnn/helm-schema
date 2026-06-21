@@ -5,7 +5,10 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::contract_sink::ContractUseContext;
-use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime};
+use crate::node_eval::{
+    NodeActionEffectSink, NodeEvalRuntime, activate_condition_alternative_guards,
+    activate_if_condition_plan, activate_range_action_plan, activate_with_condition_plan,
+};
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
@@ -53,6 +56,8 @@ impl SymbolicWalker<'_> {
 
 impl NodeEvalRuntime for SymbolicWalker<'_> {
     type ScopeSnapshot = SymbolicScopeSnapshot;
+    type ConditionPlan = ConditionActionPlan;
+    type RangePlan = RangeActionPlan;
 
     fn source(&self) -> &str {
         self.source
@@ -143,6 +148,10 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         )
     }
 
+    fn activate_if_condition(&mut self, plan: &ConditionActionPlan) {
+        activate_if_condition_plan(self, plan);
+    }
+
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
         plan_with_condition(
@@ -153,6 +162,14 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         )
     }
 
+    fn activate_with_condition(&mut self, plan: &ConditionActionPlan) {
+        activate_with_condition_plan(self, plan);
+    }
+
+    fn activate_condition_alternative(&mut self, plan: &ConditionActionPlan) {
+        activate_condition_alternative_guards(self, plan);
+    }
+
     fn plan_range_action(
         &mut self,
         node: tree_sitter::Node<'_>,
@@ -161,6 +178,26 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     ) -> RangeActionPlan {
         let value_path_context = self.value_path_context();
         plan_range_action(node, header, self.source, &value_path_context, current_path)
+    }
+
+    fn range_output_path(
+        &self,
+        node: tree_sitter::Node<'_>,
+        current_path: &YamlPath,
+        plan: &RangeActionPlan,
+    ) -> YamlPath {
+        plan.mapping_entry_indent
+            .map(|indent| self.document_path_for_mapping_entry_indent(node, indent))
+            .unwrap_or_else(|| current_path.clone())
+    }
+
+    fn activate_range_action(
+        &mut self,
+        _node: tree_sitter::Node<'_>,
+        plan: &RangeActionPlan,
+        current_path: &YamlPath,
+    ) {
+        activate_range_action_plan(self, plan, current_path);
     }
 }
 

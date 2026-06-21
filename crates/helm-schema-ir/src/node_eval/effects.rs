@@ -66,13 +66,13 @@ fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: Local
     sink.refresh_helper_output_meta(plan.variable, &plan.rhs_expr);
 }
 
-pub(super) fn apply_if_condition_plan(
+pub(crate) fn activate_if_condition_plan(
     sink: &mut impl NodeActionEffectSink,
-    plan: ConditionActionPlan,
+    plan: &ConditionActionPlan,
 ) {
     let guards = plan.contract_guards();
-    for value in plan.bound_values {
-        sink.observe_value_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+    for value in &plan.bound_values {
+        sink.observe_value_use(value.clone(), YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
     for guard in &guards {
@@ -87,13 +87,13 @@ pub(super) fn apply_if_condition_plan(
         sink.push_predicate_if_absent(Predicate::from(guard.clone()));
     }
     if guards.is_empty() {
-        sink.push_predicate_if_absent(plan.predicate);
+        sink.push_predicate_if_absent(plan.predicate.clone());
     }
 }
 
-pub(super) fn apply_with_condition_plan(
+pub(crate) fn activate_with_condition_plan(
     sink: &mut impl NodeActionEffectSink,
-    plan: ConditionActionPlan,
+    plan: &ConditionActionPlan,
 ) {
     let guards = plan.contract_guards();
     // Push the With predicate before emitting header scalar uses so the
@@ -106,8 +106,8 @@ pub(super) fn apply_with_condition_plan(
         sink.push_predicate_if_absent(plan.predicate.clone());
     }
 
-    for value in plan.bound_values {
-        sink.observe_value_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+    for value in &plan.bound_values {
+        sink.observe_value_use(value.clone(), YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
     for guard in &guards {
@@ -115,10 +115,10 @@ pub(super) fn apply_with_condition_plan(
             sink.observe_value_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
         }
     }
-    sink.push_dot_binding(plan.dot_binding);
+    sink.push_dot_binding(plan.dot_binding.clone());
 }
 
-pub(super) fn apply_condition_alternative_guards(
+pub(crate) fn activate_condition_alternative_guards(
     sink: &mut impl NodeActionEffectSink,
     plan: &ConditionActionPlan,
 ) {
@@ -128,7 +128,7 @@ pub(super) fn apply_condition_alternative_guards(
     sink.push_predicate_if_absent(plan.predicate.negated());
 }
 
-pub(super) fn apply_range_action_plan(
+pub(crate) fn activate_range_action_plan(
     sink: &mut impl NodeActionEffectSink,
     plan: &RangeActionPlan,
     current_path: &YamlPath,

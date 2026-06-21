@@ -1,14 +1,10 @@
 use helm_schema_ast::TemplateHeader;
 
-use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_range_scope::range_header_from_source;
 use crate::template_expr_cache::parse_expr_text;
 use crate::tree_sitter_utils::children_with_field;
 
-use super::effects::{
-    apply_assignment_action_plan, apply_condition_alternative_guards, apply_if_condition_plan,
-    apply_range_action_plan, apply_with_condition_plan,
-};
+use super::effects::apply_assignment_action_plan;
 use super::{AssignmentObservation, NodeEvalRuntime, eval_children, eval_node};
 
 pub(super) fn eval_assignment_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
@@ -38,7 +34,7 @@ where
 {
     eval_condition_node(runtime, node, |runtime, header| {
         let plan = runtime.plan_if_condition(header);
-        apply_if_condition_plan(runtime, plan.clone());
+        runtime.activate_if_condition(&plan);
         plan
     });
 }
@@ -49,7 +45,7 @@ where
 {
     eval_condition_node(runtime, node, |runtime, header| {
         let plan = runtime.plan_with_condition(header);
-        apply_with_condition_plan(runtime, plan.clone());
+        runtime.activate_with_condition(&plan);
         plan
     });
 }
@@ -57,7 +53,7 @@ where
 fn eval_condition_node<R, F>(runtime: &mut R, node: tree_sitter::Node<'_>, mut enter_consequence: F)
 where
     R: NodeEvalRuntime,
-    F: FnMut(&mut R, &TemplateHeader) -> ConditionActionPlan,
+    F: FnMut(&mut R, &TemplateHeader) -> R::ConditionPlan,
 {
     let entry = runtime.scope_snapshot();
     let else_if_pairs = else_if_pairs(node);
@@ -81,7 +77,7 @@ where
 
     runtime.restore_scope(entry.clone());
     if let Some(plan) = &condition_plan {
-        apply_condition_alternative_guards(runtime, plan);
+        runtime.activate_condition_alternative(plan);
     }
     let alternative_outcome = eval_condition_alternative_chain(
         runtime,
@@ -137,7 +133,7 @@ fn eval_condition_alternative_chain<R, F>(
 ) -> R::ScopeSnapshot
 where
     R: NodeEvalRuntime,
-    F: FnMut(&mut R, &TemplateHeader) -> ConditionActionPlan,
+    F: FnMut(&mut R, &TemplateHeader) -> R::ConditionPlan,
 {
     let Some(((condition, option_children), tail)) = else_if_pairs.split_first() else {
         runtime.enter_local_scope();
@@ -166,7 +162,7 @@ where
 
     runtime.restore_scope(entry.clone());
     if let Some(plan) = &condition_plan {
-        apply_condition_alternative_guards(runtime, plan);
+        runtime.activate_condition_alternative(plan);
     }
     let alternative_outcome =
         eval_condition_alternative_chain(runtime, tail, alternatives, enter_consequence);
@@ -185,14 +181,11 @@ where
     let current_path = runtime.document_path_for_node(node);
     let header = range_header_from_source(node, runtime.source());
     let plan = runtime.plan_range_action(node, header.as_ref(), &current_path);
-    let range_output_path = plan
-        .mapping_entry_indent
-        .map(|indent| runtime.document_path_for_mapping_entry_indent(node, indent))
-        .unwrap_or_else(|| current_path.clone());
-    let iteration_count = runtime.range_iteration_count();
+    let range_output_path = runtime.range_output_path(node, &current_path, &plan);
 
     runtime.enter_local_scope();
-    apply_range_action_plan(runtime, &plan, &range_output_path);
+    runtime.activate_range_action(node, &plan, &range_output_path);
+    let iteration_count = runtime.range_iteration_count();
 
     for index in 0..iteration_count {
         runtime.enter_range_iteration(index);

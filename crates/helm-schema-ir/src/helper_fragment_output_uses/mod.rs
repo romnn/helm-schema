@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet};
 use helm_schema_ast::TemplateHeader;
 
 use crate::abstract_value::AbstractValue;
-use crate::condition_action_plan::ConditionActionPlan;
 use crate::document_projection::{DocumentTracker, collect_document_site_context};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{
@@ -12,8 +11,8 @@ use crate::fragment_range_scope::{
 };
 use crate::helper_range_plan::NonExactRangeVariableBinding;
 use crate::helper_runtime_plan::{
-    HelperRangeDotSource, HelperRuntimeSemantics, helper_if_condition_plan,
-    helper_range_runtime_plan, helper_with_condition_plan,
+    HelperConditionPlan, HelperRangeDotSource, HelperRangeRuntimePlan, HelperRuntimeSemantics,
+    helper_if_condition_plan, helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::{
@@ -21,10 +20,11 @@ use crate::helper_walk_state::{
     HelperRuntimeControlState, HelperRuntimeLocals,
 };
 use crate::node_eval::{
-    AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime, eval_template_body,
+    AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime,
+    activate_condition_alternative_guards, activate_if_condition_plan, activate_range_action_plan,
+    activate_with_condition_plan,
 };
 use crate::predicate::Predicate;
-use crate::range_action_plan::RangeActionPlan;
 use crate::{ValueKind, YamlPath};
 
 mod expression_output;
@@ -37,31 +37,7 @@ const FRAGMENT_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
     range_dot_source: HelperRangeDotSource::FragmentValue,
 };
 
-#[tracing::instrument(skip_all)]
-pub(crate) fn collect_bound_fragment_output_uses_from_tree(
-    tree: &tree_sitter::Tree,
-    source: &str,
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    current_dot_fragment: Option<&AbstractValue>,
-    state: &mut FragmentOutputWalkState<'_, '_>,
-) {
-    let mut document_tracker = DocumentTracker::new(source, state.context.defines);
-    document_tracker.reset_for_tree(tree);
-    let mut runtime = FragmentOutputUseRuntime {
-        source,
-        bindings,
-        control: HelperRuntimeControlState::for_fragment(current_dot, current_dot_fragment),
-        locals: state.locals,
-        context: state.context,
-        seen: state.seen,
-        outputs: state.outputs,
-        document_tracker,
-    };
-    eval_template_body(&mut runtime, tree.root_node());
-}
-
-struct FragmentOutputUseRuntime<'context, 'state> {
+pub(crate) struct FragmentOutputUseRuntime<'context, 'state> {
     source: &'state str,
     bindings: &'state HashMap<String, AbstractValue>,
     control: HelperRuntimeControlState,
@@ -73,12 +49,34 @@ struct FragmentOutputUseRuntime<'context, 'state> {
 }
 
 #[derive(Clone)]
-struct FragmentOutputUseSnapshot {
+pub(crate) struct FragmentOutputUseSnapshot {
     locals: HelperRuntimeLocals,
     control: HelperRuntimeControlSnapshot,
 }
 
 impl FragmentOutputUseRuntime<'_, '_> {
+    pub(crate) fn new<'context, 'state>(
+        tree: &tree_sitter::Tree,
+        source: &'state str,
+        bindings: &'state HashMap<String, AbstractValue>,
+        current_dot: Option<&AbstractValue>,
+        current_dot_fragment: Option<&AbstractValue>,
+        state: &'state mut FragmentOutputWalkState<'context, 'state>,
+    ) -> FragmentOutputUseRuntime<'context, 'state> {
+        let mut document_tracker = DocumentTracker::new(source, state.context.defines);
+        document_tracker.reset_for_tree(tree);
+        FragmentOutputUseRuntime {
+            source,
+            bindings,
+            control: HelperRuntimeControlState::for_fragment(current_dot, current_dot_fragment),
+            locals: state.locals,
+            context: state.context,
+            seen: state.seen,
+            outputs: state.outputs,
+            document_tracker,
+        }
+    }
+
     fn current_dot(&self) -> Option<&AbstractValue> {
         self.control.current_helper_dot()
     }
@@ -183,6 +181,8 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
 
 impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     type ScopeSnapshot = FragmentOutputUseSnapshot;
+    type ConditionPlan = HelperConditionPlan;
+    type RangePlan = HelperRangeRuntimePlan;
 
     fn source(&self) -> &str {
         self.source
@@ -295,7 +295,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         AssignmentObservation::ExpressionObserved
     }
 
-    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> HelperConditionPlan {
         let current_dot = self.current_dot().cloned();
         helper_if_condition_plan(
             header,
@@ -306,10 +306,13 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.seen,
             FRAGMENT_SEMANTICS,
         )
-        .into_action()
     }
 
-    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
+    fn activate_if_condition(&mut self, plan: &HelperConditionPlan) {
+        activate_if_condition_plan(self, &plan.action);
+    }
+
+    fn plan_with_condition(&mut self, header: &TemplateHeader) -> HelperConditionPlan {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
         helper_with_condition_plan(
@@ -322,18 +325,25 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.seen,
             FRAGMENT_SEMANTICS,
         )
-        .into_action()
+    }
+
+    fn activate_with_condition(&mut self, plan: &HelperConditionPlan) {
+        activate_with_condition_plan(self, &plan.action);
+    }
+
+    fn activate_condition_alternative(&mut self, plan: &HelperConditionPlan) {
+        activate_condition_alternative_guards(self, &plan.action);
     }
 
     fn plan_range_action(
         &mut self,
-        node: tree_sitter::Node<'_>,
+        _node: tree_sitter::Node<'_>,
         header: Option<&TemplateHeader>,
-        current_path: &YamlPath,
-    ) -> RangeActionPlan {
+        _current_path: &YamlPath,
+    ) -> HelperRangeRuntimePlan {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let plan = helper_range_runtime_plan(
+        helper_range_runtime_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
@@ -342,13 +352,33 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.context,
             self.seen,
             FRAGMENT_SEMANTICS,
-        );
-        let activated = plan.activate(&mut self.control, self.locals);
+        )
+    }
+
+    fn range_output_path(
+        &self,
+        node: tree_sitter::Node<'_>,
+        current_path: &YamlPath,
+        plan: &HelperRangeRuntimePlan,
+    ) -> YamlPath {
+        plan.action
+            .mapping_entry_indent
+            .map(|indent| self.document_path_for_mapping_entry_indent(node, indent))
+            .unwrap_or_else(|| current_path.clone())
+    }
+
+    fn activate_range_action(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        plan: &HelperRangeRuntimePlan,
+        current_path: &YamlPath,
+    ) {
+        let activated = plan.clone().activate(&mut self.control, self.locals);
         self.collect_destructured_range_fragment_outputs(
             node,
             activated.range_fragment_value.as_ref(),
             current_path,
         );
-        activated.action
+        activate_range_action_plan(self, &activated.action, current_path);
     }
 }

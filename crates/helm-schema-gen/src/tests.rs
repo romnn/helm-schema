@@ -4,7 +4,9 @@ use indoc::indoc;
 use serde_json::Value;
 
 use crate::{
-    ValuesSchemaInput, generate_values_schema,
+    ValuesSchemaInput,
+    foreign_schema::ForeignSchema,
+    generate_values_schema,
     resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
     values_yaml::ValuesYamlPathFacts,
 };
@@ -1110,7 +1112,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
                 ..ValuesYamlPathFacts::default()
             },
         ),
-        provider_schema,
+        provider_schema: ForeignSchema::new(provider_schema),
         values_yaml_schema,
         guard_predicate_schema: serde_json::json!({}),
         type_hint_schema: serde_json::json!({}),

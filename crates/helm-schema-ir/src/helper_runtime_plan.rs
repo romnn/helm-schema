@@ -35,15 +35,10 @@ pub(crate) struct HelperConditionPlan {
 }
 
 impl HelperConditionPlan {
-    pub(crate) fn into_action(self) -> ConditionActionPlan {
-        self.action
-    }
-
-    pub(crate) fn activate_value(self, analysis: &mut HelperSummary) -> ConditionActionPlan {
+    pub(crate) fn record_guard_paths_into(&self, analysis: &mut HelperSummary) {
         for path in &self.guard_paths {
             analysis.add_guard_path(path.clone());
         }
-        self.action
     }
 }
 

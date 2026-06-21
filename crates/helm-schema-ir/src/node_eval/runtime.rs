@@ -3,8 +3,6 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 use super::effects::NodeActionEffectSink;
 use crate::YamlPath;
 use crate::assignment_action_plan::AssignmentActionPlan;
-use crate::condition_action_plan::ConditionActionPlan;
-use crate::range_action_plan::RangeActionPlan;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum AssignmentObservation {
@@ -15,6 +13,8 @@ pub(crate) enum AssignmentObservation {
 
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     type ScopeSnapshot: Clone;
+    type ConditionPlan;
+    type RangePlan;
 
     fn source(&self) -> &str;
 
@@ -77,14 +77,34 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
         }
     }
 
-    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
 
-    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
+    fn activate_if_condition(&mut self, plan: &Self::ConditionPlan);
+
+    fn plan_with_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
+
+    fn activate_with_condition(&mut self, plan: &Self::ConditionPlan);
+
+    fn activate_condition_alternative(&mut self, plan: &Self::ConditionPlan);
 
     fn plan_range_action(
         &mut self,
         node: tree_sitter::Node<'_>,
         header: Option<&TemplateHeader>,
         current_path: &YamlPath,
-    ) -> RangeActionPlan;
+    ) -> Self::RangePlan;
+
+    fn range_output_path(
+        &self,
+        node: tree_sitter::Node<'_>,
+        current_path: &YamlPath,
+        plan: &Self::RangePlan,
+    ) -> YamlPath;
+
+    fn activate_range_action(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        plan: &Self::RangePlan,
+        current_path: &YamlPath,
+    );
 }

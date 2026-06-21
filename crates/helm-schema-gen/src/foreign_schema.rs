@@ -45,6 +45,9 @@ pub(crate) enum ForeignSchemaRestriction {
     ScalarCollection,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct ForeignSchema(Value);
+
 #[derive(Debug)]
 struct ForeignSchemaObject {
     raw: Map<String, Value>,
@@ -63,6 +66,24 @@ enum ForeignSchemaUnionKind {
     AnyOf,
     OneOf,
     AllOf,
+}
+
+impl ForeignSchema {
+    pub(crate) fn new(value: Value) -> Self {
+        Self(value)
+    }
+
+    pub(crate) fn as_value(&self) -> &Value {
+        &self.0
+    }
+
+    pub(crate) fn into_value(self) -> Value {
+        self.0
+    }
+
+    pub(crate) fn restrict(self, restriction: ForeignSchemaRestriction) -> Option<Self> {
+        restriction.apply(self.0).map(Self)
+    }
 }
 
 impl ForeignSchemaObject {

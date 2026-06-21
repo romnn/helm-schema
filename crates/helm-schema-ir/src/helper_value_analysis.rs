@@ -4,12 +4,11 @@ use helm_schema_ast::TemplateHeader;
 
 use crate::YamlPath;
 use crate::abstract_value::AbstractValue;
-use crate::condition_action_plan::ConditionActionPlan;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_range_plan::NonExactRangeVariableBinding;
 use crate::helper_runtime_plan::{
-    HelperRangeDotSource, HelperRuntimeSemantics, helper_if_condition_plan,
-    helper_range_runtime_plan, helper_with_condition_plan,
+    HelperConditionPlan, HelperRangeDotSource, HelperRangeRuntimePlan, HelperRuntimeSemantics,
+    helper_if_condition_plan, helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::merge_helper_output_meta_maps;
@@ -19,10 +18,11 @@ use crate::helper_walk_state::{
     HelperRuntimeLocals, HelperValuesWalkState,
 };
 use crate::node_eval::{
-    AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime, eval_template_body,
+    AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime,
+    activate_condition_alternative_guards, activate_if_condition_plan, activate_range_action_plan,
+    activate_with_condition_plan,
 };
 use crate::predicate::Predicate;
-use crate::range_action_plan::RangeActionPlan;
 
 const VALUE_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
     apply_alternative_predicate: true,
@@ -30,30 +30,7 @@ const VALUE_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
     range_dot_source: HelperRangeDotSource::HelperValue,
 };
 
-/// Walks a helper body collecting the values and effects it contributes to
-/// callers that include/template it.
-#[tracing::instrument(skip_all)]
-pub(crate) fn collect_bound_helper_values_from_tree(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    state: &mut HelperValuesWalkState<'_, '_>,
-) {
-    let mut runtime = HelperValueRuntime {
-        source,
-        bindings,
-        control: HelperRuntimeControlState::for_value(current_dot),
-        locals: state.locals,
-        local_output_meta: state.local_output_meta,
-        context: state.context,
-        seen: state.seen,
-        analysis: state.analysis,
-    };
-    eval_template_body(&mut runtime, node);
-}
-
-struct HelperValueRuntime<'context, 'state> {
+pub(crate) struct HelperValueRuntime<'context, 'state> {
     source: &'state str,
     bindings: &'state HashMap<String, AbstractValue>,
     control: HelperRuntimeControlState,
@@ -65,13 +42,31 @@ struct HelperValueRuntime<'context, 'state> {
 }
 
 #[derive(Clone)]
-struct HelperValueSnapshot {
+pub(crate) struct HelperValueSnapshot {
     locals: HelperRuntimeLocals,
     local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     control: HelperRuntimeControlSnapshot,
 }
 
 impl HelperValueRuntime<'_, '_> {
+    pub(crate) fn new<'context, 'state>(
+        source: &'state str,
+        bindings: &'state HashMap<String, AbstractValue>,
+        current_dot: Option<&AbstractValue>,
+        state: &'state mut HelperValuesWalkState<'context, 'state>,
+    ) -> HelperValueRuntime<'context, 'state> {
+        HelperValueRuntime {
+            source,
+            bindings,
+            control: HelperRuntimeControlState::for_value(current_dot),
+            locals: state.locals,
+            local_output_meta: state.local_output_meta,
+            context: state.context,
+            seen: state.seen,
+            analysis: state.analysis,
+        }
+    }
+
     fn current_dot(&self) -> Option<&AbstractValue> {
         self.control.current_helper_dot()
     }
@@ -133,6 +128,8 @@ impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
 
 impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     type ScopeSnapshot = HelperValueSnapshot;
+    type ConditionPlan = HelperConditionPlan;
+    type RangePlan = HelperRangeRuntimePlan;
 
     fn source(&self) -> &str {
         self.source
@@ -221,9 +218,9 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         AssignmentObservation::ExpressionObserved
     }
 
-    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> HelperConditionPlan {
         let current_dot = self.current_dot().cloned();
-        let plan = helper_if_condition_plan(
+        helper_if_condition_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
@@ -231,14 +228,18 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.context,
             self.seen,
             VALUE_SEMANTICS,
-        );
-        plan.activate_value(self.analysis)
+        )
     }
 
-    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
+    fn activate_if_condition(&mut self, plan: &HelperConditionPlan) {
+        plan.record_guard_paths_into(self.analysis);
+        activate_if_condition_plan(self, &plan.action);
+    }
+
+    fn plan_with_condition(&mut self, header: &TemplateHeader) -> HelperConditionPlan {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = current_dot.as_ref().map(AbstractValue::to_context_value);
-        let plan = helper_with_condition_plan(
+        helper_with_condition_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
@@ -247,8 +248,16 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.context,
             self.seen,
             VALUE_SEMANTICS,
-        );
-        plan.activate_value(self.analysis)
+        )
+    }
+
+    fn activate_with_condition(&mut self, plan: &HelperConditionPlan) {
+        plan.record_guard_paths_into(self.analysis);
+        activate_with_condition_plan(self, &plan.action);
+    }
+
+    fn activate_condition_alternative(&mut self, plan: &HelperConditionPlan) {
+        activate_condition_alternative_guards(self, &plan.action);
     }
 
     fn plan_range_action(
@@ -256,10 +265,10 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         _node: tree_sitter::Node<'_>,
         header: Option<&TemplateHeader>,
         _current_path: &YamlPath,
-    ) -> RangeActionPlan {
+    ) -> HelperRangeRuntimePlan {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment();
-        let plan = helper_range_runtime_plan(
+        helper_range_runtime_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
@@ -268,9 +277,29 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
             self.context,
             self.seen,
             VALUE_SEMANTICS,
-        );
-        let activated = plan.activate(&mut self.control, self.locals);
+        )
+    }
+
+    fn range_output_path(
+        &self,
+        node: tree_sitter::Node<'_>,
+        current_path: &YamlPath,
+        plan: &HelperRangeRuntimePlan,
+    ) -> YamlPath {
+        plan.action
+            .mapping_entry_indent
+            .map(|indent| self.document_path_for_mapping_entry_indent(node, indent))
+            .unwrap_or_else(|| current_path.clone())
+    }
+
+    fn activate_range_action(
+        &mut self,
+        _node: tree_sitter::Node<'_>,
+        plan: &HelperRangeRuntimePlan,
+        current_path: &YamlPath,
+    ) {
+        let activated = plan.clone().activate(&mut self.control, self.locals);
         activated.record_guard_paths_into(self.analysis);
-        activated.action
+        activate_range_action_plan(self, &activated.action, current_path);
     }
 }
