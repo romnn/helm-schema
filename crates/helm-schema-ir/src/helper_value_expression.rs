@@ -195,17 +195,41 @@ fn collect_assignment_bound_helper_values(
     let result_meta_by_path =
         helper_env.output_meta_from_exprs(rhs_exprs, &state.locals.bindings, state.seen);
     let nested = helper_env.summarize_calls_in_exprs(rhs_exprs, &state.locals.bindings, state.seen);
+    let mut nested_defaulted_output_paths = BTreeSet::new();
     state
         .analysis
         .chart_defaults
-        .extend(nested.chart_defaults.clone());
-    state.analysis.add_type_hints(nested.type_hints());
-    for path in nested.direct_dependency_paths() {
-        state.analysis.add_dependency_path(path);
+        .extend(nested.chart_defaults.iter().cloned());
+    for entry in nested.into_path_entries() {
+        let path = entry.path;
+        if let Some(output_meta) = entry.output_meta {
+            if output_meta.defaulted {
+                nested_defaulted_output_paths.insert(path.clone());
+            }
+            state
+                .analysis
+                .merge_dependency_meta(path.clone(), output_meta);
+        }
+        if let Some(dependency_meta) = entry.dependency_meta {
+            state.analysis.add_dependency_path(path.clone());
+            state
+                .analysis
+                .merge_dependency_meta(path.clone(), dependency_meta);
+        }
+        if !entry.type_hints.is_empty() {
+            state
+                .analysis
+                .merge_type_hints(path.clone(), entry.type_hints);
+        }
+        for output in entry.fragment_output_uses {
+            if output.meta.defaulted {
+                nested_defaulted_output_paths.insert(output.source_expr.clone());
+            }
+            state
+                .analysis
+                .merge_dependency_meta(output.source_expr, output.meta);
+        }
     }
-    state
-        .analysis
-        .add_dependency_meta_map(nested.dependency_meta());
 
     let rhs_output_meta = rhs_output_meta(
         &local_outputs,
@@ -224,7 +248,7 @@ fn collect_assignment_bound_helper_values(
     }
     let mut defaulted_paths = fallback_paths;
     defaulted_paths.extend(local_fallback_paths);
-    defaulted_paths.extend(nested.defaulted_output_paths());
+    defaulted_paths.extend(nested_defaulted_output_paths);
     if defaulted_paths.is_empty() {
         state.locals.default_paths.remove(var);
     } else {

@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 
 use crate::define_body_cache::parse_go_template;
 use crate::expression_analysis::helper_values_for_arg;
@@ -103,14 +103,29 @@ impl SymbolicWalker<'_> {
         .with_helper_values(bindings)
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let mut contract = nested.run_contract(&plan.tree);
-        let helper_renders_output =
-            helper_summary.has_render_output() || !helper_summary.dependency_paths().is_empty();
+        let helper_renders_output = !helper_summary.output_path_meta().is_empty()
+            || !helper_summary.fragment_output_uses().is_empty()
+            || !helper_summary.dependency_paths().is_empty();
+        let suppress_roots = helper_summary.suppress_roots.clone();
+        let mut helper_type_hints = BTreeMap::new();
+        let mut inline_dependency_meta = BTreeMap::new();
+        for entry in helper_summary.into_path_entries() {
+            let path = entry.path;
+            if !entry.type_hints.is_empty() {
+                helper_type_hints.insert(path.clone(), entry.type_hints);
+            }
+            if let Some(meta) = entry.dependency_meta
+                && !suppress_roots.contains(&path)
+            {
+                inline_dependency_meta.insert(path, meta);
+            }
+        }
         if helper_renders_output {
-            contract.extend_type_hints(helper_summary.type_hints());
+            contract.extend_type_hints(helper_type_hints);
         }
         self.contract.append(contract);
         let outer_guards = self.contract_guards();
-        for (value, meta) in helper_summary.inline_dependency_path_meta() {
+        for (value, meta) in inline_dependency_meta {
             for extra_guards in meta.contract_guard_sets(&value) {
                 let mut guards = outer_guards.clone();
                 for guard in extra_guards {

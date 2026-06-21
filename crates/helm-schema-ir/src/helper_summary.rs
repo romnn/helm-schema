@@ -233,10 +233,6 @@ impl HelperPathFacts {
             || !self.structured_outputs.is_empty()
     }
 
-    fn has_render_output(&self) -> bool {
-        self.has_meta_role(HelperPathMetaRole::Output) || !self.structured_outputs.is_empty()
-    }
-
     pub(crate) fn fragment_output_uses(&self, source_expr: &str) -> Vec<HelperFragmentOutputUse> {
         self.structured_outputs
             .iter()
@@ -365,18 +361,6 @@ impl HelperSummary {
             .collect()
     }
 
-    pub(crate) fn take_fragment_output_uses(&mut self) -> Vec<HelperFragmentOutputUse> {
-        self.path_facts
-            .iter_mut()
-            .flat_map(|(source_expr, facts)| {
-                std::mem::take(&mut facts.structured_outputs)
-                    .into_iter()
-                    .map(|output| output.into_output_use(source_expr.clone()))
-                    .collect::<Vec<_>>()
-            })
-            .collect()
-    }
-
     pub(crate) fn add_type_hints(&mut self, hints: BTreeMap<String, BTreeSet<String>>) {
         for (path, schema_types) in hints {
             self.merge_type_hints(path, schema_types);
@@ -398,51 +382,8 @@ impl HelperSummary {
         self.relevant_paths(HelperPathFacts::is_dependency_relevant)
     }
 
-    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self.output_path_meta();
-        for output in self.fragment_output_uses() {
-            if output.source_expr.trim().is_empty() {
-                continue;
-            }
-            out.entry(output.source_expr)
-                .or_default()
-                .merge(output.meta);
-        }
-        out
-    }
-
-    pub(crate) fn dependency_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self.dependency_path_meta();
-        for (path, meta) in self.output_meta() {
-            out.entry(path).or_default().merge(meta);
-        }
-        out
-    }
-
     pub(crate) fn output_path_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
         self.path_meta(HelperPathMetaRole::Output)
-    }
-
-    pub(crate) fn dependency_path_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.path_meta(HelperPathMetaRole::Dependency)
-    }
-
-    pub(crate) fn inline_dependency_path_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.dependency_path_meta()
-            .into_iter()
-            .filter(|(path, _meta)| !self.suppress_roots.contains(path))
-            .collect()
-    }
-
-    pub(crate) fn direct_dependency_paths(&self) -> BTreeSet<String> {
-        self.path_facts
-            .iter()
-            .filter_map(|(path, facts)| {
-                facts
-                    .has_meta_role(HelperPathMetaRole::Dependency)
-                    .then_some(path.clone())
-            })
-            .collect()
     }
 
     pub(crate) fn guard_paths(&self) -> BTreeSet<String> {
@@ -452,18 +393,13 @@ impl HelperSummary {
             .collect()
     }
 
+    #[cfg(test)]
     pub(crate) fn type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
         self.path_facts
             .iter()
             .filter(|(_path, facts)| !facts.type_hints.is_empty())
             .map(|(path, facts)| (path.clone(), facts.type_hints.clone()))
             .collect()
-    }
-
-    pub(crate) fn has_render_output(&self) -> bool {
-        self.path_facts
-            .values()
-            .any(HelperPathFacts::has_render_output)
     }
 
     pub(crate) fn add_provenance_to_outputs(&mut self, provenance: ContractProvenance) {
@@ -494,25 +430,6 @@ impl HelperSummary {
         if let Some(facts) = self.path_facts.get_mut(path) {
             facts.meta_by_role.remove(&HelperPathMetaRole::Output);
         }
-    }
-
-    pub(crate) fn defaulted_output_paths(&self) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        for (path, facts) in &self.path_facts {
-            if facts
-                .meta(HelperPathMetaRole::Output)
-                .is_some_and(|meta| meta.defaulted)
-            {
-                out.insert(path.clone());
-            }
-        }
-        out.extend(
-            self.fragment_output_uses()
-                .into_iter()
-                .filter(|output| output.meta.defaulted)
-                .map(|output| output.source_expr),
-        );
-        out
     }
 
     pub(crate) fn into_path_entries(self) -> impl Iterator<Item = HelperPathEntry> {

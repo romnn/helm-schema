@@ -31,8 +31,15 @@ impl SymbolicWalker<'_> {
                 self.fragment_eval_context(),
                 &mut HashSet::new(),
             );
-        for (path, meta) in analysis.output_meta() {
-            out.entry(path).or_default().merge(meta);
+        for entry in analysis.into_path_entries() {
+            if let Some(meta) = entry.output_meta {
+                out.entry(entry.path.clone()).or_default().merge(meta);
+            }
+            for output in entry.fragment_output_uses {
+                out.entry(output.source_expr)
+                    .or_default()
+                    .merge(output.meta);
+            }
         }
         out
     }

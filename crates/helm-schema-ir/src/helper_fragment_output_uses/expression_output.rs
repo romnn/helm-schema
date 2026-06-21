@@ -115,8 +115,15 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         &state.locals.bindings,
     );
 
-    let mut nested = helper_env.summarize_calls_in_exprs(exprs, &state.locals.bindings, state.seen);
-    let nested_fragment_outputs = nested.fragment_output_uses();
+    let nested = helper_env.summarize_calls_in_exprs(exprs, &state.locals.bindings, state.seen);
+    let mut nested_fragment_outputs = Vec::new();
+    let mut nested_scalar_outputs = Vec::new();
+    for entry in nested.into_path_entries() {
+        if let Some(meta) = entry.output_meta {
+            nested_scalar_outputs.push((entry.path, meta));
+        }
+        nested_fragment_outputs.extend(entry.fragment_output_uses);
+    }
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
         .map(|output| output.source_expr.clone())
@@ -127,7 +134,10 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .filter(|output| expression_output_use_is_keyed_map_projection(output, &empty_output_path))
         .map(|output| output.source_expr.clone())
         .collect();
-    let nested_scalar_sources: BTreeSet<String> = nested.output_path_meta().into_keys().collect();
+    let nested_scalar_sources: BTreeSet<String> = nested_scalar_outputs
+        .iter()
+        .map(|(source_expr, _)| source_expr.clone())
+        .collect();
     let nested_has_fragment_outputs = !nested_fragment_outputs.is_empty();
 
     let expression_output_scope = FragmentExpressionOutputScope {
@@ -157,7 +167,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         }
         state.outputs.push(output);
     }
-    for (source_expr, meta) in nested.output_path_meta() {
+    for (source_expr, meta) in nested_scalar_outputs {
         if kind == ValueKind::Fragment && nested_has_fragment_outputs {
             continue;
         }
@@ -174,7 +184,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             meta,
         ));
     }
-    for nested_output in nested.take_fragment_output_uses() {
+    for nested_output in nested_fragment_outputs {
         if kind == ValueKind::Fragment
             && nested_output.relative_path.0.is_empty()
             && (nested_scalar_sources.contains(&nested_output.source_expr)
