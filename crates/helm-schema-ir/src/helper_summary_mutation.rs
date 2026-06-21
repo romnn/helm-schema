@@ -1,72 +1,72 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use crate::abstract_value::AbstractValue;
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
-use crate::output_path;
 use crate::predicate::Predicate;
 
 pub(crate) fn extend_nested_scalar_render(
     analysis: &mut HelperSummary,
-    mut nested: HelperSummary,
+    nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
 ) {
-    convert_fragment_outputs_to_dependency_outputs(&mut nested);
-    nested.add_predicates_to_outputs(active_output_predicates);
-    analysis.extend(nested);
+    let parts = nested.into_parts();
+    analysis.string_output.extend(parts.string_output);
+    analysis.suppress_roots.extend(parts.suppress_roots);
+    analysis.chart_defaults.extend(parts.chart_defaults);
+
+    for (path, summary) in parts.path_summaries {
+        if let Some(mut meta) = summary.output {
+            meta.add_predicates(active_output_predicates.iter().cloned());
+            analysis.merge_output_meta(path.clone(), meta);
+        }
+        if let Some(meta) = summary.dependency {
+            analysis.merge_dependency_meta(path.clone(), meta);
+        }
+        if summary.guard {
+            analysis.add_guard_path(path.clone());
+        }
+        if !summary.type_hints.is_empty() {
+            analysis.merge_type_hints(path.clone(), summary.type_hints);
+        }
+        for mut output in summary.fragment_outputs {
+            output
+                .meta
+                .add_predicates(active_output_predicates.iter().cloned());
+            analysis.merge_output_meta(output.source_expr, output.meta);
+        }
+    }
 }
 
 pub(crate) fn extend_nested_fragment_render(
     analysis: &mut HelperSummary,
-    mut nested: HelperSummary,
+    nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
 ) {
-    for (output, mut meta) in nested.output_path_meta() {
-        meta.add_predicates(active_output_predicates.iter().cloned());
-        analysis.add_output_meta(output, meta);
-    }
-    let direct_dependency_paths = nested.direct_dependency_paths();
-    let dependency_meta = nested.dependency_path_meta();
-    let guard_paths = nested.guard_paths();
-    let type_hints = nested.type_hints();
-    for mut output in nested.take_fragment_output_uses() {
-        output
-            .meta
-            .add_predicates(active_output_predicates.iter().cloned());
-        analysis.add_fragment_output_use(output);
-    }
-    for path in direct_dependency_paths {
-        analysis.add_dependency_path(path);
-    }
-    analysis.add_dependency_meta_map(dependency_meta);
-    for path in guard_paths {
-        analysis.add_guard_path(path);
-    }
-    analysis.add_type_hints(type_hints);
-    analysis.suppress_roots.extend(nested.suppress_roots);
-    analysis.chart_defaults.extend(nested.chart_defaults);
-}
+    let parts = nested.into_parts();
+    analysis.suppress_roots.extend(parts.suppress_roots);
+    analysis.chart_defaults.extend(parts.chart_defaults);
 
-pub(crate) fn convert_fragment_outputs_to_dependency_outputs(analysis: &mut HelperSummary) {
-    for output in analysis.take_fragment_output_uses() {
-        analysis.add_output_meta(output.source_expr, output.meta);
-    }
-}
-
-pub(crate) fn mark_suppressed_roots_for_bound_outputs(
-    analysis: &mut HelperSummary,
-    bindings: &HashMap<String, AbstractValue>,
-) {
-    let rendered_sources: BTreeSet<String> = analysis
-        .output_path_meta()
-        .into_keys()
-        .chain(analysis.guard_paths())
-        .collect();
-    for binding in bindings.values() {
-        let AbstractValue::ValuesPath(root) = binding else {
-            continue;
-        };
-        if output_path::values_path_has_descendant(root, &rendered_sources) {
-            analysis.suppress_roots.insert(root.clone());
+    for (path, summary) in parts.path_summaries {
+        if let Some(mut meta) = summary.output {
+            meta.add_predicates(active_output_predicates.iter().cloned());
+            analysis.merge_output_meta(path.clone(), meta);
+        }
+        if summary.dependency.is_some() {
+            analysis.add_dependency_path(path.clone());
+        }
+        if let Some(meta) = summary.dependency {
+            analysis.merge_dependency_meta(path.clone(), meta);
+        }
+        if summary.guard {
+            analysis.add_guard_path(path.clone());
+        }
+        if !summary.type_hints.is_empty() {
+            analysis.merge_type_hints(path.clone(), summary.type_hints);
+        }
+        for mut output in summary.fragment_outputs {
+            output
+                .meta
+                .add_predicates(active_output_predicates.iter().cloned());
+            analysis.add_fragment_output_use(output);
         }
     }
 }
@@ -117,7 +117,6 @@ mod tests {
     use std::collections::{BTreeSet, HashMap};
     use test_util::prelude::sim_assert_eq;
 
-    use super::mark_suppressed_roots_for_bound_outputs;
     use crate::abstract_value::AbstractValue;
     use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 
@@ -133,7 +132,7 @@ mod tests {
             AbstractValue::ValuesPath("serviceAccount".to_string()),
         )]);
 
-        mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
+        analysis.mark_suppressed_roots_for_bound_outputs(&bindings);
 
         sim_assert_eq!(
             have: analysis.suppress_roots,
@@ -150,7 +149,7 @@ mod tests {
             AbstractValue::ValuesPath("serviceAccount".to_string()),
         )]);
 
-        mark_suppressed_roots_for_bound_outputs(&mut analysis, &bindings);
+        analysis.mark_suppressed_roots_for_bound_outputs(&bindings);
 
         assert!(analysis.suppress_roots.is_empty());
     }

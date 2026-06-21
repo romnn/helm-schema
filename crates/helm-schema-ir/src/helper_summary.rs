@@ -231,6 +231,39 @@ impl HelperPathFacts {
     }
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct HelperPathSummary {
+    pub(crate) output: Option<HelperOutputMeta>,
+    pub(crate) dependency: Option<HelperOutputMeta>,
+    pub(crate) guard: bool,
+    pub(crate) type_hints: BTreeSet<String>,
+    pub(crate) fragment_outputs: Vec<HelperFragmentOutputUse>,
+}
+
+impl HelperPathSummary {
+    fn from_path_facts(path: String, facts: HelperPathFacts) -> Self {
+        Self {
+            output: facts.output,
+            dependency: facts.dependency,
+            guard: facts.guard,
+            type_hints: facts.type_hints,
+            fragment_outputs: facts
+                .structured_outputs
+                .into_iter()
+                .map(|output| output.into_output_use(path.clone()))
+                .collect(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct HelperSummaryParts {
+    pub(crate) string_output: BTreeSet<String>,
+    pub(crate) path_summaries: BTreeMap<String, HelperPathSummary>,
+    pub(crate) suppress_roots: BTreeSet<String>,
+    pub(crate) chart_defaults: BTreeSet<String>,
+}
+
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
         self.merge_path_facts(other.path_facts);
@@ -240,6 +273,13 @@ impl HelperSummary {
     }
 
     pub(crate) fn add_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
+        if path.trim().is_empty() {
+            return;
+        }
+        self.merge_output_meta(path, meta);
+    }
+
+    pub(crate) fn merge_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
         if path.trim().is_empty() {
             return;
         }
@@ -256,16 +296,7 @@ impl HelperSummary {
         meta_by_path: BTreeMap<String, HelperOutputMeta>,
     ) {
         for (path, meta) in meta_by_path {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.add_dependency_path(path.clone());
-            self.path_facts
-                .entry(path)
-                .or_default()
-                .dependency
-                .get_or_insert_with(HelperOutputMeta::default)
-                .merge(meta);
+            self.merge_dependency_meta(path, meta);
         }
     }
 
@@ -277,6 +308,19 @@ impl HelperSummary {
                 .dependency
                 .get_or_insert_with(HelperOutputMeta::default);
         }
+    }
+
+    pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {
+        if path.trim().is_empty() {
+            return;
+        }
+        self.add_dependency_path(path.clone());
+        self.path_facts
+            .entry(path)
+            .or_default()
+            .dependency
+            .get_or_insert_with(HelperOutputMeta::default)
+            .merge(meta);
     }
 
     pub(crate) fn add_guard_path(&mut self, path: String) {
@@ -294,6 +338,22 @@ impl HelperSummary {
             .or_default()
             .structured_outputs
             .push(HelperStructuredOutput::from_output_use(output));
+    }
+
+    pub(crate) fn add_fragment_output_uses(&mut self, mut outputs: Vec<HelperFragmentOutputUse>) {
+        outputs.retain(|output| {
+            output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty()
+        });
+        let structured_sources: BTreeSet<String> = outputs
+            .iter()
+            .map(|output| output.source_expr.clone())
+            .collect();
+        for source in &structured_sources {
+            self.remove_output_path(source);
+        }
+        for output in outputs {
+            self.add_fragment_output_use(output);
+        }
     }
 
     pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
@@ -322,14 +382,19 @@ impl HelperSummary {
 
     pub(crate) fn add_type_hints(&mut self, hints: BTreeMap<String, BTreeSet<String>>) {
         for (path, schema_types) in hints {
-            if !path.trim().is_empty() {
-                self.path_facts
-                    .entry(path)
-                    .or_default()
-                    .type_hints
-                    .extend(schema_types);
-            }
+            self.merge_type_hints(path, schema_types);
         }
+    }
+
+    pub(crate) fn merge_type_hints(&mut self, path: String, schema_types: BTreeSet<String>) {
+        if path.trim().is_empty() {
+            return;
+        }
+        self.path_facts
+            .entry(path)
+            .or_default()
+            .type_hints
+            .extend(schema_types);
     }
 
     pub(crate) fn dependency_paths(&self) -> BTreeSet<String> {
@@ -399,14 +464,6 @@ impl HelperSummary {
             .any(HelperPathFacts::has_render_output)
     }
 
-    pub(crate) fn add_predicates_to_outputs(&mut self, predicates: &BTreeSet<Predicate>) {
-        for facts in self.path_facts.values_mut() {
-            if let Some(meta) = facts.output.as_mut() {
-                meta.add_predicates(predicates.iter().cloned());
-            }
-        }
-    }
-
     pub(crate) fn add_provenance_to_outputs(&mut self, provenance: ContractProvenance) {
         for facts in self.path_facts.values_mut() {
             if let Some(meta) = facts.output.as_mut() {
@@ -419,6 +476,14 @@ impl HelperSummary {
         for facts in self.path_facts.values_mut() {
             if let Some(meta) = facts.dependency.as_mut() {
                 meta.add_provenance_site(provenance.clone());
+            }
+        }
+    }
+
+    pub(crate) fn add_provenance_to_fragment_outputs(&mut self, provenance: ContractProvenance) {
+        for facts in self.path_facts.values_mut() {
+            for output in &mut facts.structured_outputs {
+                output.meta.add_provenance_site(provenance.clone());
             }
         }
     }
@@ -443,6 +508,41 @@ impl HelperSummary {
                 .map(|output| output.source_expr),
         );
         out
+    }
+
+    pub(crate) fn into_parts(self) -> HelperSummaryParts {
+        HelperSummaryParts {
+            string_output: self.string_output,
+            path_summaries: self
+                .path_facts
+                .into_iter()
+                .map(|(path, facts)| {
+                    let summary = HelperPathSummary::from_path_facts(path.clone(), facts);
+                    (path, summary)
+                })
+                .collect(),
+            suppress_roots: self.suppress_roots,
+            chart_defaults: self.chart_defaults,
+        }
+    }
+
+    pub(crate) fn mark_suppressed_roots_for_bound_outputs(
+        &mut self,
+        bindings: &HashMap<String, AbstractValue>,
+    ) {
+        let rendered_sources: BTreeSet<String> = self
+            .output_path_meta()
+            .into_keys()
+            .chain(self.guard_paths())
+            .collect();
+        for binding in bindings.values() {
+            let AbstractValue::ValuesPath(root) = binding else {
+                continue;
+            };
+            if output_path::values_path_has_descendant(root, &rendered_sources) {
+                self.suppress_roots.insert(root.clone());
+            }
+        }
     }
 
     fn merge_path_facts(&mut self, path_facts: BTreeMap<String, HelperPathFacts>) {

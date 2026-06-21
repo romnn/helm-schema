@@ -1,8 +1,7 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
-use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr,
@@ -107,6 +106,44 @@ fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
     }
 }
 
+struct ResolvedHelperBody<'a> {
+    source: &'a str,
+    tree: tree_sitter::Tree,
+    provenance: Option<ContractProvenance>,
+}
+
+impl<'a> ResolvedHelperBody<'a> {
+    fn resolve(name: &str, context: FragmentEvalContext<'a>) -> Option<Self> {
+        let source = context.define_bodies.source(name)?;
+        let tree = context.define_bodies.tree(name)?;
+        let provenance = context
+            .define_bodies
+            .source_path(name)
+            .zip(context.define_bodies.body_offset(name))
+            .map(|(source_path, body_offset)| {
+                ContractProvenance::new(
+                    source_path,
+                    SourceSpan::new(body_offset, body_offset + source.len()),
+                    vec![name.to_string()],
+                )
+            });
+        Some(Self {
+            source,
+            tree,
+            provenance,
+        })
+    }
+
+    fn attach_provenance(&self, analysis: &mut HelperSummary) {
+        let Some(provenance) = self.provenance.clone() else {
+            return;
+        };
+        analysis.add_provenance_to_outputs(provenance.clone());
+        analysis.add_provenance_to_fragment_outputs(provenance.clone());
+        analysis.add_provenance_to_dependencies(provenance);
+    }
+}
+
 #[tracing::instrument(skip_all, fields(helper = name))]
 pub(crate) fn interpret_bound_helper_body(
     name: &str,
@@ -114,65 +151,33 @@ pub(crate) fn interpret_bound_helper_body(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperSummary {
+    let Some(body) = ResolvedHelperBody::resolve(name, context) else {
+        return HelperSummary::default();
+    };
     let mut analysis = HelperSummary::default();
-    collect_value_facts(name, resolution, context, seen, &mut analysis);
+    collect_value_facts(&body, resolution, context, seen, &mut analysis);
 
     let mut helper_fragment_locals = HashMap::new();
     collect_fragment_output_uses(
-        name,
+        &body,
         resolution,
         context,
         seen,
         &mut helper_fragment_locals,
         &mut analysis,
     );
-    attach_helper_body_provenance(name, context, &mut analysis);
+    body.attach_provenance(&mut analysis);
 
     analysis
 }
 
-fn attach_helper_body_provenance(
-    name: &str,
-    context: FragmentEvalContext<'_>,
-    analysis: &mut HelperSummary,
-) {
-    let Some(source_path) = context.define_bodies.source_path(name) else {
-        return;
-    };
-    let Some(body_offset) = context.define_bodies.body_offset(name) else {
-        return;
-    };
-    let Some(source) = context.define_bodies.source(name) else {
-        return;
-    };
-    let provenance = ContractProvenance::new(
-        source_path,
-        SourceSpan::new(body_offset, body_offset + source.len()),
-        vec![name.to_string()],
-    );
-
-    analysis.add_provenance_to_outputs(provenance.clone());
-    for mut output in analysis.take_fragment_output_uses() {
-        output.meta.add_provenance_site(provenance.clone());
-        analysis.add_fragment_output_use(output);
-    }
-    analysis.add_provenance_to_dependencies(provenance);
-}
-
 fn collect_value_facts(
-    name: &str,
+    body: &ResolvedHelperBody<'_>,
     resolution: &BoundHelperCallResolution,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
     analysis: &mut HelperSummary,
 ) {
-    let (Some(src), Some(tree)) = (
-        context.define_bodies.source(name),
-        context.define_bodies.tree(name),
-    ) else {
-        return;
-    };
-
     let mut local_bindings = HashMap::new();
     let mut local_default_paths = HashMap::new();
     let mut local_output_meta = HashMap::new();
@@ -185,8 +190,8 @@ fn collect_value_facts(
         analysis,
     };
     collect_bound_helper_values_from_tree(
-        tree.root_node(),
-        src,
+        body.tree.root_node(),
+        body.source,
         &resolution.bindings,
         resolution.helper_body_dot.as_ref(),
         &mut helper_values_state,
@@ -194,20 +199,13 @@ fn collect_value_facts(
 }
 
 fn collect_fragment_output_uses(
-    name: &str,
+    body: &ResolvedHelperBody<'_>,
     resolution: &BoundHelperCallResolution,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
     helper_fragment_locals: &mut HashMap<String, AbstractValue>,
     analysis: &mut HelperSummary,
 ) {
-    let (Some(src), Some(tree)) = (
-        context.define_bodies.source(name),
-        context.define_bodies.tree(name),
-    ) else {
-        return;
-    };
-
     let mut fragment_output_uses = Vec::new();
     let mut local_default_paths = HashMap::new();
     let mut fragment_output_state = FragmentOutputWalkState {
@@ -218,26 +216,14 @@ fn collect_fragment_output_uses(
         outputs: &mut fragment_output_uses,
     };
     collect_bound_fragment_output_uses_from_tree(
-        &tree,
-        src,
+        &body.tree,
+        body.source,
         &resolution.bindings,
         resolution.helper_body_dot.as_ref(),
         resolution.helper_fragment_dot.as_ref(),
         &mut fragment_output_state,
     );
-    fragment_output_uses
-        .retain(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty());
-    let structured_sources: BTreeSet<String> = fragment_output_uses
-        .iter()
-        .filter(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty())
-        .map(|output| output.source_expr.clone())
-        .collect();
-    for source in &structured_sources {
-        analysis.remove_output_path(source);
-    }
-    for output in fragment_output_uses {
-        analysis.add_fragment_output_use(output);
-    }
+    analysis.add_fragment_output_uses(fragment_output_uses);
 }
 
 #[cfg(test)]

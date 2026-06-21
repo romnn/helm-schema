@@ -8,7 +8,6 @@ use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
 use crate::helper_summary::HelperSummary;
-use crate::helper_summary_mutation::mark_suppressed_roots_for_bound_outputs;
 use crate::template_expr_analysis::walk_expr_excluding_helper_call_args;
 
 pub(crate) fn analyze_bound_helper_calls_with_fragment_locals_in_exprs(
@@ -70,7 +69,7 @@ pub(crate) fn analyze_bound_helper_call_with_fragment_locals(
         seen,
     });
     let mut analysis = interpret_bound_helper_body(name, &resolution, context, seen);
-    mark_suppressed_roots_for_bound_outputs(&mut analysis, &resolution.bindings);
+    analysis.mark_suppressed_roots_for_bound_outputs(&resolution.bindings);
 
     seen.remove(name);
     analysis
