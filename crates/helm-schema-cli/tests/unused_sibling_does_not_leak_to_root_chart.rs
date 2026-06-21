@@ -11,7 +11,8 @@
 //! literal default into the consumer's type hints.
 
 use color_eyre::eyre::{Report, WrapErr};
-use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
@@ -89,7 +90,9 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> color_eyre::eyr
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    let schema = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(Report::from)
         .wrap_err("generate schema")?;
 

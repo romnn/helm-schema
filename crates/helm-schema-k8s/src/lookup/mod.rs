@@ -1,3 +1,36 @@
+macro_rules! impl_resource_schema_oracle_via_k8s_provider {
+    ($ty:ty) => {
+        impl helm_schema_core::ResourceSchemaOracle for $ty {
+            fn schema_fragment_for_use(
+                &self,
+                use_: &helm_schema_core::ProviderSchemaUse,
+            ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+                <Self as crate::lookup::K8sSchemaProvider>::schema_fragment_for_use(self, use_)
+            }
+
+            fn schema_fragment_for_resource_path(
+                &self,
+                resource: &helm_schema_core::ResourceRef,
+                path: &helm_schema_core::YamlPath,
+            ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+                <Self as crate::lookup::K8sSchemaProvider>::schema_fragment_for_resource_path(
+                    self, resource, path,
+                )
+            }
+
+            fn origin(&self) -> helm_schema_core::ProviderOrigin {
+                <Self as crate::lookup::K8sSchemaProvider>::origin(self)
+            }
+
+            fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
+                <Self as crate::lookup::K8sSchemaProvider>::has_resource(self, resource)
+            }
+        }
+    };
+}
+
+pub(crate) use impl_resource_schema_oracle_via_k8s_provider;
+
 mod api_presence_executor;
 mod api_version_inference_cache;
 mod chain;

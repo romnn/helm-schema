@@ -19,7 +19,8 @@
 //! `include "name"` / `template "name"` pattern.
 
 use color_eyre::eyre::{Report, WrapErr};
-use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
@@ -105,7 +106,9 @@ fn quoted_string_payload_does_not_create_phantom_helper_edge() -> color_eyre::ey
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    let schema = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(Report::from)
         .wrap_err("generate schema")?;
 

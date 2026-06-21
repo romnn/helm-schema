@@ -1,6 +1,5 @@
 use helm_schema_core::{
-    ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle,
-    YamlPath,
+    ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, YamlPath,
 };
 
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
@@ -322,27 +321,7 @@ impl K8sSchemaProvider for Chain {
     }
 }
 
-impl ResourceSchemaOracle for Chain {
-    fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
-        <Self as K8sSchemaProvider>::schema_fragment_for_use(self, use_)
-    }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        <Self as K8sSchemaProvider>::schema_fragment_for_resource_path(self, resource, path)
-    }
-
-    fn origin(&self) -> ProviderOrigin {
-        <Self as K8sSchemaProvider>::origin(self)
-    }
-
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        <Self as K8sSchemaProvider>::has_resource(self, resource)
-    }
-}
+crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(Chain);
 
 impl CapabilityOracle for Chain {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {

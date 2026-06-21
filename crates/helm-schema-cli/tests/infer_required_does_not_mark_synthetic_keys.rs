@@ -10,7 +10,8 @@
 use std::io::Read;
 
 use color_eyre::eyre::{Report, WrapErr};
-use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
 use vfs::VfsPath;
 
@@ -65,7 +66,9 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> color_eyre::eyre::Re
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    let schema = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(Report::from)
         .wrap_err("generate schema")?;
 

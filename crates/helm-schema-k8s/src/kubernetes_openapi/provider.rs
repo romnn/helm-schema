@@ -23,7 +23,10 @@ use crate::lookup::{
     ProviderSchemaSource, SourceProbeTraceOutcome, TracedApiPresenceOutcome,
 };
 use crate::schema_doc::SchemaDoc;
-use crate::source_cache::{AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc};
+use crate::source_cache::{
+    AuthoritativeAbsence, CachedSchemaDocRequest, configured_source_ids, load_source_schema_doc,
+    source_url,
+};
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
 use super::mirror_chain::{K8sMirrorChain, K8sSource};
@@ -226,10 +229,7 @@ impl KubernetesJsonSchemaProvider {
         filename: &str,
     ) -> Option<SchemaDoc> {
         let local = k8s_cache_path(&self.cache_dir, &source.source_id, version, filename);
-        let url = format!(
-            "{}/{version}/{filename}",
-            source.base_url.trim_end_matches('/')
-        );
+        let url = source_url(&source.base_url, &format!("{version}/{filename}"));
         load_source_schema_doc(
             CachedSchemaDocRequest {
                 local: &local,
@@ -584,11 +584,7 @@ impl KubernetesJsonSchemaProvider {
     /// these — stale dirs from removed mirrors do not influence live
     /// inference or hints (Finding 2).
     fn configured_source_ids(&self) -> std::collections::HashSet<String> {
-        self.mirrors
-            .sources
-            .iter()
-            .map(|s| s.source_id.clone())
-            .collect()
+        configured_source_ids(&self.mirrors.sources, |source| &source.source_id)
     }
 }
 
@@ -738,30 +734,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     }
 }
 
-impl helm_schema_core::ResourceSchemaOracle for KubernetesJsonSchemaProvider {
-    fn schema_fragment_for_use(
-        &self,
-        use_: &helm_schema_core::ProviderSchemaUse,
-    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
-        <Self as K8sSchemaProvider>::schema_fragment_for_use(self, use_)
-    }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &helm_schema_core::ResourceRef,
-        path: &helm_schema_core::YamlPath,
-    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
-        <Self as K8sSchemaProvider>::schema_fragment_for_resource_path(self, resource, path)
-    }
-
-    fn origin(&self) -> helm_schema_core::ProviderOrigin {
-        <Self as K8sSchemaProvider>::origin(self)
-    }
-
-    fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
-        <Self as K8sSchemaProvider>::has_resource(self, resource)
-    }
-}
+crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(KubernetesJsonSchemaProvider);
 
 /// True if the cache root contains a "legacy" K8s layout (i.e. version
 /// dirs sitting directly under the root, no `<source_id>` layer).

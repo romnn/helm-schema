@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use helm_schema::generation::{GenerateOptions, generate_values_schema_for_chart};
+use helm_schema::generation::GenerateOptions;
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
@@ -10,6 +10,14 @@ use helm_schema::{
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
+
+fn generate_values_schema_for_chart(
+    opts: &GenerateOptions,
+) -> helm_schema::CliResult<serde_json::Value> {
+    AnalysisSession::new(opts.clone())
+        .generated_schema()
+        .map(|generated| generated.schema)
+}
 
 #[test]
 fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {

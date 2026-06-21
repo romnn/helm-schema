@@ -21,7 +21,10 @@ use crate::lookup::{
     ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
-use crate::source_cache::{AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc};
+use crate::source_cache::{
+    AuthoritativeAbsence, CachedSchemaDocRequest, configured_source_ids, load_source_schema_doc,
+    locations_tried, source_url,
+};
 
 use super::cross_scan::collect_other_versions;
 use super::mirror_chain::{CrdMirrorChain, CrdSource};
@@ -162,17 +165,9 @@ impl CrdsCatalogSchemaProvider {
     /// [`Diagnostic::CrdVersionNotFound`] on final-miss commit by the
     /// chain layer.
     fn locations_tried_for(&self, relative_path: &str) -> Vec<String> {
-        self.mirrors
-            .sources
-            .iter()
-            .map(|source| {
-                format!(
-                    "{}/{}",
-                    source.base_url.trim_end_matches('/'),
-                    relative_path
-                )
-            })
-            .collect()
+        locations_tried(&self.mirrors.sources, relative_path, |source| {
+            &source.base_url
+        })
     }
 
     /// Source-id directory names currently configured (`default` plus
@@ -181,20 +176,12 @@ impl CrdsCatalogSchemaProvider {
     /// stale and must not influence live inference or cross-version
     /// hints (Finding 2).
     fn configured_source_ids(&self) -> std::collections::HashSet<String> {
-        self.mirrors
-            .sources
-            .iter()
-            .map(|s| s.source_id.clone())
-            .collect()
+        configured_source_ids(&self.mirrors.sources, |source| &source.source_id)
     }
 
     fn try_load_from_source(&self, source: &CrdSource, relative_path: &str) -> Option<SchemaDoc> {
         let local = crd_cache_path(&self.cache_dir, &source.source_id, relative_path);
-        let url = format!(
-            "{}/{}",
-            source.base_url.trim_end_matches('/'),
-            relative_path
-        );
+        let url = source_url(&source.base_url, relative_path);
         load_source_schema_doc(
             CachedSchemaDocRequest {
                 local: &local,
@@ -389,30 +376,7 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
     }
 }
 
-impl helm_schema_core::ResourceSchemaOracle for CrdsCatalogSchemaProvider {
-    fn schema_fragment_for_use(
-        &self,
-        use_: &helm_schema_core::ProviderSchemaUse,
-    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
-        <Self as K8sSchemaProvider>::schema_fragment_for_use(self, use_)
-    }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &helm_schema_core::ResourceRef,
-        path: &helm_schema_core::YamlPath,
-    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
-        <Self as K8sSchemaProvider>::schema_fragment_for_resource_path(self, resource, path)
-    }
-
-    fn origin(&self) -> helm_schema_core::ProviderOrigin {
-        <Self as K8sSchemaProvider>::origin(self)
-    }
-
-    fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
-        <Self as K8sSchemaProvider>::has_resource(self, resource)
-    }
-}
+crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(CrdsCatalogSchemaProvider);
 
 fn crd_root_has_legacy_layout(root: &Path) -> bool {
     let Ok(entries) = fs::read_dir(root) else {

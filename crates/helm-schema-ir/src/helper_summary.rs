@@ -193,11 +193,11 @@ pub(crate) struct HelperSummary {
 }
 
 #[derive(Clone, Debug, Default)]
-struct HelperPathFacts {
-    output: Option<HelperOutputMeta>,
-    dependency: Option<HelperOutputMeta>,
-    guard: bool,
-    type_hints: BTreeSet<String>,
+pub(crate) struct HelperPathFacts {
+    pub(crate) output: Option<HelperOutputMeta>,
+    pub(crate) dependency: Option<HelperOutputMeta>,
+    pub(crate) guard: bool,
+    pub(crate) type_hints: BTreeSet<String>,
     structured_outputs: Vec<HelperStructuredOutput>,
 }
 
@@ -229,39 +229,24 @@ impl HelperPathFacts {
     fn has_render_output(&self) -> bool {
         self.output.is_some() || !self.structured_outputs.is_empty()
     }
-}
 
-#[derive(Clone, Debug)]
-pub(crate) struct HelperPathSummary {
-    pub(crate) output: Option<HelperOutputMeta>,
-    pub(crate) dependency: Option<HelperOutputMeta>,
-    pub(crate) guard: bool,
-    pub(crate) type_hints: BTreeSet<String>,
-    pub(crate) fragment_outputs: Vec<HelperFragmentOutputUse>,
-}
-
-impl HelperPathSummary {
-    fn from_path_facts(path: String, facts: HelperPathFacts) -> Self {
-        Self {
-            output: facts.output,
-            dependency: facts.dependency,
-            guard: facts.guard,
-            type_hints: facts.type_hints,
-            fragment_outputs: facts
-                .structured_outputs
-                .into_iter()
-                .map(|output| output.into_output_use(path.clone()))
-                .collect(),
-        }
+    pub(crate) fn fragment_output_uses(&self, source_expr: &str) -> Vec<HelperFragmentOutputUse> {
+        self.structured_outputs
+            .iter()
+            .cloned()
+            .map(|output| output.into_output_use(source_expr.to_string()))
+            .collect()
     }
-}
 
-#[derive(Clone, Debug)]
-pub(crate) struct HelperSummaryParts {
-    pub(crate) string_output: BTreeSet<String>,
-    pub(crate) path_summaries: BTreeMap<String, HelperPathSummary>,
-    pub(crate) suppress_roots: BTreeSet<String>,
-    pub(crate) chart_defaults: BTreeSet<String>,
+    pub(crate) fn take_fragment_output_uses(
+        &mut self,
+        source_expr: &str,
+    ) -> Vec<HelperFragmentOutputUse> {
+        std::mem::take(&mut self.structured_outputs)
+            .into_iter()
+            .map(|output| output.into_output_use(source_expr.to_string()))
+            .collect()
+    }
 }
 
 impl HelperSummary {
@@ -359,24 +344,14 @@ impl HelperSummary {
     pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
         self.path_facts
             .iter()
-            .flat_map(|(source_expr, facts)| {
-                facts
-                    .structured_outputs
-                    .iter()
-                    .cloned()
-                    .map(|output| output.into_output_use(source_expr.clone()))
-            })
+            .flat_map(|(source_expr, facts)| facts.fragment_output_uses(source_expr))
             .collect()
     }
 
     pub(crate) fn take_fragment_output_uses(&mut self) -> Vec<HelperFragmentOutputUse> {
         self.path_facts
             .iter_mut()
-            .flat_map(|(source_expr, facts)| {
-                std::mem::take(&mut facts.structured_outputs)
-                    .into_iter()
-                    .map(|output| output.into_output_use(source_expr.clone()))
-            })
+            .flat_map(|(source_expr, facts)| facts.take_fragment_output_uses(source_expr))
             .collect()
     }
 
@@ -517,20 +492,8 @@ impl HelperSummary {
         out
     }
 
-    pub(crate) fn into_parts(self) -> HelperSummaryParts {
-        HelperSummaryParts {
-            string_output: self.string_output,
-            path_summaries: self
-                .path_facts
-                .into_iter()
-                .map(|(path, facts)| {
-                    let summary = HelperPathSummary::from_path_facts(path.clone(), facts);
-                    (path, summary)
-                })
-                .collect(),
-            suppress_roots: self.suppress_roots,
-            chart_defaults: self.chart_defaults,
-        }
+    pub(crate) fn into_path_facts(self) -> BTreeMap<String, HelperPathFacts> {
+        self.path_facts
     }
 
     pub(crate) fn mark_suppressed_roots_for_bound_outputs(

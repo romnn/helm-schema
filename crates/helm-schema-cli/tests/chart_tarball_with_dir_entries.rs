@@ -21,7 +21,8 @@ use std::io;
 use color_eyre::eyre::WrapErr;
 use flate2::Compression;
 use flate2::write::GzEncoder;
-use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
@@ -157,7 +158,9 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         },
     };
 
-    let actual = generate_values_schema_for_chart(&opts)
+    let actual = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 

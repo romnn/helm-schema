@@ -42,6 +42,4 @@ pub mod provider {
 pub use session::{Analysis, AnalysisSession, ValuePathExplanation};
 
 pub use error::{CliError, CliResult};
-pub use generation::{
-    GenerateOptions, GeneratedSchema, ResolvedContract, generate_values_schema_for_chart,
-};
+pub use generation::{GenerateOptions, GeneratedSchema, ResolvedContract};

@@ -3,7 +3,8 @@ use std::io;
 use color_eyre::eyre::{Report, WrapErr};
 use flate2::Compression;
 use flate2::write::GzEncoder;
-use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use vfs::VfsPath;
 
 const ROOT_CHART_YAML: &str = "\
@@ -183,7 +184,9 @@ fn packaged_library_common_ingress_helper_propagates_schema() -> color_eyre::eyr
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    let schema = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 

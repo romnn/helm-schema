@@ -15,7 +15,8 @@
 //! nothing.
 
 use color_eyre::eyre::{Report, WrapErr};
-use helm_schema_cli::{GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
@@ -118,7 +119,9 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    let schema = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(Report::from)
         .wrap_err("generate schema")?;
 
@@ -200,7 +203,9 @@ data:
         },
     };
 
-    let schema = generate_values_schema_for_chart(&opts)
+    let schema = AnalysisSession::new(opts)
+        .generated_schema()
+        .map(|generated| generated.schema)
         .map_err(Report::from)
         .wrap_err("generate schema")?;
 

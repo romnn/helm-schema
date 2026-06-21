@@ -1,12 +1,21 @@
 use clap::Parser;
 use color_eyre::eyre::{WrapErr, eyre};
-use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions, generate_values_schema_for_chart};
+use helm_schema::AnalysisSession;
+use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
     e.into()
+}
+
+fn generate_values_schema_for_chart(
+    opts: &GenerateOptions,
+) -> helm_schema::CliResult<serde_json::Value> {
+    AnalysisSession::new(opts.clone())
+        .generated_schema()
+        .map(|generated| generated.schema)
 }
 
 fn schema_accepts_type(schema: &serde_json::Value, schema_type: &str) -> bool {

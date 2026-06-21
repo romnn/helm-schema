@@ -8,26 +8,32 @@ pub(crate) fn extend_nested_scalar_render(
     nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
 ) {
-    let parts = nested.into_parts();
-    analysis.string_output.extend(parts.string_output);
-    analysis.suppress_roots.extend(parts.suppress_roots);
-    analysis.chart_defaults.extend(parts.chart_defaults);
+    analysis
+        .string_output
+        .extend(nested.string_output.iter().cloned());
+    analysis
+        .suppress_roots
+        .extend(nested.suppress_roots.iter().cloned());
+    analysis
+        .chart_defaults
+        .extend(nested.chart_defaults.iter().cloned());
 
-    for (path, summary) in parts.path_summaries {
-        if let Some(mut meta) = summary.output {
+    for (path, mut facts) in nested.into_path_facts() {
+        if let Some(mut meta) = facts.output.take() {
             meta.add_predicates(active_output_predicates.iter().cloned());
             analysis.merge_output_meta(path.clone(), meta);
         }
-        if let Some(meta) = summary.dependency {
+        if let Some(meta) = facts.dependency.take() {
             analysis.merge_dependency_meta(path.clone(), meta);
         }
-        if summary.guard {
+        if facts.guard {
             analysis.add_guard_path(path.clone());
         }
-        if !summary.type_hints.is_empty() {
-            analysis.merge_type_hints(path.clone(), summary.type_hints);
+        let type_hints = std::mem::take(&mut facts.type_hints);
+        if !type_hints.is_empty() {
+            analysis.merge_type_hints(path.clone(), type_hints);
         }
-        for mut output in summary.fragment_outputs {
+        for mut output in facts.take_fragment_output_uses(&path) {
             output
                 .meta
                 .add_predicates(active_output_predicates.iter().cloned());
@@ -41,28 +47,32 @@ pub(crate) fn extend_nested_fragment_render(
     nested: HelperSummary,
     active_output_predicates: &BTreeSet<Predicate>,
 ) {
-    let parts = nested.into_parts();
-    analysis.suppress_roots.extend(parts.suppress_roots);
-    analysis.chart_defaults.extend(parts.chart_defaults);
+    analysis
+        .suppress_roots
+        .extend(nested.suppress_roots.iter().cloned());
+    analysis
+        .chart_defaults
+        .extend(nested.chart_defaults.iter().cloned());
 
-    for (path, summary) in parts.path_summaries {
-        if let Some(mut meta) = summary.output {
+    for (path, mut facts) in nested.into_path_facts() {
+        if let Some(mut meta) = facts.output.take() {
             meta.add_predicates(active_output_predicates.iter().cloned());
             analysis.merge_output_meta(path.clone(), meta);
         }
-        if summary.dependency.is_some() {
+        if facts.dependency.is_some() {
             analysis.add_dependency_path(path.clone());
         }
-        if let Some(meta) = summary.dependency {
+        if let Some(meta) = facts.dependency.take() {
             analysis.merge_dependency_meta(path.clone(), meta);
         }
-        if summary.guard {
+        if facts.guard {
             analysis.add_guard_path(path.clone());
         }
-        if !summary.type_hints.is_empty() {
-            analysis.merge_type_hints(path.clone(), summary.type_hints);
+        let type_hints = std::mem::take(&mut facts.type_hints);
+        if !type_hints.is_empty() {
+            analysis.merge_type_hints(path.clone(), type_hints);
         }
-        for mut output in summary.fragment_outputs {
+        for mut output in facts.take_fragment_output_uses(&path) {
             output
                 .meta
                 .add_predicates(active_output_predicates.iter().cloned());

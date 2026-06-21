@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::hash::Hash;
 use std::path::Path;
@@ -139,4 +140,33 @@ where
         || absence.clear(),
         || absence.record(),
     )
+}
+
+pub(crate) fn source_url(base_url: &str, relative_path: &str) -> String {
+    format!(
+        "{}/{}",
+        base_url.trim_end_matches('/'),
+        relative_path.trim_start_matches('/')
+    )
+}
+
+pub(crate) fn locations_tried<S>(
+    sources: &[S],
+    relative_path: &str,
+    base_url: impl Fn(&S) -> &str,
+) -> Vec<String> {
+    sources
+        .iter()
+        .map(|source| source_url(base_url(source), relative_path))
+        .collect()
+}
+
+pub(crate) fn configured_source_ids<S>(
+    sources: &[S],
+    source_id: impl Fn(&S) -> &str,
+) -> HashSet<String> {
+    sources
+        .iter()
+        .map(|source| source_id(source).to_string())
+        .collect()
 }

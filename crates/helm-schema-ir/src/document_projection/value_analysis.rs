@@ -35,7 +35,8 @@ pub(super) struct DocumentHelperSummary {
 
 impl DocumentHelperSummary {
     fn from_helper_summary(summary: HelperSummary) -> Self {
-        let parts = summary.into_parts();
+        let suppress_roots = summary.suppress_roots.clone();
+        let chart_defaults = summary.chart_defaults.clone();
         let mut output_values = BTreeMap::new();
         let mut fragment_output_uses = Vec::new();
         let mut dependency_values = BTreeMap::new();
@@ -43,26 +44,28 @@ impl DocumentHelperSummary {
         let mut type_hints = BTreeMap::new();
         let mut suppress_direct_values = BTreeSet::new();
 
-        for (path, path_summary) in parts.path_summaries {
+        for (path, mut facts) in summary.into_path_facts() {
             let mut has_dependency = false;
-            if let Some(meta) = path_summary.output {
+            if let Some(meta) = facts.output.take() {
                 output_values.insert(path.clone(), meta);
                 has_dependency = true;
             }
-            if let Some(meta) = path_summary.dependency {
+            if let Some(meta) = facts.dependency.take() {
                 dependency_values.insert(path.clone(), meta);
                 has_dependency = true;
             }
-            if path_summary.guard {
+            if facts.guard {
                 guard_values.insert(path.clone());
                 has_dependency = true;
             }
-            if !path_summary.type_hints.is_empty() {
-                type_hints.insert(path.clone(), path_summary.type_hints);
+            let path_type_hints = std::mem::take(&mut facts.type_hints);
+            if !path_type_hints.is_empty() {
+                type_hints.insert(path.clone(), path_type_hints);
                 has_dependency = true;
             }
-            if !path_summary.fragment_outputs.is_empty() {
-                fragment_output_uses.extend(path_summary.fragment_outputs);
+            let path_fragment_outputs = facts.take_fragment_output_uses(&path);
+            if !path_fragment_outputs.is_empty() {
+                fragment_output_uses.extend(path_fragment_outputs);
                 has_dependency = true;
             }
             if has_dependency {
@@ -73,7 +76,7 @@ impl DocumentHelperSummary {
         let all_dependency_values = suppress_direct_values.clone();
         suppress_direct_values
             .retain(|path| !output_path::values_path_has_descendant(path, &all_dependency_values));
-        suppress_direct_values.extend(parts.suppress_roots);
+        suppress_direct_values.extend(suppress_roots);
 
         Self {
             output_values,
@@ -82,7 +85,7 @@ impl DocumentHelperSummary {
             guard_values,
             type_hints,
             suppress_direct_values,
-            chart_value_defaults: parts.chart_defaults,
+            chart_value_defaults: chart_defaults,
         }
     }
 
