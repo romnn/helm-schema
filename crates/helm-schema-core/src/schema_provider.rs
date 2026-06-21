@@ -1,5 +1,5 @@
 use crate::{
-    ProviderOrigin, ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, YamlPath,
+    ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, YamlPath,
     ordered_api_versions_for_resource,
 };
 
@@ -27,8 +27,4 @@ pub trait ResourceSchemaOracle: Send + Sync + std::fmt::Debug {
         resource: &ResourceRef,
         path: &YamlPath,
     ) -> Option<ProviderSchemaFragment>;
-
-    fn origin(&self) -> ProviderOrigin;
-
-    fn has_resource(&self, resource: &ResourceRef) -> bool;
 }

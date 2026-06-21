@@ -100,6 +100,24 @@ In practice, when choosing between two designs with similar correctness:
 If a new abstraction does not make the system both easier to reason about and
 more structurally correct, it is probably the wrong abstraction.
 
+### Rust guideline: do not be cleverer than necessary
+
+For Rust code in this repo, follow the KISS principle strictly.
+
+- Do not introduce generic helpers, iterator tricks, macros, wrapper
+  functions, or tiny adapter layers unless they clearly remove real
+  duplication or make the control flow easier to understand.
+- Prefer the obvious local loop or direct `match` when it says the thing more
+  plainly than a reusable helper.
+- If an abstraction saves only a few repeated lines but makes the call site
+  harder to read, do not add it.
+- If a helper needs a closure or type parameter just to spell an otherwise
+  obvious operation, that is a strong sign it may be cleverer than necessary.
+
+In short: the simpler Rust is usually the better Rust here. Prefer direct,
+boring code over abstraction that does not materially improve correctness or
+clarity.
+
 ### `values.schema.json` is output, not inference evidence
 
 helm-schema generates a `values.schema.json`-shaped artifact, but it must not

@@ -17,14 +17,6 @@ macro_rules! impl_resource_schema_oracle_via_k8s_provider {
                     self, resource, path,
                 )
             }
-
-            fn origin(&self) -> helm_schema_core::ProviderOrigin {
-                <Self as crate::lookup::K8sSchemaProvider>::origin(self)
-            }
-
-            fn has_resource(&self, resource: &helm_schema_core::ResourceRef) -> bool {
-                <Self as crate::lookup::K8sSchemaProvider>::has_resource(self, resource)
-            }
         }
     };
 }

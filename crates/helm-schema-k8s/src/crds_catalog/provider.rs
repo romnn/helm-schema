@@ -22,8 +22,7 @@ use crate::lookup::{
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
-    AuthoritativeAbsence, CachedSchemaDocRequest, configured_source_ids, load_source_schema_doc,
-    locations_tried, source_url,
+    AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc, source_url,
 };
 
 use super::cross_scan::collect_other_versions;
@@ -165,9 +164,11 @@ impl CrdsCatalogSchemaProvider {
     /// [`Diagnostic::CrdVersionNotFound`] on final-miss commit by the
     /// chain layer.
     fn locations_tried_for(&self, relative_path: &str) -> Vec<String> {
-        locations_tried(&self.mirrors.sources, relative_path, |source| {
-            &source.base_url
-        })
+        self.mirrors
+            .sources
+            .iter()
+            .map(|source| source_url(&source.base_url, relative_path))
+            .collect()
     }
 
     /// Source-id directory names currently configured (`default` plus
@@ -176,7 +177,11 @@ impl CrdsCatalogSchemaProvider {
     /// stale and must not influence live inference or cross-version
     /// hints (Finding 2).
     fn configured_source_ids(&self) -> std::collections::HashSet<String> {
-        configured_source_ids(&self.mirrors.sources, |source| &source.source_id)
+        self.mirrors
+            .sources
+            .iter()
+            .map(|source| source.source_id.clone())
+            .collect()
     }
 
     fn try_load_from_source(&self, source: &CrdSource, relative_path: &str) -> Option<SchemaDoc> {

@@ -24,8 +24,7 @@ use crate::lookup::{
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
-    AuthoritativeAbsence, CachedSchemaDocRequest, configured_source_ids, load_source_schema_doc,
-    source_url,
+    AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc, source_url,
 };
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
@@ -584,7 +583,11 @@ impl KubernetesJsonSchemaProvider {
     /// these — stale dirs from removed mirrors do not influence live
     /// inference or hints (Finding 2).
     fn configured_source_ids(&self) -> std::collections::HashSet<String> {
-        configured_source_ids(&self.mirrors.sources, |source| &source.source_id)
+        self.mirrors
+            .sources
+            .iter()
+            .map(|source| source.source_id.clone())
+            .collect()
     }
 }
 

@@ -23,24 +23,6 @@ pub(crate) struct ResolvedPathSchema {
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
 }
 
-struct ProviderSchemaForPath {
-    schema: Value,
-    provider_schema_candidate: Option<ProviderSchemaCandidate>,
-}
-
-struct IndexedPathSchemaEvidence {
-    contract: ContractPathSchemaEvidence,
-    provider_schemas: Vec<Arc<ProviderSchemaCandidate>>,
-    type_hint_schema: Value,
-    metadata_schema: Value,
-    guard_predicate_schema: Value,
-}
-
-struct PathSchemaEvidence {
-    policy_inputs: ValuePathSchemaInputs,
-    provider_schema_candidate: Option<ProviderSchemaCandidate>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ProviderSchemaLookupKey {
     resource: ResourceRef,
@@ -102,16 +84,13 @@ impl<'a> PathSchemaResolver<'a> {
         let path_segments = path_caches.path_segments.get(&evidence.value_path)?.clone();
         let values_yaml_info = path_caches.values_yaml.get(&evidence.value_path);
         let mut provider_schema_cache = HashMap::new();
-        let indexed_evidence = index_path_evidence(
+        let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
             evidence.clone(),
+            values_yaml_info,
             provider,
             &ResolvePolicy,
             &mut provider_schema_cache,
         );
-        let PathSchemaEvidence {
-            policy_inputs,
-            provider_schema_candidate,
-        } = Self::path_schema_evidence(indexed_evidence, values_yaml_info);
         let resolve_policy = ResolvePolicy;
         let schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
         let provider_schema_candidate = provider_schema_candidate
@@ -155,13 +134,15 @@ impl<'a> PathSchemaResolver<'a> {
         let evidence = self
             .schema_evidence_by_value_path
             .get(&value_path)
-            .cloned()
-            .map(|evidence| self.index_path_evidence(evidence))?;
+            .cloned()?;
         let values_yaml_info = self.path_caches.values_yaml.get(&value_path);
-        let PathSchemaEvidence {
-            policy_inputs,
-            provider_schema_candidate,
-        } = Self::path_schema_evidence(evidence, values_yaml_info);
+        let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
+            evidence,
+            values_yaml_info,
+            self.provider,
+            &self.resolve_policy,
+            &mut self.provider_schema_cache,
+        );
         let merged = self
             .resolve_policy
             .resolve_schema_for_value_path(policy_inputs);
@@ -198,73 +179,6 @@ impl<'a> PathSchemaResolver<'a> {
             resolve_policy: ResolvePolicy,
             provider,
             provider_schema_cache: HashMap::new(),
-        }
-    }
-
-    fn index_path_evidence(
-        &mut self,
-        evidence: ContractPathSchemaEvidence,
-    ) -> IndexedPathSchemaEvidence {
-        index_path_evidence(
-            evidence,
-            self.provider,
-            &self.resolve_policy,
-            &mut self.provider_schema_cache,
-        )
-    }
-
-    fn path_schema_evidence(
-        evidence: IndexedPathSchemaEvidence,
-        values_yaml_info: Option<&ValuesYamlPathInfo>,
-    ) -> PathSchemaEvidence {
-        let provider_schema =
-            Self::provider_schema_for_path(evidence.provider_schemas, evidence.metadata_schema);
-        let values_yaml_facts = values_yaml_info
-            .map_or_else(ValuesYamlPathFacts::absent, |path_info| path_info.facts());
-        let facts = ValuePathSchemaFacts::new(evidence.contract.facts, values_yaml_facts);
-
-        let values_yaml_schema = values_yaml_info
-            .map(|path_info| path_info.schema.clone())
-            .unwrap_or_else(empty_schema);
-        PathSchemaEvidence {
-            policy_inputs: ValuePathSchemaInputs {
-                facts,
-                provider_schema: provider_schema.schema,
-                values_yaml_schema,
-                guard_predicate_schema: evidence.guard_predicate_schema,
-                type_hint_schema: evidence.type_hint_schema,
-            },
-            provider_schema_candidate: provider_schema.provider_schema_candidate,
-        }
-    }
-
-    fn provider_schema_for_path(
-        provider_schemas: Vec<Arc<ProviderSchemaCandidate>>,
-        metadata_schema: Value,
-    ) -> ProviderSchemaForPath {
-        let single_provider_schema = match provider_schemas.as_slice() {
-            [schema] => Some(schema.clone()),
-            _ => None,
-        };
-        let provider_schema = if let Some(provider_schema) = single_provider_schema.as_deref() {
-            provider_schema.schema().clone()
-        } else {
-            merge_schema_list(
-                provider_schemas
-                    .into_iter()
-                    .map(|schema| schema.schema().clone())
-                    .collect(),
-            )
-        };
-        let provider_schema_candidate = if is_empty_schema(&metadata_schema) {
-            single_provider_schema.as_deref().cloned()
-        } else {
-            None
-        };
-
-        ProviderSchemaForPath {
-            schema: merge_schema_list(vec![provider_schema, metadata_schema]),
-            provider_schema_candidate,
         }
     }
 }
@@ -307,55 +221,47 @@ fn provider_schemas_for_path_evidence(
     provider_schemas
 }
 
-fn index_path_evidence(
+fn build_path_schema_inputs(
     evidence: ContractPathSchemaEvidence,
+    values_yaml_info: Option<&ValuesYamlPathInfo>,
     provider: &dyn ResourceSchemaOracle,
     resolve_policy: &ResolvePolicy,
     provider_schema_cache: &mut HashMap<
         ProviderSchemaLookupKey,
         Option<Arc<ProviderSchemaCandidate>>,
     >,
-) -> IndexedPathSchemaEvidence {
+) -> (ValuePathSchemaInputs, Option<ProviderSchemaCandidate>) {
     let provider_schemas = provider_schemas_for_path_evidence(
         &evidence,
         provider,
         resolve_policy,
         provider_schema_cache,
     );
-    let type_hint_schema = if evidence.type_hints.is_empty() {
-        empty_schema()
-    } else {
-        merge_type_hint_schemas(&evidence.type_hints)
-    };
-    let metadata_schema = if evidence.metadata_field_kinds.is_empty() {
-        empty_schema()
-    } else {
-        merge_schema_list(
-            evidence
-                .metadata_field_kinds
-                .iter()
-                .copied()
-                .map(metadata_field_schema)
-                .collect(),
-        )
-    };
-    let guard_predicate_schema = merge_schema_list(
-        evidence
-            .guard_predicates
-            .iter()
-            .filter_map(|predicate| {
-                resolve_policy.guard_predicate_schema(&evidence.value_path, predicate)
-            })
-            .collect(),
-    );
-
-    IndexedPathSchemaEvidence {
-        contract: evidence,
+    let (provider_schema, provider_schema_candidate) = provider_schema_for_path(
         provider_schemas,
-        type_hint_schema,
-        metadata_schema,
-        guard_predicate_schema,
-    }
+        metadata_schema(&evidence.metadata_field_kinds),
+    );
+    let values_yaml_facts =
+        values_yaml_info.map_or_else(ValuesYamlPathFacts::absent, |path_info| path_info.facts());
+    let facts = ValuePathSchemaFacts::new(evidence.facts, values_yaml_facts);
+    let values_yaml_schema = values_yaml_info
+        .map(|path_info| path_info.schema.clone())
+        .unwrap_or_else(empty_schema);
+
+    (
+        ValuePathSchemaInputs {
+            facts,
+            provider_schema,
+            values_yaml_schema,
+            guard_predicate_schema: guard_predicate_schema(
+                &evidence.value_path,
+                &evidence.guard_predicates,
+                resolve_policy,
+            ),
+            type_hint_schema: type_hint_schema(&evidence.type_hints),
+        },
+        provider_schema_candidate,
+    )
 }
 
 fn lookup_provider_schema(
@@ -374,6 +280,36 @@ fn lookup_provider_schema(
         .map(Arc::new)
 }
 
+fn provider_schema_for_path(
+    provider_schemas: Vec<Arc<ProviderSchemaCandidate>>,
+    metadata_schema: Value,
+) -> (Value, Option<ProviderSchemaCandidate>) {
+    let single_provider_schema = match provider_schemas.as_slice() {
+        [schema] => Some(schema.clone()),
+        _ => None,
+    };
+    let provider_schema = if let Some(provider_schema) = single_provider_schema.as_deref() {
+        provider_schema.schema().clone()
+    } else {
+        merge_schema_list(
+            provider_schemas
+                .into_iter()
+                .map(|schema| schema.schema().clone())
+                .collect(),
+        )
+    };
+    let provider_schema_candidate = if is_empty_schema(&metadata_schema) {
+        single_provider_schema.as_deref().cloned()
+    } else {
+        None
+    };
+
+    (
+        merge_schema_list(vec![provider_schema, metadata_schema]),
+        provider_schema_candidate,
+    )
+}
+
 fn metadata_field_schema(field: MetadataFieldKind) -> Value {
     match field {
         MetadataFieldKind::StringMap => string_map_schema(),
@@ -381,11 +317,42 @@ fn metadata_field_schema(field: MetadataFieldKind) -> Value {
     }
 }
 
-fn merge_type_hint_schemas(schema_types: &BTreeSet<String>) -> Value {
+fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
+    if field_kinds.is_empty() {
+        empty_schema()
+    } else {
+        merge_schema_list(
+            field_kinds
+                .iter()
+                .copied()
+                .map(metadata_field_schema)
+                .collect(),
+        )
+    }
+}
+
+fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {
+    if schema_types.is_empty() {
+        return empty_schema();
+    }
+
     merge_schema_list(
         schema_types
             .iter()
             .map(|schema_type| type_schema(schema_type))
+            .collect(),
+    )
+}
+
+fn guard_predicate_schema(
+    value_path: &str,
+    guard_predicates: &[helm_schema_ir::ConditionalGuard],
+    resolve_policy: &ResolvePolicy,
+) -> Value {
+    merge_schema_list(
+        guard_predicates
+            .iter()
+            .filter_map(|predicate| resolve_policy.guard_predicate_schema(value_path, predicate))
             .collect(),
     )
 }

@@ -1,5 +1,7 @@
 use serde_json::{Map, Value};
 
+use crate::schema_node::JsonSchemaType;
+
 const ARRAY_KEYWORDS: &[&str] = &[
     "additionalItems",
     "contains",
@@ -50,8 +52,8 @@ struct ForeignSchemaObject {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ForeignSchemaTypeField {
-    Single(String),
-    Multiple(Vec<String>),
+    Single(JsonSchemaType),
+    Multiple(Vec<JsonSchemaType>),
     Absent,
     Unsupported,
 }
@@ -89,14 +91,19 @@ impl ForeignSchemaObject {
 
     fn type_field(&self) -> ForeignSchemaTypeField {
         match self.raw.get("type") {
-            Some(Value::String(schema_type)) => ForeignSchemaTypeField::Single(schema_type.clone()),
+            Some(Value::String(schema_type)) => JsonSchemaType::from_name(schema_type)
+                .map(ForeignSchemaTypeField::Single)
+                .unwrap_or(ForeignSchemaTypeField::Unsupported),
             Some(Value::Array(schema_types)) => {
                 let mut values = Vec::with_capacity(schema_types.len());
                 for schema_type in schema_types {
                     let Some(schema_type) = schema_type.as_str() else {
                         return ForeignSchemaTypeField::Unsupported;
                     };
-                    values.push(schema_type.to_string());
+                    let Some(schema_type) = JsonSchemaType::from_name(schema_type) else {
+                        return ForeignSchemaTypeField::Unsupported;
+                    };
+                    values.push(schema_type);
                 }
                 ForeignSchemaTypeField::Multiple(values)
             }
@@ -105,7 +112,7 @@ impl ForeignSchemaObject {
         }
     }
 
-    fn allows_type(&self, expected: &str) -> bool {
+    fn allows_type(&self, expected: JsonSchemaType) -> bool {
         match self.type_field() {
             ForeignSchemaTypeField::Single(schema_type) => schema_type == expected,
             ForeignSchemaTypeField::Multiple(schema_types) => schema_types
@@ -113,7 +120,7 @@ impl ForeignSchemaObject {
                 .any(|schema_type| schema_type == expected),
             ForeignSchemaTypeField::Unsupported => false,
             ForeignSchemaTypeField::Absent => {
-                expected == "array" && self.has_any_keywords(ARRAY_KEYWORDS)
+                expected == JsonSchemaType::Array && self.has_any_keywords(ARRAY_KEYWORDS)
             }
         }
     }
@@ -130,15 +137,22 @@ impl ForeignSchemaObject {
         self.raw.insert("items".to_string(), items);
     }
 
-    fn set_type_string(&mut self, schema_type: &str) {
-        self.raw
-            .insert("type".to_string(), Value::String(schema_type.to_string()));
-    }
-
-    fn set_type_variants(&mut self, schema_types: Vec<String>) {
+    fn set_type(&mut self, schema_type: JsonSchemaType) {
         self.raw.insert(
             "type".to_string(),
-            Value::Array(schema_types.into_iter().map(Value::String).collect()),
+            Value::String(schema_type.as_str().to_string()),
+        );
+    }
+
+    fn set_type_variants(&mut self, schema_types: Vec<JsonSchemaType>) {
+        self.raw.insert(
+            "type".to_string(),
+            Value::Array(
+                schema_types
+                    .into_iter()
+                    .map(|schema_type| Value::String(schema_type.as_str().to_string()))
+                    .collect(),
+            ),
         );
     }
 
@@ -209,18 +223,18 @@ impl ForeignSchemaRestriction {
     }
 
     fn apply_scalar_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
-        if schema.allows_type("array") {
+        if schema.allows_type(JsonSchemaType::Array) {
             return rewrite_array_schema(schema, Self::Scalar);
         }
 
         match schema.type_field() {
             ForeignSchemaTypeField::Single(schema_type) => {
-                scalar_json_type(&schema_type).then(|| schema.into_value())
+                scalar_json_type(schema_type).then(|| schema.into_value())
             }
             ForeignSchemaTypeField::Multiple(schema_types) => {
-                let scalar_types: Vec<String> = schema_types
+                let scalar_types: Vec<JsonSchemaType> = schema_types
                     .into_iter()
-                    .filter(|schema_type| scalar_json_type(schema_type))
+                    .filter(|schema_type| scalar_json_type(*schema_type))
                     .collect();
                 if scalar_types.is_empty() {
                     return None;
@@ -240,7 +254,7 @@ impl ForeignSchemaRestriction {
     }
 
     fn apply_scalar_collection_object(self, schema: ForeignSchemaObject) -> Option<Value> {
-        if !schema.allows_type("array") {
+        if !schema.allows_type(JsonSchemaType::Array) {
             return None;
         }
         rewrite_array_schema(schema, Self::Scalar)
@@ -271,7 +285,7 @@ fn rewrite_array_schema(
     if let Some(items) = schema.take_items() {
         schema.set_items(item_restriction.apply(items)?);
     }
-    schema.set_type_string("array");
+    schema.set_type(JsonSchemaType::Array);
     schema.strip_object_keywords();
     Some(schema.into_value())
 }
@@ -292,10 +306,14 @@ fn restrict_schema_union(
     Some(annotations.into_value())
 }
 
-fn scalar_json_type(schema_type: &str) -> bool {
+fn scalar_json_type(schema_type: JsonSchemaType) -> bool {
     matches!(
         schema_type,
-        "string" | "number" | "integer" | "boolean" | "null"
+        JsonSchemaType::String
+            | JsonSchemaType::Number
+            | JsonSchemaType::Integer
+            | JsonSchemaType::Boolean
+            | JsonSchemaType::Null
     )
 }
 
@@ -303,6 +321,8 @@ fn scalar_json_type(schema_type: &str) -> bool {
 mod tests {
     use serde_json::json;
     use test_util::prelude::sim_assert_eq;
+
+    use crate::schema_node::JsonSchemaType;
 
     use super::{ForeignSchemaObject, ForeignSchemaRestriction, ForeignSchemaTypeField};
 
@@ -313,9 +333,9 @@ mod tests {
         }))
         .expect("object schema");
 
-        assert!(schema.allows_type("array"));
-        assert!(schema.allows_type("object"));
-        assert!(!schema.allows_type("string"));
+        assert!(schema.allows_type(JsonSchemaType::Array));
+        assert!(schema.allows_type(JsonSchemaType::Object));
+        assert!(!schema.allows_type(JsonSchemaType::String));
     }
 
     #[test]
@@ -325,8 +345,8 @@ mod tests {
         }))
         .expect("object schema");
 
-        assert!(schema.allows_type("array"));
-        assert!(!schema.allows_type("object"));
+        assert!(schema.allows_type(JsonSchemaType::Array));
+        assert!(!schema.allows_type(JsonSchemaType::Object));
     }
 
     #[test]
@@ -355,7 +375,10 @@ mod tests {
 
         sim_assert_eq!(
             have: schema.type_field(),
-            want: ForeignSchemaTypeField::Multiple(vec!["string".to_string(), "null".to_string()])
+            want: ForeignSchemaTypeField::Multiple(vec![
+                JsonSchemaType::String,
+                JsonSchemaType::Null
+            ])
         );
     }
 

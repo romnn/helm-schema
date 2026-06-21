@@ -9,7 +9,7 @@ use crate::{
     values_yaml::ValuesYamlPathFacts,
 };
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
-use helm_schema_core::{ProviderOrigin, ProviderSchemaFragment, ResourceSchemaOracle};
+use helm_schema_core::{ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, ContractValuePathFacts, Guard, GuardValue,
     ProviderSchemaUse, ResourceRef, SymbolicIrContext, ValueKind, YamlPath,
@@ -345,14 +345,6 @@ impl ResourceSchemaOracle for DescriptionProvider {
     ) -> Option<ProviderSchemaFragment> {
         None
     }
-
-    fn origin(&self) -> ProviderOrigin {
-        ProviderOrigin::KubernetesOpenApi
-    }
-
-    fn has_resource(&self, _resource: &ResourceRef) -> bool {
-        true
-    }
 }
 
 #[derive(Debug)]
@@ -376,14 +368,6 @@ impl ResourceSchemaOracle for SharedObjectProvider {
     ) -> Option<ProviderSchemaFragment> {
         None
     }
-
-    fn origin(&self) -> ProviderOrigin {
-        ProviderOrigin::KubernetesOpenApi
-    }
-
-    fn has_resource(&self, _resource: &ResourceRef) -> bool {
-        true
-    }
 }
 
 #[derive(Debug)]
@@ -400,14 +384,6 @@ impl ResourceSchemaOracle for NoopProvider {
         _path: &YamlPath,
     ) -> Option<ProviderSchemaFragment> {
         None
-    }
-
-    fn origin(&self) -> ProviderOrigin {
-        ProviderOrigin::KubernetesOpenApi
-    }
-
-    fn has_resource(&self, _resource: &ResourceRef) -> bool {
-        false
     }
 }
 
@@ -677,14 +653,6 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             _path: &YamlPath,
         ) -> Option<ProviderSchemaFragment> {
             None
-        }
-
-        fn origin(&self) -> ProviderOrigin {
-            ProviderOrigin::DefaultCatalog
-        }
-
-        fn has_resource(&self, _resource: &ResourceRef) -> bool {
-            true
         }
     }
 

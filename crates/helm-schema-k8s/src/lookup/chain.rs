@@ -89,33 +89,6 @@ impl Chain {
         ApiPresenceLookupExecutor::new(self.providers.as_slice()).execute(query)
     }
 
-    #[tracing::instrument(
-        skip_all,
-        fields(
-            kind = use_
-                .resource
-                .kind
-                .as_str(),
-            api_version = use_
-                .resource
-                .api_version
-                .as_str(),
-            path_len = use_.path.0.len(),
-        )
-    )]
-    fn schema_fragment_for_use_internal(
-        &self,
-        use_: &ProviderSchemaUse,
-    ) -> Option<ProviderSchemaFragment> {
-        let resource = &use_.resource;
-
-        if needs_inference(resource) {
-            return self.schema_fragment_for_resource_needing_inference(resource, &use_.path);
-        }
-
-        self.schema_fragment_for_planned_candidates(resource, &use_.path)
-    }
-
     fn schema_fragment_for_resource_needing_inference(
         &self,
         resource: &ResourceRef,
@@ -278,8 +251,28 @@ impl Chain {
 }
 
 impl K8sSchemaProvider for Chain {
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            kind = use_
+                .resource
+                .kind
+                .as_str(),
+            api_version = use_
+                .resource
+                .api_version
+                .as_str(),
+            path_len = use_.path.0.len(),
+        )
+    )]
     fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
-        self.schema_fragment_for_use_internal(use_)
+        let resource = &use_.resource;
+
+        if needs_inference(resource) {
+            return self.schema_fragment_for_resource_needing_inference(resource, &use_.path);
+        }
+
+        self.schema_fragment_for_planned_candidates(resource, &use_.path)
     }
 
     fn schema_fragment_for_resource_path(
