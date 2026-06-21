@@ -15,6 +15,34 @@ pub(crate) struct DocumentSiteContext {
     pub(crate) source_span: SourceSpan,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ObservedOutputSite {
+    pub(crate) kind: ValueKind,
+    pub(crate) path: YamlPath,
+}
+
+impl DocumentSiteContext {
+    pub(crate) fn fragment_output_site(&self) -> Option<ObservedOutputSite> {
+        if self.in_mapping_key {
+            return None;
+        }
+
+        let kind = if self.kind == ValueKind::Scalar
+            && !self.entire_scalar_value
+            && !self.path.0.is_empty()
+        {
+            ValueKind::PartialScalar
+        } else {
+            self.kind
+        };
+
+        Some(ObservedOutputSite {
+            kind,
+            path: self.path.clone(),
+        })
+    }
+}
+
 pub(crate) fn collect_document_site_context(
     source: &str,
     tracker: &DocumentTracker<'_>,
@@ -107,4 +135,48 @@ fn document_site_is_yaml_comment_part(source: &str, node: tree_sitter::Node<'_>)
     let start = node.start_byte();
     let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
     source[line_start..start].trim_start().starts_with('#')
+}
+
+#[cfg(test)]
+mod tests {
+    use test_util::prelude::sim_assert_eq;
+
+    use super::{DocumentSiteContext, ObservedOutputSite};
+    use crate::{SourceSpan, ValueKind, YamlPath};
+
+    #[test]
+    fn fragment_output_site_suppresses_mapping_keys() {
+        let site = DocumentSiteContext {
+            kind: ValueKind::Scalar,
+            in_mapping_key: true,
+            in_yaml_comment: false,
+            entire_scalar_value: true,
+            path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+            resource: None,
+            source_span: SourceSpan::new(0, 0),
+        };
+
+        sim_assert_eq!(have: site.fragment_output_site(), want: None);
+    }
+
+    #[test]
+    fn fragment_output_site_marks_partial_scalar_slots() {
+        let site = DocumentSiteContext {
+            kind: ValueKind::Scalar,
+            in_mapping_key: false,
+            in_yaml_comment: false,
+            entire_scalar_value: false,
+            path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
+            resource: None,
+            source_span: SourceSpan::new(0, 0),
+        };
+
+        sim_assert_eq!(
+            have: site.fragment_output_site(),
+            want: Some(ObservedOutputSite {
+                kind: ValueKind::PartialScalar,
+                path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
+            })
+        );
+    }
 }

@@ -1,27 +1,28 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::TemplateHeader;
 
 use crate::abstract_value::AbstractValue;
-use crate::assignment_action_plan::AssignmentActionPlan;
-use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::contract_sink::ContractUseSink;
 use crate::document_projection::{DocumentTracker, collect_document_site_context};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
     range_has_destructured_variable_definition,
 };
-use crate::helper_range_frame::RangeFrame;
-use crate::helper_range_plan::{HelperRangeIteration, NonExactRangeVariableBinding};
+use crate::helper_range_plan::NonExactRangeVariableBinding;
 use crate::helper_runtime_plan::{
     HelperRangeDotSource, HelperRuntimeSemantics, helper_if_condition_plan,
     helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
-use crate::helper_walk_state::{FragmentOutputWalkState, HelperRuntimeLocals};
-use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
+use crate::helper_walk_state::{
+    FragmentOutputWalkState, HelperRangeJoinBehavior, HelperRuntimeControlSnapshot,
+    HelperRuntimeControlState, HelperRuntimeLocals,
+};
+use crate::node_eval::{
+    AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime, eval_template_body,
+};
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{ValueKind, YamlPath};
@@ -50,16 +51,12 @@ pub(crate) fn collect_bound_fragment_output_uses_from_tree(
     let mut runtime = FragmentOutputUseRuntime {
         source,
         bindings,
-        dot_stack: vec![current_dot.cloned()],
-        dot_fragment_stack: vec![current_dot_fragment.cloned()],
-        active_output_predicates: BTreeSet::new(),
+        control: HelperRuntimeControlState::for_fragment(current_dot, current_dot_fragment),
         locals: state.locals,
         context: state.context,
         seen: state.seen,
         outputs: state.outputs,
         document_tracker,
-        range_frames: Vec::new(),
-        no_output_depth: 0,
     };
     eval_template_body(&mut runtime, tree.root_node());
 }
@@ -67,33 +64,27 @@ pub(crate) fn collect_bound_fragment_output_uses_from_tree(
 struct FragmentOutputUseRuntime<'context, 'state> {
     source: &'state str,
     bindings: &'state HashMap<String, AbstractValue>,
-    dot_stack: Vec<Option<AbstractValue>>,
-    dot_fragment_stack: Vec<Option<AbstractValue>>,
-    active_output_predicates: BTreeSet<Predicate>,
+    control: HelperRuntimeControlState,
     locals: &'state mut HelperRuntimeLocals,
     context: FragmentEvalContext<'context>,
     seen: &'state mut HashSet<String>,
     outputs: &'state mut Vec<HelperFragmentOutputUse>,
     document_tracker: DocumentTracker<'state>,
-    range_frames: Vec<RangeFrame<HelperRangeIteration>>,
-    no_output_depth: usize,
 }
 
 #[derive(Clone)]
 struct FragmentOutputUseSnapshot {
     locals: HelperRuntimeLocals,
-    dot_stack_len: usize,
-    dot_fragment_stack_len: usize,
-    active_output_predicates: BTreeSet<Predicate>,
+    control: HelperRuntimeControlSnapshot,
 }
 
 impl FragmentOutputUseRuntime<'_, '_> {
     fn current_dot(&self) -> Option<&AbstractValue> {
-        self.dot_stack.last().and_then(Option::as_ref)
+        self.control.current_helper_dot()
     }
 
     fn current_dot_fragment(&self) -> Option<&AbstractValue> {
-        self.dot_fragment_stack.last().and_then(Option::as_ref)
+        self.control.current_fragment_dot()
     }
 
     fn collect_expression(
@@ -104,7 +95,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
     ) {
         let current_dot = self.current_dot().cloned();
         let current_dot_fragment = self.current_dot_fragment().cloned();
-        let active_output_predicates = self.active_output_predicates.clone();
+        let active_output_predicates = self.control.active_output_predicates().clone();
         let mut state = FragmentOutputWalkState {
             locals: &mut *self.locals,
             context: self.context,
@@ -155,7 +146,8 @@ impl FragmentOutputUseRuntime<'_, '_> {
             return;
         };
 
-        let meta = HelperOutputMeta::with_predicates(&self.active_output_predicates, false);
+        let meta =
+            HelperOutputMeta::with_predicates(self.control.active_output_predicates(), false);
         for source_expr in range_binding.fragment_source_paths() {
             self.outputs.push(HelperFragmentOutputUse::new(
                 source_expr,
@@ -167,22 +159,7 @@ impl FragmentOutputUseRuntime<'_, '_> {
     }
 }
 
-impl ContractUseSink for FragmentOutputUseRuntime<'_, '_> {
-    fn emit_contract_use(&mut self, _source_expr: String, _path: YamlPath, _kind: ValueKind) {}
-
-    fn emit_contract_use_with_extra_guards(
-        &mut self,
-        _source_expr: String,
-        _path: YamlPath,
-        _kind: ValueKind,
-        _extra_guards: &[crate::Guard],
-    ) {
-    }
-}
-
 impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
-    fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
-
     fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
         if let Some(binding) = binding {
             self.locals.bindings.insert(variable, binding);
@@ -195,33 +172,13 @@ impl NodeActionEffectSink for FragmentOutputUseRuntime<'_, '_> {
         self.declare_fragment_value(variable, binding);
     }
 
-    fn refresh_default_paths(
-        &mut self,
-        _variable: &str,
-        _rhs_expr: &helm_schema_ast::TemplateExpr,
-    ) {
-    }
-
-    fn refresh_helper_output_meta(
-        &mut self,
-        _variable: String,
-        _rhs_expr: &helm_schema_ast::TemplateExpr,
-    ) {
-    }
-
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
-        if !predicate.is_trivial() {
-            self.active_output_predicates.insert(predicate);
-        }
+        self.control.push_predicate_if_absent(predicate);
     }
 
     fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
-        self.dot_fragment_stack.push(binding.clone());
-        self.dot_stack
-            .push(binding.map(|binding| binding.to_context_value()));
+        self.control.push_effect_dot_binding(binding);
     }
-
-    fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}
 }
 
 impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
@@ -230,8 +187,6 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     fn source(&self) -> &str {
         self.source
     }
-
-    fn enter_node(&mut self, _node: tree_sitter::Node<'_>) {}
 
     fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
         self.document_tracker.path_for_node(node)
@@ -249,33 +204,21 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
         FragmentOutputUseSnapshot {
             locals: self.locals.clone(),
-            dot_stack_len: self.dot_stack.len(),
-            dot_fragment_stack_len: self.dot_fragment_stack.len(),
-            active_output_predicates: self.active_output_predicates.clone(),
+            control: self.control.snapshot(),
         }
     }
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
         *self.locals = snapshot.locals;
-        self.dot_stack.truncate(snapshot.dot_stack_len);
-        self.dot_fragment_stack
-            .truncate(snapshot.dot_fragment_stack_len);
-        self.active_output_predicates = snapshot.active_output_predicates;
+        self.control.restore(&snapshot.control);
     }
-
-    fn enter_local_scope(&mut self) {}
-
-    fn exit_local_scope(&mut self) {}
 
     fn join_branch_scopes(
         &mut self,
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        self.dot_stack.truncate(entry.dot_stack_len);
-        self.dot_fragment_stack
-            .truncate(entry.dot_fragment_stack_len);
-        self.active_output_predicates = entry.active_output_predicates.clone();
+        self.control.prepare_branch_join(&entry.control);
         self.merge_outcomes(outcomes);
     }
 
@@ -284,63 +227,36 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        self.dot_stack.truncate(entry.dot_stack_len);
-        self.dot_fragment_stack
-            .truncate(entry.dot_fragment_stack_len);
-        self.active_output_predicates = entry.active_output_predicates.clone();
-        if self
-            .range_frames
-            .pop()
-            .is_some_and(|frame| frame.is_definitely_nonempty())
-        {
-            if let Some(body_outcome) = outcomes.into_iter().next() {
-                self.promote_outcome(body_outcome);
+        match self.control.prepare_range_join(&entry.control) {
+            HelperRangeJoinBehavior::PromoteBodyOutcome => {
+                if let Some(body_outcome) = outcomes.into_iter().next() {
+                    self.promote_outcome(body_outcome);
+                }
             }
-            return;
+            HelperRangeJoinBehavior::MergeAllOutcomes => {
+                self.merge_outcomes(outcomes);
+            }
         }
-
-        self.merge_outcomes(outcomes);
     }
 
     fn range_iteration_count(&self) -> usize {
-        self.range_frames
-            .last()
-            .map(RangeFrame::iteration_count)
-            .unwrap_or(1)
+        self.control.range_iteration_count()
     }
 
     fn enter_range_iteration(&mut self, index: usize) {
-        let Some(iteration) = self
-            .range_frames
-            .last()
-            .and_then(|frame| frame.iteration(index))
-        else {
-            return;
-        };
-        if let Some((variable, binding)) = iteration.variable_binding {
-            self.locals.bindings.insert(variable, binding);
-        }
-        self.dot_stack.push(iteration.helper_dot_binding);
-        self.dot_fragment_stack.push(iteration.fragment_dot_binding);
+        self.control.enter_range_iteration(index, self.locals);
     }
 
     fn exit_range_iteration(&mut self, _index: usize) {
-        if self
-            .range_frames
-            .last()
-            .is_some_and(RangeFrame::has_exact_iterations)
-        {
-            self.dot_stack.pop();
-            self.dot_fragment_stack.pop();
-        }
+        self.control.exit_range_iteration();
     }
 
     fn enter_no_output(&mut self) {
-        self.no_output_depth += 1;
+        self.control.enter_no_output();
     }
 
     fn exit_no_output(&mut self) {
-        self.no_output_depth = self.no_output_depth.saturating_sub(1);
+        self.control.exit_no_output();
     }
 
     fn handle_output_node(
@@ -348,26 +264,21 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         node: tree_sitter::Node<'_>,
         exprs: &[helm_schema_ast::TemplateExpr],
     ) {
-        if self.no_output_depth > 0 {
+        if self.control.suppresses_output() {
             return;
         }
         let site_context =
             collect_document_site_context(self.source, &self.document_tracker, node, exprs);
-        if site_context.in_mapping_key {
+        let Some(site) = site_context.fragment_output_site() else {
             return;
-        }
-        let kind = if site_context.kind == ValueKind::Scalar
-            && !site_context.entire_scalar_value
-            && !site_context.path.0.is_empty()
-        {
-            ValueKind::PartialScalar
-        } else {
-            site_context.kind
         };
-        self.collect_expression(exprs, &site_context.path, kind);
+        self.collect_expression(exprs, &site.path, site.kind);
     }
 
-    fn apply_assignment_side_effects(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) -> bool {
+    fn observe_assignment_exprs(
+        &mut self,
+        exprs: &[helm_schema_ast::TemplateExpr],
+    ) -> AssignmentObservation {
         let mut seen_set = HashSet::new();
         let current_dot_fragment = self.current_dot_fragment().cloned();
         if crate::fragment_assignment::apply_local_set_mutations_from_exprs(
@@ -377,21 +288,11 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.context,
             &mut seen_set,
         ) {
-            return true;
+            return AssignmentObservation::LocalMutationApplied;
         }
 
         self.collect_expression(exprs, &YamlPath(Vec::new()), ValueKind::Scalar);
-        true
-    }
-
-    fn plan_assignment_action(
-        &self,
-        _exprs: &[helm_schema_ast::TemplateExpr],
-    ) -> AssignmentActionPlan {
-        AssignmentActionPlan {
-            get_binding: None,
-            local_assignment: None,
-        }
+        AssignmentObservation::ExpressionObserved
     }
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
@@ -405,7 +306,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.seen,
             FRAGMENT_SEMANTICS,
         )
-        .action
+        .into_action()
     }
 
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
@@ -421,7 +322,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.seen,
             FRAGMENT_SEMANTICS,
         )
-        .action
+        .into_action()
     }
 
     fn plan_range_action(
@@ -442,15 +343,12 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
             self.seen,
             FRAGMENT_SEMANTICS,
         );
-        self.active_output_predicates
-            .extend(plan.guard_paths.iter().cloned().map(Predicate::truthy_path));
+        let activated = plan.activate(&mut self.control, self.locals);
         self.collect_destructured_range_fragment_outputs(
             node,
-            plan.range_fragment_value.as_ref(),
+            activated.range_fragment_value.as_ref(),
             current_path,
         );
-
-        self.range_frames.push(plan.frame);
-        plan.action
+        activated.action
     }
 }

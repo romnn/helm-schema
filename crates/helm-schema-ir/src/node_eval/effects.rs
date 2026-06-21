@@ -4,28 +4,40 @@ use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::contract_sink::ContractUseSink;
 use crate::fragment_assignment::AssignmentKind;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
 
-pub(crate) trait NodeActionEffectSink: ContractUseSink {
-    fn apply_get_binding(&mut self, plan: GetBindingPlan);
+pub(crate) trait NodeActionEffectSink {
+    fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
 
-    fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>);
+    fn declare_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
-    fn assign_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>);
+    fn assign_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
-    fn refresh_default_paths(&mut self, variable: &str, rhs_expr: &TemplateExpr);
+    fn refresh_default_paths(&mut self, _variable: &str, _rhs_expr: &TemplateExpr) {}
 
-    fn refresh_helper_output_meta(&mut self, variable: String, rhs_expr: &TemplateExpr);
+    fn refresh_helper_output_meta(&mut self, _variable: String, _rhs_expr: &TemplateExpr) {}
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
     fn push_dot_binding(&mut self, binding: Option<AbstractValue>);
 
-    fn insert_range_domain(&mut self, variable: String, literals: Vec<String>);
+    fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}
+
+    fn observe_value_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
+        self.observe_value_use_with_extra_guards(source_expr, path, kind, &[]);
+    }
+
+    fn observe_value_use_with_extra_guards(
+        &mut self,
+        _source_expr: String,
+        _path: YamlPath,
+        _kind: ValueKind,
+        _extra_guards: &[Guard],
+    ) {
+    }
 }
 
 pub(super) fn apply_assignment_action_plan(
@@ -60,12 +72,12 @@ pub(super) fn apply_if_condition_plan(
 ) {
     let guards = plan.contract_guards();
     for value in plan.bound_values {
-        sink.emit_contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+        sink.observe_value_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
     for guard in &guards {
         for path in guard.value_paths() {
-            sink.emit_contract_use_with_extra_guards(
+            sink.observe_value_use_with_extra_guards(
                 path.to_string(),
                 YamlPath(Vec::new()),
                 ValueKind::Scalar,
@@ -95,12 +107,12 @@ pub(super) fn apply_with_condition_plan(
     }
 
     for value in plan.bound_values {
-        sink.emit_contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
+        sink.observe_value_use(value, YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
     for guard in &guards {
         for path in guard.value_paths() {
-            sink.emit_contract_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
+            sink.observe_value_use(path.to_string(), YamlPath(Vec::new()), ValueKind::Scalar);
         }
     }
     sink.push_dot_binding(plan.dot_binding);
@@ -130,7 +142,7 @@ pub(super) fn apply_range_action_plan(
                 path: source_path.clone(),
             };
             if plan.emit_header_use {
-                sink.emit_contract_use_with_extra_guards(
+                sink.observe_value_use_with_extra_guards(
                     source_path.clone(),
                     plan.guard_path.clone(),
                     ValueKind::Scalar,
@@ -142,7 +154,7 @@ pub(super) fn apply_range_action_plan(
 
         if plan.renders_mapping_entries {
             for source_path in &plan.source_paths {
-                sink.emit_contract_use(
+                sink.observe_value_use(
                     source_path.clone(),
                     current_path.clone(),
                     ValueKind::Fragment,

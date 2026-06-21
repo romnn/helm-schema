@@ -9,7 +9,7 @@ use super::effects::{
     apply_assignment_action_plan, apply_condition_alternative_guards, apply_if_condition_plan,
     apply_range_action_plan, apply_with_condition_plan,
 };
-use super::{NodeEvalRuntime, eval_children, eval_node};
+use super::{AssignmentObservation, NodeEvalRuntime, eval_children, eval_node};
 
 pub(super) fn eval_assignment_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
 where
@@ -17,9 +17,13 @@ where
 {
     if let Ok(text) = node.utf8_text(runtime.source().as_bytes()) {
         let exprs = parse_expr_text(text);
-        if !runtime.apply_assignment_side_effects(&exprs) {
-            let plan = runtime.plan_assignment_action(&exprs);
-            apply_assignment_action_plan(runtime, plan);
+        match runtime.observe_assignment_exprs(&exprs) {
+            AssignmentObservation::Unhandled => {
+                let plan = runtime.plan_assignment_action(&exprs);
+                apply_assignment_action_plan(runtime, plan);
+            }
+            AssignmentObservation::ExpressionObserved
+            | AssignmentObservation::LocalMutationApplied => {}
         }
     }
 

@@ -10,6 +10,8 @@ use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
 };
 use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
+use crate::helper_summary::HelperSummary;
+use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals};
 use crate::range_action_plan::RangeActionPlan;
 use crate::value_path_context::computed_with_body_fragment_value_expr;
 
@@ -32,6 +34,19 @@ pub(crate) struct HelperConditionPlan {
     pub(crate) action: ConditionActionPlan,
 }
 
+impl HelperConditionPlan {
+    pub(crate) fn into_action(self) -> ConditionActionPlan {
+        self.action
+    }
+
+    pub(crate) fn activate_value(self, analysis: &mut HelperSummary) -> ConditionActionPlan {
+        for path in &self.guard_paths {
+            analysis.add_guard_path(path.clone());
+        }
+        self.action
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) guard_paths: BTreeSet<String>,
@@ -39,6 +54,40 @@ pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) frame: RangeFrame<HelperRangeIteration>,
     pub(crate) non_exact_variable_binding: Option<(String, AbstractValue)>,
     pub(crate) range_fragment_value: Option<AbstractValue>,
+}
+
+pub(crate) struct ActivatedHelperRange {
+    pub(crate) guard_paths: BTreeSet<String>,
+    pub(crate) action: RangeActionPlan,
+    pub(crate) range_fragment_value: Option<AbstractValue>,
+}
+
+impl HelperRangeRuntimePlan {
+    pub(crate) fn activate(
+        self,
+        control: &mut HelperRuntimeControlState,
+        locals: &mut HelperRuntimeLocals,
+    ) -> ActivatedHelperRange {
+        control.extend_truthy_predicates(self.guard_paths.iter().cloned());
+        if let Some((variable, binding)) = self.non_exact_variable_binding {
+            locals.bindings.insert(variable, binding);
+        }
+        control.push_range_frame(self.frame);
+
+        ActivatedHelperRange {
+            guard_paths: self.guard_paths,
+            action: self.action,
+            range_fragment_value: self.range_fragment_value,
+        }
+    }
+}
+
+impl ActivatedHelperRange {
+    pub(crate) fn record_guard_paths_into(&self, analysis: &mut HelperSummary) {
+        for path in &self.guard_paths {
+            analysis.add_guard_path(path.clone());
+        }
+    }
 }
 
 pub(crate) fn helper_if_condition_plan(
@@ -162,4 +211,58 @@ fn helper_branch_guard_paths(
         context,
         seen,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use test_util::prelude::sim_assert_eq;
+
+    use super::{ActivatedHelperRange, HelperRangeRuntimePlan};
+    use crate::abstract_value::AbstractValue;
+    use crate::helper_range_frame::RangeFrame;
+    use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals};
+    use crate::range_action_plan::RangeActionPlan;
+
+    #[test]
+    fn activate_range_plan_installs_predicates_binding_and_frame() {
+        let plan = HelperRangeRuntimePlan {
+            guard_paths: BTreeSet::from(["serviceAccount.create".to_string()]),
+            action: RangeActionPlan::empty(),
+            frame: RangeFrame::unknown(),
+            non_exact_variable_binding: Some((
+                "item".to_string(),
+                AbstractValue::ValuesPath("serviceAccount.*".to_string()),
+            )),
+            range_fragment_value: Some(AbstractValue::ValuesPath("serviceAccount".to_string())),
+        };
+        let mut control = HelperRuntimeControlState::for_value(None);
+        let mut locals = HelperRuntimeLocals::default();
+
+        let ActivatedHelperRange {
+            guard_paths,
+            action,
+            range_fragment_value,
+        } = plan.activate(&mut control, &mut locals);
+
+        sim_assert_eq!(
+            have: control.active_output_predicates().iter().cloned().collect::<Vec<_>>().len(),
+            want: 1
+        );
+        sim_assert_eq!(
+            have: locals.bindings.get("item").cloned(),
+            want: Some(AbstractValue::ValuesPath("serviceAccount.*".to_string()))
+        );
+        sim_assert_eq!(have: control.range_iteration_count(), want: 1);
+        sim_assert_eq!(
+            have: guard_paths,
+            want: BTreeSet::from(["serviceAccount.create".to_string()])
+        );
+        sim_assert_eq!(have: action.has_header, want: false);
+        sim_assert_eq!(
+            have: range_fragment_value,
+            want: Some(AbstractValue::ValuesPath("serviceAccount".to_string()))
+        );
+    }
 }

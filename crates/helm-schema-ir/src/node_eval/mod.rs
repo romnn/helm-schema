@@ -9,7 +9,7 @@ use crate::tree_sitter_utils::children_with_field;
 pub(crate) use action_kind::{NodeActionKind, classify_node_action};
 
 pub(crate) use effects::NodeActionEffectSink;
-pub(crate) use runtime::NodeEvalRuntime;
+pub(crate) use runtime::{AssignmentObservation, NodeEvalRuntime};
 
 pub(crate) fn eval_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
 where

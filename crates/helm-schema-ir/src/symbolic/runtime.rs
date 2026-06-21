@@ -4,7 +4,7 @@ use crate::abstract_value::AbstractValue;
 use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract_sink::{ContractUseContext, ContractUseSink};
+use crate::contract_sink::ContractUseContext;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime};
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
@@ -48,28 +48,6 @@ impl SymbolicWalker<'_> {
         );
         self.contract
             .push(context.contract_use(source_expr, path, kind, extra_guards, resource));
-    }
-}
-
-impl ContractUseSink for SymbolicWalker<'_> {
-    fn emit_contract_use(&mut self, source_expr: String, path: YamlPath, kind: ValueKind) {
-        self.emit_contract_use_with_extra_guards(source_expr, path, kind, &[]);
-    }
-
-    fn emit_contract_use_with_extra_guards(
-        &mut self,
-        source_expr: String,
-        path: YamlPath,
-        kind: ValueKind,
-        extra_guards: &[Guard],
-    ) {
-        self.push_contract_use_with_resource(
-            source_expr,
-            path,
-            kind,
-            extra_guards,
-            self.current_resource(),
-        );
     }
 }
 
@@ -235,5 +213,21 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         self.scope
             .locals_mut()
             .insert_range_domain(variable, literals);
+    }
+
+    fn observe_value_use_with_extra_guards(
+        &mut self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+    ) {
+        self.push_contract_use_with_resource(
+            source_expr,
+            path,
+            kind,
+            extra_guards,
+            self.current_resource(),
+        );
     }
 }

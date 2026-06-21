@@ -6,12 +6,19 @@ use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::range_action_plan::RangeActionPlan;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum AssignmentObservation {
+    Unhandled,
+    ExpressionObserved,
+    LocalMutationApplied,
+}
+
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     type ScopeSnapshot: Clone;
 
     fn source(&self) -> &str;
 
-    fn enter_node(&mut self, node: tree_sitter::Node<'_>);
+    fn enter_node(&mut self, _node: tree_sitter::Node<'_>) {}
 
     fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath;
 
@@ -27,9 +34,9 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot);
 
-    fn enter_local_scope(&mut self);
+    fn enter_local_scope(&mut self) {}
 
-    fn exit_local_scope(&mut self);
+    fn exit_local_scope(&mut self) {}
 
     fn join_branch_scopes(
         &mut self,
@@ -59,11 +66,16 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, exprs: &[TemplateExpr]);
 
-    fn apply_assignment_side_effects(&mut self, _exprs: &[TemplateExpr]) -> bool {
-        false
+    fn observe_assignment_exprs(&mut self, _exprs: &[TemplateExpr]) -> AssignmentObservation {
+        AssignmentObservation::Unhandled
     }
 
-    fn plan_assignment_action(&self, exprs: &[TemplateExpr]) -> AssignmentActionPlan;
+    fn plan_assignment_action(&self, _exprs: &[TemplateExpr]) -> AssignmentActionPlan {
+        AssignmentActionPlan {
+            get_binding: None,
+            local_assignment: None,
+        }
+    }
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan;
 
