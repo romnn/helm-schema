@@ -201,6 +201,16 @@ pub(crate) struct HelperPathEntry {
     pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
 }
 
+impl HelperPathEntry {
+    pub(crate) fn is_dependency_relevant(&self) -> bool {
+        self.output_meta.is_some()
+            || self.dependency_meta.is_some()
+            || self.guard
+            || !self.type_hints.is_empty()
+            || !self.fragment_output_uses.is_empty()
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HelperPathMetaRole {
     Output,
@@ -233,28 +243,12 @@ impl HelperPathFacts {
             || !self.structured_outputs.is_empty()
     }
 
-    pub(crate) fn fragment_output_uses(&self, source_expr: &str) -> Vec<HelperFragmentOutputUse> {
-        self.structured_outputs
-            .iter()
-            .cloned()
-            .map(|output| output.into_output_use(source_expr.to_string()))
-            .collect()
-    }
-
     fn merge_meta(&mut self, role: HelperPathMetaRole, meta: HelperOutputMeta) {
         self.meta_by_role.entry(role).or_default().merge(meta);
     }
 
     fn ensure_meta(&mut self, role: HelperPathMetaRole) {
         self.meta_by_role.entry(role).or_default();
-    }
-
-    fn meta(&self, role: HelperPathMetaRole) -> Option<&HelperOutputMeta> {
-        self.meta_by_role.get(&role)
-    }
-
-    fn meta_cloned(&self, role: HelperPathMetaRole) -> Option<HelperOutputMeta> {
-        self.meta(role).cloned()
     }
 
     fn take_meta(&mut self, role: HelperPathMetaRole) -> Option<HelperOutputMeta> {
@@ -354,13 +348,6 @@ impl HelperSummary {
         }
     }
 
-    pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
-        self.path_facts
-            .iter()
-            .flat_map(|(source_expr, facts)| facts.fragment_output_uses(source_expr))
-            .collect()
-    }
-
     pub(crate) fn add_type_hints(&mut self, hints: BTreeMap<String, BTreeSet<String>>) {
         for (path, schema_types) in hints {
             self.merge_type_hints(path, schema_types);
@@ -378,28 +365,10 @@ impl HelperSummary {
             .extend(schema_types);
     }
 
-    pub(crate) fn dependency_paths(&self) -> BTreeSet<String> {
-        self.relevant_paths(HelperPathFacts::is_dependency_relevant)
-    }
-
-    pub(crate) fn output_path_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.path_meta(HelperPathMetaRole::Output)
-    }
-
-    pub(crate) fn guard_paths(&self) -> BTreeSet<String> {
+    pub(crate) fn has_document_value_facts(&self) -> bool {
         self.path_facts
-            .iter()
-            .filter_map(|(path, facts)| facts.guard.then_some(path.clone()))
-            .collect()
-    }
-
-    #[cfg(test)]
-    pub(crate) fn type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
-        self.path_facts
-            .iter()
-            .filter(|(_path, facts)| !facts.type_hints.is_empty())
-            .map(|(path, facts)| (path.clone(), facts.type_hints.clone()))
-            .collect()
+            .values()
+            .any(HelperPathFacts::is_dependency_relevant)
     }
 
     pub(crate) fn add_provenance_to_outputs(&mut self, provenance: ContractProvenance) {
@@ -443,9 +412,12 @@ impl HelperSummary {
         bindings: &HashMap<String, AbstractValue>,
     ) {
         let rendered_sources: BTreeSet<String> = self
-            .output_path_meta()
-            .into_keys()
-            .chain(self.guard_paths())
+            .path_facts
+            .iter()
+            .filter_map(|(path, facts)| {
+                (facts.has_meta_role(HelperPathMetaRole::Output) || facts.guard)
+                    .then_some(path.clone())
+            })
             .collect();
         for binding in bindings.values() {
             let AbstractValue::ValuesPath(root) = binding else {
@@ -476,26 +448,6 @@ impl HelperSummary {
             .merge_meta(role, meta);
     }
 
-    fn path_meta(&self, role: HelperPathMetaRole) -> BTreeMap<String, HelperOutputMeta> {
-        self.path_facts
-            .iter()
-            .filter_map(|(path, facts)| facts.meta_cloned(role).map(|meta| (path.clone(), meta)))
-            .collect()
-    }
-
-    fn relevant_paths(&self, is_relevant: fn(&HelperPathFacts) -> bool) -> BTreeSet<String> {
-        let out: BTreeSet<String> = self
-            .path_facts
-            .iter()
-            .filter_map(|(path, facts)| is_relevant(facts).then_some(path.clone()))
-            .collect();
-        remove_ancestor_paths(
-            out.into_iter()
-                .filter(|path| !path.trim().is_empty())
-                .collect(),
-        )
-    }
-
     pub(crate) fn project_helper_value(self) -> Option<AbstractValue> {
         project_summary_value(self).map(|value| value.to_context_value())
     }
@@ -508,56 +460,55 @@ impl HelperSummary {
 }
 
 fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
-    let structured_sources = structured_fragment_sources(&analysis);
-    let rendered_sources = rendered_sources(&analysis, &structured_sources);
+    let string_output = analysis.string_output.clone();
+    let entries = analysis.into_path_entries().collect::<Vec<_>>();
+    let structured_sources = structured_fragment_sources(&entries);
+    let rendered_sources = rendered_sources(&entries, &structured_sources);
 
     let mut values = Vec::new();
-    if !analysis.string_output.is_empty() {
-        values.push(AbstractValue::StringSet(analysis.string_output.clone()));
+    if !string_output.is_empty() {
+        values.push(AbstractValue::StringSet(string_output));
     }
-    for output in analysis.fragment_output_uses() {
-        values.push(AbstractValue::for_output_path(
-            output.source_expr,
-            &output.relative_path,
-            output.meta,
-        ));
-    }
-    for (source, meta) in analysis.output_path_meta() {
-        if !structured_sources.contains(&source)
-            && !output_path::values_path_has_descendant(&source, &rendered_sources)
+    for entry in entries {
+        for output in entry.fragment_output_uses {
+            values.push(AbstractValue::for_output_path(
+                output.source_expr,
+                &output.relative_path,
+                output.meta,
+            ));
+        }
+        if let Some(meta) = entry.output_meta
+            && !structured_sources.contains(&entry.path)
+            && !output_path::values_path_has_descendant(&entry.path, &rendered_sources)
         {
             values.push(AbstractValue::OutputSet(
-                [(source, meta)].into_iter().collect(),
+                [(entry.path, meta)].into_iter().collect(),
             ));
         }
     }
     AbstractValue::merge_all(values)
 }
 
-fn structured_fragment_sources(analysis: &HelperSummary) -> BTreeSet<String> {
-    analysis
-        .path_facts
+fn structured_fragment_sources(entries: &[HelperPathEntry]) -> BTreeSet<String> {
+    entries
         .iter()
-        .filter(|(_path, facts)| !facts.structured_outputs.is_empty())
-        .map(|(path, _facts)| path.clone())
+        .filter(|entry| !entry.fragment_output_uses.is_empty())
+        .map(|entry| entry.path.clone())
         .collect()
 }
 
 fn rendered_sources(
-    analysis: &HelperSummary,
+    entries: &[HelperPathEntry],
     structured_sources: &BTreeSet<String>,
 ) -> BTreeSet<String> {
     let mut rendered_sources = structured_sources.clone();
-    rendered_sources.extend(analysis.output_path_meta().into_keys());
+    rendered_sources.extend(
+        entries
+            .iter()
+            .filter(|entry| entry.output_meta.is_some())
+            .map(|entry| entry.path.clone()),
+    );
     rendered_sources
-}
-
-fn remove_ancestor_paths(paths: BTreeSet<String>) -> BTreeSet<String> {
-    paths
-        .iter()
-        .filter(|path| !output_path::values_path_has_descendant(path, &paths))
-        .cloned()
-        .collect()
 }
 
 pub(crate) struct HelperSummaryCache {
@@ -902,7 +853,12 @@ mod tests {
             HelperOutputMeta::default(),
         ));
 
-        sim_assert_eq!(have: summary.fragment_output_uses().len(), want: 1);
+        let outputs = summary
+            .into_path_entries()
+            .flat_map(|entry| entry.fragment_output_uses)
+            .collect::<Vec<_>>();
+
+        sim_assert_eq!(have: outputs.len(), want: 1);
     }
 
     #[test]

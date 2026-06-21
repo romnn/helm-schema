@@ -5,7 +5,8 @@ use helm_schema_ast::TemplateExpr;
 use crate::SourceSpan;
 use crate::contract_sink::ContractUseContext;
 use crate::document_projection::{
-    DocumentOutput, collect_document_site_context, collect_document_value_analysis_from_exprs,
+    append_document_output_contract_uses, collect_document_site_context,
+    collect_document_value_analysis_from_exprs,
 };
 use crate::helper_summary::HelperOutputMeta;
 
@@ -99,8 +100,12 @@ impl SymbolicWalker<'_> {
                 )),
                 self.provenance_helper_chain(),
             );
-            DocumentOutput::new(site_context, output_values)
-                .append_to_contract(&mut self.contract, &projection_context);
+            append_document_output_contract_uses(
+                site_context,
+                output_values,
+                &mut self.contract,
+                &projection_context,
+            );
         }
     }
 }

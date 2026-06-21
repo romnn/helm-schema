@@ -223,8 +223,10 @@ fn collect_bound_fragment_output_assignment_uses(
         let mut rhs_seen = state.seen.clone();
         let nested =
             helper_env.summarize_calls_in_exprs(rhs_exprs, &state.locals.bindings, &mut rhs_seen);
-        top_level_helper_dependency_paths = nested.dependency_paths();
-        if let Some(nested_binding) = nested.project_fragment_value() {
+        let nested_binding = nested.clone().project_fragment_value();
+        top_level_helper_dependency_paths =
+            dependency_paths_from_entries(nested.into_path_entries());
+        if let Some(nested_binding) = nested_binding {
             binding = match binding {
                 Some(binding) => AbstractValue::merge_context_values(vec![binding, nested_binding]),
                 None => Some(nested_binding),
@@ -267,6 +269,26 @@ fn collect_bound_fragment_output_assignment_uses(
             .default_paths
             .insert(var.to_string(), defaulted_paths);
     }
+}
+
+fn dependency_paths_from_entries(
+    entries: impl IntoIterator<Item = crate::helper_summary::HelperPathEntry>,
+) -> BTreeSet<String> {
+    let paths = entries
+        .into_iter()
+        .filter(crate::helper_summary::HelperPathEntry::is_dependency_relevant)
+        .map(|entry| entry.path)
+        .filter(|path| !path.trim().is_empty())
+        .collect();
+    remove_ancestor_paths(paths)
+}
+
+fn remove_ancestor_paths(paths: BTreeSet<String>) -> BTreeSet<String> {
+    paths
+        .iter()
+        .filter(|path| !output_path::values_path_has_descendant(path, &paths))
+        .cloned()
+        .collect()
 }
 
 fn local_output_uses_from_exprs(

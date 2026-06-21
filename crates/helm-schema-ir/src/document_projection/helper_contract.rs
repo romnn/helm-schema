@@ -2,88 +2,183 @@ use std::collections::BTreeSet;
 
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::{ValueKind, output_path};
+use crate::helper_summary::HelperPathEntry;
+use crate::{Guard, ValueKind, YamlPath, output_path};
 
-use super::site::DocumentSite;
-use super::value_analysis::DocumentHelperSummary;
+use super::site_context::DocumentSiteContext;
+use super::value_analysis::DocumentValueAnalysis;
 
-pub(super) fn append_document_helper_contract_uses(
-    helper: DocumentHelperSummary,
-    encoded_output_values: &BTreeSet<String>,
-    site: &DocumentSite,
+pub(crate) fn append_document_output_contract_uses(
+    site: DocumentSiteContext,
+    analysis: DocumentValueAnalysis,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let structured_fragment_sources: BTreeSet<String> = helper
-        .fragment_output_uses
-        .iter()
-        .map(|output| output.source_expr.clone())
-        .collect();
-    let mut helper_rendered_sources = structured_fragment_sources.clone();
-    helper_rendered_sources.extend(helper.output_values.keys().cloned());
-    let only_scalar_helper_outputs = helper.fragment_output_uses.is_empty();
+    let DocumentValueAnalysis {
+        default_fallback_values,
+        values,
+        encoded_output_values,
+        type_hints,
+        local_output_meta,
+        bound_values,
+        helper,
+    } = analysis;
+    let suppress_roots = helper.suppress_roots.clone();
+    let helper_entries = helper.into_path_entries().collect::<Vec<_>>();
+    let suppress_direct_values = suppress_direct_values_for_helper(&helper_entries, suppress_roots);
 
-    for (value, meta) in &helper.output_values {
-        if structured_fragment_sources.contains(value) {
+    for value in values {
+        if suppress_direct_values.contains(&value)
+            || suppresses_direct_descendant(&suppress_direct_values, &value)
+        {
+            contract.push(site.contract_use(
+                context,
+                value,
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                Vec::new(),
+            ));
             continue;
         }
-        let has_rendered_descendant =
-            output_path::values_path_has_descendant(value, &helper_rendered_sources);
-        for extra_guards in meta.contract_guard_sets(value) {
-            let emit_kind = encoded_kind(site.kind(), encoded_output_values.contains(value));
-            if only_scalar_helper_outputs
-                && site.can_project_scalar_helper_to_caller_path()
-                && !has_rendered_descendant
-            {
-                contract.push(site.contract_use_with_extra_provenance(
-                    context,
-                    value.clone(),
-                    site.path().clone(),
-                    emit_kind,
-                    extra_guards,
-                    &meta.provenance,
-                ));
-            } else {
-                contract.push(context.pathless_contract_use_with_extra_provenance(
-                    value.clone(),
-                    ValueKind::Scalar,
-                    &extra_guards,
-                    &meta.provenance,
-                ));
+
+        let default_guard = Guard::Default {
+            path: value.clone(),
+        };
+        let provider_path_suppressed = encoded_output_values.contains(&value);
+        let emit_path = site.direct_value_path(&value);
+        let emit_kind = if provider_path_suppressed {
+            ValueKind::PartialScalar
+        } else {
+            site.direct_value_kind()
+        };
+        let mut guard_sets = local_output_meta
+            .get(&value)
+            .map(|meta| meta.contract_guard_sets(&value))
+            .unwrap_or_else(|| vec![Vec::new()]);
+        for extra_guards in &mut guard_sets {
+            if default_fallback_values.contains(&value) && !extra_guards.contains(&default_guard) {
+                extra_guards.push(default_guard.clone());
             }
+            contract.push(site.contract_use(
+                context,
+                value.clone(),
+                emit_path.clone(),
+                emit_kind,
+                extra_guards.clone(),
+            ));
         }
     }
 
-    for output in helper.fragment_output_uses {
-        let has_rendered_descendant =
-            output_path::values_path_has_descendant(&output.source_expr, &helper_rendered_sources);
-        for extra_guards in output.meta.contract_guard_sets(&output.source_expr) {
-            let output_encoded =
-                output.encoded || encoded_output_values.contains(&output.source_expr);
-            let emit_kind = encoded_kind(output.kind, output_encoded);
-            if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
-                let emit_path =
-                    output_path::append_relative_path(site.path(), &output.relative_path);
-                contract.push(site.contract_use_with_extra_provenance(
-                    context,
-                    output.source_expr.clone(),
-                    emit_path,
-                    emit_kind,
-                    extra_guards,
-                    &output.meta.provenance,
-                ));
-            } else {
-                contract.push(context.pathless_contract_use_with_extra_provenance(
-                    output.source_expr.clone(),
-                    emit_kind,
-                    &extra_guards,
-                    &output.meta.provenance,
-                ));
+    for value in bound_values {
+        contract.push(site.contract_use(
+            context,
+            value,
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            Vec::new(),
+        ));
+    }
+
+    contract.extend_type_hints(type_hints);
+    append_document_helper_contract_uses(
+        helper_entries,
+        &encoded_output_values,
+        &site,
+        contract,
+        context,
+    );
+}
+
+fn append_document_helper_contract_uses(
+    helper_entries: Vec<HelperPathEntry>,
+    encoded_output_values: &BTreeSet<String>,
+    site: &DocumentSiteContext,
+    contract: &mut ContractIr,
+    context: &ContractUseContext<'_>,
+) {
+    let structured_fragment_sources: BTreeSet<String> = helper_entries
+        .iter()
+        .filter(|entry| !entry.fragment_output_uses.is_empty())
+        .map(|entry| entry.path.clone())
+        .collect();
+    let mut helper_rendered_sources = structured_fragment_sources.clone();
+    helper_rendered_sources.extend(
+        helper_entries
+            .iter()
+            .filter(|entry| entry.output_meta.is_some())
+            .map(|entry| entry.path.clone()),
+    );
+    let only_scalar_helper_outputs = helper_entries
+        .iter()
+        .all(|entry| entry.fragment_output_uses.is_empty());
+
+    let mut dependency_values = Vec::new();
+    let mut guard_values = Vec::new();
+    let mut type_hints = Vec::new();
+
+    for entry in helper_entries {
+        let HelperPathEntry {
+            path: value,
+            output_meta,
+            dependency_meta,
+            guard,
+            type_hints: entry_type_hints,
+            fragment_output_uses,
+        } = entry;
+
+        if !entry_type_hints.is_empty() {
+            type_hints.push((value.clone(), entry_type_hints));
+        }
+        if guard {
+            guard_values.push(value.clone());
+        }
+        if let Some(meta) = dependency_meta {
+            dependency_values.push((value.clone(), meta));
+        }
+
+        if let Some(meta) = output_meta
+            && !structured_fragment_sources.contains(&value)
+        {
+            let has_rendered_descendant =
+                output_path::values_path_has_descendant(&value, &helper_rendered_sources);
+            for extra_guards in meta.contract_guard_sets(&value) {
+                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(&value));
+                if only_scalar_helper_outputs
+                    && site.can_project_scalar_helper_to_caller_path()
+                    && !has_rendered_descendant
+                {
+                    contract.push(site.contract_use_with_extra_provenance(
+                        context,
+                        value.clone(),
+                        site.path.clone(),
+                        emit_kind,
+                        extra_guards,
+                        &meta.provenance,
+                    ));
+                } else {
+                    contract.push(context.pathless_contract_use_with_extra_provenance(
+                        value.clone(),
+                        ValueKind::Scalar,
+                        &extra_guards,
+                        &meta.provenance,
+                    ));
+                }
             }
+        }
+
+        for output in fragment_output_uses {
+            append_fragment_output_contract_use(
+                output,
+                &helper_rendered_sources,
+                encoded_output_values,
+                site,
+                contract,
+                context,
+            );
         }
     }
 
-    for (value, meta) in helper.dependency_values {
+    for (value, meta) in dependency_values {
         for extra_guards in meta.contract_guard_sets(&value) {
             contract.push(context.pathless_contract_use_with_extra_provenance(
                 value.clone(),
@@ -94,11 +189,63 @@ pub(super) fn append_document_helper_contract_uses(
         }
     }
 
-    for value in helper.guard_values {
+    for value in guard_values {
         contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &[]));
     }
 
-    contract.extend_type_hints(helper.type_hints);
+    contract.extend_type_hints(type_hints);
+}
+
+fn append_fragment_output_contract_use(
+    output: crate::helper_summary::HelperFragmentOutputUse,
+    helper_rendered_sources: &BTreeSet<String>,
+    encoded_output_values: &BTreeSet<String>,
+    site: &DocumentSiteContext,
+    contract: &mut ContractIr,
+    context: &ContractUseContext<'_>,
+) {
+    let has_rendered_descendant =
+        output_path::values_path_has_descendant(&output.source_expr, helper_rendered_sources);
+    for extra_guards in output.meta.contract_guard_sets(&output.source_expr) {
+        let output_encoded = output.encoded || encoded_output_values.contains(&output.source_expr);
+        let emit_kind = encoded_kind(output.kind, output_encoded);
+        if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
+            let emit_path = output_path::append_relative_path(&site.path, &output.relative_path);
+            contract.push(site.contract_use_with_extra_provenance(
+                context,
+                output.source_expr.clone(),
+                emit_path,
+                emit_kind,
+                extra_guards,
+                &output.meta.provenance,
+            ));
+        } else {
+            contract.push(context.pathless_contract_use_with_extra_provenance(
+                output.source_expr.clone(),
+                emit_kind,
+                &extra_guards,
+                &output.meta.provenance,
+            ));
+        }
+    }
+}
+
+fn suppress_direct_values_for_helper(
+    helper_entries: &[HelperPathEntry],
+    suppress_roots: BTreeSet<String>,
+) -> BTreeSet<String> {
+    let mut suppress_direct_values = BTreeSet::new();
+    for entry in helper_entries {
+        if entry.is_dependency_relevant() {
+            suppress_direct_values.insert(entry.path.clone());
+        }
+    }
+
+    let all_dependency_values = suppress_direct_values.clone();
+    suppress_direct_values
+        .retain(|path| !output_path::values_path_has_descendant(path, &all_dependency_values));
+    suppress_direct_values.extend(suppress_roots);
+    suppress_direct_values
 }
 
 fn encoded_kind(kind: ValueKind, encoded: bool) -> ValueKind {
@@ -107,4 +254,12 @@ fn encoded_kind(kind: ValueKind, encoded: bool) -> ValueKind {
     } else {
         kind
     }
+}
+
+fn suppresses_direct_descendant(suppressed_roots: &BTreeSet<String>, value_path: &str) -> bool {
+    suppressed_roots.iter().any(|root| {
+        value_path
+            .strip_prefix(root)
+            .is_some_and(|suffix| suffix.starts_with('.'))
+    })
 }

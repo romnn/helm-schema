@@ -103,9 +103,7 @@ impl SymbolicWalker<'_> {
         .with_helper_values(bindings)
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let mut contract = nested.run_contract(&plan.tree);
-        let helper_renders_output = !helper_summary.output_path_meta().is_empty()
-            || !helper_summary.fragment_output_uses().is_empty()
-            || !helper_summary.dependency_paths().is_empty();
+        let helper_renders_output = helper_summary.has_document_value_facts();
         let suppress_roots = helper_summary.suppress_roots.clone();
         let mut helper_type_hints = BTreeMap::new();
         let mut inline_dependency_meta = BTreeMap::new();

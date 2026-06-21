@@ -144,12 +144,68 @@ impl PathSchemaFactsAccumulator {
 
 impl ContractSchemaSignalBuilder {
     fn record(&mut self, contract_use: &ContractUse) {
-        self.record_provider_schema_use(contract_use);
-        self.record_render_facts(contract_use);
-        self.record_path_identity(contract_use);
-        self.record_requiredness(contract_use);
-        self.record_nullable_path(contract_use);
-        self.record_conditional_overlay(contract_use);
+        let has_source = !contract_use.source_expr.trim().is_empty();
+        let has_render_path = !contract_use.path.0.is_empty();
+        let range_guard_paths = contract_use.top_level_range_guard_paths();
+        let guard_value_paths = contract_use.guard_value_paths();
+        let provider_schema_use = from_contract_use(contract_use);
+
+        if let Some(provider_use) = provider_schema_use.clone() {
+            self.path(&provider_use.value_path)
+                .facts
+                .record_provider_schema_use(provider_use);
+        }
+
+        for path in contract_use.conditionally_optional_paths() {
+            if !path.trim().is_empty() {
+                self.path(&path).requiredness.is_conditionally_optional = true;
+            }
+        }
+        for path in contract_use.default_fallback_paths() {
+            if !path.trim().is_empty() {
+                self.path(&path).requiredness.has_default_fallback = true;
+            }
+        }
+
+        if has_source {
+            let self_guarded = use_is_self_guarded(contract_use);
+            let null_tolerant = use_is_null_tolerant(contract_use);
+            self.path(&contract_use.source_expr).observe_source_use(
+                contract_use,
+                has_render_path,
+                self_guarded,
+                null_tolerant,
+                provider_schema_use,
+            );
+
+            for predicate in contract_use.conditional_guard_predicates() {
+                self.record_guard_predicate(predicate);
+            }
+        }
+
+        for path in guard_value_paths {
+            if path.trim().is_empty() || (has_source && path == contract_use.source_expr) {
+                continue;
+            }
+            let acc = self.path(&path);
+            if has_source {
+                acc.referenced = true;
+            }
+            if has_render_path {
+                acc.facts
+                    .record_render_use(range_guard_paths.contains(&path), None);
+            }
+        }
+
+        if has_source {
+            for path in range_guard_paths {
+                if !path.trim().is_empty() {
+                    let acc = self.path(&path);
+                    acc.ranged = true;
+                    acc.facts.mark_nullable_render_use();
+                }
+            }
+        }
     }
 
     fn finish(mut self) -> ContractSchemaSignals {
@@ -202,85 +258,6 @@ impl ContractSchemaSignalBuilder {
         self.paths.entry(path.to_string()).or_default()
     }
 
-    fn record_provider_schema_use(&mut self, contract_use: &ContractUse) {
-        if let Some(provider_use) = from_contract_use(contract_use) {
-            self.path(&provider_use.value_path)
-                .facts
-                .record_provider_schema_use(provider_use);
-        }
-    }
-
-    fn record_render_facts(&mut self, contract_use: &ContractUse) {
-        if contract_use.source_expr.trim().is_empty() {
-            self.record_empty_source_render_facts(contract_use);
-            return;
-        }
-
-        self.path(&contract_use.source_expr);
-        if !contract_use.path.0.is_empty() {
-            self.record_render_use(
-                &contract_use.source_expr,
-                contract_use.has_self_range_guard(),
-                Some(use_is_self_guarded(contract_use)),
-            );
-        }
-
-        let range_guard_paths = contract_use.top_level_range_guard_paths();
-        for path in contract_use.guard_value_paths() {
-            if path.trim().is_empty() || path == contract_use.source_expr {
-                continue;
-            }
-            self.path(&path);
-            if !contract_use.path.0.is_empty() {
-                self.record_render_use(&path, range_guard_paths.contains(&path), None);
-            }
-        }
-    }
-
-    fn record_empty_source_render_facts(&mut self, contract_use: &ContractUse) {
-        let range_guard_paths = contract_use.top_level_range_guard_paths();
-        for path in contract_use.guard_value_paths() {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.path(&path);
-            if !contract_use.path.0.is_empty() {
-                self.record_render_use(&path, range_guard_paths.contains(&path), None);
-            }
-        }
-    }
-
-    fn record_render_use(&mut self, path: &str, range_guarded: bool, self_guarded: Option<bool>) {
-        self.path(path)
-            .facts
-            .record_render_use(range_guarded, self_guarded);
-    }
-
-    fn record_path_identity(&mut self, contract_use: &ContractUse) {
-        if contract_use.source_expr.trim().is_empty() {
-            return;
-        }
-
-        let source_acc = self.path(&contract_use.source_expr);
-        source_acc.referenced = true;
-        source_acc.facts.record_path_identity(contract_use);
-        for path in contract_use.guard_value_paths() {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.path(&path).referenced = true;
-        }
-        for path in contract_use.top_level_range_guard_paths() {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.path(&path).ranged = true;
-        }
-        for predicate in contract_use.conditional_guard_predicates() {
-            self.record_guard_predicate(predicate);
-        }
-    }
-
     fn record_guard_predicate(&mut self, predicate: ConditionalGuard) {
         let mut paths = BTreeSet::new();
         collect_conditional_guard_paths(&predicate, &mut paths);
@@ -294,98 +271,79 @@ impl ContractSchemaSignalBuilder {
             }
         }
     }
+}
 
-    fn record_requiredness(&mut self, contract_use: &ContractUse) {
-        for path in contract_use.conditionally_optional_paths() {
-            self.record_conditionally_optional_path(&path);
+impl ContractPathAccumulator {
+    fn observe_source_use(
+        &mut self,
+        contract_use: &ContractUse,
+        has_render_path: bool,
+        self_guarded: bool,
+        null_tolerant: bool,
+        provider_schema_use: Option<ProviderSchemaUse>,
+    ) {
+        self.referenced = true;
+        self.facts.record_path_identity(contract_use);
+        if has_render_path {
+            self.facts
+                .record_render_use(contract_use.has_self_range_guard(), Some(self_guarded));
         }
-        for path in contract_use.default_fallback_paths() {
-            self.record_default_fallback_path(&path);
-        }
-
-        if contract_use.kind == ValueKind::Scalar
-            && contract_use.path.0.is_empty()
-            && !contract_use.source_expr.trim().is_empty()
-            && contract_use.is_positive_header()
-        {
-            self.path(&contract_use.source_expr)
-                .requiredness
-                .is_positive_header = true;
-        }
-    }
-
-    fn record_conditionally_optional_path(&mut self, path: &str) {
-        if path.trim().is_empty() {
-            return;
-        }
-        self.path(path).requiredness.is_conditionally_optional = true;
-    }
-
-    fn record_default_fallback_path(&mut self, path: &str) {
-        if path.trim().is_empty() {
-            return;
-        }
-        self.path(path).requiredness.has_default_fallback = true;
-    }
-
-    fn record_nullable_path(&mut self, contract_use: &ContractUse) {
-        if contract_use.source_expr.trim().is_empty() {
-            return;
-        }
-
-        let info = &mut self.path(&contract_use.source_expr).facts;
-        if !contract_use.path.0.is_empty()
+        if has_render_path
             || contract_use.has_self_range_guard()
             || contract_use.kind == ValueKind::Fragment
             || contract_use.has_pathless_self_default_guard()
         {
-            info.mark_nullable_render_use();
+            self.facts.mark_nullable_render_use();
         }
-        info.record_nullable_observation(use_is_null_tolerant(contract_use));
+        self.facts.record_nullable_observation(null_tolerant);
 
-        for path in contract_use.top_level_range_guard_paths() {
-            if !path.trim().is_empty() {
-                self.path(&path).facts.mark_nullable_render_use();
-            }
+        if contract_use.kind == ValueKind::Scalar
+            && contract_use.path.0.is_empty()
+            && contract_use.is_positive_header()
+        {
+            self.requiredness.is_positive_header = true;
         }
+
+        self.observe_conditional_overlay(
+            contract_use,
+            has_render_path,
+            self_guarded,
+            null_tolerant,
+            provider_schema_use,
+        );
     }
 
-    fn record_conditional_overlay(&mut self, contract_use: &ContractUse) {
-        if contract_use.source_expr.trim().is_empty() || contract_use.path.0.is_empty() {
+    fn observe_conditional_overlay(
+        &mut self,
+        contract_use: &ContractUse,
+        has_render_path: bool,
+        self_guarded: bool,
+        null_tolerant: bool,
+        provider_schema_use: Option<ProviderSchemaUse>,
+    ) {
+        if !has_render_path {
             return;
         }
-
-        let accumulator = self.path(&contract_use.source_expr);
-
         if contract_use.guards.is_empty() {
-            accumulator.has_unconditional_overlay_peer = true;
+            self.has_unconditional_overlay_peer = true;
             return;
         }
-
         let Some(guards) = contract_use.lowerable_conditional_guard_set() else {
-            accumulator.saw_unsupported_overlay = true;
+            self.saw_unsupported_overlay = true;
             return;
         };
 
-        let branch = accumulator
-            .conditional_overlay_branches
-            .entry(guards)
-            .or_default();
-        branch.record_render_use(
-            contract_use.has_self_range_guard(),
-            Some(use_is_self_guarded(contract_use)),
-        );
+        let branch = self.conditional_overlay_branches.entry(guards).or_default();
+        branch.record_render_use(contract_use.has_self_range_guard(), Some(self_guarded));
         branch.mark_nullable_render_use();
-        branch.record_nullable_observation(use_is_null_tolerant(contract_use));
+        branch.record_nullable_observation(null_tolerant);
         branch.record_path_identity(contract_use);
 
-        if let Some(provider_schema_use) = from_contract_use(contract_use) {
+        if let Some(provider_schema_use) = provider_schema_use {
             branch.record_provider_schema_use(provider_schema_use);
         }
     }
-}
 
-impl ContractPathAccumulator {
     fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
         self.facts.facts(self.ranged, has_referenced_descendants)
     }

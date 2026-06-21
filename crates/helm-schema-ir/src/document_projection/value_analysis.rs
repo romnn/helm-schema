@@ -6,7 +6,7 @@ use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
 use crate::expression_analysis::resolved_string_transform_paths_for_exprs_with_fragment_locals;
 use crate::expression_analysis::resolved_type_hint_paths_for_exprs_with_fragment_locals;
-use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
+use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::insert_type_hint;
 use crate::literal_schema_type::expression_schema_type;
 use crate::output_path;
@@ -19,91 +19,18 @@ pub(crate) struct DocumentValueAnalysis {
     pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(super) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(super) bound_values: Vec<String>,
-    pub(super) helper: DocumentHelperSummary,
-}
-
-#[derive(Default)]
-pub(super) struct DocumentHelperSummary {
-    pub(crate) output_values: BTreeMap<String, HelperOutputMeta>,
-    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
-    pub(crate) dependency_values: BTreeMap<String, HelperOutputMeta>,
-    pub(crate) guard_values: BTreeSet<String>,
-    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    pub(crate) suppress_direct_values: BTreeSet<String>,
-    pub(crate) chart_value_defaults: BTreeSet<String>,
-}
-
-impl DocumentHelperSummary {
-    fn from_helper_summary(summary: HelperSummary) -> Self {
-        let suppress_roots = summary.suppress_roots.clone();
-        let chart_defaults = summary.chart_defaults.clone();
-        let mut output_values = BTreeMap::new();
-        let mut fragment_output_uses = Vec::new();
-        let mut dependency_values = BTreeMap::new();
-        let mut guard_values = BTreeSet::new();
-        let mut type_hints = BTreeMap::new();
-        let mut suppress_direct_values = BTreeSet::new();
-
-        for entry in summary.into_path_entries() {
-            let path = entry.path;
-            let mut has_dependency = false;
-            if let Some(meta) = entry.output_meta {
-                output_values.insert(path.clone(), meta);
-                has_dependency = true;
-            }
-            if let Some(meta) = entry.dependency_meta {
-                dependency_values.insert(path.clone(), meta);
-                has_dependency = true;
-            }
-            if entry.guard {
-                guard_values.insert(path.clone());
-                has_dependency = true;
-            }
-            if !entry.type_hints.is_empty() {
-                type_hints.insert(path.clone(), entry.type_hints);
-                has_dependency = true;
-            }
-            if !entry.fragment_output_uses.is_empty() {
-                fragment_output_uses.extend(entry.fragment_output_uses);
-                has_dependency = true;
-            }
-            if has_dependency {
-                suppress_direct_values.insert(path);
-            }
-        }
-
-        let all_dependency_values = suppress_direct_values.clone();
-        suppress_direct_values
-            .retain(|path| !output_path::values_path_has_descendant(path, &all_dependency_values));
-        suppress_direct_values.extend(suppress_roots);
-
-        Self {
-            output_values,
-            fragment_output_uses,
-            dependency_values,
-            guard_values,
-            type_hints,
-            suppress_direct_values,
-            chart_value_defaults: chart_defaults,
-        }
-    }
-
-    fn is_empty(&self) -> bool {
-        self.output_values.is_empty()
-            && self.fragment_output_uses.is_empty()
-            && self.dependency_values.is_empty()
-            && self.guard_values.is_empty()
-            && self.type_hints.is_empty()
-    }
+    pub(super) helper: HelperSummary,
 }
 
 impl DocumentValueAnalysis {
     pub(crate) fn is_empty(&self) -> bool {
-        self.values.is_empty() && self.bound_values.is_empty() && self.helper.is_empty()
+        self.values.is_empty()
+            && self.bound_values.is_empty()
+            && !self.helper.has_document_value_facts()
     }
 
     pub(crate) fn take_chart_value_defaults(&mut self) -> BTreeSet<String> {
-        std::mem::take(&mut self.helper.chart_value_defaults)
+        std::mem::take(&mut self.helper.chart_defaults)
     }
 }
 
@@ -132,9 +59,7 @@ pub(crate) fn collect_document_value_analysis_from_exprs(
 
     let bound_values = extract_bound_values_from_exprs(exprs, range_domains, get_bindings);
 
-    let helper = helper_summary
-        .map(DocumentHelperSummary::from_helper_summary)
-        .unwrap_or_default();
+    let helper = helper_summary.unwrap_or_default();
 
     DocumentValueAnalysis {
         default_fallback_values,
@@ -289,14 +214,12 @@ mod tests {
     use helm_schema_ast::DefineIndex;
     use helm_schema_ast::parse_action_expressions;
 
-    use super::{DocumentHelperSummary, collect_document_value_analysis_from_exprs};
+    use super::collect_document_value_analysis_from_exprs;
     use crate::ValueKind;
     use crate::abstract_value::AbstractValue;
     use crate::define_body_cache::DefineBodyCache;
     use crate::fragment_expr_eval::FragmentEvalContext;
     use crate::helper_summary::HelperSummaryCache;
-    use crate::helper_summary::{HelperOutputMeta, HelperSummary};
-    use crate::predicate::Predicate;
     use crate::value_path_context::ValuePathContext;
 
     fn empty_fragment_context<'a>(
@@ -305,81 +228,6 @@ mod tests {
         helper_summaries: &'a HelperSummaryCache,
     ) -> FragmentEvalContext<'a> {
         FragmentEvalContext::new(defines, define_bodies, helper_summaries)
-    }
-
-    #[test]
-    fn document_helper_summary_preserves_helper_summary_fields() {
-        let mut summary = HelperSummary::default();
-        let meta = HelperOutputMeta {
-            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
-                "enabled".to_string(),
-            )])]),
-            defaulted: true,
-            provenance: Vec::new(),
-        };
-        summary.add_output_meta("image.tag".to_string(), meta.clone());
-        summary.add_fragment_output_use(crate::helper_summary::HelperFragmentOutputUse::new(
-            "extraEnv".to_string(),
-            crate::YamlPath(Vec::new()),
-            ValueKind::Fragment,
-            HelperOutputMeta::default(),
-        ));
-        summary.add_dependency_path("global".to_string());
-        summary.add_dependency_meta_map(BTreeMap::from([(
-            "global.image.tag".to_string(),
-            meta.clone(),
-        )]));
-        summary.add_guard_path("service.enabled".to_string());
-        summary.add_type_hints(BTreeMap::from([(
-            "image.tag".to_string(),
-            BTreeSet::from(["string".to_string()]),
-        )]));
-        summary.suppress_roots.insert("image".to_string());
-        summary.chart_defaults.insert("nameOverride".to_string());
-
-        let helper = DocumentHelperSummary::from_helper_summary(summary);
-
-        sim_assert_eq!(
-            have: helper.output_values,
-            want: BTreeMap::from([("image.tag".to_string(), meta.clone())])
-        );
-        sim_assert_eq!(have: helper.fragment_output_uses.len(), want: 1);
-        sim_assert_eq!(
-            have: helper.fragment_output_uses[0].source_expr.as_str(),
-            want: "extraEnv"
-        );
-        sim_assert_eq!(
-            have: helper.dependency_values,
-            want: BTreeMap::from([
-                ("global".to_string(), HelperOutputMeta::default()),
-                ("global.image.tag".to_string(), meta),
-            ])
-        );
-        sim_assert_eq!(
-            have: helper.guard_values,
-            want: BTreeSet::from(["service.enabled".to_string()])
-        );
-        sim_assert_eq!(
-            have: helper.type_hints,
-            want: BTreeMap::from([(
-                "image.tag".to_string(),
-                BTreeSet::from(["string".to_string()])
-            )])
-        );
-        sim_assert_eq!(
-            have: helper.suppress_direct_values,
-            want: BTreeSet::from([
-                "extraEnv".to_string(),
-                "global.image.tag".to_string(),
-                "image".to_string(),
-                "image.tag".to_string(),
-                "service.enabled".to_string(),
-            ])
-        );
-        sim_assert_eq!(
-            have: helper.chart_value_defaults,
-            want: BTreeSet::from(["nameOverride".to_string()])
-        );
     }
 
     #[test]
