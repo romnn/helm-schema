@@ -4,13 +4,11 @@ use crate::resource_identity::ResourceIdentityIndex;
 use crate::{ResourceRef, ValueKind, YamlPath};
 
 mod attribution;
-mod fragment_indent;
 mod yaml_tree;
 
 use attribution::{
     AttributionIndex, ResolvedNodeContext, build_attribution_index, is_output_root_kind,
 };
-use fragment_indent::fragment_indent_width_from_exprs;
 
 /// Tracks document-local path and resource attribution while the symbolic
 /// interpreter walks mixed YAML and Helm actions.
@@ -139,7 +137,10 @@ impl<'a> DocumentTracker<'a> {
     }
 
     pub(crate) fn fragment_indent_width_for_exprs(exprs: &[TemplateExpr]) -> Option<usize> {
-        fragment_indent_width_from_exprs(exprs)
+        exprs
+            .iter()
+            .rev()
+            .find_map(TemplateExpr::fragment_indent_width)
     }
 }
 

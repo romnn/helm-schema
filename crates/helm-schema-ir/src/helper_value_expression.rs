@@ -10,7 +10,6 @@ use crate::expression_analysis::{
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_summary::HelperOutputMeta;
 use crate::helper_summary_mutation::{extend_nested_fragment_render, extend_nested_scalar_render};
 use crate::helper_walk_state::HelperValuesWalkState;
@@ -80,7 +79,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         helper_env.local_default_fallback_paths_in_exprs(exprs, state.local_default_paths);
     let local_meta_by_path =
         local_output_meta_from_exprs(exprs, state.local_bindings, state.local_output_meta);
-    let expression_kind = if is_fragment_exprs(exprs) {
+    let expression_kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
         ValueKind::Fragment
     } else {
         ValueKind::Scalar

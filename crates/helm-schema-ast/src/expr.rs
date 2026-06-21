@@ -122,6 +122,72 @@ impl TemplateExpr {
         current
     }
 
+    #[must_use]
+    pub fn renders_yaml_fragment(&self) -> bool {
+        match self.deparen() {
+            TemplateExpr::Call { function, args } => {
+                is_fragment_render_function(function)
+                    || args.iter().any(TemplateExpr::renders_yaml_fragment)
+            }
+            TemplateExpr::Pipeline(stages) => {
+                stages.iter().any(TemplateExpr::renders_yaml_fragment)
+            }
+            TemplateExpr::Parenthesized(inner) => inner.renders_yaml_fragment(),
+            TemplateExpr::Literal(_)
+            | TemplateExpr::Field(_)
+            | TemplateExpr::Selector { .. }
+            | TemplateExpr::Variable(_)
+            | TemplateExpr::VariableDefinition { .. }
+            | TemplateExpr::Assignment { .. }
+            | TemplateExpr::Unknown(_) => false,
+        }
+    }
+
+    #[must_use]
+    pub fn may_inject_yaml_structure(&self) -> bool {
+        match self.deparen() {
+            TemplateExpr::Call { function, args } => {
+                is_yaml_structure_injector_function(function)
+                    || args.iter().any(TemplateExpr::may_inject_yaml_structure)
+            }
+            TemplateExpr::Pipeline(stages) => {
+                stages.iter().any(TemplateExpr::may_inject_yaml_structure)
+            }
+            TemplateExpr::Parenthesized(inner) => inner.may_inject_yaml_structure(),
+            TemplateExpr::Literal(_)
+            | TemplateExpr::Field(_)
+            | TemplateExpr::Selector { .. }
+            | TemplateExpr::Variable(_)
+            | TemplateExpr::VariableDefinition { .. }
+            | TemplateExpr::Assignment { .. }
+            | TemplateExpr::Unknown(_) => false,
+        }
+    }
+
+    #[must_use]
+    pub fn fragment_indent_width(&self) -> Option<usize> {
+        match self {
+            TemplateExpr::Call { function, args }
+                if matches!(function.as_str(), "indent" | "nindent") =>
+            {
+                indent_width_from_call_args(args)
+            }
+            TemplateExpr::Call { .. } => None,
+            TemplateExpr::Pipeline(stages) => stages
+                .iter()
+                .rev()
+                .find_map(TemplateExpr::fragment_indent_width),
+            TemplateExpr::Parenthesized(inner) => inner.fragment_indent_width(),
+            TemplateExpr::Literal(_)
+            | TemplateExpr::Field(_)
+            | TemplateExpr::Selector { .. }
+            | TemplateExpr::Variable(_)
+            | TemplateExpr::VariableDefinition { .. }
+            | TemplateExpr::Assignment { .. }
+            | TemplateExpr::Unknown(_) => None,
+        }
+    }
+
     fn walk_inner<F: FnMut(&TemplateExpr)>(&self, visit: &mut F) {
         visit(self);
         match self {
@@ -144,6 +210,24 @@ impl TemplateExpr {
             | TemplateExpr::Variable(_)
             | TemplateExpr::Unknown(_) => {}
         }
+    }
+}
+
+fn is_fragment_render_function(function: &str) -> bool {
+    matches!(function, "toYaml" | "nindent" | "indent" | "tpl")
+}
+
+fn is_yaml_structure_injector_function(function: &str) -> bool {
+    matches!(
+        function,
+        "include" | "template" | "tpl" | "toYaml" | "fromYaml" | "indent" | "nindent"
+    )
+}
+
+fn indent_width_from_call_args(args: &[TemplateExpr]) -> Option<usize> {
+    match args.first()?.deparen() {
+        TemplateExpr::Literal(Literal::Int(width)) => usize::try_from(*width).ok(),
+        _ => None,
     }
 }
 
@@ -1159,5 +1243,63 @@ mod tests {
             panic!("expected Call");
         };
         sim_assert_eq!(have: args[0], want: TemplateExpr::Literal(Literal::Int(0xFF)));
+    }
+
+    #[test]
+    fn fragment_render_semantics_ignore_string_literals() {
+        let exprs = parse_action_expressions(r#"{{ printf "%s" "nindent" }}"#);
+        assert!(
+            !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
+            "string literals must not masquerade as fragment render functions: {exprs:?}"
+        );
+        assert!(
+            !exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
+            "string literals must not masquerade as yaml injectors: {exprs:?}"
+        );
+    }
+
+    #[test]
+    fn fragment_render_semantics_distinguish_include_from_fragment_render() {
+        let exprs = parse_action_expressions(r#"{{ include "name" . }}"#);
+        assert!(
+            !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
+            "bare include is not a definite fragment render: {exprs:?}"
+        );
+        assert!(
+            exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
+            "bare include still may inject yaml structure: {exprs:?}"
+        );
+    }
+
+    #[test]
+    fn fragment_indent_width_comes_from_last_indent_stage() {
+        let exprs = parse_action_expressions(r#"{{ include "labels" . | nindent 4 }}"#);
+        let width = exprs
+            .iter()
+            .rev()
+            .find_map(TemplateExpr::fragment_indent_width);
+        sim_assert_eq!(have: width, want: Some(4));
+    }
+
+    #[test]
+    fn assignment_rhs_include_is_not_treated_as_emitted_yaml_structure() {
+        let exprs = parse_action_expressions(r#"{{ $name := include "common.names.fullname" . }}"#);
+        assert!(
+            !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
+            "assignment-side include must not be treated as a rendered fragment: {exprs:?}"
+        );
+        assert!(
+            !exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
+            "assignment-side include must not be treated as emitted yaml structure: {exprs:?}"
+        );
+    }
+
+    #[test]
+    fn nested_tpl_inside_printf_still_counts_as_fragment_render() {
+        let exprs = parse_action_expressions(r#"{{ printf "%s" (tpl .Values.auth.database $) }}"#);
+        assert!(
+            exprs.iter().any(TemplateExpr::renders_yaml_fragment),
+            "nested tpl forwarded through printf must still count as fragment render: {exprs:?}"
+        );
     }
 }

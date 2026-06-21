@@ -1,6 +1,5 @@
 use helm_schema_ast::TemplateExpr;
 
-use crate::fragment_classification::is_fragment_exprs;
 use crate::template_expr_cache::parse_expr_text;
 use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
 
@@ -72,7 +71,7 @@ fn analyze_output_action(
 
 fn output_action_shape_from_exprs(exprs: &[TemplateExpr]) -> OutputActionAnalysis {
     OutputActionAnalysis {
-        is_fragment: is_fragment_exprs(exprs),
+        is_fragment: exprs.iter().any(TemplateExpr::renders_yaml_fragment),
         fragment_indent_width: DocumentTracker::fragment_indent_width_for_exprs(exprs),
     }
 }

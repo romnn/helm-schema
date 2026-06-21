@@ -135,6 +135,26 @@ impl TemplateAction {
     pub fn exprs(&self) -> &[TemplateExpr] {
         &self.exprs
     }
+
+    #[must_use]
+    pub fn renders_yaml_fragment(&self) -> bool {
+        self.exprs.iter().any(TemplateExpr::renders_yaml_fragment)
+    }
+
+    #[must_use]
+    pub fn may_inject_yaml_structure(&self) -> bool {
+        self.exprs
+            .iter()
+            .any(TemplateExpr::may_inject_yaml_structure)
+    }
+
+    #[must_use]
+    pub fn fragment_indent_width(&self) -> Option<usize> {
+        self.exprs
+            .iter()
+            .rev()
+            .find_map(TemplateExpr::fragment_indent_width)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

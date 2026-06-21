@@ -7,7 +7,6 @@ use crate::bound_helper_env::BoundHelperEnv;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::fragment_classification::is_fragment_exprs;
 use crate::helper_output_projection::{
     HelperOutputExprContext, collect_output_uses_from_expr,
     expression_output_use_is_keyed_map_projection, static_yaml_fragment_output_path_from_exprs,
@@ -68,7 +67,9 @@ pub(super) fn collect_bound_fragment_output_uses_from_exprs(
         return;
     }
 
-    let kind = if matches!(output_kind, ValueKind::Fragment) || is_fragment_exprs(exprs) {
+    let kind = if matches!(output_kind, ValueKind::Fragment)
+        || exprs.iter().any(TemplateExpr::renders_yaml_fragment)
+    {
         ValueKind::Fragment
     } else {
         ValueKind::Scalar

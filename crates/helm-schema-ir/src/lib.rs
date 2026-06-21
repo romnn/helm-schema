@@ -29,7 +29,6 @@ mod expr_function_catalog;
 mod expr_pipeline_eval;
 mod expression_analysis;
 mod fragment_assignment;
-mod fragment_classification;
 mod fragment_expr_eval;
 #[cfg(test)]
 mod fragment_expr_eval_tests;

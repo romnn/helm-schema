@@ -6,7 +6,6 @@ use crate::YamlPath;
 use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
 use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
 
-use super::fragment_indent::fragment_indent_width_from_exprs;
 use super::yaml_tree::{
     is_scalar_like, parse_yaml_tree, scalar_text, strip_scalar_quotes, unwrap_yaml_node,
 };
@@ -1364,7 +1363,10 @@ fn action_structural_indent_width(sanitized: &[u8], start: usize, end: usize) ->
         std::str::from_utf8(&sanitized[start.min(sanitized.len())..end.min(sanitized.len())])
             .ok()?;
     let exprs = parse_action_expressions(text);
-    fragment_indent_width_from_exprs(&exprs)
+    exprs
+        .iter()
+        .rev()
+        .find_map(TemplateExpr::fragment_indent_width)
 }
 
 fn action_is_standalone_line(sanitized: &[u8], start: usize, end: usize) -> bool {

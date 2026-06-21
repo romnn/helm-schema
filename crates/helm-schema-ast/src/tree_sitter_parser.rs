@@ -1,4 +1,4 @@
-use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateExpr, TemplateHeader};
+use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateHeader};
 
 /// Parser implementation backed by the tree-sitter fused Helm+YAML grammar.
 ///
@@ -61,31 +61,6 @@ fn is_template_action_node(kind: &str) -> bool {
 
 fn is_template_delim_start(kind: &str) -> bool {
     kind == "{{" || kind == "{{-"
-}
-
-fn is_fragment_injector_action(action: &TemplateAction) -> bool {
-    action
-        .exprs()
-        .iter()
-        .any(template_expr_is_fragment_injector)
-}
-
-fn template_expr_is_fragment_injector(expr: &TemplateExpr) -> bool {
-    match expr.deparen() {
-        TemplateExpr::Call { function, .. } => matches!(
-            function.as_str(),
-            "include" | "template" | "tpl" | "toYaml" | "fromYaml" | "indent" | "nindent"
-        ),
-        TemplateExpr::Pipeline(stages) => stages.iter().any(template_expr_is_fragment_injector),
-        TemplateExpr::Parenthesized(inner) => template_expr_is_fragment_injector(inner),
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Selector { .. }
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::VariableDefinition { .. }
-        | TemplateExpr::Assignment { .. }
-        | TemplateExpr::Unknown(_) => false,
-    }
 }
 
 fn is_template_delim_end(kind: &str) -> bool {
@@ -566,7 +541,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
                     if !is_yaml_value_continuation
                         && !in_control_flow
                         && action_indent > 0
-                        && is_fragment_injector_action(&action)
+                        && action.may_inject_yaml_structure()
                     {
                         i = j + 1;
                         continue;
@@ -627,7 +602,7 @@ fn fuse_blocks(blocks: &[tree_sitter::Node<'_>], src: &str, in_control_flow: boo
             if !is_yaml_value_continuation
                 && !in_control_flow
                 && action_indent > 0
-                && is_fragment_injector_action(&action)
+                && action.may_inject_yaml_structure()
             {
                 // Skip top-level fragment injectors; they typically expand to YAML.
             } else if is_yaml_value_continuation {
