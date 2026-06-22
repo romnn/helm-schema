@@ -1,5 +1,7 @@
 use serde_json::{Map, Value};
 
+use crate::schema_node::SchemaNode;
+
 fn is_annotation_keyword(key: &str) -> bool {
     matches!(
         key,
@@ -9,11 +11,11 @@ fn is_annotation_keyword(key: &str) -> bool {
 
 pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
     match schemas.len() {
-        0 => return Value::Object(Map::new()),
-        1 => return schemas.pop().unwrap_or_else(|| Value::Object(Map::new())),
+        0 => return empty_schema(),
+        1 => return schemas.pop().unwrap_or_else(empty_schema),
         2 => {
-            let right = schemas.pop().unwrap_or_else(|| Value::Object(Map::new()));
-            let left = schemas.pop().unwrap_or_else(|| Value::Object(Map::new()));
+            let right = schemas.pop().unwrap_or_else(empty_schema);
+            let left = schemas.pop().unwrap_or_else(empty_schema);
             return merge_two_schemas(left, right);
         }
         _ => {}
@@ -22,15 +24,15 @@ pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
     schemas = dedup_schemas(schemas);
     let mut it = schemas.into_iter();
     let Some(first) = it.next() else {
-        return Value::Object(Map::new());
+        return empty_schema();
     };
     it.fold(first, merge_two_schemas)
 }
 
 pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
     match schemas.len() {
-        0 => return Value::Object(Map::new()),
-        1 => return schemas.pop().unwrap_or_else(|| Value::Object(Map::new())),
+        0 => return empty_schema(),
+        1 => return schemas.pop().unwrap_or_else(empty_schema),
         _ => {}
     }
 
@@ -49,11 +51,7 @@ pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
     } else {
-        Value::Object(
-            [("anyOf".to_string(), Value::Array(out))]
-                .into_iter()
-                .collect(),
-        )
+        any_of_schema(out)
     }
 }
 
@@ -93,12 +91,16 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
     } else {
-        Value::Object(
-            [("anyOf".to_string(), Value::Array(out))]
-                .into_iter()
-                .collect(),
-        )
+        any_of_schema(out)
     }
+}
+
+fn empty_schema() -> Value {
+    SchemaNode::empty().into_value()
+}
+
+fn any_of_schema(schemas: Vec<Value>) -> Value {
+    SchemaNode::any_of(schemas.into_iter().map(SchemaNode::foreign).collect()).into_value()
 }
 
 fn flatten_union_variants(v: Value) -> Vec<Value> {

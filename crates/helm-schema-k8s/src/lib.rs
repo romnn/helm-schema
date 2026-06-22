@@ -43,6 +43,7 @@ pub use fetch::{FetchError, HttpFetcher, MockFetcher, MockResponse, UreqFetcher}
 pub use filename::{
     candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
 };
+pub use helm_schema_core::ResourceSchemaOracle;
 pub use inference::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
 };

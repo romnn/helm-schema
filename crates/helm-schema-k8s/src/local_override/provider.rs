@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
 use serde_json::Value;
 
 use crate::doc_backed_schema::{
@@ -167,7 +167,7 @@ enum LocalSchemaDocLoad {
     },
 }
 
-impl K8sSchemaProvider for LocalSchemaProvider {
+impl ResourceSchemaOracle for LocalSchemaProvider {
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -177,7 +177,9 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         self.schema_leaf_for_resource_path_from_doc(&root, path)
             .map(|leaf| self.fragment_for_leaf(resource, &root, leaf))
     }
+}
 
+impl K8sSchemaProvider for LocalSchemaProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::LocalOverride
     }
@@ -222,8 +224,6 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         out
     }
 }
-
-crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(LocalSchemaProvider);
 
 /// Expand the full override document for regression tests and debugging.
 ///

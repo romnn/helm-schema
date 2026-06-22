@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
+use helm_schema_core::{ApiPresenceQuery, ResourceRef, ResourceSchemaOracle, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
@@ -629,7 +629,7 @@ pub fn debug_materialize_schema_for_resource(
     Some(expanded)
 }
 
-impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
+impl ResourceSchemaOracle for KubernetesJsonSchemaProvider {
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -641,7 +641,9 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         self.schema_fragment_for_resource_path_uncached(resource, path)
             .and_then(|(_version, fragment)| fragment)
     }
+}
 
+impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::KubernetesOpenApi
     }
@@ -727,8 +729,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         out
     }
 }
-
-crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(KubernetesJsonSchemaProvider);
 
 /// True if the cache root contains a "legacy" K8s layout (i.e. version
 /// dirs sitting directly under the root, no `<source_id>` layer).

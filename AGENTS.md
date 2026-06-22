@@ -100,6 +100,24 @@ In practice, when choosing between two designs with similar correctness:
 If a new abstraction does not make the system both easier to reason about and
 more structurally correct, it is probably the wrong abstraction.
 
+### Architecture guideline: compiler-style phases, not clever plumbing
+
+helm-schema is closest to a small compiler or interpreter: it parses Helm/YAML,
+lowers that structure into semantic facts, analyzes effects, then emits schema.
+Keep complexity manageable the same way good compilers do:
+
+- make each phase explicit and give it one clear input and output
+- prefer typed semantic facts over loosely shaped maps, projections, or DTOs
+- keep lowering, analysis, and emission separate enough that each phase has
+  simple invariants
+- use shared semantic IR only when multiple consumers truly need the same facts
+- delete compatibility facades once their callers can consume the real semantic
+  model directly
+
+Do not replace messy local code with generic plumbing that only moves the
+complexity elsewhere. A compiler-style refactor should make the dataflow easier
+to draw and should usually remove a representation, adapter, or pass.
+
 ### Rust guideline: do not be cleverer than necessary
 
 For Rust code in this repo, follow the KISS principle strictly.

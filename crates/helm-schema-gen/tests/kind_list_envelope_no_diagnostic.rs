@@ -12,6 +12,7 @@ use test_util::prelude::sim_assert_eq;
 mod schema_generation;
 
 use helm_schema_ast::DefineIndex;
+use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_ir::{ResourceRef, SymbolicIrContext, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
@@ -93,7 +94,7 @@ fn kind_list_envelope_descends_into_inner_resource() {
 #[derive(Debug)]
 struct FakeIngressProvider;
 
-impl K8sSchemaProvider for FakeIngressProvider {
+impl ResourceSchemaOracle for FakeIngressProvider {
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -108,9 +109,11 @@ impl K8sSchemaProvider for FakeIngressProvider {
             None
         }
     }
+}
 
+impl K8sSchemaProvider for FakeIngressProvider {
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        match self.schema_fragment_for_resource_path(resource, path) {
+        match ResourceSchemaOracle::schema_fragment_for_resource_path(self, resource, path) {
             Some(fragment) => ProviderLookupResult::Found {
                 schema: fragment,
                 resolved_k8s_version: None,

@@ -22,9 +22,9 @@ use helm_schema_ir::{ConditionalGuard, ConditionalPathOverlay, ContractSchemaSig
 use merge::{merge_schema_list, union_schema_list};
 use path_resolver::PathSchemaResolver;
 use provider_definitions::ProviderSchemaDefinitions;
-use schema_model::{guard_value_to_json, is_scalar_like_schema, schema_allows_type, type_schema};
+use schema_model::{guard_value_to_json, is_scalar_like_schema, schema_allows_type};
 use schema_node::{JsonSchemaType, SchemaNode};
-use schema_tree::{SchemaDocument, draft07_root_document, open_array_schema, open_object_schema};
+use schema_tree::{SchemaDocument, draft07_root_document};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
@@ -129,7 +129,7 @@ fn build_root_schema(
             Some(_) => crate::schema_model::empty_schema(),
             None => resolved_path.schema,
         };
-        root_schema.insert_path_schema(&resolved_path.path_segments, schema);
+        root_schema.insert_path_schema(&resolved_path.path_segments, SchemaNode::foreign(schema));
     }
 
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
@@ -170,13 +170,17 @@ fn summarize_conditional_targets(
 fn open_fragment_base_schema(resolved_schema: &Value) -> Value {
     let mut schemas = Vec::new();
     if schema_allows_type(resolved_schema, "object") {
-        schemas.push(open_object_schema());
+        schemas.push(
+            SchemaNode::object()
+                .with_additional_properties(SchemaNode::empty())
+                .into_value(),
+        );
     }
     if schema_allows_type(resolved_schema, "array") {
-        schemas.push(open_array_schema());
+        schemas.push(SchemaNode::array().items(SchemaNode::empty()).into_value());
     }
     if schema_allows_type(resolved_schema, "null") {
-        schemas.push(type_schema("null"));
+        schemas.push(SchemaNode::typed(JsonSchemaType::Null).into_value());
     }
 
     match schemas.len() {
@@ -396,13 +400,11 @@ fn append_conditional_schemas(
             &conditional.guards,
             &conditional.ancestor_segments,
             values_yaml_doc,
-        )
-        .into_value();
+        );
         let then_schema = build_target_fragment(
             &conditional.relative_target_segments,
             SchemaNode::foreign(conditional.target_schema),
-        )
-        .into_value();
+        );
         root_schema.append_conditional(&conditional.ancestor_segments, condition, then_schema);
     }
 }

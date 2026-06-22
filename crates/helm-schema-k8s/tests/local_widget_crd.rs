@@ -1,7 +1,5 @@
-use helm_schema_core::{ResourceRef, YamlPath};
-use helm_schema_k8s::{
-    K8sSchemaProvider, LocalSchemaProvider, local_override::debug_materialize_schema_for_resource,
-};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_k8s::{LocalSchemaProvider, local_override::debug_materialize_schema_for_resource};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 

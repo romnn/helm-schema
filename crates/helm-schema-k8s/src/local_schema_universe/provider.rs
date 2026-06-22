@@ -1,4 +1,4 @@
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
 use serde_json::Value;
 
 use crate::doc_backed_schema::{
@@ -67,7 +67,7 @@ impl ChartLocalCrdSchemaProvider {
     }
 }
 
-impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
+impl ResourceSchemaOracle for ChartLocalCrdSchemaProvider {
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -77,7 +77,9 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
         self.schema_leaf_for_resource_path_from_doc(document.schema_doc(), path)
             .map(|leaf| self.fragment_for_leaf(document, leaf))
     }
+}
 
+impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::ChartLocalCrd
     }
@@ -116,8 +118,6 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
             .collect()
     }
 }
-
-crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(ChartLocalCrdSchemaProvider);
 
 /// Expand the full chart-local CRD document for regression tests and debugging.
 ///

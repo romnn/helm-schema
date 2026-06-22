@@ -4,7 +4,7 @@
 use std::fs;
 use std::sync::Arc;
 
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
 use helm_schema_k8s::{
     Chain, CrdsCatalogSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider, MockFetcher,
     MockResponse, source_id_for_url,

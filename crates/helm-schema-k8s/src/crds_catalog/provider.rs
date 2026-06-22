@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
@@ -275,7 +275,7 @@ pub fn debug_materialize_schema_for_resource(
     Some(debug_materialize_local_schema(loaded.doc.root()))
 }
 
-impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
+impl ResourceSchemaOracle for CrdsCatalogSchemaProvider {
     fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -288,7 +288,9 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path)
             .map(|leaf| self.fragment_for_leaf(&loaded, leaf))
     }
+}
 
+impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::DefaultCatalog
     }
@@ -380,8 +382,6 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         out
     }
 }
-
-crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(CrdsCatalogSchemaProvider);
 
 fn crd_root_has_legacy_layout(root: &Path) -> bool {
     let Ok(entries) = fs::read_dir(root) else {

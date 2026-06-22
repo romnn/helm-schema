@@ -1,4 +1,4 @@
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
 use helm_schema_k8s::{
     CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider,
     crds_catalog::debug_materialize_schema_for_resource as debug_materialize_catalog_schema,

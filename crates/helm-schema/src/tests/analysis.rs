@@ -1,5 +1,5 @@
 use helm_schema_ir::{Guard, ResourceRef, YamlPath};
-use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
+use helm_schema_k8s::{ChartLocalCrdSchemaProvider, ResourceSchemaOracle};
 use serde_json::json;
 use vfs::VfsPath;
 

@@ -1,7 +1,6 @@
-use helm_schema_core::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
+use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use helm_schema_k8s::{
-    Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider,
-    kubernetes_openapi::debug_materialize_schema_for_resource,
+    Chain, KubernetesJsonSchemaProvider, kubernetes_openapi::debug_materialize_schema_for_resource,
 };
 use test_util::prelude::sim_assert_eq;
 

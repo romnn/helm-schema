@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
 
 use super::*;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
@@ -13,7 +13,7 @@ struct CountingInferenceProvider {
     calls: Arc<AtomicUsize>,
 }
 
-impl K8sSchemaProvider for CountingInferenceProvider {
+impl ResourceSchemaOracle for CountingInferenceProvider {
     fn schema_fragment_for_resource_path(
         &self,
         _resource: &ResourceRef,
@@ -21,7 +21,9 @@ impl K8sSchemaProvider for CountingInferenceProvider {
     ) -> Option<crate::lookup::ProviderSchemaFragment> {
         None
     }
+}
 
+impl K8sSchemaProvider for CountingInferenceProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::KubernetesOpenApi
     }

@@ -23,18 +23,18 @@ impl SchemaDocument {
         Self { root }
     }
 
-    pub(crate) fn insert_path_schema(&mut self, path_segments: &[String], schema: Value) {
-        insert_schema_at_path_segments(&mut self.root, path_segments, schema);
+    pub(crate) fn insert_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
+        insert_schema_at_path_segments(&mut self.root, path_segments, schema.into_value());
     }
 
     pub(crate) fn append_conditional(
         &mut self,
         ancestor_segments: &[String],
-        condition: Value,
-        then_schema: Value,
+        condition: SchemaNode,
+        then_schema: SchemaNode,
     ) {
         let ancestor = ensure_schema_node_at_path_segments(&mut self.root, ancestor_segments);
-        append_conditional_entry(ancestor, condition, then_schema);
+        append_conditional_entry(ancestor, condition.into_value(), then_schema.into_value());
     }
 
     pub(crate) fn apply_descriptions(&mut self, descriptions: &BTreeMap<String, String>) {
@@ -75,31 +75,19 @@ pub(crate) fn object_schema(properties: Map<String, Value>) -> Value {
 }
 
 pub(crate) fn unknown_object_schema() -> Value {
-    open_object_schema()
-}
-
-pub(crate) fn open_object_schema() -> Value {
     SchemaNode::object()
         .with_additional_properties(SchemaNode::empty())
         .into_value()
 }
 
-pub(crate) fn open_array_schema() -> Value {
-    SchemaNode::array().items(SchemaNode::empty()).into_value()
-}
-
-pub(crate) fn insert_schema_at_path_segments(
-    root: &mut Value,
-    path_segments: &[String],
-    leaf: Value,
-) {
+fn insert_schema_at_path_segments(root: &mut Value, path_segments: &[String], leaf: Value) {
     if path_segments.is_empty() {
         return;
     }
     insert_schema_at_parts(root, path_segments, leaf);
 }
 
-pub(crate) fn ensure_schema_node_at_path_segments<'a>(
+fn ensure_schema_node_at_path_segments<'a>(
     root: &'a mut Value,
     path_segments: &[String],
 ) -> &'a mut Value {
@@ -129,7 +117,7 @@ pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMa
     }
 }
 
-pub(crate) fn append_conditional_entry(node: &mut Value, condition: Value, then_schema: Value) {
+fn append_conditional_entry(node: &mut Value, condition: Value, then_schema: Value) {
     let Value::Object(object) = node else {
         return;
     };
@@ -431,14 +419,9 @@ fn insert_schema_into_union_variants(
 
 fn new_union_variant_for_head(head: &str) -> Value {
     if head == "*" {
-        Value::Object(
-            [
-                ("type".to_string(), Value::String("array".to_string())),
-                ("items".to_string(), Value::Null),
-            ]
-            .into_iter()
-            .collect(),
-        )
+        SchemaNode::array()
+            .items(SchemaNode::foreign(Value::Null))
+            .into_value()
     } else {
         object_schema(Map::new())
     }

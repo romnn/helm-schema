@@ -1,5 +1,5 @@
-use helm_schema_core::{ResourceRef, YamlPath};
-use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider};
+use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_k8s::CrdsCatalogSchemaProvider;
 use test_util::prelude::sim_assert_eq;
 
 fn resource() -> ResourceRef {

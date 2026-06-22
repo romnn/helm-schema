@@ -4,6 +4,7 @@ use std::fs;
 use std::sync::Arc;
 use test_util::prelude::sim_assert_eq;
 
+use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_k8s::{
     CACHE_LAYOUT_VERSION, Diagnostic, DiagnosticSink, K8sSchemaProvider,
     KubernetesJsonSchemaProvider, LAYOUT_MARKER_FILENAME, MockFetcher, MockResponse,

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use helm_schema_core::{ProviderSchemaUse, ResourceRef, ValueKind, YamlPath};
+use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use helm_schema_k8s::inference::aggregate;
 use helm_schema_k8s::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, Chain, CrdsCatalogSchemaProvider, Diagnostic,
@@ -262,7 +262,7 @@ fn infer_api_version_candidates_default_impl_empty() {
     // infer_api_version_candidates returns empty via the trait default.
     #[derive(Debug)]
     struct Empty;
-    impl helm_schema_k8s::K8sSchemaProvider for Empty {
+    impl ResourceSchemaOracle for Empty {
         fn schema_fragment_for_resource_path(
             &self,
             _r: &helm_schema_core::ResourceRef,
@@ -270,6 +270,9 @@ fn infer_api_version_candidates_default_impl_empty() {
         ) -> Option<helm_schema_k8s::ProviderSchemaFragment> {
             None
         }
+    }
+
+    impl helm_schema_k8s::K8sSchemaProvider for Empty {
         fn origin(&self) -> helm_schema_k8s::ProviderOrigin {
             helm_schema_k8s::ProviderOrigin::DefaultCatalog
         }

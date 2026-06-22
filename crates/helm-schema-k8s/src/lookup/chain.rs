@@ -1,5 +1,6 @@
 use helm_schema_core::{
-    ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, YamlPath,
+    ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle,
+    YamlPath,
 };
 
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
@@ -250,7 +251,7 @@ impl Chain {
     }
 }
 
-impl K8sSchemaProvider for Chain {
+impl ResourceSchemaOracle for Chain {
     #[tracing::instrument(
         skip_all,
         fields(
@@ -283,7 +284,9 @@ impl K8sSchemaProvider for Chain {
         self.resolve_against_chain(resource, path)
             .into_schema_fragment()
     }
+}
 
+impl K8sSchemaProvider for Chain {
     fn origin(&self) -> ProviderOrigin {
         // Chains are not addressable as a single origin; report the
         // first provider's origin for the rare caller that asks.
@@ -313,8 +316,6 @@ impl K8sSchemaProvider for Chain {
         Chain::capability_has_query_at_primary_version_traced(self, query)
     }
 }
-
-crate::lookup::impl_resource_schema_oracle_via_k8s_provider!(Chain);
 
 impl CapabilityOracle for Chain {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {

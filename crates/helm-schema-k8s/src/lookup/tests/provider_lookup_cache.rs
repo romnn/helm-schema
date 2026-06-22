@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
+use helm_schema_core::ResourceSchemaOracle;
 use serde_json::json;
 
 use super::*;
@@ -11,7 +12,7 @@ struct CountingProvider {
     calls: AtomicUsize,
 }
 
-impl K8sSchemaProvider for CountingProvider {
+impl ResourceSchemaOracle for CountingProvider {
     fn schema_fragment_for_resource_path(
         &self,
         _resource: &ResourceRef,
@@ -19,7 +20,9 @@ impl K8sSchemaProvider for CountingProvider {
     ) -> Option<ProviderSchemaFragment> {
         None
     }
+}
 
+impl K8sSchemaProvider for CountingProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::KubernetesOpenApi
     }
