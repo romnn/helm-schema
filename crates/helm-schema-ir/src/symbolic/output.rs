@@ -16,7 +16,8 @@ impl SymbolicWalker<'_> {
     ) -> BTreeMap<String, HelperOutputMeta> {
         let mut out = self
             .value_path_context()
-            .local_alias_output_meta_for_exprs(exprs);
+            .expression_path_facts(exprs)
+            .local_output_meta;
         let analysis = self
             .ir_context
             .inner

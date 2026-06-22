@@ -10,6 +10,7 @@ use crate::expression_analysis::resolve_expr_to_values_path;
 use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
 use crate::helper_summary::{HelperOutputMeta, insert_type_hint};
 use crate::literal_schema_type::expression_schema_type;
+use crate::local_projection::{LocalExpressionFacts, local_expression_facts_from_exprs};
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::value_path_extraction::values_path_from_expr;
 
@@ -52,19 +53,20 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 impl ValuePathContext<'_> {
     pub(crate) fn expression_path_facts(&self, exprs: &[TemplateExpr]) -> ValuePathExpressionFacts {
         let effects = self.expression_effects(exprs);
+        let local_facts = self.local_expression_facts(exprs);
         let mut values = BTreeSet::new();
         for expr in exprs {
             values.extend(self.resolved_values_paths_from_expr(expr));
         }
         let default_fallback_values =
-            self.resolved_default_fallback_paths_in_exprs_with_effects(exprs, &effects);
+            self.resolved_default_fallback_paths_in_exprs_with_facts(exprs, &effects, &local_facts);
         values.extend(default_fallback_values.iter().cloned());
         ValuePathExpressionFacts {
             values,
             default_fallback_values,
             type_hints: self.collect_type_hints(exprs, &effects),
             encoded_output_values: effects.encoded_paths,
-            local_output_meta: self.local_alias_output_meta_for_exprs(exprs),
+            local_output_meta: local_facts.output_meta,
         }
     }
 
@@ -125,39 +127,53 @@ impl ValuePathContext<'_> {
 
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
+        let locals = locals_with_roots(self.template_bindings, self.root_bindings);
 
         walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
             if let Some(path) = values_path_from_expr(node) {
                 paths.insert(path);
                 return true;
             }
-            false
-        });
 
-        if !self.root_bindings.is_empty() {
-            walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
-                if let Some(path) =
+            if !self.root_bindings.is_empty()
+                && let Some(path) =
                     resolve_expr_to_values_path(node, Some(self.root_bindings), None)
-                {
-                    paths.insert(path);
+            {
+                paths.insert(path);
+                return true;
+            }
+
+            if !self.template_bindings.is_empty() {
+                let local_paths = self.local_alias_paths_for_expr(node);
+                if !local_paths.is_empty() {
+                    paths.extend(local_paths);
                     return true;
                 }
-                false
-            });
-        }
+            }
 
-        if !self.template_bindings.is_empty() {
-            walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
-                let local_paths = self.local_alias_paths_for_expr(node);
-                if local_paths.is_empty() {
-                    return false;
-                }
-                paths.extend(local_paths);
-                true
-            });
-        }
+            if expr_contains_helper_call(node) {
+                return false;
+            }
 
-        paths.extend(self.resolved_values_paths_in_expr_tree(expr));
+            let outer_binding = context_value_from_outer_expr(
+                node,
+                Some(&locals),
+                Some(self.root_bindings),
+                self.current_dot_binding.as_ref(),
+            );
+            let fragment_value =
+                self.fragment_value_from_expr(node, self.current_dot_fragment.as_ref());
+            let resolved_paths = outer_binding
+                .into_iter()
+                .chain(fragment_value)
+                .flat_map(|binding| binding.fragment_source_paths())
+                .filter(|path| !path.trim().is_empty())
+                .collect::<BTreeSet<_>>();
+            let found = !resolved_paths.is_empty();
+            paths.extend(resolved_paths);
+            found
+        });
+
         paths
     }
 
@@ -166,26 +182,74 @@ impl ValuePathContext<'_> {
         exprs: &[TemplateExpr],
     ) -> BTreeSet<String> {
         let effects = self.expression_effects(exprs);
-        self.resolved_default_fallback_paths_in_exprs_with_effects(exprs, &effects)
+        let local_facts = self.local_expression_facts(exprs);
+        self.resolved_default_fallback_paths_in_exprs_with_facts(exprs, &effects, &local_facts)
     }
 
-    fn resolved_default_fallback_paths_in_exprs_with_effects(
+    fn resolved_default_fallback_paths_in_exprs_with_facts(
         &self,
         exprs: &[TemplateExpr],
         effects: &Effects,
+        local_facts: &LocalExpressionFacts,
     ) -> BTreeSet<String> {
         let mut paths = effects.defaults.clone();
         for expr in exprs {
             paths.extend(self.resolved_default_fallback_paths_for_expr(expr));
         }
-        if !self.template_default_paths.is_empty() {
-            for expr in exprs {
-                expr.walk(|node| {
-                    paths.extend(self.local_alias_default_paths_for_expr(node));
-                });
-            }
-        }
+        paths.extend(local_facts.default_paths.iter().cloned());
         paths
+    }
+
+    fn local_expression_facts(&self, exprs: &[TemplateExpr]) -> LocalExpressionFacts {
+        local_expression_facts_from_exprs(
+            exprs,
+            self.template_bindings,
+            self.template_default_paths,
+            self.template_output_meta,
+        )
+    }
+
+    fn local_alias_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+        match expr {
+            TemplateExpr::Variable(var) if !var.is_empty() => self
+                .template_bindings
+                .get(var)
+                .map(AbstractValue::fragment_source_paths)
+                .unwrap_or_default(),
+            TemplateExpr::Selector { operand, path } => match operand.as_ref() {
+                TemplateExpr::Variable(var) if !var.is_empty() => self
+                    .template_bindings
+                    .get(var)
+                    .and_then(|binding| binding.select_fragment_path(path))
+                    .map(|binding| binding.fragment_source_paths())
+                    .unwrap_or_default(),
+                _ => BTreeSet::new(),
+            },
+            _ => BTreeSet::new(),
+        }
+    }
+
+    pub(super) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+        let mut paths = self.resolve_expr_to_values_paths(expr);
+        paths.extend(self.local_alias_paths_for_expr(expr));
+        paths
+            .into_iter()
+            .filter(|path| !path.trim().is_empty())
+            .collect()
+    }
+
+    fn expr_has_local_alias_path(&self, expr: &TemplateExpr) -> bool {
+        !self.local_alias_paths_for_expr(expr).is_empty()
+    }
+
+    pub(super) fn expr_needs_context_value_resolution(&self, expr: &TemplateExpr) -> bool {
+        self.expr_has_local_alias_path(expr)
+            || (values_path_from_expr(expr).is_none()
+                && !self.resolve_expr_to_values_paths(expr).is_empty())
+    }
+
+    pub(super) fn truthy_paths_for_condition_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+        self.resolved_values_paths_from_expr(expr)
     }
 
     fn resolved_default_fallback_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
@@ -278,38 +342,6 @@ impl ValuePathContext<'_> {
             current_dot,
             &mut seen,
         )
-    }
-
-    pub(super) fn resolved_values_paths_in_expr_tree(
-        &self,
-        expr: &TemplateExpr,
-    ) -> BTreeSet<String> {
-        let locals = locals_with_roots(self.template_bindings, self.root_bindings);
-
-        let mut paths = BTreeSet::new();
-        walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
-            if expr_contains_helper_call(node) {
-                return false;
-            }
-            let outer_binding = context_value_from_outer_expr(
-                node,
-                Some(&locals),
-                Some(self.root_bindings),
-                self.current_dot_binding.as_ref(),
-            );
-            let fragment_value =
-                self.fragment_value_from_expr(node, self.current_dot_fragment.as_ref());
-            let resolved_paths = outer_binding
-                .into_iter()
-                .chain(fragment_value)
-                .flat_map(|binding| binding.fragment_source_paths())
-                .filter(|path| !path.trim().is_empty())
-                .collect::<BTreeSet<_>>();
-            let found = !resolved_paths.is_empty();
-            paths.extend(resolved_paths);
-            found
-        });
-        paths
     }
 }
 

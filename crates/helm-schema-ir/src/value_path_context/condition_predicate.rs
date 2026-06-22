@@ -6,7 +6,6 @@ use crate::Guard;
 use crate::condition_guards::{guard_value_literal, parse_condition_expr};
 use crate::expr_function_catalog::type_is_schema_type;
 use crate::predicate::Predicate;
-use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
 
@@ -32,7 +31,7 @@ impl ValuePathContext<'_> {
             return Predicate::True;
         }
         Predicate::all(
-            self.resolved_values_paths_in_expr_tree(expr)
+            self.truthy_paths_for_condition_expr(expr)
                 .into_iter()
                 .map(Predicate::truthy_path)
                 .collect(),
@@ -150,12 +149,6 @@ impl ValuePathContext<'_> {
             _ => {}
         };
         out
-    }
-
-    fn expr_needs_context_value_resolution(&self, expr: &TemplateExpr) -> bool {
-        !self.local_alias_paths_for_expr(expr).is_empty()
-            || (values_path_from_expr(expr).is_none()
-                && !self.resolve_expr_to_values_paths(expr).is_empty())
     }
 
     fn condition_has_unrepresentable_values_comparison_expr(&self, expr: &TemplateExpr) -> bool {

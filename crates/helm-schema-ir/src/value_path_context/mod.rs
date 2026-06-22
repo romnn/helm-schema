@@ -4,7 +4,6 @@ use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_summary::HelperOutputMeta;
 
-mod alias_projection;
 mod condition_predicate;
 mod path_resolution;
 
