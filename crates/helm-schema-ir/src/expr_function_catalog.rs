@@ -50,26 +50,3 @@ pub(crate) fn is_provenance_preserving_function(function: &str) -> bool {
             | "uniq"
     )
 }
-
-pub(crate) fn transform_source_arg<'a>(
-    function: &str,
-    args: &'a [TemplateExpr],
-) -> Option<&'a TemplateExpr> {
-    match function {
-        function if is_string_transform_function(function) => match function {
-            "indent" | "nindent" | "trim" | "trimAll" | "trimPrefix" | "trimSuffix" | "trunc"
-            | "replace" => args.last(),
-            _ => args.first(),
-        },
-        function if is_provenance_preserving_function(function) => match function {
-            "indent" | "nindent" => args.last(),
-            "printf" => None,
-            _ => args.first(),
-        },
-        _ => None,
-    }
-}
-
-pub(crate) fn pipeline_preserves_current(function: &str) -> bool {
-    is_string_transform_function(function) || is_provenance_preserving_function(function)
-}

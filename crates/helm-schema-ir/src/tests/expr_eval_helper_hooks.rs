@@ -1,9 +1,11 @@
 use std::collections::BTreeMap;
+
+use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use test_util::prelude::sim_assert_eq;
 
-use helm_schema_ast::parse_action_expressions;
-
-use super::*;
+use crate::abstract_value::AbstractValue;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
 struct StaticResolver;
 
@@ -32,7 +34,7 @@ fn single_expr(action: &str) -> TemplateExpr {
 
 fn eval(action: &str) -> Option<AbstractValue> {
     let mut resolver = StaticResolver;
-    eval_expr_with_helper_calls(&single_expr(action), &EvalEnv::default(), &mut resolver)
+    eval_expr_with_helper_calls(&single_expr(action), &EvalEnv::default(), &mut resolver).value
 }
 
 #[test]

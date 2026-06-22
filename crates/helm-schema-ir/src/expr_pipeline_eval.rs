@@ -4,22 +4,28 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::value_paths;
-use crate::expr_eval::{eval_expr, eval_expr_value};
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::expr_function_catalog::{
     is_provenance_preserving_function, is_string_transform_function,
 };
 use crate::literal_schema_type::expression_schema_type;
 use crate::template_expr_analysis::is_merge_function;
 
-pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+pub(crate) fn eval_pipeline_with_helper_calls(
+    stages: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let Some(first_stage) = stages.first() else {
         return EvalResult::none();
     };
-    let mut current = eval_expr(first_stage, env);
+    let mut current = eval_expr_with_helper_calls(first_stage, env, resolver);
 
     for stage in &stages[1..] {
         let TemplateExpr::Call { function, args } = stage else {
-            current.effects.merge(eval_expr(stage, env).effects);
+            current
+                .effects
+                .merge(eval_expr_with_helper_calls(stage, env, resolver).effects);
             continue;
         };
 
@@ -33,7 +39,7 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
                 }
                 let mut values = current.value.into_iter().collect::<Vec<_>>();
                 for arg in args {
-                    let arg_result = eval_expr(arg, env);
+                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     effects.merge(arg_result.effects);
                     if let Some(value) = arg_result.value {
                         values.push(value);
@@ -45,7 +51,7 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
                 let mut effects = current.effects;
                 let mut values = current.value.into_iter().collect::<Vec<_>>();
                 for arg in args {
-                    let arg_result = eval_expr(arg, env);
+                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     effects.merge(arg_result.effects);
                     if let Some(value) = arg_result.value {
                         values.push(value);
@@ -56,12 +62,12 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
             "ternary" => {
                 let mut effects = current.effects;
                 let mut values = Vec::new();
-                for arg in args {
-                    let arg_result = eval_expr(arg, env);
+                for (index, arg) in args.iter().enumerate() {
+                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     effects.merge(arg_result.effects);
-                }
-                for arg in args.iter().take(2) {
-                    if let Some(value) = eval_expr_value(arg, env) {
+                    if index < 2
+                        && let Some(value) = arg_result.value
+                    {
                         values.push(value);
                     }
                 }
@@ -75,7 +81,7 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
                     effects.add_encoded_paths(current_paths);
                 }
                 for arg in args {
-                    let arg_result = eval_expr(arg, env);
+                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     if function == "b64enc" {
                         effects.add_encoded_paths(value_paths(&arg_result.value));
                     }
@@ -86,14 +92,14 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
             function if is_provenance_preserving_function(function) => {
                 let mut effects = current.effects;
                 for arg in args {
-                    effects.merge(eval_expr(arg, env).effects);
+                    effects.merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
                 }
                 EvalResult::with_effects(current.value, effects)
             }
             _ => {
                 let mut effects = current.effects;
                 for arg in args {
-                    effects.merge(eval_expr(arg, env).effects);
+                    effects.merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
                 }
                 EvalResult::with_effects(None, effects)
             }

@@ -2,6 +2,7 @@ mod abstract_value_output_projection;
 mod contract;
 mod contract_signals;
 mod expr_eval;
+mod expr_eval_helper_hooks;
 mod fragment_expr_eval;
 mod fragment_scope_eval;
 mod resource_identity;

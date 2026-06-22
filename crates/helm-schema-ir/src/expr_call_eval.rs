@@ -5,7 +5,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{eval_expr, eval_expr_value};
+use crate::expr_eval::{HelperCallValueResolver, eval_expr, eval_expr_with_helper_calls};
 use crate::expr_function_catalog::{
     is_provenance_preserving_function, is_string_transform_function, type_is_schema_type,
 };
@@ -13,120 +13,31 @@ use crate::literal_schema_type::expression_schema_type;
 use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
 use crate::template_expr_analysis::is_merge_function;
 
-pub(crate) fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+pub(crate) fn eval_call_with_helper_calls(
+    function: &str,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     match function {
-        "set" if args.len() == 3 => eval_set_call(args, env),
-        "default" if args.len() == 2 => {
-            let fallback = eval_expr(&args[0], env);
-            let primary = eval_expr(&args[1], env);
-            let primary_paths = primary
-                .value
-                .as_ref()
-                .map(AbstractValue::paths)
-                .unwrap_or_default();
-            let mut effects = fallback.effects;
-            effects.merge(primary.effects);
-            effects.add_default_paths(primary_paths.clone());
-            if let Some(schema_type) = expression_schema_type(&args[0]) {
-                effects.add_type_hints(primary_paths, schema_type);
-            }
-            EvalResult::with_effects(
-                AbstractValue::choice(
-                    [primary.value, fallback.value]
-                        .into_iter()
-                        .flatten()
-                        .collect(),
-                ),
-                effects,
-            )
-        }
-        "dict" => {
-            let mut map = BTreeMap::new();
-            let mut effects = Effects::default();
-            let mut index = 0usize;
-            while index + 1 < args.len() {
-                let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) =
-                    &args[index]
-                else {
-                    index += 1;
-                    continue;
-                };
-                let value = eval_expr(&args[index + 1], env);
-                effects.merge(value.effects);
-                map.insert(key.clone(), value.value.unwrap_or(AbstractValue::Unknown));
-                index += 2;
-            }
-            EvalResult::with_effects(Some(AbstractValue::Dict(map)), effects)
-        }
-        "list" | "tuple" => {
-            let mut items = Vec::new();
-            let mut effects = Effects::default();
-            for arg in args {
-                let item = eval_expr(arg, env);
-                effects.merge(item.effects);
-                items.push(item.value.unwrap_or(AbstractValue::Unknown));
-            }
-            EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
-        }
-        "first" if args.len() == 1 => eval_first(args, env),
-        "reverse" if args.len() == 1 => eval_reverse(args, env),
-        "splitList" if args.len() == 2 => eval_split_list(args, env),
-        "append" => eval_append(args, env),
-        "omit" if !args.is_empty() => eval_omit(args, env),
-        function if is_merge_function(function) => {
-            let mut values = Vec::new();
-            let mut effects = Effects::default();
-            for arg in args {
-                let value = eval_expr(arg, env);
-                effects.merge(value.effects);
-                if let Some(value) = value.value {
-                    values.push(value);
-                }
-            }
-            EvalResult::with_effects(AbstractValue::merge_all(values), effects)
-        }
-        "coalesce" => {
-            let mut values = Vec::new();
-            let mut effects = Effects::default();
-            for arg in args {
-                let value = eval_expr(arg, env);
-                effects.merge(value.effects);
-                if let Some(value) = value.value {
-                    values.push(value);
-                }
-            }
-            EvalResult::with_effects(AbstractValue::choice(values), effects)
-        }
-        "ternary" => {
-            let mut values = Vec::new();
-            let mut effects = Effects::default();
-            for arg in args {
-                let value = eval_expr(arg, env);
-                effects.merge(value.effects);
-            }
-            for arg in args.iter().take(2) {
-                if let Some(value) = eval_expr_value(arg, env) {
-                    values.push(value);
-                }
-            }
-            EvalResult::with_effects(AbstractValue::choice(values), effects)
-        }
-        "printf" => eval_printf(args, env),
-        "index" => eval_index(args, env),
-        "typeIs" if args.len() >= 2 => {
-            let mut result = eval_all_args(args, env);
-            if let Some(schema_type) = type_is_schema_type(args.first()) {
-                let paths = eval_expr(&args[1], env)
-                    .value
-                    .as_ref()
-                    .map(AbstractValue::paths)
-                    .unwrap_or_default();
-                result.effects.add_type_hints(paths, &schema_type);
-            }
-            EvalResult::with_effects(None, result.effects)
-        }
+        "include" | "template" => eval_helper_call(args, env, resolver),
+        "set" if args.len() == 3 => eval_set_call(args, env, resolver),
+        "default" if args.len() == 2 => eval_default(args, env, resolver),
+        "dict" => eval_dict(args, env, resolver),
+        "list" | "tuple" => eval_list(args, env, resolver),
+        "first" if args.len() == 1 => eval_first(args, env, resolver),
+        "reverse" if args.len() == 1 => eval_reverse(args, env, resolver),
+        "splitList" if args.len() == 2 => eval_split_list(args, env, resolver),
+        "append" => eval_append(args, env, resolver),
+        "omit" if !args.is_empty() => eval_omit(args, env, resolver),
+        function if is_merge_function(function) => eval_merge(args, env, resolver),
+        "coalesce" => eval_choice(args, env, resolver),
+        "ternary" => eval_ternary(args, env, resolver),
+        "printf" => eval_printf(args, env, resolver),
+        "index" => eval_index(args, env, resolver),
+        "typeIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
         function if is_string_transform_function(function) => {
-            let result = eval_all_args(args, env);
+            let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
             let paths = value_paths(&result.value);
             effects.add_string_hints(paths.clone());
@@ -135,18 +46,33 @@ pub(crate) fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) ->
             }
             EvalResult::with_effects(result.value, effects)
         }
-        function if is_provenance_preserving_function(function) => eval_all_args(args, env),
-        _ => {
-            let mut effects = Effects::default();
-            for arg in args {
-                effects.merge(eval_expr(arg, env).effects);
-            }
-            EvalResult::with_effects(None, effects)
+        function if is_provenance_preserving_function(function) => {
+            eval_all_args(args, env, resolver)
         }
+        _ => eval_unknown_call(args, env, resolver),
     }
 }
 
-fn eval_set_call(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+fn eval_helper_call(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    if let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
+        args.first().map(TemplateExpr::deparen)
+        && let Some(value) = resolver.resolve_helper_call(name, args.get(1))
+    {
+        return EvalResult::with_effects(Some(value), Effects::default());
+    }
+
+    eval_unknown_call(args, env, resolver)
+}
+
+fn eval_set_call(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let mut effects = Effects::default();
     let target = match args.first().map(TemplateExpr::deparen) {
         Some(TemplateExpr::Variable(name)) => {
@@ -161,7 +87,7 @@ fn eval_set_call(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     };
     let mut keys = BTreeSet::new();
     if let Some(expr) = args.get(1) {
-        let key = eval_expr(expr, env);
+        let key = eval_expr_with_helper_calls(expr, env, resolver);
         keys = key
             .value
             .as_ref()
@@ -170,7 +96,7 @@ fn eval_set_call(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
         effects.merge(key.effects);
     }
     let assigned_value = if let Some(expr) = args.get(2) {
-        let result = eval_expr(expr, env);
+        let result = eval_expr_with_helper_calls(expr, env, resolver);
         let value = result.value.clone().unwrap_or(AbstractValue::Unknown);
         effects.merge(result.effects);
         value
@@ -194,8 +120,78 @@ fn eval_set_call(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(value, effects)
 }
 
-fn eval_first(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
-    let result = eval_expr(&args[0], env);
+fn eval_default(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let fallback = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let primary = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let primary_paths = primary
+        .value
+        .as_ref()
+        .map(AbstractValue::paths)
+        .unwrap_or_default();
+    let mut effects = fallback.effects;
+    effects.merge(primary.effects);
+    effects.add_default_paths(primary_paths.clone());
+    if let Some(schema_type) = expression_schema_type(&args[0]) {
+        effects.add_type_hints(primary_paths, schema_type);
+    }
+    EvalResult::with_effects(
+        AbstractValue::choice(
+            [primary.value, fallback.value]
+                .into_iter()
+                .flatten()
+                .collect(),
+        ),
+        effects,
+    )
+}
+
+fn eval_dict(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut map = BTreeMap::new();
+    let mut effects = Effects::default();
+    let mut index = 0usize;
+    while index + 1 < args.len() {
+        let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = &args[index]
+        else {
+            index += 1;
+            continue;
+        };
+        let value = eval_expr_with_helper_calls(&args[index + 1], env, resolver);
+        effects.merge(value.effects);
+        map.insert(key.clone(), value.value.unwrap_or(AbstractValue::Unknown));
+        index += 2;
+    }
+    EvalResult::with_effects(Some(AbstractValue::Dict(map)), effects)
+}
+
+fn eval_list(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut items = Vec::new();
+    let mut effects = Effects::default();
+    for arg in args {
+        let item = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(item.effects);
+        items.push(item.value.unwrap_or(AbstractValue::Unknown));
+    }
+    EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
+}
+
+fn eval_first(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let result = eval_expr_with_helper_calls(&args[0], env, resolver);
     let value = match result.value {
         Some(AbstractValue::List(items)) => items.first().cloned(),
         other => other,
@@ -203,8 +199,12 @@ fn eval_first(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(value, result.effects)
 }
 
-fn eval_reverse(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
-    let result = eval_expr(&args[0], env);
+fn eval_reverse(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let result = eval_expr_with_helper_calls(&args[0], env, resolver);
     let value = match result.value {
         Some(AbstractValue::List(mut items)) => {
             items.reverse();
@@ -215,12 +215,16 @@ fn eval_reverse(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(value, result.effects)
 }
 
-fn eval_split_list(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+fn eval_split_list(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let separator = match args[0].deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
-        _ => return eval_all_args(args, env),
+        _ => return eval_all_args(args, env, resolver),
     };
-    let result = eval_expr(&args[1], env);
+    let result = eval_expr_with_helper_calls(&args[1], env, resolver);
     let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
         return EvalResult::with_effects(None, result.effects);
     };
@@ -257,11 +261,15 @@ fn split_string_set(separator: &str, strings: BTreeSet<String>) -> Option<Vec<Ab
     Some(vec![AbstractValue::StringSet(strings)])
 }
 
-fn eval_index(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+fn eval_index(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let Some(base_expr) = args.first() else {
         return EvalResult::none();
     };
-    let base = eval_expr(base_expr, env);
+    let base = eval_expr_with_helper_calls(base_expr, env, resolver);
     let mut effects = base.effects;
     let Some(value) = base.value else {
         return EvalResult::with_effects(None, effects);
@@ -269,7 +277,7 @@ fn eval_index(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
 
     let mut values = vec![value];
     for arg in &args[1..] {
-        let arg_result = eval_expr(arg, env);
+        let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(arg_result.effects);
         let Some(options) = path_segment_options(arg, arg_result.value.as_ref()) else {
             return EvalResult::with_effects(None, effects);
@@ -321,9 +329,16 @@ pub(crate) fn apply_index_segment(
     }
 }
 
-fn eval_append(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+fn eval_append(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let mut effects = Effects::default();
-    let mut items = match args.first().map(|expr| eval_expr(expr, env)) {
+    let mut items = match args
+        .first()
+        .map(|expr| eval_expr_with_helper_calls(expr, env, resolver))
+    {
         Some(result) => {
             effects.merge(result.effects);
             match result.value {
@@ -335,7 +350,7 @@ fn eval_append(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
         None => Vec::new(),
     };
     for arg in &args[1..] {
-        let result = eval_expr(arg, env);
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
         if let Some(value) = result.value {
             items.push(value);
@@ -344,11 +359,15 @@ fn eval_append(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
 }
 
-fn eval_omit(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
-    let mut base = eval_expr(&args[0], env);
+fn eval_omit(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut base = eval_expr_with_helper_calls(&args[0], env, resolver);
     let mut keys = BTreeSet::new();
     for arg in &args[1..] {
-        let key = eval_expr(arg, env);
+        let key = eval_expr_with_helper_calls(arg, env, resolver);
         keys.extend(
             key.value
                 .as_ref()
@@ -361,13 +380,17 @@ fn eval_omit(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(value, base.effects)
 }
 
-fn eval_printf(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+fn eval_printf(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let mut effects = Effects::default();
     let mut provenance_paths = BTreeSet::new();
     let mut values = Vec::with_capacity(args.len());
 
     for arg in args {
-        let result = eval_expr(arg, env);
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
         provenance_paths.extend(value_paths(&result.value));
         effects.merge(result.effects);
         values.push(result.value);
@@ -398,17 +421,93 @@ fn eval_printf(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
     EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
-fn eval_all_args(args: &[TemplateExpr], env: &EvalEnv) -> EvalResult {
+fn eval_merge(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let result = eval_all_args(args, env, resolver);
+    let values = result.value.into_iter().collect();
+    EvalResult::with_effects(AbstractValue::merge_all(values), result.effects)
+}
+
+fn eval_choice(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    eval_all_args(args, env, resolver)
+}
+
+fn eval_ternary(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut values = Vec::new();
+    let mut effects = Effects::default();
+    for (index, arg) in args.iter().enumerate() {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(result.effects);
+        if index < 2
+            && let Some(value) = result.value
+        {
+            values.push(value);
+        }
+    }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn eval_type_is(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let mut values = Vec::new();
     let mut effects = Effects::default();
     for arg in args {
-        let result = eval_expr(arg, env);
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(result.effects);
+        values.push(result.value);
+    }
+    if let Some(schema_type) = type_is_schema_type(args.first()) {
+        let paths = values
+            .get(1)
+            .and_then(Option::as_ref)
+            .map(AbstractValue::paths)
+            .unwrap_or_default();
+        effects.add_type_hints(paths, &schema_type);
+    }
+    EvalResult::with_effects(None, effects)
+}
+
+fn eval_all_args(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut values = Vec::new();
+    let mut effects = Effects::default();
+    for arg in args {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
         if let Some(value) = result.value {
             values.push(value);
         }
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn eval_unknown_call(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    _resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = Effects::default();
+    for arg in args {
+        effects.merge(eval_expr(arg, env).effects);
+    }
+    EvalResult::with_effects(None, effects)
 }
 
 pub(crate) fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {

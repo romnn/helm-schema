@@ -4,7 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
-use crate::helper_aware_expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
 use super::FragmentEvalContext;
 
@@ -14,7 +14,7 @@ pub(super) fn eval_expr_with_bound_helpers(
     params: BoundHelperValueResolverParams<'_, '_, '_>,
 ) -> Option<AbstractValue> {
     let mut resolver = BoundHelperValueResolver { params };
-    eval_expr_with_helper_calls(expr, env, &mut resolver)
+    eval_expr_with_helper_calls(expr, env, &mut resolver).value
 }
 
 pub(super) struct BoundHelperValueResolverParams<'a, 'context, 'seen> {
