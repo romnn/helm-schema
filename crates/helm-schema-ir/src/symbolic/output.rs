@@ -30,10 +30,10 @@ impl SymbolicWalker<'_> {
                 &mut HashSet::new(),
             );
         for (path, facts) in analysis.path_facts() {
-            if let Some(meta) = facts.output_meta() {
+            if let Some(meta) = facts.output_meta.as_ref() {
                 out.entry(path.to_string()).or_default().merge_ref(meta);
             }
-            for output in facts.fragment_output_uses().cloned() {
+            for output in facts.fragment_output_uses.iter().cloned() {
                 out.entry(output.source_expr)
                     .or_default()
                     .merge(output.meta);

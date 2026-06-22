@@ -1,4 +1,4 @@
-use helm_schema_ast::{DefineIndex, HelmAst, TemplateHeader};
+use helm_schema_ast::{DefineIndex, HelmAst};
 
 use crate::capability_branch::{
     CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard, decode_guard_expr,
@@ -13,14 +13,6 @@ pub(super) struct ApiVersionOutputDetector<'a> {
 impl<'a> ApiVersionOutputDetector<'a> {
     pub(super) fn new(defines: &'a DefineIndex) -> Self {
         Self { defines }
-    }
-
-    pub(super) fn is_capability_guard(&self, condition: &TemplateHeader) -> bool {
-        matches!(
-            decode_guard_expr(condition.expr(), condition.raw())
-                .unwrap_or_else(|| decode_guard(condition.raw())),
-            CapabilityGuard::Has { .. } | CapabilityGuard::NotHas { .. }
-        )
     }
 
     pub(super) fn inline_branches(&self, node: &HelmAst) -> Option<Vec<HelperBranch>> {

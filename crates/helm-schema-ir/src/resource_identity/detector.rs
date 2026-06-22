@@ -66,13 +66,11 @@ impl<'a> ResourceIdentityDetector<'a> {
                 }
             }
             HelmAst::If {
-                condition,
                 then_branch,
                 else_branch,
+                ..
             } => {
-                if capture_branches
-                    && self.api_versions.is_capability_guard(condition)
-                    && let Some(branches) = self.api_versions.inline_branches(node)
+                if capture_branches && let Some(branches) = self.api_versions.inline_branches(node)
                 {
                     state.record_api_version_branches(branches);
                     self.scan_items(then_branch, state, false);

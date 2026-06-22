@@ -119,10 +119,10 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let mut nested_fragment_outputs = Vec::new();
     let mut nested_scalar_outputs = Vec::new();
     for (path, facts) in nested.path_facts() {
-        if let Some(meta) = facts.output_meta() {
+        if let Some(meta) = facts.output_meta.as_ref() {
             nested_scalar_outputs.push((path.to_string(), meta.clone()));
         }
-        nested_fragment_outputs.extend(facts.fragment_output_uses().cloned());
+        nested_fragment_outputs.extend(facts.fragment_output_uses.iter().cloned());
     }
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()

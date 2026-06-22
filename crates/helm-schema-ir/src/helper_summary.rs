@@ -179,11 +179,11 @@ pub(crate) struct HelperSummary {
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct HelperPathFacts {
-    output_meta: Option<HelperOutputMeta>,
-    dependency_meta: Option<HelperOutputMeta>,
+    pub(crate) output_meta: Option<HelperOutputMeta>,
+    pub(crate) dependency_meta: Option<HelperOutputMeta>,
     pub(crate) guard: bool,
     pub(crate) type_hints: BTreeSet<String>,
-    fragment_output_uses: Vec<HelperFragmentOutputUse>,
+    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
 }
 
 impl HelperPathFacts {
@@ -214,30 +214,6 @@ impl HelperPathFacts {
     fn ensure_dependency_meta(&mut self) {
         self.dependency_meta
             .get_or_insert_with(HelperOutputMeta::default);
-    }
-
-    pub(crate) fn output_meta(&self) -> Option<&HelperOutputMeta> {
-        self.output_meta.as_ref()
-    }
-
-    pub(crate) fn dependency_meta(&self) -> Option<&HelperOutputMeta> {
-        self.dependency_meta.as_ref()
-    }
-
-    pub(crate) fn is_guard(&self) -> bool {
-        self.guard
-    }
-
-    pub(crate) fn type_hints(&self) -> &BTreeSet<String> {
-        &self.type_hints
-    }
-
-    pub(crate) fn fragment_output_uses(&self) -> impl Iterator<Item = &HelperFragmentOutputUse> {
-        self.fragment_output_uses.iter()
-    }
-
-    pub(crate) fn has_fragment_output_uses(&self) -> bool {
-        !self.fragment_output_uses.is_empty()
     }
 }
 
@@ -407,7 +383,7 @@ impl HelperSummary {
         let mut rendered_sources = self.structured_fragment_sources();
         rendered_sources.extend(
             self.path_facts()
-                .filter(|(_path, facts)| facts.output_meta().is_some())
+                .filter(|(_path, facts)| facts.output_meta.is_some())
                 .map(|(path, _facts)| path.to_string()),
         );
         rendered_sources
@@ -467,14 +443,14 @@ fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
         values.push(AbstractValue::StringSet(analysis.string_output.clone()));
     }
     for (path, facts) in analysis.path_facts() {
-        for output in facts.fragment_output_uses().cloned() {
+        for output in facts.fragment_output_uses.iter().cloned() {
             values.push(AbstractValue::for_output_path(
                 output.source_expr,
                 &output.relative_path,
                 output.meta,
             ));
         }
-        if let Some(meta) = facts.output_meta()
+        if let Some(meta) = facts.output_meta.as_ref()
             && !structured_sources.contains(path)
             && !output_path::values_path_has_descendant(path, &rendered_sources)
         {

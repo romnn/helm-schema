@@ -205,7 +205,7 @@ fn collect_assignment_bound_helper_values(
         .chart_defaults
         .extend(nested.chart_defaults.iter().cloned());
     for (path, facts) in nested.path_facts() {
-        if let Some(output_meta) = facts.output_meta().cloned() {
+        if let Some(output_meta) = facts.output_meta.clone() {
             if output_meta.defaulted {
                 nested_defaulted_output_paths.insert(path.to_string());
             }
@@ -213,18 +213,18 @@ fn collect_assignment_bound_helper_values(
                 .analysis
                 .merge_dependency_meta(path.to_string(), output_meta);
         }
-        if let Some(dependency_meta) = facts.dependency_meta().cloned() {
+        if let Some(dependency_meta) = facts.dependency_meta.clone() {
             state.analysis.add_dependency_path(path.to_string());
             state
                 .analysis
                 .merge_dependency_meta(path.to_string(), dependency_meta);
         }
-        if !facts.type_hints().is_empty() {
+        if !facts.type_hints.is_empty() {
             state
                 .analysis
-                .merge_type_hints(path.to_string(), facts.type_hints().clone());
+                .merge_type_hints(path.to_string(), facts.type_hints.clone());
         }
-        for output in facts.fragment_output_uses().cloned() {
+        for output in facts.fragment_output_uses.iter().cloned() {
             if output.meta.defaulted {
                 nested_defaulted_output_paths.insert(output.source_expr.clone());
             }
@@ -318,20 +318,20 @@ fn extend_nested_render(
         .extend(nested.chart_defaults.iter().cloned());
 
     for (path, facts) in nested.path_facts() {
-        if let Some(mut meta) = facts.output_meta().cloned() {
+        if let Some(mut meta) = facts.output_meta.clone() {
             meta.add_predicates(active_output_predicates.iter().cloned());
             analysis.merge_output_meta(path.to_string(), meta);
         }
-        if let Some(meta) = facts.dependency_meta().cloned() {
+        if let Some(meta) = facts.dependency_meta.clone() {
             analysis.merge_dependency_meta(path.to_string(), meta);
         }
-        if facts.is_guard() {
+        if facts.guard {
             analysis.add_guard_path(path.to_string());
         }
-        if !facts.type_hints().is_empty() {
-            analysis.merge_type_hints(path.to_string(), facts.type_hints().clone());
+        if !facts.type_hints.is_empty() {
+            analysis.merge_type_hints(path.to_string(), facts.type_hints.clone());
         }
-        for mut output in facts.fragment_output_uses().cloned() {
+        for mut output in facts.fragment_output_uses.iter().cloned() {
             output
                 .meta
                 .add_predicates(active_output_predicates.iter().cloned());

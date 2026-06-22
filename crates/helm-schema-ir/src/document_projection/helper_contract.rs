@@ -121,24 +121,24 @@ fn append_document_helper_contract_uses(
     let helper_rendered_sources = helper.rendered_sources();
     let only_scalar_helper_outputs = helper
         .path_facts()
-        .all(|(_path, facts)| !facts.has_fragment_output_uses());
+        .all(|(_path, facts)| facts.fragment_output_uses.is_empty());
 
     let mut dependency_values = Vec::new();
     let mut guard_values = Vec::new();
     let mut type_hints = Vec::new();
 
     for (value, facts) in helper.path_facts() {
-        if !facts.type_hints().is_empty() {
-            type_hints.push((value.to_string(), facts.type_hints().clone()));
+        if !facts.type_hints.is_empty() {
+            type_hints.push((value.to_string(), facts.type_hints.clone()));
         }
-        if facts.is_guard() {
+        if facts.guard {
             guard_values.push(value.to_string());
         }
-        if let Some(meta) = facts.dependency_meta() {
+        if let Some(meta) = facts.dependency_meta.as_ref() {
             dependency_values.push((value.to_string(), meta.clone()));
         }
 
-        if let Some(meta) = facts.output_meta()
+        if let Some(meta) = facts.output_meta.as_ref()
             && !structured_fragment_sources.contains(value)
         {
             let has_rendered_descendant =
@@ -168,7 +168,7 @@ fn append_document_helper_contract_uses(
             }
         }
 
-        for output in facts.fragment_output_uses().cloned() {
+        for output in facts.fragment_output_uses.iter().cloned() {
             append_fragment_output_contract_use(
                 output,
                 &helper_rendered_sources,

@@ -42,7 +42,8 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         .find(|(path, _facts)| *path == "signoz.serviceAccount.name")
         .expect("service account name output metadata");
     let meta = facts
-        .output_meta()
+        .output_meta
+        .as_ref()
         .expect("service account name output metadata");
     let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
 
@@ -69,14 +70,14 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         "expected create=false output branch; guard_sets={guard_sets:#?}"
     );
     sim_assert_eq!(
-        have: facts.type_hints(),
+        have: &facts.type_hints,
         want: &["string".to_string()].into_iter().collect(),
         "defaulted scalar output should retain string type hint"
     );
     assert!(
         summary
             .path_facts()
-            .all(|(_path, facts)| !facts.has_fragment_output_uses())
+            .all(|(_path, facts)| facts.fragment_output_uses.is_empty())
     );
 }
 
@@ -117,11 +118,11 @@ fn helper_body_summary_resolves_string_hints_through_local_aliases() {
         .expect("tag type hint");
 
     sim_assert_eq!(
-        have: repository_facts.type_hints(),
+        have: &repository_facts.type_hints,
         want: &BTreeSet::from(["string".to_string()])
     );
     sim_assert_eq!(
-        have: tag_facts.type_hints(),
+        have: &tag_facts.type_hints,
         want: &BTreeSet::from(["string".to_string()])
     );
 }
@@ -171,7 +172,7 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
         interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
     let outputs = summary
         .path_facts()
-        .flat_map(|(_path, facts)| facts.fragment_output_uses().cloned())
+        .flat_map(|(_path, facts)| facts.fragment_output_uses.iter().cloned())
         .collect::<Vec<_>>();
 
     assert!(
