@@ -112,7 +112,8 @@ impl<'a> ApiVersionOutputDetector<'a> {
             }
             HelmAst::Pair { key, value } => {
                 if scalar_text(key) == Some("apiVersion")
-                    && let Some(output) = self.output(value.as_deref())
+                    && let Some(output) = HelperOutputEvaluator::new()
+                        .evaluate_ast_value(value.as_deref(), self.defines)
                 {
                     match output {
                         HelperOutput::Literals(values) => literals.extend(values),
@@ -149,37 +150,7 @@ impl<'a> ApiVersionOutputDetector<'a> {
     }
 
     pub(super) fn output(&self, value: Option<&HelmAst>) -> Option<HelperOutput> {
-        match value? {
-            HelmAst::Scalar { text } => {
-                let value = text.trim();
-                if value.is_empty() {
-                    None
-                } else {
-                    Some(HelperOutput::Literals(vec![value.to_string()]))
-                }
-            }
-            HelmAst::HelmExpr { action } => {
-                HelperOutputEvaluator::new().evaluate_action(action, self.defines)
-            }
-            HelmAst::Document { items } | HelmAst::Mapping { items } => {
-                for item in items {
-                    if let Some(output) = self.output(Some(item)) {
-                        return Some(output);
-                    }
-                }
-                None
-            }
-            HelmAst::Pair { value, .. } => self.output(value.as_deref()),
-            node @ HelmAst::If { .. } => self
-                .inline_branches(node)
-                .map(|branches| HelperOutput::Branched { branches }),
-            HelmAst::Sequence { .. }
-            | HelmAst::Range { .. }
-            | HelmAst::With { .. }
-            | HelmAst::Define { .. }
-            | HelmAst::Block { .. }
-            | HelmAst::HelmComment { .. } => None,
-        }
+        HelperOutputEvaluator::new().evaluate_ast_value(value, self.defines)
     }
 }
 

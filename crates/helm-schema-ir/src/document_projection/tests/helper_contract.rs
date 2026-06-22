@@ -4,9 +4,9 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_ast::parse_action_expressions;
 use test_util::prelude::sim_assert_eq;
 
-use super::{collect_document_type_hints, collect_encoded_output_values};
 use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
+use crate::expression_output_facts::DocumentExpressionOutputFacts;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_summary::HelperSummaryCache;
 use crate::value_path_context::ValuePathContext;
@@ -46,8 +46,10 @@ fn document_type_hints_resolve_template_local_aliases() {
         current_dot_binding: None,
     };
 
+    let facts = DocumentExpressionOutputFacts::collect(&exprs, &context);
+
     sim_assert_eq!(
-        have: collect_document_type_hints(&exprs, &context),
+        have: facts.type_hints,
         want: BTreeMap::from([
             (
                 "global.service.port".to_string(),
@@ -60,7 +62,7 @@ fn document_type_hints_resolve_template_local_aliases() {
         ])
     );
     sim_assert_eq!(
-        have: collect_encoded_output_values(&exprs, &context),
+        have: facts.encoded_output_values,
         want: BTreeSet::from([
             "global.service.port".to_string(),
             "service.port".to_string()

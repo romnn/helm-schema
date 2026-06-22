@@ -28,8 +28,16 @@ impl HelperOutputEvaluator {
         HelperOutput::Literals(dedup_preserve_order(flat))
     }
 
-    pub(crate) fn evaluate_action(
+    pub(crate) fn evaluate_ast_value(
         mut self,
+        value: Option<&HelmAst>,
+        helpers: &DefineIndex,
+    ) -> Option<HelperOutput> {
+        self.evaluate_value_node(value?, helpers, 0)
+    }
+
+    pub(crate) fn evaluate_action(
+        &mut self,
         action: &TemplateAction,
         helpers: &DefineIndex,
     ) -> Option<HelperOutput> {
@@ -46,6 +54,48 @@ impl HelperOutputEvaluator {
             None
         } else {
             Some(HelperOutput::Literals(literals))
+        }
+    }
+
+    fn evaluate_value_node(
+        &mut self,
+        node: &HelmAst,
+        helpers: &DefineIndex,
+        depth: usize,
+    ) -> Option<HelperOutput> {
+        if depth >= MAX_RECURSION_DEPTH {
+            return None;
+        }
+        match node {
+            HelmAst::Scalar { text } => {
+                let value = text.trim();
+                if value.is_empty() {
+                    None
+                } else {
+                    Some(HelperOutput::Literals(vec![value.to_string()]))
+                }
+            }
+            HelmAst::HelmExpr { action } => self.evaluate_action(action, helpers),
+            HelmAst::Document { items } | HelmAst::Mapping { items } => {
+                for item in items {
+                    if let Some(output) = self.evaluate_value_node(item, helpers, depth + 1) {
+                        return Some(output);
+                    }
+                }
+                None
+            }
+            HelmAst::Pair { value, .. } => {
+                self.evaluate_value_node(value.as_deref()?, helpers, depth + 1)
+            }
+            node @ HelmAst::If { .. } => self
+                .extract_top_level_branches(std::slice::from_ref(node), helpers, depth)
+                .map(|branches| HelperOutput::Branched { branches }),
+            HelmAst::Sequence { .. }
+            | HelmAst::Range { .. }
+            | HelmAst::With { .. }
+            | HelmAst::Define { .. }
+            | HelmAst::Block { .. }
+            | HelmAst::HelmComment { .. } => None,
         }
     }
 
