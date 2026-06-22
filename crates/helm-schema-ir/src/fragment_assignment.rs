@@ -6,16 +6,6 @@ use crate::abstract_value::AbstractValue;
 use crate::expr_eval::apply_local_set_mutations_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
-#[cfg(test)]
-fn strip_template_action_wrapping(line: &str) -> Option<String> {
-    let after_open = line.trim_start().strip_prefix("{{")?;
-    let close_at = after_open.find("}}")?;
-    let body = &after_open[..close_at];
-    let body = body.strip_prefix('-').unwrap_or(body);
-    let body = body.strip_suffix('-').unwrap_or(body);
-    Some(body.trim().to_string())
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum AssignmentKind {
     Declaration,
@@ -27,27 +17,6 @@ pub(crate) struct ParsedHelperAssignment {
     pub(crate) variable: String,
     pub(crate) kind: AssignmentKind,
     pub(crate) rhs_expr: TemplateExpr,
-}
-
-#[cfg(test)]
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ParsedHelperAssignmentWithRhs {
-    pub(crate) variable: String,
-    pub(crate) kind: AssignmentKind,
-    pub(crate) rhs: String,
-    pub(crate) rhs_expr: TemplateExpr,
-}
-
-#[cfg(test)]
-pub(crate) fn parse_helper_assignment(text: &str) -> Option<ParsedHelperAssignmentWithRhs> {
-    use crate::template_expr_cache::parse_expr_text;
-    let assignment = parse_helper_assignment_from_exprs(&parse_expr_text(text))?;
-    Some(ParsedHelperAssignmentWithRhs {
-        variable: assignment.variable,
-        kind: assignment.kind,
-        rhs: assignment_rhs_text(text, assignment.kind)?,
-        rhs_expr: assignment.rhs_expr,
-    })
 }
 
 pub(crate) fn parse_helper_assignment_from_exprs(
@@ -77,23 +46,6 @@ fn parsed_assignment_from_expr(
         kind,
         rhs_expr: value.clone(),
     })
-}
-
-#[cfg(test)]
-fn assignment_rhs_text(text: &str, kind: AssignmentKind) -> Option<String> {
-    let owned;
-    let trimmed = if text.trim_start().starts_with("{{") {
-        owned = strip_template_action_wrapping(text)?;
-        owned.trim()
-    } else {
-        text.trim()
-    };
-    let (operator, operator_len) = match kind {
-        AssignmentKind::Declaration => (":=", 2usize),
-        AssignmentKind::Assignment => ("=", 1usize),
-    };
-    let index = trimmed.find(operator)?;
-    Some(trimmed[index + operator_len..].trim().to_string())
 }
 
 pub(crate) fn merge_fragment_locals(
@@ -169,24 +121,6 @@ fn local_set_mutation_target_and_keys_from_exprs(
         });
     }
     out
-}
-
-#[cfg(test)]
-pub(crate) fn apply_local_set_mutations(
-    text: &str,
-    local_bindings: &mut HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> bool {
-    use crate::template_expr_cache::parse_expr_text;
-    apply_local_set_mutations_from_exprs(
-        &parse_expr_text(text),
-        local_bindings,
-        current_dot,
-        context,
-        seen,
-    )
 }
 
 pub(crate) fn apply_local_set_mutations_from_exprs(

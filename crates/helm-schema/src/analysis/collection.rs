@@ -15,13 +15,6 @@ pub(crate) struct ChartAnalysis {
     pub(crate) local_schema_universe: LocalSchemaUniverse,
 }
 
-impl ChartAnalysis {
-    #[cfg(test)]
-    pub(crate) fn contract_schema_signals(&self) -> helm_schema_ir::ContractSchemaSignals {
-        self.contract.clone().into_schema_signals()
-    }
-}
-
 #[tracing::instrument(skip_all)]
 pub(crate) fn analyze_charts(
     charts: &[chart::ChartContext],

@@ -4,8 +4,15 @@ use serde_json::json;
 use vfs::VfsPath;
 
 use crate::analysis::analyze_charts;
-use crate::chart;
 use test_util::prelude::sim_assert_eq;
+
+use crate::chart;
+
+macro_rules! contract_schema_signals {
+    ($collection:expr) => {
+        $collection.contract.clone().into_schema_signals()
+    };
+}
 
 #[test]
 fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact()
@@ -53,8 +60,7 @@ spec:
     )?;
     let path = "kid.controller.ingressClassResource.parameters";
 
-    let ir_fact = collection
-        .contract_schema_signals()
+    let ir_fact = contract_schema_signals!(collection)
         .evidence_for(path)
         .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing IR-derived fact for {path}"));
@@ -85,14 +91,11 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     let path = "clickhouse.zookeeper.nameOverride";
 
     assert!(
-        collection
-            .contract_schema_signals()
+        contract_schema_signals!(collection)
             .evidence_for(path)
             .is_some_and(|evidence| evidence.type_hints.contains("string")),
         "expected structural contract type hint for {path}; contract_hints={:?}",
-        collection
-            .contract_schema_signals()
-            .schema_evidence_by_value_path(),
+        contract_schema_signals!(collection).schema_evidence_by_value_path(),
     );
 
     Ok(())
@@ -117,14 +120,11 @@ fn signoz_clickhouse_operator_image_helper_type_hints_flow_into_contract_schema_
     let path = "clickhouse.clickhouseOperator.image.repository";
 
     assert!(
-        collection
-            .contract_schema_signals()
+        contract_schema_signals!(collection)
             .evidence_for(path)
             .is_some_and(|evidence| evidence.type_hints.contains("string")),
         "expected structural contract type hint for {path}; contract_hints={:?}",
-        collection
-            .contract_schema_signals()
-            .schema_evidence_by_value_path(),
+        contract_schema_signals!(collection).schema_evidence_by_value_path(),
     );
 
     Ok(())
@@ -174,7 +174,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
         }),
         "expected render use for {path} at secretKeyRef.name; uses={uses:#?}",
     );
-    let signals = collection.contract_schema_signals();
+    let signals = contract_schema_signals!(collection);
     let evidence = signals
         .evidence_for(path)
         .unwrap_or_else(|| panic!("missing schema evidence for {path}; uses={uses:#?}"));
@@ -239,8 +239,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         }),
         "expected a create=false branch for {path}; uses={uses:#?}"
     );
-    let overlays = collection
-        .contract_schema_signals()
+    let overlays = contract_schema_signals!(collection)
         .evidence_for(path)
         .map(|evidence| evidence.conditional_overlays.clone())
         .unwrap_or_default();
@@ -368,13 +367,11 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
         "expected helper default guard for {path}; uses={uses:#?}"
     );
     assert!(
-        collection
-            .contract_schema_signals()
+        contract_schema_signals!(collection)
             .evidence_for(path)
             .is_some_and(|evidence| evidence.facts.is_nullable),
         "helper-defaulted subchart path should be globally nullable; facts={:#?}; uses={uses:#?}",
-        collection
-            .contract_schema_signals()
+        contract_schema_signals!(collection)
             .evidence_for(path)
             .map(|evidence| evidence.facts),
     );
@@ -408,13 +405,11 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
         .collect::<Vec<_>>();
 
     assert!(
-        collection
-            .contract_schema_signals()
+        contract_schema_signals!(collection)
             .evidence_for(path)
             .is_some_and(|evidence| evidence.facts.used_as_fragment),
         "fragment-valued securityContext should not be pruned as a scalar parent; facts={:#?}; uses={uses:#?}",
-        collection
-            .contract_schema_signals()
+        contract_schema_signals!(collection)
             .evidence_for(path)
             .map(|evidence| evidence.facts),
     );
@@ -506,7 +501,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
         .cloned()
         .collect::<Vec<_>>();
 
-    let schema_signals = collection.contract_schema_signals();
+    let schema_signals = contract_schema_signals!(collection);
     let evidence = schema_signals
         .evidence_for("app.nameOverride")
         .unwrap_or_else(|| {
@@ -544,7 +539,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
         .filter(|use_| use_.source_expr == path)
         .cloned()
         .collect::<Vec<_>>();
-    let schema_signals = collection.contract_schema_signals();
+    let schema_signals = contract_schema_signals!(collection);
     let facts = schema_signals
         .evidence_for(path)
         .map(|evidence| evidence.facts)

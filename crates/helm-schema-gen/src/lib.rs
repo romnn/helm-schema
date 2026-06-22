@@ -754,4 +754,5 @@ fn strip_ancestor_prefix(
 }
 
 #[cfg(test)]
+#[path = "tests/mod.rs"]
 mod tests;

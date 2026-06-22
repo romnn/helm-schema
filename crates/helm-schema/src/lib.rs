@@ -13,6 +13,7 @@ mod session;
 mod values_roots;
 
 #[cfg(test)]
+#[path = "tests/mod.rs"]
 mod tests;
 
 pub mod diagnostics {

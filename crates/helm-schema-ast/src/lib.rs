@@ -622,4 +622,5 @@ fn is_inline_source(path: &str, existing_src: &str, src: &str) -> bool {
 }
 
 #[cfg(test)]
+#[path = "tests/mod.rs"]
 mod tests;

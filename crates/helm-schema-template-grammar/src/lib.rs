@@ -16,16 +16,6 @@ pub mod yaml {
         env!("OUT_DIR"),
         "/vendor/tree-sitter-yaml/src/node-types.json"
     ));
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn loads_grammar() {
-            let mut parser = tree_sitter::Parser::new();
-            let language = tree_sitter::Language::new(super::language());
-            parser.set_language(&language).unwrap();
-        }
-    }
 }
 
 pub mod go_template {
@@ -44,16 +34,6 @@ pub mod go_template {
         env!("OUT_DIR"),
         "/vendor/tree-sitter-go-template/src/node-types.json"
     ));
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn loads_grammar() {
-            let mut parser = tree_sitter::Parser::new();
-            let language = tree_sitter::Language::new(super::language());
-            parser.set_language(&language).unwrap();
-        }
-    }
 }
 
 pub mod helm_template {
@@ -69,14 +49,8 @@ pub mod helm_template {
         env!("OUT_DIR"),
         "/vendor/tree-sitter-helm-template/src/node-types.json"
     ));
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn loads_grammar() {
-            let mut parser = tree_sitter::Parser::new();
-            let language = tree_sitter::Language::new(super::language());
-            parser.set_language(&language).unwrap();
-        }
-    }
 }
+
+#[cfg(test)]
+#[path = "tests/lib.rs"]
+mod tests;

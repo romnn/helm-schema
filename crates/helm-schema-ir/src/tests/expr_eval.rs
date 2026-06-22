@@ -23,6 +23,14 @@ fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
     )
 }
 
+fn env_from_root_fields(root_fields: HashMap<String, AbstractValue>) -> EvalEnv {
+    EvalEnv {
+        root_fields,
+        allow_field_root_lookup: true,
+        ..EvalEnv::default()
+    }
+}
+
 #[test]
 fn string_transform_pipeline_preserves_all_printf_argument_paths() {
     let expr = single_expr(r#"printf "%s-%s" .Values.primary.name .Values.suffix | trunc 63"#);
@@ -321,7 +329,7 @@ fn first_and_reverse_preserve_list_structure() {
 #[test]
 fn helper_argument_fields_resolve_from_dot_root() {
     let expr = single_expr(r#"default "generated" .config.name"#);
-    let env = EvalEnv::from_root_fields(HashMap::from([(
+    let env = env_from_root_fields(HashMap::from([(
         "config".to_string(),
         AbstractValue::ValuesPath("serviceAccount".to_string()),
     )]));

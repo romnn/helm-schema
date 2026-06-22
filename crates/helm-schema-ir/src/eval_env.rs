@@ -12,15 +12,6 @@ pub(crate) struct EvalEnv {
 }
 
 impl EvalEnv {
-    #[cfg(test)]
-    pub(crate) fn from_root_fields(root_fields: HashMap<String, AbstractValue>) -> Self {
-        Self {
-            root_fields,
-            allow_field_root_lookup: true,
-            ..Self::default()
-        }
-    }
-
     pub(crate) fn from_helper_context(
         bindings: Option<&HashMap<String, AbstractValue>>,
         current_dot: Option<&AbstractValue>,

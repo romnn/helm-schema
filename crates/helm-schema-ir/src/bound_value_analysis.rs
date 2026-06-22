@@ -3,8 +3,6 @@ use std::collections::{BTreeSet, HashMap};
 use helm_schema_ast::TemplateExpr;
 
 use crate::fragment_assignment::AssignmentKind;
-#[cfg(test)]
-use crate::template_expr_cache::parse_expr_text;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GetBinding {
@@ -19,16 +17,6 @@ pub(crate) struct GetBindingPlan {
     pub(crate) binding: GetBinding,
 }
 
-#[cfg(test)]
-pub(crate) fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
-    let header = header.trim();
-    let exprs = parse_expr_text(header);
-    let [expr] = exprs.as_slice() else {
-        return None;
-    };
-    parse_literal_list_range_expr(expr)
-}
-
 pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(String, Vec<String>)> {
     let TemplateExpr::VariableDefinition { name, value } = expr.deparen() else {
         return None;
@@ -39,11 +27,6 @@ pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(Stri
     }
     let values = literal_list_values(value.deparen())?;
     Some((variable.to_string(), values))
-}
-
-#[cfg(test)]
-pub(crate) fn parse_get_binding(text: &str) -> Option<GetBindingPlan> {
-    parse_get_binding_from_exprs(&parse_expr_text(text))
 }
 
 pub(crate) fn parse_get_binding_from_exprs(exprs: &[TemplateExpr]) -> Option<GetBindingPlan> {
@@ -276,15 +259,6 @@ fn eq_domain_constraints(args: &[TemplateExpr], truthy: bool) -> Option<DomainCo
     })
 }
 
-#[cfg(test)]
-pub(crate) fn extract_bound_values(
-    text: &str,
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-) -> Vec<String> {
-    extract_bound_values_from_exprs(&parse_expr_text(text), range_domains, get_bindings)
-}
-
 pub(crate) fn extract_bound_values_from_exprs(
     exprs: &[TemplateExpr],
     range_domains: &HashMap<String, Vec<String>>,
@@ -406,135 +380,5 @@ fn collect_bound_selector_value(
 }
 
 #[cfg(test)]
-mod tests {
-    use std::collections::HashMap;
-    use test_util::prelude::sim_assert_eq;
-
-    use super::{
-        GetBinding, GetBindingPlan, extract_bound_values, parse_get_binding,
-        parse_literal_list_range,
-    };
-    use crate::fragment_assignment::AssignmentKind;
-
-    #[test]
-    fn parse_get_binding_detects_declaration_from_ast() {
-        sim_assert_eq!(
-            have: parse_get_binding(r#"{{- $value := get $.Values.config $key -}}"#),
-            want: Some(GetBindingPlan {
-                variable: "value".to_string(),
-                kind: AssignmentKind::Declaration,
-                binding: GetBinding {
-                    base: "config".to_string(),
-                    key_var: "key".to_string(),
-                },
-            })
-        );
-    }
-
-    #[test]
-    fn parse_get_binding_detects_assignment_from_ast() {
-        sim_assert_eq!(
-            have: parse_get_binding(r#"{{- $value = get .Values.config $key -}}"#),
-            want: Some(GetBindingPlan {
-                variable: "value".to_string(),
-                kind: AssignmentKind::Assignment,
-                binding: GetBinding {
-                    base: "config".to_string(),
-                    key_var: "key".to_string(),
-                },
-            })
-        );
-    }
-
-    #[test]
-    fn parse_literal_list_range_detects_variable_definition_from_ast() {
-        sim_assert_eq!(
-            have: parse_literal_list_range(r#"$scope := list "frontend" "backend""#),
-            want: Some((
-                "scope".to_string(),
-                vec!["frontend".to_string(), "backend".to_string()]
-            ))
-        );
-    }
-
-    #[test]
-    fn extract_bound_values_resolves_selector_reads_from_ast() {
-        let mut range_domains = HashMap::new();
-        range_domains.insert(
-            "scope".to_string(),
-            vec!["frontend".to_string(), "backend".to_string()],
-        );
-        let mut get_bindings = HashMap::new();
-        get_bindings.insert(
-            "config".to_string(),
-            GetBinding {
-                base: "config".to_string(),
-                key_var: "scope".to_string(),
-            },
-        );
-
-        sim_assert_eq!(
-            have: extract_bound_values(
-                r#"{{- printf "%s" $config.port -}}"#,
-                &range_domains,
-                &get_bindings
-            ),
-            want: vec![
-                "config.backend.port".to_string(),
-                "config.frontend.port".to_string()
-            ]
-        );
-    }
-
-    #[test]
-    fn extract_bound_values_respects_or_short_circuit_eq_predicate() {
-        let mut range_domains = HashMap::new();
-        range_domains.insert(
-            "protocol".to_string(),
-            vec!["nats".to_string(), "websocket".to_string()],
-        );
-        let mut get_bindings = HashMap::new();
-        get_bindings.insert(
-            "config".to_string(),
-            GetBinding {
-                base: "config".to_string(),
-                key_var: "protocol".to_string(),
-            },
-        );
-
-        sim_assert_eq!(
-            have: extract_bound_values(
-                r#"or (eq $protocol "nats") $config.enabled"#,
-                &range_domains,
-                &get_bindings
-            ),
-            want: vec!["config.websocket.enabled".to_string()]
-        );
-    }
-
-    #[test]
-    fn extract_bound_values_respects_and_short_circuit_eq_predicate() {
-        let mut range_domains = HashMap::new();
-        range_domains.insert(
-            "protocol".to_string(),
-            vec!["nats".to_string(), "websocket".to_string()],
-        );
-        let mut get_bindings = HashMap::new();
-        get_bindings.insert(
-            "config".to_string(),
-            GetBinding {
-                base: "config".to_string(),
-                key_var: "protocol".to_string(),
-            },
-        );
-
-        sim_assert_eq!(
-            have: extract_bound_values(
-                r#"and (eq $protocol "nats") $config.enabled"#,
-                &range_domains,
-                &get_bindings
-            ),
-            want: vec!["config.nats.enabled".to_string()]
-        );
-    }
-}
+#[path = "tests/bound_value_analysis.rs"]
+mod tests;

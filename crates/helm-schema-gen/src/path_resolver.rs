@@ -108,20 +108,6 @@ impl<'a> PathSchemaResolver<'a> {
         })
     }
 
-    #[cfg(test)]
-    pub(crate) fn provider_schemas_for_path_evidence(
-        evidence: &ContractPathSchemaEvidence,
-        provider: &'a dyn ResourceSchemaOracle,
-    ) -> Vec<Arc<ProviderSchemaCandidate>> {
-        let mut provider_schema_cache = HashMap::new();
-        provider_schemas_for_path_evidence(
-            evidence,
-            provider,
-            &ResolvePolicy,
-            &mut provider_schema_cache,
-        )
-    }
-
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
         let referenced_value_paths = std::mem::take(&mut self.referenced_value_paths);
         referenced_value_paths

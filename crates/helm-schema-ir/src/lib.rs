@@ -86,4 +86,5 @@ pub use provenance::{ContractProvenance, SourceSpan};
 pub use symbolic::SymbolicIrContext;
 
 #[cfg(test)]
+#[path = "tests/mod.rs"]
 mod tests;

@@ -109,65 +109,6 @@ pub(crate) fn debug_materialize_local_schema(root: &Value) -> Value {
     enrich_root_metadata_schema(expand_local_refs(root, root, 0, &mut stack))
 }
 
-#[cfg(test)]
-#[tracing::instrument(skip_all, fields(path_len = path.len()))]
-pub(crate) fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
-    let mut current = schema;
-    for segment in path {
-        current = descend_one(current, segment)?;
-    }
-    Some(current.clone())
-}
-
-#[cfg(test)]
-fn descend_one<'a>(schema: &'a Value, segment: &str) -> Option<&'a Value> {
-    for keyword in ["allOf", "anyOf", "oneOf"] {
-        if let Some(branches) = schema.get(keyword).and_then(Value::as_array) {
-            for branch in branches {
-                if let Some(value) = descend_one(branch, segment) {
-                    return Some(value);
-                }
-            }
-        }
-    }
-
-    let (key, is_array_item) = segment
-        .strip_suffix("[*]")
-        .map_or((segment, false), |key| (key, true));
-
-    let mut next = schema
-        .get("properties")
-        .and_then(|properties| properties.as_object())
-        .and_then(|properties| properties.get(key))
-        .or_else(|| {
-            schema
-                .get("additionalProperties")
-                .and_then(|additional_properties| {
-                    if additional_properties.is_boolean() {
-                        None
-                    } else {
-                        Some(additional_properties)
-                    }
-                })
-        })?;
-
-    if is_array_item {
-        next = next.get("items").or_else(|| {
-            next.get("prefixItems")
-                .and_then(Value::as_array)
-                .and_then(|items| items.first())
-        })?;
-    }
-
-    Some(next)
-}
-
-#[cfg(test)]
-#[tracing::instrument(skip_all, fields(path_len = path.len()))]
-pub(crate) fn descend_schema_path_expanding_leaf(root: &Value, path: &[String]) -> Option<Value> {
-    descend_schema_path_expanding_leaf_with_source(root, path).map(LocalSchemaLeaf::into_schema)
-}
-
 #[tracing::instrument(skip_all, fields(path_len = path.len()))]
 pub(crate) fn descend_schema_path_expanding_leaf_with_source(
     root: &Value,
@@ -178,16 +119,6 @@ pub(crate) fn descend_schema_path_expanding_leaf_with_source(
     let mut expand_stack = std::collections::HashSet::new();
     let expanded = expand_local_refs(root, leaf.schema(), 0, &mut expand_stack);
     Some(LocalSchemaLeaf::from_source_leaf(leaf, expanded))
-}
-
-#[cfg(test)]
-#[tracing::instrument(skip_all, fields(path_len = path.len()))]
-pub(crate) fn descend_schema_path_expanding_leaf_with_root_metadata(
-    root: &Value,
-    path: &[String],
-) -> Option<Value> {
-    descend_schema_path_expanding_leaf_with_root_metadata_source(root, path)
-        .map(LocalSchemaLeaf::into_schema)
 }
 
 #[tracing::instrument(skip_all, fields(path_len = path.len()))]
