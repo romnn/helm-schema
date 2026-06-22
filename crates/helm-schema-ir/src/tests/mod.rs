@@ -1,9 +1,9 @@
+mod abstract_value_output_projection;
 mod contract;
 mod contract_signals;
 mod expr_eval;
 mod fragment_expr_eval;
 mod fragment_scope_eval;
-mod helper_output_projection;
 mod resource_identity;
 mod symbolic_local_state;
 

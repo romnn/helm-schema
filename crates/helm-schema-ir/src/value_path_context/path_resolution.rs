@@ -1,12 +1,15 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::expression_analysis::{
     resolve_expr_to_values_path, resolved_default_fallback_paths_for_exprs,
+    resolved_schema_type_hints_for_exprs_with_fragment_locals,
 };
 use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
+use crate::helper_summary::{HelperOutputMeta, insert_type_hint};
+use crate::literal_schema_type::expression_schema_type;
 use crate::template_expr_analysis::expr_contains_helper_call;
 use crate::value_path_extraction::values_path_from_expr;
 
@@ -15,6 +18,9 @@ use super::ValuePathContext;
 pub(crate) struct ValuePathExpressionFacts {
     pub(crate) values: BTreeSet<String>,
     pub(crate) default_fallback_values: BTreeSet<String>,
+    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
+    pub(crate) encoded_output_values: BTreeSet<String>,
+    pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
 }
 
 pub(crate) fn computed_with_body_fragment_value_expr(
@@ -54,7 +60,117 @@ impl ValuePathContext<'_> {
         ValuePathExpressionFacts {
             values,
             default_fallback_values,
+            type_hints: self.collect_type_hints(exprs),
+            encoded_output_values: self.encoded_output_paths_from_exprs(exprs),
+            local_output_meta: self.local_alias_output_meta_for_exprs(exprs),
         }
+    }
+
+    fn encoded_output_paths_from_exprs(&self, exprs: &[TemplateExpr]) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        for expr in exprs {
+            self.append_encoded_output_paths(expr, &mut out);
+        }
+        out
+    }
+
+    fn append_encoded_output_paths(&self, expr: &TemplateExpr, out: &mut BTreeSet<String>) {
+        match expr.deparen() {
+            TemplateExpr::Call { function, args } => {
+                if function == "b64enc" {
+                    for arg in args {
+                        out.extend(self.resolve_expr_to_values_paths(arg));
+                    }
+                }
+                for arg in args {
+                    self.append_encoded_output_paths(arg, out);
+                }
+            }
+            TemplateExpr::Pipeline(stages) => {
+                self.append_pipeline_encoded_output_paths(stages, out);
+            }
+            TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
+                self.append_encoded_output_paths(operand, out);
+            }
+            TemplateExpr::VariableDefinition { value, .. }
+            | TemplateExpr::Assignment { value, .. } => {
+                self.append_encoded_output_paths(value, out);
+            }
+            TemplateExpr::Literal(_)
+            | TemplateExpr::Field(_)
+            | TemplateExpr::Variable(_)
+            | TemplateExpr::Unknown(_) => {}
+        }
+    }
+
+    fn append_pipeline_encoded_output_paths(
+        &self,
+        stages: &[TemplateExpr],
+        out: &mut BTreeSet<String>,
+    ) {
+        let mut prefix: Vec<TemplateExpr> = Vec::new();
+        for stage in stages {
+            let current = stage.deparen();
+            if let TemplateExpr::Call { function, args } = current {
+                for arg in args {
+                    self.append_encoded_output_paths(arg, out);
+                }
+                if function == "b64enc" {
+                    if !prefix.is_empty() {
+                        let prefix_expr = if prefix.len() == 1 {
+                            prefix[0].clone()
+                        } else {
+                            TemplateExpr::Pipeline(prefix.clone())
+                        };
+                        out.extend(self.resolve_expr_to_values_paths(&prefix_expr));
+                    }
+                    for arg in args {
+                        out.extend(self.resolve_expr_to_values_paths(arg));
+                    }
+                }
+            } else {
+                self.append_encoded_output_paths(current, out);
+            }
+            prefix.push(stage.clone());
+        }
+    }
+
+    fn collect_type_hints(&self, exprs: &[TemplateExpr]) -> BTreeMap<String, BTreeSet<String>> {
+        let mut hints = resolved_schema_type_hints_for_exprs_with_fragment_locals(
+            exprs,
+            Some(self.root_bindings),
+            self.current_dot_binding.as_ref(),
+            self.template_bindings,
+        );
+
+        for expr in exprs {
+            expr.walk(|node| match node {
+                TemplateExpr::Call { function, args }
+                    if function == "default" && args.len() == 2 =>
+                {
+                    let Some(schema_type) = expression_schema_type(&args[0]) else {
+                        return;
+                    };
+                    for path in self.resolve_expr_to_values_paths(&args[1]) {
+                        insert_type_hint(&mut hints, path, schema_type);
+                    }
+                }
+                TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
+                    for window in stages.windows(2) {
+                        let Some(schema_type) = pipeline_default_expression_schema_type(&window[1])
+                        else {
+                            continue;
+                        };
+                        for path in self.resolve_expr_to_values_paths(&window[0]) {
+                            insert_type_hint(&mut hints, path, schema_type);
+                        }
+                    }
+                }
+                _ => {}
+            });
+        }
+
+        hints
     }
 
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
@@ -297,4 +413,14 @@ fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, AbstractV
         }
         _ => false,
     }
+}
+
+fn pipeline_default_expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    if function != "default" {
+        return None;
+    }
+    args.first().and_then(expression_schema_type)
 }

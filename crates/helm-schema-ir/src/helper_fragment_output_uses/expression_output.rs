@@ -1,15 +1,13 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
-};
-use crate::helper_output_projection::{
-    HelperOutputExprContext, collect_output_uses_from_expr,
-    expression_output_use_is_keyed_map_projection, static_yaml_fragment_output_path_from_exprs,
 };
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_walk_state::FragmentOutputWalkState;
@@ -22,7 +20,18 @@ use crate::template_expr_analysis::{
     expr_contains_helper_call, exprs_pipeline_merges_into_var, exprs_start_with_helper_call,
     walk_expr_excluding_helper_call_args,
 };
+use crate::yaml_syntax::parse_yaml_key;
 use crate::{ValueKind, YamlPath};
+
+#[derive(Clone, Copy)]
+struct HelperOutputExprContext<'a> {
+    bindings: &'a HashMap<String, AbstractValue>,
+    current_dot: Option<&'a AbstractValue>,
+    relative_path: &'a YamlPath,
+    kind: ValueKind,
+    active_output_predicates: &'a BTreeSet<Predicate>,
+    defaulted_paths: &'a BTreeSet<String>,
+}
 
 struct FragmentExpressionOutputScope<'a> {
     bindings: &'a HashMap<String, AbstractValue>,
@@ -357,4 +366,90 @@ fn helper_expression_output_uses_from_exprs(
     expression_output_uses
         .retain(|output| expression_output_use_is_keyed_map_projection(output, scope.output_path));
     expression_output_uses
+}
+
+fn expression_output_use_is_keyed_map_projection(
+    output: &HelperFragmentOutputUse,
+    expression_base: &YamlPath,
+) -> bool {
+    let suffix = if output.relative_path.0.starts_with(&expression_base.0) {
+        &output.relative_path.0[expression_base.0.len()..]
+    } else {
+        output.relative_path.0.as_slice()
+    };
+    !suffix.is_empty() && suffix.iter().all(|segment| !segment.ends_with("[*]"))
+}
+
+fn collect_output_uses_from_expr(
+    expr: &TemplateExpr,
+    context: HelperOutputExprContext<'_>,
+    outputs: &mut Vec<HelperFragmentOutputUse>,
+) {
+    if expr_contains_helper_call(expr) {
+        return;
+    }
+
+    let env = EvalEnv::from_helper_context(Some(context.bindings), context.current_dot);
+    let result = eval_expr(expr, &env);
+    if let Some(value) = result.value {
+        value.collect_output_uses_with_encoding(
+            outputs,
+            context.relative_path,
+            context.kind,
+            &result.effects.encoded_paths,
+            context.active_output_predicates,
+            context.defaulted_paths,
+        );
+        return;
+    }
+
+    match expr {
+        TemplateExpr::Call { args, .. } => {
+            for arg in args {
+                collect_output_uses_from_expr(arg, context, outputs);
+            }
+        }
+        TemplateExpr::Selector { operand, .. } => {
+            collect_output_uses_from_expr(operand, context, outputs);
+        }
+        TemplateExpr::Pipeline(stages) => {
+            for stage in stages {
+                collect_output_uses_from_expr(stage, context, outputs);
+            }
+        }
+        TemplateExpr::Parenthesized(inner)
+        | TemplateExpr::VariableDefinition { value: inner, .. }
+        | TemplateExpr::Assignment { value: inner, .. } => {
+            collect_output_uses_from_expr(inner, context, outputs);
+        }
+        TemplateExpr::Literal(_)
+        | TemplateExpr::Field(_)
+        | TemplateExpr::Variable(_)
+        | TemplateExpr::Unknown(_) => {}
+    }
+}
+
+fn static_yaml_fragment_output_path_from_exprs(exprs: &[TemplateExpr]) -> Option<YamlPath> {
+    fn printf_format(expr: &TemplateExpr) -> Option<&str> {
+        match expr {
+            TemplateExpr::Parenthesized(inner) => printf_format(inner),
+            TemplateExpr::Call { function, args } if function == "printf" => {
+                let TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) =
+                    args.first()?
+                else {
+                    return None;
+                };
+                Some(format)
+            }
+            TemplateExpr::Pipeline(stages) => stages.first().and_then(printf_format),
+            _ => None,
+        }
+    }
+
+    let [expr] = exprs else {
+        return None;
+    };
+    let format = printf_format(expr)?;
+    let key = parse_yaml_key(format.trim_start())?.into_key();
+    Some(YamlPath(vec![key]))
 }

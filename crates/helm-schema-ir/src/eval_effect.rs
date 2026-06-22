@@ -9,6 +9,7 @@ pub(crate) struct Effects {
     pub(crate) defaults: BTreeSet<String>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) string_hints: BTreeSet<String>,
+    pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
 }
 
@@ -24,6 +25,7 @@ impl Effects {
         self.reads.extend(other.reads);
         self.defaults.extend(other.defaults);
         self.string_hints.extend(other.string_hints);
+        self.encoded_paths.extend(other.encoded_paths);
         for (name, entries) in other.local_set_mutations {
             self.local_set_mutations
                 .entry(name)
@@ -57,6 +59,11 @@ impl Effects {
 
     pub(crate) fn add_string_hints(&mut self, paths: BTreeSet<String>) {
         self.string_hints
+            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {
+        self.encoded_paths
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 

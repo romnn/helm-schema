@@ -128,7 +128,11 @@ pub(crate) fn eval_call(function: &str, args: &[TemplateExpr], env: &EvalEnv) ->
         function if is_string_transform_function(function) => {
             let result = eval_all_args(args, env);
             let mut effects = result.effects;
-            effects.add_string_hints(value_paths(&result.value));
+            let paths = value_paths(&result.value);
+            effects.add_string_hints(paths.clone());
+            if function == "b64enc" {
+                effects.add_encoded_paths(paths);
+            }
             EvalResult::with_effects(result.value, effects)
         }
         function if is_provenance_preserving_function(function) => eval_all_args(args, env),

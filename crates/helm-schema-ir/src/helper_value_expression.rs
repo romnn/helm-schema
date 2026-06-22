@@ -4,8 +4,7 @@ use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::expression_analysis::{
-    resolved_string_transform_paths_for_exprs_with_fragment_locals,
-    resolved_type_hint_paths_for_exprs_with_fragment_locals, set_default_chart_paths_for_exprs,
+    resolved_schema_type_hints_for_exprs_with_fragment_locals, set_default_chart_paths_for_exprs,
 };
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
@@ -64,20 +63,12 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
     state
         .analysis
-        .add_type_hints(resolved_type_hint_paths_for_exprs_with_fragment_locals(
+        .add_type_hints(resolved_schema_type_hints_for_exprs_with_fragment_locals(
             exprs,
             Some(bindings),
             current_dot,
             &state.locals.bindings,
         ));
-    state.analysis.add_type_hints(
-        resolved_string_transform_paths_for_exprs_with_fragment_locals(
-            exprs,
-            Some(bindings),
-            current_dot,
-            &state.locals.bindings,
-        ),
-    );
     let local_outputs = local_rendered_paths_from_exprs(exprs, &state.locals.bindings);
     let local_fallback_paths =
         helper_env.local_default_fallback_paths_in_exprs(exprs, &state.locals.default_paths);
@@ -174,20 +165,12 @@ fn collect_assignment_bound_helper_values(
 
     state
         .analysis
-        .add_type_hints(resolved_type_hint_paths_for_exprs_with_fragment_locals(
+        .add_type_hints(resolved_schema_type_hints_for_exprs_with_fragment_locals(
             rhs_exprs,
             Some(bindings),
             current_dot,
             &state.locals.bindings,
         ));
-    state.analysis.add_type_hints(
-        resolved_string_transform_paths_for_exprs_with_fragment_locals(
-            rhs_exprs,
-            Some(bindings),
-            current_dot,
-            &state.locals.bindings,
-        ),
-    );
 
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);

@@ -69,9 +69,17 @@ pub(crate) fn eval_pipeline(stages: &[TemplateExpr], env: &EvalEnv) -> EvalResul
             }
             function if is_string_transform_function(function) => {
                 let mut effects = current.effects;
-                effects.add_string_hints(value_paths(&current.value));
+                let current_paths = value_paths(&current.value);
+                effects.add_string_hints(current_paths.clone());
+                if function == "b64enc" {
+                    effects.add_encoded_paths(current_paths);
+                }
                 for arg in args {
-                    effects.merge(eval_expr(arg, env).effects);
+                    let arg_result = eval_expr(arg, env);
+                    if function == "b64enc" {
+                        effects.add_encoded_paths(value_paths(&arg_result.value));
+                    }
+                    effects.merge(arg_result.effects);
                 }
                 EvalResult::with_effects(current.value, effects)
             }

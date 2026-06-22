@@ -6,7 +6,6 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
-use crate::expression_output_facts::DocumentExpressionOutputFacts;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_summary::HelperSummaryCache;
 use crate::value_path_context::ValuePathContext;
@@ -46,7 +45,7 @@ fn document_type_hints_resolve_template_local_aliases() {
         current_dot_binding: None,
     };
 
-    let facts = DocumentExpressionOutputFacts::collect(&exprs, &context);
+    let facts = context.expression_path_facts(&exprs);
 
     sim_assert_eq!(
         have: facts.type_hints,

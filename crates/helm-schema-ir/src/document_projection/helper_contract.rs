@@ -6,7 +6,6 @@ use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::expression_output_facts::DocumentExpressionOutputFacts;
 use crate::helper_summary::HelperSummary;
 use crate::value_path_context::ValuePathContext;
 use crate::{Guard, YamlPath, output_path};
@@ -24,7 +23,7 @@ pub(crate) fn document_output_contract(
     context: &ContractUseContext<'_>,
 ) -> ContractIr {
     let mut contract = ContractIr::default();
-    let mut output_facts = DocumentExpressionOutputFacts::collect(exprs, value_path_context);
+    let mut output_facts = value_path_context.expression_path_facts(exprs);
     if kind == ValueKind::Scalar {
         let all_values = output_facts.values.clone();
         output_facts

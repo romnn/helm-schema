@@ -70,7 +70,7 @@ pub(crate) fn resolved_default_fallback_paths_for_expr(
     eval_expr(expr, &env).effects.defaults
 }
 
-pub(crate) fn resolved_type_hint_paths_for_exprs_with_fragment_locals(
+pub(crate) fn resolved_schema_type_hints_for_exprs_with_fragment_locals(
     exprs: &[TemplateExpr],
     bindings: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
@@ -78,40 +78,13 @@ pub(crate) fn resolved_type_hint_paths_for_exprs_with_fragment_locals(
 ) -> BTreeMap<String, BTreeSet<String>> {
     let env =
         EvalEnv::from_helper_context_with_fragment_locals(bindings, current_dot, fragment_locals);
-    resolved_type_hint_paths_for_exprs_in_env(exprs, &env)
-}
-
-fn resolved_type_hint_paths_for_exprs_in_env(
-    exprs: &[TemplateExpr],
-    env: &EvalEnv,
-) -> BTreeMap<String, BTreeSet<String>> {
     let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for expr in exprs {
-        for (path, hints) in eval_expr(expr, env).effects.type_hints {
+        let effects = eval_expr(expr, &env).effects;
+        for (path, hints) in effects.type_hints {
             out.entry(path).or_default().extend(hints);
         }
-    }
-    out
-}
-
-pub(crate) fn resolved_string_transform_paths_for_exprs_with_fragment_locals(
-    exprs: &[TemplateExpr],
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-) -> BTreeMap<String, BTreeSet<String>> {
-    let env =
-        EvalEnv::from_helper_context_with_fragment_locals(bindings, current_dot, fragment_locals);
-    resolved_string_transform_paths_for_exprs_in_env(exprs, &env)
-}
-
-fn resolved_string_transform_paths_for_exprs_in_env(
-    exprs: &[TemplateExpr],
-    env: &EvalEnv,
-) -> BTreeMap<String, BTreeSet<String>> {
-    let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-    for expr in exprs {
-        for path in eval_expr(expr, env).effects.string_hints {
+        for path in effects.string_hints {
             out.entry(path).or_default().insert("string".to_string());
         }
     }
