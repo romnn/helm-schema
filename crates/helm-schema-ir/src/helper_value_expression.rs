@@ -10,8 +10,7 @@ use crate::expression_analysis::{
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::helper_summary::HelperOutputMeta;
-use crate::helper_summary_mutation::{NestedRenderMode, extend_nested_render};
+use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
     direct_bound_paths_from_exprs_in_context, local_bound_paths_from_expr,
@@ -19,6 +18,11 @@ use crate::local_projection::{
 };
 use crate::predicate::Predicate;
 use helm_schema_ast::TemplateExpr;
+
+enum NestedRenderMode {
+    Scalar,
+    Fragment,
+}
 
 pub(crate) fn collect_helper_value_expression_from_exprs(
     exprs: &[TemplateExpr],
@@ -293,4 +297,52 @@ fn rhs_output_meta(
             .merge(meta);
     }
     rhs_output_meta
+}
+
+fn extend_nested_render(
+    analysis: &mut HelperSummary,
+    nested: HelperSummary,
+    active_output_predicates: &BTreeSet<Predicate>,
+    mode: NestedRenderMode,
+) {
+    if matches!(mode, NestedRenderMode::Scalar) {
+        analysis
+            .string_output
+            .extend(nested.string_output.iter().cloned());
+    }
+    analysis
+        .suppress_roots
+        .extend(nested.suppress_roots.iter().cloned());
+    analysis
+        .chart_defaults
+        .extend(nested.chart_defaults.iter().cloned());
+
+    for (path, facts) in nested.path_facts() {
+        if let Some(mut meta) = facts.output_meta().cloned() {
+            meta.add_predicates(active_output_predicates.iter().cloned());
+            analysis.merge_output_meta(path.to_string(), meta);
+        }
+        if let Some(meta) = facts.dependency_meta().cloned() {
+            analysis.merge_dependency_meta(path.to_string(), meta);
+        }
+        if facts.is_guard() {
+            analysis.add_guard_path(path.to_string());
+        }
+        if !facts.type_hints().is_empty() {
+            analysis.merge_type_hints(path.to_string(), facts.type_hints().clone());
+        }
+        for mut output in facts.fragment_output_uses(path) {
+            output
+                .meta
+                .add_predicates(active_output_predicates.iter().cloned());
+            match mode {
+                NestedRenderMode::Scalar => {
+                    analysis.merge_output_meta(output.source_expr, output.meta);
+                }
+                NestedRenderMode::Fragment => {
+                    analysis.add_fragment_output_use(output);
+                }
+            }
+        }
+    }
 }

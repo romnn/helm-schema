@@ -105,6 +105,20 @@ impl HelperOutputMeta {
     }
 }
 
+pub(crate) fn insert_type_hint(
+    hints: &mut BTreeMap<String, BTreeSet<String>>,
+    path: String,
+    schema_type: &str,
+) {
+    if path.trim().is_empty() {
+        return;
+    }
+    hints
+        .entry(path)
+        .or_default()
+        .insert(schema_type.to_string());
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct HelperFragmentOutputUse {
     pub(crate) source_expr: String,
@@ -741,7 +755,7 @@ fn append_len_prefixed(out: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::{BTreeMap, BTreeSet, HashMap};
     use test_util::prelude::sim_assert_eq;
 
     use helm_schema_ast::TemplateExpr;
@@ -897,6 +911,40 @@ mod tests {
                 "image.tag".to_string(),
             ]))
         );
+    }
+
+    #[test]
+    fn suppresses_bound_root_when_helper_outputs_descendant_path() {
+        let mut analysis = HelperSummary::default();
+        analysis.add_output_meta(
+            "serviceAccount.name".to_string(),
+            HelperOutputMeta::default(),
+        );
+        let bindings = HashMap::from([(
+            "config".to_string(),
+            AbstractValue::ValuesPath("serviceAccount".to_string()),
+        )]);
+
+        analysis.mark_suppressed_roots_for_bound_outputs(&bindings);
+
+        sim_assert_eq!(
+            have: analysis.suppress_roots,
+            want: BTreeSet::from(["serviceAccount".to_string()])
+        );
+    }
+
+    #[test]
+    fn does_not_suppress_bound_root_for_exact_root_output() {
+        let mut analysis = HelperSummary::default();
+        analysis.add_output_meta("serviceAccount".to_string(), HelperOutputMeta::default());
+        let bindings = HashMap::from([(
+            "config".to_string(),
+            AbstractValue::ValuesPath("serviceAccount".to_string()),
+        )]);
+
+        analysis.mark_suppressed_roots_for_bound_outputs(&bindings);
+
+        assert!(analysis.suppress_roots.is_empty());
     }
 
     #[test]

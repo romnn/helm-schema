@@ -44,12 +44,6 @@ pub(crate) enum HelperRangeJoinBehavior {
     PromoteBodyOutcome,
 }
 
-pub(crate) enum HelperRuntimeScopeJoin<T> {
-    Merge(Vec<T>),
-    Promote(T),
-    Noop,
-}
-
 impl HelperRuntimeControlState {
     pub(crate) fn for_value(current_dot: Option<&AbstractValue>) -> Self {
         Self {
@@ -138,15 +132,6 @@ impl HelperRuntimeControlState {
         self.restore(snapshot);
     }
 
-    pub(crate) fn branch_join_outcomes<T>(
-        &mut self,
-        snapshot: &HelperRuntimeControlSnapshot,
-        outcomes: Vec<T>,
-    ) -> Vec<T> {
-        self.prepare_branch_join(snapshot);
-        outcomes
-    }
-
     pub(crate) fn prepare_range_join(
         &mut self,
         snapshot: &HelperRuntimeControlSnapshot,
@@ -160,21 +145,6 @@ impl HelperRuntimeControlState {
             HelperRangeJoinBehavior::PromoteBodyOutcome
         } else {
             HelperRangeJoinBehavior::MergeAllOutcomes
-        }
-    }
-
-    pub(crate) fn range_join_outcomes<T>(
-        &mut self,
-        snapshot: &HelperRuntimeControlSnapshot,
-        outcomes: Vec<T>,
-    ) -> HelperRuntimeScopeJoin<T> {
-        match self.prepare_range_join(snapshot) {
-            HelperRangeJoinBehavior::PromoteBodyOutcome => outcomes
-                .into_iter()
-                .next()
-                .map(HelperRuntimeScopeJoin::Promote)
-                .unwrap_or(HelperRuntimeScopeJoin::Noop),
-            HelperRangeJoinBehavior::MergeAllOutcomes => HelperRuntimeScopeJoin::Merge(outcomes),
         }
     }
 

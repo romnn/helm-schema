@@ -11,11 +11,10 @@ use crate::helper_runtime_plan::{
     helper_if_condition_plan, helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
-use crate::helper_summary_mutation::merge_helper_output_meta_maps;
 use crate::helper_value_expression::collect_helper_value_expression_from_exprs;
 use crate::helper_walk_state::{
-    HelperRuntimeControlSnapshot, HelperRuntimeControlState, HelperRuntimeLocals,
-    HelperRuntimeScopeJoin, HelperValuesWalkState,
+    HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
+    HelperRuntimeLocals, HelperValuesWalkState,
 };
 use crate::node_eval::{
     AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime,
@@ -126,6 +125,19 @@ impl NodeActionEffectSink for HelperValueRuntime<'_, '_> {
     }
 }
 
+fn merge_helper_output_meta_maps(
+    mut base: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    other: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+) -> HashMap<String, BTreeMap<String, HelperOutputMeta>> {
+    for (var, meta_by_path) in other {
+        let entry = base.entry(var).or_default();
+        for (path, meta) in meta_by_path {
+            entry.entry(path).or_default().merge(meta);
+        }
+    }
+    base
+}
+
 impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
     type ScopeSnapshot = HelperValueSnapshot;
     type ConditionPlan = HelperConditionPlan;
@@ -158,7 +170,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        let outcomes = self.control.branch_join_outcomes(&entry.control, outcomes);
+        self.control.prepare_branch_join(&entry.control);
         self.merge_outcomes(outcomes);
     }
 
@@ -167,10 +179,15 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        match self.control.range_join_outcomes(&entry.control, outcomes) {
-            HelperRuntimeScopeJoin::Promote(body_outcome) => self.promote_outcome(body_outcome),
-            HelperRuntimeScopeJoin::Merge(outcomes) => self.merge_outcomes(outcomes),
-            HelperRuntimeScopeJoin::Noop => {}
+        match self.control.prepare_range_join(&entry.control) {
+            HelperRangeJoinBehavior::PromoteBodyOutcome => {
+                if let Some(body_outcome) = outcomes.into_iter().next() {
+                    self.promote_outcome(body_outcome);
+                }
+            }
+            HelperRangeJoinBehavior::MergeAllOutcomes => {
+                self.merge_outcomes(outcomes);
+            }
         }
     }
 

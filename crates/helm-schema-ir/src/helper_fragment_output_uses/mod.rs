@@ -16,8 +16,8 @@ use crate::helper_runtime_plan::{
 };
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::{
-    FragmentOutputWalkState, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
-    HelperRuntimeLocals, HelperRuntimeScopeJoin,
+    FragmentOutputWalkState, HelperRangeJoinBehavior, HelperRuntimeControlSnapshot,
+    HelperRuntimeControlState, HelperRuntimeLocals,
 };
 use crate::node_eval::{
     AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime,
@@ -218,7 +218,7 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        let outcomes = self.control.branch_join_outcomes(&entry.control, outcomes);
+        self.control.prepare_branch_join(&entry.control);
         self.merge_outcomes(outcomes);
     }
 
@@ -227,10 +227,15 @@ impl NodeEvalRuntime for FragmentOutputUseRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        match self.control.range_join_outcomes(&entry.control, outcomes) {
-            HelperRuntimeScopeJoin::Promote(body_outcome) => self.promote_outcome(body_outcome),
-            HelperRuntimeScopeJoin::Merge(outcomes) => self.merge_outcomes(outcomes),
-            HelperRuntimeScopeJoin::Noop => {}
+        match self.control.prepare_range_join(&entry.control) {
+            HelperRangeJoinBehavior::PromoteBodyOutcome => {
+                if let Some(body_outcome) = outcomes.into_iter().next() {
+                    self.promote_outcome(body_outcome);
+                }
+            }
+            HelperRangeJoinBehavior::MergeAllOutcomes => {
+                self.merge_outcomes(outcomes);
+            }
         }
     }
 

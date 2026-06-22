@@ -4,10 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::SourceSpan;
 use crate::contract_sink::ContractUseContext;
-use crate::document_projection::{
-    append_document_output_contract_uses, collect_document_expression_facts,
-    collect_document_site_context,
-};
+use crate::document_projection::{collect_document_site_context, document_output_contract};
 use crate::helper_summary::HelperOutputMeta;
 
 use super::SymbolicWalker;
@@ -75,15 +72,8 @@ impl SymbolicWalker<'_> {
             .locals_mut()
             .append_chart_value_defaults(&mut chart_value_defaults);
 
-        let value_path_context = self.value_path_context();
-        let expression_facts = collect_document_expression_facts(
-            exprs,
-            kind,
-            &value_path_context,
-            &self.scope.locals().range_domains,
-            &self.scope.locals().get_bindings,
-        );
-        {
+        let document_contract = {
+            let value_path_context = self.value_path_context();
             let guards = self.contract_guards();
             let projection_context = ContractUseContext::new(
                 &guards,
@@ -96,13 +86,17 @@ impl SymbolicWalker<'_> {
                 )),
                 self.provenance_helper_chain(),
             );
-            append_document_output_contract_uses(
+            document_output_contract(
                 site_context,
-                expression_facts,
+                exprs,
+                kind,
+                &value_path_context,
+                &self.scope.locals().range_domains,
+                &self.scope.locals().get_bindings,
                 helper_summary,
-                &mut self.contract,
                 &projection_context,
-            );
-        }
+            )
+        };
+        self.contract.append(document_contract);
     }
 }

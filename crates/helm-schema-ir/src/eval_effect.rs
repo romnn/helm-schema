@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::helper_summary_mutation::insert_type_hint;
+use crate::helper_summary::insert_type_hint;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
