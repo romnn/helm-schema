@@ -1,4 +1,5 @@
-use super::*;
+use crate::chart::discovery;
+use crate::chart::*;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -117,7 +118,7 @@ fn vendored_chart_archive_respects_load_budget() -> color_eyre::eyre::Result<()>
         file.write_all(&tar_bytes)?;
     }
 
-    let err = super::discovery::discover_chart_contexts_with_budget(
+    let err = discovery::discover_chart_contexts_with_budget(
         &chart_dir,
         crate::load_budget::LoadBudget::new(128, 1024),
     )
@@ -184,7 +185,7 @@ fn vendored_chart_archive_respects_expanded_budget() -> color_eyre::eyre::Result
     archive_path.parent().create_dir_all()?;
     archive_path.create_file()?.write_all(&tar_bytes)?;
 
-    let err = super::discovery::discover_chart_contexts_with_budget(
+    let err = discovery::discover_chart_contexts_with_budget(
         &chart_dir,
         crate::load_budget::LoadBudget::new(16 * 1024, 1024).with_chart_archive_limits(16, 1024),
     )
@@ -244,7 +245,7 @@ fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()
     archive_path.parent().create_dir_all()?;
     archive_path.create_file()?.write_all(&tar_bytes)?;
 
-    let err = super::discovery::discover_chart_contexts_with_budget(
+    let err = discovery::discover_chart_contexts_with_budget(
         &chart_dir,
         crate::load_budget::LoadBudget::new(16 * 1024, 1024)
             .with_chart_archive_limits(2, 16 * 1024),
@@ -267,7 +268,7 @@ fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()
 
 #[test]
 fn vendored_chart_archive_rejects_unsafe_entry_paths() -> color_eyre::eyre::Result<()> {
-    let err = super::discovery::validate_archive_entry_path(
+    let err = discovery::validate_archive_entry_path(
         "charts/child.tgz",
         std::path::Path::new("../child/Chart.yaml"),
     )

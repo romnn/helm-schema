@@ -14,8 +14,6 @@ mod manifest_resource;
 mod source_documents;
 mod span_collection;
 mod state;
-#[cfg(test)]
-mod tests;
 
 pub(crate) use detector::ResourceIdentityDetector;
 pub(crate) use locator::ResourceIdentityIndex;

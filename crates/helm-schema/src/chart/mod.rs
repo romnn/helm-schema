@@ -1,11 +1,9 @@
 mod define_index;
-mod discovery;
+pub(crate) mod discovery;
 mod file_roles;
 mod files;
 mod paths;
 mod static_crds;
-#[cfg(test)]
-mod tests;
 mod types;
 mod values;
 

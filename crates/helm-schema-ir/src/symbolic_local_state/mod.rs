@@ -9,9 +9,6 @@ mod branch_join;
 
 use branch_join::joined_branch_outcomes;
 
-#[cfg(test)]
-mod tests;
-
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SymbolicLocalState {
     pub(crate) range_domains: HashMap<String, Vec<String>>,

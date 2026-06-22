@@ -118,6 +118,29 @@ In short: the simpler Rust is usually the better Rust here. Prefer direct,
 boring code over abstraction that does not materially improve correctness or
 clarity.
 
+### Rust test layout and source LOC hygiene
+
+Keep production `src/` files focused on production code so source LOC remains a
+useful simplicity metric.
+
+- Public API and end-to-end behavior tests belong in the crate's `tests/`
+  directory.
+- Private API tests may live under `src/tests/` so they can access crate-private
+  items without mixing test bodies into production modules.
+- Do not add Rust sibling test files such as `foo_test.rs`, `foo_tests.rs`, or
+  `foo.spec.rs` next to `foo.rs`. That is idiomatic in other ecosystems, but not
+  the layout we want here. If an integration test mirrors one production file,
+  it may use that production file's name inside `tests/`.
+- Avoid inline `#[cfg(test)] mod tests { ... }` blocks in production source
+  files. Move those tests to `src/tests/` when they need private access, or to
+  `tests/` when they only need public APIs. A minimal `#[cfg(test)] mod tests;`
+  declaration is acceptable only as a bridge to a `src/tests/` module tree.
+- Do not put test-only helpers in production modules behind `#[cfg(test)]`.
+  Shared test helpers belong in `tests/common.rs`, `tests/util.rs`, or the
+  crate's `src/tests/` module tree when private access is required.
+- `src/tests/**` is test code, not production source. Core LOC metrics should
+  be able to exclude it along with crate-level `tests/` directories.
+
 ### `values.schema.json` is output, not inference evidence
 
 helm-schema generates a `values.schema.json`-shaped artifact, but it must not

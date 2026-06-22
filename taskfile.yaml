@@ -227,13 +227,13 @@ tasks:
   tokei:core:
     desc: "count lines of non-test code in the crates"
     cmds:
-      # excludes integration tests (crates/*/tests), unit test modules
-      # (src/tests.rs), and the test-util crate; inline #[cfg(test)] modules
-      # in other src files cannot be excluded file-wise and remain counted
+      # excludes all directories named tests, including crate integration tests
+      # and private src/tests modules, plus fixtures and the test-util crate; inline
+      # #[cfg(test)] modules in production src files remain counted until
+      # they are migrated out of those files
       - >-
         tokei crates
         --exclude tests
         --exclude fixtures
-        --exclude tests.rs
         --exclude test-util
         {{.CLI_ARGS}}

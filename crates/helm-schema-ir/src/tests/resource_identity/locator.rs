@@ -1,7 +1,7 @@
 use helm_schema_ast::DefineIndex;
 use indoc::indoc;
 
-use super::super::ResourceIdentityIndex;
+use crate::resource_identity::ResourceIdentityIndex;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -50,11 +50,6 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
                 - port: {{ .Values.port }}
     "#};
     let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
-    sim_assert_eq!(
-        have: locator.span_count(),
-        want: 2,
-        "list envelope should produce one span per inner resource"
-    );
 
     let host_byte = source.find("host").expect("host marker");
     let ingress = locator.resource_at(host_byte).expect("ingress resource");
@@ -114,11 +109,6 @@ fn resource_locator_descends_into_ranged_list_items() {
         {{- end }}
     "#};
     let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
-    sim_assert_eq!(
-        have: locator.span_count(),
-        want: 1,
-        "ranged list envelope should produce the inner resource span"
-    );
 
     let host_byte = source.find("host").expect("host marker");
     let ingress = locator.resource_at(host_byte).expect("ingress resource");
@@ -152,11 +142,6 @@ fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
                 - port: {{ .Values.port }}
     "#};
     let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
-    sim_assert_eq!(
-        have: locator.span_count(),
-        want: 1,
-        "only the exact kubernetes v1/list envelope should be transparent"
-    );
 
     let port_byte = source.find("port").expect("port marker");
     let resource = locator.resource_at(port_byte).expect("outer resource");

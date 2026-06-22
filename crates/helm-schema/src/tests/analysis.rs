@@ -3,7 +3,7 @@ use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
 use serde_json::json;
 use vfs::VfsPath;
 
-use super::analyze_charts;
+use crate::analysis::analyze_charts;
 use crate::chart;
 use test_util::prelude::sim_assert_eq;
 

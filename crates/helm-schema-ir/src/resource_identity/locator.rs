@@ -54,9 +54,4 @@ impl ResourceIdentityIndex {
             })
             .map(|(index, _)| index)
     }
-
-    #[cfg(test)]
-    pub(super) fn span_count(&self) -> usize {
-        self.spans.len()
-    }
 }

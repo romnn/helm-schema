@@ -1,8 +1,8 @@
 use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use indoc::indoc;
 
-use super::super::ResourceIdentityDetector;
 use crate::capability_branch::{CapabilityGuard, HelperBranchBody};
+use crate::resource_identity::ResourceIdentityDetector;
 use test_util::prelude::sim_assert_eq;
 
 fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {

@@ -1,3 +1,12 @@
+mod contract;
+mod contract_signals;
+mod expr_eval;
+mod fragment_expr_eval;
+mod fragment_scope_eval;
+mod helper_output_projection;
+mod resource_identity;
+mod symbolic_local_state;
+
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use test_util::prelude::sim_assert_eq;

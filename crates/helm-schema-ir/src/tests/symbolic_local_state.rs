@@ -1,10 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::SymbolicLocalState;
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_summary::HelperOutputMeta;
+use crate::symbolic_local_state::SymbolicLocalState;
 use test_util::prelude::sim_assert_eq;
 
 #[test]

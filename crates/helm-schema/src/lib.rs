@@ -12,6 +12,9 @@ pub mod schema_override;
 mod session;
 mod values_roots;
 
+#[cfg(test)]
+mod tests;
+
 pub mod diagnostics {
     pub use helm_schema_k8s::{
         Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,

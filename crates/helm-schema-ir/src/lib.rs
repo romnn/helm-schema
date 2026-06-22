@@ -11,11 +11,7 @@ mod contract;
 mod contract_normalization;
 mod contract_signal_builder;
 mod contract_signals;
-#[cfg(test)]
-mod contract_signals_tests;
 mod contract_sink;
-#[cfg(test)]
-mod contract_tests;
 mod contract_types;
 mod define_body_cache;
 mod document_projection;
@@ -23,18 +19,12 @@ mod eval_effect;
 mod eval_env;
 mod expr_call_eval;
 mod expr_eval;
-#[cfg(test)]
-mod expr_eval_tests;
 mod expr_function_catalog;
 mod expr_pipeline_eval;
 mod expression_analysis;
 mod fragment_assignment;
 mod fragment_expr_eval;
-#[cfg(test)]
-mod fragment_expr_eval_tests;
 mod fragment_range_scope;
-#[cfg(test)]
-mod fragment_scope_eval_tests;
 mod helper_arg_projection;
 mod helper_aware_expr_eval;
 mod helper_body_analysis;
