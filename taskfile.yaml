@@ -232,8 +232,7 @@ tasks:
       # #[cfg(test)] modules in production src files remain counted until
       # they are migrated out of those files
       - >-
-        tokei crates
+        tokei {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}crates{{end}}
         --exclude tests
         --exclude fixtures
         --exclude test-util
-        {{.CLI_ARGS}}
