@@ -8,7 +8,7 @@ use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_summary::HelperSummary;
 use crate::local_projection::{
-    direct_bound_paths_from_expr_in_context, local_bound_paths_from_expr,
+    direct_bound_paths_from_expr_in_context, local_expression_facts_from_exprs,
 };
 use crate::output_path;
 use crate::predicate::Predicate;
@@ -23,7 +23,13 @@ pub(crate) fn branch_guard_paths_for_expr(
 ) -> BTreeSet<String> {
     let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
     let mut branch_guard_paths = direct_bound_paths_from_expr_in_context(expr, &env);
-    branch_guard_paths.extend(local_bound_paths_from_expr(expr, local_bindings));
+    let local_facts = local_expression_facts_from_exprs(
+        std::slice::from_ref(expr),
+        local_bindings,
+        &HashMap::new(),
+        &HashMap::new(),
+    );
+    branch_guard_paths.extend(local_facts.source_paths);
 
     let nested = BoundHelperEnv::new(bindings, current_dot, context).summarize_calls_in_exprs(
         std::slice::from_ref(expr),

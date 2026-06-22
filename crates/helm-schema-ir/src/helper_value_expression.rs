@@ -10,8 +10,7 @@ use crate::fragment_assignment::{
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::HelperValuesWalkState;
 use crate::local_projection::{
-    direct_bound_paths_from_exprs_in_context, local_bound_paths_from_expr,
-    local_output_meta_from_exprs, local_rendered_paths_from_exprs,
+    direct_bound_paths_from_exprs_in_context, local_expression_facts_from_exprs,
 };
 use crate::predicate::Predicate;
 use helm_schema_ast::TemplateExpr;
@@ -62,11 +61,12 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     state
         .analysis
         .add_type_hints(helper_env.type_hints_in_exprs(exprs, &state.locals.bindings));
-    let local_outputs = local_rendered_paths_from_exprs(exprs, &state.locals.bindings);
-    let local_fallback_paths =
-        helper_env.local_default_fallback_paths_in_exprs(exprs, &state.locals.default_paths);
-    let local_meta_by_path =
-        local_output_meta_from_exprs(exprs, &state.locals.bindings, state.local_output_meta);
+    let local_facts = local_expression_facts_from_exprs(
+        exprs,
+        &state.locals.bindings,
+        &state.locals.default_paths,
+        state.local_output_meta,
+    );
     let expression_kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
         ValueKind::Fragment
     } else {
@@ -80,12 +80,16 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
             );
             state.analysis.add_output_meta(output, meta);
         }
-        let mut local_output_sources = local_outputs;
-        local_output_sources.extend(local_meta_by_path.keys().cloned());
+        let mut local_output_sources = local_facts.rendered_paths;
+        local_output_sources.extend(local_facts.output_meta.keys().cloned());
         for output in local_output_sources {
-            let mut meta = local_meta_by_path.get(&output).cloned().unwrap_or_default();
+            let mut meta = local_facts
+                .output_meta
+                .get(&output)
+                .cloned()
+                .unwrap_or_default();
             meta.add_predicates(active_output_predicates.iter().cloned());
-            meta.defaulted |= local_fallback_paths.contains(&output);
+            meta.defaulted |= local_facts.default_paths.contains(&output);
             state.analysis.add_output_meta(output, meta);
         }
         state
@@ -161,11 +165,12 @@ fn collect_assignment_bound_helper_values(
         .analysis
         .add_type_hints(helper_env.type_hints_in_exprs(rhs_exprs, &state.locals.bindings));
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
-    let local_fallback_paths =
-        helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, &state.locals.default_paths);
-    let local_outputs = local_bound_paths_from_expr(rhs_expr, &state.locals.bindings);
-    let local_meta_by_path =
-        local_output_meta_from_exprs(rhs_exprs, &state.locals.bindings, state.local_output_meta);
+    let local_facts = local_expression_facts_from_exprs(
+        rhs_exprs,
+        &state.locals.bindings,
+        &state.locals.default_paths,
+        state.local_output_meta,
+    );
     let result_meta_by_path =
         helper_env.output_meta_from_exprs(rhs_exprs, &state.locals.bindings, state.seen);
     let nested = helper_env.summarize_calls_in_exprs(rhs_exprs, &state.locals.bindings, state.seen);
@@ -205,10 +210,10 @@ fn collect_assignment_bound_helper_values(
     }
 
     let rhs_output_meta = rhs_output_meta(
-        &local_outputs,
+        &local_facts.source_paths,
         &fallback_paths,
-        &local_fallback_paths,
-        &local_meta_by_path,
+        &local_facts.default_paths,
+        &local_facts.output_meta,
         &result_meta_by_path,
         active_output_predicates,
     );
@@ -220,7 +225,7 @@ fn collect_assignment_bound_helper_values(
         state.locals.bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = fallback_paths;
-    defaulted_paths.extend(local_fallback_paths);
+    defaulted_paths.extend(local_facts.default_paths);
     defaulted_paths.extend(nested_defaulted_output_paths);
     if defaulted_paths.is_empty() {
         state.locals.default_paths.remove(var);

@@ -9,7 +9,6 @@ use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_value_from_expr, helper_value_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
-use crate::local_projection::local_default_paths_from_exprs;
 use crate::template_expr_analysis::expr_contains_helper_call;
 
 pub(crate) struct BoundHelperEnv<'bindings, 'context> {
@@ -45,14 +44,6 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
             paths.extend(eval_expr(expr, &env).effects.defaults);
         }
         paths
-    }
-
-    pub(crate) fn local_default_fallback_paths_in_exprs(
-        &self,
-        exprs: &[TemplateExpr],
-        local_default_paths: &HashMap<String, BTreeSet<String>>,
-    ) -> BTreeSet<String> {
-        local_default_paths_from_exprs(exprs, local_default_paths)
     }
 
     pub(crate) fn type_hints_in_exprs(

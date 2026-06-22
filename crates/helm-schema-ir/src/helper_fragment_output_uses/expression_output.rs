@@ -11,9 +11,7 @@ use crate::fragment_assignment::{
 };
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_walk_state::FragmentOutputWalkState;
-use crate::local_projection::{
-    direct_bound_paths_from_exprs_in_context, local_rendered_paths_from_exprs,
-};
+use crate::local_projection::local_expression_facts_from_exprs;
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::{
@@ -86,15 +84,14 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let output_path = static_yaml_fragment_output_path_from_exprs(exprs)
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
-    let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);
     let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
-    let local_outputs = local_rendered_paths_from_exprs(exprs, &state.locals.bindings);
-    let handled_outputs: BTreeSet<String> = direct_outputs
-        .iter()
-        .chain(local_outputs.iter())
-        .cloned()
-        .collect();
+    let local_facts = local_expression_facts_from_exprs(
+        exprs,
+        &state.locals.bindings,
+        &state.locals.default_paths,
+        &HashMap::new(),
+    );
 
     let mut direct_output_uses = Vec::new();
     for expr in exprs {
@@ -111,16 +108,19 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             &mut direct_output_uses,
         );
     }
+    let handled_outputs: BTreeSet<String> = direct_output_uses
+        .iter()
+        .map(|output| output.source_expr.clone())
+        .chain(local_facts.rendered_paths.iter().cloned())
+        .collect();
     state.outputs.extend(direct_output_uses);
 
-    let local_fallback_paths =
-        helper_env.local_default_fallback_paths_in_exprs(exprs, &state.locals.default_paths);
     let local_output_uses = local_output_uses_from_exprs(
         exprs,
         &output_path,
         kind,
         active_output_predicates,
-        &local_fallback_paths,
+        &local_facts.default_paths,
         &state.locals.bindings,
     );
 
@@ -266,9 +266,13 @@ fn collect_bound_fragment_output_assignment_uses(
         state.locals.bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
-    defaulted_paths.extend(
-        helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, &state.locals.default_paths),
+    let local_facts = local_expression_facts_from_exprs(
+        rhs_exprs,
+        &state.locals.bindings,
+        &state.locals.default_paths,
+        &HashMap::new(),
     );
+    defaulted_paths.extend(local_facts.default_paths);
     if defaulted_paths.is_empty() {
         state.locals.default_paths.remove(var);
     } else {
