@@ -3,7 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::expression_analysis::resolved_default_fallback_paths_for_exprs;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, fragment_value_from_expr, helper_value_from_expr_with_fragment_locals,
 };
@@ -38,7 +39,12 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
         &self,
         exprs: &[TemplateExpr],
     ) -> BTreeSet<String> {
-        resolved_default_fallback_paths_for_exprs(exprs, Some(self.bindings), self.current_dot)
+        let env = EvalEnv::from_helper_context(Some(self.bindings), self.current_dot);
+        let mut paths = BTreeSet::new();
+        for expr in exprs {
+            paths.extend(eval_expr(expr, &env).effects.defaults);
+        }
+        paths
     }
 
     pub(crate) fn local_default_fallback_paths_in_exprs(
@@ -47,6 +53,25 @@ impl<'bindings, 'context> BoundHelperEnv<'bindings, 'context> {
         local_default_paths: &HashMap<String, BTreeSet<String>>,
     ) -> BTreeSet<String> {
         local_default_paths_from_exprs(exprs, local_default_paths)
+    }
+
+    pub(crate) fn type_hints_in_exprs(
+        &self,
+        exprs: &[TemplateExpr],
+        local_bindings: &HashMap<String, AbstractValue>,
+    ) -> BTreeMap<String, BTreeSet<String>> {
+        let env = EvalEnv::from_helper_context_with_fragment_locals(
+            Some(self.bindings),
+            self.current_dot,
+            local_bindings,
+        );
+        let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for expr in exprs {
+            for (path, hints) in eval_expr(expr, &env).effects.schema_type_hints() {
+                out.entry(path).or_default().extend(hints);
+            }
+        }
+        out
     }
 
     pub(crate) fn summarize_calls_in_exprs(

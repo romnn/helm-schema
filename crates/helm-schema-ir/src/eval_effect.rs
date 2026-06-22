@@ -62,6 +62,14 @@ impl Effects {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
+    pub(crate) fn schema_type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
+        let mut hints = self.type_hints.clone();
+        for path in &self.string_hints {
+            insert_type_hint(&mut hints, path.clone(), "string");
+        }
+        hints
+    }
+
     pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {
         self.encoded_paths
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));

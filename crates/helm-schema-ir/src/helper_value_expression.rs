@@ -3,9 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
-use crate::expression_analysis::{
-    resolved_schema_type_hints_for_exprs_with_fragment_locals, set_default_chart_paths_for_exprs,
-};
+use crate::expression_analysis::set_default_chart_paths_for_exprs;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
@@ -63,12 +61,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
     state
         .analysis
-        .add_type_hints(resolved_schema_type_hints_for_exprs_with_fragment_locals(
-            exprs,
-            Some(bindings),
-            current_dot,
-            &state.locals.bindings,
-        ));
+        .add_type_hints(helper_env.type_hints_in_exprs(exprs, &state.locals.bindings));
     let local_outputs = local_rendered_paths_from_exprs(exprs, &state.locals.bindings);
     let local_fallback_paths =
         helper_env.local_default_fallback_paths_in_exprs(exprs, &state.locals.default_paths);
@@ -163,16 +156,10 @@ fn collect_assignment_bound_helper_values(
         return;
     }
 
+    let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
     state
         .analysis
-        .add_type_hints(resolved_schema_type_hints_for_exprs_with_fragment_locals(
-            rhs_exprs,
-            Some(bindings),
-            current_dot,
-            &state.locals.bindings,
-        ));
-
-    let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
+        .add_type_hints(helper_env.type_hints_in_exprs(rhs_exprs, &state.locals.bindings));
     let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
     let local_fallback_paths =
         helper_env.local_default_fallback_paths_in_exprs(rhs_exprs, &state.locals.default_paths);

@@ -3,10 +3,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::expression_analysis::{
-    resolve_expr_to_values_path, resolved_default_fallback_paths_for_exprs,
-    resolved_schema_type_hints_for_exprs_with_fragment_locals,
-};
+use crate::eval_effect::Effects;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
+use crate::expression_analysis::resolve_expr_to_values_path;
 use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
 use crate::helper_summary::{HelperOutputMeta, insert_type_hint};
 use crate::literal_schema_type::expression_schema_type;
@@ -51,97 +51,47 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 
 impl ValuePathContext<'_> {
     pub(crate) fn expression_path_facts(&self, exprs: &[TemplateExpr]) -> ValuePathExpressionFacts {
+        let effects = self.expression_effects(exprs);
         let mut values = BTreeSet::new();
         for expr in exprs {
             values.extend(self.resolved_values_paths_from_expr(expr));
         }
-        let default_fallback_values = self.resolved_default_fallback_paths_in_exprs(exprs);
+        let default_fallback_values =
+            self.resolved_default_fallback_paths_in_exprs_with_effects(exprs, &effects);
         values.extend(default_fallback_values.iter().cloned());
         ValuePathExpressionFacts {
             values,
             default_fallback_values,
-            type_hints: self.collect_type_hints(exprs),
-            encoded_output_values: self.encoded_output_paths_from_exprs(exprs),
+            type_hints: self.collect_type_hints(exprs, &effects),
+            encoded_output_values: effects.encoded_paths,
             local_output_meta: self.local_alias_output_meta_for_exprs(exprs),
         }
     }
 
-    fn encoded_output_paths_from_exprs(&self, exprs: &[TemplateExpr]) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
+    fn expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
+        let mut effects = Effects::default();
+        let env = self.expression_eval_env();
         for expr in exprs {
-            self.append_encoded_output_paths(expr, &mut out);
+            effects.merge(eval_expr(expr, &env).effects);
         }
-        out
+        effects
     }
 
-    fn append_encoded_output_paths(&self, expr: &TemplateExpr, out: &mut BTreeSet<String>) {
-        match expr.deparen() {
-            TemplateExpr::Call { function, args } => {
-                if function == "b64enc" {
-                    for arg in args {
-                        out.extend(self.resolve_expr_to_values_paths(arg));
-                    }
-                }
-                for arg in args {
-                    self.append_encoded_output_paths(arg, out);
-                }
-            }
-            TemplateExpr::Pipeline(stages) => {
-                self.append_pipeline_encoded_output_paths(stages, out);
-            }
-            TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
-                self.append_encoded_output_paths(operand, out);
-            }
-            TemplateExpr::VariableDefinition { value, .. }
-            | TemplateExpr::Assignment { value, .. } => {
-                self.append_encoded_output_paths(value, out);
-            }
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::Unknown(_) => {}
-        }
-    }
-
-    fn append_pipeline_encoded_output_paths(
-        &self,
-        stages: &[TemplateExpr],
-        out: &mut BTreeSet<String>,
-    ) {
-        let mut prefix: Vec<TemplateExpr> = Vec::new();
-        for stage in stages {
-            let current = stage.deparen();
-            if let TemplateExpr::Call { function, args } = current {
-                for arg in args {
-                    self.append_encoded_output_paths(arg, out);
-                }
-                if function == "b64enc" {
-                    if !prefix.is_empty() {
-                        let prefix_expr = if prefix.len() == 1 {
-                            prefix[0].clone()
-                        } else {
-                            TemplateExpr::Pipeline(prefix.clone())
-                        };
-                        out.extend(self.resolve_expr_to_values_paths(&prefix_expr));
-                    }
-                    for arg in args {
-                        out.extend(self.resolve_expr_to_values_paths(arg));
-                    }
-                }
-            } else {
-                self.append_encoded_output_paths(current, out);
-            }
-            prefix.push(stage.clone());
-        }
-    }
-
-    fn collect_type_hints(&self, exprs: &[TemplateExpr]) -> BTreeMap<String, BTreeSet<String>> {
-        let mut hints = resolved_schema_type_hints_for_exprs_with_fragment_locals(
-            exprs,
+    fn expression_eval_env(&self) -> EvalEnv {
+        let mut env = EvalEnv::from_helper_context(
             Some(self.root_bindings),
             self.current_dot_binding.as_ref(),
-            self.template_bindings,
         );
+        env.locals = locals_with_roots(self.template_bindings, self.root_bindings);
+        env
+    }
+
+    fn collect_type_hints(
+        &self,
+        exprs: &[TemplateExpr],
+        effects: &Effects,
+    ) -> BTreeMap<String, BTreeSet<String>> {
+        let mut hints = effects.schema_type_hints();
 
         for expr in exprs {
             expr.walk(|node| match node {
@@ -215,11 +165,16 @@ impl ValuePathContext<'_> {
         &self,
         exprs: &[TemplateExpr],
     ) -> BTreeSet<String> {
-        let mut paths = resolved_default_fallback_paths_for_exprs(
-            exprs,
-            Some(self.root_bindings),
-            self.current_dot_binding.as_ref(),
-        );
+        let effects = self.expression_effects(exprs);
+        self.resolved_default_fallback_paths_in_exprs_with_effects(exprs, &effects)
+    }
+
+    fn resolved_default_fallback_paths_in_exprs_with_effects(
+        &self,
+        exprs: &[TemplateExpr],
+        effects: &Effects,
+    ) -> BTreeSet<String> {
+        let mut paths = effects.defaults.clone();
         for expr in exprs {
             paths.extend(self.resolved_default_fallback_paths_for_expr(expr));
         }

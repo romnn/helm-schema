@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -46,51 +46,6 @@ pub(crate) fn helper_values_for_arg(
     })
 }
 
-pub(crate) fn resolved_default_fallback_paths_for_exprs(
-    exprs: &[TemplateExpr],
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    let env = EvalEnv::from_helper_context(bindings, current_dot);
-
-    for expr in exprs {
-        out.extend(eval_expr(expr, &env).effects.defaults);
-    }
-
-    out
-}
-
-pub(crate) fn resolved_default_fallback_paths_for_expr(
-    expr: &TemplateExpr,
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-) -> BTreeSet<String> {
-    let env = EvalEnv::from_helper_context(bindings, current_dot);
-    eval_expr(expr, &env).effects.defaults
-}
-
-pub(crate) fn resolved_schema_type_hints_for_exprs_with_fragment_locals(
-    exprs: &[TemplateExpr],
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-) -> BTreeMap<String, BTreeSet<String>> {
-    let env =
-        EvalEnv::from_helper_context_with_fragment_locals(bindings, current_dot, fragment_locals);
-    let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-    for expr in exprs {
-        let effects = eval_expr(expr, &env).effects;
-        for (path, hints) in effects.type_hints {
-            out.entry(path).or_default().extend(hints);
-        }
-        for path in effects.string_hints {
-            out.entry(path).or_default().insert("string".to_string());
-        }
-    }
-    out
-}
-
 /// Extract Values-rooted paths that helper-body text declares as chart-level
 /// defaults via the canonical `set OPERAND "KEY" (OPERAND.KEY | default V)`
 /// pattern.
@@ -104,6 +59,8 @@ pub(crate) fn set_default_chart_paths_for_exprs(
     bindings: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
 ) -> BTreeSet<String> {
+    let env = EvalEnv::from_helper_context(bindings, current_dot);
+
     fn literal_string(expr: &TemplateExpr) -> Option<&str> {
         match expr {
             TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
@@ -135,8 +92,7 @@ pub(crate) fn set_default_chart_paths_for_exprs(
             } else {
                 format!("{operand_path}.{key}")
             };
-            let defaulted_paths =
-                resolved_default_fallback_paths_for_expr(&args[2], bindings, current_dot);
+            let defaulted_paths = eval_expr(&args[2], &env).effects.defaults;
             if !defaulted_paths.contains(&target_path) {
                 return;
             }
