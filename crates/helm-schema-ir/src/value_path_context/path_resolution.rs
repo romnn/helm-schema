@@ -12,6 +12,11 @@ use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
 
+pub(crate) struct ValuePathExpressionFacts {
+    pub(crate) values: BTreeSet<String>,
+    pub(crate) default_fallback_values: BTreeSet<String>,
+}
+
 pub(crate) fn computed_with_body_fragment_value_expr(
     expr: &TemplateExpr,
     root_bindings: &HashMap<String, AbstractValue>,
@@ -39,12 +44,17 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 }
 
 impl ValuePathContext<'_> {
-    pub(crate) fn resolved_values_paths_in_exprs(&self, exprs: &[TemplateExpr]) -> Vec<String> {
-        let mut paths = BTreeSet::new();
+    pub(crate) fn expression_path_facts(&self, exprs: &[TemplateExpr]) -> ValuePathExpressionFacts {
+        let mut values = BTreeSet::new();
         for expr in exprs {
-            paths.extend(self.resolved_values_paths_from_expr(expr));
+            values.extend(self.resolved_values_paths_from_expr(expr));
         }
-        paths.into_iter().collect()
+        let default_fallback_values = self.resolved_default_fallback_paths_in_exprs(exprs);
+        values.extend(default_fallback_values.iter().cloned());
+        ValuePathExpressionFacts {
+            values,
+            default_fallback_values,
+        }
     }
 
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {

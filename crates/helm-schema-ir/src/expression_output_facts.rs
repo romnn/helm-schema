@@ -23,21 +23,15 @@ impl DocumentExpressionOutputFacts {
         exprs: &[TemplateExpr],
         value_path_context: &ValuePathContext<'_>,
     ) -> Self {
-        let default_fallback_values =
-            value_path_context.resolved_default_fallback_paths_in_exprs(exprs);
-        let mut values: BTreeSet<String> = value_path_context
-            .resolved_values_paths_in_exprs(exprs)
-            .into_iter()
-            .collect();
+        let path_facts = value_path_context.expression_path_facts(exprs);
         let type_hints = collect_document_type_hints(exprs, value_path_context);
         let encoded_output_values = encoded_output_paths_from_exprs(exprs, |expr| {
             value_path_context.resolve_expr_to_values_paths(expr)
         });
         let local_output_meta = value_path_context.local_alias_output_meta_for_exprs(exprs);
-        values.extend(default_fallback_values.iter().cloned());
         Self {
-            values,
-            default_fallback_values,
+            values: path_facts.values,
+            default_fallback_values: path_facts.default_fallback_values,
             type_hints,
             encoded_output_values,
             local_output_meta,

@@ -48,7 +48,6 @@ mod output_path;
 mod predicate;
 mod printf_eval;
 mod provenance;
-mod provider_schema_use;
 mod range_action_plan;
 mod resource_identity;
 mod static_file_template;

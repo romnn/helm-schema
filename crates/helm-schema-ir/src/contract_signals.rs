@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::GuardValue;
-use crate::provider_schema_use::ProviderSchemaUse;
+use helm_schema_core::ProviderSchemaUse;
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
 /// conditionals.
