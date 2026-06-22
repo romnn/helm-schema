@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_helper_env::BoundHelperEnv;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperPathEntry;
+use crate::helper_summary::HelperSummary;
 use crate::local_projection::{
     direct_bound_paths_from_expr_in_context, local_bound_paths_from_expr,
 };
@@ -30,7 +30,7 @@ pub(crate) fn branch_guard_paths_for_expr(
         local_bindings,
         seen,
     );
-    branch_guard_paths.extend(dependency_paths_from_entries(nested.into_path_entries()));
+    branch_guard_paths.extend(dependency_paths_from_summary(&nested));
     branch_guard_paths
 }
 
@@ -38,13 +38,11 @@ pub(crate) fn truthy_predicate_for_paths(paths: &BTreeSet<String>) -> Predicate 
     Predicate::all(paths.iter().cloned().map(Predicate::truthy_path).collect())
 }
 
-fn dependency_paths_from_entries(
-    entries: impl IntoIterator<Item = HelperPathEntry>,
-) -> BTreeSet<String> {
-    let paths = entries
-        .into_iter()
-        .filter(HelperPathEntry::is_dependency_relevant)
-        .map(|entry| entry.path)
+fn dependency_paths_from_summary(summary: &HelperSummary) -> BTreeSet<String> {
+    let paths = summary
+        .path_facts()
+        .filter(|(_path, facts)| facts.is_dependency_relevant())
+        .map(|(path, _facts)| path.to_string())
         .filter(|path| !path.trim().is_empty())
         .collect();
     remove_ancestor_paths(paths)

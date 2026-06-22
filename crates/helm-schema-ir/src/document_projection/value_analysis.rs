@@ -6,42 +6,28 @@ use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
 use crate::expression_analysis::resolved_string_transform_paths_for_exprs_with_fragment_locals;
 use crate::expression_analysis::resolved_type_hint_paths_for_exprs_with_fragment_locals;
-use crate::helper_summary::{HelperOutputMeta, HelperSummary};
+use crate::helper_summary::HelperOutputMeta;
 use crate::helper_summary_mutation::insert_type_hint;
 use crate::literal_schema_type::expression_schema_type;
 use crate::output_path;
 use crate::value_path_context::ValuePathContext;
 
-pub(crate) struct DocumentValueAnalysis {
+pub(crate) struct DocumentExpressionFacts {
     pub(super) default_fallback_values: BTreeSet<String>,
     pub(super) values: BTreeSet<String>,
     pub(super) encoded_output_values: BTreeSet<String>,
     pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(super) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(super) bound_values: Vec<String>,
-    pub(super) helper: HelperSummary,
 }
 
-impl DocumentValueAnalysis {
-    pub(crate) fn is_empty(&self) -> bool {
-        self.values.is_empty()
-            && self.bound_values.is_empty()
-            && !self.helper.has_document_value_facts()
-    }
-
-    pub(crate) fn take_chart_value_defaults(&mut self) -> BTreeSet<String> {
-        std::mem::take(&mut self.helper.chart_defaults)
-    }
-}
-
-pub(crate) fn collect_document_value_analysis_from_exprs(
+pub(crate) fn collect_document_expression_facts(
     exprs: &[TemplateExpr],
     kind: ValueKind,
     value_path_context: &ValuePathContext<'_>,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
-    helper_summary: Option<HelperSummary>,
-) -> DocumentValueAnalysis {
+) -> DocumentExpressionFacts {
     let default_fallback_values =
         value_path_context.resolved_default_fallback_paths_in_exprs(exprs);
     let mut values: BTreeSet<String> = value_path_context
@@ -59,16 +45,13 @@ pub(crate) fn collect_document_value_analysis_from_exprs(
 
     let bound_values = extract_bound_values_from_exprs(exprs, range_domains, get_bindings);
 
-    let helper = helper_summary.unwrap_or_default();
-
-    DocumentValueAnalysis {
+    DocumentExpressionFacts {
         default_fallback_values,
         values,
         encoded_output_values,
         type_hints,
         local_output_meta,
         bound_values,
-        helper,
     }
 }
 
@@ -214,7 +197,7 @@ mod tests {
     use helm_schema_ast::DefineIndex;
     use helm_schema_ast::parse_action_expressions;
 
-    use super::collect_document_value_analysis_from_exprs;
+    use super::collect_document_expression_facts;
     use crate::ValueKind;
     use crate::abstract_value::AbstractValue;
     use crate::define_body_cache::DefineBodyCache;
@@ -257,13 +240,12 @@ mod tests {
             current_dot_binding: None,
         };
 
-        let analysis = collect_document_value_analysis_from_exprs(
+        let analysis = collect_document_expression_facts(
             &exprs,
             ValueKind::Scalar,
             &context,
             &HashMap::new(),
             &HashMap::new(),
-            None,
         );
 
         sim_assert_eq!(

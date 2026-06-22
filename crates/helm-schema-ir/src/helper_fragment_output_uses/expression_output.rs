@@ -118,11 +118,11 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let nested = helper_env.summarize_calls_in_exprs(exprs, &state.locals.bindings, state.seen);
     let mut nested_fragment_outputs = Vec::new();
     let mut nested_scalar_outputs = Vec::new();
-    for entry in nested.into_path_entries() {
-        if let Some(meta) = entry.output_meta {
-            nested_scalar_outputs.push((entry.path, meta));
+    for (path, facts) in nested.path_facts() {
+        if let Some(meta) = facts.output_meta() {
+            nested_scalar_outputs.push((path.to_string(), meta.clone()));
         }
-        nested_fragment_outputs.extend(entry.fragment_output_uses);
+        nested_fragment_outputs.extend(facts.fragment_output_uses(path));
     }
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
@@ -224,8 +224,7 @@ fn collect_bound_fragment_output_assignment_uses(
         let nested =
             helper_env.summarize_calls_in_exprs(rhs_exprs, &state.locals.bindings, &mut rhs_seen);
         let nested_binding = nested.clone().project_fragment_value();
-        top_level_helper_dependency_paths =
-            dependency_paths_from_entries(nested.into_path_entries());
+        top_level_helper_dependency_paths = dependency_paths_from_summary(&nested);
         if let Some(nested_binding) = nested_binding {
             binding = match binding {
                 Some(binding) => AbstractValue::merge_context_values(vec![binding, nested_binding]),
@@ -271,13 +270,13 @@ fn collect_bound_fragment_output_assignment_uses(
     }
 }
 
-fn dependency_paths_from_entries(
-    entries: impl IntoIterator<Item = crate::helper_summary::HelperPathEntry>,
+fn dependency_paths_from_summary(
+    summary: &crate::helper_summary::HelperSummary,
 ) -> BTreeSet<String> {
-    let paths = entries
-        .into_iter()
-        .filter(crate::helper_summary::HelperPathEntry::is_dependency_relevant)
-        .map(|entry| entry.path)
+    let paths = summary
+        .path_facts()
+        .filter(|(_path, facts)| facts.is_dependency_relevant())
+        .map(|(path, _facts)| path.to_string())
         .filter(|path| !path.trim().is_empty())
         .collect();
     remove_ancestor_paths(paths)

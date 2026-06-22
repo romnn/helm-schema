@@ -26,22 +26,21 @@ pub(crate) fn extend_nested_render(
         .chart_defaults
         .extend(nested.chart_defaults.iter().cloned());
 
-    for entry in nested.into_path_entries() {
-        let path = entry.path;
-        if let Some(mut meta) = entry.output_meta {
+    for (path, facts) in nested.path_facts() {
+        if let Some(mut meta) = facts.output_meta().cloned() {
             meta.add_predicates(active_output_predicates.iter().cloned());
-            analysis.merge_output_meta(path.clone(), meta);
+            analysis.merge_output_meta(path.to_string(), meta);
         }
-        if let Some(meta) = entry.dependency_meta {
-            analysis.merge_dependency_meta(path.clone(), meta);
+        if let Some(meta) = facts.dependency_meta().cloned() {
+            analysis.merge_dependency_meta(path.to_string(), meta);
         }
-        if entry.guard {
-            analysis.add_guard_path(path.clone());
+        if facts.is_guard() {
+            analysis.add_guard_path(path.to_string());
         }
-        if !entry.type_hints.is_empty() {
-            analysis.merge_type_hints(path.clone(), entry.type_hints);
+        if !facts.type_hints().is_empty() {
+            analysis.merge_type_hints(path.to_string(), facts.type_hints().clone());
         }
-        for mut output in entry.fragment_output_uses {
+        for mut output in facts.fragment_output_uses(path) {
             output
                 .meta
                 .add_predicates(active_output_predicates.iter().cloned());

@@ -5,8 +5,8 @@ use helm_schema_ast::TemplateExpr;
 use crate::SourceSpan;
 use crate::contract_sink::ContractUseContext;
 use crate::document_projection::{
-    append_document_output_contract_uses, collect_document_site_context,
-    collect_document_value_analysis_from_exprs,
+    append_document_output_contract_uses, collect_document_expression_facts,
+    collect_document_site_context,
 };
 use crate::helper_summary::HelperOutputMeta;
 
@@ -32,11 +32,11 @@ impl SymbolicWalker<'_> {
                 self.fragment_eval_context(),
                 &mut HashSet::new(),
             );
-        for entry in analysis.into_path_entries() {
-            if let Some(meta) = entry.output_meta {
-                out.entry(entry.path.clone()).or_default().merge(meta);
+        for (path, facts) in analysis.path_facts() {
+            if let Some(meta) = facts.output_meta() {
+                out.entry(path.to_string()).or_default().merge_ref(meta);
             }
-            for output in entry.fragment_output_uses {
+            for output in facts.fragment_output_uses(path) {
                 out.entry(output.source_expr)
                     .or_default()
                     .merge(output.meta);
@@ -64,29 +64,25 @@ impl SymbolicWalker<'_> {
             self.inline_exact_helper_call(exprs);
         }
 
-        let helper_summary = Some(self.summarize_bound_helper_calls_in_exprs(exprs));
-        let value_path_context = self.value_path_context();
-        let mut output_values = collect_document_value_analysis_from_exprs(
-            exprs,
-            kind,
-            &value_path_context,
-            &self.scope.locals().range_domains,
-            &self.scope.locals().get_bindings,
-            helper_summary,
-        );
+        let mut helper_summary = self.summarize_bound_helper_calls_in_exprs(exprs);
         // Stash chart-level `set X "K" (X.K | default V)` mutations discovered
         // in any helper called from this text. Subsequent contract emissions
         // in this walker attach `Guard::Default { path }` for matching reads,
         // which models that the helper's `set` has already run by the time
         // those reads are evaluated.
-        let mut chart_value_defaults = output_values.take_chart_value_defaults();
+        let mut chart_value_defaults = helper_summary.take_chart_value_defaults();
         self.scope
             .locals_mut()
             .append_chart_value_defaults(&mut chart_value_defaults);
-        if output_values.is_empty() {
-            return;
-        }
 
+        let value_path_context = self.value_path_context();
+        let expression_facts = collect_document_expression_facts(
+            exprs,
+            kind,
+            &value_path_context,
+            &self.scope.locals().range_domains,
+            &self.scope.locals().get_bindings,
+        );
         {
             let guards = self.contract_guards();
             let projection_context = ContractUseContext::new(
@@ -102,7 +98,8 @@ impl SymbolicWalker<'_> {
             );
             append_document_output_contract_uses(
                 site_context,
-                output_values,
+                expression_facts,
+                helper_summary,
                 &mut self.contract,
                 &projection_context,
             );

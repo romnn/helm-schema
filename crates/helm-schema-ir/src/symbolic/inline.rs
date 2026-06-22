@@ -107,15 +107,14 @@ impl SymbolicWalker<'_> {
         let suppress_roots = helper_summary.suppress_roots.clone();
         let mut helper_type_hints = BTreeMap::new();
         let mut inline_dependency_meta = BTreeMap::new();
-        for entry in helper_summary.into_path_entries() {
-            let path = entry.path;
-            if !entry.type_hints.is_empty() {
-                helper_type_hints.insert(path.clone(), entry.type_hints);
+        for (path, facts) in helper_summary.path_facts() {
+            if !facts.type_hints().is_empty() {
+                helper_type_hints.insert(path.to_string(), facts.type_hints().clone());
             }
-            if let Some(meta) = entry.dependency_meta
-                && !suppress_roots.contains(&path)
+            if let Some(meta) = facts.dependency_meta()
+                && !suppress_roots.contains(path)
             {
-                inline_dependency_meta.insert(path, meta);
+                inline_dependency_meta.insert(path.to_string(), meta.clone());
             }
         }
         if helper_renders_output {

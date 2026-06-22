@@ -2,30 +2,34 @@ use std::collections::BTreeSet;
 
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::helper_summary::HelperPathEntry;
+use crate::helper_summary::HelperSummary;
 use crate::{Guard, ValueKind, YamlPath, output_path};
 
 use super::site_context::DocumentSiteContext;
-use super::value_analysis::DocumentValueAnalysis;
+use super::value_analysis::DocumentExpressionFacts;
 
 pub(crate) fn append_document_output_contract_uses(
     site: DocumentSiteContext,
-    analysis: DocumentValueAnalysis,
+    facts: DocumentExpressionFacts,
+    helper: HelperSummary,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let DocumentValueAnalysis {
+    let super::value_analysis::DocumentExpressionFacts {
         default_fallback_values,
         values,
         encoded_output_values,
         type_hints,
         local_output_meta,
         bound_values,
-        helper,
-    } = analysis;
+    } = facts;
+
+    if values.is_empty() && bound_values.is_empty() && !helper.has_document_value_facts() {
+        return;
+    }
+
     let suppress_roots = helper.suppress_roots.clone();
-    let helper_entries = helper.into_path_entries().collect::<Vec<_>>();
-    let suppress_direct_values = suppress_direct_values_for_helper(&helper_entries, suppress_roots);
+    let suppress_direct_values = suppress_direct_values_for_helper(&helper, suppress_roots);
 
     for value in values {
         if suppress_direct_values.contains(&value)
@@ -80,76 +84,51 @@ pub(crate) fn append_document_output_contract_uses(
     }
 
     contract.extend_type_hints(type_hints);
-    append_document_helper_contract_uses(
-        helper_entries,
-        &encoded_output_values,
-        &site,
-        contract,
-        context,
-    );
+    append_document_helper_contract_uses(&helper, &encoded_output_values, &site, contract, context);
 }
 
 fn append_document_helper_contract_uses(
-    helper_entries: Vec<HelperPathEntry>,
+    helper: &HelperSummary,
     encoded_output_values: &BTreeSet<String>,
     site: &DocumentSiteContext,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let structured_fragment_sources: BTreeSet<String> = helper_entries
-        .iter()
-        .filter(|entry| !entry.fragment_output_uses.is_empty())
-        .map(|entry| entry.path.clone())
-        .collect();
-    let mut helper_rendered_sources = structured_fragment_sources.clone();
-    helper_rendered_sources.extend(
-        helper_entries
-            .iter()
-            .filter(|entry| entry.output_meta.is_some())
-            .map(|entry| entry.path.clone()),
-    );
-    let only_scalar_helper_outputs = helper_entries
-        .iter()
-        .all(|entry| entry.fragment_output_uses.is_empty());
+    let structured_fragment_sources = helper.structured_fragment_sources();
+    let helper_rendered_sources = helper.rendered_sources();
+    let only_scalar_helper_outputs = helper
+        .path_facts()
+        .all(|(_path, facts)| !facts.has_fragment_output_uses());
 
     let mut dependency_values = Vec::new();
     let mut guard_values = Vec::new();
     let mut type_hints = Vec::new();
 
-    for entry in helper_entries {
-        let HelperPathEntry {
-            path: value,
-            output_meta,
-            dependency_meta,
-            guard,
-            type_hints: entry_type_hints,
-            fragment_output_uses,
-        } = entry;
-
-        if !entry_type_hints.is_empty() {
-            type_hints.push((value.clone(), entry_type_hints));
+    for (value, facts) in helper.path_facts() {
+        if !facts.type_hints().is_empty() {
+            type_hints.push((value.to_string(), facts.type_hints().clone()));
         }
-        if guard {
-            guard_values.push(value.clone());
+        if facts.is_guard() {
+            guard_values.push(value.to_string());
         }
-        if let Some(meta) = dependency_meta {
-            dependency_values.push((value.clone(), meta));
+        if let Some(meta) = facts.dependency_meta() {
+            dependency_values.push((value.to_string(), meta.clone()));
         }
 
-        if let Some(meta) = output_meta
-            && !structured_fragment_sources.contains(&value)
+        if let Some(meta) = facts.output_meta()
+            && !structured_fragment_sources.contains(value)
         {
             let has_rendered_descendant =
-                output_path::values_path_has_descendant(&value, &helper_rendered_sources);
-            for extra_guards in meta.contract_guard_sets(&value) {
-                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(&value));
+                output_path::values_path_has_descendant(value, &helper_rendered_sources);
+            for extra_guards in meta.contract_guard_sets(value) {
+                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(value));
                 if only_scalar_helper_outputs
                     && site.can_project_scalar_helper_to_caller_path()
                     && !has_rendered_descendant
                 {
                     contract.push(site.contract_use_with_extra_provenance(
                         context,
-                        value.clone(),
+                        value.to_string(),
                         site.path.clone(),
                         emit_kind,
                         extra_guards,
@@ -157,7 +136,7 @@ fn append_document_helper_contract_uses(
                     ));
                 } else {
                     contract.push(context.pathless_contract_use_with_extra_provenance(
-                        value.clone(),
+                        value.to_string(),
                         ValueKind::Scalar,
                         &extra_guards,
                         &meta.provenance,
@@ -166,7 +145,7 @@ fn append_document_helper_contract_uses(
             }
         }
 
-        for output in fragment_output_uses {
+        for output in facts.fragment_output_uses(value) {
             append_fragment_output_contract_use(
                 output,
                 &helper_rendered_sources,
@@ -231,13 +210,13 @@ fn append_fragment_output_contract_use(
 }
 
 fn suppress_direct_values_for_helper(
-    helper_entries: &[HelperPathEntry],
+    helper: &HelperSummary,
     suppress_roots: BTreeSet<String>,
 ) -> BTreeSet<String> {
     let mut suppress_direct_values = BTreeSet::new();
-    for entry in helper_entries {
-        if entry.is_dependency_relevant() {
-            suppress_direct_values.insert(entry.path.clone());
+    for (path, facts) in helper.path_facts() {
+        if facts.is_dependency_relevant() {
+            suppress_direct_values.insert(path.to_string());
         }
     }
 

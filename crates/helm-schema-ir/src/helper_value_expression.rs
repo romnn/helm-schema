@@ -200,28 +200,27 @@ fn collect_assignment_bound_helper_values(
         .analysis
         .chart_defaults
         .extend(nested.chart_defaults.iter().cloned());
-    for entry in nested.into_path_entries() {
-        let path = entry.path;
-        if let Some(output_meta) = entry.output_meta {
+    for (path, facts) in nested.path_facts() {
+        if let Some(output_meta) = facts.output_meta().cloned() {
             if output_meta.defaulted {
-                nested_defaulted_output_paths.insert(path.clone());
+                nested_defaulted_output_paths.insert(path.to_string());
             }
             state
                 .analysis
-                .merge_dependency_meta(path.clone(), output_meta);
+                .merge_dependency_meta(path.to_string(), output_meta);
         }
-        if let Some(dependency_meta) = entry.dependency_meta {
-            state.analysis.add_dependency_path(path.clone());
+        if let Some(dependency_meta) = facts.dependency_meta().cloned() {
+            state.analysis.add_dependency_path(path.to_string());
             state
                 .analysis
-                .merge_dependency_meta(path.clone(), dependency_meta);
+                .merge_dependency_meta(path.to_string(), dependency_meta);
         }
-        if !entry.type_hints.is_empty() {
+        if !facts.type_hints().is_empty() {
             state
                 .analysis
-                .merge_type_hints(path.clone(), entry.type_hints);
+                .merge_type_hints(path.to_string(), facts.type_hints().clone());
         }
-        for output in entry.fragment_output_uses {
+        for output in facts.fragment_output_uses(path) {
             if output.meta.defaulted {
                 nested_defaulted_output_paths.insert(output.source_expr.clone());
             }

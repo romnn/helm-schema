@@ -59,6 +59,31 @@ struct PathSchemaFactsAccumulator {
     is_partial_scalar_value_path: bool,
 }
 
+struct ContractUseObservation {
+    has_source: bool,
+    has_render_path: bool,
+    range_guard_paths: BTreeSet<String>,
+    guard_value_paths: BTreeSet<String>,
+    provider_schema_use: Option<ProviderSchemaUse>,
+    self_guarded: bool,
+    null_tolerant: bool,
+}
+
+impl ContractUseObservation {
+    fn new(contract_use: &ContractUse) -> Self {
+        let has_source = !contract_use.source_expr.trim().is_empty();
+        Self {
+            has_source,
+            has_render_path: !contract_use.path.0.is_empty(),
+            range_guard_paths: contract_use.top_level_range_guard_paths(),
+            guard_value_paths: contract_use.guard_value_paths(),
+            provider_schema_use: from_contract_use(contract_use),
+            self_guarded: has_source && use_is_self_guarded(contract_use),
+            null_tolerant: !has_source || use_is_null_tolerant(contract_use),
+        }
+    }
+}
+
 impl Default for PathSchemaFactsAccumulator {
     fn default() -> Self {
         Self {
@@ -144,13 +169,9 @@ impl PathSchemaFactsAccumulator {
 
 impl ContractSchemaSignalBuilder {
     fn record(&mut self, contract_use: &ContractUse) {
-        let has_source = !contract_use.source_expr.trim().is_empty();
-        let has_render_path = !contract_use.path.0.is_empty();
-        let range_guard_paths = contract_use.top_level_range_guard_paths();
-        let guard_value_paths = contract_use.guard_value_paths();
-        let provider_schema_use = from_contract_use(contract_use);
+        let observation = ContractUseObservation::new(contract_use);
 
-        if let Some(provider_use) = provider_schema_use.clone() {
+        if let Some(provider_use) = observation.provider_schema_use.clone() {
             self.path(&provider_use.value_path)
                 .facts
                 .record_provider_schema_use(provider_use);
@@ -167,38 +188,33 @@ impl ContractSchemaSignalBuilder {
             }
         }
 
-        if has_source {
-            let self_guarded = use_is_self_guarded(contract_use);
-            let null_tolerant = use_is_null_tolerant(contract_use);
-            self.path(&contract_use.source_expr).observe_source_use(
-                contract_use,
-                has_render_path,
-                self_guarded,
-                null_tolerant,
-                provider_schema_use,
-            );
+        if observation.has_source {
+            self.path(&contract_use.source_expr)
+                .observe_source_use(contract_use, &observation);
 
             for predicate in contract_use.conditional_guard_predicates() {
                 self.record_guard_predicate(predicate);
             }
         }
 
-        for path in guard_value_paths {
-            if path.trim().is_empty() || (has_source && path == contract_use.source_expr) {
+        for path in observation.guard_value_paths {
+            if path.trim().is_empty()
+                || (observation.has_source && path == contract_use.source_expr)
+            {
                 continue;
             }
             let acc = self.path(&path);
-            if has_source {
+            if observation.has_source {
                 acc.referenced = true;
             }
-            if has_render_path {
+            if observation.has_render_path {
                 acc.facts
-                    .record_render_use(range_guard_paths.contains(&path), None);
+                    .record_render_use(observation.range_guard_paths.contains(&path), None);
             }
         }
 
-        if has_source {
-            for path in range_guard_paths {
+        if observation.has_source {
+            for path in observation.range_guard_paths {
                 if !path.trim().is_empty() {
                     let acc = self.path(&path);
                     acc.ranged = true;
@@ -277,25 +293,25 @@ impl ContractPathAccumulator {
     fn observe_source_use(
         &mut self,
         contract_use: &ContractUse,
-        has_render_path: bool,
-        self_guarded: bool,
-        null_tolerant: bool,
-        provider_schema_use: Option<ProviderSchemaUse>,
+        observation: &ContractUseObservation,
     ) {
         self.referenced = true;
         self.facts.record_path_identity(contract_use);
-        if has_render_path {
-            self.facts
-                .record_render_use(contract_use.has_self_range_guard(), Some(self_guarded));
+        if observation.has_render_path {
+            self.facts.record_render_use(
+                contract_use.has_self_range_guard(),
+                Some(observation.self_guarded),
+            );
         }
-        if has_render_path
+        if observation.has_render_path
             || contract_use.has_self_range_guard()
             || contract_use.kind == ValueKind::Fragment
             || contract_use.has_pathless_self_default_guard()
         {
             self.facts.mark_nullable_render_use();
         }
-        self.facts.record_nullable_observation(null_tolerant);
+        self.facts
+            .record_nullable_observation(observation.null_tolerant);
 
         if contract_use.kind == ValueKind::Scalar
             && contract_use.path.0.is_empty()
@@ -304,24 +320,15 @@ impl ContractPathAccumulator {
             self.requiredness.is_positive_header = true;
         }
 
-        self.observe_conditional_overlay(
-            contract_use,
-            has_render_path,
-            self_guarded,
-            null_tolerant,
-            provider_schema_use,
-        );
+        self.observe_conditional_overlay(contract_use, observation);
     }
 
     fn observe_conditional_overlay(
         &mut self,
         contract_use: &ContractUse,
-        has_render_path: bool,
-        self_guarded: bool,
-        null_tolerant: bool,
-        provider_schema_use: Option<ProviderSchemaUse>,
+        observation: &ContractUseObservation,
     ) {
-        if !has_render_path {
+        if !observation.has_render_path {
             return;
         }
         if contract_use.guards.is_empty() {
@@ -334,12 +341,15 @@ impl ContractPathAccumulator {
         };
 
         let branch = self.conditional_overlay_branches.entry(guards).or_default();
-        branch.record_render_use(contract_use.has_self_range_guard(), Some(self_guarded));
+        branch.record_render_use(
+            contract_use.has_self_range_guard(),
+            Some(observation.self_guarded),
+        );
         branch.mark_nullable_render_use();
-        branch.record_nullable_observation(null_tolerant);
+        branch.record_nullable_observation(observation.null_tolerant);
         branch.record_path_identity(contract_use);
 
-        if let Some(provider_schema_use) = provider_schema_use {
+        if let Some(provider_schema_use) = observation.provider_schema_use.clone() {
             branch.record_provider_schema_use(provider_schema_use);
         }
     }

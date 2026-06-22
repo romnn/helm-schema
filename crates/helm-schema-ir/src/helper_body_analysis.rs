@@ -516,14 +516,12 @@ mod tests {
 
         let summary =
             interpret_bound_helper_body("serviceAccountName", &resolution, context, &mut seen);
-        let entries = summary.into_path_entries().collect::<Vec<_>>();
-        let entry = entries
-            .iter()
-            .find(|entry| entry.path == "signoz.serviceAccount.name")
+        let (_path, facts) = summary
+            .path_facts()
+            .find(|(path, _facts)| *path == "signoz.serviceAccount.name")
             .expect("service account name output metadata");
-        let meta = entry
-            .output_meta
-            .as_ref()
+        let meta = facts
+            .output_meta()
             .expect("service account name output metadata");
         let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
 
@@ -550,14 +548,14 @@ mod tests {
             "expected create=false output branch; guard_sets={guard_sets:#?}"
         );
         sim_assert_eq!(
-            have: &entry.type_hints,
+            have: facts.type_hints(),
             want: &["string".to_string()].into_iter().collect(),
             "defaulted scalar output should retain string type hint"
         );
         assert!(
-            entries
-                .iter()
-                .all(|entry| entry.fragment_output_uses.is_empty())
+            summary
+                .path_facts()
+                .all(|(_path, facts)| !facts.has_fragment_output_uses())
         );
     }
 
@@ -588,22 +586,21 @@ mod tests {
         let mut seen = HashSet::new();
 
         let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
-        let entries = summary.into_path_entries().collect::<Vec<_>>();
-        let repository_entry = entries
-            .iter()
-            .find(|entry| entry.path == "image.repository")
+        let (_repository_path, repository_facts) = summary
+            .path_facts()
+            .find(|(path, _facts)| *path == "image.repository")
             .expect("repository type hint");
-        let tag_entry = entries
-            .iter()
-            .find(|entry| entry.path == "image.tag")
+        let (_tag_path, tag_facts) = summary
+            .path_facts()
+            .find(|(path, _facts)| *path == "image.tag")
             .expect("tag type hint");
 
         sim_assert_eq!(
-            have: &repository_entry.type_hints,
+            have: repository_facts.type_hints(),
             want: &BTreeSet::from(["string".to_string()])
         );
         sim_assert_eq!(
-            have: &tag_entry.type_hints,
+            have: tag_facts.type_hints(),
             want: &BTreeSet::from(["string".to_string()])
         );
     }
@@ -652,8 +649,8 @@ mod tests {
         let summary =
             interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
         let outputs = summary
-            .into_path_entries()
-            .flat_map(|entry| entry.fragment_output_uses)
+            .path_facts()
+            .flat_map(|(path, facts)| facts.fragment_output_uses(path))
             .collect::<Vec<_>>();
 
         assert!(

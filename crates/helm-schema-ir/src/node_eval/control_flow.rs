@@ -1,8 +1,8 @@
 use helm_schema_ast::TemplateHeader;
 
-use crate::fragment_range_scope::range_header_from_source;
 use crate::tree_sitter_utils::children_with_field;
 
+use super::action;
 use super::effects::apply_assignment_action_plan;
 use super::{AssignmentObservation, NodeEvalRuntime, eval_children, eval_node};
 
@@ -29,41 +29,48 @@ pub(super) fn eval_assignment_node<R>(
     runtime.exit_no_output();
 }
 
-pub(super) fn eval_if_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
-where
+pub(super) fn eval_if_node<R>(
+    runtime: &mut R,
+    node: tree_sitter::Node<'_>,
+    header: Option<&TemplateHeader>,
+) where
     R: NodeEvalRuntime,
 {
-    eval_condition_node(runtime, node, |runtime, header| {
+    eval_condition_node(runtime, node, header, |runtime, header| {
         let plan = runtime.plan_if_condition(header);
         runtime.activate_if_condition(&plan);
         plan
     });
 }
 
-pub(super) fn eval_with_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
-where
+pub(super) fn eval_with_node<R>(
+    runtime: &mut R,
+    node: tree_sitter::Node<'_>,
+    header: Option<&TemplateHeader>,
+) where
     R: NodeEvalRuntime,
 {
-    eval_condition_node(runtime, node, |runtime, header| {
+    eval_condition_node(runtime, node, header, |runtime, header| {
         let plan = runtime.plan_with_condition(header);
         runtime.activate_with_condition(&plan);
         plan
     });
 }
 
-fn eval_condition_node<R, F>(runtime: &mut R, node: tree_sitter::Node<'_>, mut enter_consequence: F)
-where
+fn eval_condition_node<R, F>(
+    runtime: &mut R,
+    node: tree_sitter::Node<'_>,
+    header: Option<&TemplateHeader>,
+    mut enter_consequence: F,
+) where
     R: NodeEvalRuntime,
     F: FnMut(&mut R, &TemplateHeader) -> R::ConditionPlan,
 {
     let entry = runtime.scope_snapshot();
-    let else_if_pairs = else_if_pairs(node);
+    let else_if_pairs = else_if_pairs(node, runtime.source());
     let alternatives = children_with_field(node, "alternative");
 
-    let condition_plan = node
-        .child_by_field_name("condition")
-        .and_then(|condition| control_header(runtime.source(), condition))
-        .map(|header| enter_consequence(runtime, &header));
+    let condition_plan = header.map(|header| enter_consequence(runtime, header));
 
     runtime.enter_local_scope();
     for child in children_with_field(node, "consequence") {
@@ -89,7 +96,8 @@ where
 
 fn else_if_pairs<'node>(
     node: tree_sitter::Node<'node>,
-) -> Vec<(tree_sitter::Node<'node>, Vec<tree_sitter::Node<'node>>)> {
+    source: &str,
+) -> Vec<(Option<TemplateHeader>, Vec<tree_sitter::Node<'node>>)> {
     let mut pairs = Vec::new();
     let mut seen_main_condition = false;
     let mut walker = node.walk();
@@ -102,7 +110,7 @@ fn else_if_pairs<'node>(
         match walker.field_name() {
             Some("condition") => {
                 if seen_main_condition {
-                    pairs.push((child, Vec::new()));
+                    pairs.push((action::control_header(source, child), Vec::new()));
                 } else {
                     seen_main_condition = true;
                 }
@@ -124,7 +132,7 @@ fn else_if_pairs<'node>(
 
 fn eval_condition_alternative_chain<R, F>(
     runtime: &mut R,
-    else_if_pairs: &[(tree_sitter::Node<'_>, Vec<tree_sitter::Node<'_>>)],
+    else_if_pairs: &[(Option<TemplateHeader>, Vec<tree_sitter::Node<'_>>)],
     alternatives: &[tree_sitter::Node<'_>],
     enter_consequence: &mut F,
 ) -> R::ScopeSnapshot
@@ -132,7 +140,7 @@ where
     R: NodeEvalRuntime,
     F: FnMut(&mut R, &TemplateHeader) -> R::ConditionPlan,
 {
-    let Some(((condition, option_children), tail)) = else_if_pairs.split_first() else {
+    let Some(((condition_header, option_children), tail)) = else_if_pairs.split_first() else {
         runtime.enter_local_scope();
         for child in alternatives {
             eval_node(runtime, *child);
@@ -142,7 +150,6 @@ where
     };
 
     let entry = runtime.scope_snapshot();
-    let condition_header = control_header(runtime.source(), *condition);
     let condition_plan = condition_header
         .as_ref()
         .map(|header| enter_consequence(runtime, header));
@@ -166,21 +173,17 @@ where
     runtime.scope_snapshot()
 }
 
-fn control_header(source: &str, node: tree_sitter::Node<'_>) -> Option<TemplateHeader> {
-    node.utf8_text(source.as_bytes())
-        .ok()
-        .map(|text| TemplateHeader::parse_control(text.trim().to_string()))
-}
-
-pub(super) fn eval_range_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
-where
+pub(super) fn eval_range_node<R>(
+    runtime: &mut R,
+    node: tree_sitter::Node<'_>,
+    header: Option<&TemplateHeader>,
+) where
     R: NodeEvalRuntime,
 {
     let entry = runtime.scope_snapshot();
 
     let current_path = runtime.document_path_for_node(node);
-    let header = range_header_from_source(node, runtime.source());
-    let plan = runtime.plan_range_action(node, header.as_ref(), &current_path);
+    let plan = runtime.plan_range_action(node, header, &current_path);
     let range_output_path = runtime.range_output_path(node, &current_path, &plan);
 
     runtime.enter_local_scope();

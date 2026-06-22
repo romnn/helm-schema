@@ -14,8 +14,8 @@ use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_summary_mutation::merge_helper_output_meta_maps;
 use crate::helper_value_expression::collect_helper_value_expression_from_exprs;
 use crate::helper_walk_state::{
-    HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
-    HelperRuntimeLocals, HelperValuesWalkState,
+    HelperRuntimeControlSnapshot, HelperRuntimeControlState, HelperRuntimeLocals,
+    HelperRuntimeScopeJoin, HelperValuesWalkState,
 };
 use crate::node_eval::{
     AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime,
@@ -158,7 +158,7 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        self.control.prepare_branch_join(&entry.control);
+        let outcomes = self.control.branch_join_outcomes(&entry.control, outcomes);
         self.merge_outcomes(outcomes);
     }
 
@@ -167,15 +167,10 @@ impl NodeEvalRuntime for HelperValueRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        match self.control.prepare_range_join(&entry.control) {
-            HelperRangeJoinBehavior::PromoteBodyOutcome => {
-                if let Some(body_outcome) = outcomes.into_iter().next() {
-                    self.promote_outcome(body_outcome);
-                }
-            }
-            HelperRangeJoinBehavior::MergeAllOutcomes => {
-                self.merge_outcomes(outcomes);
-            }
+        match self.control.range_join_outcomes(&entry.control, outcomes) {
+            HelperRuntimeScopeJoin::Promote(body_outcome) => self.promote_outcome(body_outcome),
+            HelperRuntimeScopeJoin::Merge(outcomes) => self.merge_outcomes(outcomes),
+            HelperRuntimeScopeJoin::Noop => {}
         }
     }
 

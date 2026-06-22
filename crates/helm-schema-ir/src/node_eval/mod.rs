@@ -24,14 +24,14 @@ where
         NodeAction::Assignment(exprs) => {
             control_flow::eval_assignment_node(runtime, node, exprs.as_deref());
         }
-        NodeAction::If => {
-            control_flow::eval_if_node(runtime, node);
+        NodeAction::If(header) => {
+            control_flow::eval_if_node(runtime, node, header.as_ref());
         }
-        NodeAction::With => {
-            control_flow::eval_with_node(runtime, node);
+        NodeAction::With(header) => {
+            control_flow::eval_with_node(runtime, node, header.as_ref());
         }
-        NodeAction::Range => {
-            control_flow::eval_range_node(runtime, node);
+        NodeAction::Range(header) => {
+            control_flow::eval_range_node(runtime, node, header.as_ref());
         }
         NodeAction::Output(exprs) => {
             if let Some(exprs) = exprs {
