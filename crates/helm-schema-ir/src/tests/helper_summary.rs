@@ -99,7 +99,7 @@ fn helper_summary_merges_fragment_output_uses() {
 
     let outputs = summary
         .path_facts()
-        .flat_map(|(path, facts)| facts.fragment_output_uses(path))
+        .flat_map(|(_path, facts)| facts.fragment_output_uses().cloned())
         .collect::<Vec<_>>();
 
     sim_assert_eq!(have: outputs.len(), want: 1);

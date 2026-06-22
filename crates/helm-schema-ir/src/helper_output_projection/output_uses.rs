@@ -5,6 +5,7 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
+use crate::expression_output_facts::encoded_output_paths_from_exprs;
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::predicate::Predicate;
 use crate::template_expr_analysis::expr_contains_helper_call;
@@ -43,7 +44,18 @@ pub(crate) fn collect_output_uses_from_expr(
 
     let env = EvalEnv::from_helper_context(Some(context.bindings), context.current_dot);
     if let Some(value) = eval_expr(expr, &env).value {
-        let encoded_paths = collect_encoded_output_paths_from_expr(expr, &env);
+        let encoded_paths = encoded_output_paths_from_exprs(std::slice::from_ref(expr), |expr| {
+            eval_expr(expr, &env)
+                .value
+                .map(|value| {
+                    value
+                        .paths()
+                        .into_iter()
+                        .filter(|path| !path.is_empty())
+                        .collect()
+                })
+                .unwrap_or_default()
+        });
         value.collect_output_uses_with_encoding(
             outputs,
             context.relative_path,
@@ -78,81 +90,5 @@ pub(crate) fn collect_output_uses_from_expr(
         | TemplateExpr::Field(_)
         | TemplateExpr::Variable(_)
         | TemplateExpr::Unknown(_) => {}
-    }
-}
-
-fn collect_encoded_output_paths_from_expr(expr: &TemplateExpr, env: &EvalEnv) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    append_encoded_output_paths_from_expr(expr, env, &mut out);
-    out
-}
-
-fn append_encoded_output_paths_from_expr(
-    expr: &TemplateExpr,
-    env: &EvalEnv,
-    out: &mut BTreeSet<String>,
-) {
-    match expr.deparen() {
-        TemplateExpr::Call { function, args } => {
-            if function == "b64enc" {
-                for arg in args {
-                    append_expr_value_paths(arg, env, out);
-                }
-            }
-            for arg in args {
-                append_encoded_output_paths_from_expr(arg, env, out);
-            }
-        }
-        TemplateExpr::Pipeline(stages) => {
-            append_pipeline_encoded_output_paths(stages, env, out);
-        }
-        TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
-            append_encoded_output_paths_from_expr(operand, env, out);
-        }
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            append_encoded_output_paths_from_expr(value, env, out);
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
-}
-
-fn append_pipeline_encoded_output_paths(
-    stages: &[TemplateExpr],
-    env: &EvalEnv,
-    out: &mut BTreeSet<String>,
-) {
-    let mut prefix: Vec<TemplateExpr> = Vec::new();
-    for stage in stages {
-        let current = stage.deparen();
-        if let TemplateExpr::Call { function, args } = current {
-            for arg in args {
-                append_encoded_output_paths_from_expr(arg, env, out);
-            }
-            if function == "b64enc" {
-                if !prefix.is_empty() {
-                    let prefix_expr = if prefix.len() == 1 {
-                        prefix[0].clone()
-                    } else {
-                        TemplateExpr::Pipeline(prefix.clone())
-                    };
-                    append_expr_value_paths(&prefix_expr, env, out);
-                }
-                for arg in args {
-                    append_expr_value_paths(arg, env, out);
-                }
-            }
-        } else {
-            append_encoded_output_paths_from_expr(current, env, out);
-        }
-        prefix.push(stage.clone());
-    }
-}
-
-fn append_expr_value_paths(expr: &TemplateExpr, env: &EvalEnv, out: &mut BTreeSet<String>) {
-    if let Some(value) = eval_expr(expr, env).value {
-        out.extend(value.paths().into_iter().filter(|path| !path.is_empty()));
     }
 }

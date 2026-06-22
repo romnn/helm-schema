@@ -33,7 +33,7 @@ impl SymbolicWalker<'_> {
             if let Some(meta) = facts.output_meta() {
                 out.entry(path.to_string()).or_default().merge_ref(meta);
             }
-            for output in facts.fragment_output_uses(path) {
+            for output in facts.fragment_output_uses().cloned() {
                 out.entry(output.source_expr)
                     .or_default()
                     .merge(output.meta);

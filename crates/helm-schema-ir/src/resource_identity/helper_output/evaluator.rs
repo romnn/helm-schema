@@ -8,24 +8,45 @@ use crate::capability_branch::{
 
 use super::{HelperOutput, MAX_RECURSION_DEPTH};
 
-pub(super) struct HelperOutputEvaluator {
+pub(crate) struct HelperOutputEvaluator {
     seen: HashSet<String>,
 }
 
 impl HelperOutputEvaluator {
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             seen: HashSet::new(),
         }
     }
 
-    pub(super) fn evaluate(mut self, name: &str, helpers: &DefineIndex) -> HelperOutput {
+    pub(crate) fn evaluate(mut self, name: &str, helpers: &DefineIndex) -> HelperOutput {
         let body = helpers.get(name).unwrap_or(&[]);
         if let Some(branches) = self.extract_top_level_branches(body, helpers, 0) {
             return HelperOutput::Branched { branches };
         }
         let flat = self.collect_literals(body, helpers, 0);
         HelperOutput::Literals(dedup_preserve_order(flat))
+    }
+
+    pub(crate) fn evaluate_action(
+        mut self,
+        action: &TemplateAction,
+        helpers: &DefineIndex,
+    ) -> Option<HelperOutput> {
+        let helper_names = helper_call_names(action);
+        if !helper_names.is_empty() {
+            let outputs = helper_names
+                .into_iter()
+                .map(|name| HelperOutputEvaluator::new().evaluate(&name, helpers));
+            return combine_helper_outputs(outputs);
+        }
+
+        let literals = dedup_preserve_order(self.extract_expr_outputs(action, helpers, 0));
+        if literals.is_empty() {
+            None
+        } else {
+            Some(HelperOutput::Literals(literals))
+        }
     }
 
     /// Try to project the helper body as a top-level if/elif/else chain.
@@ -335,6 +356,57 @@ impl HelperOutputEvaluator {
         let result = helpers.get(name).map(|body| f(self, body));
         self.seen.remove(name);
         result
+    }
+}
+
+fn helper_call_names(action: &TemplateAction) -> Vec<String> {
+    let mut out = Vec::new();
+    for expr in action.exprs() {
+        expr.walk(|node| {
+            let TemplateExpr::Call { function, args } = node else {
+                return;
+            };
+            if !matches!(function.as_str(), "include" | "template") {
+                return;
+            }
+            let Some(TemplateExpr::Literal(lit)) = args.first() else {
+                return;
+            };
+            let Some(name) = lit.as_string() else {
+                return;
+            };
+            if !name.is_empty() && !out.iter().any(|existing| existing == name) {
+                out.push(name.to_string());
+            }
+        });
+    }
+    out
+}
+
+fn combine_helper_outputs(outputs: impl IntoIterator<Item = HelperOutput>) -> Option<HelperOutput> {
+    let mut literals = Vec::new();
+    let mut branches = Vec::new();
+    for output in outputs {
+        match output {
+            HelperOutput::Literals(values) => {
+                for value in values {
+                    if !value.is_empty() && !literals.contains(&value) {
+                        literals.push(value);
+                    }
+                }
+            }
+            HelperOutput::Branched {
+                branches: output_branches,
+            } => branches.extend(output_branches),
+        }
+    }
+
+    if !branches.is_empty() {
+        Some(HelperOutput::Branched { branches })
+    } else if !literals.is_empty() {
+        Some(HelperOutput::Literals(literals))
+    } else {
+        None
     }
 }
 

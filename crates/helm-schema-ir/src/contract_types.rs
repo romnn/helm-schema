@@ -88,7 +88,8 @@ impl fmt::Display for GuardValue {
 }
 
 /// A guard condition from an `if`, `with`, or `range` block.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Guard {
     /// Simple truthy check: `if .Values.X`
     Truthy { path: String },

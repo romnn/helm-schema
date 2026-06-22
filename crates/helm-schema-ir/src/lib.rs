@@ -22,6 +22,7 @@ mod expr_eval;
 mod expr_function_catalog;
 mod expr_pipeline_eval;
 mod expression_analysis;
+mod expression_output_facts;
 mod fragment_assignment;
 mod fragment_expr_eval;
 mod fragment_range_scope;
@@ -65,8 +66,7 @@ pub use capability_liveness::{
     CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
 };
 pub use contract::{
-    ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
-    ContractDocumentUse, ContractIr, ContractUse, FinalizedContract,
+    ContractDocument, ContractDocumentUse, ContractIr, ContractUse, FinalizedContract,
 };
 pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,

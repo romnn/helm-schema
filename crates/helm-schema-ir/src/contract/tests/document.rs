@@ -1,8 +1,8 @@
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
-use super::{ContractDocument, ContractDocumentGuard, ContractDocumentUse};
-use crate::{ResourceRef, ValueKind, YamlPath};
+use super::{ContractDocument, ContractDocumentUse};
+use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
 #[test]
 fn contract_document_serializes_stable_guard_shape() {
@@ -11,19 +11,19 @@ fn contract_document_serializes_stable_guard_shape() {
         path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
         kind: ValueKind::Scalar,
         guards: vec![
-            ContractDocumentGuard::Or {
+            Guard::Or {
                 paths: vec![
                     "global.kidEnabled".to_string(),
                     "kid.enabled".to_string(),
                     "tags.observability".to_string(),
                 ],
             },
-            ContractDocumentGuard::AnyOf {
+            Guard::AnyOf {
                 alternatives: vec![
-                    vec![ContractDocumentGuard::Truthy {
+                    vec![Guard::Truthy {
                         path: "kid.enabled".to_string(),
                     }],
-                    vec![ContractDocumentGuard::Eq {
+                    vec![Guard::Eq {
                         path: "kid.mode".to_string(),
                         value: crate::GuardValue::string("prod"),
                     }],

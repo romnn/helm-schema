@@ -171,7 +171,7 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
         interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
     let outputs = summary
         .path_facts()
-        .flat_map(|(path, facts)| facts.fragment_output_uses(path))
+        .flat_map(|(_path, facts)| facts.fragment_output_uses().cloned())
         .collect::<Vec<_>>();
 
     assert!(

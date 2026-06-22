@@ -16,13 +16,11 @@
 //! Output is typed so the common `if Capabilities.APIVersions.Has … else …`
 //! shape stays branch-aware for Kubernetes lookup.
 
-use helm_schema_ast::DefineIndex;
-
 use crate::capability_branch::HelperBranch;
 
-use self::evaluator::HelperOutputEvaluator;
-
 mod evaluator;
+
+pub(super) use evaluator::HelperOutputEvaluator;
 
 const MAX_RECURSION_DEPTH: usize = 6;
 
@@ -43,12 +41,6 @@ pub(crate) enum HelperOutput {
     /// branch carries its guard (when decodable) and the literals it
     /// can produce.
     Branched { branches: Vec<HelperBranch> },
-}
-
-/// Resolve a helper name to its typed output.
-#[must_use]
-pub(crate) fn helper_evaluate(name: &str, helpers: &DefineIndex) -> HelperOutput {
-    HelperOutputEvaluator::new().evaluate(name, helpers)
 }
 
 #[cfg(test)]

@@ -1,13 +1,10 @@
-use helm_schema_ast::{
-    DefineIndex, HelmAst, Literal, TemplateAction, TemplateExpr, TemplateHeader,
-};
+use helm_schema_ast::{DefineIndex, HelmAst, TemplateHeader};
 
 use crate::capability_branch::{
     CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard, decode_guard_expr,
 };
 
-use super::helper_output::{HelperOutput, helper_evaluate};
-use super::state::ResourceState;
+use super::helper_output::{HelperOutput, HelperOutputEvaluator};
 
 pub(super) struct ApiVersionOutputDetector<'a> {
     defines: &'a DefineIndex,
@@ -161,7 +158,9 @@ impl<'a> ApiVersionOutputDetector<'a> {
                     Some(HelperOutput::Literals(vec![value.to_string()]))
                 }
             }
-            HelmAst::HelmExpr { action } => self.helper_output(action),
+            HelmAst::HelmExpr { action } => {
+                HelperOutputEvaluator::new().evaluate_action(action, self.defines)
+            }
             HelmAst::Document { items } | HelmAst::Mapping { items } => {
                 for item in items {
                     if let Some(output) = self.output(Some(item)) {
@@ -182,14 +181,6 @@ impl<'a> ApiVersionOutputDetector<'a> {
             | HelmAst::HelmComment { .. } => None,
         }
     }
-
-    fn helper_output(&self, action: &TemplateAction) -> Option<HelperOutput> {
-        let mut combined = ResourceState::default();
-        for name in helper_call_names(action) {
-            combined.record_api_version_output(helper_evaluate(&name, self.defines));
-        }
-        combined.into_helper_output()
-    }
 }
 
 pub(super) fn scalar_text(node: &HelmAst) -> Option<&str> {
@@ -197,29 +188,6 @@ pub(super) fn scalar_text(node: &HelmAst) -> Option<&str> {
         HelmAst::Scalar { text } => Some(text.trim()),
         _ => None,
     }
-}
-
-fn helper_call_names(action: &TemplateAction) -> Vec<String> {
-    let mut out = Vec::new();
-    for expr in action.exprs() {
-        expr.walk(|node| {
-            let TemplateExpr::Call { function, args } = node else {
-                return;
-            };
-            if !matches!(function.as_str(), "include" | "template") {
-                return;
-            }
-            let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
-                args.first()
-            else {
-                return;
-            };
-            if !name.is_empty() && !out.contains(name) {
-                out.push(name.clone());
-            }
-        });
-    }
-    out
 }
 
 fn dedup_preserve_order(values: Vec<String>) -> Vec<String> {

@@ -20,10 +20,7 @@ pub(crate) fn computed_with_body_fragment_value_expr(
     current_dot_fragment: Option<&AbstractValue>,
     current_dot_binding: Option<&AbstractValue>,
 ) -> Option<AbstractValue> {
-    let mut locals = template_bindings.clone();
-    for (key, value) in root_bindings {
-        locals.insert(key.clone(), value.to_context_value());
-    }
+    let locals = locals_with_roots(template_bindings, root_bindings);
 
     context_value_from_outer_expr(
         expr,
@@ -137,10 +134,7 @@ impl ValuePathContext<'_> {
             return [path].into_iter().collect();
         }
 
-        let mut locals = self.template_bindings.clone();
-        for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), value.to_context_value());
-        }
+        let locals = locals_with_roots(self.template_bindings, self.root_bindings);
 
         let outer_binding = context_value_from_outer_expr(
             expr,
@@ -209,10 +203,7 @@ impl ValuePathContext<'_> {
         &self,
         expr: &TemplateExpr,
     ) -> BTreeSet<String> {
-        let mut locals = self.template_bindings.clone();
-        for (key, value) in self.root_bindings {
-            locals.insert(key.clone(), value.to_context_value());
-        }
+        let locals = locals_with_roots(self.template_bindings, self.root_bindings);
 
         let mut paths = BTreeSet::new();
         walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
@@ -239,6 +230,17 @@ impl ValuePathContext<'_> {
         });
         paths
     }
+}
+
+fn locals_with_roots(
+    template_bindings: &HashMap<String, AbstractValue>,
+    root_bindings: &HashMap<String, AbstractValue>,
+) -> HashMap<String, AbstractValue> {
+    let mut locals = template_bindings.clone();
+    for (key, value) in root_bindings {
+        locals.insert(key.clone(), value.to_context_value());
+    }
+    locals
 }
 
 fn walk_expr_maximal_paths_excluding_helper_call_args<F>(expr: &TemplateExpr, visit: &mut F)

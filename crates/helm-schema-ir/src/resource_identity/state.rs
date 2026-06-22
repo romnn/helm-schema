@@ -68,16 +68,4 @@ impl ResourceState {
             api_version_branches: self.api_version_branches,
         })
     }
-
-    pub(super) fn into_helper_output(self) -> Option<HelperOutput> {
-        if self.api_versions.is_empty() && self.api_version_branches.is_empty() {
-            None
-        } else if self.api_version_branches.is_empty() {
-            Some(HelperOutput::Literals(self.api_versions))
-        } else {
-            Some(HelperOutput::Branched {
-                branches: self.api_version_branches,
-            })
-        }
-    }
 }

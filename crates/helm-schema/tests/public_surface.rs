@@ -4,7 +4,7 @@ use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs,
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
     AnalysisSession,
-    contract::{ContractDocument, ContractDocumentGuard, ValueKind},
+    contract::{ContractDocument, Guard, ValueKind},
     diagnostics::DiagnosticSink,
 };
 use serde_json::{Value, json};
@@ -608,7 +608,7 @@ data:
             .exact_uses
             .iter()
             .any(|use_| use_.guards.as_slice()
-                == [ContractDocumentGuard::Truthy {
+                == [Guard::Truthy {
                     path: "kid.enabled".to_string()
                 }]
                 .as_slice()),
@@ -620,10 +620,10 @@ data:
             .iter()
             .any(|use_| use_.guards.as_slice()
                 == [
-                    ContractDocumentGuard::Absent {
+                    Guard::Absent {
                         path: "kid.enabled".to_string()
                     },
-                    ContractDocumentGuard::Truthy {
+                    Guard::Truthy {
                         path: "global.kidEnabled".to_string()
                     },
                 ]

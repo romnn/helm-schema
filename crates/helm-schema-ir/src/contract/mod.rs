@@ -5,10 +5,7 @@ mod graph;
 mod use_claim;
 mod use_semantics;
 
-pub use document::{
-    ContractDocument, ContractDocumentGuard, ContractDocumentProvenance, ContractDocumentSpan,
-    ContractDocumentUse,
-};
+pub use document::{ContractDocument, ContractDocumentUse};
 pub(crate) use fact::ContractTypeHint;
 pub use finalized::FinalizedContract;
 pub use graph::ContractIr;

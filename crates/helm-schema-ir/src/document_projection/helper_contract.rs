@@ -8,6 +8,7 @@ use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
 use crate::expression_analysis::resolved_string_transform_paths_for_exprs_with_fragment_locals;
 use crate::expression_analysis::resolved_type_hint_paths_for_exprs_with_fragment_locals;
+use crate::expression_output_facts::encoded_output_paths_from_exprs;
 use crate::helper_summary::{HelperSummary, insert_type_hint};
 use crate::literal_schema_type::expression_schema_type;
 use crate::value_path_context::ValuePathContext;
@@ -171,7 +172,7 @@ fn append_document_helper_contract_uses(
             }
         }
 
-        for output in facts.fragment_output_uses(value) {
+        for output in facts.fragment_output_uses().cloned() {
             append_fragment_output_contract_use(
                 output,
                 &helper_rendered_sources,
@@ -273,75 +274,9 @@ fn collect_encoded_output_values(
     exprs: &[TemplateExpr],
     value_path_context: &ValuePathContext<'_>,
 ) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    for expr in exprs {
-        collect_encoded_output_values_from_expr(expr, value_path_context, &mut out);
-    }
-    out
-}
-
-fn collect_encoded_output_values_from_expr(
-    expr: &TemplateExpr,
-    value_path_context: &ValuePathContext<'_>,
-    out: &mut BTreeSet<String>,
-) {
-    match expr.deparen() {
-        TemplateExpr::Call { function, args } => {
-            if function == "b64enc" {
-                for arg in args {
-                    out.extend(value_path_context.resolve_expr_to_values_paths(arg));
-                }
-            }
-            for arg in args {
-                collect_encoded_output_values_from_expr(arg, value_path_context, out);
-            }
-        }
-        TemplateExpr::Pipeline(stages) => {
-            collect_pipeline_encoded_output_values(stages, value_path_context, out);
-        }
-        TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
-            collect_encoded_output_values_from_expr(operand, value_path_context, out);
-        }
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            collect_encoded_output_values_from_expr(value, value_path_context, out);
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
-}
-
-fn collect_pipeline_encoded_output_values(
-    stages: &[TemplateExpr],
-    value_path_context: &ValuePathContext<'_>,
-    out: &mut BTreeSet<String>,
-) {
-    let mut prefix: Vec<TemplateExpr> = Vec::new();
-    for stage in stages {
-        let current = stage.deparen();
-        if let TemplateExpr::Call { function, args } = current {
-            for arg in args {
-                collect_encoded_output_values_from_expr(arg, value_path_context, out);
-            }
-            if function == "b64enc" {
-                if !prefix.is_empty() {
-                    let prefix_expr = if prefix.len() == 1 {
-                        prefix[0].clone()
-                    } else {
-                        TemplateExpr::Pipeline(prefix.clone())
-                    };
-                    out.extend(value_path_context.resolve_expr_to_values_paths(&prefix_expr));
-                }
-                for arg in args {
-                    out.extend(value_path_context.resolve_expr_to_values_paths(arg));
-                }
-            }
-        } else {
-            collect_encoded_output_values_from_expr(current, value_path_context, out);
-        }
-        prefix.push(stage.clone());
-    }
+    encoded_output_paths_from_exprs(exprs, |expr| {
+        value_path_context.resolve_expr_to_values_paths(expr)
+    })
 }
 
 fn collect_document_type_hints(

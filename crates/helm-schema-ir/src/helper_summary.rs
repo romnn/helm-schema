@@ -161,35 +161,6 @@ impl HelperFragmentOutputUse {
     }
 }
 
-#[derive(Clone, Debug)]
-struct HelperStructuredOutput {
-    relative_path: YamlPath,
-    kind: ValueKind,
-    encoded: bool,
-    meta: HelperOutputMeta,
-}
-
-impl HelperStructuredOutput {
-    fn from_output_use(output: HelperFragmentOutputUse) -> Self {
-        Self {
-            relative_path: output.relative_path,
-            kind: output.kind,
-            encoded: output.encoded,
-            meta: output.meta,
-        }
-    }
-
-    fn into_output_use(self, source_expr: String) -> HelperFragmentOutputUse {
-        HelperFragmentOutputUse {
-            source_expr,
-            relative_path: self.relative_path,
-            kind: self.kind,
-            encoded: self.encoded,
-            meta: self.meta,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default)]
 pub(crate) struct HelperSummary {
     pub(crate) string_output: BTreeSet<String>,
@@ -206,56 +177,51 @@ pub(crate) struct HelperSummary {
     pub(crate) chart_defaults: BTreeSet<String>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum HelperPathMetaRole {
-    Output,
-    Dependency,
-}
-
 #[derive(Clone, Debug, Default)]
 pub(crate) struct HelperPathFacts {
-    meta_by_role: BTreeMap<HelperPathMetaRole, HelperOutputMeta>,
+    output_meta: Option<HelperOutputMeta>,
+    dependency_meta: Option<HelperOutputMeta>,
     pub(crate) guard: bool,
     pub(crate) type_hints: BTreeSet<String>,
-    structured_outputs: Vec<HelperStructuredOutput>,
+    fragment_output_uses: Vec<HelperFragmentOutputUse>,
 }
 
 impl HelperPathFacts {
     fn merge(&mut self, other: Self) {
-        for (role, meta) in other.meta_by_role {
-            self.meta_by_role.entry(role).or_default().merge(meta);
-        }
+        merge_optional_meta(&mut self.output_meta, other.output_meta);
+        merge_optional_meta(&mut self.dependency_meta, other.dependency_meta);
         self.guard |= other.guard;
         self.type_hints.extend(other.type_hints);
-        self.structured_outputs.extend(other.structured_outputs);
+        self.fragment_output_uses.extend(other.fragment_output_uses);
     }
 
     pub(crate) fn is_dependency_relevant(&self) -> bool {
-        self.has_meta_role(HelperPathMetaRole::Output)
-            || self.has_meta_role(HelperPathMetaRole::Dependency)
+        self.output_meta.is_some()
+            || self.dependency_meta.is_some()
             || self.guard
             || !self.type_hints.is_empty()
-            || !self.structured_outputs.is_empty()
+            || !self.fragment_output_uses.is_empty()
     }
 
-    fn merge_meta(&mut self, role: HelperPathMetaRole, meta: HelperOutputMeta) {
-        self.meta_by_role.entry(role).or_default().merge(meta);
+    fn merge_output_meta(&mut self, meta: HelperOutputMeta) {
+        merge_optional_meta(&mut self.output_meta, Some(meta));
     }
 
-    fn ensure_meta(&mut self, role: HelperPathMetaRole) {
-        self.meta_by_role.entry(role).or_default();
+    fn merge_dependency_meta(&mut self, meta: HelperOutputMeta) {
+        merge_optional_meta(&mut self.dependency_meta, Some(meta));
     }
 
-    fn has_meta_role(&self, role: HelperPathMetaRole) -> bool {
-        self.meta_by_role.contains_key(&role)
+    fn ensure_dependency_meta(&mut self) {
+        self.dependency_meta
+            .get_or_insert_with(HelperOutputMeta::default);
     }
 
     pub(crate) fn output_meta(&self) -> Option<&HelperOutputMeta> {
-        self.meta_by_role.get(&HelperPathMetaRole::Output)
+        self.output_meta.as_ref()
     }
 
     pub(crate) fn dependency_meta(&self) -> Option<&HelperOutputMeta> {
-        self.meta_by_role.get(&HelperPathMetaRole::Dependency)
+        self.dependency_meta.as_ref()
     }
 
     pub(crate) fn is_guard(&self) -> bool {
@@ -266,16 +232,22 @@ impl HelperPathFacts {
         &self.type_hints
     }
 
-    pub(crate) fn fragment_output_uses(&self, source_expr: &str) -> Vec<HelperFragmentOutputUse> {
-        self.structured_outputs
-            .iter()
-            .cloned()
-            .map(|output| output.into_output_use(source_expr.to_string()))
-            .collect()
+    pub(crate) fn fragment_output_uses(&self) -> impl Iterator<Item = &HelperFragmentOutputUse> {
+        self.fragment_output_uses.iter()
     }
 
     pub(crate) fn has_fragment_output_uses(&self) -> bool {
-        !self.structured_outputs.is_empty()
+        !self.fragment_output_uses.is_empty()
+    }
+}
+
+fn merge_optional_meta(target: &mut Option<HelperOutputMeta>, incoming: Option<HelperOutputMeta>) {
+    let Some(incoming) = incoming else {
+        return;
+    };
+    match target {
+        Some(target) => target.merge(incoming),
+        None => *target = Some(incoming),
     }
 }
 
@@ -295,7 +267,13 @@ impl HelperSummary {
     }
 
     pub(crate) fn merge_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
-        self.merge_path_meta(path, HelperPathMetaRole::Output, meta);
+        if path.trim().is_empty() {
+            return;
+        }
+        self.path_facts
+            .entry(path)
+            .or_default()
+            .merge_output_meta(meta);
     }
 
     pub(crate) fn add_dependency_meta_map(
@@ -312,12 +290,18 @@ impl HelperSummary {
             self.path_facts
                 .entry(path)
                 .or_default()
-                .ensure_meta(HelperPathMetaRole::Dependency);
+                .ensure_dependency_meta();
         }
     }
 
     pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {
-        self.merge_path_meta(path, HelperPathMetaRole::Dependency, meta);
+        if path.trim().is_empty() {
+            return;
+        }
+        self.path_facts
+            .entry(path)
+            .or_default()
+            .merge_dependency_meta(meta);
     }
 
     pub(crate) fn add_guard_path(&mut self, path: String) {
@@ -333,8 +317,8 @@ impl HelperSummary {
         self.path_facts
             .entry(output.source_expr.clone())
             .or_default()
-            .structured_outputs
-            .push(HelperStructuredOutput::from_output_use(output));
+            .fragment_output_uses
+            .push(output);
     }
 
     pub(crate) fn add_fragment_output_uses(&mut self, mut outputs: Vec<HelperFragmentOutputUse>) {
@@ -378,7 +362,7 @@ impl HelperSummary {
 
     pub(crate) fn add_provenance_to_outputs(&mut self, provenance: ContractProvenance) {
         for facts in self.path_facts.values_mut() {
-            if let Some(meta) = facts.meta_by_role.get_mut(&HelperPathMetaRole::Output) {
+            if let Some(meta) = facts.output_meta.as_mut() {
                 meta.add_provenance_site(provenance.clone());
             }
         }
@@ -386,7 +370,7 @@ impl HelperSummary {
 
     pub(crate) fn add_provenance_to_dependencies(&mut self, provenance: ContractProvenance) {
         for facts in self.path_facts.values_mut() {
-            if let Some(meta) = facts.meta_by_role.get_mut(&HelperPathMetaRole::Dependency) {
+            if let Some(meta) = facts.dependency_meta.as_mut() {
                 meta.add_provenance_site(provenance.clone());
             }
         }
@@ -394,7 +378,7 @@ impl HelperSummary {
 
     pub(crate) fn add_provenance_to_fragment_outputs(&mut self, provenance: ContractProvenance) {
         for facts in self.path_facts.values_mut() {
-            for output in &mut facts.structured_outputs {
+            for output in &mut facts.fragment_output_uses {
                 output.meta.add_provenance_site(provenance.clone());
             }
         }
@@ -402,7 +386,7 @@ impl HelperSummary {
 
     pub(crate) fn remove_output_path(&mut self, path: &str) {
         if let Some(facts) = self.path_facts.get_mut(path) {
-            facts.meta_by_role.remove(&HelperPathMetaRole::Output);
+            facts.output_meta = None;
         }
     }
 
@@ -414,7 +398,7 @@ impl HelperSummary {
 
     pub(crate) fn structured_fragment_sources(&self) -> BTreeSet<String> {
         self.path_facts()
-            .filter(|(_path, facts)| !facts.structured_outputs.is_empty())
+            .filter(|(_path, facts)| !facts.fragment_output_uses.is_empty())
             .map(|(path, _facts)| path.to_string())
             .collect()
     }
@@ -441,8 +425,7 @@ impl HelperSummary {
             .path_facts
             .iter()
             .filter_map(|(path, facts)| {
-                (facts.has_meta_role(HelperPathMetaRole::Output) || facts.guard)
-                    .then_some(path.clone())
+                (facts.output_meta.is_some() || facts.guard).then_some(path.clone())
             })
             .collect();
         for binding in bindings.values() {
@@ -462,16 +445,6 @@ impl HelperSummary {
             }
             self.path_facts.entry(path).or_default().merge(facts);
         }
-    }
-
-    fn merge_path_meta(&mut self, path: String, role: HelperPathMetaRole, meta: HelperOutputMeta) {
-        if path.trim().is_empty() {
-            return;
-        }
-        self.path_facts
-            .entry(path)
-            .or_default()
-            .merge_meta(role, meta);
     }
 
     pub(crate) fn project_helper_value(self) -> Option<AbstractValue> {
@@ -494,7 +467,7 @@ fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
         values.push(AbstractValue::StringSet(analysis.string_output.clone()));
     }
     for (path, facts) in analysis.path_facts() {
-        for output in facts.fragment_output_uses(path) {
+        for output in facts.fragment_output_uses().cloned() {
             values.push(AbstractValue::for_output_path(
                 output.source_expr,
                 &output.relative_path,

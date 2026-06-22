@@ -122,7 +122,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         if let Some(meta) = facts.output_meta() {
             nested_scalar_outputs.push((path.to_string(), meta.clone()));
         }
-        nested_fragment_outputs.extend(facts.fragment_output_uses(path));
+        nested_fragment_outputs.extend(facts.fragment_output_uses().cloned());
     }
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()

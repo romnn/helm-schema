@@ -1,137 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::ContractUse;
-use crate::{ContractProvenance, Guard, GuardValue, ResourceRef, SourceSpan, ValueKind, YamlPath};
-
-/// Stable serialized guard row in the versioned contract document.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum ContractDocumentGuard {
-    Truthy {
-        path: String,
-    },
-    Not {
-        path: String,
-    },
-    Eq {
-        path: String,
-        value: GuardValue,
-    },
-    NotEq {
-        path: String,
-        value: GuardValue,
-    },
-    Absent {
-        path: String,
-    },
-    Or {
-        paths: Vec<String>,
-    },
-    AnyOf {
-        alternatives: Vec<Vec<ContractDocumentGuard>>,
-    },
-    Range {
-        path: String,
-    },
-    With {
-        path: String,
-    },
-    Default {
-        path: String,
-    },
-    TypeIs {
-        path: String,
-        schema_type: String,
-    },
-}
-
-impl From<Guard> for ContractDocumentGuard {
-    fn from(guard: Guard) -> Self {
-        match guard {
-            Guard::Truthy { path } => Self::Truthy { path },
-            Guard::Not { path } => Self::Not { path },
-            Guard::Eq { path, value } => Self::Eq { path, value },
-            Guard::NotEq { path, value } => Self::NotEq { path, value },
-            Guard::Absent { path } => Self::Absent { path },
-            Guard::Or { paths } => Self::Or { paths },
-            Guard::AnyOf { alternatives } => Self::AnyOf {
-                alternatives: alternatives
-                    .into_iter()
-                    .map(|alternative| {
-                        alternative
-                            .into_iter()
-                            .map(ContractDocumentGuard::from)
-                            .collect()
-                    })
-                    .collect(),
-            },
-            Guard::Range { path } => Self::Range { path },
-            Guard::With { path } => Self::With { path },
-            Guard::Default { path } => Self::Default { path },
-            Guard::TypeIs { path, schema_type } => Self::TypeIs { path, schema_type },
-        }
-    }
-}
-
-impl From<ContractDocumentGuard> for Guard {
-    fn from(guard: ContractDocumentGuard) -> Self {
-        match guard {
-            ContractDocumentGuard::Truthy { path } => Self::Truthy { path },
-            ContractDocumentGuard::Not { path } => Self::Not { path },
-            ContractDocumentGuard::Eq { path, value } => Self::Eq { path, value },
-            ContractDocumentGuard::NotEq { path, value } => Self::NotEq { path, value },
-            ContractDocumentGuard::Absent { path } => Self::Absent { path },
-            ContractDocumentGuard::Or { paths } => Self::Or { paths },
-            ContractDocumentGuard::AnyOf { alternatives } => Self::AnyOf {
-                alternatives: alternatives
-                    .into_iter()
-                    .map(|alternative| alternative.into_iter().map(Guard::from).collect())
-                    .collect(),
-            },
-            ContractDocumentGuard::Range { path } => Self::Range { path },
-            ContractDocumentGuard::With { path } => Self::With { path },
-            ContractDocumentGuard::Default { path } => Self::Default { path },
-            ContractDocumentGuard::TypeIs { path, schema_type } => {
-                Self::TypeIs { path, schema_type }
-            }
-        }
-    }
-}
-
-/// Serialized source span in the versioned contract export.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct ContractDocumentSpan {
-    pub start: usize,
-    pub end: usize,
-}
-
-impl From<SourceSpan> for ContractDocumentSpan {
-    fn from(span: SourceSpan) -> Self {
-        Self {
-            start: span.start,
-            end: span.end,
-        }
-    }
-}
-
-/// Serialized provenance row for one observed contract use site.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct ContractDocumentProvenance {
-    pub template_path: String,
-    pub span: ContractDocumentSpan,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub helper_chain: Vec<String>,
-}
-
-impl From<ContractProvenance> for ContractDocumentProvenance {
-    fn from(provenance: ContractProvenance) -> Self {
-        Self {
-            template_path: provenance.template_path,
-            span: provenance.span.into(),
-            helper_chain: provenance.helper_chain,
-        }
-    }
-}
+use crate::{ContractProvenance, Guard, ResourceRef, ValueKind, YamlPath};
 
 /// Provenance-aware serialized inspection row for one observed `.Values.*` path.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -139,10 +9,10 @@ pub struct ContractDocumentUse {
     pub source_expr: String,
     pub path: YamlPath,
     pub kind: ValueKind,
-    pub guards: Vec<ContractDocumentGuard>,
+    pub guards: Vec<Guard>,
     pub resource: Option<ResourceRef>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub provenance: Vec<ContractDocumentProvenance>,
+    pub provenance: Vec<ContractProvenance>,
 }
 
 impl From<ContractUse> for ContractDocumentUse {
@@ -160,15 +30,9 @@ impl From<ContractUse> for ContractDocumentUse {
             source_expr,
             path,
             kind,
-            guards: guards
-                .into_iter()
-                .map(ContractDocumentGuard::from)
-                .collect(),
+            guards,
             resource,
-            provenance: provenance
-                .into_iter()
-                .map(ContractDocumentProvenance::from)
-                .collect(),
+            provenance,
         }
     }
 }

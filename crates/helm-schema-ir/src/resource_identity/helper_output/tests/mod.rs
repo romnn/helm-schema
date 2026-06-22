@@ -43,6 +43,10 @@ fn index_with(src: &str) -> DefineIndex {
     idx
 }
 
+fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperOutput {
+    HelperOutputEvaluator::new().evaluate(name, helpers)
+}
+
 #[test]
 fn single_literal_helper_resolves() {
     let helpers = index_with(indoc! {r#"
@@ -51,7 +55,7 @@ fn single_literal_helper_resolves() {
         {{- end -}}
     "#});
     sim_assert_eq!(
-        have: helper_evaluate("x.apiVersion", &helpers).all_literals(),
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
         want: vec!["apps/v1"]
     );
 }
@@ -67,7 +71,7 @@ fn if_else_helper_returns_both_branches() {
         {{- end -}}
         {{- end -}}
     "#});
-    let outs = helper_evaluate("rbac.apiVersion", &helpers).all_literals();
+    let outs = evaluate_helper("rbac.apiVersion", &helpers).all_literals();
     assert!(
         outs.contains(&"rbac.authorization.k8s.io/v1".to_string()),
         "must include modern; got {outs:?}"
@@ -94,7 +98,7 @@ fn helper_with_values_reference_is_silent_about_dynamic_branch() {
         {{- end }}
         {{- end }}
     "#});
-    let outs = helper_evaluate("grafana.podDisruptionBudget.apiVersion", &helpers).all_literals();
+    let outs = evaluate_helper("grafana.podDisruptionBudget.apiVersion", &helpers).all_literals();
     assert!(
         outs.contains(&"policy/v1".to_string()),
         "must include policy/v1 literal branch; got {outs:?}"
@@ -109,7 +113,7 @@ fn helper_with_values_reference_is_silent_about_dynamic_branch() {
 fn unknown_helper_returns_empty() {
     let helpers = DefineIndex::new();
     sim_assert_eq!(
-        have: helper_evaluate("nope", &helpers).all_literals(),
+        have: evaluate_helper("nope", &helpers).all_literals(),
         want: Vec::<String>::new()
     );
 }
@@ -125,7 +129,7 @@ fn nested_helper_recurses_one_level() {
         {{- end -}}
     "#});
     sim_assert_eq!(
-        have: helper_evaluate("outer", &helpers).all_literals(),
+        have: evaluate_helper("outer", &helpers).all_literals(),
         want: vec!["apps/v1"]
     );
 }
@@ -141,7 +145,7 @@ fn cyclic_helper_does_not_stack_overflow() {
         {{- end -}}
     "#});
     // Either empty (cycle suppressed) — must NOT panic / overflow.
-    let outs = helper_evaluate("a", &helpers).all_literals();
+    let outs = evaluate_helper("a", &helpers).all_literals();
     assert!(
         outs.is_empty(),
         "cyclic helper must return empty, not infinite recursion; got {outs:?}"
@@ -163,7 +167,7 @@ fn typed_output_preserves_guard_and_branch_literals() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("rbac.apiVersion", &helpers);
+    let out = evaluate_helper("rbac.apiVersion", &helpers);
     let HelperOutput::Branched { branches } = out else {
         panic!("expected Branched; got {out:?}");
     };
@@ -206,7 +210,7 @@ fn typed_output_preserves_branches_through_wrapper_include() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("outer.apiVersion", &helpers);
+    let out = evaluate_helper("outer.apiVersion", &helpers);
     let HelperOutput::Branched { branches } = out else {
         panic!(
             "wrapper helper must preserve branched typed output from delegated callee; got {out:?}"
@@ -248,7 +252,7 @@ fn typed_output_preserves_branches_through_wrapper_template() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("outer.apiVersion", &helpers);
+    let out = evaluate_helper("outer.apiVersion", &helpers);
     assert!(
         matches!(out, HelperOutput::Branched { .. }),
         "wrapper via template must preserve Branched output; got {out:?}"
@@ -275,7 +279,7 @@ fn typed_output_preserves_branches_through_multi_level_wrapper() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("outer", &helpers);
+    let out = evaluate_helper("outer", &helpers);
     let HelperOutput::Branched { branches } = out else {
         panic!("multi-level wrapper must preserve branched output; got {out:?}");
     };
@@ -324,7 +328,7 @@ fn typed_output_preserves_nested_branches_through_branch_body_delegation() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("outer", &helpers);
+    let out = evaluate_helper("outer", &helpers);
     let HelperOutput::Branched { branches } = out else {
         panic!("outer must be Branched; got {out:?}");
     };
@@ -377,7 +381,7 @@ fn typed_output_preserves_nested_branches_through_inline_nested_if() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("outer", &helpers);
+    let out = evaluate_helper("outer", &helpers);
     let HelperOutput::Branched { branches } = out else {
         panic!("outer must be Branched; got {out:?}");
     };
@@ -416,7 +420,7 @@ fn wrapper_with_mixed_content_does_not_promote_branches() {
         {{- end -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("outer", &helpers);
+    let out = evaluate_helper("outer", &helpers);
     // The mixed-content wrapper is NOT a pure delegation — the
     // typed `Branched` form doesn't fit. Fall back to flat.
     assert!(
@@ -438,7 +442,7 @@ fn wrapper_cycle_falls_through_safely() {
         {{- include "a" . -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("a", &helpers);
+    let out = evaluate_helper("a", &helpers);
     // Cycle → no branches discoverable → fall through to
     // Literals (which will also be empty per the existing
     // cycle guard in collect_literals).
@@ -463,7 +467,7 @@ fn typed_output_preserves_elif_chain() {
         {{- end }}
         {{- end }}
     "#});
-    let out = helper_evaluate("grafana.pdb.apiVersion", &helpers);
+    let out = evaluate_helper("grafana.pdb.apiVersion", &helpers);
     let HelperOutput::Branched { branches } = out else {
         panic!("expected Branched; got {out:?}");
     };
@@ -505,7 +509,7 @@ fn printf_compositional_format_emits_no_bogus_candidates() {
         {{- printf "%s/%s" "apps" "v1" -}}
         {{- end -}}
     "#});
-    let outs = helper_evaluate("x.apiVersion", &helpers).all_literals();
+    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
     assert!(
         outs.is_empty(),
         "compositional printf must emit no literal candidates; got {outs:?}"
@@ -523,7 +527,7 @@ fn printf_single_substitution_resolves_to_arg() {
         {{- end -}}
     "#});
     sim_assert_eq!(
-        have: helper_evaluate("x.apiVersion", &helpers).all_literals(),
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
         want: vec!["apps/v1"]
     );
 }
@@ -537,7 +541,7 @@ fn printf_no_substitution_resolves_to_format() {
         {{- end -}}
     "#});
     sim_assert_eq!(
-        have: helper_evaluate("x.apiVersion", &helpers).all_literals(),
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
         want: vec!["apps/v1"]
     );
 }
@@ -550,7 +554,7 @@ fn printf_non_string_directive_emits_no_candidates() {
         {{- printf "%d" 1 -}}
         {{- end -}}
     "#});
-    let outs = helper_evaluate("x.apiVersion", &helpers).all_literals();
+    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
     assert!(
         outs.is_empty(),
         "non-%s printf directive must emit no candidates; got {outs:?}"
@@ -568,7 +572,7 @@ fn quote_with_single_string_arg_resolves() {
         {{- end -}}
     "#});
     sim_assert_eq!(
-        have: helper_evaluate("x.apiVersion", &helpers).all_literals(),
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
         want: vec!["apps/v1"]
     );
 }
@@ -582,7 +586,7 @@ fn print_with_multiple_args_emits_no_candidates() {
         {{- print "apps" "v1" -}}
         {{- end -}}
     "#});
-    let outs = helper_evaluate("x.apiVersion", &helpers).all_literals();
+    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
     assert!(
         outs.is_empty(),
         "print with multiple args must emit no candidates; got {outs:?}"
@@ -599,7 +603,7 @@ fn pipeline_seed_literal_then_quote_resolves_to_seed() {
         {{- end -}}
     "#});
     sim_assert_eq!(
-        have: helper_evaluate("x.apiVersion", &helpers).all_literals(),
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
         want: vec!["apps/v1"]
     );
 }
@@ -611,7 +615,7 @@ fn single_literal_helper_is_not_branched() {
         {{- print "apps/v1" -}}
         {{- end -}}
     "#});
-    let out = helper_evaluate("x.apiVersion", &helpers);
+    let out = evaluate_helper("x.apiVersion", &helpers);
     assert!(
         matches!(out, HelperOutput::Literals(_)),
         "single-literal helper must not be Branched; got {out:?}"

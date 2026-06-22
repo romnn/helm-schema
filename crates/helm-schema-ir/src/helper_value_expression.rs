@@ -224,7 +224,7 @@ fn collect_assignment_bound_helper_values(
                 .analysis
                 .merge_type_hints(path.to_string(), facts.type_hints().clone());
         }
-        for output in facts.fragment_output_uses(path) {
+        for output in facts.fragment_output_uses().cloned() {
             if output.meta.defaulted {
                 nested_defaulted_output_paths.insert(output.source_expr.clone());
             }
@@ -331,7 +331,7 @@ fn extend_nested_render(
         if !facts.type_hints().is_empty() {
             analysis.merge_type_hints(path.to_string(), facts.type_hints().clone());
         }
-        for mut output in facts.fragment_output_uses(path) {
+        for mut output in facts.fragment_output_uses().cloned() {
             output
                 .meta
                 .add_predicates(active_output_predicates.iter().cloned());
