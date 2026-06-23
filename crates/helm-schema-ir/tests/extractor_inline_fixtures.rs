@@ -28,7 +28,7 @@ fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
     }
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
-        .project()
+        .finalize()
         .uses()
         .to_vec()
 }

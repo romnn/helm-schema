@@ -43,7 +43,7 @@ host: example.com
 fn kind_list_envelope_descends_into_inner_resource() {
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx).generate_contract_ir(KIND_LIST_TEMPLATE, &idx);
-    let projection = ir.clone().project();
+    let projection = ir.clone().finalize();
     assert!(
         projection.uses().iter().any(|use_| {
             use_.source_expr == "host"

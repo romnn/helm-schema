@@ -1,12 +1,12 @@
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
-use super::{ContractDocument, ContractDocumentUse};
-use crate::{Guard, ResourceRef, ValueKind, YamlPath};
+use super::ContractDocument;
+use crate::{ContractUse, Guard, ResourceRef, ValueKind, YamlPath};
 
 #[test]
 fn contract_document_serializes_stable_guard_shape() {
-    let value_use = ContractDocumentUse {
+    let value_use = ContractUse {
         source_expr: "kid.enabled".to_string(),
         path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
         kind: ValueKind::Scalar,

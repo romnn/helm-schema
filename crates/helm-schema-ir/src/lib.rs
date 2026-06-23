@@ -2,7 +2,6 @@ mod abstract_value;
 mod assignment_action_plan;
 mod bound_value_analysis;
 mod capability_branch;
-mod capability_liveness;
 mod condition_action_plan;
 mod condition_guards;
 mod contract;
@@ -46,19 +45,13 @@ mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
 mod symbolic_scope_state;
-mod template_expr_analysis;
 mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
 mod value_path_extraction;
 mod yaml_syntax;
 
-pub use capability_liveness::{
-    CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
-};
-pub use contract::{
-    ContractDocument, ContractDocumentUse, ContractIr, ContractUse, FinalizedContract,
-};
+pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};
 pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
@@ -66,8 +59,9 @@ pub use contract_signals::{
 };
 pub use contract_types::{Guard, GuardValue};
 pub use helm_schema_core::{
-    ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
-    ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
+    ApiPresenceQuery, CapabilityGuard, CapabilityOracle, CapabilityPresencePredicate, HelperBranch,
+    HelperBranchBody, ProviderSchemaUse, ResourceRef, StaticOracle, ValueKind, YamlPath,
+    evaluate_guard, live_literals, select_live_branch,
 };
 pub use helper_discovery::{
     DefineBlock, extract_define_blocks, extract_helper_calls, extract_helper_calls_from_ast,

@@ -150,7 +150,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
         &crate::values_roots::top_level_value_paths(None),
         &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let path = "signoz.smtpVars.existingSecret.name";
     let uses = projection
         .uses()
@@ -211,7 +211,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         &crate::values_roots::top_level_value_paths(None),
         &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let path = "clickhouse.clickhouseOperator.serviceAccount.name";
     let uses = projection
         .uses()
@@ -297,7 +297,7 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
         &crate::values_roots::top_level_value_paths(None),
         &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let path = "signoz.serviceAccount.name";
     let uses = projection
         .uses()
@@ -352,7 +352,7 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
         &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
         &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
     )?;
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let path = "signoz-otel-gateway.serviceAccount.name";
     let uses = projection
         .uses()
@@ -403,7 +403,7 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
         &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
         &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
     )?;
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let path = "clickhouse.securityContext";
     let uses = projection
         .uses()
@@ -502,7 +502,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
         &crate::values_roots::top_level_value_paths(None),
         &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let name_override_uses = projection
         .uses()
         .iter()
@@ -542,7 +542,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
         &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let path = "fullnameOverride";
-    let projection = collection.contract.clone().project();
+    let projection = collection.contract.clone().finalize();
     let uses = projection
         .uses()
         .iter()
@@ -686,7 +686,7 @@ data:
         &crate::values_roots::top_level_value_paths(None),
         &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
-    let projection = collection.contract.project();
+    let projection = collection.contract.finalize();
     let uses = projection
         .uses()
         .iter()

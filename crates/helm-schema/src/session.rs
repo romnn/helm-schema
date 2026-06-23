@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::{
-    ConditionalGuard, ContractDocument, ContractDocumentUse, ContractIr, ContractSchemaSignals,
+    ConditionalGuard, ContractDocument, ContractIr, ContractSchemaSignals, ContractUse,
     ContractValuePathFacts, FinalizedContract, MetadataFieldKind,
 };
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
@@ -39,8 +39,8 @@ pub struct Analysis {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValuePathExplanation {
     pub path: String,
-    pub exact_uses: Vec<ContractDocumentUse>,
-    pub descendant_uses: Vec<ContractDocumentUse>,
+    pub exact_uses: Vec<ContractUse>,
+    pub descendant_uses: Vec<ContractUse>,
     pub value_path_facts: Option<ContractValuePathFacts>,
     pub guard_predicates: Vec<ConditionalGuard>,
     pub metadata_fields: Vec<MetadataFieldKind>,
@@ -247,7 +247,6 @@ impl AnalysisSession {
             .iter()
             .filter(|use_| use_.source_expr == normalized_path)
             .cloned()
-            .map(ContractDocumentUse::from)
             .collect();
         let descendant_uses = uses
             .iter()
@@ -257,7 +256,6 @@ impl AnalysisSession {
                     .is_some_and(|suffix| suffix.starts_with('.'))
             })
             .cloned()
-            .map(ContractDocumentUse::from)
             .collect();
         let value_path_facts = evidence.map(|evidence| evidence.facts);
         let guard_predicates = evidence

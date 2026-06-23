@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::template_expr_analysis::is_merge_function;
+use crate::expr_function_catalog::is_merge_function;
 
 pub(crate) fn bindings_for_helper_arg_with(
     arg: Option<&TemplateExpr>,

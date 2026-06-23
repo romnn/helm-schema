@@ -22,7 +22,7 @@ foo: {{ .Values.name }}
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
-        .project();
+        .finalize();
 
     assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
         && u.guards
@@ -49,7 +49,7 @@ metadata:
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
-        .project();
+        .finalize();
 
     let name_use = ir
         .uses()
@@ -84,7 +84,7 @@ metadata:
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
-        .project();
+        .finalize();
 
     let name_use = ir
         .uses()
@@ -121,7 +121,7 @@ metadata:
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
-        .project();
+        .finalize();
 
     let name_use = ir
         .uses()
@@ -159,7 +159,7 @@ metadata:
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
-        .project();
+        .finalize();
 
     assert!(
         ir.uses().iter().any(|use_| {

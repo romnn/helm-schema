@@ -49,11 +49,6 @@ impl FinalizedContract {
     }
 
     #[must_use]
-    pub fn into_uses(self) -> Vec<ContractUse> {
-        self.uses
-    }
-
-    #[must_use]
     pub fn into_schema_signals(self) -> ContractSchemaSignals {
         self.schema_signals
     }

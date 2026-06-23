@@ -122,14 +122,14 @@ spec:
 
     let analysis = session.analysis()?;
     assert!(
-        !analysis.contract.clone().project().uses().is_empty(),
+        !analysis.contract.clone().finalize().uses().is_empty(),
         "session contract should expose at least one use"
     );
     assert!(
         analysis
             .contract
             .clone()
-            .project()
+            .finalize()
             .uses()
             .iter()
             .any(|use_| !use_.provenance.is_empty()),
@@ -331,7 +331,7 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
     let expected = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
     for _ in 0..100 {
         let actual = serde_json::to_vec(&AnalysisSession::new(opts.clone()).contract_document()?)?;
-        sim_assert_eq!(have: actual, want: expected, "contract DTO bytes must be deterministic");
+        sim_assert_eq!(have: actual, want: expected, "contract document bytes must be deterministic");
     }
 
     Ok(())

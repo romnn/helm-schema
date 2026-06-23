@@ -1,17 +1,16 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{ContractProvenance, Guard, ResourceRef, ValueKind, YamlPath};
 
 /// A contract claim for one observed values path.
-///
-/// This is the semantic contract claim shape owned by the contract layer.
-/// [`ContractDocumentUse`] is the serialized inspection DTO at the export
-/// boundary.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ContractUse {
     pub source_expr: String,
     pub path: YamlPath,
     pub kind: ValueKind,
     pub guards: Vec<Guard>,
     pub resource: Option<ResourceRef>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub provenance: Vec<ContractProvenance>,
 }
 

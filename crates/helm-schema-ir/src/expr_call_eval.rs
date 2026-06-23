@@ -7,11 +7,11 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr, eval_expr_with_helper_calls};
 use crate::expr_function_catalog::{
-    is_provenance_preserving_function, is_string_transform_function, type_is_schema_type,
+    is_merge_function, is_provenance_preserving_function, is_string_transform_function,
+    type_is_schema_type,
 };
 use crate::literal_schema_type::expression_schema_type;
 use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
-use crate::template_expr_analysis::is_merge_function;
 
 pub(crate) fn eval_call_with_helper_calls(
     function: &str,

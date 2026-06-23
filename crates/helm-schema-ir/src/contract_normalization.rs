@@ -17,9 +17,9 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 
 /// Canonicalize contract claims without dropping semantically distinct rows.
 ///
-/// DTO-oriented constructors use this when tests or external tooling provide
-/// already-projected rows and need deterministic ordering without losing raw
-/// evidence such as one nullable and one non-nullable render site.
+/// Tests and expert callers use this when they provide already-structured
+/// claims and need deterministic ordering without losing raw evidence such as
+/// one nullable and one non-nullable render site.
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
     uses.sort_by(contract_use_semantic_cmp);
 

@@ -1,6 +1,6 @@
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
-pub use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody};
+use crate::CapabilityGuard;
 
 /// Decode an if-condition string into a typed [`CapabilityGuard`].
 pub(crate) fn decode_guard(cond: &str) -> CapabilityGuard {

@@ -89,46 +89,10 @@ impl ValuePathContext<'_> {
                 }
             }
             "eq" => {
-                let [left, right] = args.as_slice() else {
-                    return out;
-                };
-                if !self.expr_needs_context_value_resolution(left)
-                    && !self.expr_needs_context_value_resolution(right)
-                {
-                    return out;
-                }
-                let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
-                    (Some(value), None) => (value, self.paths_for_expr(right)),
-                    (None, Some(value)) => (value, self.paths_for_expr(left)),
-                    _ => return out,
-                };
-                out.extend(paths.into_iter().map(|path| {
-                    Predicate::from(Guard::Eq {
-                        path,
-                        value: value.clone(),
-                    })
-                }));
+                out.extend(self.value_comparison_predicates(args, false));
             }
             "ne" => {
-                let [left, right] = args.as_slice() else {
-                    return out;
-                };
-                if !self.expr_needs_context_value_resolution(left)
-                    && !self.expr_needs_context_value_resolution(right)
-                {
-                    return out;
-                }
-                let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
-                    (Some(value), None) => (value, self.paths_for_expr(right)),
-                    (None, Some(value)) => (value, self.paths_for_expr(left)),
-                    _ => return out,
-                };
-                out.extend(paths.into_iter().map(|path| {
-                    Predicate::from(Guard::NotEq {
-                        path,
-                        value: value.clone(),
-                    })
-                }));
+                out.extend(self.value_comparison_predicates(args, true));
             }
             "typeIs" => {
                 let Some(schema_type) = type_is_schema_type(args.first()) else {
@@ -163,41 +127,60 @@ impl ValuePathContext<'_> {
             return false;
         };
         match function.as_str() {
-            "eq" => {
-                let has_values_path = args
-                    .iter()
-                    .any(|arg| self.expr_needs_context_value_resolution(arg));
-                if !has_values_path {
-                    return false;
-                }
-                let [left, right] = args.as_slice() else {
-                    return true;
-                };
-                !matches!(
-                    (guard_value_literal(left), guard_value_literal(right)),
-                    (Some(_), None) | (None, Some(_))
-                )
-            }
-            "ne" => {
-                let has_values_path = args
-                    .iter()
-                    .any(|arg| self.expr_needs_context_value_resolution(arg));
-                if !has_values_path {
-                    return false;
-                }
-                let [left, right] = args.as_slice() else {
-                    return true;
-                };
-                !matches!(
-                    (guard_value_literal(left), guard_value_literal(right)),
-                    (Some(_), None) | (None, Some(_))
-                )
-            }
+            "eq" | "ne" => self.comparison_has_unrepresentable_values(args),
             "typeIs" => args
                 .iter()
                 .any(|arg| self.expr_needs_context_value_resolution(arg)),
             _ => false,
         }
+    }
+
+    fn value_comparison_predicates(&self, args: &[TemplateExpr], negated: bool) -> Vec<Predicate> {
+        let [left, right] = args else {
+            return Vec::new();
+        };
+        if !self.expr_needs_context_value_resolution(left)
+            && !self.expr_needs_context_value_resolution(right)
+        {
+            return Vec::new();
+        }
+        let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
+            (Some(value), None) => (value, self.paths_for_expr(right)),
+            (None, Some(value)) => (value, self.paths_for_expr(left)),
+            _ => return Vec::new(),
+        };
+        paths
+            .into_iter()
+            .map(|path| {
+                if negated {
+                    Predicate::from(Guard::NotEq {
+                        path,
+                        value: value.clone(),
+                    })
+                } else {
+                    Predicate::from(Guard::Eq {
+                        path,
+                        value: value.clone(),
+                    })
+                }
+            })
+            .collect()
+    }
+
+    fn comparison_has_unrepresentable_values(&self, args: &[TemplateExpr]) -> bool {
+        if !args
+            .iter()
+            .any(|arg| self.expr_needs_context_value_resolution(arg))
+        {
+            return false;
+        }
+        let [left, right] = args else {
+            return true;
+        };
+        !matches!(
+            (guard_value_literal(left), guard_value_literal(right)),
+            (Some(_), None) | (None, Some(_))
+        )
     }
 }
 

@@ -51,13 +51,12 @@ impl SymbolicIrContext {
         }
     }
 
-    /// Generate the opaque contract graph without projecting to fixture DTOs.
+    /// Generate the opaque contract graph without finalizing it.
     ///
     /// Callers that need to combine, scope, or otherwise transform chart-local
     /// contracts should use this method and derive schema facts with
-    /// [`ContractIr::into_schema_signals`]. Fixture and external inspection
-    /// output should first call [`ContractIr::project`] and then explicitly
-    /// convert the projection to inspection DTO rows.
+    /// [`ContractIr::into_schema_signals`]. Inspection output can finalize the
+    /// graph once and ask the resulting contract for its stable document.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
         self.generate_contract_ir_with_provenance(src, None, defines, &[])
     }

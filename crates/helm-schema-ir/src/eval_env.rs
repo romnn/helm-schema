@@ -112,6 +112,19 @@ impl EvalEnv {
         }
     }
 
+    pub(crate) fn from_local_facts(
+        locals: &HashMap<String, AbstractValue>,
+        local_default_paths: &HashMap<String, BTreeSet<String>>,
+        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    ) -> Self {
+        Self {
+            locals: locals.clone(),
+            skip_helper_call_args: true,
+            ..Self::default()
+        }
+        .with_local_facts(local_default_paths, local_output_meta)
+    }
+
     pub(crate) fn with_local_facts(
         mut self,
         local_default_paths: &HashMap<String, BTreeSet<String>>,

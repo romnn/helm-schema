@@ -6,10 +6,9 @@ use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::value_paths;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::expr_function_catalog::{
-    is_provenance_preserving_function, is_string_transform_function,
+    is_merge_function, is_provenance_preserving_function, is_string_transform_function,
 };
 use crate::literal_schema_type::expression_schema_type;
-use crate::template_expr_analysis::is_merge_function;
 
 pub(crate) fn eval_pipeline_with_helper_calls(
     stages: &[TemplateExpr],

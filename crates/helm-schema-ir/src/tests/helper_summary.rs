@@ -150,8 +150,8 @@ fn helper_summary_fragment_projection_preserves_structured_output_path() {
 #[test]
 fn helper_summary_fragment_projection_merges_scalar_outputs_into_one_output_set() {
     let mut summary = HelperSummary::default();
-    summary.add_output_meta("image.repository".to_string(), HelperOutputMeta::default());
-    summary.add_output_meta("image.tag".to_string(), HelperOutputMeta::default());
+    summary.merge_output_meta("image.repository".to_string(), HelperOutputMeta::default());
+    summary.merge_output_meta("image.tag".to_string(), HelperOutputMeta::default());
 
     sim_assert_eq!(
         have: summary.project_fragment_value(),
@@ -165,7 +165,7 @@ fn helper_summary_fragment_projection_merges_scalar_outputs_into_one_output_set(
 #[test]
 fn suppresses_bound_root_when_helper_outputs_descendant_path() {
     let mut analysis = HelperSummary::default();
-    analysis.add_output_meta(
+    analysis.merge_output_meta(
         "serviceAccount.name".to_string(),
         HelperOutputMeta::default(),
     );
@@ -185,7 +185,7 @@ fn suppresses_bound_root_when_helper_outputs_descendant_path() {
 #[test]
 fn does_not_suppress_bound_root_for_exact_root_output() {
     let mut analysis = HelperSummary::default();
-    analysis.add_output_meta("serviceAccount".to_string(), HelperOutputMeta::default());
+    analysis.merge_output_meta("serviceAccount".to_string(), HelperOutputMeta::default());
     let bindings = HashMap::from([(
         "config".to_string(),
         AbstractValue::ValuesPath("serviceAccount".to_string()),

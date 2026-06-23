@@ -98,7 +98,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
                 active_output_predicates,
                 fallback_paths.contains(&output),
             );
-            state.analysis.add_output_meta(output, meta);
+            state.analysis.merge_output_meta(output, meta);
         }
         let mut local_output_sources = local_effects.local_rendered_paths;
         local_output_sources.extend(local_effects.local_output_meta.keys().cloned());
@@ -110,7 +110,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
                 .unwrap_or_default();
             meta.add_predicates(active_output_predicates.iter().cloned());
             meta.defaulted |= local_effects.local_default_paths.contains(&output);
-            state.analysis.add_output_meta(output, meta);
+            state.analysis.merge_output_meta(output, meta);
         }
         state
             .analysis
@@ -227,7 +227,6 @@ fn collect_assignment_bound_helper_values(
                 .merge_dependency_meta(path.to_string(), output_meta);
         }
         if let Some(dependency_meta) = facts.dependency_meta.clone() {
-            state.analysis.add_dependency_path(path.to_string());
             state
                 .analysis
                 .merge_dependency_meta(path.to_string(), dependency_meta);
@@ -316,12 +315,7 @@ fn local_expression_effects(
     local_default_paths: &HashMap<String, BTreeSet<String>>,
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
 ) -> Effects {
-    let env = EvalEnv {
-        locals: local_bindings.clone(),
-        skip_helper_call_args: true,
-        ..EvalEnv::default()
-    }
-    .with_local_facts(local_default_paths, local_output_meta);
+    let env = EvalEnv::from_local_facts(local_bindings, local_default_paths, local_output_meta);
     eval_exprs_effects(exprs, &env)
 }
 

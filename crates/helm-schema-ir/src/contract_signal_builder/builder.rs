@@ -9,8 +9,6 @@ use crate::contract_signals::{
     ContractValuePathFacts, MetadataFieldKind,
 };
 
-use super::classifiers::metadata_field_kind_from_yaml_path;
-
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     type_hints: &[ContractTypeHint],
@@ -27,6 +25,21 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         builder.record_declared_type_hint(type_hint);
     }
     builder.finish()
+}
+
+fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
+    let last = path.last()?.as_str();
+    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
+    if prev != "metadata" {
+        return None;
+    }
+
+    match last {
+        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
+        "name" => Some(MetadataFieldKind::Name),
+        "namespace" => Some(MetadataFieldKind::Namespace),
+        _ => None,
+    }
 }
 
 #[derive(Default)]

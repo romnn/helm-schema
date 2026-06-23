@@ -615,7 +615,7 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
     "#};
 
     let ir = parse_ir_with_helpers(src, helpers);
-    let projection = ir.clone().project();
+    let projection = ir.clone().finalize();
     let guarded_target_uses: Vec<_> = projection
         .uses()
         .iter()
@@ -2190,7 +2190,7 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
-        .project();
+        .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let fullname = schema
@@ -2342,7 +2342,7 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
-        .project();
+        .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
@@ -2442,7 +2442,7 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
-        .project();
+        .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let image = schema.pointer("/properties/image").expect("image present");
@@ -2527,7 +2527,7 @@ fn selector_chain_and_indexed_default_do_not_leak_parent_object_as_scalar_use() 
         data:
           version: {{ $appVersion | quote }}
     "#};
-    let ir = parse_ir(src).project();
+    let ir = parse_ir(src).finalize();
     let uses = ir
         .uses()
         .iter()
@@ -3190,7 +3190,7 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
-        .project();
+        .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
     let name_override = schema

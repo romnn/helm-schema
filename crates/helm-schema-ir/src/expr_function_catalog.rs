@@ -50,3 +50,10 @@ pub(crate) fn is_provenance_preserving_function(function: &str) -> bool {
             | "uniq"
     )
 }
+
+pub(crate) fn is_merge_function(function: &str) -> bool {
+    matches!(
+        function,
+        "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite"
+    )
+}

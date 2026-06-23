@@ -1,5 +1,5 @@
 use super::*;
-use crate::capability_branch::{CapabilityGuard, HelperBranch, HelperBranchBody};
+use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use indoc::indoc;
 use std::collections::HashSet;

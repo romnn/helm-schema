@@ -21,7 +21,7 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
         None,
     ));
 
-    let value_uses = contract.project();
+    let value_uses = contract.finalize();
     let value_uses = value_uses.uses();
 
     sim_assert_eq!(have: value_uses.len(), want: 1);
@@ -56,7 +56,7 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
         }),
     ));
 
-    let value_uses = contract.project();
+    let value_uses = contract.finalize();
     let value_uses = value_uses.uses();
 
     sim_assert_eq!(have: value_uses.len(), want: 1);
@@ -106,7 +106,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         }
     });
 
-    let value_uses = contract.project();
+    let value_uses = contract.finalize();
     let value_uses = value_uses.uses();
     let value_use = value_uses.first().expect("mapped value use");
 
@@ -148,7 +148,7 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
 
     contract.push_pathless_scalar("extraConfig");
 
-    let finalized = contract.project();
+    let finalized = contract.finalize();
     let value_uses = finalized.uses();
     sim_assert_eq!(have: value_uses.len(), want: 1);
     sim_assert_eq!(have: value_uses[0].source_expr, want: "extraConfig");
@@ -193,7 +193,7 @@ fn contract_ir_declared_type_hints_do_not_project_as_contract_rows() {
     let mut contract = ContractIr::default();
     contract.add_type_hint("image.tag", "string");
 
-    let finalized = contract.project();
+    let finalized = contract.finalize();
 
     assert!(
         finalized.uses().is_empty(),
@@ -217,6 +217,6 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
 
     let finalized = contract.clone().finalize();
 
-    sim_assert_eq!(have: finalized.uses(), want: contract.clone().project().uses());
+    sim_assert_eq!(have: finalized.uses(), want: contract.clone().finalize().uses());
     sim_assert_eq!(have: finalized.schema_signals(), want: &contract.into_schema_signals());
 }

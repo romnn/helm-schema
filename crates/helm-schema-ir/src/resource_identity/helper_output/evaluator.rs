@@ -2,9 +2,8 @@ use std::collections::HashSet;
 
 use helm_schema_ast::{DefineIndex, HelmAst, TemplateAction, TemplateExpr, TemplateHeader};
 
-use crate::capability_branch::{
-    CapabilityGuard, HelperBranch, HelperBranchBody, decode_guard, decode_guard_expr,
-};
+use crate::capability_branch::{decode_guard, decode_guard_expr};
+use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
 
 use super::{HelperOutput, MAX_RECURSION_DEPTH};
 
@@ -417,22 +416,16 @@ impl HelperOutputEvaluator {
                     out.extend(self.collect_literals(then_branch, helpers, depth + 1));
                     out.extend(self.collect_literals(else_branch, helpers, depth + 1));
                 }
-                HelmAst::With {
-                    body, else_branch, ..
-                } => {
-                    out.extend(self.collect_literals(body, helpers, depth + 1));
-                    out.extend(self.collect_literals(else_branch, helpers, depth + 1));
-                }
                 HelmAst::Range {
                     body, else_branch, ..
+                }
+                | HelmAst::With {
+                    body, else_branch, ..
                 } => {
                     out.extend(self.collect_literals(body, helpers, depth + 1));
                     out.extend(self.collect_literals(else_branch, helpers, depth + 1));
                 }
-                HelmAst::Define { body, .. } => {
-                    out.extend(self.collect_literals(body, helpers, depth + 1));
-                }
-                HelmAst::Block { body, .. } => {
+                HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
                     out.extend(self.collect_literals(body, helpers, depth + 1));
                 }
                 HelmAst::Document { items }
@@ -463,30 +456,9 @@ impl HelperOutputEvaluator {
         let mut out: Vec<String> = Vec::new();
         for expr in action.exprs() {
             match expr.deparen() {
-                TemplateExpr::Literal(lit) => {
-                    if let Some(value) = lit.as_string() {
-                        out.push(value.to_string());
-                    }
-                }
                 TemplateExpr::Call { function, args } => match function.as_str() {
-                    "print" | "quote" => {
-                        if let Some(value) = single_string_literal_arg(args) {
-                            out.push(value);
-                        }
-                    }
-                    "printf" => {
-                        if let Some(value) = evaluate_printf(args) {
-                            out.push(value);
-                        }
-                    }
                     "template" | "include" => {
-                        let Some(first) = args.first() else {
-                            continue;
-                        };
-                        let TemplateExpr::Literal(lit) = first else {
-                            continue;
-                        };
-                        let Some(name) = lit.as_string() else {
+                        let Some(name) = helper_call_callee(function, args) else {
                             continue;
                         };
                         if let Some(values) = self.with_helper_body(name, helpers, |this, body| {
@@ -495,31 +467,15 @@ impl HelperOutputEvaluator {
                             out.extend(values);
                         }
                     }
-                    _ => {}
+                    _ => {
+                        if let Some(value) = literal_expr_output(expr.deparen()) {
+                            out.push(value);
+                        }
+                    }
                 },
                 TemplateExpr::Pipeline(stages) => {
-                    if let Some(last) = stages.last() {
-                        match last {
-                            TemplateExpr::Literal(lit) => {
-                                if let Some(value) = lit.as_string() {
-                                    out.push(value.to_string());
-                                }
-                            }
-                            TemplateExpr::Call { function, args } => match function.as_str() {
-                                "print" | "quote" => {
-                                    if let Some(value) = single_string_literal_arg(args) {
-                                        out.push(value);
-                                    }
-                                }
-                                "printf" => {
-                                    if let Some(value) = evaluate_printf(args) {
-                                        out.push(value);
-                                    }
-                                }
-                                _ => {}
-                            },
-                            _ => {}
-                        }
+                    if let Some(value) = stages.last().and_then(literal_expr_output) {
+                        out.push(value);
                     }
                     if let Some(seed) = stages.first().and_then(|stage| match stage {
                         TemplateExpr::Literal(lit) => lit.as_string().map(str::to_string),
@@ -535,7 +491,11 @@ impl HelperOutputEvaluator {
                         out.push(seed);
                     }
                 }
-                _ => {}
+                _ => {
+                    if let Some(value) = literal_expr_output(expr.deparen()) {
+                        out.push(value);
+                    }
+                }
             }
         }
         out
@@ -566,10 +526,7 @@ fn helper_call_names(action: &TemplateAction) -> Vec<String> {
             if !matches!(function.as_str(), "include" | "template") {
                 return;
             }
-            let Some(TemplateExpr::Literal(lit)) = args.first() else {
-                return;
-            };
-            let Some(name) = lit.as_string() else {
+            let Some(name) = helper_call_callee(function, args) else {
                 return;
             };
             if !name.is_empty() && !out.iter().any(|existing| existing == name) {
@@ -614,13 +571,8 @@ fn lone_helper_call_callee(action: &TemplateAction) -> Option<String> {
         return None;
     }
     match &action.exprs()[0] {
-        TemplateExpr::Call { function, args }
-            if matches!(function.as_str(), "template" | "include") =>
-        {
-            args.first().and_then(|arg| match arg {
-                TemplateExpr::Literal(lit) => lit.as_string().map(str::to_string),
-                _ => None,
-            })
+        TemplateExpr::Call { function, args } => {
+            helper_call_callee(function, args).map(str::to_string)
         }
         _ => None,
     }
@@ -663,6 +615,27 @@ fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
         }
     }
     out
+}
+
+fn literal_expr_output(expr: &TemplateExpr) -> Option<String> {
+    match expr.deparen() {
+        TemplateExpr::Literal(lit) => lit.as_string().map(str::to_string),
+        TemplateExpr::Call { function, args } if matches!(function.as_str(), "print" | "quote") => {
+            single_string_literal_arg(args)
+        }
+        TemplateExpr::Call { function, args } if function == "printf" => evaluate_printf(args),
+        _ => None,
+    }
+}
+
+fn helper_call_callee<'a>(function: &str, args: &'a [TemplateExpr]) -> Option<&'a str> {
+    if !matches!(function, "include" | "template") {
+        return None;
+    }
+    let Some(TemplateExpr::Literal(lit)) = args.first() else {
+        return None;
+    };
+    lit.as_string()
 }
 
 /// Extract the unique string-literal argument from a call's args.

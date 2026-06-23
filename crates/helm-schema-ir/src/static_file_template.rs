@@ -52,43 +52,22 @@ pub(crate) fn collect_template_requests<F>(
 ) where
     F: FnMut(&TemplateExpr) -> Option<AbstractValue>,
 {
-    if let TemplateExpr::Call { function, args } = expr
-        && function == "tpl"
-        && let Some(template_arg) = args.first()
-    {
-        let dot = args.get(1).and_then(&mut *resolve_fragment_value);
-        let mut paths = BTreeSet::new();
-        collect_files_get_paths(template_arg, resolve_fragment_value, &mut paths);
-        for path in paths {
-            requests.insert(StaticFileTemplate {
-                path,
-                dot: dot.clone(),
-            });
-        }
-    }
-
-    match expr {
-        TemplateExpr::Call { args, .. } => {
-            for arg in args {
-                collect_template_requests(arg, resolve_fragment_value, requests);
+    expr.walk(|node| {
+        if let TemplateExpr::Call { function, args } = node
+            && function == "tpl"
+            && let Some(template_arg) = args.first()
+        {
+            let dot = args.get(1).and_then(&mut *resolve_fragment_value);
+            let mut paths = BTreeSet::new();
+            collect_files_get_paths(template_arg, resolve_fragment_value, &mut paths);
+            for path in paths {
+                requests.insert(StaticFileTemplate {
+                    path,
+                    dot: dot.clone(),
+                });
             }
         }
-        TemplateExpr::Selector { operand, .. }
-        | TemplateExpr::Parenthesized(operand)
-        | TemplateExpr::VariableDefinition { value: operand, .. }
-        | TemplateExpr::Assignment { value: operand, .. } => {
-            collect_template_requests(operand, resolve_fragment_value, requests);
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                collect_template_requests(stage, resolve_fragment_value, requests);
-            }
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
+    });
 }
 
 pub(crate) fn collect_template_requests_from_helper(
@@ -122,36 +101,15 @@ fn collect_files_get_paths<F>(
 ) where
     F: FnMut(&TemplateExpr) -> Option<AbstractValue>,
 {
-    if let TemplateExpr::Call { function, args } = expr
-        && is_static_files_get_call(function)
-        && let Some(path_arg) = args.first()
-        && let Some(binding) = resolve_fragment_value(path_arg)
-    {
-        out.extend(binding.strings());
-    }
-
-    match expr {
-        TemplateExpr::Call { args, .. } => {
-            for arg in args {
-                collect_files_get_paths(arg, resolve_fragment_value, out);
-            }
+    expr.walk(|node| {
+        if let TemplateExpr::Call { function, args } = node
+            && is_static_files_get_call(function)
+            && let Some(path_arg) = args.first()
+            && let Some(binding) = resolve_fragment_value(path_arg)
+        {
+            out.extend(binding.strings());
         }
-        TemplateExpr::Selector { operand, .. }
-        | TemplateExpr::Parenthesized(operand)
-        | TemplateExpr::VariableDefinition { value: operand, .. }
-        | TemplateExpr::Assignment { value: operand, .. } => {
-            collect_files_get_paths(operand, resolve_fragment_value, out);
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                collect_files_get_paths(stage, resolve_fragment_value, out);
-            }
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
+    });
 }
 
 fn is_static_files_get_call(function: &str) -> bool {

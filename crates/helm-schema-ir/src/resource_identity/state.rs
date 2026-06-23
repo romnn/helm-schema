@@ -1,5 +1,4 @@
-use crate::ResourceRef;
-use crate::capability_branch::HelperBranch;
+use crate::{HelperBranch, ResourceRef};
 
 use super::helper_output::HelperOutput;
 

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
@@ -7,18 +7,9 @@ use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, eval_exprs_effects};
 use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
-use crate::helper_summary::HelperOutputMeta;
 use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
-
-pub(crate) struct ValuePathExpressionFacts {
-    pub(crate) values: BTreeSet<String>,
-    pub(crate) default_fallback_values: BTreeSet<String>,
-    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    pub(crate) encoded_output_values: BTreeSet<String>,
-    pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
-}
 
 pub(crate) fn computed_with_body_fragment_value_expr(
     expr: &TemplateExpr,
@@ -47,21 +38,24 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 }
 
 impl ValuePathContext<'_> {
-    pub(crate) fn expression_path_facts(&self, exprs: &[TemplateExpr]) -> ValuePathExpressionFacts {
+    pub(crate) fn expression_output_effects(&self, exprs: &[TemplateExpr]) -> Effects {
         let effects = self.expression_effects(exprs);
         let local_effects = self.local_expression_effects(exprs);
         let mut values = output_value_paths(effects.clone());
-        let mut default_fallback_values = effects.defaults.clone();
-        default_fallback_values.extend(local_effects.local_default_paths.iter().cloned());
-        values.extend(default_fallback_values.iter().cloned());
-        let mut type_hint_effects = effects.clone();
-        type_hint_effects.merge(local_effects.clone());
-        ValuePathExpressionFacts {
-            values,
-            default_fallback_values,
-            type_hints: type_hint_effects.schema_type_hints(),
-            encoded_output_values: effects.encoded_paths,
+        let mut defaults = effects.defaults.clone();
+        defaults.extend(local_effects.local_default_paths.iter().cloned());
+        values.extend(defaults.iter().cloned());
+        let mut type_hints = effects.schema_type_hints();
+        for (path, hints) in local_effects.schema_type_hints() {
+            type_hints.entry(path).or_default().extend(hints);
+        }
+        Effects {
+            output_paths: values,
+            defaults,
+            type_hints,
+            encoded_paths: effects.encoded_paths,
             local_output_meta: local_effects.local_output_meta,
+            ..Effects::default()
         }
     }
 
@@ -103,12 +97,11 @@ impl ValuePathContext<'_> {
     }
 
     fn local_expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
-        let env = EvalEnv {
-            locals: self.template_bindings.clone(),
-            skip_helper_call_args: true,
-            ..EvalEnv::default()
-        }
-        .with_local_facts(self.template_default_paths, self.template_output_meta);
+        let env = EvalEnv::from_local_facts(
+            self.template_bindings,
+            self.template_default_paths,
+            self.template_output_meta,
+        );
         eval_exprs_effects(exprs, &env)
     }
 

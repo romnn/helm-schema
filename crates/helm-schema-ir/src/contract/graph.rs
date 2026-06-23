@@ -21,7 +21,7 @@ impl ContractIr {
     /// This is the contract-layer constructor for tests and expert callers
     /// that already have semantic claims. Schema signals are still derived
     /// through [`ContractIr::into_schema_signals`], so semantic finalization
-    /// stays on the contract graph rather than the inspection projection.
+    /// stays on the contract graph rather than a serialized document.
     #[must_use]
     pub fn from_contract_uses(uses: Vec<ContractUse>) -> Self {
         Self {
@@ -132,12 +132,6 @@ impl ContractIr {
                 self.facts.push(ContractFact::TypeHint(type_hint));
             }
         }
-    }
-
-    /// Finalize claims once and return the canonical normalized contract.
-    #[must_use]
-    pub fn project(self) -> FinalizedContract {
-        self.finalize()
     }
 
     /// Finalize claims and export the stable versioned inspection document.

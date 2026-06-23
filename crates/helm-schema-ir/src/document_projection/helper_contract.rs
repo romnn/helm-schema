@@ -23,17 +23,17 @@ pub(crate) fn document_output_contract(
     context: &ContractUseContext<'_>,
 ) -> ContractIr {
     let mut contract = ContractIr::default();
-    let mut output_facts = value_path_context.expression_path_facts(exprs);
+    let mut output_effects = value_path_context.expression_output_effects(exprs);
     if kind == ValueKind::Scalar {
-        let all_values = output_facts.values.clone();
-        output_facts
-            .values
+        let all_values = output_effects.output_paths.clone();
+        output_effects
+            .output_paths
             .retain(|path| !output_path::values_path_has_descendant(path, &all_values));
     }
 
     let bound_values = extract_bound_values_from_exprs(exprs, range_domains, get_bindings);
 
-    if output_facts.values.is_empty()
+    if output_effects.output_paths.is_empty()
         && bound_values.is_empty()
         && !helper.has_document_value_facts()
     {
@@ -43,7 +43,8 @@ pub(crate) fn document_output_contract(
     let suppress_roots = helper.suppress_roots.clone();
     let suppress_direct_values = suppress_direct_values_for_helper(&helper, suppress_roots);
 
-    for value in output_facts.values {
+    let output_values = std::mem::take(&mut output_effects.output_paths);
+    for value in output_values {
         if suppress_direct_values.contains(&value)
             || suppresses_direct_descendant(&suppress_direct_values, &value)
         {
@@ -60,22 +61,20 @@ pub(crate) fn document_output_contract(
         let default_guard = Guard::Default {
             path: value.clone(),
         };
-        let provider_path_suppressed = output_facts.encoded_output_values.contains(&value);
+        let provider_path_suppressed = output_effects.encoded_paths.contains(&value);
         let emit_path = site.direct_value_path(&value);
         let emit_kind = if provider_path_suppressed {
             ValueKind::PartialScalar
         } else {
             site.direct_value_kind()
         };
-        let mut guard_sets = output_facts
+        let mut guard_sets = output_effects
             .local_output_meta
             .get(&value)
             .map(|meta| meta.contract_guard_sets(&value))
             .unwrap_or_else(|| vec![Vec::new()]);
         for extra_guards in &mut guard_sets {
-            if output_facts.default_fallback_values.contains(&value)
-                && !extra_guards.contains(&default_guard)
-            {
+            if output_effects.defaults.contains(&value) && !extra_guards.contains(&default_guard) {
                 extra_guards.push(default_guard.clone());
             }
             contract.push(site.contract_use(
@@ -98,10 +97,10 @@ pub(crate) fn document_output_contract(
         ));
     }
 
-    contract.extend_type_hints(output_facts.type_hints);
+    contract.extend_type_hints(output_effects.schema_type_hints());
     append_document_helper_contract_uses(
         &helper,
-        &output_facts.encoded_output_values,
+        &output_effects.encoded_paths,
         &site,
         &mut contract,
         context,

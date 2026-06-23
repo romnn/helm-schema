@@ -45,10 +45,10 @@ fn document_type_hints_resolve_template_local_aliases() {
         current_dot_binding: None,
     };
 
-    let facts = context.expression_path_facts(&exprs);
+    let effects = context.expression_output_effects(&exprs);
 
     sim_assert_eq!(
-        have: facts.type_hints,
+        have: effects.schema_type_hints(),
         want: BTreeMap::from([
             (
                 "global.service.port".to_string(),
@@ -61,7 +61,7 @@ fn document_type_hints_resolve_template_local_aliases() {
         ])
     );
     sim_assert_eq!(
-        have: facts.encoded_output_values,
+        have: effects.encoded_paths,
         want: BTreeSet::from([
             "global.service.port".to_string(),
             "service.port".to_string()

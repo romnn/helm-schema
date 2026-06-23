@@ -16,7 +16,7 @@
 //! Output is typed so the common `if Capabilities.APIVersions.Has … else …`
 //! shape stays branch-aware for Kubernetes lookup.
 
-use crate::capability_branch::HelperBranch;
+use crate::HelperBranch;
 
 mod evaluator;
 

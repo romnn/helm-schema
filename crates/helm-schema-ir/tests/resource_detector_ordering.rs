@@ -21,7 +21,7 @@ fn generate(template: &str) -> FinalizedContract {
     let idx = DefineIndex::new();
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
-        .project()
+        .finalize()
 }
 
 fn resource_of(use_: &ContractUse) -> (String, String) {
@@ -381,7 +381,7 @@ fn detector_resolves_helper_returned_api_version() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
-        .project();
+        .finalize();
 
     let u = ir
         .uses()
@@ -428,7 +428,7 @@ fn detector_resolves_helper_with_if_else_branches() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
-        .project();
+        .finalize();
 
     let u = ir
         .uses()
@@ -482,7 +482,7 @@ fn detector_resolves_include_returned_api_version() {
         .expect("helpers parse");
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
-        .project();
+        .finalize();
 
     let u = ir
         .uses()

@@ -208,11 +208,6 @@ impl HelperPathFacts {
     fn merge_dependency_meta(&mut self, meta: HelperOutputMeta) {
         merge_optional_meta(&mut self.dependency_meta, Some(meta));
     }
-
-    fn ensure_dependency_meta(&mut self) {
-        self.dependency_meta
-            .get_or_insert_with(HelperOutputMeta::default);
-    }
 }
 
 fn merge_optional_meta(target: &mut Option<HelperOutputMeta>, incoming: Option<HelperOutputMeta>) {
@@ -233,13 +228,6 @@ impl HelperSummary {
         self.chart_defaults.extend(other.chart_defaults);
     }
 
-    pub(crate) fn add_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
-        if path.trim().is_empty() {
-            return;
-        }
-        self.merge_output_meta(path, meta);
-    }
-
     pub(crate) fn merge_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
         if path.trim().is_empty() {
             return;
@@ -248,15 +236,6 @@ impl HelperSummary {
             .entry(path)
             .or_default()
             .merge_output_meta(meta);
-    }
-
-    pub(crate) fn add_dependency_path(&mut self, path: String) {
-        if !path.trim().is_empty() {
-            self.path_facts
-                .entry(path)
-                .or_default()
-                .ensure_dependency_meta();
-        }
     }
 
     pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {

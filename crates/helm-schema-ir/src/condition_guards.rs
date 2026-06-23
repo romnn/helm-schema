@@ -50,20 +50,8 @@ fn parse_structural_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
             let alternatives = parse_or_alternatives(args)?;
             Some(or_guard_from_alternatives(alternatives))
         }
-        "eq" => {
-            let [left, right] = args.as_slice() else {
-                return None;
-            };
-            let (path, value) = comparison_path_and_literal(left, right)?;
-            Some(vec![Guard::Eq { path, value }])
-        }
-        "ne" => {
-            let [left, right] = args.as_slice() else {
-                return None;
-            };
-            let (path, value) = comparison_path_and_literal(left, right)?;
-            Some(vec![Guard::NotEq { path, value }])
-        }
+        "eq" => comparison_guard(args, false).map(|guard| vec![guard]),
+        "ne" => comparison_guard(args, true).map(|guard| vec![guard]),
         "typeIs" => {
             let schema_type = type_is_schema_type(args.first())?;
             let mut paths = BTreeSet::new();
@@ -132,14 +120,8 @@ fn parse_negated_condition_expr(expr: &TemplateExpr) -> Option<Vec<Guard>> {
 
     if let TemplateExpr::Call { function, args } = expr.deparen()
         && matches!(function.as_str(), "eq" | "ne")
-        && let [left, right] = args.as_slice()
-        && let Some((path, value)) = comparison_path_and_literal(left, right)
     {
-        return Some(match function.as_str() {
-            "eq" => vec![Guard::NotEq { path, value }],
-            "ne" => vec![Guard::Eq { path, value }],
-            _ => unreachable!("function is restricted above"),
-        });
+        return comparison_guard(args, function == "eq").map(|guard| vec![guard]);
     }
 
     let mut paths = BTreeSet::new();
@@ -178,6 +160,18 @@ fn comparison_path_and_literal(
         }
         _ => None,
     }
+}
+
+fn comparison_guard(args: &[TemplateExpr], negated: bool) -> Option<Guard> {
+    let [left, right] = args else {
+        return None;
+    };
+    let (path, value) = comparison_path_and_literal(left, right)?;
+    Some(if negated {
+        Guard::NotEq { path, value }
+    } else {
+        Guard::Eq { path, value }
+    })
 }
 
 pub(crate) fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {

@@ -17,9 +17,6 @@ use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::output_path;
 use crate::predicate::Predicate;
-use crate::template_expr_analysis::{
-    expr_contains_helper_call, exprs_pipeline_merges_into_var, exprs_start_with_helper_call,
-};
 use crate::yaml_syntax::parse_yaml_key;
 use crate::{ValueKind, YamlPath};
 
@@ -291,12 +288,7 @@ fn local_expression_effects(
     local_bindings: &HashMap<String, AbstractValue>,
     local_default_paths: &HashMap<String, BTreeSet<String>>,
 ) -> Effects {
-    let env = EvalEnv {
-        locals: local_bindings.clone(),
-        skip_helper_call_args: true,
-        ..EvalEnv::default()
-    }
-    .with_local_facts(local_default_paths, &HashMap::new());
+    let env = EvalEnv::from_local_facts(local_bindings, local_default_paths, &HashMap::new());
     eval_exprs_effects(exprs, &env)
 }
 
@@ -401,4 +393,50 @@ fn static_yaml_fragment_output_path_from_exprs(exprs: &[TemplateExpr]) -> Option
     let format = printf_format(expr)?;
     let key = parse_yaml_key(format.trim_start())?.into_key();
     Some(YamlPath(vec![key]))
+}
+
+fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
+    let mut found = false;
+    expr.walk(|node| {
+        if let TemplateExpr::Call { function, .. } = node
+            && matches!(function.as_str(), "include" | "template")
+        {
+            found = true;
+        }
+    });
+    found
+}
+
+fn exprs_start_with_helper_call(exprs: &[TemplateExpr]) -> bool {
+    fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {
+        match expr {
+            TemplateExpr::Parenthesized(inner) => expr_starts_with_helper_call(inner),
+            TemplateExpr::Call { function, .. } => {
+                matches!(function.as_str(), "include" | "template")
+            }
+            TemplateExpr::Pipeline(stages) => {
+                stages.first().is_some_and(expr_starts_with_helper_call)
+            }
+            _ => false,
+        }
+    }
+
+    matches!(exprs, [expr] if expr_starts_with_helper_call(expr))
+}
+
+fn exprs_pipeline_merges_into_var(exprs: &[TemplateExpr], var: &str) -> bool {
+    let [TemplateExpr::Pipeline(stages)] = exprs else {
+        return false;
+    };
+    stages.iter().skip(1).any(|stage| {
+        let TemplateExpr::Call { function, args } = stage else {
+            return false;
+        };
+        matches!(
+            function.as_str(),
+            "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite"
+        ) && args
+            .iter()
+            .any(|arg| matches!(arg, TemplateExpr::Variable(name) if name == var))
+    })
 }
