@@ -1,6 +1,5 @@
 mod abstract_value;
 mod assignment_action_plan;
-mod bound_helper_call_analysis;
 mod bound_value_analysis;
 mod capability_branch;
 mod capability_liveness;
@@ -33,7 +32,6 @@ mod helper_range_plan;
 mod helper_runtime_guards;
 mod helper_runtime_plan;
 mod helper_summary;
-mod helper_value_analysis;
 mod helper_value_expression;
 mod helper_walk_state;
 mod literal_schema_type;

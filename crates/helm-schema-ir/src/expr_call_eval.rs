@@ -33,6 +33,7 @@ pub(crate) fn eval_call_with_helper_calls(
         function if is_merge_function(function) => eval_merge(args, env, resolver),
         "coalesce" => eval_choice(args, env, resolver),
         "ternary" => eval_ternary(args, env, resolver),
+        "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
         "index" => eval_index(args, env, resolver),
         "typeIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
@@ -473,6 +474,35 @@ fn eval_printf(
         values.push(AbstractValue::PathSet(provenance_paths));
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn eval_print(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut rendered: BTreeSet<String> = [String::new()].into_iter().collect();
+    for arg in args {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(result.effects);
+        let strings = result
+            .value
+            .as_ref()
+            .map(AbstractValue::strings)
+            .unwrap_or_default();
+        if strings.is_empty() {
+            return EvalResult::with_effects(None, effects);
+        }
+        let mut next = BTreeSet::new();
+        for prefix in &rendered {
+            for value in &strings {
+                next.insert(format!("{prefix}{value}"));
+            }
+        }
+        rendered = next;
+    }
+    EvalResult::with_effects(Some(AbstractValue::StringSet(rendered)), effects)
 }
 
 fn eval_merge(

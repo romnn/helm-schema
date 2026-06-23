@@ -10,7 +10,7 @@ use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, fragment_or_helper_value_from_expr,
+    helper_call_summary_from_exprs_with_fragment_locals,
     helper_value_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperFragmentOutputUse;
@@ -22,15 +22,6 @@ use crate::template_expr_analysis::{
 };
 use crate::yaml_syntax::parse_yaml_key;
 use crate::{ValueKind, YamlPath};
-
-struct FragmentExpressionOutputScope<'a> {
-    bindings: &'a HashMap<String, AbstractValue>,
-    current_dot: Option<&'a AbstractValue>,
-    output_path: &'a YamlPath,
-    kind: ValueKind,
-    active_output_predicates: &'a BTreeSet<Predicate>,
-    fallback_paths: &'a BTreeSet<String>,
-}
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
@@ -103,9 +94,9 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         &local_effects.local_default_paths,
     );
 
-    let nested = summarize_calls_in_exprs(
+    let nested = helper_call_summary_from_exprs_with_fragment_locals(
         exprs,
-        bindings,
+        Some(bindings),
         current_dot,
         &state.locals.bindings,
         state.context,
@@ -135,16 +126,31 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .collect();
     let nested_has_fragment_outputs = !nested_fragment_outputs.is_empty();
 
-    let expression_output_scope = FragmentExpressionOutputScope {
-        bindings,
-        current_dot,
-        output_path: &output_path,
-        kind,
-        active_output_predicates,
-        fallback_paths: &fallback_paths,
-    };
-    let expression_output_uses =
-        helper_expression_output_uses_from_exprs(exprs, expression_output_scope, state);
+    let mut expression_output_uses = Vec::new();
+    let mut expression_seen = state.seen.clone();
+    for expr in exprs {
+        if !expr_contains_helper_call(expr) {
+            continue;
+        }
+        if let Some(binding) = helper_value_from_expr_with_fragment_locals(
+            expr,
+            &state.locals.bindings,
+            Some(bindings),
+            current_dot,
+            state.context,
+            &mut expression_seen,
+        ) {
+            binding.collect_output_uses(
+                &mut expression_output_uses,
+                &output_path,
+                kind,
+                active_output_predicates,
+                &fallback_paths,
+            );
+        }
+    }
+    expression_output_uses
+        .retain(|output| expression_output_use_is_keyed_map_projection(output, &output_path));
     let expression_descendant_sources: BTreeSet<String> = expression_output_uses
         .iter()
         .filter(|output| !output.relative_path.0.is_empty())
@@ -210,7 +216,7 @@ fn collect_bound_fragment_output_assignment_uses(
 ) {
     let rhs_exprs = std::slice::from_ref(rhs_expr);
     let mut seen_rhs = HashSet::new();
-    let mut binding = fragment_or_helper_value_from_expr(
+    let mut binding = helper_value_from_expr_with_fragment_locals(
         rhs_expr,
         &state.locals.bindings,
         Some(bindings),
@@ -221,9 +227,9 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let mut rhs_seen = state.seen.clone();
-        let nested = summarize_calls_in_exprs(
+        let nested = helper_call_summary_from_exprs_with_fragment_locals(
             rhs_exprs,
-            bindings,
+            Some(bindings),
             current_dot,
             &state.locals.bindings,
             state.context,
@@ -303,26 +309,6 @@ fn helper_context_expression_effects(
     eval_exprs_effects(exprs, &env)
 }
 
-fn summarize_calls_in_exprs(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> crate::helper_summary::HelperSummary {
-    context
-        .helper_summaries()
-        .summarize_bound_helper_calls_in_exprs(
-            exprs,
-            Some(bindings),
-            current_dot,
-            local_bindings,
-            context,
-            seen,
-        )
-}
-
 fn local_output_uses_from_effects(
     effects: &Effects,
     output_path: &YamlPath,
@@ -378,39 +364,6 @@ fn output_uses_from_rendered_effects(
         );
     }
     outputs
-}
-
-fn helper_expression_output_uses_from_exprs(
-    exprs: &[TemplateExpr],
-    scope: FragmentExpressionOutputScope<'_>,
-    state: &mut FragmentOutputWalkState<'_, '_>,
-) -> Vec<HelperFragmentOutputUse> {
-    let mut expression_output_uses = Vec::new();
-    let mut expression_seen = state.seen.clone();
-    for expr in exprs {
-        if !expr_contains_helper_call(expr) {
-            continue;
-        }
-        if let Some(binding) = helper_value_from_expr_with_fragment_locals(
-            expr,
-            &state.locals.bindings,
-            Some(scope.bindings),
-            scope.current_dot,
-            state.context,
-            &mut expression_seen,
-        ) {
-            binding.collect_output_uses(
-                &mut expression_output_uses,
-                scope.output_path,
-                scope.kind,
-                scope.active_output_predicates,
-                scope.fallback_paths,
-            );
-        }
-    }
-    expression_output_uses
-        .retain(|output| expression_output_use_is_keyed_map_projection(output, scope.output_path));
-    expression_output_uses
 }
 
 fn expression_output_use_is_keyed_map_projection(

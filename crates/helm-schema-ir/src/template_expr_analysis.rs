@@ -46,37 +46,3 @@ pub(crate) fn is_merge_function(function: &str) -> bool {
         "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite"
     )
 }
-
-pub(crate) fn walk_expr_excluding_helper_call_args<F>(expr: &TemplateExpr, visit: &mut F)
-where
-    F: FnMut(&TemplateExpr),
-{
-    visit(expr);
-    match expr {
-        TemplateExpr::Call { function, args } => {
-            if matches!(function.as_str(), "include" | "template") {
-                return;
-            }
-            for arg in args {
-                walk_expr_excluding_helper_call_args(arg, visit);
-            }
-        }
-        TemplateExpr::Selector { operand, .. }
-        | TemplateExpr::VariableDefinition { value: operand, .. }
-        | TemplateExpr::Assignment { value: operand, .. } => {
-            walk_expr_excluding_helper_call_args(operand, visit);
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                walk_expr_excluding_helper_call_args(stage, visit);
-            }
-        }
-        TemplateExpr::Parenthesized(inner) => {
-            walk_expr_excluding_helper_call_args(inner, visit);
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
-}

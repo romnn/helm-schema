@@ -12,7 +12,9 @@ use crate::abstract_value::AbstractValue;
 use crate::contract::ContractIr;
 use crate::define_body_cache::{DefineBodyCache, parse_go_template};
 use crate::document_projection::DocumentTracker;
-use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::fragment_expr_eval::{
+    FragmentEvalContext, helper_call_summary_from_exprs_with_fragment_locals,
+};
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
@@ -250,16 +252,13 @@ impl<'a> SymbolicWalker<'a> {
         &self,
         exprs: &[helm_schema_ast::TemplateExpr],
     ) -> HelperSummary {
-        self.ir_context
-            .inner
-            .helper_summaries
-            .summarize_bound_helper_calls_in_exprs(
-                exprs,
-                Some(&self.root_bindings),
-                self.current_dot_binding().as_ref(),
-                &self.scope.locals().fragment_values,
-                self.fragment_eval_context(),
-                &mut HashSet::new(),
-            )
+        helper_call_summary_from_exprs_with_fragment_locals(
+            exprs,
+            Some(&self.root_bindings),
+            self.current_dot_binding().as_ref(),
+            &self.scope.locals().fragment_values,
+            self.fragment_eval_context(),
+            &mut HashSet::new(),
+        )
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 
 use helm_schema_ast::TemplateExpr;
 
@@ -18,18 +18,7 @@ impl SymbolicWalker<'_> {
             .value_path_context()
             .expression_path_facts(exprs)
             .local_output_meta;
-        let analysis = self
-            .ir_context
-            .inner
-            .helper_summaries
-            .summarize_bound_helper_calls_in_exprs(
-                exprs,
-                Some(&self.root_bindings),
-                self.current_dot_binding().as_ref(),
-                &self.scope.locals().fragment_values,
-                self.fragment_eval_context(),
-                &mut HashSet::new(),
-            );
+        let analysis = self.summarize_bound_helper_calls_in_exprs(exprs);
         for (path, facts) in analysis.path_facts() {
             if let Some(meta) = facts.output_meta.as_ref() {
                 out.entry(path.to_string()).or_default().merge_ref(meta);

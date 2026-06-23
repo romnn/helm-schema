@@ -9,7 +9,7 @@ use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, fragment_or_helper_value_from_expr,
+    FragmentEvalContext, helper_call_summary_from_exprs_with_fragment_locals,
     helper_value_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
@@ -20,6 +20,12 @@ use helm_schema_ast::TemplateExpr;
 enum NestedRenderMode {
     Scalar,
     Fragment,
+}
+
+#[derive(Default)]
+struct HelperValueResultFacts {
+    output_meta: BTreeMap<String, HelperOutputMeta>,
+    string_outputs: BTreeSet<String>,
 }
 
 pub(crate) fn collect_helper_value_expression_from_exprs(
@@ -79,6 +85,14 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         ValueKind::Scalar
     };
     if expression_kind == ValueKind::Scalar {
+        let result_facts = value_result_facts_from_exprs(
+            exprs,
+            bindings,
+            current_dot,
+            &state.locals.bindings,
+            state.context,
+            state.seen,
+        );
         for output in direct_outputs {
             let meta = HelperOutputMeta::with_predicates(
                 active_output_predicates,
@@ -101,18 +115,11 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         state
             .analysis
             .string_output
-            .extend(string_outputs_from_exprs(
-                exprs,
-                bindings,
-                current_dot,
-                &state.locals.bindings,
-                state.context,
-                state.seen,
-            ));
+            .extend(result_facts.string_outputs);
     }
-    let nested = summarize_calls_in_exprs(
+    let nested = helper_call_summary_from_exprs_with_fragment_locals(
         exprs,
-        bindings,
+        Some(bindings),
         current_dot,
         &state.locals.bindings,
         state.context,
@@ -167,17 +174,12 @@ fn collect_assignment_bound_helper_values(
         let defaulted_dependencies =
             helper_context_expression_effects(rhs_exprs, bindings, current_dot, &HashMap::new())
                 .defaults;
-        state.analysis.add_dependency_meta_map(
-            defaulted_dependencies
-                .into_iter()
-                .map(|path| {
-                    (
-                        path,
-                        HelperOutputMeta::with_predicates(active_output_predicates, true),
-                    )
-                })
-                .collect(),
-        );
+        for path in defaulted_dependencies {
+            state.analysis.merge_dependency_meta(
+                path,
+                HelperOutputMeta::with_predicates(active_output_predicates, true),
+            );
+        }
         return;
     }
 
@@ -194,7 +196,7 @@ fn collect_assignment_bound_helper_values(
         &state.locals.default_paths,
         state.local_output_meta,
     );
-    let result_meta_by_path = output_meta_from_exprs(
+    let result_facts = value_result_facts_from_exprs(
         rhs_exprs,
         bindings,
         current_dot,
@@ -202,9 +204,9 @@ fn collect_assignment_bound_helper_values(
         state.context,
         state.seen,
     );
-    let nested = summarize_calls_in_exprs(
+    let nested = helper_call_summary_from_exprs_with_fragment_locals(
         rhs_exprs,
-        bindings,
+        Some(bindings),
         current_dot,
         &state.locals.bindings,
         state.context,
@@ -250,12 +252,12 @@ fn collect_assignment_bound_helper_values(
         &fallback_paths,
         &local_effects.local_default_paths,
         &local_effects.local_output_meta,
-        &result_meta_by_path,
+        &result_facts.output_meta,
         active_output_predicates,
     );
 
     let mut seen_rhs = HashSet::new();
-    if let Some(binding) = fragment_or_helper_value_from_expr(
+    if let Some(binding) = helper_value_from_expr_with_fragment_locals(
         rhs_expr,
         &state.locals.bindings,
         Some(bindings),
@@ -323,35 +325,15 @@ fn local_expression_effects(
     eval_exprs_effects(exprs, &env)
 }
 
-fn summarize_calls_in_exprs(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> HelperSummary {
-    context
-        .helper_summaries()
-        .summarize_bound_helper_calls_in_exprs(
-            exprs,
-            Some(bindings),
-            current_dot,
-            local_bindings,
-            context,
-            seen,
-        )
-}
-
-fn output_meta_from_exprs(
+fn value_result_facts_from_exprs(
     exprs: &[TemplateExpr],
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
     local_bindings: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen_seed: &HashSet<String>,
-) -> BTreeMap<String, HelperOutputMeta> {
-    let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+) -> HelperValueResultFacts {
+    let mut facts = HelperValueResultFacts::default();
     let mut seen = seen_seed.clone();
     for expr in exprs {
         if let Some(binding) = helper_value_from_expr_with_fragment_locals(
@@ -362,37 +344,13 @@ fn output_meta_from_exprs(
             context,
             &mut seen,
         ) {
+            facts.string_outputs.extend(binding.strings());
             for (path, meta) in binding.output_meta() {
-                out.entry(path).or_default().merge(meta);
+                facts.output_meta.entry(path).or_default().merge(meta);
             }
         }
     }
-    out
-}
-
-fn string_outputs_from_exprs(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen_seed: &HashSet<String>,
-) -> BTreeSet<String> {
-    let mut strings = BTreeSet::new();
-    let mut seen = seen_seed.clone();
-    for expr in exprs {
-        if let Some(binding) = fragment_or_helper_value_from_expr(
-            expr,
-            local_bindings,
-            Some(bindings),
-            current_dot,
-            context,
-            &mut seen,
-        ) {
-            strings.extend(binding.strings());
-        }
-    }
-    strings
+    facts
 }
 
 fn rhs_output_meta(
