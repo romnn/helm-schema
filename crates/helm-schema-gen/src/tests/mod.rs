@@ -19,8 +19,10 @@ use helm_schema_ir::{
 use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 use test_util::prelude::sim_assert_eq;
 
-fn provider() -> KubernetesJsonSchemaProvider {
-    KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
+fn provider() -> Chain {
+    Chain::new(vec![Box::new(
+        KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true),
+    )])
 }
 
 fn production_chain_provider() -> Chain {

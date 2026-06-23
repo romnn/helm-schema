@@ -1,4 +1,4 @@
-use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider,
     crds_catalog::debug_materialize_schema_for_resource as debug_materialize_catalog_schema,
@@ -69,7 +69,8 @@ fn prometheusrule_leaf_schema_rules_items() {
     ]);
 
     let upstream_leaf = provider
-        .schema_fragment_for_resource_path(&r, &path)
+        .lookup(&r, &path)
+        .into_schema_fragment()
         .expect("leaf schema");
 
     let relative_path = "monitoring.coreos.com/prometheusrule_v1.json";
@@ -84,7 +85,8 @@ fn prometheusrule_leaf_schema_rules_items() {
 
     let local_provider = LocalSchemaProvider::new(&root_dir);
     let local_leaf = local_provider
-        .schema_fragment_for_resource_path(&r, &path)
+        .lookup(&r, &path)
+        .into_schema_fragment()
         .expect("leaf schema");
 
     sim_assert_eq!(have: upstream_leaf.into_schema(), want: local_leaf.into_schema());

@@ -1,6 +1,4 @@
-use helm_schema_core::{
-    ApiPresenceQuery, ProviderOrigin, ResourceRef, ResourceSchemaOracle, YamlPath,
-};
+use helm_schema_core::{ApiPresenceQuery, ProviderOrigin, ResourceRef, YamlPath};
 
 use crate::diagnostic::Diagnostic;
 use crate::inference::candidate::ApiVersionCandidate;
@@ -13,7 +11,7 @@ use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 /// Implementations typically own one source of schemas (local files,
 /// upstream HTTP catalog, etc.) and delegate to shared `fetch`, `cache`,
 /// and `lookup` primitives.
-pub trait K8sSchemaProvider: ResourceSchemaOracle {
+pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// Identifier of the layer this provider implements. Drives chain
     /// precedence and origin-specific diagnostic rules.
     fn origin(&self) -> ProviderOrigin;
@@ -21,21 +19,7 @@ pub trait K8sSchemaProvider: ResourceSchemaOracle {
     /// Typed lookup: distinguish ownership, doc presence, and path
     /// presence so the chain can attribute diagnostics correctly.
     ///
-    /// Default impl synthesises one of `Found` / `NotOwned` from the core
-    /// schema-fragment lookup, so simple providers only need to implement one
-    /// structural fragment boundary; richer providers should override.
-    fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        if !self.has_resource(resource) {
-            return ProviderLookupResult::NotOwned;
-        }
-        match ResourceSchemaOracle::schema_fragment_for_resource_path(self, resource, path) {
-            Some(fragment) => ProviderLookupResult::Found {
-                schema: fragment,
-                resolved_k8s_version: None,
-            },
-            None => ProviderLookupResult::PathUnresolved,
-        }
-    }
+    fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult;
 
     /// Cheap check for "does this provider own this resource type?".
     /// MUST NOT issue network requests — providers answer from local

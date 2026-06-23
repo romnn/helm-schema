@@ -78,7 +78,9 @@ fn crd_loose_probes_mirrors_for_exact_version() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let schema = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let schema = provider
+        .lookup(&resource, &YamlPath(Vec::new()))
+        .into_schema_fragment();
     assert!(
         schema.is_some(),
         "mirror should answer for exact requested version"
@@ -230,7 +232,9 @@ fn crd_strict_suppresses_cross_scan_keeps_mirrors() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let schema = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let schema = provider
+        .lookup(&resource, &YamlPath(Vec::new()))
+        .into_schema_fragment();
     assert!(schema.is_some(), "mirror must answer in strict mode");
     let snapshot = diagnostics.snapshot();
     assert!(
@@ -273,7 +277,7 @@ fn crd_mirror_does_not_mask_default_catalog() {
         .with_fetcher(mock);
 
     let schema = provider
-        .schema_fragment_for_resource_path(
+        .lookup(
             &ResourceRef {
                 api_version: "monitoring.coreos.com/v1alpha1".to_string(),
                 kind: "ServiceMonitor".to_string(),
@@ -282,6 +286,7 @@ fn crd_mirror_does_not_mask_default_catalog() {
             },
             &YamlPath(Vec::new()),
         )
+        .into_schema_fragment()
         .expect("default answered")
         .into_schema();
     let props = schema
@@ -323,8 +328,8 @@ fn crd_negative_cache_per_source() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
     sim_assert_eq!(
         have: mock.calls_for(default_url),
@@ -355,7 +360,7 @@ fn crd_cache_record_source_writes_meta_sidecar() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
     let meta = cache.join("default/monitoring.coreos.com/servicemonitor_v1alpha1.json.meta");
     assert!(meta.exists(), "expected meta sidecar at {meta:?}");
@@ -417,7 +422,7 @@ fn crd_mirror_cache_per_source_namespaced() {
         api_version_branches: Vec::new(),
     };
     // Force the default to populate first.
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
     let default_path = cache.join("default/monitoring.coreos.com/servicemonitor_v1alpha1.json");
     let mirror_path = cache.join(format!(

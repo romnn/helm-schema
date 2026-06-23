@@ -1,5 +1,5 @@
 use helm_schema_ir::{Guard, ResourceRef, YamlPath};
-use helm_schema_k8s::{ChartLocalCrdSchemaProvider, ResourceSchemaOracle};
+use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
 use serde_json::json;
 use vfs::VfsPath;
 
@@ -818,10 +818,12 @@ spec:
         api_version_branches: Vec::new(),
     };
 
-    let schema = provider.schema_fragment_for_resource_path(
-        &resource,
-        &YamlPath(vec!["spec".to_string(), "size".to_string()]),
-    );
+    let schema = provider
+        .lookup(
+            &resource,
+            &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+        )
+        .into_schema_fragment();
 
     sim_assert_eq!(
         have: schema.map(|fragment| fragment.into_schema()),
@@ -895,10 +897,12 @@ spec:
         api_version_branches: Vec::new(),
     };
 
-    let schema = provider.schema_fragment_for_resource_path(
-        &resource,
-        &YamlPath(vec!["spec".to_string(), "size".to_string()]),
-    );
+    let schema = provider
+        .lookup(
+            &resource,
+            &YamlPath(vec!["spec".to_string(), "size".to_string()]),
+        )
+        .into_schema_fragment();
 
     sim_assert_eq!(
         have: schema.map(|fragment| fragment.into_schema()),

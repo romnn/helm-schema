@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use helm_schema_core::{ApiPresenceQuery, ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
@@ -627,20 +627,6 @@ pub fn debug_materialize_schema_for_resource(
     let root_doc = ctx.doc(&filename)?.clone();
     let (_, expanded) = super::resolve_ctx::expand_schema_node(&mut ctx, &filename, &root_doc, 0);
     Some(expanded)
-}
-
-impl ResourceSchemaOracle for KubernetesJsonSchemaProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
-            return None;
-        }
-        self.schema_fragment_for_resource_path_uncached(resource, path)
-            .and_then(|(_version, fragment)| fragment)
-    }
 }
 
 impl K8sSchemaProvider for KubernetesJsonSchemaProvider {

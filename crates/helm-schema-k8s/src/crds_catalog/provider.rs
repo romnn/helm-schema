@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
@@ -273,21 +273,6 @@ pub fn debug_materialize_schema_for_resource(
 ) -> Option<Value> {
     let loaded = provider.load_schema_doc(resource)?;
     Some(debug_materialize_local_schema(loaded.doc.root()))
-}
-
-impl ResourceSchemaOracle for CrdsCatalogSchemaProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        if self.run_layout_check() == LayoutCheckOutcome::ForwardIncompatible {
-            return None;
-        }
-        let loaded = self.load_schema_doc(resource)?;
-        self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path)
-            .map(|leaf| self.fragment_for_leaf(&loaded, leaf))
-    }
 }
 
 impl K8sSchemaProvider for CrdsCatalogSchemaProvider {

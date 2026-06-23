@@ -46,14 +46,17 @@ fn widget_universe() -> LocalSchemaUniverse {
 fn resolves_served_crd_version_schema_from_universe() {
     let provider = ChartLocalCrdSchemaProvider::new(widget_universe());
 
-    let schema = provider.schema_fragment_for_resource_path(
+    let schema = provider.lookup(
         &resource("example.com/v1"),
         &YamlPath(vec!["spec".to_string(), "size".to_string()]),
     );
 
+    let ProviderLookupResult::Found { schema, .. } = schema else {
+        panic!("chart-local provider should resolve spec.size");
+    };
     sim_assert_eq!(
-        have: schema.map(ProviderSchemaFragment::into_schema),
-        want: Some(json!({"type": "integer"}))
+        have: schema.into_schema(),
+        want: json!({"type": "integer"})
     );
 }
 

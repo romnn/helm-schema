@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::doc_backed_schema::{
@@ -165,18 +165,6 @@ enum LocalSchemaDocLoad {
         source_path: String,
         io_error: String,
     },
-}
-
-impl ResourceSchemaOracle for LocalSchemaProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        let root = self.load_schema_doc(resource)?;
-        self.schema_leaf_for_resource_path_from_doc(&root, path)
-            .map(|leaf| self.fragment_for_leaf(resource, &root, leaf))
-    }
 }
 
 impl K8sSchemaProvider for LocalSchemaProvider {

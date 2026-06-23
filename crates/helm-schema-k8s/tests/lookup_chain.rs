@@ -56,19 +56,6 @@ impl FakeProvider {
     }
 }
 
-impl ResourceSchemaOracle for FakeProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        _r: &ResourceRef,
-        _p: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        match &self.behaviour {
-            FakeBehaviour::Found(v) => Some(ProviderSchemaFragment::new(v.clone())),
-            _ => None,
-        }
-    }
-}
-
 impl K8sSchemaProvider for FakeProvider {
     fn origin(&self) -> ProviderOrigin {
         self.name
@@ -406,19 +393,13 @@ fn chain_exposes_provider_kube_version() {
     #[derive(Debug)]
     struct VersionedProvider;
 
-    impl ResourceSchemaOracle for VersionedProvider {
-        fn schema_fragment_for_resource_path(
-            &self,
-            _r: &ResourceRef,
-            _p: &YamlPath,
-        ) -> Option<ProviderSchemaFragment> {
-            None
-        }
-    }
-
     impl K8sSchemaProvider for VersionedProvider {
         fn origin(&self) -> ProviderOrigin {
             ProviderOrigin::KubernetesOpenApi
+        }
+
+        fn lookup(&self, _r: &ResourceRef, _p: &YamlPath) -> ProviderLookupResult {
+            ProviderLookupResult::NotOwned
         }
 
         fn has_resource(&self, _r: &ResourceRef) -> bool {
@@ -468,22 +449,6 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
     struct OnlyAnswersFor {
         wants: &'static str,
     }
-    impl ResourceSchemaOracle for OnlyAnswersFor {
-        fn schema_fragment_for_resource_path(
-            &self,
-            r: &ResourceRef,
-            _p: &YamlPath,
-        ) -> Option<ProviderSchemaFragment> {
-            if r.api_version == self.wants {
-                Some(ProviderSchemaFragment::new(Value::String(
-                    "hit".to_string(),
-                )))
-            } else {
-                None
-            }
-        }
-    }
-
     impl K8sSchemaProvider for OnlyAnswersFor {
         fn origin(&self) -> ProviderOrigin {
             ProviderOrigin::DefaultCatalog
@@ -945,16 +910,6 @@ fn chain_schema_fragment_for_use_path_unresolved_does_not_leak_missing_schema() 
 fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_leak() {
     #[derive(Debug)]
     struct AlwaysPathUnresolved;
-    impl ResourceSchemaOracle for AlwaysPathUnresolved {
-        fn schema_fragment_for_resource_path(
-            &self,
-            _r: &ResourceRef,
-            _p: &YamlPath,
-        ) -> Option<ProviderSchemaFragment> {
-            None
-        }
-    }
-
     impl K8sSchemaProvider for AlwaysPathUnresolved {
         fn origin(&self) -> ProviderOrigin {
             ProviderOrigin::KubernetesOpenApi

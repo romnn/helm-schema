@@ -47,8 +47,7 @@ fn legacy_cache_layout_is_invalidated_in_alpha() {
         api_version_branches: Vec::new(),
     };
     let _ = provider.has_resource(&resource);
-    let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     // Legacy `<root>/v1.35.0/foo.json` was wiped.
     assert!(
@@ -95,8 +94,7 @@ fn cache_layout_version_marker_written_after_repopulate() {
         api_version_branches: Vec::new(),
     };
     let _ = provider.has_resource(&resource);
-    let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let marker = root.join(LAYOUT_MARKER_FILENAME);
     assert!(
@@ -135,8 +133,7 @@ fn cache_invalidation_emits_diagnostic() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let snapshot = diagnostics.snapshot();
     let inv = snapshot
@@ -180,8 +177,7 @@ fn forward_incompat_cache_emits_diagnostic() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let snapshot = diagnostics.snapshot();
     let payload = snapshot
@@ -460,8 +456,7 @@ fn cache_layout_version_newer_marker_refuses_mutation() {
         api_version_branches: Vec::new(),
     };
     let _ = provider.has_resource(&resource);
-    let _ = provider
-        .schema_fragment_for_resource_path(&resource, &helm_schema_core::YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     // Marker untouched.
     let marker_value: u32 = fs::read_to_string(root.join(LAYOUT_MARKER_FILENAME))

@@ -7,7 +7,7 @@ use helm_schema_k8s::inference::aggregate;
 use helm_schema_k8s::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, Chain, CrdsCatalogSchemaProvider, Diagnostic,
     DiagnosticSink, InferenceSource, K8sSchemaProvider, KubernetesJsonSchemaProvider, MockFetcher,
-    MockResponse, ProviderOrigin, source_id_for_url,
+    MockResponse, ProviderLookupResult, ProviderOrigin, source_id_for_url,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -262,19 +262,16 @@ fn infer_api_version_candidates_default_impl_empty() {
     // infer_api_version_candidates returns empty via the trait default.
     #[derive(Debug)]
     struct Empty;
-    impl ResourceSchemaOracle for Empty {
-        fn schema_fragment_for_resource_path(
-            &self,
-            _r: &helm_schema_core::ResourceRef,
-            _p: &helm_schema_core::YamlPath,
-        ) -> Option<helm_schema_k8s::ProviderSchemaFragment> {
-            None
-        }
-    }
-
     impl helm_schema_k8s::K8sSchemaProvider for Empty {
         fn origin(&self) -> helm_schema_k8s::ProviderOrigin {
             helm_schema_k8s::ProviderOrigin::DefaultCatalog
+        }
+        fn lookup(
+            &self,
+            _r: &helm_schema_core::ResourceRef,
+            _p: &helm_schema_core::YamlPath,
+        ) -> ProviderLookupResult {
+            ProviderLookupResult::NotOwned
         }
         fn has_resource(&self, _r: &helm_schema_core::ResourceRef) -> bool {
             false

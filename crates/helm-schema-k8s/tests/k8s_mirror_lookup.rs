@@ -3,9 +3,10 @@
 use std::fs;
 use std::sync::Arc;
 
-use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
-    K8sVersionChain, KubernetesJsonSchemaProvider, MockFetcher, source_id_for_url,
+    K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, MockFetcher,
+    source_id_for_url,
 };
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
@@ -65,7 +66,7 @@ fn k8s_mirror_cache_per_source_namespaced() {
     };
 
     // First lookup → default populates.
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
     let default_path = cache_dir.join("default/v1.35.0/service-v1.json");
     assert!(default_path.exists(), "default cache namespace populated");
 

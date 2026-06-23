@@ -261,8 +261,8 @@ fn k8s_negative_cache_per_source_and_version() {
         api_version_branches: Vec::new(),
     };
 
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
     sim_assert_eq!(
         have: mock.calls_for(default_url),
@@ -298,9 +298,9 @@ fn negative_cache_avoids_retry() {
         api_version_branches: Vec::new(),
     };
 
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
-    let _ = provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
+    let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
     // Multiple call sites attempt several filename candidates per
     // resource; what matters is that no URL is fetched twice.
@@ -335,7 +335,7 @@ fn persisted_not_found_marker_avoids_cross_process_retry() {
         api_version_branches: Vec::new(),
     };
 
-    let _ = first_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = first_provider.lookup(&resource, &YamlPath(Vec::new()));
     sim_assert_eq!(
         have: first_fetcher.calls_for(url),
         want: 1,
@@ -351,7 +351,7 @@ fn persisted_not_found_marker_avoids_cross_process_retry() {
     .with_allow_download(true)
     .with_fetcher(second_fetcher.clone());
 
-    let _ = second_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = second_provider.lookup(&resource, &YamlPath(Vec::new()));
     sim_assert_eq!(
         have: second_fetcher.total_calls(),
         want: 0,
@@ -385,7 +385,7 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
         "poddisruptionbudget-policy-v1beta1.json",
     );
 
-    let _ = stale_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let _ = stale_provider.lookup(&resource, &YamlPath(Vec::new()));
     sim_assert_eq!(
         have: stale_fetcher.calls_for(url),
         want: 1,
@@ -407,8 +407,9 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
     .with_use_cache(false)
     .with_fetcher(refresh_fetcher.clone());
 
-    let refreshed =
-        refresh_provider.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
+    let refreshed = refresh_provider
+        .lookup(&resource, &YamlPath(Vec::new()))
+        .into_schema_fragment();
     assert!(
         refreshed.is_some(),
         "--no-cache should bypass the stale not-found marker"
@@ -433,7 +434,8 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
     .with_fetcher(offline_fetcher);
     assert!(
         offline_provider
-            .schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .lookup(&resource, &YamlPath(Vec::new()))
+            .into_schema_fragment()
             .is_some(),
         "fresh positive schema should be cached for later normal runs"
     );
@@ -461,7 +463,8 @@ fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
     .with_fetcher(positive_fetcher);
     assert!(
         positive_provider
-            .schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .lookup(&resource, &YamlPath(Vec::new()))
+            .into_schema_fragment()
             .is_some(),
         "setup should write a positive cache entry"
     );
@@ -477,7 +480,8 @@ fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
     .with_fetcher(stale_fetcher.clone());
     assert!(
         stale_provider
-            .schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .lookup(&resource, &YamlPath(Vec::new()))
+            .into_schema_fragment()
             .is_none(),
         "--no-cache should accept the fresh authoritative 404"
     );
@@ -497,7 +501,8 @@ fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
     .with_fetcher(offline_fetcher);
     assert!(
         offline_provider
-            .schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()))
+            .lookup(&resource, &YamlPath(Vec::new()))
+            .into_schema_fragment()
             .is_none(),
         "stale positive cache entry should not survive the authoritative 404"
     );

@@ -1,4 +1,4 @@
-use helm_schema_core::{ResourceRef, ResourceSchemaOracle, YamlPath};
+use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::doc_backed_schema::{
@@ -64,18 +64,6 @@ impl ChartLocalCrdSchemaProvider {
             )
         });
         fragment_for_source_leaf(document.schema_doc(), source, leaf)
-    }
-}
-
-impl ResourceSchemaOracle for ChartLocalCrdSchemaProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        let document = self.universe.schema_document_for_resource(resource)?;
-        self.schema_leaf_for_resource_path_from_doc(document.schema_doc(), path)
-            .map(|leaf| self.fragment_for_leaf(document, leaf))
     }
 }
 

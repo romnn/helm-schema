@@ -1,6 +1,7 @@
 use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use helm_schema_k8s::{
-    Chain, KubernetesJsonSchemaProvider, kubernetes_openapi::debug_materialize_schema_for_resource,
+    Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider,
+    kubernetes_openapi::debug_materialize_schema_for_resource,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -45,7 +46,8 @@ fn networkpolicy_leaf_schema_matchlabels() {
     ]);
 
     let leaf = provider
-        .schema_fragment_for_resource_path(&r, &path)
+        .lookup(&r, &path)
+        .into_schema_fragment()
         .expect("leaf schema")
         .into_schema();
 
@@ -77,7 +79,8 @@ fn deployment_container_security_context_leaf_is_not_pod_spec() {
     ]);
 
     let leaf = provider
-        .schema_fragment_for_resource_path(&r, &path)
+        .lookup(&r, &path)
+        .into_schema_fragment()
         .expect("container securityContext leaf schema")
         .into_schema();
 
@@ -141,8 +144,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
 /// The legacy `load_resource_doc_by_kind_scan` path is retired. The
 /// new inference path (Feature D) owns the empty-`api_version` case,
 /// and only fires when invoked through a `Chain` with inference
-/// enabled — a single provider's `schema_fragment_for_resource_path` returns
-/// `None` for an empty api_version.
+/// enabled — a single provider lookup does not resolve an empty apiVersion.
 #[test]
 fn kind_scan_legacy_path_retired() {
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);

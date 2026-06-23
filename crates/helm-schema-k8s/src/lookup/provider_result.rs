@@ -50,3 +50,12 @@ pub enum ProviderLookupResult {
     /// Chain moves on to the next provider.
     NotOwned,
 }
+
+impl ProviderLookupResult {
+    pub fn into_schema_fragment(self) -> Option<ProviderSchemaFragment> {
+        match self {
+            Self::Found { schema, .. } => Some(schema),
+            Self::PathUnresolved | Self::ResourceDocMissing { .. } | Self::NotOwned => None,
+        }
+    }
+}

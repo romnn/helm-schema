@@ -1,7 +1,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
-use helm_schema_core::ResourceSchemaOracle;
 use serde_json::json;
 
 use super::*;
@@ -10,16 +9,6 @@ use crate::lookup::{ProviderOrigin, ProviderSchemaFragment};
 #[derive(Debug)]
 struct CountingProvider {
     calls: AtomicUsize,
-}
-
-impl ResourceSchemaOracle for CountingProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        _resource: &ResourceRef,
-        _path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        None
-    }
 }
 
 impl K8sSchemaProvider for CountingProvider {

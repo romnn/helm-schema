@@ -10,10 +10,12 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{
     ContractIr, ContractUse, Guard, GuardValue, SymbolicIrContext, ValueKind, YamlPath,
 };
-use helm_schema_k8s::KubernetesJsonSchemaProvider;
+use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
-fn provider() -> KubernetesJsonSchemaProvider {
-    KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true)
+fn provider() -> Chain {
+    Chain::new(vec![Box::new(
+        KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true),
+    )])
 }
 
 fn parse_contract(src: &str) -> ContractIr {

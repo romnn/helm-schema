@@ -12,7 +12,6 @@ use test_util::prelude::sim_assert_eq;
 mod schema_generation;
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::ResourceSchemaOracle;
 use helm_schema_ir::{ResourceRef, SymbolicIrContext, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
@@ -94,32 +93,20 @@ fn kind_list_envelope_descends_into_inner_resource() {
 #[derive(Debug)]
 struct FakeIngressProvider;
 
-impl ResourceSchemaOracle for FakeIngressProvider {
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        if is_ingress_host(resource, path) {
-            Some(ProviderSchemaFragment::new(json!({
-                "description": "inner ingress host",
-                "type": "string"
-            })))
-        } else {
-            None
-        }
-    }
-}
-
 impl K8sSchemaProvider for FakeIngressProvider {
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        match ResourceSchemaOracle::schema_fragment_for_resource_path(self, resource, path) {
-            Some(fragment) => ProviderLookupResult::Found {
-                schema: fragment,
+        if is_ingress_host(resource, path) {
+            ProviderLookupResult::Found {
+                schema: ProviderSchemaFragment::new(json!({
+                    "description": "inner ingress host",
+                    "type": "string"
+                })),
                 resolved_k8s_version: None,
-            },
-            None if self.has_resource(resource) => ProviderLookupResult::PathUnresolved,
-            None => ProviderLookupResult::NotOwned,
+            }
+        } else if self.has_resource(resource) {
+            ProviderLookupResult::PathUnresolved
+        } else {
+            ProviderLookupResult::NotOwned
         }
     }
 

@@ -12,6 +12,7 @@ use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
+use super::provider_result::ProviderLookupResult;
 use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::resource_lookup_executor::ResourceLookupExecutor;
 use super::resource_lookup_plan::ResourceLookupPlan;
@@ -294,6 +295,22 @@ impl K8sSchemaProvider for Chain {
             .first()
             .map(|p| p.origin())
             .unwrap_or(ProviderOrigin::KubernetesOpenApi)
+    }
+
+    fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
+        match self.resolve_against_chain(resource, path) {
+            ChainLookupOutcome::Resolved {
+                schema,
+                resolved_k8s_version,
+                ..
+            } => schema.map_or(ProviderLookupResult::PathUnresolved, |schema| {
+                ProviderLookupResult::Found {
+                    schema,
+                    resolved_k8s_version,
+                }
+            }),
+            ChainLookupOutcome::MissingSchema { .. } => ProviderLookupResult::NotOwned,
+        }
     }
 
     fn has_resource(&self, resource: &ResourceRef) -> bool {
