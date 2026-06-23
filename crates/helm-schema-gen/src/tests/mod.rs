@@ -388,14 +388,6 @@ impl ResourceSchemaOracle for DescriptionProvider {
             "type": "string",
         })))
     }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        _resource: &ResourceRef,
-        _path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        None
-    }
 }
 
 #[derive(Debug)]
@@ -411,14 +403,6 @@ impl ResourceSchemaOracle for SharedObjectProvider {
             "additionalProperties": false
         })))
     }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        _resource: &ResourceRef,
-        _path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        None
-    }
 }
 
 #[derive(Debug)]
@@ -426,14 +410,6 @@ struct NoopProvider;
 
 impl ResourceSchemaOracle for NoopProvider {
     fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
-        None
-    }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        _resource: &ResourceRef,
-        _path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
         None
     }
 }
@@ -695,14 +671,6 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
                     }
                 }))
             })
-        }
-
-        fn schema_fragment_for_resource_path(
-            &self,
-            _resource: &ResourceRef,
-            _path: &YamlPath,
-        ) -> Option<ProviderSchemaFragment> {
-            None
         }
     }
 

@@ -12,7 +12,6 @@ use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_origin::ProviderOrigin;
-use super::provider_result::ProviderLookupResult;
 use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::resource_lookup_executor::ResourceLookupExecutor;
 use super::resource_lookup_plan::ResourceLookupPlan;
@@ -59,6 +58,12 @@ impl Chain {
         &self.providers
     }
 
+    pub fn kube_version(&self) -> Option<&str> {
+        self.providers
+            .iter()
+            .find_map(|provider| provider.kube_version())
+    }
+
     /// Resolve a single concrete `(apiVersion, kind)` against the
     /// chain and return the typed outcome. Emits miss-side diagnostics.
     pub fn resolve_against_chain(
@@ -68,6 +73,15 @@ impl Chain {
     ) -> ChainLookupOutcome {
         self.resolve_against_chain_traced(resource, path)
             .into_outcome()
+    }
+
+    pub fn schema_fragment_for_resource_path(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
+        self.resolve_against_chain(resource, path)
+            .into_schema_fragment()
     }
 
     /// Resolve a single concrete `(apiVersion, kind)` and keep the executed
@@ -276,71 +290,16 @@ impl ResourceSchemaOracle for Chain {
 
         self.schema_fragment_for_planned_candidates(resource, &use_.path)
     }
-
-    fn schema_fragment_for_resource_path(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> Option<ProviderSchemaFragment> {
-        self.resolve_against_chain(resource, path)
-            .into_schema_fragment()
-    }
-}
-
-impl K8sSchemaProvider for Chain {
-    fn origin(&self) -> ProviderOrigin {
-        // Chains are not addressable as a single origin; report the
-        // first provider's origin for the rare caller that asks.
-        self.providers
-            .first()
-            .map(|p| p.origin())
-            .unwrap_or(ProviderOrigin::KubernetesOpenApi)
-    }
-
-    fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
-        match self.resolve_against_chain(resource, path) {
-            ChainLookupOutcome::Resolved {
-                schema,
-                resolved_k8s_version,
-                ..
-            } => schema.map_or(ProviderLookupResult::PathUnresolved, |schema| {
-                ProviderLookupResult::Found {
-                    schema,
-                    resolved_k8s_version,
-                }
-            }),
-            ChainLookupOutcome::MissingSchema { .. } => ProviderLookupResult::NotOwned,
-        }
-    }
-
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        self.providers.iter().any(|p| p.has_resource(resource))
-    }
-
-    fn kube_version(&self) -> Option<&str> {
-        self.providers.iter().find_map(|p| p.kube_version())
-    }
-
-    fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
-        self.capability_has_query_at_primary_version_traced(query)
-            .into_answer()
-    }
-
-    fn capability_has_query_at_primary_version_traced(
-        &self,
-        query: &ApiPresenceQuery,
-    ) -> TracedApiPresenceOutcome {
-        Chain::capability_has_query_at_primary_version_traced(self, query)
-    }
 }
 
 impl CapabilityOracle for Chain {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {
-        <Self as K8sSchemaProvider>::capability_has_query_at_primary_version(self, query)
+        self.capability_has_query_at_primary_version_traced(query)
+            .into_answer()
     }
 
     fn kube_version(&self) -> Option<&str> {
-        <Self as K8sSchemaProvider>::kube_version(self)
+        Chain::kube_version(self)
     }
 }
 

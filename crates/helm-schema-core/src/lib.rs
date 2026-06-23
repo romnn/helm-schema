@@ -17,5 +17,5 @@ pub use provider_schema_fragment::{
     ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment,
 };
 pub use provider_schema_use::ProviderSchemaUse;
-pub use schema_provider::{ResourceSchemaOracle, schema_fragment_for_use_across_ordered_versions};
+pub use schema_provider::ResourceSchemaOracle;
 pub use types::{ResourceRef, ValueKind, YamlPath, ordered_api_versions_for_resource};

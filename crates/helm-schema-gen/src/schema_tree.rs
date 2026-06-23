@@ -165,37 +165,13 @@ fn open_host_descendants_extended_by_schema(node: &mut SchemaNode, schema: &Sche
         return;
     }
 
-    match node {
-        SchemaNode::Object { properties, .. } => {
-            for (property, branch_child) in branch_properties {
-                let Some(host_child) = properties.get_mut(&property) else {
-                    continue;
-                };
-
-                reconcile_node_host_with_branch_schema(host_child, &branch_child);
-                open_host_descendants_extended_by_schema(host_child, &branch_child);
-            }
-        }
-        SchemaNode::Foreign(value) => {
-            let Some(host_properties) = value
-                .as_object_mut()
-                .and_then(|object| object.get_mut("properties"))
-                .and_then(Value::as_object_mut)
-            else {
-                return;
-            };
-
-            for (property, branch_child) in branch_properties {
-                let Some(host_child_value) = host_properties.get_mut(&property) else {
-                    continue;
-                };
-                let mut host_child = SchemaNode::foreign(std::mem::take(host_child_value));
-                reconcile_node_host_with_branch_schema(&mut host_child, &branch_child);
-                open_host_descendants_extended_by_schema(&mut host_child, &branch_child);
-                *host_child_value = host_child.into_value();
-            }
-        }
-        _ => {}
+    for (property, branch_child) in branch_properties {
+        let Some(mut host_child) = node.take_property(&property) else {
+            continue;
+        };
+        reconcile_node_host_with_branch_schema(&mut host_child, &branch_child);
+        open_host_descendants_extended_by_schema(&mut host_child, &branch_child);
+        node.put_property(property, host_child);
     }
 }
 

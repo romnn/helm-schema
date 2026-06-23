@@ -262,6 +262,34 @@ impl SchemaNode {
         }
     }
 
+    pub(crate) fn take_property(&mut self, key: &str) -> Option<SchemaNode> {
+        match self {
+            Self::Object { properties, .. } => properties.remove(key),
+            Self::Foreign(Value::Object(object)) => object
+                .get_mut("properties")
+                .and_then(Value::as_object_mut)
+                .and_then(|properties| properties.remove(key))
+                .map(SchemaNode::foreign),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn put_property(&mut self, key: String, value: SchemaNode) {
+        match self {
+            Self::Object { properties, .. } => {
+                properties.insert(key, value);
+            }
+            Self::Foreign(Value::Object(object)) => {
+                if let Some(properties) =
+                    object.get_mut("properties").and_then(Value::as_object_mut)
+                {
+                    properties.insert(key, value.into_value());
+                }
+            }
+            _ => {}
+        }
+    }
+
     pub(crate) fn is_object_like(&self) -> bool {
         match self {
             Self::Object { .. } => true,
