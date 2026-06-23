@@ -43,7 +43,6 @@ impl JsonSchemaType {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum SchemaNode {
     Empty,
-    Type(JsonSchemaType),
     Typed {
         ty: JsonSchemaType,
         keywords: BTreeMap<String, Value>,
@@ -91,7 +90,10 @@ impl SchemaNode {
     }
 
     pub(crate) fn typed(ty: JsonSchemaType) -> Self {
-        Self::Type(ty)
+        Self::Typed {
+            ty,
+            keywords: BTreeMap::new(),
+        }
     }
 
     pub(crate) fn type_named(name: &str) -> Self {
@@ -103,11 +105,6 @@ impl SchemaNode {
     pub(crate) fn typed_keyword(mut self, key: impl Into<String>, value: Value) -> Self {
         let key = key.into();
         match &mut self {
-            Self::Type(ty) => {
-                let ty = *ty;
-                let keywords = BTreeMap::from_iter([(key, value)]);
-                Self::Typed { ty, keywords }
-            }
             Self::Typed { keywords, .. } => {
                 keywords.insert(key, value);
                 self
@@ -267,16 +264,12 @@ impl SchemaNode {
 
     pub(crate) fn is_object_like(&self) -> bool {
         match self {
-            Self::Object { .. } | Self::Type(JsonSchemaType::Object) => true,
+            Self::Object { .. } => true,
             Self::Typed {
                 ty: JsonSchemaType::Object,
                 ..
             } => true,
-            Self::Array { .. }
-            | Self::Type(_)
-            | Self::Typed { .. }
-            | Self::AnyOf(_)
-            | Self::AllOf(_) => false,
+            Self::Array { .. } | Self::Typed { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
             Self::Foreign(value) => foreign_is_object_like(value),
             _ => false,
         }
@@ -284,16 +277,12 @@ impl SchemaNode {
 
     pub(crate) fn is_array_like(&self) -> bool {
         match self {
-            Self::Array { .. } | Self::Type(JsonSchemaType::Array) => true,
+            Self::Array { .. } => true,
             Self::Typed {
                 ty: JsonSchemaType::Array,
                 ..
             } => true,
-            Self::Object { .. }
-            | Self::Type(_)
-            | Self::Typed { .. }
-            | Self::AnyOf(_)
-            | Self::AllOf(_) => false,
+            Self::Object { .. } | Self::Typed { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
             Self::Foreign(value) => foreign_is_array_like(value),
             _ => false,
         }
@@ -436,7 +425,6 @@ impl SchemaNode {
     pub(crate) fn into_value(self) -> Value {
         match self {
             Self::Empty => Value::Object(Map::new()),
-            Self::Type(ty) => type_schema(ty),
             Self::Typed { ty, keywords } => {
                 let mut object = type_map(ty);
                 object.extend(keywords);
@@ -664,10 +652,6 @@ fn foreign_path_exists(
         .and_then(Value::as_object)
         .and_then(|properties| properties.get(head))
         .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment))
-}
-
-fn type_schema(ty: JsonSchemaType) -> Value {
-    Value::Object(type_map(ty))
 }
 
 fn type_map(ty: JsonSchemaType) -> Map<String, Value> {

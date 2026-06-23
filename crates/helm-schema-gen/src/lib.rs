@@ -454,12 +454,12 @@ fn guards_supported_for_conditional_lowering(
 }
 
 fn schema_is_boolean_like(schema: &Value) -> bool {
-    crate::schema_model::schema_allows_scalar_type(schema, "boolean")
-        && !crate::schema_model::schema_allows_scalar_type(schema, "string")
-        && !crate::schema_model::schema_allows_scalar_type(schema, "integer")
-        && !crate::schema_model::schema_allows_scalar_type(schema, "number")
-        && !crate::schema_model::schema_allows_scalar_type(schema, "object")
-        && !crate::schema_model::schema_allows_scalar_type(schema, "array")
+    crate::schema_model::schema_allows_type(schema, "boolean")
+        && !crate::schema_model::schema_allows_type(schema, "string")
+        && !crate::schema_model::schema_allows_type(schema, "integer")
+        && !crate::schema_model::schema_allows_type(schema, "number")
+        && !crate::schema_model::schema_allows_type(schema, "object")
+        && !crate::schema_model::schema_allows_type(schema, "array")
 }
 
 fn append_conditional_schemas(

@@ -27,6 +27,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
+use json_schema_walk::try_visit_subschemas_mut;
 use jsonschema::{Retrieve, Uri};
 use referencing::uri;
 use serde_json::{Map, Value};
@@ -192,7 +193,7 @@ impl<R: Retrieve> BundleState<R> {
             return Ok(());
         }
 
-        visit_subschemas_mut(schema, &mut |subschema| {
+        try_visit_subschemas_mut(schema, &mut |subschema| {
             self.bundle_schema(subschema, &current_document_uri)
         })
     }
@@ -444,73 +445,6 @@ fn definition_ref(name: &str) -> Value {
     )]))
 }
 
-fn visit_subschemas_mut(
-    schema: &mut Value,
-    visitor: &mut impl FnMut(&mut Value) -> CliResult<()>,
-) -> CliResult<()> {
-    let Value::Object(object) = schema else {
-        return Ok(());
-    };
-    if object.contains_key("$ref") {
-        return Ok(());
-    }
-
-    for key in DIRECT_SCHEMA_KEYS {
-        if let Some(value) = object.get_mut(*key) {
-            visit_schema_or_schema_array_mut(value, visitor)?;
-        }
-    }
-
-    for key in MAP_OF_SCHEMAS_KEYS {
-        if let Some(Value::Object(values)) = object.get_mut(*key) {
-            for value in values.values_mut() {
-                visit_schema_value_mut(value, visitor)?;
-            }
-        }
-    }
-
-    for key in ARRAY_OF_SCHEMAS_KEYS {
-        if let Some(Value::Array(values)) = object.get_mut(*key) {
-            for value in values {
-                visit_schema_value_mut(value, visitor)?;
-            }
-        }
-    }
-
-    if let Some(Value::Object(values)) = object.get_mut("dependencies") {
-        for value in values.values_mut() {
-            visit_schema_value_mut(value, visitor)?;
-        }
-    }
-
-    Ok(())
-}
-
-fn visit_schema_or_schema_array_mut(
-    value: &mut Value,
-    visitor: &mut impl FnMut(&mut Value) -> CliResult<()>,
-) -> CliResult<()> {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                visit_schema_value_mut(value, visitor)?;
-            }
-            Ok(())
-        }
-        _ => visit_schema_value_mut(value, visitor),
-    }
-}
-
-fn visit_schema_value_mut(
-    value: &mut Value,
-    visitor: &mut impl FnMut(&mut Value) -> CliResult<()>,
-) -> CliResult<()> {
-    if matches!(value, Value::Object(_) | Value::Bool(_)) {
-        visitor(value)?;
-    }
-    Ok(())
-}
-
 /// Convert a filesystem path into a base `file://` URI suitable for
 /// passing to `with_base_uri`. The trailing `/` ensures relative refs
 /// resolve as *children* of the base, not as siblings replacing the last
@@ -523,31 +457,6 @@ fn path_to_file_uri(p: &Path) -> String {
     let trimmed = s.trim_end_matches('/');
     format!("file://{trimmed}/")
 }
-
-const DIRECT_SCHEMA_KEYS: &[&str] = &[
-    "additionalItems",
-    "additionalProperties",
-    "contains",
-    "contentSchema",
-    "else",
-    "if",
-    "items",
-    "not",
-    "propertyNames",
-    "then",
-    "unevaluatedItems",
-    "unevaluatedProperties",
-];
-
-const MAP_OF_SCHEMAS_KEYS: &[&str] = &[
-    "$defs",
-    "definitions",
-    "dependentSchemas",
-    "patternProperties",
-    "properties",
-];
-
-const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems"];
 
 #[cfg(test)]
 #[path = "tests/flatten.rs"]

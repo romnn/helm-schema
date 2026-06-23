@@ -102,28 +102,6 @@ pub(crate) fn is_open_string_map_schema(value: &Value) -> bool {
     )
 }
 
-pub(crate) fn schema_allows_scalar_type(schema: &Value, scalar_type: &str) -> bool {
-    if let Some(schema_type) = schema_type(schema) {
-        return schema_type == scalar_type;
-    }
-
-    let Some(object) = schema.as_object() else {
-        return false;
-    };
-
-    for key in ["oneOf", "anyOf"] {
-        if let Some(Value::Array(variants)) = object.get(key)
-            && variants
-                .iter()
-                .any(|variant| schema_allows_scalar_type(variant, scalar_type))
-        {
-            return true;
-        }
-    }
-
-    false
-}
-
 pub(crate) fn schema_allows_type(schema: &Value, expected_type: &str) -> bool {
     if let Some(schema_type) = schema_type(schema) {
         return schema_type == expected_type;

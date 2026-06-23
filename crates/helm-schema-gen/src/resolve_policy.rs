@@ -14,8 +14,8 @@ use crate::path_schema::{
 use crate::schema_model::{
     add_null_schema, empty_schema, empty_string_schema, guard_value_to_json, is_empty_schema,
     is_fixed_object_schema, is_object_or_array_schema, is_open_string_map_schema,
-    is_scalar_like_schema, is_scalar_schema, schema_allows_scalar_type,
-    schema_permits_empty_string, schema_type, type_schema,
+    is_scalar_like_schema, is_scalar_schema, schema_allows_type, schema_permits_empty_string,
+    schema_type, type_schema,
 };
 use crate::schema_node::SchemaNode;
 use crate::values_yaml::ValuesYamlPathFacts;
@@ -337,7 +337,7 @@ impl ResolvePolicy {
                     input.values_yaml_schema
                 } else if let Some(values_yaml_ty) = schema_type(&input.values_yaml_schema)
                     && is_scalar_schema(&input.values_yaml_schema)
-                    && schema_allows_scalar_type(&input.provider_schema, values_yaml_ty)
+                    && schema_allows_type(&input.provider_schema, values_yaml_ty)
                 {
                     if input.preserve_empty_string_fallback
                         && values_yaml_ty == "string"

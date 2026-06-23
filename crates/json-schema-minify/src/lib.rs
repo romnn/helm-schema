@@ -6,6 +6,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use json_schema_walk::{visit_subschemas, visit_subschemas_mut};
 use serde_json::{Map, Value};
 
 const DEFAULT_MIN_SUBTREE_BYTES: usize = 1;
@@ -300,118 +301,6 @@ fn contains_reference_scope_keyword(value: &Value) -> bool {
     contains_scope
 }
 
-fn visit_subschemas(schema: &Value, visitor: &mut impl FnMut(&Value)) {
-    let Value::Object(object) = schema else {
-        return;
-    };
-    if object.contains_key("$ref") {
-        return;
-    }
-
-    for key in DIRECT_SCHEMA_KEYS {
-        if let Some(value) = object.get(*key) {
-            visit_schema_or_schema_array(value, visitor);
-        }
-    }
-
-    for key in MAP_OF_SCHEMAS_KEYS {
-        if let Some(Value::Object(values)) = object.get(*key) {
-            for value in values.values() {
-                visit_schema_value(value, visitor);
-            }
-        }
-    }
-
-    for key in ARRAY_OF_SCHEMAS_KEYS {
-        if let Some(Value::Array(values)) = object.get(*key) {
-            for value in values {
-                visit_schema_value(value, visitor);
-            }
-        }
-    }
-
-    if let Some(Value::Object(values)) = object.get("dependencies") {
-        for value in values.values() {
-            visit_schema_value(value, visitor);
-        }
-    }
-}
-
-fn visit_subschemas_mut(schema: &mut Value, visitor: &mut impl FnMut(&mut Value)) {
-    let Value::Object(object) = schema else {
-        return;
-    };
-    if object.contains_key("$ref") {
-        return;
-    }
-
-    for key in DIRECT_SCHEMA_KEYS {
-        if let Some(value) = object.get_mut(*key) {
-            visit_schema_or_schema_array_mut(value, visitor);
-        }
-    }
-
-    for key in MAP_OF_SCHEMAS_KEYS {
-        if let Some(Value::Object(values)) = object.get_mut(*key) {
-            for value in values.values_mut() {
-                visit_schema_value_mut(value, visitor);
-            }
-        }
-    }
-
-    for key in ARRAY_OF_SCHEMAS_KEYS {
-        if let Some(Value::Array(values)) = object.get_mut(*key) {
-            for value in values {
-                visit_schema_value_mut(value, visitor);
-            }
-        }
-    }
-
-    if let Some(Value::Object(values)) = object.get_mut("dependencies") {
-        for value in values.values_mut() {
-            visit_schema_value_mut(value, visitor);
-        }
-    }
-}
-
-fn visit_schema_or_schema_array(value: &Value, visitor: &mut impl FnMut(&Value)) {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                visit_schema_value(value, visitor);
-            }
-        }
-        _ => visit_schema_value(value, visitor),
-    }
-}
-
-fn visit_schema_or_schema_array_mut(value: &mut Value, visitor: &mut impl FnMut(&mut Value)) {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                visit_schema_value_mut(value, visitor);
-            }
-        }
-        _ => visit_schema_value_mut(value, visitor),
-    }
-}
-
-fn visit_schema_value(value: &Value, visitor: &mut impl FnMut(&Value)) {
-    if is_schema_value(value) {
-        visitor(value);
-    }
-}
-
-fn visit_schema_value_mut(value: &mut Value, visitor: &mut impl FnMut(&mut Value)) {
-    if is_schema_value(value) {
-        visitor(value);
-    }
-}
-
-fn is_schema_value(value: &Value) -> bool {
-    matches!(value, Value::Object(_) | Value::Bool(_))
-}
-
 fn existing_definition_names(schema: &Value) -> BTreeSet<String> {
     schema
         .get(DEFINITIONS_KEY)
@@ -453,31 +342,6 @@ fn canonicalize_json_value(value: &Value) -> Value {
         other => other.clone(),
     }
 }
-
-const DIRECT_SCHEMA_KEYS: &[&str] = &[
-    "additionalItems",
-    "additionalProperties",
-    "contains",
-    "contentSchema",
-    "else",
-    "if",
-    "items",
-    "not",
-    "propertyNames",
-    "then",
-    "unevaluatedItems",
-    "unevaluatedProperties",
-];
-
-const MAP_OF_SCHEMAS_KEYS: &[&str] = &[
-    "$defs",
-    "definitions",
-    "dependentSchemas",
-    "patternProperties",
-    "properties",
-];
-
-const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems"];
 
 #[cfg(test)]
 #[path = "tests/lib.rs"]
