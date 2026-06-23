@@ -11,6 +11,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
+use crate::template_expr_analysis::expr_contains_helper_call;
 use bound_helper_resolver::{
     BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_with_bound_helpers,
 };
@@ -105,4 +106,43 @@ pub(crate) fn fragment_value_from_expr(
         },
     )
     .map(|value| value.to_context_value())
+}
+
+pub(crate) fn fragment_or_helper_value_from_expr(
+    expr: &TemplateExpr,
+    fragment_locals: &HashMap<String, AbstractValue>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> Option<AbstractValue> {
+    let current_dot_fragment = current_dot.map(AbstractValue::to_context_value);
+    if !expr_contains_helper_call(expr)
+        && let Some(binding) = fragment_value_from_expr(
+            expr,
+            fragment_locals,
+            current_dot_fragment.as_ref(),
+            context,
+            seen,
+        )
+    {
+        return Some(binding);
+    }
+    if let Some(binding) = helper_value_from_expr_with_fragment_locals(
+        expr,
+        fragment_locals,
+        outer,
+        current_dot,
+        context,
+        seen,
+    ) {
+        return Some(binding.to_context_value());
+    }
+    fragment_value_from_expr(
+        expr,
+        fragment_locals,
+        current_dot_fragment.as_ref(),
+        context,
+        seen,
+    )
 }

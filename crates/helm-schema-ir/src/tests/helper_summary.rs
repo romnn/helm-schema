@@ -1,12 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
 
-use helm_schema_ast::TemplateExpr;
-
 use super::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::abstract_value::AbstractValue;
 use crate::predicate::Predicate;
-use crate::template_expr_cache::parse_expr_text;
 use crate::{Guard, ValueKind, YamlPath};
 
 fn output_paths(paths: impl IntoIterator<Item = String>) -> AbstractValue {
@@ -197,16 +194,4 @@ fn does_not_suppress_bound_root_for_exact_root_output() {
     analysis.mark_suppressed_roots_for_bound_outputs(&bindings);
 
     assert!(analysis.suppress_roots.is_empty());
-}
-
-#[test]
-fn structural_exprs_cache_key_is_source_spelling_independent() {
-    fn exprs(text: &str) -> Vec<TemplateExpr> {
-        parse_expr_text(text)
-    }
-
-    sim_assert_eq!(
-        have: super::structural_exprs_cache_key(&exprs("include \"name\" .")),
-        want: super::structural_exprs_cache_key(&exprs("{{ include   \"name\" . }}"))
-    );
 }

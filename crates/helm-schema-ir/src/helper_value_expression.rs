@@ -2,16 +2,18 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::bound_helper_env::BoundHelperEnv;
-use crate::expression_analysis::set_default_chart_paths_for_exprs;
+use crate::eval_effect::Effects;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_exprs_effects;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
+use crate::fragment_expr_eval::{
+    FragmentEvalContext, fragment_or_helper_value_from_expr,
+    helper_value_from_expr_with_fragment_locals,
+};
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::HelperValuesWalkState;
-use crate::local_projection::{
-    direct_bound_paths_from_exprs_in_context, local_expression_facts_from_exprs,
-};
 use crate::predicate::Predicate;
 use helm_schema_ast::TemplateExpr;
 
@@ -49,19 +51,23 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         state.context,
         &mut seen_set,
     ) {
-        let set_default_paths =
-            set_default_chart_paths_for_exprs(exprs, Some(bindings), current_dot);
-        state.analysis.chart_defaults.extend(set_default_paths);
+        let effects = direct_expression_effects(exprs, bindings, current_dot);
+        state
+            .analysis
+            .chart_defaults
+            .extend(effects.chart_default_paths);
         return;
     }
 
-    let direct_outputs = direct_bound_paths_from_exprs_in_context(exprs, bindings, current_dot);
-    let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
-    let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(exprs);
-    state
-        .analysis
-        .add_type_hints(helper_env.type_hints_in_exprs(exprs, &state.locals.bindings));
-    let local_facts = local_expression_facts_from_exprs(
+    let direct_effects = direct_expression_effects(exprs, bindings, current_dot);
+    let direct_outputs = direct_effects.reads.clone();
+    let fallback_paths =
+        helper_context_expression_effects(exprs, bindings, current_dot, &HashMap::new()).defaults;
+    state.analysis.add_type_hints(
+        helper_context_expression_effects(exprs, bindings, current_dot, &state.locals.bindings)
+            .schema_type_hints(),
+    );
+    let local_effects = local_expression_effects(
         exprs,
         &state.locals.bindings,
         &state.locals.default_paths,
@@ -80,28 +86,38 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
             );
             state.analysis.add_output_meta(output, meta);
         }
-        let mut local_output_sources = local_facts.rendered_paths;
-        local_output_sources.extend(local_facts.output_meta.keys().cloned());
+        let mut local_output_sources = local_effects.local_rendered_paths;
+        local_output_sources.extend(local_effects.local_output_meta.keys().cloned());
         for output in local_output_sources {
-            let mut meta = local_facts
-                .output_meta
+            let mut meta = local_effects
+                .local_output_meta
                 .get(&output)
                 .cloned()
                 .unwrap_or_default();
             meta.add_predicates(active_output_predicates.iter().cloned());
-            meta.defaulted |= local_facts.default_paths.contains(&output);
+            meta.defaulted |= local_effects.local_default_paths.contains(&output);
             state.analysis.add_output_meta(output, meta);
         }
         state
             .analysis
             .string_output
-            .extend(helper_env.string_outputs_from_exprs(
+            .extend(string_outputs_from_exprs(
                 exprs,
+                bindings,
+                current_dot,
                 &state.locals.bindings,
+                state.context,
                 state.seen,
             ));
     }
-    let nested = helper_env.summarize_calls_in_exprs(exprs, &state.locals.bindings, state.seen);
+    let nested = summarize_calls_in_exprs(
+        exprs,
+        bindings,
+        current_dot,
+        &state.locals.bindings,
+        state.context,
+        state.seen,
+    );
     if expression_kind == ValueKind::Fragment {
         extend_nested_render(
             state.analysis,
@@ -117,8 +133,10 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
             NestedRenderMode::Scalar,
         );
     }
-    let set_default_paths = set_default_chart_paths_for_exprs(exprs, Some(bindings), current_dot);
-    state.analysis.chart_defaults.extend(set_default_paths);
+    state
+        .analysis
+        .chart_defaults
+        .extend(direct_effects.chart_default_paths);
 }
 
 fn collect_assignment_bound_helper_values(
@@ -131,9 +149,11 @@ fn collect_assignment_bound_helper_values(
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     let rhs_exprs = std::slice::from_ref(rhs_expr);
-    let set_default_paths =
-        set_default_chart_paths_for_exprs(full_exprs, Some(bindings), current_dot);
-    state.analysis.chart_defaults.extend(set_default_paths);
+    let full_effects = direct_expression_effects(full_exprs, bindings, current_dot);
+    state
+        .analysis
+        .chart_defaults
+        .extend(full_effects.chart_default_paths);
 
     let current_dot_fragment = current_dot.map(AbstractValue::to_context_value);
     let mut seen_set = HashSet::new();
@@ -144,8 +164,9 @@ fn collect_assignment_bound_helper_values(
         state.context,
         &mut seen_set,
     ) {
-        let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
-        let defaulted_dependencies = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
+        let defaulted_dependencies =
+            helper_context_expression_effects(rhs_exprs, bindings, current_dot, &HashMap::new())
+                .defaults;
         state.analysis.add_dependency_meta_map(
             defaulted_dependencies
                 .into_iter()
@@ -160,20 +181,35 @@ fn collect_assignment_bound_helper_values(
         return;
     }
 
-    let helper_env = BoundHelperEnv::new(bindings, current_dot, state.context);
-    state
-        .analysis
-        .add_type_hints(helper_env.type_hints_in_exprs(rhs_exprs, &state.locals.bindings));
-    let fallback_paths = helper_env.external_default_fallback_paths_in_exprs(rhs_exprs);
-    let local_facts = local_expression_facts_from_exprs(
+    state.analysis.add_type_hints(
+        helper_context_expression_effects(rhs_exprs, bindings, current_dot, &state.locals.bindings)
+            .schema_type_hints(),
+    );
+    let fallback_paths =
+        helper_context_expression_effects(rhs_exprs, bindings, current_dot, &HashMap::new())
+            .defaults;
+    let local_effects = local_expression_effects(
         rhs_exprs,
         &state.locals.bindings,
         &state.locals.default_paths,
         state.local_output_meta,
     );
-    let result_meta_by_path =
-        helper_env.output_meta_from_exprs(rhs_exprs, &state.locals.bindings, state.seen);
-    let nested = helper_env.summarize_calls_in_exprs(rhs_exprs, &state.locals.bindings, state.seen);
+    let result_meta_by_path = output_meta_from_exprs(
+        rhs_exprs,
+        bindings,
+        current_dot,
+        &state.locals.bindings,
+        state.context,
+        state.seen,
+    );
+    let nested = summarize_calls_in_exprs(
+        rhs_exprs,
+        bindings,
+        current_dot,
+        &state.locals.bindings,
+        state.context,
+        state.seen,
+    );
     let mut nested_defaulted_output_paths = BTreeSet::new();
     state
         .analysis
@@ -210,22 +246,27 @@ fn collect_assignment_bound_helper_values(
     }
 
     let rhs_output_meta = rhs_output_meta(
-        &local_facts.source_paths,
+        &local_effects.local_source_paths,
         &fallback_paths,
-        &local_facts.default_paths,
-        &local_facts.output_meta,
+        &local_effects.local_default_paths,
+        &local_effects.local_output_meta,
         &result_meta_by_path,
         active_output_predicates,
     );
 
     let mut seen_rhs = HashSet::new();
-    if let Some(binding) =
-        helper_env.fragment_value_from_expr(rhs_expr, &state.locals.bindings, &mut seen_rhs)
-    {
+    if let Some(binding) = fragment_or_helper_value_from_expr(
+        rhs_expr,
+        &state.locals.bindings,
+        Some(bindings),
+        current_dot,
+        state.context,
+        &mut seen_rhs,
+    ) {
         state.locals.bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = fallback_paths;
-    defaulted_paths.extend(local_facts.default_paths);
+    defaulted_paths.extend(local_effects.local_default_paths);
     defaulted_paths.extend(nested_defaulted_output_paths);
     if defaulted_paths.is_empty() {
         state.locals.default_paths.remove(var);
@@ -242,6 +283,116 @@ fn collect_assignment_bound_helper_values(
             .local_output_meta
             .insert(var.to_string(), rhs_output_meta);
     }
+}
+
+fn direct_expression_effects(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+) -> Effects {
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
+    eval_exprs_effects(exprs, &env)
+}
+
+fn helper_context_expression_effects(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+) -> Effects {
+    let env = EvalEnv::from_helper_context_with_fragment_locals(
+        Some(bindings),
+        current_dot,
+        local_bindings,
+    );
+    eval_exprs_effects(exprs, &env)
+}
+
+fn local_expression_effects(
+    exprs: &[TemplateExpr],
+    local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+) -> Effects {
+    let env = EvalEnv {
+        locals: local_bindings.clone(),
+        skip_helper_call_args: true,
+        ..EvalEnv::default()
+    }
+    .with_local_facts(local_default_paths, local_output_meta);
+    eval_exprs_effects(exprs, &env)
+}
+
+fn summarize_calls_in_exprs(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> HelperSummary {
+    context
+        .helper_summaries()
+        .summarize_bound_helper_calls_in_exprs(
+            exprs,
+            Some(bindings),
+            current_dot,
+            local_bindings,
+            context,
+            seen,
+        )
+}
+
+fn output_meta_from_exprs(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen_seed: &HashSet<String>,
+) -> BTreeMap<String, HelperOutputMeta> {
+    let mut out: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+    let mut seen = seen_seed.clone();
+    for expr in exprs {
+        if let Some(binding) = helper_value_from_expr_with_fragment_locals(
+            expr,
+            local_bindings,
+            Some(bindings),
+            current_dot,
+            context,
+            &mut seen,
+        ) {
+            for (path, meta) in binding.output_meta() {
+                out.entry(path).or_default().merge(meta);
+            }
+        }
+    }
+    out
+}
+
+fn string_outputs_from_exprs(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen_seed: &HashSet<String>,
+) -> BTreeSet<String> {
+    let mut strings = BTreeSet::new();
+    let mut seen = seen_seed.clone();
+    for expr in exprs {
+        if let Some(binding) = fragment_or_helper_value_from_expr(
+            expr,
+            local_bindings,
+            Some(bindings),
+            current_dot,
+            context,
+            &mut seen,
+        ) {
+            strings.extend(binding.strings());
+        }
+    }
+    strings
 }
 
 fn rhs_output_meta(

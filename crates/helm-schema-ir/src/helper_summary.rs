@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-use std::fmt::Write;
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_helper_call_analysis::{
@@ -389,6 +388,20 @@ impl HelperSummary {
         rendered_sources
     }
 
+    pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
+        let paths = self
+            .path_facts()
+            .filter(|(_path, facts)| facts.is_dependency_relevant())
+            .map(|(path, _facts)| path.to_string())
+            .filter(|path| !path.trim().is_empty())
+            .collect::<BTreeSet<_>>();
+        paths
+            .iter()
+            .filter(|path| !output_path::values_path_has_descendant(path, &paths))
+            .cloned()
+            .collect()
+    }
+
     pub(crate) fn take_chart_value_defaults(&mut self) -> BTreeSet<String> {
         std::mem::take(&mut self.chart_defaults)
     }
@@ -523,7 +536,7 @@ impl HelperSummaryCache {
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
         let key = BoundHelperCallsCacheKey {
-            exprs: structural_exprs_cache_key(exprs),
+            exprs: format!("{exprs:?}"),
             current_dot: current_dot.cloned(),
             root_bindings: root_bindings_key,
             fragment_locals: fragment_locals_key,
@@ -570,7 +583,7 @@ impl HelperSummaryCache {
             .collect();
         let key = BoundHelperCallCacheKey {
             name: name.to_string(),
-            arg: structural_optional_expr_cache_key(arg),
+            arg: format!("{arg:?}"),
             current_dot: current_dot.cloned(),
             outer_bindings: outer_bindings_key,
             fragment_locals: fragment_locals_key,
@@ -595,111 +608,6 @@ impl HelperSummaryCache {
             .insert(key, summary.clone());
         summary
     }
-}
-
-fn structural_exprs_cache_key(exprs: &[helm_schema_ast::TemplateExpr]) -> String {
-    let mut out = String::new();
-    let _ = write!(out, "n{}|", exprs.len());
-    for expr in exprs {
-        append_structural_expr_key(&mut out, expr);
-    }
-    out
-}
-
-fn structural_optional_expr_cache_key(expr: Option<&helm_schema_ast::TemplateExpr>) -> String {
-    let mut out = String::new();
-    match expr {
-        Some(expr) => append_structural_expr_key(&mut out, expr),
-        None => out.push('n'),
-    }
-    out
-}
-
-fn append_structural_expr_key(out: &mut String, expr: &helm_schema_ast::TemplateExpr) {
-    use helm_schema_ast::{Literal, TemplateExpr};
-
-    match expr {
-        TemplateExpr::Literal(Literal::String(value)) => {
-            out.push_str("ls");
-            append_len_prefixed(out, value);
-        }
-        TemplateExpr::Literal(Literal::RawString(value)) => {
-            out.push_str("lr");
-            append_len_prefixed(out, value);
-        }
-        TemplateExpr::Literal(Literal::Int(value)) => {
-            let _ = write!(out, "li{value}|");
-        }
-        TemplateExpr::Literal(Literal::Float(value)) => {
-            let _ = write!(out, "lf{:016x}|", value.to_bits());
-        }
-        TemplateExpr::Literal(Literal::Bool(value)) => {
-            let _ = write!(out, "lb{}|", u8::from(*value));
-        }
-        TemplateExpr::Literal(Literal::Nil) => out.push_str("ln|"),
-        TemplateExpr::Field(path) => {
-            out.push_str("f[");
-            append_string_list(out, path);
-            out.push(']');
-        }
-        TemplateExpr::Selector { operand, path } => {
-            out.push_str("s(");
-            append_structural_expr_key(out, operand);
-            out.push('[');
-            append_string_list(out, path);
-            out.push_str("])");
-        }
-        TemplateExpr::Variable(variable) => {
-            out.push('v');
-            append_len_prefixed(out, variable);
-        }
-        TemplateExpr::Call { function, args } => {
-            out.push('c');
-            append_len_prefixed(out, function);
-            out.push('(');
-            for arg in args {
-                append_structural_expr_key(out, arg);
-            }
-            out.push(')');
-        }
-        TemplateExpr::Pipeline(stages) => {
-            out.push_str("p(");
-            for stage in stages {
-                append_structural_expr_key(out, stage);
-            }
-            out.push(')');
-        }
-        TemplateExpr::Parenthesized(inner) => {
-            out.push_str("q(");
-            append_structural_expr_key(out, inner);
-            out.push(')');
-        }
-        TemplateExpr::VariableDefinition { name, value } => {
-            out.push_str("vd");
-            append_len_prefixed(out, name);
-            append_structural_expr_key(out, value);
-        }
-        TemplateExpr::Assignment { name, value } => {
-            out.push_str("as");
-            append_len_prefixed(out, name);
-            append_structural_expr_key(out, value);
-        }
-        TemplateExpr::Unknown(value) => {
-            out.push('u');
-            append_len_prefixed(out, value);
-        }
-    }
-}
-
-fn append_string_list(out: &mut String, values: &[String]) {
-    let _ = write!(out, "{}:", values.len());
-    for value in values {
-        append_len_prefixed(out, value);
-    }
-}
-
-fn append_len_prefixed(out: &mut String, value: &str) {
-    let _ = write!(out, "{}:{value}|", value.len());
 }
 
 #[cfg(test)]

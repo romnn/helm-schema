@@ -3,6 +3,7 @@ use std::collections::{BTreeSet, HashMap};
 use helm_schema_ast::TemplateExpr;
 
 use crate::fragment_assignment::AssignmentKind;
+use crate::value_path_extraction::values_path_from_expr;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GetBinding {
@@ -56,42 +57,21 @@ fn get_binding_plan_from_expr(
         return None;
     }
 
-    let base = values_base_path(args[0].deparen())?;
-    let key_var = variable_name(args[1].deparen())?;
+    let base = values_path_from_expr(args[0].deparen())?;
+    let TemplateExpr::Variable(key_var) = args[1].deparen() else {
+        return None;
+    };
+    if key_var.is_empty() {
+        return None;
+    }
     Some(GetBindingPlan {
         variable: variable.trim_start_matches('$').to_string(),
         kind,
-        binding: GetBinding { base, key_var },
+        binding: GetBinding {
+            base,
+            key_var: key_var.clone(),
+        },
     })
-}
-
-fn values_base_path(expr: &TemplateExpr) -> Option<String> {
-    match expr {
-        TemplateExpr::Field(path) => values_path_tail(path),
-        TemplateExpr::Selector { operand, path } if is_root_variable(operand.deparen()) => {
-            values_path_tail(path)
-        }
-        _ => None,
-    }
-}
-
-fn values_path_tail(path: &[String]) -> Option<String> {
-    let (root, tail) = path.split_first()?;
-    if root != "Values" || tail.is_empty() {
-        return None;
-    }
-    Some(tail.join("."))
-}
-
-fn variable_name(expr: &TemplateExpr) -> Option<String> {
-    match expr {
-        TemplateExpr::Variable(variable) if !variable.is_empty() => Some(variable.clone()),
-        _ => None,
-    }
-}
-
-fn is_root_variable(expr: &TemplateExpr) -> bool {
-    matches!(expr, TemplateExpr::Variable(variable) if variable.is_empty())
 }
 
 fn literal_list_values(expr: &TemplateExpr) -> Option<Vec<String>> {
@@ -102,20 +82,12 @@ fn literal_list_values(expr: &TemplateExpr) -> Option<Vec<String>> {
         return None;
     }
 
-    let mut values = Vec::new();
-    for arg in args {
-        let value = string_literal_value(arg.deparen())?;
-        if value.is_empty() {
-            return None;
-        }
-        values.push(value.to_string());
-    }
-
-    if values.is_empty() {
-        None
-    } else {
-        Some(values)
-    }
+    let values = args
+        .iter()
+        .map(|arg| string_literal_value(arg.deparen()).filter(|value| !value.is_empty()))
+        .map(|value| value.map(str::to_string))
+        .collect::<Option<Vec<_>>>()?;
+    (!values.is_empty()).then_some(values)
 }
 
 fn string_literal_value(expr: &TemplateExpr) -> Option<&str> {

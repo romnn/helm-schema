@@ -44,5 +44,5 @@ pub(crate) enum HelperOutput {
 }
 
 #[cfg(test)]
-#[path = "tests/mod.rs"]
+#[path = "../../tests/resource_identity/helper_output.rs"]
 mod tests;

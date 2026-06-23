@@ -761,11 +761,6 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn select_fragment_path(&self, path: &[String]) -> Option<Self> {
-        self.apply_to_path(path)
-            .map(|value| value.to_context_value())
-    }
-
     pub(crate) fn for_output_path(
         source_expr: String,
         relative_path: &YamlPath,

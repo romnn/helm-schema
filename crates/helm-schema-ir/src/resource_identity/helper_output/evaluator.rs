@@ -36,6 +36,15 @@ impl HelperOutputEvaluator {
         self.evaluate_value_node(value?, helpers, 0)
     }
 
+    pub(crate) fn evaluate_keyed_inline_branches(
+        mut self,
+        node: &HelmAst,
+        key: &str,
+        helpers: &DefineIndex,
+    ) -> Option<Vec<HelperBranch>> {
+        self.extract_keyed_inline_branches(node, key, helpers, 0)
+    }
+
     pub(crate) fn evaluate_action(
         &mut self,
         action: &TemplateAction,
@@ -219,6 +228,144 @@ impl HelperOutputEvaluator {
             let body = self.collect_branch_body(else_branch, helpers, depth + 1);
             if !body.is_empty() {
                 out.push(HelperBranch { guard: None, body });
+            }
+        }
+    }
+
+    fn extract_keyed_inline_branches(
+        &mut self,
+        node: &HelmAst,
+        key: &str,
+        helpers: &DefineIndex,
+        depth: usize,
+    ) -> Option<Vec<HelperBranch>> {
+        if depth >= MAX_RECURSION_DEPTH {
+            return None;
+        }
+        let HelmAst::If {
+            condition,
+            then_branch,
+            else_branch,
+        } = node
+        else {
+            return None;
+        };
+        let guard = decode_guard_expr(condition.expr(), condition.raw())
+            .unwrap_or_else(|| decode_guard(condition.raw()));
+        if !matches!(
+            guard,
+            CapabilityGuard::Has { .. } | CapabilityGuard::NotHas { .. }
+        ) {
+            return None;
+        }
+
+        let mut branches = vec![HelperBranch {
+            guard: Some(guard),
+            body: self.collect_keyed_branch_body(then_branch, key, helpers, depth + 1),
+        }];
+        if let [nested @ HelmAst::If { .. }] = else_branch.as_slice()
+            && let Some(nested_branches) =
+                self.extract_keyed_inline_branches(nested, key, helpers, depth + 1)
+        {
+            branches.extend(nested_branches);
+        } else if !else_branch.is_empty() {
+            branches.push(HelperBranch {
+                guard: None,
+                body: self.collect_keyed_branch_body(else_branch, key, helpers, depth + 1),
+            });
+        }
+        branches.retain(|branch| !branch.body.is_empty());
+        (!branches.is_empty()).then_some(branches)
+    }
+
+    fn collect_keyed_branch_body(
+        &mut self,
+        nodes: &[HelmAst],
+        key: &str,
+        helpers: &DefineIndex,
+        depth: usize,
+    ) -> HelperBranchBody {
+        let mut literals = Vec::new();
+        let mut nested = Vec::new();
+        self.collect_keyed_outputs(nodes, key, helpers, depth, &mut literals, &mut nested);
+        let literals = dedup_preserve_order(literals);
+        if nested.is_empty() {
+            return HelperBranchBody::literals(literals);
+        }
+        if !literals.is_empty() {
+            nested.insert(
+                0,
+                HelperBranch {
+                    guard: None,
+                    body: HelperBranchBody::literals(literals),
+                },
+            );
+        }
+        HelperBranchBody::Nested { branches: nested }
+    }
+
+    fn collect_keyed_outputs(
+        &mut self,
+        nodes: &[HelmAst],
+        key: &str,
+        helpers: &DefineIndex,
+        depth: usize,
+        literals: &mut Vec<String>,
+        nested: &mut Vec<HelperBranch>,
+    ) {
+        if depth >= MAX_RECURSION_DEPTH {
+            return;
+        }
+        for node in nodes {
+            match node {
+                HelmAst::Document { items } | HelmAst::Mapping { items } => {
+                    self.collect_keyed_outputs(items, key, helpers, depth + 1, literals, nested);
+                }
+                HelmAst::Pair {
+                    key: pair_key,
+                    value,
+                } => {
+                    if scalar_text(pair_key) == Some(key)
+                        && let Some(value) = value.as_deref()
+                        && let Some(output) = self.evaluate_value_node(value, helpers, depth + 1)
+                    {
+                        match output {
+                            HelperOutput::Literals(values) => literals.extend(values),
+                            HelperOutput::Branched { branches } => nested.extend(branches),
+                        }
+                    }
+                }
+                HelmAst::If { .. } => {
+                    if let Some(branches) =
+                        self.extract_keyed_inline_branches(node, key, helpers, depth + 1)
+                    {
+                        nested.extend(branches);
+                    }
+                }
+                HelmAst::Range {
+                    body, else_branch, ..
+                }
+                | HelmAst::With {
+                    body, else_branch, ..
+                } => {
+                    self.collect_keyed_outputs(body, key, helpers, depth + 1, literals, nested);
+                    self.collect_keyed_outputs(
+                        else_branch,
+                        key,
+                        helpers,
+                        depth + 1,
+                        literals,
+                        nested,
+                    );
+                }
+                HelmAst::Block { body, .. } => {
+                    self.collect_keyed_outputs(body, key, helpers, depth + 1, literals, nested);
+                }
+                HelmAst::Define { .. }
+                | HelmAst::Sequence { .. }
+                | HelmAst::Scalar { .. }
+                | HelmAst::HelmExpr { .. }
+                | HelmAst::HelmComment { .. } => {}
             }
         }
     }
@@ -497,6 +644,13 @@ fn lone_if_in(nodes: &[HelmAst]) -> Option<&HelmAst> {
         }
     }
     found
+}
+
+fn scalar_text(node: &HelmAst) -> Option<&str> {
+    match node {
+        HelmAst::Scalar { text } => Some(text.trim()),
+        _ => None,
+    }
 }
 
 fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {

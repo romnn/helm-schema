@@ -2173,5 +2173,5 @@ pub(super) fn is_output_root_kind(kind: &str) -> bool {
 }
 
 #[cfg(test)]
-#[path = "tests/attribution.rs"]
+#[path = "../../tests/document_projection/tracker/attribution.rs"]
 mod tests;

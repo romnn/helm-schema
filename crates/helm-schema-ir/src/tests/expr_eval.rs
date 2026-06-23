@@ -1,12 +1,18 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
-
-use helm_schema_ast::{TemplateExpr, parse_action_expressions};
-
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{apply_local_set_mutations_expr, eval_expr};
+use crate::expr_eval::{apply_local_set_mutations_expr, eval_expr, eval_exprs_effects};
+use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::printf_eval::render_printf_string_sets;
+use crate::template_expr_cache::parse_expr_text;
+use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
+
+fn expr(text: &str) -> TemplateExpr {
+    let exprs = parse_expr_text(text);
+    sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
+    exprs.into_iter().next().expect("expression exists")
+}
 
 fn single_expr(action: &str) -> TemplateExpr {
     let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
@@ -32,6 +38,91 @@ fn env_from_root_fields(root_fields: HashMap<String, AbstractValue>) -> EvalEnv 
 }
 
 #[test]
+fn helper_value_expression_uses_shared_expression_eval() {
+    let bindings = HashMap::from([(
+        "ctx".to_string(),
+        AbstractValue::Dict(
+            [(
+                "config".to_string(),
+                AbstractValue::ValuesPath("serviceAccount".to_string()),
+            )]
+            .into_iter()
+            .collect(),
+        ),
+    )]);
+
+    let env = EvalEnv::from_helper_context(Some(&bindings), None);
+
+    sim_assert_eq!(
+        have: eval_expr(&expr(".ctx.config.name | default \"x\""), &env)
+            .value
+            .map(|value| value.to_context_value()),
+        want: Some(AbstractValue::Choice(
+            [
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+                AbstractValue::StringSet(["x".to_string()].into_iter().collect()),
+            ]
+            .into_iter()
+            .collect(),
+        )),
+    );
+}
+
+#[test]
+fn helper_argument_projection_uses_shared_expression_eval() {
+    let env = EvalEnv::from_helper_context(None, None);
+    let bindings = bindings_for_helper_arg_with(
+        Some(&expr(r#"dict "ctx" $ "config" .Values.serviceAccount"#)),
+        None,
+        |expr| {
+            eval_expr(expr, &env)
+                .value
+                .map(|value| value.to_context_value())
+        },
+    );
+
+    sim_assert_eq!(
+        have: bindings,
+        want: HashMap::from([
+            ("ctx".to_string(), AbstractValue::RootContext),
+            (
+                "config".to_string(),
+                AbstractValue::ValuesPath("serviceAccount".to_string()),
+            ),
+        ]),
+    );
+}
+
+#[test]
+fn bound_path_resolution_uses_shared_expression_eval() {
+    let bindings = HashMap::from([(
+        "config".to_string(),
+        AbstractValue::ValuesPath("serviceAccount".to_string()),
+    )]);
+
+    let env = EvalEnv::from_helper_context(Some(&bindings), None);
+    let path = eval_expr(&expr(".config.name"), &env)
+        .value
+        .as_ref()
+        .and_then(AbstractValue::unique_path);
+
+    sim_assert_eq!(have: path, want: Some("serviceAccount.name".to_string()));
+}
+
+#[test]
+fn set_default_chart_paths_ignores_unrelated_default_inside_set_rhs() {
+    let exprs = parse_expr_text(
+        r#"$_ := set .serviceAccount "name" (printf "%s" (.other | default "fallback"))"#,
+    );
+    let env = EvalEnv::from_helper_context(None, Some(&AbstractValue::ValuesPath(String::new())));
+
+    sim_assert_eq!(
+        have: eval_exprs_effects(&exprs, &env).chart_default_paths,
+        want: BTreeSet::new(),
+    );
+}
+
+#[test]
 fn string_transform_pipeline_preserves_all_printf_argument_paths() {
     let expr = single_expr(r#"printf "%s-%s" .Values.primary.name .Values.suffix | trunc 63"#);
     let result = eval_expr(&expr, &EvalEnv::default());
@@ -43,6 +134,32 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
     assert!(
         result.effects.string_hints.contains("suffix"),
         "suffix should remain visible through printf before trunc"
+    );
+}
+
+#[test]
+fn local_fragment_variable_effects_include_shallow_source_paths() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "nodeSelector".to_string(),
+        AbstractValue::Choice(
+            [
+                AbstractValue::ValuesPath("global.nodeSelector".to_string()),
+                AbstractValue::ValuesPath("nodeSelector".to_string()),
+            ]
+            .into_iter()
+            .collect(),
+        ),
+    );
+
+    let result = eval_expr(&single_expr("$nodeSelector"), &env);
+
+    sim_assert_eq!(
+        have: result.effects.local_source_paths,
+        want: BTreeSet::from([
+            "global.nodeSelector".to_string(),
+            "nodeSelector".to_string(),
+        ]),
     );
 }
 

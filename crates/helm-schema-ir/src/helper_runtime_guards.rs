@@ -3,14 +3,9 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_helper_env::BoundHelperEnv;
 use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperSummary;
-use crate::local_projection::{
-    direct_bound_paths_from_expr_in_context, local_expression_facts_from_exprs,
-};
-use crate::output_path;
 use crate::predicate::Predicate;
 
 pub(crate) fn branch_guard_paths_for_expr(
@@ -21,45 +16,31 @@ pub(crate) fn branch_guard_paths_for_expr(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> BTreeSet<String> {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    let mut branch_guard_paths = direct_bound_paths_from_expr_in_context(expr, &env);
-    let local_facts = local_expression_facts_from_exprs(
-        std::slice::from_ref(expr),
-        local_bindings,
-        &HashMap::new(),
-        &HashMap::new(),
-    );
-    branch_guard_paths.extend(local_facts.source_paths);
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
+    let mut branch_guard_paths = eval_expr(expr, &env).effects.reads;
+    let local_env = EvalEnv {
+        locals: local_bindings.clone(),
+        skip_helper_call_args: true,
+        ..EvalEnv::default()
+    };
+    branch_guard_paths.extend(eval_expr(expr, &local_env).effects.local_source_paths);
 
-    let nested = BoundHelperEnv::new(bindings, current_dot, context).summarize_calls_in_exprs(
-        std::slice::from_ref(expr),
-        local_bindings,
-        seen,
-    );
-    branch_guard_paths.extend(dependency_paths_from_summary(&nested));
+    let nested = context
+        .helper_summaries()
+        .summarize_bound_helper_calls_in_exprs(
+            std::slice::from_ref(expr),
+            Some(bindings),
+            current_dot,
+            local_bindings,
+            context,
+            seen,
+        );
+    branch_guard_paths.extend(nested.dependency_relevant_paths());
     branch_guard_paths
 }
 
 pub(crate) fn truthy_predicate_for_paths(paths: &BTreeSet<String>) -> Predicate {
     Predicate::all(paths.iter().cloned().map(Predicate::truthy_path).collect())
-}
-
-fn dependency_paths_from_summary(summary: &HelperSummary) -> BTreeSet<String> {
-    let paths = summary
-        .path_facts()
-        .filter(|(_path, facts)| facts.is_dependency_relevant())
-        .map(|(path, _facts)| path.to_string())
-        .filter(|path| !path.trim().is_empty())
-        .collect();
-    remove_ancestor_paths(paths)
-}
-
-fn remove_ancestor_paths(paths: BTreeSet<String>) -> BTreeSet<String> {
-    paths
-        .iter()
-        .filter(|path| !output_path::values_path_has_descendant(path, &paths))
-        .cloned()
-        .collect()
 }
 
 #[cfg(test)]

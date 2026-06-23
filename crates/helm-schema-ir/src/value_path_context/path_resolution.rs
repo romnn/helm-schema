@@ -5,13 +5,9 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_expr;
-use crate::expression_analysis::resolve_expr_to_values_path;
+use crate::expr_eval::{eval_expr, eval_exprs_effects};
 use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
-use crate::helper_summary::{HelperOutputMeta, insert_type_hint};
-use crate::literal_schema_type::expression_schema_type;
-use crate::local_projection::{LocalExpressionFacts, local_expression_facts_from_exprs};
-use crate::template_expr_analysis::expr_contains_helper_call;
+use crate::helper_summary::HelperOutputMeta;
 use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
@@ -53,20 +49,19 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 impl ValuePathContext<'_> {
     pub(crate) fn expression_path_facts(&self, exprs: &[TemplateExpr]) -> ValuePathExpressionFacts {
         let effects = self.expression_effects(exprs);
-        let local_facts = self.local_expression_facts(exprs);
-        let mut values = BTreeSet::new();
-        for expr in exprs {
-            values.extend(self.resolved_values_paths_from_expr(expr));
-        }
-        let default_fallback_values =
-            self.resolved_default_fallback_paths_in_exprs_with_facts(exprs, &effects, &local_facts);
+        let local_effects = self.local_expression_effects(exprs);
+        let mut values = output_value_paths(effects.clone());
+        let mut default_fallback_values = effects.defaults.clone();
+        default_fallback_values.extend(local_effects.local_default_paths.iter().cloned());
         values.extend(default_fallback_values.iter().cloned());
+        let mut type_hint_effects = effects.clone();
+        type_hint_effects.merge(local_effects.clone());
         ValuePathExpressionFacts {
             values,
             default_fallback_values,
-            type_hints: self.collect_type_hints(exprs, &effects),
+            type_hints: type_hint_effects.schema_type_hints(),
             encoded_output_values: effects.encoded_paths,
-            local_output_meta: local_facts.output_meta,
+            local_output_meta: local_effects.local_output_meta,
         }
     }
 
@@ -80,101 +75,20 @@ impl ValuePathContext<'_> {
     }
 
     fn expression_eval_env(&self) -> EvalEnv {
-        let mut env = EvalEnv::from_helper_context(
-            Some(self.root_bindings),
-            self.current_dot_binding.as_ref(),
-        );
+        let current_dot = self
+            .current_dot_fragment
+            .as_ref()
+            .map(AbstractValue::to_context_value)
+            .or_else(|| self.current_dot_binding.clone());
+        let mut env = EvalEnv::from_helper_context(Some(self.root_bindings), current_dot.as_ref())
+            .without_helper_call_args();
         env.locals = locals_with_roots(self.template_bindings, self.root_bindings);
+        env = env.with_local_facts(self.template_default_paths, self.template_output_meta);
         env
     }
 
-    fn collect_type_hints(
-        &self,
-        exprs: &[TemplateExpr],
-        effects: &Effects,
-    ) -> BTreeMap<String, BTreeSet<String>> {
-        let mut hints = effects.schema_type_hints();
-
-        for expr in exprs {
-            expr.walk(|node| match node {
-                TemplateExpr::Call { function, args }
-                    if function == "default" && args.len() == 2 =>
-                {
-                    let Some(schema_type) = expression_schema_type(&args[0]) else {
-                        return;
-                    };
-                    for path in self.resolve_expr_to_values_paths(&args[1]) {
-                        insert_type_hint(&mut hints, path, schema_type);
-                    }
-                }
-                TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
-                    for window in stages.windows(2) {
-                        let Some(schema_type) = pipeline_default_expression_schema_type(&window[1])
-                        else {
-                            continue;
-                        };
-                        for path in self.resolve_expr_to_values_paths(&window[0]) {
-                            insert_type_hint(&mut hints, path, schema_type);
-                        }
-                    }
-                }
-                _ => {}
-            });
-        }
-
-        hints
-    }
-
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        let mut paths = BTreeSet::new();
-        let locals = locals_with_roots(self.template_bindings, self.root_bindings);
-
-        walk_expr_maximal_paths_excluding_helper_call_args(expr, &mut |node| {
-            if let Some(path) = values_path_from_expr(node) {
-                paths.insert(path);
-                return true;
-            }
-
-            if !self.root_bindings.is_empty()
-                && let Some(path) =
-                    resolve_expr_to_values_path(node, Some(self.root_bindings), None)
-            {
-                paths.insert(path);
-                return true;
-            }
-
-            if !self.template_bindings.is_empty() {
-                let local_paths = self.local_alias_paths_for_expr(node);
-                if !local_paths.is_empty() {
-                    paths.extend(local_paths);
-                    return true;
-                }
-            }
-
-            if expr_contains_helper_call(node) {
-                return false;
-            }
-
-            let outer_binding = context_value_from_outer_expr(
-                node,
-                Some(&locals),
-                Some(self.root_bindings),
-                self.current_dot_binding.as_ref(),
-            );
-            let fragment_value =
-                self.fragment_value_from_expr(node, self.current_dot_fragment.as_ref());
-            let resolved_paths = outer_binding
-                .into_iter()
-                .chain(fragment_value)
-                .flat_map(|binding| binding.fragment_source_paths())
-                .filter(|path| !path.trim().is_empty())
-                .collect::<BTreeSet<_>>();
-            let found = !resolved_paths.is_empty();
-            paths.extend(resolved_paths);
-            found
-        });
-
-        paths
+        output_value_paths(eval_expr(expr, &self.expression_eval_env()).effects)
     }
 
     pub(crate) fn resolved_default_fallback_paths_in_exprs(
@@ -182,120 +96,33 @@ impl ValuePathContext<'_> {
         exprs: &[TemplateExpr],
     ) -> BTreeSet<String> {
         let effects = self.expression_effects(exprs);
-        let local_facts = self.local_expression_facts(exprs);
-        self.resolved_default_fallback_paths_in_exprs_with_facts(exprs, &effects, &local_facts)
-    }
-
-    fn resolved_default_fallback_paths_in_exprs_with_facts(
-        &self,
-        exprs: &[TemplateExpr],
-        effects: &Effects,
-        local_facts: &LocalExpressionFacts,
-    ) -> BTreeSet<String> {
+        let local_effects = self.local_expression_effects(exprs);
         let mut paths = effects.defaults.clone();
-        for expr in exprs {
-            paths.extend(self.resolved_default_fallback_paths_for_expr(expr));
-        }
-        paths.extend(local_facts.default_paths.iter().cloned());
+        paths.extend(local_effects.local_default_paths.iter().cloned());
         paths
     }
 
-    fn local_expression_facts(&self, exprs: &[TemplateExpr]) -> LocalExpressionFacts {
-        local_expression_facts_from_exprs(
-            exprs,
-            self.template_bindings,
-            self.template_default_paths,
-            self.template_output_meta,
-        )
-    }
-
-    fn local_alias_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        match expr {
-            TemplateExpr::Variable(var) if !var.is_empty() => self
-                .template_bindings
-                .get(var)
-                .map(AbstractValue::fragment_source_paths)
-                .unwrap_or_default(),
-            TemplateExpr::Selector { operand, path } => match operand.as_ref() {
-                TemplateExpr::Variable(var) if !var.is_empty() => self
-                    .template_bindings
-                    .get(var)
-                    .and_then(|binding| binding.select_fragment_path(path))
-                    .map(|binding| binding.fragment_source_paths())
-                    .unwrap_or_default(),
-                _ => BTreeSet::new(),
-            },
-            _ => BTreeSet::new(),
+    fn local_expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
+        let env = EvalEnv {
+            locals: self.template_bindings.clone(),
+            skip_helper_call_args: true,
+            ..EvalEnv::default()
         }
+        .with_local_facts(self.template_default_paths, self.template_output_meta);
+        eval_exprs_effects(exprs, &env)
     }
 
     pub(super) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        let mut paths = self.resolve_expr_to_values_paths(expr);
-        paths.extend(self.local_alias_paths_for_expr(expr));
-        paths
-            .into_iter()
-            .filter(|path| !path.trim().is_empty())
-            .collect()
-    }
-
-    fn expr_has_local_alias_path(&self, expr: &TemplateExpr) -> bool {
-        !self.local_alias_paths_for_expr(expr).is_empty()
+        self.resolved_values_paths_from_expr(expr)
     }
 
     pub(super) fn expr_needs_context_value_resolution(&self, expr: &TemplateExpr) -> bool {
-        self.expr_has_local_alias_path(expr)
-            || (values_path_from_expr(expr).is_none()
-                && !self.resolve_expr_to_values_paths(expr).is_empty())
+        values_path_from_expr(expr).is_none()
+            && !self.resolved_values_paths_from_expr(expr).is_empty()
     }
 
     pub(super) fn truthy_paths_for_condition_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
         self.resolved_values_paths_from_expr(expr)
-    }
-
-    fn resolved_default_fallback_paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        let mut out = BTreeSet::new();
-        expr.walk(|node| match node {
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                out.extend(self.resolve_expr_to_values_paths(&args[1]));
-            }
-            TemplateExpr::Pipeline(stages) if stages.len() >= 2 => {
-                for window in stages.windows(2) {
-                    let TemplateExpr::Call { function, .. } = &window[1] else {
-                        continue;
-                    };
-                    if function != "default" {
-                        continue;
-                    }
-                    out.extend(self.resolve_expr_to_values_paths(&window[0]));
-                }
-            }
-            _ => {}
-        });
-        out
-    }
-
-    pub(crate) fn resolve_expr_to_values_paths(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        if let Some(path) = values_path_from_expr(expr) {
-            return [path].into_iter().collect();
-        }
-
-        let locals = locals_with_roots(self.template_bindings, self.root_bindings);
-
-        let outer_binding = context_value_from_outer_expr(
-            expr,
-            Some(&locals),
-            Some(self.root_bindings),
-            self.current_dot_binding.as_ref(),
-        );
-        let fragment_value =
-            self.fragment_value_from_expr(expr, self.current_dot_fragment.as_ref());
-
-        outer_binding
-            .into_iter()
-            .chain(fragment_value)
-            .flat_map(|binding| binding.fragment_source_paths())
-            .filter(|path| !path.trim().is_empty())
-            .collect()
     }
 
     pub(crate) fn with_body_fragment_value_expr(
@@ -329,20 +156,15 @@ impl ValuePathContext<'_> {
         }
         self.single_resolved_values_path_expr(expr)
     }
+}
 
-    fn fragment_value_from_expr(
-        &self,
-        expr: &TemplateExpr,
-        current_dot: Option<&AbstractValue>,
-    ) -> Option<AbstractValue> {
-        let mut seen = HashSet::new();
-        self.fragment_context.fragment_value_from_expr(
-            expr,
-            self.template_bindings,
-            current_dot,
-            &mut seen,
-        )
-    }
+fn output_value_paths(effects: Effects) -> BTreeSet<String> {
+    effects
+        .output_paths
+        .into_iter()
+        .chain(effects.local_source_paths)
+        .filter(|path| !path.trim().is_empty())
+        .collect()
 }
 
 fn locals_with_roots(
@@ -356,41 +178,6 @@ fn locals_with_roots(
     locals
 }
 
-fn walk_expr_maximal_paths_excluding_helper_call_args<F>(expr: &TemplateExpr, visit: &mut F)
-where
-    F: FnMut(&TemplateExpr) -> bool,
-{
-    if visit(expr) {
-        return;
-    }
-
-    match expr {
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-        TemplateExpr::Selector { operand, .. } | TemplateExpr::Parenthesized(operand) => {
-            walk_expr_maximal_paths_excluding_helper_call_args(operand, visit);
-        }
-        TemplateExpr::Call { function, args } => {
-            if matches!(function.as_str(), "include" | "template") {
-                return;
-            }
-            for arg in args {
-                walk_expr_maximal_paths_excluding_helper_call_args(arg, visit);
-            }
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                walk_expr_maximal_paths_excluding_helper_call_args(stage, visit);
-            }
-        }
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            walk_expr_maximal_paths_excluding_helper_call_args(value, visit);
-        }
-    }
-}
-
 fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, AbstractValue>) -> bool {
     match expr {
         TemplateExpr::Parenthesized(inner) => is_direct_path_expr(inner, bindings),
@@ -402,12 +189,18 @@ fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, AbstractV
     }
 }
 
-fn pipeline_default_expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
-    let TemplateExpr::Call { function, args } = expr.deparen() else {
-        return None;
-    };
-    if function != "default" {
-        return None;
+fn resolve_expr_to_values_path(
+    expr: &TemplateExpr,
+    bindings: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+) -> Option<String> {
+    if let Some(path) = values_path_from_expr(expr) {
+        return Some(path);
     }
-    args.first().and_then(expression_schema_type)
+
+    let env = EvalEnv::from_helper_context(bindings, current_dot);
+    eval_expr(expr, &env)
+        .value
+        .as_ref()
+        .and_then(AbstractValue::unique_path)
 }

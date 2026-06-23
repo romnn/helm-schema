@@ -65,6 +65,10 @@ fn eval_helper_call(
         return EvalResult::with_effects(Some(value), Effects::default());
     }
 
+    if env.skip_helper_call_args {
+        return EvalResult::none();
+    }
+
     eval_unknown_call(args, env, resolver)
 }
 
@@ -74,6 +78,10 @@ fn eval_set_call(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = Effects::default();
+    let target_paths = args
+        .first()
+        .map(|expr| set_target_paths(expr, env, resolver))
+        .unwrap_or_default();
     let target = match args.first().map(TemplateExpr::deparen) {
         Some(TemplateExpr::Variable(name)) => {
             let name = name.trim_start_matches('$');
@@ -103,6 +111,18 @@ fn eval_set_call(
     } else {
         AbstractValue::Unknown
     };
+    for target_path in &target_paths {
+        for key in &keys {
+            let defaulted_path = if target_path.is_empty() {
+                key.clone()
+            } else {
+                format!("{target_path}.{key}")
+            };
+            if effects.defaults.contains(&defaulted_path) {
+                effects.chart_default_paths.insert(defaulted_path);
+            }
+        }
+    }
     let value = target
         .as_ref()
         .and_then(|target| env.locals.get(target))
@@ -118,6 +138,40 @@ fn eval_set_call(
         effects.add_local_set_mutation(target, keys, assigned_value);
     }
     EvalResult::with_effects(value, effects)
+}
+
+fn set_target_paths(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> BTreeSet<String> {
+    match expr.deparen() {
+        TemplateExpr::Variable(name) if !name.is_empty() => env
+            .locals
+            .get(name)
+            .or_else(|| env.root_fields.get(name))
+            .map(AbstractValue::paths)
+            .unwrap_or_default(),
+        TemplateExpr::Selector { operand, path } => match operand.deparen() {
+            TemplateExpr::Variable(name) if !name.is_empty() => env
+                .locals
+                .get(name)
+                .or_else(|| env.root_fields.get(name))
+                .and_then(|value| value.apply_to_path(path))
+                .map(|value| value.paths())
+                .unwrap_or_default(),
+            _ => eval_expr_with_helper_calls(expr, env, resolver)
+                .value
+                .as_ref()
+                .map(AbstractValue::paths)
+                .unwrap_or_default(),
+        },
+        _ => eval_expr_with_helper_calls(expr, env, resolver)
+            .value
+            .as_ref()
+            .map(AbstractValue::paths)
+            .unwrap_or_default(),
+    }
 }
 
 fn eval_default(

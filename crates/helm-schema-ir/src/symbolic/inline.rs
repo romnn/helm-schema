@@ -1,7 +1,9 @@
 use std::collections::{BTreeMap, HashSet};
 
 use crate::define_body_cache::parse_go_template;
-use crate::expression_analysis::helper_values_for_arg;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
+use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_inline::plan_exact_helper_inline_from_exprs;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
@@ -83,11 +85,13 @@ impl SymbolicWalker<'_> {
         };
 
         let current_dot = self.current_dot_binding();
-        let bindings = helper_values_for_arg(
-            plan.arg.as_ref(),
-            Some(&self.root_bindings),
-            current_dot.as_ref(),
-        );
+        let env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref());
+        let bindings =
+            bindings_for_helper_arg_with(plan.arg.as_ref(), Some(&self.root_bindings), |expr| {
+                eval_expr(expr, &env)
+                    .value
+                    .map(|value| value.to_context_value())
+            });
         let mut stack = self.inline_stack.clone();
         stack.push(plan.token);
         let mut nested = SymbolicWalker::new_with_context(

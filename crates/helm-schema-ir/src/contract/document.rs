@@ -57,5 +57,5 @@ impl ContractDocument {
 }
 
 #[cfg(test)]
-#[path = "tests/document.rs"]
+#[path = "../tests/contract/document.rs"]
 mod tests;

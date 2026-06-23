@@ -209,5 +209,5 @@ fn path_segments_equivalent(left: &str, right: &str) -> bool {
 }
 
 #[cfg(test)]
-#[path = "tests/mod.rs"]
+#[path = "../../tests/document_projection/tracker/mod.rs"]
 mod tests;

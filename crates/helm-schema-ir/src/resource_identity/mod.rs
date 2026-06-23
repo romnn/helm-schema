@@ -5,7 +5,6 @@
 //! boundary directly, so resource identity stays isolated from the walker and
 //! from contract lowering.
 
-mod api_version;
 mod detector;
 mod helper_output;
 mod list_envelope;

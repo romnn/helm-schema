@@ -266,5 +266,5 @@ fn suppresses_direct_descendant(suppressed_roots: &BTreeSet<String>, value_path:
 }
 
 #[cfg(test)]
-#[path = "tests/helper_contract.rs"]
+#[path = "../tests/document_projection/helper_contract.rs"]
 mod tests;

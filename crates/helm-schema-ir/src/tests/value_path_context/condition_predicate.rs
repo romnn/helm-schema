@@ -81,3 +81,24 @@ fn alias_or_predicate_subsumes_direct_truthy_predicates() {
         &[],
     ));
 }
+
+#[test]
+fn precise_structural_predicate_suppresses_broader_truthy_fallback() {
+    let structural = Predicate::Or(vec![
+        Predicate::from(Guard::Eq {
+            path: "service.type".to_string(),
+            value: GuardValue::string("LoadBalancer"),
+        }),
+        Predicate::from(Guard::Eq {
+            path: "service.type".to_string(),
+            value: GuardValue::string("NodePort"),
+        }),
+    ]);
+    let fallback = Predicate::Or(vec![Predicate::truthy_path("service.type")]);
+    let structural_paths = predicate_value_paths(&structural);
+
+    assert!(truthy_predicate_is_covered_by_structural_paths(
+        &fallback,
+        &structural_paths,
+    ));
+}

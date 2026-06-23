@@ -192,5 +192,5 @@ fn document_site_is_yaml_comment_part(source: &str, node: tree_sitter::Node<'_>)
 }
 
 #[cfg(test)]
-#[path = "tests/site_context.rs"]
+#[path = "../tests/document_projection/site_context.rs"]
 mod tests;

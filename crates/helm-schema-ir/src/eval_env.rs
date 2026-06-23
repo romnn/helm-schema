@@ -1,6 +1,7 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
+use crate::helper_summary::HelperOutputMeta;
 
 /// Abstract interpreter environment for Helm expression evaluation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -8,7 +9,10 @@ pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) root_fields: HashMap<String, AbstractValue>,
     pub(crate) locals: HashMap<String, AbstractValue>,
+    pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
+    pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     pub(crate) allow_field_root_lookup: bool,
+    pub(crate) skip_helper_call_args: bool,
 }
 
 impl EvalEnv {
@@ -27,7 +31,10 @@ impl EvalEnv {
                 })
                 .unwrap_or_default(),
             locals: HashMap::new(),
+            local_default_paths: HashMap::new(),
+            local_output_meta: HashMap::new(),
             allow_field_root_lookup: true,
+            skip_helper_call_args: false,
         }
     }
 
@@ -79,7 +86,10 @@ impl EvalEnv {
             dot,
             root_fields,
             locals,
+            local_default_paths: HashMap::new(),
+            local_output_meta: HashMap::new(),
             allow_field_root_lookup: true,
+            skip_helper_call_args: false,
         }
     }
 
@@ -95,8 +105,26 @@ impl EvalEnv {
             dot: current_dot.cloned(),
             root_fields: locals.clone(),
             locals,
+            local_default_paths: HashMap::new(),
+            local_output_meta: HashMap::new(),
             allow_field_root_lookup: false,
+            skip_helper_call_args: false,
         }
+    }
+
+    pub(crate) fn with_local_facts(
+        mut self,
+        local_default_paths: &HashMap<String, BTreeSet<String>>,
+        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    ) -> Self {
+        self.local_default_paths = local_default_paths.clone();
+        self.local_output_meta = local_output_meta.clone();
+        self
+    }
+
+    pub(crate) fn without_helper_call_args(mut self) -> Self {
+        self.skip_helper_call_args = true;
+        self
     }
 
     pub(crate) fn apply_local_set_mutations(

@@ -42,6 +42,17 @@ pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
             "{}",
             serde_json::to_string_pretty(&actual).expect("pretty json")
         );
+        let dump_stem = case
+            .template_path
+            .chars()
+            .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
+            .collect::<String>();
+        let path = std::env::temp_dir().join(format!("helm-schema-ir.{dump_stem}.ir.json"));
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&actual).expect("json bytes"),
+        )
+        .expect("write ir dump");
     }
     actual
 }

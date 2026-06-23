@@ -1,6 +1,6 @@
 use helm_schema_ast::{DefineIndex, HelmAst};
 
-use super::api_version::{ApiVersionOutputDetector, scalar_text};
+use super::helper_output::HelperOutputEvaluator;
 use super::state::ResourceState;
 use crate::ResourceRef;
 
@@ -13,15 +13,13 @@ use crate::ResourceRef;
 /// choose the runtime-live branch instead of flattening mutually-exclusive
 /// alternatives.
 pub(crate) struct ResourceIdentityDetector<'a> {
-    api_versions: ApiVersionOutputDetector<'a>,
+    defines: &'a DefineIndex,
 }
 
 impl<'a> ResourceIdentityDetector<'a> {
     #[must_use]
     pub(crate) fn new(defines: &'a DefineIndex) -> Self {
-        Self {
-            api_versions: ApiVersionOutputDetector::new(defines),
-        }
+        Self { defines }
     }
 
     /// Detect the resource identity for one manifest document subtree.
@@ -53,7 +51,9 @@ impl<'a> ResourceIdentityDetector<'a> {
                 };
                 match key_text {
                     "apiVersion" => {
-                        if let Some(output) = self.api_versions.output(value.as_deref()) {
+                        if let Some(output) = HelperOutputEvaluator::new()
+                            .evaluate_ast_value(value.as_deref(), self.defines)
+                        {
                             state.record_api_version_output(output);
                         }
                     }
@@ -70,7 +70,9 @@ impl<'a> ResourceIdentityDetector<'a> {
                 else_branch,
                 ..
             } => {
-                if capture_branches && let Some(branches) = self.api_versions.inline_branches(node)
+                if capture_branches
+                    && let Some(branches) = HelperOutputEvaluator::new()
+                        .evaluate_keyed_inline_branches(node, "apiVersion", self.defines)
                 {
                     state.record_api_version_branches(branches);
                     self.scan_items(then_branch, state, false);
@@ -98,5 +100,12 @@ impl<'a> ResourceIdentityDetector<'a> {
             | HelmAst::HelmExpr { .. }
             | HelmAst::HelmComment { .. } => {}
         }
+    }
+}
+
+fn scalar_text(node: &HelmAst) -> Option<&str> {
+    match node {
+        HelmAst::Scalar { text } => Some(text.trim()),
+        _ => None,
     }
 }
