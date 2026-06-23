@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use super::{ContractDocument, ContractTypeHint, ContractUse};
 use crate::contract_signal_builder::derive_schema_signals_from_contract_parts;
 use crate::contract_signals::ContractSchemaSignals;
@@ -17,9 +19,13 @@ impl FinalizedContract {
     pub(in crate::contract) fn new(
         normalized_uses: Vec<ContractUse>,
         type_hints: Vec<ContractTypeHint>,
+        dependency_values_root_fragments: BTreeSet<String>,
     ) -> Self {
-        let schema_signals =
-            derive_schema_signals_from_contract_parts(&normalized_uses, &type_hints);
+        let schema_signals = derive_schema_signals_from_contract_parts(
+            &normalized_uses,
+            &type_hints,
+            &dependency_values_root_fragments,
+        );
 
         Self {
             uses: normalized_uses,

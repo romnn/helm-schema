@@ -64,14 +64,21 @@ impl PreparedSession {
         let defines = chart::build_define_index(charts, opts.include_tests)?;
         let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
         let top_level_value_paths = values_roots::top_level_value_paths(values_yaml.as_deref());
+        let top_level_mapping_value_paths =
+            values_roots::top_level_mapping_value_paths(values_yaml.as_deref());
         let explicit_value_paths = values_roots::explicit_value_paths(values_yaml.as_deref());
         let values_descriptions = chart::build_composed_values_descriptions(
             charts,
             opts.include_subchart_values,
             &opts.values_files,
         )?;
-        let chart_analysis =
-            analyze_charts(charts, &defines, opts.include_tests, &top_level_value_paths)?;
+        let chart_analysis = analyze_charts(
+            charts,
+            &defines,
+            opts.include_tests,
+            &top_level_value_paths,
+            &top_level_mapping_value_paths,
+        )?;
 
         Ok(Self {
             analysis: Analysis {

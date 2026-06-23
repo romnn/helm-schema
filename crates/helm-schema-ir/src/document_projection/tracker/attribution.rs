@@ -1062,14 +1062,14 @@ fn process_structural_line(line: &str, frames: &mut Vec<OpenValueFrame>) {
         if rest.is_empty() {
             return;
         }
-        if let Some((key, has_nested_value)) = parse_mapping_line(rest) {
-            if has_nested_value {
-                frames.push(OpenValueFrame {
-                    indent: indent + 2,
-                    path: append_mapping_segment(&item_path, &key),
-                    kind: OpenValueFrameKind::MappingValue,
-                });
-            }
+        if let Some((key, has_nested_value)) = parse_mapping_line(rest)
+            && has_nested_value
+        {
+            frames.push(OpenValueFrame {
+                indent: indent + 2,
+                path: append_mapping_segment(&item_path, &key),
+                kind: OpenValueFrameKind::MappingValue,
+            });
         }
         return;
     }

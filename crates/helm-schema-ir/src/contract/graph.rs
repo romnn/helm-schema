@@ -47,6 +47,12 @@ impl ContractIr {
         ));
     }
 
+    pub fn push_pathless_dependency_fragment(&mut self, source_expr: impl Into<String>) {
+        self.facts.push(ContractFact::DependencyValuesRootFragment(
+            source_expr.into(),
+        ));
+    }
+
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
         self.facts.append(&mut other.facts);
@@ -153,22 +159,33 @@ impl ContractIr {
     /// one normalized contract representation.
     #[must_use]
     pub fn finalize(self) -> FinalizedContract {
-        let (mut uses, type_hints) = self.into_contract_parts();
+        let (mut uses, type_hints, dependency_values_root_fragments) = self.into_contract_parts();
         normalize_contract_uses(&mut uses);
-        FinalizedContract::new(uses, type_hints)
+        FinalizedContract::new(uses, type_hints, dependency_values_root_fragments)
     }
 
-    fn into_contract_parts(self) -> (Vec<ContractUse>, Vec<ContractTypeHint>) {
+    fn into_contract_parts(self) -> (Vec<ContractUse>, Vec<ContractTypeHint>, BTreeSet<String>) {
         let mut uses = Vec::new();
         let mut type_hints = Vec::new();
+        let mut dependency_values_root_fragments = BTreeSet::new();
 
         for fact in self.facts {
             match fact {
                 ContractFact::Use(contract_use) => uses.push(contract_use),
+                ContractFact::DependencyValuesRootFragment(source_expr) => {
+                    dependency_values_root_fragments.insert(source_expr.clone());
+                    uses.push(ContractUse::new(
+                        source_expr,
+                        YamlPath(Vec::new()),
+                        ValueKind::Fragment,
+                        Vec::new(),
+                        None,
+                    ));
+                }
                 ContractFact::TypeHint(type_hint) => type_hints.push(type_hint),
             }
         }
 
-        (uses, type_hints)
+        (uses, type_hints, dependency_values_root_fragments)
     }
 }

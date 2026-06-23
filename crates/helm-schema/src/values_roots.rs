@@ -31,6 +31,31 @@ pub(crate) fn top_level_value_paths(values_yaml: Option<&str>) -> BTreeSet<Strin
     paths
 }
 
+pub(crate) fn top_level_mapping_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
+    let mut paths = BTreeSet::new();
+    let Some(values_yaml) = values_yaml else {
+        return paths;
+    };
+    let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
+        return paths;
+    };
+    let YamlValue::Mapping(mapping) = doc else {
+        return paths;
+    };
+
+    for (key, value) in mapping {
+        let Some(key) = key.as_str() else {
+            continue;
+        };
+        let key = key.trim();
+        if !key.is_empty() && matches!(value, YamlValue::Mapping(_)) {
+            paths.insert(key.to_string());
+        }
+    }
+
+    paths
+}
+
 /// Return every explicit mapping-backed values path present in the composed
 /// values.yaml.
 ///

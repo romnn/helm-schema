@@ -347,7 +347,7 @@ impl NodeEvalRuntime for CombinedHelperRuntime<'_, '_> {
     fn range_iteration_count(&self) -> usize {
         let value_count = self.value.range_iteration_count();
         let fragment_count = self.fragment.range_iteration_count();
-        debug_assert_eq!(value_count, fragment_count);
+        debug_assert!(value_count == fragment_count);
         value_count
     }
 
@@ -458,7 +458,7 @@ impl NodeEvalRuntime for CombinedHelperRuntime<'_, '_> {
         let fragment_path = self
             .fragment
             .range_output_path(node, current_path, &plan.fragment);
-        debug_assert_eq!(value_path, fragment_path);
+        debug_assert!(value_path == fragment_path);
         value_path
     }
 

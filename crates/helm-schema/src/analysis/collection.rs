@@ -21,6 +21,7 @@ pub(crate) fn analyze_charts(
     defines: &DefineIndex,
     include_tests: bool,
     top_level_value_paths: &BTreeSet<String>,
+    top_level_mapping_value_paths: &BTreeSet<String>,
 ) -> CliResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_schema_universe = chart::collect_static_crd_universe(charts)?;
@@ -54,7 +55,16 @@ pub(crate) fn analyze_charts(
         }
     }
 
-    seed_top_level_values_yaml_keys(&mut contract, top_level_value_paths);
+    let dependency_root_paths = charts
+        .iter()
+        .filter_map(|chart| chart.values_prefix.first().cloned())
+        .collect::<BTreeSet<_>>();
+    seed_top_level_values_yaml_keys(
+        &mut contract,
+        top_level_value_paths,
+        top_level_mapping_value_paths,
+        &dependency_root_paths,
+    );
 
     Ok(ChartAnalysis {
         contract,

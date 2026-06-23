@@ -6,7 +6,6 @@ use serde_yaml::Value as YamlValue;
 use crate::merge::merge_schema_list;
 use crate::schema_model::{empty_schema, is_empty_schema};
 use crate::schema_node::SchemaNode;
-use crate::schema_tree::unknown_object_schema;
 
 pub(crate) struct ValuesYamlPathInfo {
     pub(crate) schema: Value,
@@ -267,7 +266,7 @@ fn schema_node_from_yaml_value(value: &YamlValue) -> SchemaNode {
         }
         YamlValue::Mapping(mapping) => {
             if mapping.is_empty() {
-                return SchemaNode::foreign(unknown_object_schema());
+                return SchemaNode::unknown_object();
             }
             let mut schema = SchemaNode::closed_object();
             for (key, value) in mapping {

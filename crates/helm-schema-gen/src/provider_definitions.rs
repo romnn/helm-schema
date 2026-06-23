@@ -60,24 +60,31 @@ impl ProviderSchemaDefinitions {
         }
     }
 
-    pub(crate) fn insert_into_root(self, schema: &mut Value) {
-        if self.definitions_by_name.is_empty() {
-            return;
-        }
+    pub(crate) fn into_definitions_by_name(self) -> BTreeMap<String, Value> {
+        self.definitions_by_name
+    }
+}
 
-        let Value::Object(root) = schema else {
-            return;
-        };
-        let definitions = root
-            .entry(DEFINITIONS_KEY.to_string())
-            .or_insert_with(|| Value::Object(Map::new()));
-        let Value::Object(definitions) = definitions else {
-            return;
-        };
+pub(crate) fn insert_definitions_into_root(
+    schema: &mut Value,
+    definitions_by_name: BTreeMap<String, Value>,
+) {
+    if definitions_by_name.is_empty() {
+        return;
+    }
 
-        for (name, definition) in self.definitions_by_name {
-            definitions.insert(name, definition);
-        }
+    let Value::Object(root) = schema else {
+        return;
+    };
+    let definitions = root
+        .entry(DEFINITIONS_KEY.to_string())
+        .or_insert_with(|| Value::Object(Map::new()));
+    let Value::Object(definitions) = definitions else {
+        return;
+    };
+
+    for (name, definition) in definitions_by_name {
+        definitions.insert(name, definition);
     }
 }
 

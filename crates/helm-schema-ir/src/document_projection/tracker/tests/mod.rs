@@ -122,8 +122,6 @@ fn tracker_keeps_outer_prefix_for_fragment_inside_with_body() {
             })
         })
         .expect("fragment action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(8))
         .path;
@@ -156,8 +154,6 @@ fn tracker_attributes_cert_manager_extra_env_to_container_env() {
         .filter(|node| node.start_byte() > range_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("extraEnv render action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(10))
         .path;
@@ -256,8 +252,6 @@ spec:
         .filter(|node| node.start_byte() > security_context_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("security context render");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let rendered_context = tracker
         .attribution
         .virtual_indent_context_for_node(action, 12);
@@ -300,8 +294,6 @@ fn tracker_attributes_cert_manager_inline_host_aliases_fragment_to_host_aliases(
         .filter(|node| node.start_byte() > host_aliases_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("host aliases render action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(8))
         .path;
@@ -333,8 +325,6 @@ fn tracker_attributes_cert_manager_inline_ip_families_fragment_to_field() {
                 .is_ok_and(|text| text.contains("nindent 2"))
         })
         .expect("serviceIPFamilies render action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(2))
         .path;
@@ -367,8 +357,6 @@ fn tracker_attributes_signoz_service_common_labels_to_metadata_labels() {
                 .is_ok_and(|text| text.contains("common.tplvalues.render"))
         })
         .expect("commonLabels render action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(4))
         .path;
@@ -401,8 +389,6 @@ fn tracker_attributes_signoz_service_extra_ports_to_service_ports() {
                 .is_ok_and(|text| text.contains("common.tplvalues.render"))
         })
         .expect("extraPorts render action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(4))
         .path;
@@ -431,8 +417,6 @@ fn tracker_attributes_cert_manager_liveness_probe_scalar_to_probe_field() {
         .into_iter()
         .find(|node| source[..node.start_byte()].contains("with .Values.livenessProbe"))
         .expect("liveness probe failureThreshold action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -478,8 +462,6 @@ fn tracker_attributes_cert_manager_proxy_value_to_env_value() {
         .filter(|node| node.start_byte() > proxy_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("HTTP proxy value action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -579,8 +561,6 @@ fn tracker_preserves_entire_scalar_for_inline_sequence_mapping_action() {
     let mut actions = Vec::new();
     output_nodes_containing(tree.root_node(), source, ".Values.port", &mut actions);
     let action = actions.into_iter().next().expect("output action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -615,8 +595,6 @@ ports:
         &mut actions,
     );
     let action = actions.into_iter().next().expect("output action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -652,8 +630,6 @@ fn tracker_attributes_required_call_to_mapping_scalar_value() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("required output action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -686,8 +662,6 @@ fn tracker_attributes_signoz_smtp_required_name_to_secret_ref_name() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("required output action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -739,8 +713,6 @@ fn tracker_attributes_networkpolicy_extra_ingress_to_ingress_rules() {
                 .is_ok_and(|text| text.contains("common.tplvalues.render"))
         })
         .expect("extra ingress render action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let rendered_context = tracker
         .attribution
         .virtual_indent_context_for_node(action, 4);
@@ -776,8 +748,6 @@ fn tracker_attributes_networkpolicy_standard_labels_to_metadata_labels() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("standard labels action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(4))
         .path;
@@ -809,8 +779,6 @@ fn tracker_attributes_networkpolicy_match_labels_to_selector_matchlabels() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("match labels action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     let path = tracker
         .output_slot_for_node(action, ValueKind::Fragment, Some(6))
         .path;
@@ -844,8 +812,6 @@ fn tracker_attributes_networkpolicy_range_labels_to_matchlabels_map() {
         .filter(|node| node.start_byte() > range_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("range value action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker.path_for_node(action).0,
         want: vec![
@@ -881,8 +847,6 @@ fn tracker_attributes_networkpolicy_metrics_range_labels_to_matchlabels_map() {
         .filter(|node| node.start_byte() > range_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("metrics range value action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker.path_for_node(action).0,
         want: vec![
@@ -917,8 +881,6 @@ fn tracker_attributes_networkpolicy_range_mapping_entry_path() {
         &mut ranges,
     );
     let range = ranges.into_iter().next().expect("range action");
-    drive_tracker_until(&mut tracker, tree.root_node(), range);
-
     sim_assert_eq!(
         have: tracker.path_at_mapping_entry_indent(range, 16).0,
         want: vec![
@@ -957,8 +919,6 @@ metadata:
         .into_iter()
         .next()
         .expect("serviceAccount.name output");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -994,7 +954,6 @@ fn tracker_attributes_signoz_storage_class_scalar_include_to_pvc_spec_container(
         &mut actions,
     );
     let action = actions.into_iter().next().expect("storage class include");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -1029,8 +988,6 @@ fn tracker_preserves_entire_scalar_for_bitnami_metrics_port_after_nested_blocks(
         .into_iter()
         .next()
         .expect("metrics port output action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     sim_assert_eq!(
         have: tracker
             .output_slot_for_node(action, ValueKind::Scalar, None)
@@ -1071,8 +1028,6 @@ fn tracker_keeps_script_block_scalar_outputs_pathless() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("script output action");
-    drive_tracker_until(&mut tracker, tree.root_node(), action);
-
     assert!(tracker.context_for_node(action).inside_block_scalar);
     sim_assert_eq!(
         have: tracker
@@ -1152,22 +1107,4 @@ fn attribution_marks_embedded_sequence_value_action_as_partial_scalar() {
             node.kind()
         );
     }
-}
-
-fn drive_tracker_until(
-    tracker: &mut DocumentTracker<'_>,
-    node: tree_sitter::Node<'_>,
-    target: tree_sitter::Node<'_>,
-) -> bool {
-    if node.id() == target.id() {
-        return true;
-    }
-
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        if drive_tracker_until(tracker, child, target) {
-            return true;
-        }
-    }
-    false
 }

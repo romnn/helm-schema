@@ -135,7 +135,7 @@ impl<'a> DocumentTracker<'a> {
                 self.attribution
                     .virtual_indent_context_for_node(node, indent)
             });
-            prefer_fragment_output_path(&current_context, rendered_context.as_ref())
+            prefer_fragment_output_path(current_context, rendered_context.as_ref())
         } else {
             current_context.output_path.clone()
         };

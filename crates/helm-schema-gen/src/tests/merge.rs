@@ -119,6 +119,48 @@ fn merge_preserve_unknown_fields_object_with_closed_values_object_stays_open() {
 }
 
 #[test]
+fn merge_object_with_conditional_all_of_preserves_branch_constraint() {
+    let base = json!({
+        "type": "object",
+        "additionalProperties": {},
+        "properties": {}
+    });
+    let conditional = json!({
+        "type": "object",
+        "allOf": [
+            {
+                "if": {
+                    "properties": {
+                        "create": { "const": true }
+                    },
+                    "required": ["create"],
+                    "type": "object"
+                },
+                "then": {
+                    "properties": {
+                        "annotations": {
+                            "type": "object",
+                            "additionalProperties": { "type": "string" }
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        ]
+    });
+
+    let merged = merge_two_schemas(base, conditional);
+
+    sim_assert_eq!(
+        have: merged
+            .pointer("/allOf/0/then/properties/annotations/additionalProperties/type")
+            .and_then(Value::as_str),
+        want: Some("string"),
+        "conditional allOf constraints must survive object merges: {merged}"
+    );
+}
+
+#[test]
 fn merge_open_values_object_with_exact_empty_union_preserves_empty_branch() {
     let values_placeholder = json!({
         "type": "object",

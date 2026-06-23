@@ -55,6 +55,7 @@ pub(crate) enum SchemaNode {
         additional_properties: Option<Box<SchemaNode>>,
         min_properties: Option<u64>,
         max_properties: Option<u64>,
+        all_of: Vec<SchemaNode>,
     },
     Array {
         items: Option<Box<SchemaNode>>,
@@ -66,6 +67,18 @@ pub(crate) enum SchemaNode {
     AllOf(Vec<SchemaNode>),
     AnyOf(Vec<SchemaNode>),
     Foreign(Value),
+}
+
+pub(crate) fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
+    schema.as_object().is_some_and(|object| {
+        object.get("type").and_then(Value::as_str) == Some("object")
+            && matches!(
+                object.get("additionalProperties"),
+                Some(Value::Object(additional_properties)) if additional_properties.is_empty()
+            )
+            && !object.contains_key("properties")
+            && !object.contains_key("required")
+    })
 }
 
 impl SchemaNode {
@@ -111,6 +124,7 @@ impl SchemaNode {
             additional_properties: None,
             min_properties: None,
             max_properties: None,
+            all_of: Vec::new(),
         }
     }
 
@@ -118,6 +132,10 @@ impl SchemaNode {
         Self::object()
             .with_empty_properties()
             .with_additional_properties(Self::foreign(Value::Bool(false)))
+    }
+
+    pub(crate) fn unknown_object() -> Self {
+        Self::object().with_additional_properties(Self::empty())
     }
 
     pub(crate) fn property(mut self, key: impl Into<String>, value: SchemaNode) -> Self {
@@ -170,6 +188,23 @@ impl SchemaNode {
         self
     }
 
+    pub(crate) fn push_all_of(&mut self, value: SchemaNode) {
+        match self {
+            Self::Object { all_of, .. } => {
+                all_of.push(value);
+            }
+            Self::Foreign(Value::Object(object)) => {
+                let all_of = object
+                    .entry("allOf".to_string())
+                    .or_insert_with(|| Value::Array(Vec::new()));
+                if let Value::Array(entries) = all_of {
+                    entries.push(value.into_value());
+                }
+            }
+            _ => {}
+        }
+    }
+
     pub(crate) fn array() -> Self {
         Self::Array {
             items: None,
@@ -219,6 +254,185 @@ impl SchemaNode {
         }
     }
 
+    pub(crate) fn property_entries(&self) -> Vec<(String, SchemaNode)> {
+        match self {
+            Self::Object { properties, .. } => properties
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
+            Self::Foreign(value) => foreign_property_entries(value),
+            _ => Vec::new(),
+        }
+    }
+
+    pub(crate) fn is_object_like(&self) -> bool {
+        match self {
+            Self::Object { .. } | Self::Type(JsonSchemaType::Object) => true,
+            Self::Typed {
+                ty: JsonSchemaType::Object,
+                ..
+            } => true,
+            Self::Array { .. }
+            | Self::Type(_)
+            | Self::Typed { .. }
+            | Self::AnyOf(_)
+            | Self::AllOf(_) => false,
+            Self::Foreign(value) => foreign_is_object_like(value),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_array_like(&self) -> bool {
+        match self {
+            Self::Array { .. } | Self::Type(JsonSchemaType::Array) => true,
+            Self::Typed {
+                ty: JsonSchemaType::Array,
+                ..
+            } => true,
+            Self::Object { .. }
+            | Self::Type(_)
+            | Self::Typed { .. }
+            | Self::AnyOf(_)
+            | Self::AllOf(_) => false,
+            Self::Foreign(value) => foreign_is_array_like(value),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_false_schema(&self) -> bool {
+        matches!(self, Self::Foreign(Value::Bool(false)))
+    }
+
+    pub(crate) fn opens_unknown_object_fields(&self) -> bool {
+        match self {
+            Self::Object {
+                additional_properties: Some(additional_properties),
+                ..
+            } => !additional_properties.is_false_schema(),
+            Self::Foreign(Value::Object(object)) => foreign_opens_unknown_object_fields(object),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_exact_empty_object(&self) -> bool {
+        match self {
+            Self::Object { max_properties, .. } => *max_properties == Some(0),
+            Self::Foreign(Value::Object(object)) => foreign_is_exact_empty_object(object),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn has_object_descendants(&self) -> bool {
+        match self {
+            Self::Object {
+                properties, all_of, ..
+            } => !properties.is_empty() || !all_of.is_empty(),
+            Self::Foreign(Value::Object(object)) => foreign_has_object_descendants(object),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_plain_closed_values_object(&self) -> bool {
+        match self {
+            Self::Object {
+                additional_properties: Some(additional_properties),
+                all_of,
+                max_properties,
+                ..
+            } => {
+                additional_properties.is_false_schema()
+                    && all_of.is_empty()
+                    && *max_properties != Some(0)
+            }
+            Self::Foreign(Value::Object(object)) => foreign_is_plain_closed_values_object(object),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn open_object(&mut self) {
+        match self {
+            Self::Object {
+                additional_properties,
+                ..
+            } if additional_properties
+                .as_deref()
+                .is_none_or(Self::is_false_schema) =>
+            {
+                *additional_properties = Some(Box::new(Self::empty()));
+            }
+            Self::Foreign(Value::Object(object))
+                if object.get("additionalProperties").and_then(Value::as_bool) == Some(false) =>
+            {
+                object.insert(
+                    "additionalProperties".to_string(),
+                    Self::empty().into_value(),
+                );
+            }
+            _ => {}
+        }
+    }
+
+    pub(crate) fn clear_exact_empty_constraint_for_descendant(&mut self) {
+        let should_open = match self {
+            Self::Object { max_properties, .. } if *max_properties == Some(0) => {
+                *max_properties = None;
+                true
+            }
+            Self::Foreign(Value::Object(object)) if foreign_is_exact_empty_object(object) => {
+                object.remove("maxProperties");
+                true
+            }
+            _ => false,
+        };
+        if should_open {
+            self.open_object();
+        }
+    }
+
+    pub(crate) fn path_exists(&self, path_segments: &[String], map_wildcard_segment: &str) -> bool {
+        if path_segments.is_empty() {
+            return !self.is_empty_slot();
+        }
+
+        let Some((head, tail)) = path_segments.split_first() else {
+            return false;
+        };
+
+        match self {
+            Self::Object {
+                properties,
+                additional_properties,
+                ..
+            } => {
+                if head == map_wildcard_segment {
+                    return additional_properties
+                        .as_deref()
+                        .is_some_and(|child| child.path_exists(tail, map_wildcard_segment));
+                }
+                properties
+                    .get(head)
+                    .is_some_and(|child| child.path_exists(tail, map_wildcard_segment))
+            }
+            Self::Array { items, .. } if head == "*" => items
+                .as_deref()
+                .is_some_and(|child| child.path_exists(tail, map_wildcard_segment)),
+            Self::AnyOf(variants) | Self::AllOf(variants) => variants
+                .iter()
+                .any(|variant| variant.path_exists(path_segments, map_wildcard_segment)),
+            Self::Foreign(value) => foreign_path_exists(value, path_segments, map_wildcard_segment),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_empty_slot(&self) -> bool {
+        match self {
+            Self::Empty => true,
+            Self::Foreign(Value::Null) => true,
+            Self::Foreign(value) => crate::schema_model::is_empty_schema(value),
+            _ => false,
+        }
+    }
+
     pub(crate) fn into_value(self) -> Value {
         match self {
             Self::Empty => Value::Object(Map::new()),
@@ -235,6 +449,7 @@ impl SchemaNode {
                 additional_properties,
                 min_properties,
                 max_properties,
+                all_of,
             } => {
                 let mut object = type_map(JsonSchemaType::Object);
                 if include_empty_properties || !properties.is_empty() {
@@ -270,6 +485,12 @@ impl SchemaNode {
                     object.insert(
                         "maxProperties".to_string(),
                         Value::Number(Number::from(max_properties)),
+                    );
+                }
+                if !all_of.is_empty() {
+                    object.insert(
+                        "allOf".to_string(),
+                        Value::Array(all_of.into_iter().map(Self::into_value).collect()),
                     );
                 }
                 Value::Object(object)
@@ -327,6 +548,122 @@ fn type_name_schema(name: &str) -> Value {
             .into_iter()
             .collect(),
     )
+}
+
+fn foreign_property_entries(value: &Value) -> Vec<(String, SchemaNode)> {
+    value
+        .as_object()
+        .and_then(|object| object.get("properties"))
+        .and_then(Value::as_object)
+        .map(|properties| {
+            properties
+                .iter()
+                .map(|(key, value)| (key.clone(), SchemaNode::foreign(value.clone())))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn foreign_schema_type(value: &Value) -> Option<&str> {
+    value.as_object()?.get("type")?.as_str()
+}
+
+fn foreign_is_object_like(value: &Value) -> bool {
+    match foreign_schema_type(value) {
+        Some("object") => true,
+        Some(_) => false,
+        None => value.as_object().is_some_and(|object| {
+            object.contains_key("properties")
+                || object.contains_key("additionalProperties")
+                || object.contains_key("patternProperties")
+                || object.contains_key("required")
+        }),
+    }
+}
+
+fn foreign_is_array_like(value: &Value) -> bool {
+    match foreign_schema_type(value) {
+        Some("array") => true,
+        Some(_) => false,
+        None => value
+            .as_object()
+            .is_some_and(|object| object.contains_key("items")),
+    }
+}
+
+fn foreign_opens_unknown_object_fields(object: &Map<String, Value>) -> bool {
+    object
+        .get("additionalProperties")
+        .is_some_and(|value| value.as_bool() != Some(false))
+        || object
+            .get("x-kubernetes-preserve-unknown-fields")
+            .and_then(Value::as_bool)
+            == Some(true)
+}
+
+fn foreign_is_exact_empty_object(object: &Map<String, Value>) -> bool {
+    object.get("maxProperties").and_then(Value::as_u64) == Some(0)
+}
+
+fn foreign_has_object_descendants(object: &Map<String, Value>) -> bool {
+    object
+        .get("properties")
+        .and_then(Value::as_object)
+        .is_some_and(|properties| !properties.is_empty())
+        || object
+            .get("allOf")
+            .and_then(Value::as_array)
+            .is_some_and(|entries| !entries.is_empty())
+}
+
+fn foreign_is_plain_closed_values_object(object: &Map<String, Value>) -> bool {
+    object.get("type").and_then(Value::as_str) == Some("object")
+        && object.get("additionalProperties").and_then(Value::as_bool) == Some(false)
+        && object
+            .get("properties")
+            .and_then(Value::as_object)
+            .is_some_and(|properties| !properties.is_empty())
+        && !object.contains_key("anyOf")
+        && !object.contains_key("oneOf")
+        && !object.contains_key("allOf")
+        && !object.contains_key("description")
+        && !object
+            .keys()
+            .any(|key| key.starts_with("x-kubernetes-") || key == "$ref")
+}
+
+fn foreign_path_exists(
+    value: &Value,
+    path_segments: &[String],
+    map_wildcard_segment: &str,
+) -> bool {
+    if path_segments.is_empty() {
+        return !crate::schema_model::is_empty_schema(value);
+    }
+
+    let Some((head, tail)) = path_segments.split_first() else {
+        return false;
+    };
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+
+    if head == "*" {
+        return object
+            .get("items")
+            .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment));
+    }
+    if head == map_wildcard_segment {
+        return object
+            .get("additionalProperties")
+            .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment));
+    }
+
+    object
+        .get("properties")
+        .and_then(Value::as_object)
+        .and_then(|properties| properties.get(head))
+        .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment))
 }
 
 fn type_schema(ty: JsonSchemaType) -> Value {

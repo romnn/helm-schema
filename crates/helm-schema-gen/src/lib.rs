@@ -11,7 +11,7 @@ mod schema_node;
 mod schema_tree;
 mod values_yaml;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::ResourceSchemaOracle;
 use serde_json::Value;
@@ -21,9 +21,11 @@ use helm_schema_ir::{ConditionalGuard, ConditionalPathOverlay, ContractSchemaSig
 
 use merge::{merge_schema_list, union_schema_list};
 use path_resolver::PathSchemaResolver;
-use provider_definitions::ProviderSchemaDefinitions;
-use schema_model::{guard_value_to_json, is_scalar_like_schema, schema_allows_type};
-use schema_node::{JsonSchemaType, SchemaNode};
+use provider_definitions::{ProviderSchemaDefinitions, insert_definitions_into_root};
+use schema_model::{
+    guard_value_to_json, is_fixed_object_schema, is_scalar_like_schema, schema_allows_type,
+};
+use schema_node::{JsonSchemaType, SchemaNode, is_placeholder_fragment_object_schema};
 use schema_tree::{SchemaDocument, draft07_root_document};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
@@ -114,32 +116,96 @@ fn build_root_schema(
         values_yaml_doc,
         provider,
     );
-    let conditional_targets = summarize_conditional_targets(&conditional_schemas);
-
-    for resolved_path in resolved_paths {
-        let schema = match conditional_targets.get(resolved_path.value_path.as_str()) {
-            Some(target) if target.preserve_base_schema => resolved_path.schema,
-            Some(target) if target.open_fragment_base_schema => {
-                if resolved_path.provider_schema_candidate.is_some() {
-                    resolved_path.schema
-                } else {
-                    open_fragment_base_schema(&resolved_path.schema)
-                }
+    let conditional_targets = ConditionalTargetIndex::from_conditionals(&conditional_schemas);
+    let accepted_values_root_paths = contract_schema_signals
+        .schema_evidence_by_value_path()
+        .values()
+        .filter(|evidence| evidence.facts.accepted_values_root_fragment)
+        .map(|evidence| split_value_path(&evidence.value_path))
+        .collect::<Vec<_>>();
+    let mut delayed_replacements = Vec::new();
+    for resolved_path in &resolved_paths {
+        match base_insertion_decision(resolved_path, &conditional_targets) {
+            BaseInsertionDecision::Insert(schema) => {
+                root_schema.insert_path_schema(&resolved_path.path_segments, schema);
             }
-            Some(_) => crate::schema_model::empty_schema(),
-            None => resolved_path.schema,
-        };
-        root_schema.insert_path_schema(&resolved_path.path_segments, SchemaNode::foreign(schema));
+            BaseInsertionDecision::Replace(schema) => {
+                delayed_replacements.push((resolved_path.path_segments.clone(), schema));
+            }
+        }
+    }
+    for (path_segments, schema) in delayed_replacements {
+        root_schema.replace_path_schema(&path_segments, schema);
     }
 
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
+    root_schema.merge_missing_values_yaml_defaults_under_roots(
+        values_yaml_doc,
+        &accepted_values_root_paths,
+        &conditional_targets.guarded_only_paths,
+    );
 
     let mut root_schema = root_schema.into_value();
-    provider_definitions.insert_into_root(&mut root_schema);
-    let mut root_schema = SchemaDocument::from_value(root_schema);
-    root_schema.apply_descriptions(values_descriptions);
+    insert_definitions_into_root(
+        &mut root_schema,
+        provider_definitions.into_definitions_by_name(),
+    );
+    schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);
+    root_schema
+}
 
-    root_schema.into_value()
+enum BaseInsertionDecision {
+    Insert(SchemaNode),
+    Replace(SchemaNode),
+}
+
+fn base_insertion_decision(
+    resolved_path: &path_resolver::ResolvedPathSchema,
+    conditional_targets: &ConditionalTargetIndex,
+) -> BaseInsertionDecision {
+    if is_pathless_dependency_root_with_guarded_descendant(resolved_path, conditional_targets) {
+        return BaseInsertionDecision::Insert(SchemaNode::unknown_object());
+    }
+
+    let Some(target) = conditional_targets
+        .targets
+        .get(resolved_path.value_path.as_str())
+    else {
+        return BaseInsertionDecision::Insert(SchemaNode::foreign(resolved_path.schema.clone()));
+    };
+
+    if target.preserve_base_schema {
+        BaseInsertionDecision::Insert(SchemaNode::foreign(resolved_path.schema.clone()))
+    } else {
+        BaseInsertionDecision::Replace(guarded_only_target_base_schema(resolved_path, target))
+    }
+}
+
+fn is_pathless_dependency_root_with_guarded_descendant(
+    resolved_path: &path_resolver::ResolvedPathSchema,
+    conditional_targets: &ConditionalTargetIndex,
+) -> bool {
+    resolved_path.accepted_dependency_values_root_fragment
+        && resolved_path.used_as_pathless_fragment
+        && conditional_targets.has_guarded_only_descendant(&resolved_path.path_segments)
+}
+
+fn guarded_only_target_base_schema(
+    resolved_path: &path_resolver::ResolvedPathSchema,
+    target: &ConditionalTargetSummary,
+) -> SchemaNode {
+    let schema = if target.open_fragment_base_schema {
+        if resolved_path.provider_schema_candidate.is_some()
+            || is_fixed_object_schema(&resolved_path.schema)
+        {
+            resolved_path.schema.clone()
+        } else {
+            open_fragment_base_schema(&resolved_path.schema)
+        }
+    } else {
+        crate::schema_model::empty_schema()
+    };
+    SchemaNode::foreign(schema)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -148,33 +214,50 @@ struct ConditionalTargetSummary {
     open_fragment_base_schema: bool,
 }
 
-fn summarize_conditional_targets(
-    conditionals: &[ConditionalResolvedSchema],
-) -> BTreeMap<&str, ConditionalTargetSummary> {
-    let mut targets = BTreeMap::new();
-    for conditional in conditionals {
-        let entry = targets
-            .entry(conditional.target_value_path.as_str())
-            .or_insert(ConditionalTargetSummary {
-                preserve_base_schema: false,
-                open_fragment_base_schema: true,
-            });
-        entry.preserve_base_schema |= conditional.preserve_base_schema;
-        if !conditional.preserve_base_schema {
-            entry.open_fragment_base_schema &= conditional.target_is_fragment;
+struct ConditionalTargetIndex {
+    targets: BTreeMap<String, ConditionalTargetSummary>,
+    guarded_only_paths: BTreeSet<Vec<String>>,
+}
+
+impl ConditionalTargetIndex {
+    fn from_conditionals(conditionals: &[ConditionalResolvedSchema]) -> Self {
+        let mut targets = BTreeMap::new();
+        for conditional in conditionals {
+            let entry = targets
+                .entry(conditional.target_value_path.clone())
+                .or_insert(ConditionalTargetSummary {
+                    preserve_base_schema: false,
+                    open_fragment_base_schema: true,
+                });
+            entry.preserve_base_schema |= conditional.preserve_base_schema;
+            if !conditional.preserve_base_schema {
+                entry.open_fragment_base_schema &= conditional.target_is_fragment;
+            }
+        }
+
+        let guarded_only_paths = targets
+            .iter()
+            .filter(|(_, target)| !target.preserve_base_schema)
+            .map(|(path, _)| split_value_path(path))
+            .collect();
+
+        Self {
+            targets,
+            guarded_only_paths,
         }
     }
-    targets
+
+    fn has_guarded_only_descendant(&self, path_segments: &[String]) -> bool {
+        self.guarded_only_paths.iter().any(|target_path| {
+            target_path.len() > path_segments.len() && target_path.starts_with(path_segments)
+        })
+    }
 }
 
 fn open_fragment_base_schema(resolved_schema: &Value) -> Value {
     let mut schemas = Vec::new();
     if schema_allows_type(resolved_schema, "object") {
-        schemas.push(
-            SchemaNode::object()
-                .with_additional_properties(SchemaNode::empty())
-                .into_value(),
-        );
+        schemas.push(SchemaNode::unknown_object().into_value());
     }
     if schema_allows_type(resolved_schema, "array") {
         schemas.push(SchemaNode::array().items(SchemaNode::empty()).into_value());
@@ -230,6 +313,7 @@ fn collect_conditional_schemas(
             let target_segments = split_value_path(target_value_path);
             let ancestor_segments =
                 conditional_ancestor_segments(&target_segments, &overlay.guards);
+            let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
             let target_schema = conditional_target_schema(
                 target_value_path,
                 overlay,
@@ -240,6 +324,7 @@ fn collect_conditional_schemas(
                     .get(target_value_path.as_str())
                     .cloned()
                     .cloned(),
+                active_by_defaults,
             );
             if crate::schema_model::is_empty_schema(&target_schema) {
                 continue;
@@ -267,13 +352,13 @@ fn conditional_target_schema(
     provider: &dyn ResourceSchemaOracle,
     values_yaml_schema: Value,
     resolved_fallback: Option<Value>,
+    active_by_defaults: Option<bool>,
 ) -> Value {
     let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider)
         .or(resolved_fallback.clone())
         .unwrap_or_else(crate::schema_model::empty_schema);
 
-    let Some(active_by_defaults) = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc)
-    else {
+    let Some(active_by_defaults) = active_by_defaults else {
         return branch_schema;
     };
     let branch_schema =
@@ -325,15 +410,6 @@ fn resolve_overlay_target_schema(
     let evidence = overlay.evidence.as_path_evidence(target_value_path);
     PathSchemaResolver::resolve_single_path_evidence(&evidence, &YamlValue::Null, provider)
         .map(|resolved| resolved.schema)
-}
-
-fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
-    schema.as_object().is_some_and(|object| {
-        object.get("type") == Some(&Value::String("object".to_string()))
-            && object.get("additionalProperties") == Some(&SchemaNode::empty().into_value())
-            && !object.contains_key("properties")
-            && !object.contains_key("required")
-    })
 }
 
 fn conditional_ancestor_segments(

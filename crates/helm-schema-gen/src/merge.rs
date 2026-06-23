@@ -425,6 +425,10 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 .get("required")
                 .and_then(|v| v.as_array())
                 .is_some_and(|a| !a.is_empty())
+            || obj
+                .get("allOf")
+                .and_then(|v| v.as_array())
+                .is_some_and(|a| !a.is_empty())
     }
 
     let a_structured = is_structured_object(&out);
@@ -554,6 +558,20 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
     if !pp.is_empty() {
         out.insert("patternProperties".to_string(), Value::Object(pp));
     }
+
+    let mut all_of = out
+        .get("allOf")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    if let Some(b_all_of) = bobj.get("allOf").and_then(Value::as_array) {
+        all_of.extend(b_all_of.iter().cloned());
+    }
+    all_of = dedup_schemas(all_of);
+    if !all_of.is_empty() {
+        out.insert("allOf".to_string(), Value::Array(all_of));
+    }
+
     out.insert("type".to_string(), Value::String("object".to_string()));
 
     Some(Value::Object(out))

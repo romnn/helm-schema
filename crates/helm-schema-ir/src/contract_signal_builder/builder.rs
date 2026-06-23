@@ -14,10 +14,14 @@ use super::classifiers::metadata_field_kind_from_yaml_path;
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     type_hints: &[ContractTypeHint],
+    dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut builder = ContractSchemaSignalBuilder::default();
     for contract_use in uses {
         builder.record(contract_use);
+    }
+    for value_path in dependency_values_root_fragments {
+        builder.record_dependency_values_root_fragment(value_path);
     }
     for type_hint in type_hints {
         builder.record_declared_type_hint(type_hint);
@@ -48,12 +52,16 @@ struct PathSchemaFactsAccumulator {
     metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     provider_schema_uses: Vec<ProviderSchemaUse>,
     has_render_use: bool,
+    has_unconditional_render_use: bool,
     has_self_guarded_render_use: bool,
     all_render_uses_self_guarded: bool,
     has_self_range_guard_render_use: bool,
     has_nullable_render_use: bool,
     all_uses_nullable: bool,
     used_as_fragment: bool,
+    used_as_pathless_fragment: bool,
+    accepted_values_root_fragment: bool,
+    accepted_dependency_values_root_fragment: bool,
     is_partial_scalar_value_path: bool,
 }
 
@@ -132,12 +140,16 @@ impl Default for PathSchemaFactsAccumulator {
             metadata_field_kinds: BTreeSet::new(),
             provider_schema_uses: Vec::new(),
             has_render_use: false,
+            has_unconditional_render_use: false,
             has_self_guarded_render_use: false,
             all_render_uses_self_guarded: true,
             has_self_range_guard_render_use: false,
             has_nullable_render_use: false,
             all_uses_nullable: true,
             used_as_fragment: false,
+            used_as_pathless_fragment: false,
+            accepted_values_root_fragment: false,
+            accepted_dependency_values_root_fragment: false,
             is_partial_scalar_value_path: false,
         }
     }
@@ -153,6 +165,10 @@ impl PathSchemaFactsAccumulator {
         }
     }
 
+    fn mark_unconditional_render_use(&mut self) {
+        self.has_unconditional_render_use = true;
+    }
+
     fn record_nullable_observation(&mut self, nullable: bool) {
         self.all_uses_nullable &= nullable;
     }
@@ -166,8 +182,15 @@ impl PathSchemaFactsAccumulator {
             self.metadata_field_kinds.insert(field_kind);
         }
         self.used_as_fragment |= contract_use.kind == ValueKind::Fragment;
+        self.used_as_pathless_fragment |=
+            contract_use.kind == ValueKind::Fragment && contract_use.path.0.is_empty();
         self.is_partial_scalar_value_path |=
             contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty();
+    }
+
+    fn mark_dependency_values_root_fragment(&mut self) {
+        self.accepted_values_root_fragment = true;
+        self.accepted_dependency_values_root_fragment = true;
     }
 
     fn record_provider_schema_use(&mut self, provider_schema_use: ProviderSchemaUse) {
@@ -184,9 +207,13 @@ impl PathSchemaFactsAccumulator {
         ContractValuePathFacts {
             has_referenced_descendants,
             used_as_fragment: self.used_as_fragment,
+            used_as_pathless_fragment: self.used_as_pathless_fragment,
+            accepted_values_root_fragment: self.accepted_values_root_fragment,
+            accepted_dependency_values_root_fragment: self.accepted_dependency_values_root_fragment,
             is_ranged_source,
             is_partial_scalar_value_path: self.is_partial_scalar_value_path,
             has_render_use: self.has_render_use,
+            has_unconditional_render_use: self.has_unconditional_render_use,
             has_self_guarded_render_use: self.has_self_guarded_render_use,
             all_render_uses_self_guarded: self.all_render_uses_self_guarded,
             has_self_range_guard_render_use: self.has_self_range_guard_render_use,
@@ -312,6 +339,15 @@ impl ContractSchemaSignalBuilder {
         }
     }
 
+    fn record_dependency_values_root_fragment(&mut self, value_path: &str) {
+        if value_path.trim().is_empty() {
+            return;
+        }
+        let acc = self.path(value_path);
+        acc.referenced = true;
+        acc.facts.mark_dependency_values_root_fragment();
+    }
+
     fn path(&mut self, path: &str) -> &mut ContractPathAccumulator {
         self.paths.entry(path.to_string()).or_default()
     }
@@ -344,6 +380,9 @@ impl ContractPathAccumulator {
                 observation.self_range_guarded,
                 Some(observation.self_guarded),
             );
+            if contract_use.guards.is_empty() {
+                self.facts.mark_unconditional_render_use();
+            }
         }
         if observation.has_render_path
             || observation.self_range_guarded

@@ -144,9 +144,13 @@ impl ContractSchemaSignals {
 pub struct ContractValuePathFacts {
     pub has_referenced_descendants: bool,
     pub used_as_fragment: bool,
+    pub used_as_pathless_fragment: bool,
+    pub accepted_values_root_fragment: bool,
+    pub accepted_dependency_values_root_fragment: bool,
     pub is_ranged_source: bool,
     pub is_partial_scalar_value_path: bool,
     pub has_render_use: bool,
+    pub has_unconditional_render_use: bool,
     pub has_self_guarded_render_use: bool,
     pub all_render_uses_self_guarded: bool,
     pub has_self_range_guard_render_use: bool,

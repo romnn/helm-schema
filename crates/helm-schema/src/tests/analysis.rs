@@ -57,6 +57,7 @@ spec:
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let path = "kid.controller.ingressClassResource.parameters";
 
@@ -87,6 +88,7 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
@@ -116,6 +118,7 @@ fn signoz_clickhouse_operator_image_helper_type_hints_flow_into_contract_schema_
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let path = "clickhouse.clickhouseOperator.image.repository";
 
@@ -145,6 +148,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let projection = collection.contract.clone().project();
     let path = "signoz.smtpVars.existingSecret.name";
@@ -205,6 +209,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let projection = collection.contract.clone().project();
     let path = "clickhouse.clickhouseOperator.serviceAccount.name";
@@ -290,6 +295,7 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let projection = collection.contract.clone().project();
     let path = "signoz.serviceAccount.name";
@@ -344,6 +350,7 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
+        &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
     )?;
     let projection = collection.contract.clone().project();
     let path = "signoz-otel-gateway.serviceAccount.name";
@@ -394,6 +401,7 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
+        &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
     )?;
     let projection = collection.contract.clone().project();
     let path = "clickhouse.securityContext";
@@ -492,6 +500,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let projection = collection.contract.clone().project();
     let name_override_uses = projection
@@ -530,6 +539,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let path = "fullnameOverride";
     let projection = collection.contract.clone().project();
@@ -548,6 +558,81 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
     assert!(
         facts.has_self_guarded_render_use,
         "helper override path should carry at least one self-guarded render use; facts={facts:#?}; uses={uses:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("cert-manager");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let discovery = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
+    let collection = analyze_charts(
+        &discovery.charts,
+        &defines,
+        false,
+        &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
+        &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
+    )?;
+    let path = "webhook";
+    let signals = contract_schema_signals!(collection);
+    let evidence = signals
+        .evidence_for(path)
+        .unwrap_or_else(|| panic!("missing values-root evidence for {path}"));
+
+    assert!(
+        !evidence.facts.used_as_pathless_fragment,
+        "local values root should not be seeded as a pathless fragment; evidence={evidence:#?}",
+    );
+    assert!(
+        !evidence.facts.accepted_dependency_values_root_fragment,
+        "local mapping-backed values root should not be treated as a dependency-root fragment; evidence={evidence:#?}",
+    );
+    assert!(
+        evidence.is_referenced_value_path,
+        "values root should still be resolved as an accepted values path; evidence={evidence:#?}",
+    );
+    assert!(
+        evidence.conditional_overlays.is_empty(),
+        "values root seed should not gain conditional overlays; evidence={evidence:#?}",
+    );
+
+    let opts = crate::GenerateOptions {
+        chart_dir: chart_dir.clone(),
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: crate::provider::ProviderOptions {
+            k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
+            k8s_schema_cache_dir: Some(
+                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
+            ),
+            allow_net: false,
+            disable_k8s_schemas: false,
+            crd_override_dir: Some(test_util::workspace_root().join(".cache/crds-catalog-cache")),
+            ..Default::default()
+        },
+    };
+    let session = crate::AnalysisSession::new(opts);
+    let session_signals = session.contract_schema_signals()?;
+    let session_evidence = session_signals
+        .evidence_for(path)
+        .unwrap_or_else(|| panic!("missing session schema evidence for {path}"));
+    assert!(
+        session_evidence.is_referenced_value_path
+            && !session_evidence.facts.used_as_pathless_fragment
+            && !session_evidence
+                .facts
+                .accepted_dependency_values_root_fragment,
+        "session should preserve local root evidence without dependency-fragment widening; evidence={session_evidence:#?}",
     );
 
     Ok(())
@@ -599,6 +684,7 @@ data:
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let projection = collection.contract.project();
     let uses = projection
@@ -722,6 +808,7 @@ spec:
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef {
@@ -798,6 +885,7 @@ spec:
         &defines,
         false,
         &crate::values_roots::top_level_value_paths(None),
+        &crate::values_roots::top_level_mapping_value_paths(None),
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef {

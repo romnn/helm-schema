@@ -18,7 +18,6 @@ use crate::schema_model::{
     schema_permits_empty_string, schema_type, type_schema,
 };
 use crate::schema_node::SchemaNode;
-use crate::schema_tree::unknown_object_schema;
 use crate::values_yaml::ValuesYamlPathFacts;
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
@@ -255,7 +254,12 @@ impl ResolvePolicy {
             values_yaml_schema
         };
         let values_yaml_schema =
-            if facts.contract.used_as_fragment && is_empty_schema(provider_schema) {
+            if facts.contract.accepted_values_root_fragment && facts.values_yaml.is_mapping {
+                values_yaml_schema
+            } else if facts.contract.used_as_fragment
+                && is_empty_schema(provider_schema)
+                && should_open_fragment_values_schema(&values_yaml_schema, facts)
+            {
                 open_fragment_values_schema(values_yaml_schema)
             } else {
                 values_yaml_schema
@@ -350,7 +354,7 @@ impl ResolvePolicy {
         } else if !is_empty_schema(&input.values_yaml_schema) {
             input.values_yaml_schema
         } else if input.facts.contract.used_as_fragment {
-            unknown_object_schema()
+            SchemaNode::unknown_object().into_value()
         } else {
             empty_schema()
         };
@@ -371,6 +375,20 @@ impl ResolvePolicy {
             merge_two_schemas(base, input.guard_predicate_schema)
         }
     }
+}
+
+fn should_open_fragment_values_schema(schema: &Value, facts: ValuePathSchemaFacts) -> bool {
+    !facts.values_yaml.is_mapping
+        || facts.values_yaml.is_empty_map
+        || fixed_object_schema_has_object_or_array_child(schema)
+}
+
+fn fixed_object_schema_has_object_or_array_child(schema: &Value) -> bool {
+    schema
+        .as_object()
+        .and_then(|object| object.get("properties"))
+        .and_then(Value::as_object)
+        .is_some_and(|properties| properties.values().any(is_object_or_array_schema))
 }
 
 fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {

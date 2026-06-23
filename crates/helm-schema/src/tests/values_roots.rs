@@ -26,6 +26,25 @@ fn ignores_non_mapping_documents_and_empty_keys() {
 }
 
 #[test]
+fn mapping_root_paths_distinguish_structured_values_roots() {
+    let paths = top_level_mapping_value_paths(Some(
+        r#"
+object:
+  nested: true
+empty: {}
+scalar: value
+list:
+  - item
+"#,
+    ));
+
+    sim_assert_eq!(
+        have: paths,
+        want: BTreeSet::from(["empty".to_string(), "object".to_string()])
+    );
+}
+
+#[test]
 fn extracts_nested_explicit_mapping_paths() {
     let paths = explicit_value_paths(Some(
         r#"

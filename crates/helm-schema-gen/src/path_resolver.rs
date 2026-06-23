@@ -22,6 +22,8 @@ pub(crate) struct ResolvedPathSchema {
     pub(crate) schema: Value,
     pub(crate) values_yaml_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
+    pub(crate) used_as_pathless_fragment: bool,
+    pub(crate) accepted_dependency_values_root_fragment: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -84,6 +86,9 @@ impl<'a> PathSchemaResolver<'a> {
             build_value_path_caches(values_yaml_doc, &referenced_value_paths, &BTreeSet::new());
         let path_segments = path_caches.path_segments.get(&evidence.value_path)?.clone();
         let values_yaml_info = path_caches.values_yaml.get(&evidence.value_path);
+        let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
+        let accepted_dependency_values_root_fragment =
+            evidence.facts.accepted_dependency_values_root_fragment;
         let mut provider_schema_cache = HashMap::new();
         let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
             evidence.clone(),
@@ -105,6 +110,8 @@ impl<'a> PathSchemaResolver<'a> {
                 .map(|path_info| path_info.schema.clone())
                 .unwrap_or_else(empty_schema),
             provider_schema_candidate,
+            used_as_pathless_fragment,
+            accepted_dependency_values_root_fragment,
         })
     }
 
@@ -122,6 +129,9 @@ impl<'a> PathSchemaResolver<'a> {
             .schema_evidence_by_value_path
             .get(&value_path)
             .cloned()?;
+        let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
+        let accepted_dependency_values_root_fragment =
+            evidence.facts.accepted_dependency_values_root_fragment;
         let values_yaml_info = self.path_caches.values_yaml.get(&value_path);
         let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
             evidence,
@@ -144,6 +154,8 @@ impl<'a> PathSchemaResolver<'a> {
                 .map(|path_info| path_info.schema.clone())
                 .unwrap_or_else(empty_schema),
             provider_schema_candidate,
+            used_as_pathless_fragment,
+            accepted_dependency_values_root_fragment,
         })
     }
 

@@ -329,8 +329,9 @@ pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) {
         let instance: Value =
             serde_json::from_str(expectation.instance).expect("behavior instance JSON");
         let accepted = schema_accepts_instance(&schema, &instance);
-        assert_eq!(
-            accepted, expectation.accepted,
+        sim_assert_eq!(
+            have: accepted,
+            want: expectation.accepted,
             "{}: {}. schema={schema}",
             case.schema_case.dump_stem, expectation.message
         );

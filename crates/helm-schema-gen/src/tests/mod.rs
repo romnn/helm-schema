@@ -102,6 +102,42 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
     )
 }
 
+#[test]
+fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "webhook.serviceAccount.name".to_string(),
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        kind: ValueKind::Scalar,
+        guards: vec![Guard::Truthy {
+            path: "webhook.enabled".to_string(),
+        }],
+        resource: None,
+        provenance: Vec::new(),
+    }]);
+    contract.push_pathless_dependency_fragment("webhook");
+
+    let schema = schema_for_values_yaml(
+        contract,
+        Some(indoc! {"
+            webhook:
+              enabled: false
+              image:
+                repository: webhook
+              serviceAccount:
+                name: webhook
+        "}),
+    );
+    let webhook = schema
+        .pointer("/properties/webhook")
+        .expect("webhook schema");
+
+    assert_ne!(
+        webhook.get("additionalProperties"),
+        Some(&Value::Bool(false)),
+        "pathless dependency fragment roots should stay open when descendants are inserted: {webhook}",
+    );
+}
+
 fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
     jsonschema::validator_for(schema)
         .expect("schema validator")
@@ -213,7 +249,18 @@ fn schema_property_contains_type(schema: &Value, property: &str, schema_type: &s
         .into_iter()
         .filter_map(|key| schema.get(key).and_then(Value::as_array))
         .flatten()
+        .chain(
+            schema
+                .get("allOf")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten(),
+        )
         .any(|variant| schema_property_contains_type(variant, property, schema_type))
+        || ["then", "else"]
+            .into_iter()
+            .filter_map(|key| schema.get(key))
+            .any(|child| schema_property_contains_type(child, property, schema_type))
 }
 
 fn property_schema_with_type_exists(schema: &Value, property: &str, schema_type: &str) -> bool {
@@ -436,16 +483,16 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
             .is_some_and(|evidence| !evidence.provider_schema_uses.is_empty()),
         "metricRelabelings should keep CRD provider schema evidence"
     );
-    assert_eq!(
-        provider_schema.get("type").and_then(Value::as_str),
-        Some("array"),
+    sim_assert_eq!(
+        have: provider_schema.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "metricRelabelings provider schema should stay array-shaped: {provider_schema}"
     );
-    assert_eq!(
-        provider_schema
+    sim_assert_eq!(
+        have: provider_schema
             .pointer("/items/properties/action/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "metricRelabelings provider schema should keep relabel config item shape: {provider_schema}"
     );
     let overlay = schema_signals
@@ -464,18 +511,18 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
         &provider,
     )
     .expect("resolved overlay schema");
-    assert_eq!(
-        resolved_overlay.schema.get("type").and_then(Value::as_str),
-        Some("array"),
+    sim_assert_eq!(
+        have: resolved_overlay.schema.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "resolved overlay schema should stay array-shaped: {}",
         resolved_overlay.schema
     );
-    assert_eq!(
-        resolved_overlay
+    sim_assert_eq!(
+        have: resolved_overlay
             .schema
             .pointer("/items/properties/action/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "resolved overlay schema should keep relabel config item shape: {}",
         resolved_overlay.schema
     );
@@ -488,16 +535,16 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
     let metric_relabelings = generated
         .pointer("/properties/serviceMonitor/properties/metricRelabelings")
         .expect("generated metricRelabelings property");
-    assert_eq!(
-        metric_relabelings.get("type").and_then(Value::as_str),
-        Some("array"),
+    sim_assert_eq!(
+        have: metric_relabelings.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "generated metricRelabelings schema should stay array-shaped: {generated}"
     );
-    assert_eq!(
-        metric_relabelings
+    sim_assert_eq!(
+        have: metric_relabelings
             .pointer("/items/properties/action/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "generated metricRelabelings item schema should stay precise: {generated}"
     );
 }
@@ -531,21 +578,21 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
         resolved_extra_envs.provider_schema_candidate.is_some(),
         "extraEnvs should preserve provider schema candidate"
     );
-    assert_eq!(
-        resolved_extra_envs
+    sim_assert_eq!(
+        have: resolved_extra_envs
             .schema
             .get("type")
             .and_then(Value::as_str),
-        Some("array"),
+        want: Some("array"),
         "extraEnvs should stay array-shaped: {}",
         resolved_extra_envs.schema
     );
-    assert_eq!(
-        resolved_extra_envs
+    sim_assert_eq!(
+        have: resolved_extra_envs
             .schema
             .pointer("/items/properties/name/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "extraEnvs should keep EnvVar item shape: {}",
         resolved_extra_envs.schema
     );
@@ -558,16 +605,16 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
     let extra_envs = generated
         .pointer("/properties/extraEnvs")
         .expect("generated extraEnvs property");
-    assert_eq!(
-        extra_envs.get("type").and_then(Value::as_str),
-        Some("array"),
+    sim_assert_eq!(
+        have: extra_envs.get("type").and_then(Value::as_str),
+        want: Some("array"),
         "generated extraEnvs should stay array-shaped: {extra_envs}"
     );
-    assert_eq!(
-        extra_envs
+    sim_assert_eq!(
+        have: extra_envs
             .pointer("/items/properties/name/type")
             .and_then(Value::as_str),
-        Some("string"),
+        want: Some("string"),
         "generated extraEnvs should keep EnvVar item shape: {extra_envs}"
     );
 }

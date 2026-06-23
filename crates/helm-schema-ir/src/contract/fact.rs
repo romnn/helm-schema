@@ -8,6 +8,7 @@ use crate::contract::ContractUse;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ContractFact {
     Use(ContractUse),
+    DependencyValuesRootFragment(String),
     TypeHint(ContractTypeHint),
 }
 
@@ -18,6 +19,9 @@ impl ContractFact {
     {
         match self {
             Self::Use(contract_use) => contract_use.map_value_paths(map),
+            Self::DependencyValuesRootFragment(source_expr) => {
+                *source_expr = map(source_expr);
+            }
             Self::TypeHint(type_hint) => type_hint.map_value_paths(map),
         }
     }

@@ -63,9 +63,9 @@ enum ForeignSchemaTypeField {
 
 #[derive(Debug, Clone, Copy)]
 enum ForeignSchemaUnionKind {
-    AnyOf,
-    OneOf,
-    AllOf,
+    Any,
+    One,
+    All,
 }
 
 impl ForeignSchema {
@@ -96,9 +96,9 @@ impl ForeignSchemaObject {
 
     fn first_union(&self) -> Option<(ForeignSchemaUnionKind, Vec<Value>)> {
         [
-            ForeignSchemaUnionKind::AnyOf,
-            ForeignSchemaUnionKind::OneOf,
-            ForeignSchemaUnionKind::AllOf,
+            ForeignSchemaUnionKind::Any,
+            ForeignSchemaUnionKind::One,
+            ForeignSchemaUnionKind::All,
         ]
         .into_iter()
         .find_map(|kind| {
@@ -223,7 +223,7 @@ impl ForeignSchemaRestriction {
     fn apply_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
         if let Some((kind, variants)) = schema.first_union() {
             return match kind {
-                ForeignSchemaUnionKind::AllOf => {
+                ForeignSchemaUnionKind::All => {
                     let restricted = variants
                         .into_iter()
                         .map(|variant| self.apply(variant))
@@ -231,7 +231,7 @@ impl ForeignSchemaRestriction {
                     schema.set_keyword(kind.keyword(), Value::Array(restricted));
                     Some(schema.into_value())
                 }
-                ForeignSchemaUnionKind::AnyOf | ForeignSchemaUnionKind::OneOf => {
+                ForeignSchemaUnionKind::Any | ForeignSchemaUnionKind::One => {
                     restrict_schema_union(schema, kind, variants, |variant| self.apply(variant))
                 }
             };
@@ -285,9 +285,9 @@ impl ForeignSchemaRestriction {
 impl ForeignSchemaUnionKind {
     fn keyword(self) -> &'static str {
         match self {
-            Self::AnyOf => "anyOf",
-            Self::OneOf => "oneOf",
-            Self::AllOf => "allOf",
+            Self::Any => "anyOf",
+            Self::One => "oneOf",
+            Self::All => "allOf",
         }
     }
 }
