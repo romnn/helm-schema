@@ -17,7 +17,7 @@ fn with_predicates_preserve_header_projection_semantics() {
         Predicate::truthy_path("service.disabled").negated(),
     ]);
 
-    let with_predicate = Predicate::all(with_predicates_from_condition_predicate(predicate));
+    let with_predicate = Predicate::all(predicate.with_context_predicates());
 
     sim_assert_eq!(
         have: with_predicate.contract_guards(),
@@ -53,7 +53,7 @@ fn with_predicates_preserve_header_projection_semantics() {
         ]
     );
     sim_assert_eq!(
-        have: Predicate::all(with_predicates_from_condition_predicate(Predicate::False)),
+        have: Predicate::all(Predicate::False.with_context_predicates()),
         want: Predicate::False,
     );
 }
@@ -95,7 +95,7 @@ fn precise_structural_predicate_suppresses_broader_truthy_fallback() {
         }),
     ]);
     let fallback = Predicate::Or(vec![Predicate::truthy_path("service.type")]);
-    let structural_paths = predicate_value_paths(&structural);
+    let structural_paths = structural.value_paths();
 
     assert!(truthy_predicate_is_covered_by_structural_paths(
         &fallback,

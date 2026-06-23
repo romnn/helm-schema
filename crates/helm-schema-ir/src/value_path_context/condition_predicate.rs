@@ -17,7 +17,7 @@ impl ValuePathContext<'_> {
             .collect();
         let structural_paths = predicates
             .iter()
-            .flat_map(predicate_value_paths)
+            .flat_map(Predicate::value_paths)
             .collect::<BTreeSet<_>>();
         let mut alias_predicates = self.condition_predicates_from_expr(expr);
         alias_predicates.retain(|predicate| {
@@ -46,9 +46,10 @@ impl ValuePathContext<'_> {
     }
 
     pub(crate) fn with_condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
-        Predicate::all(with_predicates_from_condition_predicate(
-            self.condition_predicate_expr(expr),
-        ))
+        Predicate::all(
+            self.condition_predicate_expr(expr)
+                .with_context_predicates(),
+        )
     }
 
     fn condition_predicates_from_expr(&self, expr: &TemplateExpr) -> Vec<Predicate> {
@@ -188,119 +189,28 @@ fn truthy_predicate_is_covered_by_structural_paths(
     predicate: &Predicate,
     structural_paths: &BTreeSet<String>,
 ) -> bool {
-    let Some(paths) = truthy_or_predicate_paths(predicate) else {
+    let Some(paths) = predicate.truthy_disjunction_paths() else {
         return false;
     };
     paths.iter().all(|path| structural_paths.contains(path))
-}
-
-fn predicate_value_paths(predicate: &Predicate) -> BTreeSet<String> {
-    let mut paths = BTreeSet::new();
-    collect_predicate_value_paths(predicate, &mut paths);
-    paths
-}
-
-fn collect_predicate_value_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
-    match predicate {
-        Predicate::True | Predicate::False => {}
-        Predicate::Guard(guard) => {
-            for path in guard.value_paths() {
-                out.insert(path.to_string());
-            }
-        }
-        Predicate::Not(inner) => collect_predicate_value_paths(inner, out),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
-            for predicate in predicates {
-                collect_predicate_value_paths(predicate, out);
-            }
-        }
-    }
 }
 
 fn predicate_is_subsumed_by_alias_or_predicate(
     predicate: &Predicate,
     alias_predicates: &[Predicate],
 ) -> bool {
-    let Some(paths) = truthy_or_predicate_paths(predicate) else {
+    let Some(paths) = predicate.truthy_disjunction_paths() else {
         return false;
     };
 
     alias_predicates.iter().any(|alias_predicate| {
-        let Some(alias_paths) = truthy_or_predicate_paths(alias_predicate) else {
+        let Some(alias_paths) = alias_predicate.truthy_disjunction_paths() else {
             return false;
         };
         paths
             .iter()
             .all(|path| alias_paths.iter().any(|alias_path| alias_path == path))
     })
-}
-
-fn truthy_or_predicate_paths(predicate: &Predicate) -> Option<Vec<String>> {
-    match predicate {
-        Predicate::Guard(Guard::Truthy { path }) => Some(vec![path.clone()]),
-        Predicate::Or(predicates) => truthy_predicate_paths(predicates),
-        _ => None,
-    }
-}
-
-fn truthy_predicate_paths(predicates: &[Predicate]) -> Option<Vec<String>> {
-    predicates
-        .iter()
-        .map(|predicate| match predicate {
-            Predicate::Guard(Guard::Truthy { path }) => Some(path.clone()),
-            _ => None,
-        })
-        .collect()
-}
-
-fn with_predicates_from_condition_predicate(predicate: Predicate) -> Vec<Predicate> {
-    match predicate {
-        Predicate::True => Vec::new(),
-        Predicate::False => vec![Predicate::False],
-        Predicate::And(predicates) => predicates
-            .into_iter()
-            .flat_map(with_predicates_from_condition_predicate)
-            .collect(),
-        Predicate::Guard(Guard::Truthy { path }) => vec![Predicate::from(Guard::With { path })],
-        Predicate::Or(predicates) => {
-            let Some(paths) = truthy_predicate_paths(&predicates) else {
-                return vec![Predicate::Or(predicates)];
-            };
-            let mut out: Vec<Predicate> = paths
-                .iter()
-                .map(|path| Predicate::from(Guard::With { path: path.clone() }))
-                .collect();
-            out.push(Predicate::Or(
-                paths.into_iter().map(Predicate::truthy_path).collect(),
-            ));
-            out
-        }
-        Predicate::Not(inner) => match inner.as_ref() {
-            Predicate::Guard(Guard::Truthy { path }) => vec![
-                Predicate::from(Guard::With { path: path.clone() }),
-                Predicate::Not(inner),
-            ],
-            _ => vec![Predicate::Not(inner)],
-        },
-        Predicate::Guard(Guard::Eq { path, value }) => vec![
-            Predicate::from(Guard::With { path: path.clone() }),
-            Predicate::from(Guard::Eq { path, value }),
-        ],
-        Predicate::Guard(Guard::NotEq { path, value }) => vec![
-            Predicate::from(Guard::With { path: path.clone() }),
-            Predicate::from(Guard::NotEq { path, value }),
-        ],
-        Predicate::Guard(
-            Guard::Range { .. }
-            | Guard::Absent { .. }
-            | Guard::With { .. }
-            | Guard::Default { .. }
-            | Guard::TypeIs { .. }
-            | Guard::Not { .. }
-            | Guard::Or { .. }
-            | Guard::AnyOf { .. },
-        ) => vec![predicate],
-    }
 }
 
 #[cfg(test)]

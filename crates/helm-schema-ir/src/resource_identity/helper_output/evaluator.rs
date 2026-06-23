@@ -20,15 +20,6 @@ impl HelperOutputEvaluator {
         }
     }
 
-    pub(crate) fn evaluate(mut self, name: &str, helpers: &DefineIndex) -> HelperOutput {
-        let body = helpers.get(name).unwrap_or(&[]);
-        if let Some(branches) = self.extract_top_level_branches(body, helpers, 0) {
-            return HelperOutput::Branched { branches };
-        }
-        let flat = self.collect_literals(body, helpers, 0);
-        HelperOutput::Literals(dedup_preserve_order(flat))
-    }
-
     pub(crate) fn evaluate_ast_value(
         mut self,
         value: Option<&HelmAst>,
@@ -44,27 +35,6 @@ impl HelperOutputEvaluator {
         helpers: &DefineIndex,
     ) -> Option<Vec<HelperBranch>> {
         self.extract_keyed_inline_branches(node, key, helpers, 0)
-    }
-
-    pub(crate) fn evaluate_action(
-        &mut self,
-        action: &TemplateAction,
-        helpers: &DefineIndex,
-    ) -> Option<HelperOutput> {
-        let helper_names = helper_call_names(action);
-        if !helper_names.is_empty() {
-            let outputs = helper_names
-                .into_iter()
-                .map(|name| HelperOutputEvaluator::new().evaluate(&name, helpers));
-            return combine_helper_outputs(outputs);
-        }
-
-        let literals = dedup_preserve_order(self.extract_expr_outputs(action, helpers, 0));
-        if literals.is_empty() {
-            None
-        } else {
-            Some(HelperOutput::Literals(literals))
-        }
     }
 
     fn evaluate_value_node(
@@ -85,7 +55,9 @@ impl HelperOutputEvaluator {
                     Some(HelperOutput::Literals(vec![value.to_string()]))
                 }
             }
-            HelmAst::HelmExpr { action } => self.evaluate_action(action, helpers),
+            HelmAst::HelmExpr { action } => {
+                self.evaluate_action_at_depth(action, helpers, depth + 1)
+            }
             HelmAst::Document { items } | HelmAst::Mapping { items } => {
                 for item in items {
                     if let Some(output) = self.evaluate_value_node(item, helpers, depth + 1) {
@@ -195,6 +167,21 @@ impl HelperOutputEvaluator {
             return None;
         }
         Some(branches)
+    }
+
+    pub(super) fn evaluate_body(
+        &mut self,
+        body: &[HelmAst],
+        helpers: &DefineIndex,
+        depth: usize,
+    ) -> HelperOutput {
+        if let Some(branches) = self.extract_top_level_branches(body, helpers, depth) {
+            HelperOutput::Branched { branches }
+        } else {
+            HelperOutput::Literals(dedup_preserve_order(
+                self.collect_literals(body, helpers, depth),
+            ))
+        }
     }
 
     fn collect_if_branches(
@@ -379,11 +366,10 @@ impl HelperOutputEvaluator {
         helpers: &DefineIndex,
         depth: usize,
     ) -> HelperBranchBody {
-        if let Some(nested) = self.extract_top_level_branches(nodes, helpers, depth) {
-            return HelperBranchBody::Nested { branches: nested };
+        match self.evaluate_body(nodes, helpers, depth) {
+            HelperOutput::Branched { branches } => HelperBranchBody::Nested { branches },
+            HelperOutput::Literals(values) => HelperBranchBody::Literals { values },
         }
-        let literals = dedup_preserve_order(self.collect_literals(nodes, helpers, depth));
-        HelperBranchBody::Literals { values: literals }
     }
 
     fn collect_literals(
@@ -405,8 +391,16 @@ impl HelperOutputEvaluator {
                     }
                 }
                 HelmAst::HelmExpr { action } => {
-                    for value in self.extract_expr_outputs(action, helpers, depth) {
-                        out.push(value);
+                    if let Some(output) = self.evaluate_action_at_depth(action, helpers, depth) {
+                        match output {
+                            HelperOutput::Literals(values) => out.extend(values),
+                            HelperOutput::Branched { branches } => {
+                                let mut seen = HashSet::new();
+                                for branch in branches {
+                                    branch.body.append_all_literals(&mut out, &mut seen);
+                                }
+                            }
+                        }
                     }
                 }
                 HelmAst::HelmComment { .. } => {}
@@ -449,32 +443,28 @@ impl HelperOutputEvaluator {
         out
     }
 
-    fn extract_expr_outputs(
+    fn evaluate_action_at_depth(
         &mut self,
         action: &TemplateAction,
         helpers: &DefineIndex,
         depth: usize,
-    ) -> Vec<String> {
-        let mut out: Vec<String> = Vec::new();
-        for expr in action.exprs() {
-            match expr.deparen() {
-                TemplateExpr::Call { function, args } => match function.as_str() {
-                    "template" | "include" => {
-                        let Some(name) = helper_call_callee(function, args) else {
-                            continue;
-                        };
-                        if let Some(values) = self.with_helper_body(name, helpers, |this, body| {
-                            this.collect_literals(body, helpers, depth + 1)
-                        }) {
-                            out.extend(values);
-                        }
-                    }
-                    _ => out.extend(static_literal_outputs(expr)),
-                },
-                _ => out.extend(static_literal_outputs(expr)),
-            }
+    ) -> Option<HelperOutput> {
+        let helper_names = helper_call_names(action);
+        if !helper_names.is_empty() {
+            let outputs = helper_names.into_iter().filter_map(|name| {
+                self.with_helper_body(&name, helpers, |this, body| {
+                    this.evaluate_body(body, helpers, depth + 1)
+                })
+            });
+            return combine_helper_outputs(outputs);
         }
-        out
+
+        let mut out = Vec::new();
+        for expr in action.exprs() {
+            out.extend(static_literal_outputs(expr));
+        }
+        let literals = dedup_preserve_order(out);
+        (!literals.is_empty()).then_some(HelperOutput::Literals(literals))
     }
 
     fn with_helper_body<T>(

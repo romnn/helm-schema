@@ -44,7 +44,8 @@ fn index_with(src: &str) -> DefineIndex {
 }
 
 fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperOutput {
-    HelperOutputEvaluator::new().evaluate(name, helpers)
+    let body = helpers.get(name).unwrap_or(&[]);
+    HelperOutputEvaluator::new().evaluate_body(body, helpers, 0)
 }
 
 #[test]

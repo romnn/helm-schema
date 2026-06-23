@@ -1,121 +1,150 @@
 use std::collections::BTreeSet;
 
 use crate::Guard;
+use crate::ProviderSchemaUse;
+use crate::ValueKind;
 use crate::contract_signals::ConditionalGuard;
 use crate::predicate::Predicate;
 
 use super::ContractUse;
 
-impl ContractUse {
-    pub(crate) fn predicate_stack(&self) -> Vec<Predicate> {
-        self.guards.iter().cloned().map(Predicate::from).collect()
-    }
+pub(crate) struct ContractUseObservation {
+    pub(crate) has_source: bool,
+    pub(crate) has_render_path: bool,
+    pub(crate) range_guard_paths: BTreeSet<String>,
+    pub(crate) guard_value_paths: BTreeSet<String>,
+    pub(crate) conditional_guard_predicates: Vec<ConditionalGuard>,
+    pub(crate) lowerable_conditional_guards: Option<Vec<ConditionalGuard>>,
+    pub(crate) conditionally_optional_paths: BTreeSet<String>,
+    pub(crate) default_fallback_paths: BTreeSet<String>,
+    pub(crate) provider_schema_use: Option<ProviderSchemaUse>,
+    pub(crate) self_guarded: bool,
+    pub(crate) self_range_guarded: bool,
+    pub(crate) pathless_self_default_guarded: bool,
+    pub(crate) null_tolerant: bool,
+    pub(crate) positive_header: bool,
+}
 
-    pub(crate) fn guard_value_paths(&self) -> BTreeSet<String> {
-        let mut paths = BTreeSet::new();
-        for predicate in self.predicate_stack() {
-            collect_predicate_value_paths(&predicate, &mut paths);
-        }
-        paths
-    }
-
-    pub(crate) fn top_level_range_guard_paths(&self) -> BTreeSet<String> {
-        self.predicate_stack()
-            .into_iter()
+impl ContractUseObservation {
+    pub(crate) fn new(contract_use: &ContractUse) -> Self {
+        let predicates = predicate_stack(contract_use);
+        let has_source = !contract_use.source_expr.trim().is_empty();
+        let has_render_path = !contract_use.path.0.is_empty();
+        let path_is_empty = contract_use.path.0.is_empty();
+        let self_range_guarded = predicates.iter().any(|predicate| {
+            matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &contract_use.source_expr)
+        });
+        let has_matching_self_guard = predicates
+            .iter()
+            .any(|predicate| predicate_is_self_guarding(predicate, &contract_use.source_expr));
+        let pathless_self_default_guarded = path_is_empty
+            && predicates.iter().any(|predicate| {
+                matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
+            });
+        let range_guard_paths = predicates
+            .iter()
             .filter_map(|predicate| match predicate {
-                Predicate::Guard(Guard::Range { path }) => Some(path),
+                Predicate::Guard(Guard::Range { path }) => Some(path.clone()),
                 _ => None,
             })
-            .collect()
-    }
-
-    pub(crate) fn conditional_guard_predicates(&self) -> Vec<ConditionalGuard> {
-        let mut predicates = self
-            .predicate_stack()
-            .into_iter()
-            .filter_map(|predicate| predicate_to_conditional_guard(&predicate))
+            .collect();
+        let guard_value_paths = predicates.iter().flat_map(Predicate::value_paths).collect();
+        let mut conditional_guard_predicates = predicates
+            .iter()
+            .filter_map(predicate_to_conditional_guard)
             .collect::<Vec<_>>();
-        predicates.sort();
-        predicates.dedup();
-        predicates
-    }
-
-    pub(crate) fn lowerable_conditional_guard_set(&self) -> Option<Vec<ConditionalGuard>> {
-        if path_contains_wildcard(&self.source_expr) {
-            return None;
-        }
-
-        let mut guards = Vec::new();
-        for predicate in self.predicate_stack() {
-            extend_lowerable_predicate(&predicate, &self.source_expr, &mut guards)?;
-        }
-        guards.sort();
-        guards.dedup();
-        Some(guards)
-    }
-
-    pub(crate) fn conditionally_optional_paths(&self) -> BTreeSet<String> {
-        let mut paths = BTreeSet::new();
-        for predicate in self.predicate_stack() {
-            collect_conditionally_optional_paths(&predicate, &mut paths);
-        }
-        paths
-    }
-
-    pub(crate) fn default_fallback_paths(&self) -> BTreeSet<String> {
-        self.predicate_stack()
-            .into_iter()
+        conditional_guard_predicates.sort();
+        conditional_guard_predicates.dedup();
+        let conditionally_optional_paths = predicates
+            .iter()
+            .flat_map(Predicate::conditionally_optional_paths)
+            .collect();
+        let default_fallback_paths = predicates
+            .iter()
             .filter_map(|predicate| match predicate {
-                Predicate::Guard(Guard::Default { path }) => Some(path),
+                Predicate::Guard(Guard::Default { path }) => Some(path.clone()),
                 _ => None,
             })
-            .collect()
-    }
+            .collect();
+        let positive_header = contract_use.kind == ValueKind::Scalar
+            && path_is_empty
+            && !predicates.is_empty()
+            && predicates.iter().all(|predicate| {
+                predicate_is_positive_header(predicate, &contract_use.source_expr)
+            });
 
-    pub(crate) fn has_matching_self_guard(&self) -> bool {
-        self.predicate_stack()
-            .into_iter()
-            .any(|predicate| predicate_is_self_guarding(&predicate, &self.source_expr))
-    }
-
-    pub(crate) fn has_self_range_guard(&self) -> bool {
-        self.predicate_stack()
-            .into_iter()
-            .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == self.source_expr))
-    }
-
-    pub(crate) fn has_pathless_self_default_guard(&self) -> bool {
-        self.path.0.is_empty()
-            && self
-                .predicate_stack()
-                .into_iter()
-                .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == self.source_expr))
-    }
-
-    pub(crate) fn is_positive_header(&self) -> bool {
-        let predicates = self.predicate_stack();
-        !predicates.is_empty()
-            && predicates
-                .iter()
-                .all(|predicate| predicate_is_positive_header(predicate, &self.source_expr))
+        Self {
+            has_source,
+            has_render_path,
+            range_guard_paths,
+            guard_value_paths,
+            conditional_guard_predicates,
+            lowerable_conditional_guards: lowerable_conditional_guard_set(
+                contract_use,
+                &predicates,
+            ),
+            conditionally_optional_paths,
+            default_fallback_paths,
+            provider_schema_use: provider_schema_use(contract_use, self_range_guarded),
+            self_guarded: has_source && (path_is_empty || has_matching_self_guard),
+            self_range_guarded,
+            pathless_self_default_guarded,
+            null_tolerant: !has_source || path_is_empty || has_matching_self_guard,
+            positive_header,
+        }
     }
 }
 
-fn collect_predicate_value_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
-    match predicate {
-        Predicate::True | Predicate::False => {}
-        Predicate::Guard(guard) => {
-            for path in guard.value_paths() {
-                out.insert(path.to_string());
-            }
-        }
-        Predicate::Not(inner) => collect_predicate_value_paths(inner, out),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
-            for predicate in predicates {
-                collect_predicate_value_paths(predicate, out);
-            }
-        }
+fn predicate_stack(contract_use: &ContractUse) -> Vec<Predicate> {
+    contract_use
+        .guards
+        .iter()
+        .cloned()
+        .map(Predicate::from)
+        .collect()
+}
+
+fn lowerable_conditional_guard_set(
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+) -> Option<Vec<ConditionalGuard>> {
+    if path_contains_wildcard(&contract_use.source_expr) {
+        return None;
     }
+
+    let mut guards = Vec::new();
+    for predicate in predicates {
+        extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut guards)?;
+    }
+    guards.sort();
+    guards.dedup();
+    Some(guards)
+}
+
+fn provider_schema_use(
+    contract_use: &ContractUse,
+    self_range_guarded: bool,
+) -> Option<ProviderSchemaUse> {
+    if contract_use.source_expr.trim().is_empty()
+        || contract_use.kind == ValueKind::PartialScalar
+        || contract_use.path.0.is_empty()
+    {
+        return None;
+    }
+    let resource = contract_use.resource.clone()?;
+
+    Some(ProviderSchemaUse {
+        value_path: contract_use.source_expr.clone(),
+        path: contract_use.path.clone(),
+        kind: contract_use.kind,
+        resource,
+        is_self_range_collection: self_range_guarded
+            && contract_use
+                .path
+                .0
+                .last()
+                .is_none_or(|segment| !segment.ends_with("[*]")),
+    })
 }
 
 fn predicate_to_conditional_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
@@ -265,43 +294,6 @@ fn lowerable_single_predicate(
                 _ => Some(ConditionalGuard::AllOf(guards)),
             }
         }
-    }
-}
-
-fn collect_conditionally_optional_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
-    match predicate {
-        Predicate::Guard(Guard::NotEq { path, .. } | Guard::Absent { path }) => {
-            out.insert(path.clone());
-        }
-        Predicate::Not(inner) => match inner.as_ref() {
-            Predicate::Guard(Guard::Truthy { path }) => {
-                out.insert(path.clone());
-            }
-            _ => collect_conditionally_optional_paths(inner, out),
-        },
-        Predicate::Or(predicates) => {
-            for predicate in predicates {
-                collect_predicate_value_paths(predicate, out);
-            }
-        }
-        Predicate::And(predicates) => {
-            for predicate in predicates {
-                collect_conditionally_optional_paths(predicate, out);
-            }
-        }
-        Predicate::True
-        | Predicate::False
-        | Predicate::Guard(
-            Guard::Truthy { .. }
-            | Guard::Eq { .. }
-            | Guard::Range { .. }
-            | Guard::With { .. }
-            | Guard::Default { .. }
-            | Guard::TypeIs { .. }
-            | Guard::Not { .. }
-            | Guard::Or { .. }
-            | Guard::AnyOf { .. },
-        ) => {}
     }
 }
 

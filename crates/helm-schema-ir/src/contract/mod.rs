@@ -10,3 +10,4 @@ pub(crate) use fact::ContractTypeHint;
 pub use finalized::FinalizedContract;
 pub use graph::ContractIr;
 pub use use_claim::ContractUse;
+pub(crate) use use_semantics::ContractUseObservation;

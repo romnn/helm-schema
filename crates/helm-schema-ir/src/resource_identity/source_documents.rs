@@ -1,13 +1,7 @@
-pub(super) fn parse_template_tree(source: &str) -> Option<tree_sitter::Tree> {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).ok()?;
-    parser.parse(source, None)
-}
+use crate::tree_sitter_utils::parse_helm_template;
 
 pub(super) fn document_spans(source: &str) -> Vec<(usize, usize)> {
-    let Some(tree) = parse_template_tree(source) else {
+    let Some(tree) = parse_helm_template(source) else {
         return whole_source_span(source);
     };
 

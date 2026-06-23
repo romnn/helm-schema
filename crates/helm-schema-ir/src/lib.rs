@@ -23,7 +23,6 @@ mod fragment_expr_eval;
 mod fragment_range_scope;
 mod helper_arg_projection;
 mod helper_body_analysis;
-mod helper_discovery;
 mod helper_fragment_output_uses;
 mod helper_inline;
 mod helper_range_frame;
@@ -62,10 +61,6 @@ pub use helm_schema_core::{
     ApiPresenceQuery, CapabilityGuard, CapabilityOracle, CapabilityPresencePredicate, HelperBranch,
     HelperBranchBody, ProviderSchemaUse, ResourceRef, StaticOracle, ValueKind, YamlPath,
     evaluate_guard, live_literals, select_live_branch,
-};
-pub use helper_discovery::{
-    DefineBlock, extract_define_blocks, extract_helper_calls, extract_helper_calls_from_ast,
-    extract_helper_calls_from_ast_body, extract_helper_calls_from_ast_excluding_defines,
 };
 pub use provenance::{ContractProvenance, SourceSpan};
 pub use symbolic::SymbolicIrContext;

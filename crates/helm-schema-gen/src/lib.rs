@@ -417,12 +417,11 @@ fn conditional_ancestor_segments(
     guards: &[ConditionalGuard],
 ) -> Vec<String> {
     let mut shared_prefix = target_segments.to_vec();
-    let mut guard_paths = Vec::new();
     for guard in guards {
-        collect_guard_paths(guard, &mut guard_paths);
-    }
-    for guard_path in guard_paths {
-        shared_prefix.truncate(common_prefix_len(&shared_prefix, &guard_path));
+        for guard_path in guard.value_paths() {
+            let guard_path = split_value_path(&guard_path);
+            shared_prefix.truncate(common_prefix_len(&shared_prefix, &guard_path));
+        }
     }
     shared_prefix
 }
@@ -791,28 +790,6 @@ fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
     jsonschema::validator_for(schema)
         .map(|validator| validator.is_valid(instance))
         .unwrap_or(false)
-}
-
-fn collect_guard_paths(guard: &ConditionalGuard, paths: &mut Vec<Vec<String>>) {
-    match guard {
-        ConditionalGuard::Truthy { path }
-        | ConditionalGuard::With { path }
-        | ConditionalGuard::Eq { path, .. }
-        | ConditionalGuard::NotEq { path, .. }
-        | ConditionalGuard::Absent { path }
-        | ConditionalGuard::TypeIs { path, .. } => paths.push(split_value_path(path)),
-        ConditionalGuard::Not(inner) => collect_guard_paths(inner, paths),
-        ConditionalGuard::AllOf(guards) => {
-            for guard in guards {
-                collect_guard_paths(guard, paths);
-            }
-        }
-        ConditionalGuard::AnyOf(guards) => {
-            for guard in guards {
-                collect_guard_paths(guard, paths);
-            }
-        }
-    }
 }
 
 fn common_prefix_len(left: &[String], right: &[String]) -> usize {

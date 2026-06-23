@@ -1,4 +1,4 @@
-use super::source_documents::parse_template_tree;
+use crate::tree_sitter_utils::parse_helm_template;
 
 pub(super) struct ListItemSource<'source> {
     pub(super) source: &'source str,
@@ -12,7 +12,7 @@ pub(super) fn list_item_sources<'source>(
     base_offset: usize,
     path_prefix: Vec<String>,
 ) -> Vec<ListItemSource<'source>> {
-    let Some(tree) = parse_template_tree(source) else {
+    let Some(tree) = parse_helm_template(source) else {
         return Vec::new();
     };
     let root = tree.root_node();

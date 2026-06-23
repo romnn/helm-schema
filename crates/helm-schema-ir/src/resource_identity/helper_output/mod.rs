@@ -7,8 +7,8 @@
 //! `apiVersion: {{ include "X" . }}` in a document header.
 //!
 //! This is intentionally NOT a general Helm renderer:
-//! - only handles `{{ print … }}`, `{{ printf "%s" "X" }}`, bare string
-//!   literals, and nested `{{ template/include "Y" . }}` calls;
+//! - only accepts exact static string outputs from the shared expression
+//!   interpreter and nested `{{ template/include "Y" . }}` calls;
 //! - dives into `if` / `with` branches to collect alternatives;
 //! - skips Field / Variable references (returns nothing for those —
 //!   the literal-only output set is the contract).

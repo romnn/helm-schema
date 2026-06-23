@@ -10,7 +10,7 @@ use helm_schema_ast::DefineIndex;
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
 use crate::contract::ContractIr;
-use crate::define_body_cache::{DefineBodyCache, parse_go_template};
+use crate::define_body_cache::DefineBodyCache;
 use crate::document_projection::DocumentTracker;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, helper_call_summary_from_exprs_with_fragment_locals,
@@ -21,6 +21,7 @@ use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
 use crate::symbolic_scope_state::SymbolicScopeState;
 use crate::template_expr_cache::clear_template_expr_cache;
+use crate::tree_sitter_utils::parse_go_template;
 use crate::value_path_context::ValuePathContext;
 
 /// Reusable state for generating symbolic IR across many templates that

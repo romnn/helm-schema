@@ -4,6 +4,7 @@ use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
 use crate::YamlPath;
 use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
+use crate::tree_sitter_utils::parse_go_template;
 use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
 
 use super::yaml_tree::{
@@ -1669,7 +1670,7 @@ fn sanitize_embedded_template_actions(node: tree_sitter::Node<'_>, sanitized: &m
         return;
     }
 
-    let Some(tree) = parse_go_template_tree(&text) else {
+    let Some(tree) = parse_go_template(&text) else {
         return;
     };
     let mut ranges = Vec::new();
@@ -1689,14 +1690,6 @@ fn sanitize_embedded_template_actions(node: tree_sitter::Node<'_>, sanitized: &m
             fill_placeholder(sanitized, start, end, &token);
         }
     }
-}
-
-fn parse_go_template_tree(source: &str) -> Option<tree_sitter::Tree> {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).ok()?;
-    parser.parse(source, None)
 }
 
 fn collect_template_action_ranges(node: tree_sitter::Node<'_>, ranges: &mut Vec<(usize, usize)>) {

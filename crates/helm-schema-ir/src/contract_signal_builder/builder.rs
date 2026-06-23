@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ProviderSchemaUse;
 use crate::ValueKind;
-use crate::contract::{ContractTypeHint, ContractUse};
+use crate::contract::{ContractTypeHint, ContractUse, ContractUseObservation};
 use crate::contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
@@ -76,75 +76,6 @@ struct PathSchemaFactsAccumulator {
     accepted_values_root_fragment: bool,
     accepted_dependency_values_root_fragment: bool,
     is_partial_scalar_value_path: bool,
-}
-
-struct ContractUseObservation {
-    has_source: bool,
-    has_render_path: bool,
-    range_guard_paths: BTreeSet<String>,
-    guard_value_paths: BTreeSet<String>,
-    conditional_guard_predicates: Vec<ConditionalGuard>,
-    conditionally_optional_paths: BTreeSet<String>,
-    default_fallback_paths: BTreeSet<String>,
-    provider_schema_use: Option<ProviderSchemaUse>,
-    self_guarded: bool,
-    self_range_guarded: bool,
-    pathless_self_default_guarded: bool,
-    null_tolerant: bool,
-    positive_header: bool,
-}
-
-impl ContractUseObservation {
-    fn new(contract_use: &ContractUse) -> Self {
-        let has_source = !contract_use.source_expr.trim().is_empty();
-        let has_render_path = !contract_use.path.0.is_empty();
-        let self_range_guarded = contract_use.has_self_range_guard();
-        let path_is_empty = contract_use.path.0.is_empty();
-        let has_matching_self_guard = contract_use.has_matching_self_guard();
-        Self {
-            has_source,
-            has_render_path,
-            range_guard_paths: contract_use.top_level_range_guard_paths(),
-            guard_value_paths: contract_use.guard_value_paths(),
-            conditional_guard_predicates: contract_use.conditional_guard_predicates(),
-            conditionally_optional_paths: contract_use.conditionally_optional_paths(),
-            default_fallback_paths: contract_use.default_fallback_paths(),
-            provider_schema_use: provider_schema_use(contract_use, self_range_guarded),
-            self_guarded: has_source && (path_is_empty || has_matching_self_guard),
-            self_range_guarded,
-            pathless_self_default_guarded: contract_use.has_pathless_self_default_guard(),
-            null_tolerant: !has_source || path_is_empty || has_matching_self_guard,
-            positive_header: contract_use.kind == ValueKind::Scalar
-                && path_is_empty
-                && contract_use.is_positive_header(),
-        }
-    }
-}
-
-fn provider_schema_use(
-    contract_use: &ContractUse,
-    self_range_guarded: bool,
-) -> Option<ProviderSchemaUse> {
-    if contract_use.source_expr.trim().is_empty()
-        || contract_use.kind == ValueKind::PartialScalar
-        || contract_use.path.0.is_empty()
-    {
-        return None;
-    }
-    let resource = contract_use.resource.clone()?;
-
-    Some(ProviderSchemaUse {
-        value_path: contract_use.source_expr.clone(),
-        path: contract_use.path.clone(),
-        kind: contract_use.kind,
-        resource,
-        is_self_range_collection: self_range_guarded
-            && contract_use
-                .path
-                .0
-                .last()
-                .is_none_or(|segment| !segment.ends_with("[*]")),
-    })
 }
 
 impl Default for PathSchemaFactsAccumulator {
@@ -366,9 +297,7 @@ impl ContractSchemaSignalBuilder {
     }
 
     fn record_guard_predicate(&mut self, predicate: ConditionalGuard) {
-        let mut paths = BTreeSet::new();
-        collect_conditional_guard_paths(&predicate, &mut paths);
-        for path in paths {
+        for path in predicate.value_paths() {
             if path.trim().is_empty() {
                 continue;
             }
@@ -426,7 +355,7 @@ impl ContractPathAccumulator {
             self.has_unconditional_overlay_peer = true;
             return;
         }
-        let Some(guards) = contract_use.lowerable_conditional_guard_set() else {
+        let Some(guards) = observation.lowerable_conditional_guards.clone() else {
             self.saw_unsupported_overlay = true;
             return;
         };
@@ -504,25 +433,6 @@ fn conditional_overlays(
             preserve_base_schema,
         })
         .collect()
-}
-
-fn collect_conditional_guard_paths(guard: &ConditionalGuard, paths: &mut BTreeSet<String>) {
-    match guard {
-        ConditionalGuard::Truthy { path }
-        | ConditionalGuard::With { path }
-        | ConditionalGuard::Eq { path, .. }
-        | ConditionalGuard::NotEq { path, .. }
-        | ConditionalGuard::Absent { path }
-        | ConditionalGuard::TypeIs { path, .. } => {
-            paths.insert(path.clone());
-        }
-        ConditionalGuard::Not(inner) => collect_conditional_guard_paths(inner, paths),
-        ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
-            for guard in guards {
-                collect_conditional_guard_paths(guard, paths);
-            }
-        }
-    }
 }
 
 fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {

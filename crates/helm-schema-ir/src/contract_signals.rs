@@ -18,6 +18,34 @@ pub enum ConditionalGuard {
     AnyOf(Vec<ConditionalGuard>),
 }
 
+impl ConditionalGuard {
+    #[must_use]
+    pub fn value_paths(&self) -> BTreeSet<String> {
+        let mut paths = BTreeSet::new();
+        self.collect_value_paths(&mut paths);
+        paths
+    }
+
+    fn collect_value_paths(&self, paths: &mut BTreeSet<String>) {
+        match self {
+            Self::Truthy { path }
+            | Self::With { path }
+            | Self::Eq { path, .. }
+            | Self::NotEq { path, .. }
+            | Self::Absent { path }
+            | Self::TypeIs { path, .. } => {
+                paths.insert(path.clone());
+            }
+            Self::Not(inner) => inner.collect_value_paths(paths),
+            Self::AllOf(guards) | Self::AnyOf(guards) => {
+                for guard in guards {
+                    guard.collect_value_paths(paths);
+                }
+            }
+        }
+    }
+}
+
 /// Conditionally-scoped values path whose schema can be lowered under a
 /// values-decidable guard set.
 ///

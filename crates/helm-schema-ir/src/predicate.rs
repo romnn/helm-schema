@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use crate::Guard;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -52,6 +54,80 @@ impl Predicate {
         matches!(self, Self::True | Self::False)
     }
 
+    pub(crate) fn value_paths(&self) -> BTreeSet<String> {
+        let mut paths = BTreeSet::new();
+        self.collect_value_paths(&mut paths);
+        paths
+    }
+
+    pub(crate) fn truthy_disjunction_paths(&self) -> Option<Vec<String>> {
+        match self {
+            Self::Guard(Guard::Truthy { path }) => Some(vec![path.clone()]),
+            Self::Or(predicates) => predicates
+                .iter()
+                .map(|predicate| match predicate {
+                    Self::Guard(Guard::Truthy { path }) => Some(path.clone()),
+                    _ => None,
+                })
+                .collect(),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn with_context_predicates(self) -> Vec<Self> {
+        match self {
+            Self::True => Vec::new(),
+            Self::False => vec![Self::False],
+            Self::And(predicates) => predicates
+                .into_iter()
+                .flat_map(Self::with_context_predicates)
+                .collect(),
+            Self::Guard(Guard::Truthy { path }) => vec![Self::from(Guard::With { path })],
+            Self::Or(predicates) => {
+                let Some(paths) = Self::Or(predicates.clone()).truthy_disjunction_paths() else {
+                    return vec![Self::Or(predicates)];
+                };
+                let mut out: Vec<Self> = paths
+                    .iter()
+                    .map(|path| Self::from(Guard::With { path: path.clone() }))
+                    .collect();
+                out.push(Self::Or(paths.into_iter().map(Self::truthy_path).collect()));
+                out
+            }
+            Self::Not(inner) => match inner.as_ref() {
+                Self::Guard(Guard::Truthy { path }) => vec![
+                    Self::from(Guard::With { path: path.clone() }),
+                    Self::Not(inner),
+                ],
+                _ => vec![Self::Not(inner)],
+            },
+            Self::Guard(Guard::Eq { path, value }) => vec![
+                Self::from(Guard::With { path: path.clone() }),
+                Self::from(Guard::Eq { path, value }),
+            ],
+            Self::Guard(Guard::NotEq { path, value }) => vec![
+                Self::from(Guard::With { path: path.clone() }),
+                Self::from(Guard::NotEq { path, value }),
+            ],
+            Self::Guard(
+                Guard::Range { .. }
+                | Guard::Absent { .. }
+                | Guard::With { .. }
+                | Guard::Default { .. }
+                | Guard::TypeIs { .. }
+                | Guard::Not { .. }
+                | Guard::Or { .. }
+                | Guard::AnyOf { .. },
+            ) => vec![self],
+        }
+    }
+
+    pub(crate) fn conditionally_optional_paths(&self) -> BTreeSet<String> {
+        let mut paths = BTreeSet::new();
+        self.collect_conditionally_optional_paths(&mut paths);
+        paths
+    }
+
     pub(crate) fn contract_guards(&self) -> Vec<Guard> {
         match self {
             Self::True | Self::False => Vec::new(),
@@ -59,6 +135,60 @@ impl Predicate {
             Self::Not(inner) => negated_contract_guards(inner),
             Self::And(predicates) => predicates.iter().flat_map(Self::contract_guards).collect(),
             Self::Or(predicates) => or_contract_guards(predicates),
+        }
+    }
+
+    fn collect_value_paths(&self, out: &mut BTreeSet<String>) {
+        match self {
+            Self::True | Self::False => {}
+            Self::Guard(guard) => {
+                for path in guard.value_paths() {
+                    out.insert(path.to_string());
+                }
+            }
+            Self::Not(inner) => inner.collect_value_paths(out),
+            Self::And(predicates) | Self::Or(predicates) => {
+                for predicate in predicates {
+                    predicate.collect_value_paths(out);
+                }
+            }
+        }
+    }
+
+    fn collect_conditionally_optional_paths(&self, out: &mut BTreeSet<String>) {
+        match self {
+            Self::Guard(Guard::NotEq { path, .. } | Guard::Absent { path }) => {
+                out.insert(path.clone());
+            }
+            Self::Not(inner) => match inner.as_ref() {
+                Self::Guard(Guard::Truthy { path }) => {
+                    out.insert(path.clone());
+                }
+                _ => inner.collect_conditionally_optional_paths(out),
+            },
+            Self::Or(predicates) => {
+                for predicate in predicates {
+                    out.extend(predicate.value_paths());
+                }
+            }
+            Self::And(predicates) => {
+                for predicate in predicates {
+                    predicate.collect_conditionally_optional_paths(out);
+                }
+            }
+            Self::True
+            | Self::False
+            | Self::Guard(
+                Guard::Truthy { .. }
+                | Guard::Eq { .. }
+                | Guard::Range { .. }
+                | Guard::With { .. }
+                | Guard::Default { .. }
+                | Guard::TypeIs { .. }
+                | Guard::Not { .. }
+                | Guard::Or { .. }
+                | Guard::AnyOf { .. },
+            ) => {}
         }
     }
 
