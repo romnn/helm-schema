@@ -1,5 +1,5 @@
-use super::provider_origin::ProviderOrigin;
 use super::provider_schema_fragment::ProviderSchemaFragment;
+use helm_schema_core::ProviderOrigin;
 
 /// Outcome of resolving a known `(apiVersion, kind)` against the full
 /// provider chain. Missing diagnostics are projected from the corresponding

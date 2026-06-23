@@ -43,7 +43,6 @@ pub use fetch::{FetchError, HttpFetcher, MockFetcher, MockResponse, UreqFetcher}
 pub use filename::{
     candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
 };
-pub use helm_schema_core::ResourceSchemaOracle;
 pub use inference::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
 };
@@ -61,19 +60,6 @@ pub use lookup::{
     ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment, SourceProbeTraceOutcome,
     TracedApiPresenceOutcome, TracedLookupOutcome,
 };
-
-// ---------------------------------------------------------------------------
-// Convenience helpers
-// ---------------------------------------------------------------------------
-
-use serde_json::Value;
-
-#[must_use]
-pub fn type_schema(ty: &str) -> Value {
-    let mut m = serde_json::Map::new();
-    m.insert("type".to_string(), Value::String(ty.to_string()));
-    Value::Object(m)
-}
 
 #[cfg(test)]
 #[path = "tests/lib.rs"]

@@ -1,9 +1,8 @@
-use helm_schema_core::{CapabilityOracle, ResourceRef};
+use helm_schema_core::{CapabilityOracle, ProviderOrigin, ResourceRef};
 
 use crate::diagnostic::Diagnostic;
 use crate::filename::candidate_filenames_for_resource;
 
-use super::provider_origin::ProviderOrigin;
 use super::resource_lookup_plan::MissingSchemaAttributionPlan;
 use super::trace::{LookupTrace, LookupTraceEntry, LookupTraceOutcome};
 use super::trait_def::K8sSchemaProvider;

@@ -4,7 +4,6 @@ mod chain;
 mod chain_outcome;
 mod miss_diagnostics;
 mod provider_lookup_cache;
-mod provider_origin;
 mod provider_result;
 mod provider_schema_fragment;
 mod resource_lookup_executor;
@@ -15,8 +14,7 @@ mod trait_def;
 
 pub use chain::Chain;
 pub use chain_outcome::ChainLookupOutcome;
-pub use helm_schema_core::ApiPresenceQuery;
-pub use provider_origin::ProviderOrigin;
+pub use helm_schema_core::{ApiPresenceQuery, ProviderOrigin};
 pub use provider_result::ProviderLookupResult;
 pub use provider_schema_fragment::{
     ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment,

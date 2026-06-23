@@ -42,13 +42,6 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         None
     }
 
-    /// Kubernetes version targeted by capability evaluation. This is the
-    /// public adapter name used by higher layers; provider implementations can
-    /// keep `primary_k8s_version` as their source of truth during migration.
-    fn kube_version(&self) -> Option<&str> {
-        self.primary_k8s_version()
-    }
-
     /// Full K8s version chain (for `MissingSchema` payload). Non-K8s
     /// providers leave the default `None`.
     fn k8s_version_chain(&self) -> Option<Vec<String>> {

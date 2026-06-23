@@ -1,6 +1,6 @@
 use helm_schema_core::{
-    ApiPresenceQuery, CapabilityOracle, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle,
-    YamlPath,
+    ApiPresenceQuery, CapabilityOracle, ProviderOrigin, ProviderSchemaUse, ResourceRef,
+    ResourceSchemaOracle, YamlPath,
 };
 
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
@@ -11,7 +11,6 @@ use super::api_version_inference_cache::ApiVersionInferenceCache;
 use super::chain_outcome::ChainLookupOutcome;
 use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_lookup_cache::ProviderLookupCache;
-use super::provider_origin::ProviderOrigin;
 use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::resource_lookup_executor::ResourceLookupExecutor;
 use super::resource_lookup_plan::ResourceLookupPlan;
@@ -61,7 +60,7 @@ impl Chain {
     pub fn kube_version(&self) -> Option<&str> {
         self.providers
             .iter()
-            .find_map(|provider| provider.kube_version())
+            .find_map(|provider| provider.primary_k8s_version())
     }
 
     /// Resolve a single concrete `(apiVersion, kind)` against the

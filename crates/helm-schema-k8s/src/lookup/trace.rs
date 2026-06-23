@@ -1,7 +1,6 @@
-use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
+use helm_schema_core::{ApiPresenceQuery, ProviderOrigin, ResourceRef, YamlPath};
 
 use super::chain_outcome::ChainLookupOutcome;
-use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
 
 /// Executed lookup trace for one concrete schema-knowledge query.

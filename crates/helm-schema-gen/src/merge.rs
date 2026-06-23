@@ -1,5 +1,6 @@
 use serde_json::{Map, Value};
 
+use crate::schema_model::schema_type;
 use crate::schema_node::SchemaNode;
 
 fn is_annotation_keyword(key: &str) -> bool {
@@ -228,10 +229,6 @@ fn canonicalize_json_value(v: &Value) -> Value {
         Value::Array(values) => Value::Array(values.iter().map(canonicalize_json_value).collect()),
         _ => v.clone(),
     }
-}
-
-fn schema_type(v: &Value) -> Option<&str> {
-    v.as_object()?.get("type").and_then(|t| t.as_str())
 }
 
 fn is_exact_empty_object_schema(v: &Value) -> bool {

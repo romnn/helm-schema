@@ -280,9 +280,10 @@ impl SchemaNode {
                 properties.insert(key, value);
             }
             Self::Foreign(Value::Object(object)) => {
-                if let Some(properties) =
-                    object.get_mut("properties").and_then(Value::as_object_mut)
-                {
+                let properties = object
+                    .entry("properties".to_string())
+                    .or_insert_with(|| Value::Object(Map::new()));
+                if let Value::Object(properties) = properties {
                     properties.insert(key, value.into_value());
                 }
             }

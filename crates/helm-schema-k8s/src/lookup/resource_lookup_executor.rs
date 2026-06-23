@@ -1,10 +1,9 @@
-use helm_schema_core::{ResourceRef, YamlPath};
+use helm_schema_core::{ProviderOrigin, ResourceRef, YamlPath};
 
 use crate::filename::candidate_filenames_for_resource;
 
 use super::chain_outcome::ChainLookupOutcome;
 use super::provider_lookup_cache::ProviderLookupCache;
-use super::provider_origin::ProviderOrigin;
 use super::provider_result::ProviderLookupResult;
 use super::trace::{LookupTrace, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
