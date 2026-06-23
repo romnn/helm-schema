@@ -499,20 +499,19 @@ fn typed_output_preserves_elif_chain() {
     );
 }
 
-/// `printf "%s/%s" "apps" "v1"` is compositional formatting we do not
-/// statically model, so it must not emit its format or arguments as
-/// literal apiVersion candidates.
+/// `printf "%s/%s" "apps" "v1"` is exact compositional formatting; the
+/// shared expression interpreter should resolve it without the resource
+/// helper evaluator carrying a separate printf mini-parser.
 #[test]
-fn printf_compositional_format_emits_no_bogus_candidates() {
+fn printf_compositional_format_resolves_exactly() {
     let helpers = index_with(indoc! {r#"
         {{- define "x.apiVersion" -}}
         {{- printf "%s/%s" "apps" "v1" -}}
         {{- end -}}
     "#});
-    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
-    assert!(
-        outs.is_empty(),
-        "compositional printf must emit no literal candidates; got {outs:?}"
+    sim_assert_eq!(
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
+        want: vec!["apps/v1"]
     );
 }
 
@@ -561,6 +560,20 @@ fn printf_non_string_directive_emits_no_candidates() {
     );
 }
 
+#[test]
+fn default_choice_does_not_emit_fallback_as_exact_identity() {
+    let helpers = index_with(indoc! {r#"
+        {{- define "x.apiVersion" -}}
+        {{- default "policy/v1beta1" "policy/v1" -}}
+        {{- end -}}
+    "#});
+    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
+    assert!(
+        outs.is_empty(),
+        "resource identity literal evaluation must abstain on expression choices; got {outs:?}"
+    );
+}
+
 /// `quote "X"` should produce the inner literal "X" (without the
 /// added quote wrapping — for apiVersion resolution we want the
 /// raw value).
@@ -577,19 +590,17 @@ fn quote_with_single_string_arg_resolves() {
     );
 }
 
-/// `print` with multiple args is unusual and not the apiVersion
-/// shape we model; refuse rather than emit partial candidates.
+/// `print` with multiple literal args is exact string concatenation.
 #[test]
-fn print_with_multiple_args_emits_no_candidates() {
+fn print_with_multiple_literal_args_resolves_exactly() {
     let helpers = index_with(indoc! {r#"
         {{- define "x.apiVersion" -}}
-        {{- print "apps" "v1" -}}
+        {{- print "apps/" "v1" -}}
         {{- end -}}
     "#});
-    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
-    assert!(
-        outs.is_empty(),
-        "print with multiple args must emit no candidates; got {outs:?}"
+    sim_assert_eq!(
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
+        want: vec!["apps/v1"]
     );
 }
 

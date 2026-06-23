@@ -115,12 +115,6 @@ fn append_document_helper_contract_uses(
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let structured_fragment_sources = helper.structured_fragment_sources();
-    let helper_rendered_sources = helper.rendered_sources();
-    let only_scalar_helper_outputs = helper
-        .path_facts()
-        .all(|(_path, facts)| facts.fragment_output_uses.is_empty());
-
     let mut dependency_values = Vec::new();
     let mut guard_values = Vec::new();
     let mut type_hints = Vec::new();
@@ -137,15 +131,13 @@ fn append_document_helper_contract_uses(
         }
 
         if let Some(meta) = facts.output_meta.as_ref()
-            && !structured_fragment_sources.contains(value)
+            && !helper.has_structured_fragment_source(value)
         {
-            let has_rendered_descendant =
-                output_path::values_path_has_descendant(value, &helper_rendered_sources);
             for extra_guards in meta.contract_guard_sets(value) {
                 let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(value));
-                if only_scalar_helper_outputs
+                if helper.has_only_scalar_outputs()
                     && site.can_project_scalar_helper_to_caller_path()
-                    && !has_rendered_descendant
+                    && !helper.has_rendered_source_descendant(value)
                 {
                     contract.push(site.contract_use_with_extra_provenance(
                         context,
@@ -169,7 +161,7 @@ fn append_document_helper_contract_uses(
         for output in facts.fragment_output_uses.iter().cloned() {
             append_fragment_output_contract_use(
                 output,
-                &helper_rendered_sources,
+                helper,
                 encoded_output_values,
                 site,
                 contract,
@@ -198,18 +190,18 @@ fn append_document_helper_contract_uses(
 
 fn append_fragment_output_contract_use(
     output: crate::helper_summary::HelperFragmentOutputUse,
-    helper_rendered_sources: &BTreeSet<String>,
+    helper: &HelperSummary,
     encoded_output_values: &BTreeSet<String>,
     site: &DocumentSiteContext,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let has_rendered_descendant =
-        output_path::values_path_has_descendant(&output.source_expr, helper_rendered_sources);
     for extra_guards in output.meta.contract_guard_sets(&output.source_expr) {
         let output_encoded = output.encoded || encoded_output_values.contains(&output.source_expr);
         let emit_kind = encoded_kind(output.kind, output_encoded);
-        if site.can_project_structured_helper_to_caller_path() && !has_rendered_descendant {
+        if site.can_project_structured_helper_to_caller_path()
+            && !helper.has_rendered_source_descendant(&output.source_expr)
+        {
             let emit_path = output_path::append_relative_path(&site.path, &output.relative_path);
             contract.push(site.contract_use_with_extra_provenance(
                 context,

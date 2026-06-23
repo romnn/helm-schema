@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use helm_schema_ast::{DefineIndex, HelmAst, TemplateAction, TemplateExpr, TemplateHeader};
 
 use crate::capability_branch::{decode_guard, decode_guard_expr};
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
 
 use super::{HelperOutput, MAX_RECURSION_DEPTH};
@@ -467,35 +469,9 @@ impl HelperOutputEvaluator {
                             out.extend(values);
                         }
                     }
-                    _ => {
-                        if let Some(value) = literal_expr_output(expr.deparen()) {
-                            out.push(value);
-                        }
-                    }
+                    _ => out.extend(static_literal_outputs(expr)),
                 },
-                TemplateExpr::Pipeline(stages) => {
-                    if let Some(value) = stages.last().and_then(literal_expr_output) {
-                        out.push(value);
-                    }
-                    if let Some(seed) = stages.first().and_then(|stage| match stage {
-                        TemplateExpr::Literal(lit) => lit.as_string().map(str::to_string),
-                        _ => None,
-                    }) && stages.iter().skip(1).all(|stage| {
-                        matches!(
-                            stage,
-                            TemplateExpr::Call { function, args }
-                                if matches!(function.as_str(), "print" | "quote")
-                                    && args.is_empty()
-                        )
-                    }) {
-                        out.push(seed);
-                    }
-                }
-                _ => {
-                    if let Some(value) = literal_expr_output(expr.deparen()) {
-                        out.push(value);
-                    }
-                }
+                _ => out.extend(static_literal_outputs(expr)),
             }
         }
         out
@@ -617,17 +593,6 @@ fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
     out
 }
 
-fn literal_expr_output(expr: &TemplateExpr) -> Option<String> {
-    match expr.deparen() {
-        TemplateExpr::Literal(lit) => lit.as_string().map(str::to_string),
-        TemplateExpr::Call { function, args } if matches!(function.as_str(), "print" | "quote") => {
-            single_string_literal_arg(args)
-        }
-        TemplateExpr::Call { function, args } if function == "printf" => evaluate_printf(args),
-        _ => None,
-    }
-}
-
 fn helper_call_callee<'a>(function: &str, args: &'a [TemplateExpr]) -> Option<&'a str> {
     if !matches!(function, "include" | "template") {
         return None;
@@ -638,34 +603,22 @@ fn helper_call_callee<'a>(function: &str, args: &'a [TemplateExpr]) -> Option<&'
     lit.as_string()
 }
 
-/// Extract the unique string-literal argument from a call's args.
-fn single_string_literal_arg(args: &[TemplateExpr]) -> Option<String> {
-    if args.len() != 1 {
-        return None;
+fn static_literal_outputs(expr: &TemplateExpr) -> Vec<String> {
+    let result = eval_expr(expr, &EvalEnv::default());
+    if !result.effects.reads.is_empty()
+        || !result.effects.output_paths.is_empty()
+        || !result.effects.local_source_paths.is_empty()
+        || !result.effects.local_rendered_paths.is_empty()
+    {
+        return Vec::new();
     }
-    let TemplateExpr::Literal(lit) = &args[0] else {
-        return None;
-    };
-    lit.as_string().map(str::to_string)
-}
-
-/// Statically evaluate `printf` for the exact shapes this evaluator models.
-fn evaluate_printf(args: &[TemplateExpr]) -> Option<String> {
-    let format = match args.first()? {
-        TemplateExpr::Literal(lit) => lit.as_string()?,
-        _ => return None,
-    };
-    if !format.contains('%') {
-        if args.len() != 1 {
-            return None;
-        }
-        return Some(format.to_string());
+    let strings = result
+        .value
+        .map(|value| value.strings())
+        .unwrap_or_default();
+    if strings.len() == 1 {
+        strings.into_iter().collect()
+    } else {
+        Vec::new()
     }
-    if format == "%s" && args.len() == 2 {
-        let TemplateExpr::Literal(lit) = &args[1] else {
-            return None;
-        };
-        return lit.as_string().map(str::to_string);
-    }
-    None
 }

@@ -5,10 +5,10 @@ use crate::YamlPath;
 pub(crate) fn values_path_has_descendant(path: &str, sources: &BTreeSet<String>) -> bool {
     sources
         .iter()
-        .any(|source| values_path_is_strict_descendant(source, path))
+        .any(|source| values_path_is_descendant(source, path))
 }
 
-fn values_path_is_strict_descendant(path: &str, ancestor: &str) -> bool {
+pub(crate) fn values_path_is_descendant(path: &str, ancestor: &str) -> bool {
     if ancestor.trim().is_empty() {
         return !path.trim().is_empty();
     }

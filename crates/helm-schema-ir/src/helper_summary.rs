@@ -340,21 +340,22 @@ impl HelperSummary {
             .map(|(path, facts)| (path.as_str(), facts))
     }
 
-    pub(crate) fn structured_fragment_sources(&self) -> BTreeSet<String> {
-        self.path_facts()
-            .filter(|(_path, facts)| !facts.fragment_output_uses.is_empty())
-            .map(|(path, _facts)| path.to_string())
-            .collect()
+    pub(crate) fn has_structured_fragment_source(&self, path: &str) -> bool {
+        self.path_facts
+            .get(path)
+            .is_some_and(|facts| !facts.fragment_output_uses.is_empty())
     }
 
-    pub(crate) fn rendered_sources(&self) -> BTreeSet<String> {
-        let mut rendered_sources = self.structured_fragment_sources();
-        rendered_sources.extend(
-            self.path_facts()
-                .filter(|(_path, facts)| facts.output_meta.is_some())
-                .map(|(path, _facts)| path.to_string()),
-        );
-        rendered_sources
+    pub(crate) fn has_rendered_source_descendant(&self, path: &str) -> bool {
+        self.path_facts().any(|(candidate, facts)| {
+            (facts.output_meta.is_some() || !facts.fragment_output_uses.is_empty())
+                && output_path::values_path_is_descendant(candidate, path)
+        })
+    }
+
+    pub(crate) fn has_only_scalar_outputs(&self) -> bool {
+        self.path_facts()
+            .all(|(_path, facts)| facts.fragment_output_uses.is_empty())
     }
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
@@ -417,9 +418,6 @@ impl HelperSummary {
 }
 
 fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
-    let structured_sources = analysis.structured_fragment_sources();
-    let rendered_sources = analysis.rendered_sources();
-
     let mut values = Vec::new();
     if !analysis.string_output.is_empty() {
         values.push(AbstractValue::StringSet(analysis.string_output.clone()));
@@ -433,8 +431,8 @@ fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
             ));
         }
         if let Some(meta) = facts.output_meta.as_ref()
-            && !structured_sources.contains(path)
-            && !output_path::values_path_has_descendant(path, &rendered_sources)
+            && !analysis.has_structured_fragment_source(path)
+            && !analysis.has_rendered_source_descendant(path)
         {
             values.push(AbstractValue::OutputSet(
                 [(path.to_string(), meta.clone())].into_iter().collect(),
