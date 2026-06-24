@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
@@ -12,7 +12,7 @@ use super::yaml_tree::{
 };
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
-const VIRTUAL_MAPPING_KEY: &str = "__HS_MAPPING_KEY__";
+const VIRTUAL_MAPPING_VALUE: &str = "__HS_MAPPING_VALUE__";
 
 #[derive(Clone, Debug)]
 pub(super) struct ResolvedNodeContext {
@@ -22,6 +22,8 @@ pub(super) struct ResolvedNodeContext {
     pub(super) in_mapping_key: bool,
     pub(super) entire_scalar_value: bool,
     pub(super) inside_block_scalar: bool,
+    explicit_mapping_value_slot: bool,
+    pub(super) sequence_item_slot: bool,
 }
 
 impl Default for ResolvedNodeContext {
@@ -33,6 +35,8 @@ impl Default for ResolvedNodeContext {
             in_mapping_key: false,
             entire_scalar_value: false,
             inside_block_scalar: false,
+            explicit_mapping_value_slot: false,
+            sequence_item_slot: false,
         }
     }
 }
@@ -41,7 +45,7 @@ impl Default for ResolvedNodeContext {
 pub(super) struct AttributionIndex {
     sanitized: String,
     output_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
-    output_placeholders: HashMap<(usize, usize), String>,
+    output_spans: HashSet<(usize, usize)>,
     control_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
     rendered_output_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
     mapping_entry_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
@@ -67,7 +71,7 @@ impl AttributionIndex {
         node: tree_sitter::Node<'_>,
         indent: usize,
     ) -> Option<ResolvedNodeContext> {
-        let (span_start, span_end, placeholder) = self.placeholder_for_node_or_ancestor(node)?;
+        let (span_start, span_end) = self.output_span_for_node_or_ancestor(node)?;
         self.rendered_output_nodes
             .get(&(span_start, span_end, indent))
             .cloned()
@@ -77,7 +81,6 @@ impl AttributionIndex {
                     span_start,
                     span_end,
                     indent,
-                    &placeholder,
                 )
             })
     }
@@ -111,14 +114,14 @@ impl AttributionIndex {
         }
     }
 
-    fn placeholder_for_node_or_ancestor(
+    fn output_span_for_node_or_ancestor(
         &self,
         mut node: tree_sitter::Node<'_>,
-    ) -> Option<(usize, usize, String)> {
+    ) -> Option<(usize, usize)> {
         loop {
             let span = (node.start_byte(), node.end_byte());
-            if let Some(placeholder) = self.output_placeholders.get(&span) {
-                return Some((span.0, span.1, placeholder.clone()));
+            if self.output_spans.contains(&span) {
+                return Some(span);
             }
             node = node.parent()?;
         }
@@ -167,14 +170,12 @@ pub(super) fn build_attribution_index(
     let mut previous_output_paths = Vec::new();
 
     for output in outputs {
-        attribution.output_placeholders.insert(
-            (output.action_start, output.action_end),
-            output.placeholder.clone(),
-        );
-        attribution.output_placeholders.insert(
-            (output.node_start, output.node_end),
-            output.placeholder.clone(),
-        );
+        attribution
+            .output_spans
+            .insert((output.action_start, output.action_end));
+        attribution
+            .output_spans
+            .insert((output.node_start, output.node_end));
 
         let base_context = tree.as_ref().and_then(|tree| {
             resolve_output_context(
@@ -197,7 +198,6 @@ pub(super) fn build_attribution_index(
                 output.action_start,
                 output.action_end,
                 indent,
-                &output.placeholder,
             );
             let mapping = resolve_full_document_mapping_entry_context(
                 &sanitized,
@@ -226,7 +226,12 @@ pub(super) fn build_attribution_index(
         });
 
         let context = if output.structural_indent.is_some() {
-            base_context.or(rendered_context.clone())
+            let base_context = merge_resolved_contexts(base_context, inline_context);
+            if rendered_context_is_better_base(&base_context, &rendered_context) {
+                rendered_context.clone().or(base_context)
+            } else {
+                base_context.or(rendered_context.clone())
+            }
         } else {
             merge_output_context_candidates(base_context, inline_context, None)
         };
@@ -282,6 +287,23 @@ pub(super) fn build_attribution_index(
     attribution
 }
 
+fn rendered_context_is_better_base(
+    base: &Option<ResolvedNodeContext>,
+    rendered: &Option<ResolvedNodeContext>,
+) -> bool {
+    let Some(rendered) = rendered else {
+        return false;
+    };
+    if rendered.explicit_mapping_value_slot {
+        return true;
+    }
+    let Some(base) = base else {
+        return true;
+    };
+    rendered.output_path.0.len() > base.output_path.0.len()
+        && path_has_equivalent_prefix(&rendered.output_path.0, &base.output_path.0)
+}
+
 fn merge_resolved_contexts(
     global: Option<ResolvedNodeContext>,
     local: Option<ResolvedNodeContext>,
@@ -295,6 +317,8 @@ fn merge_resolved_contexts(
             global.in_mapping_key |= local.in_mapping_key;
             global.entire_scalar_value |= local.entire_scalar_value;
             global.inside_block_scalar |= local.inside_block_scalar;
+            global.explicit_mapping_value_slot |= local.explicit_mapping_value_slot;
+            global.sequence_item_slot |= local.sequence_item_slot;
             Some(global)
         }
         (Some(global), None) => Some(global),
@@ -373,7 +397,6 @@ fn resolve_full_document_fragment_output_context(
     insertion_start: usize,
     insertion_end: usize,
     indent: usize,
-    placeholder: &str,
 ) -> Option<ResolvedNodeContext> {
     let mapping = resolve_full_document_mapping_entry_context(sanitized, insertion_start, indent);
     let sequence = resolve_full_document_sequence_item_context(
@@ -381,9 +404,9 @@ fn resolve_full_document_fragment_output_context(
         insertion_start,
         insertion_end,
         indent,
-        placeholder,
     );
     match (mapping, sequence) {
+        (Some(mapping), Some(_sequence)) if mapping.explicit_mapping_value_slot => Some(mapping),
         (Some(mapping), Some(sequence))
             if sequence.output_path.0.len() < mapping.output_path.0.len()
                 && path_has_equivalent_prefix(&mapping.output_path.0, &sequence.output_path.0) =>
@@ -407,25 +430,65 @@ fn resolve_full_document_mapping_entry_context(
         insertion_byte,
         indent,
         ProbeContextKind::Mapping,
-    )
-    .or_else(|| {
-        resolve_full_document_probe_output_context(
-            sanitized,
-            insertion_byte,
-            indent,
-            &format!("{VIRTUAL_MAPPING_KEY}: __HS_MAPPING_VALUE__"),
-            VIRTUAL_MAPPING_KEY,
-        )
-    });
-    merge_resolved_contexts(
-        structural,
-        fallback_structural_probe_context(
-            sanitized,
-            insertion_byte,
-            indent,
-            ProbeContextKind::Mapping,
-        ),
-    )
+    );
+    let value_slot = resolve_full_document_mapping_value_context(sanitized, insertion_byte, indent);
+    match (structural, value_slot) {
+        (Some(structural), Some(value_slot))
+            if value_slot.output_path.0.len() > structural.output_path.0.len()
+                && path_has_equivalent_prefix(
+                    &value_slot.output_path.0,
+                    &structural.output_path.0,
+                ) =>
+        {
+            Some(value_slot)
+        }
+        (Some(structural), _) => Some(structural),
+        (None, Some(value_slot)) => Some(value_slot),
+        (None, None) => None,
+    }
+}
+
+fn resolve_full_document_mapping_value_context(
+    sanitized: &str,
+    insertion_byte: usize,
+    indent: usize,
+) -> Option<ResolvedNodeContext> {
+    let key = previous_open_mapping_key(sanitized, insertion_byte, indent)?;
+    let mut context = resolve_root_probe_output_context(
+        sanitized,
+        insertion_byte,
+        indent + 2,
+        VIRTUAL_MAPPING_VALUE,
+        VIRTUAL_MAPPING_VALUE,
+    )?;
+    let last = context.output_path.0.last()?;
+    if !path_segments_equivalent(last, &key) {
+        return None;
+    }
+    context.explicit_mapping_value_slot = true;
+    Some(context)
+}
+
+fn previous_open_mapping_key(
+    sanitized: &str,
+    insertion_byte: usize,
+    indent: usize,
+) -> Option<String> {
+    let line_start = sanitized[..insertion_byte.min(sanitized.len())]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let previous = sanitized[..line_start]
+        .lines()
+        .rev()
+        .find(|line| !line.trim().is_empty())?;
+    let previous_indent = previous.chars().take_while(|&ch| ch == ' ').count();
+    if previous_indent != indent {
+        return None;
+    }
+    let text = previous.trim_start();
+    let key = parse_yaml_key(text)?.into_key();
+    let colon = first_mapping_colon_offset(text)?;
+    text[colon + 1..].trim().is_empty().then_some(key)
 }
 
 fn resolve_full_document_sequence_item_context(
@@ -433,98 +496,38 @@ fn resolve_full_document_sequence_item_context(
     insertion_start: usize,
     insertion_end: usize,
     indent: usize,
-    placeholder: &str,
 ) -> Option<ResolvedNodeContext> {
     let insertion_byte = first_nonblank_byte(sanitized.as_bytes(), insertion_start, insertion_end)
         .unwrap_or(insertion_start);
-    let structural = resolve_structural_gap_context(
+    if let Some(context) = resolve_exact_sequence_indent_context(sanitized, insertion_byte, indent)
+    {
+        return Some(context);
+    }
+    resolve_structural_gap_context(
         sanitized,
         insertion_byte,
         indent,
         ProbeContextKind::Sequence,
     )
-    .or_else(|| {
-        resolve_full_document_probe_output_context(
-            sanitized,
-            insertion_byte,
-            indent,
-            &format!("- {placeholder}"),
-            placeholder,
-        )
-    });
-    let fallback = fallback_structural_probe_context(
-        sanitized,
-        insertion_byte,
-        indent,
-        ProbeContextKind::Sequence,
-    );
-    merge_sequence_fragment_contexts(structural, fallback)
 }
 
-fn merge_sequence_fragment_contexts(
-    structural: Option<ResolvedNodeContext>,
-    fallback: Option<ResolvedNodeContext>,
-) -> Option<ResolvedNodeContext> {
-    match (structural, fallback) {
-        (Some(structural), Some(fallback))
-            if structural.entire_scalar_value
-                && fallback.output_path.0.len() < structural.output_path.0.len()
-                && path_has_equivalent_prefix(
-                    &structural.output_path.0,
-                    &fallback.output_path.0,
-                ) =>
-        {
-            Some(fallback)
-        }
-        (structural, fallback) => merge_resolved_contexts(structural, fallback),
-    }
-}
-
-fn resolve_full_document_probe_output_context(
+fn resolve_root_probe_output_context(
     sanitized: &str,
     insertion_byte: usize,
     indent: usize,
     probe: &str,
     placeholder: &str,
 ) -> Option<ResolvedNodeContext> {
-    let tree = parse_yaml_tree(sanitized)?;
-    let mut scopes = Vec::new();
-    collect_probe_scopes(
-        tree.root_node(),
-        sanitized,
-        insertion_byte,
+    let (probe_document, probe_byte) =
+        build_probe_document(sanitized, insertion_byte, indent, probe, placeholder)?;
+    let probe_tree = parse_yaml_tree(&probe_document)?;
+    resolve_output_context(
+        probe_tree.root_node(),
+        &probe_document,
+        probe_byte,
+        placeholder,
         &YamlPath(Vec::new()),
-        &mut scopes,
-    );
-
-    for scope in scopes.into_iter().rev() {
-        let relative_insertion = insertion_byte.saturating_sub(scope.span_start);
-        let (dedented, dedented_insertion) = dedent_scope_source(
-            &sanitized[scope.span_start..scope.span_end],
-            scope.indent,
-            relative_insertion,
-        )?;
-        let relative_indent = indent.saturating_sub(scope.indent);
-        let (probe_document, probe_byte) = build_probe_document(
-            &dedented,
-            dedented_insertion,
-            relative_indent,
-            probe,
-            placeholder,
-        )?;
-        let probe_tree = parse_yaml_tree(&probe_document)?;
-        if let Some(context) = resolve_output_context(
-            probe_tree.root_node(),
-            &probe_document,
-            probe_byte,
-            placeholder,
-            &scope.root_path,
-        ) {
-            return Some(context);
-        }
-    }
-
-    None
+    )
 }
 
 fn build_probe_document(
@@ -569,31 +572,10 @@ fn build_probe_document(
     Some((document, probe_line_start + indent + probe_offset))
 }
 
-#[derive(Clone)]
-struct ProbeScope {
-    span_start: usize,
-    span_end: usize,
-    indent: usize,
-    root_path: YamlPath,
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ProbeContextKind {
     Mapping,
     Sequence,
-}
-
-#[derive(Clone)]
-struct OpenValueFrame {
-    indent: usize,
-    path: YamlPath,
-    kind: OpenValueFrameKind,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum OpenValueFrameKind {
-    MappingValue,
-    SequenceItem,
 }
 
 fn resolve_structural_gap_context(
@@ -606,14 +588,170 @@ fn resolve_structural_gap_context(
         return None;
     }
     let tree = parse_yaml_tree(sanitized)?;
+    let root = tree.root_node();
+    let insertion_byte = insertion_byte.min(root.end_byte());
     resolve_structural_gap_context_in_node(
-        tree.root_node(),
+        root,
         sanitized,
         insertion_byte,
         indent,
         &YamlPath(Vec::new()),
         kind,
     )
+}
+
+fn resolve_exact_sequence_indent_context(
+    sanitized: &str,
+    insertion_byte: usize,
+    indent: usize,
+) -> Option<ResolvedNodeContext> {
+    let tree = parse_yaml_tree(sanitized)?;
+    let mut best = None;
+    collect_exact_sequence_indent_slots(
+        tree.root_node(),
+        sanitized,
+        insertion_byte,
+        indent,
+        &YamlPath(Vec::new()),
+        &mut best,
+    );
+    best.map(|(_start, path)| {
+        let mut context = probe_context_for_path(&path, ProbeContextKind::Sequence);
+        context.sequence_item_slot = true;
+        context
+    })
+}
+
+fn collect_exact_sequence_indent_slots(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    insertion_byte: usize,
+    indent: usize,
+    path: &YamlPath,
+    best: &mut Option<(usize, YamlPath)>,
+) {
+    if node.start_byte() > insertion_byte {
+        return;
+    }
+
+    match node.kind() {
+        "stream" | "document" | "block_node" | "flow_node" => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+                collect_exact_sequence_indent_slots(
+                    child,
+                    source,
+                    insertion_byte,
+                    indent,
+                    path,
+                    best,
+                );
+            }
+        }
+        "block_mapping" | "flow_mapping" => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+                collect_exact_sequence_indent_slots(
+                    child,
+                    source,
+                    insertion_byte,
+                    indent,
+                    path,
+                    best,
+                );
+            }
+        }
+        "block_mapping_pair" | "flow_pair" => {
+            let child_path = mapping_pair_child_path(node, source, path);
+            if let Some(value) = node.child_by_field_name("value") {
+                collect_exact_sequence_indent_slots(
+                    value,
+                    source,
+                    insertion_byte,
+                    indent,
+                    &child_path,
+                    best,
+                );
+            }
+        }
+        "block_sequence" | "flow_sequence" => {
+            if sequence_item_indent(node) == Some(indent)
+                && sequence_scope_is_open_at_insertion(node, source, insertion_byte)
+                && best.as_ref().is_none_or(|(best_start, best_path)| {
+                    path.0.len() > best_path.0.len()
+                        || (path.0.len() == best_path.0.len() && node.start_byte() > *best_start)
+                })
+            {
+                *best = Some((node.start_byte(), path.clone()));
+            }
+
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+                collect_exact_sequence_indent_slots(
+                    child,
+                    source,
+                    insertion_byte,
+                    indent,
+                    path,
+                    best,
+                );
+            }
+        }
+        "block_sequence_item" => {
+            if let Some(child) = node.named_child(0).map(unwrap_yaml_node) {
+                let item_path = append_sequence_segment(path);
+                collect_exact_sequence_indent_slots(
+                    child,
+                    source,
+                    insertion_byte,
+                    indent,
+                    &item_path,
+                    best,
+                );
+            }
+        }
+        _ => {}
+    }
+}
+
+fn sequence_scope_is_open_at_insertion(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    insertion_byte: usize,
+) -> bool {
+    if insertion_byte <= node.end_byte() {
+        return true;
+    }
+    let parent_indent = sequence_parent_indent(node);
+    !has_dedent_before_insertion(source, node.end_byte(), insertion_byte, parent_indent)
+}
+
+fn sequence_parent_indent(node: tree_sitter::Node<'_>) -> usize {
+    let mut current = node;
+    while let Some(parent) = current.parent() {
+        if matches!(parent.kind(), "block_mapping_pair" | "flow_pair") {
+            return parent.start_position().column;
+        }
+        current = parent;
+    }
+    node.start_position().column.saturating_sub(2)
+}
+
+fn has_dedent_before_insertion(
+    source: &str,
+    start: usize,
+    insertion_byte: usize,
+    parent_indent: usize,
+) -> bool {
+    let start = start.min(source.len());
+    let insertion_byte = insertion_byte.min(source.len());
+    if start >= insertion_byte {
+        return false;
+    }
+    source[start..insertion_byte]
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .any(|line| line.chars().take_while(|&ch| ch == ' ').count() <= parent_indent)
 }
 
 fn resolve_structural_gap_context_in_node(
@@ -743,6 +881,16 @@ fn resolve_structural_gap_in_mapping_pair(
                 kind,
             );
         }
+        if byte >= value.end_byte() && indent > node.start_position().column {
+            return resolve_trailing_structural_gap_from_child(
+                value,
+                source,
+                byte,
+                indent,
+                &child_path,
+                kind,
+            );
+        }
         return None;
     }
 
@@ -764,27 +912,42 @@ fn resolve_structural_gap_in_sequence(
             continue;
         }
         if contains_byte(child, byte) {
+            if let Some(context) = sequence_container_gap_context(node, indent, path, kind)
+                && indent <= child.start_position().column
+            {
+                return Some(context);
+            }
             return resolve_structural_gap_in_sequence_child(
                 child, source, byte, indent, path, kind,
             );
         }
         if byte < child.start_byte() {
-            return sequence_container_gap_context(node, indent, path, kind).or_else(|| {
-                previous.and_then(|child| {
-                    resolve_trailing_structural_gap_from_child(
-                        child, source, byte, indent, path, kind,
-                    )
-                })
-            });
+            return sequence_gap_context(node, previous, source, byte, indent, path, kind);
         }
         previous = Some(child);
     }
 
-    sequence_container_gap_context(node, indent, path, kind).or_else(|| {
-        previous.and_then(|child| {
-            resolve_trailing_structural_gap_from_child(child, source, byte, indent, path, kind)
-        })
-    })
+    sequence_gap_context(node, previous, source, byte, indent, path, kind)
+}
+
+fn sequence_gap_context(
+    sequence: tree_sitter::Node<'_>,
+    previous: Option<tree_sitter::Node<'_>>,
+    source: &str,
+    byte: usize,
+    indent: usize,
+    path: &YamlPath,
+    kind: ProbeContextKind,
+) -> Option<ResolvedNodeContext> {
+    let previous_item = previous.and_then(|child| {
+        resolve_trailing_structural_gap_from_child(child, source, byte, indent, path, kind)
+    });
+    let sequence_container = sequence_container_gap_context(sequence, indent, path, kind);
+    if indent > sequence_item_indent(sequence).unwrap_or(sequence.start_position().column) {
+        previous_item.or(sequence_container)
+    } else {
+        sequence_container.or(previous_item)
+    }
 }
 
 fn resolve_structural_gap_in_sequence_child(
@@ -886,18 +1049,22 @@ fn resolve_mapping_gap_after_pair(
     kind: ProbeContextKind,
 ) -> Option<ResolvedNodeContext> {
     let pair = pair?;
-    let child_path = mapping_pair_open_value_path(pair, source, path)?;
-    (indent > pair.start_position().column).then(|| probe_context_for_path(&child_path, kind))
-}
+    let child_path = mapping_pair_child_path(pair, source, path);
+    if let Some(value) = pair.child_by_field_name("value") {
+        if indent <= pair.start_position().column {
+            return None;
+        }
+        return resolve_trailing_structural_gap_from_child(
+            value,
+            source,
+            value.end_byte(),
+            indent,
+            &child_path,
+            kind,
+        );
+    }
 
-fn mapping_pair_open_value_path(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    path: &YamlPath,
-) -> Option<YamlPath> {
-    node.child_by_field_name("value")
-        .is_none()
-        .then(|| mapping_pair_child_path(node, source, path))
+    Some(probe_context_for_path(&child_path, kind))
 }
 
 fn mapping_pair_child_path(node: tree_sitter::Node<'_>, source: &str, path: &YamlPath) -> YamlPath {
@@ -955,275 +1122,9 @@ fn probe_context_for_path(path: &YamlPath, kind: ProbeContextKind) -> ResolvedNo
         in_mapping_key: false,
         entire_scalar_value: false,
         inside_block_scalar: false,
+        explicit_mapping_value_slot: kind == ProbeContextKind::Mapping,
+        sequence_item_slot: false,
     }
-}
-
-fn fallback_structural_probe_context(
-    sanitized: &str,
-    insertion_byte: usize,
-    indent: usize,
-    kind: ProbeContextKind,
-) -> Option<ResolvedNodeContext> {
-    let target_line_start = sanitized[..insertion_byte.min(sanitized.len())]
-        .rfind('\n')
-        .map_or(0, |index| index + 1);
-    if !sanitized[target_line_start..insertion_byte.min(sanitized.len())]
-        .trim()
-        .is_empty()
-    {
-        return None;
-    }
-    let mut frames = Vec::<OpenValueFrame>::new();
-    let mut offset = 0usize;
-
-    for line in sanitized.split_inclusive('\n') {
-        let line_start = offset;
-        let line_end = line_start + line.len();
-        if line_start >= target_line_start {
-            break;
-        }
-        process_structural_line(line, &mut frames);
-        offset = line_end;
-    }
-
-    while frames.last().is_some_and(|frame| indent < frame.indent) {
-        frames.pop();
-    }
-    if kind == ProbeContextKind::Mapping
-        && frames.last().is_some_and(|frame| {
-            frame.kind == OpenValueFrameKind::MappingValue && frame.indent == indent
-        })
-    {
-        frames.pop();
-    }
-    if kind == ProbeContextKind::Sequence
-        && frames.last().is_some_and(|frame| {
-            frame.kind == OpenValueFrameKind::SequenceItem && frame.indent == indent
-        })
-    {
-        frames.pop();
-    }
-
-    let parent_path = frames
-        .last()
-        .map(|frame| frame.path.clone())
-        .unwrap_or_else(|| YamlPath(Vec::new()));
-    let output_path = match kind {
-        ProbeContextKind::Mapping => parent_path.clone(),
-        ProbeContextKind::Sequence => append_sequence_segment(&parent_path),
-    };
-
-    Some(ResolvedNodeContext {
-        current_path: parent_path.clone(),
-        output_path,
-        mapping_entry_path: parent_path,
-        in_mapping_key: false,
-        entire_scalar_value: false,
-        inside_block_scalar: false,
-    })
-}
-
-fn process_structural_line(line: &str, frames: &mut Vec<OpenValueFrame>) {
-    let content = line.trim_end_matches(['\n', '\r']);
-    if content.trim().is_empty() {
-        return;
-    }
-
-    let indent = content.chars().take_while(|&ch| ch == ' ').count();
-    let after = &content[indent..];
-    let starts_sequence_item = after.starts_with('-');
-    while let Some(frame) = frames.last() {
-        if indent < frame.indent {
-            frames.pop();
-            continue;
-        }
-        if indent == frame.indent {
-            if starts_sequence_item && frame.kind == OpenValueFrameKind::MappingValue {
-                break;
-            }
-            frames.pop();
-            continue;
-        }
-        break;
-    }
-
-    let current_path = frames
-        .last()
-        .map(|frame| frame.path.clone())
-        .unwrap_or_else(|| YamlPath(Vec::new()));
-
-    if let Some(rest) = after.strip_prefix('-') {
-        let item_path = append_sequence_segment(&current_path);
-        frames.push(OpenValueFrame {
-            indent,
-            path: item_path.clone(),
-            kind: OpenValueFrameKind::SequenceItem,
-        });
-        let rest = rest.trim_start();
-        if rest.is_empty() {
-            return;
-        }
-        if let Some((key, has_nested_value)) = parse_mapping_line(rest)
-            && has_nested_value
-        {
-            frames.push(OpenValueFrame {
-                indent: indent + 2,
-                path: append_mapping_segment(&item_path, &key),
-                kind: OpenValueFrameKind::MappingValue,
-            });
-        }
-        return;
-    }
-
-    if let Some((key, has_nested_value)) = parse_mapping_line(after)
-        && has_nested_value
-    {
-        frames.push(OpenValueFrame {
-            indent,
-            path: append_mapping_segment(&current_path, &key),
-            kind: OpenValueFrameKind::MappingValue,
-        });
-    }
-}
-
-fn parse_mapping_line(text: &str) -> Option<(String, bool)> {
-    let key = parse_yaml_key(text)?.into_key();
-    let colon = first_mapping_colon_offset(text)?;
-    let remainder = text[colon + 1..].trim();
-    let opens_nested_value =
-        remainder.is_empty() || matches!(remainder.chars().next(), Some('|') | Some('>'));
-    Some((key, opens_nested_value))
-}
-
-fn collect_probe_scopes(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    byte: usize,
-    path: &YamlPath,
-    scopes: &mut Vec<ProbeScope>,
-) {
-    if !contains_byte(node, byte) {
-        return;
-    }
-
-    match node.kind() {
-        "stream" => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                collect_probe_scopes(child, source, byte, path, scopes);
-            }
-        }
-        "document" | "block_mapping" | "flow_mapping" | "block_sequence" | "flow_sequence" => {
-            scopes.push(ProbeScope {
-                span_start: node.start_byte(),
-                span_end: node.end_byte(),
-                indent: node.start_position().column,
-                root_path: path.clone(),
-            });
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                collect_probe_scopes(child, source, byte, path, scopes);
-            }
-        }
-        "block_mapping_pair" | "flow_pair" => {
-            scopes.push(ProbeScope {
-                span_start: node.start_byte(),
-                span_end: node.end_byte(),
-                indent: node.start_position().column,
-                root_path: path.clone(),
-            });
-
-            let key = node.child_by_field_name("key");
-            let value = node.child_by_field_name("value");
-            let key_text = key.and_then(|node| scalar_text(node, source));
-            let child_path = if key_text
-                .as_deref()
-                .is_some_and(|text| text.contains(PLACEHOLDER_PREFIX))
-            {
-                path.clone()
-            } else if let Some(key_text) = key_text.as_deref() {
-                append_mapping_segment(path, key_text)
-            } else {
-                path.clone()
-            };
-
-            if let Some(key) = key
-                && contains_byte(key, byte)
-            {
-                collect_probe_scopes(key, source, byte, path, scopes);
-            }
-            if let Some(value) = value
-                && contains_byte(value, byte)
-            {
-                collect_probe_scopes(value, source, byte, &child_path, scopes);
-            }
-        }
-        "block_sequence_item" => {
-            scopes.push(ProbeScope {
-                span_start: node.start_byte(),
-                span_end: node.end_byte(),
-                indent: node.start_position().column,
-                root_path: path.clone(),
-            });
-
-            if let Some(child) = node.named_child(0) {
-                let seq_path = append_sequence_segment(path);
-                collect_probe_scopes(unwrap_yaml_node(child), source, byte, &seq_path, scopes);
-            }
-        }
-        "block_node" | "flow_node" => {
-            if let Some(child) = node.named_child(0) {
-                collect_probe_scopes(child, source, byte, path, scopes);
-            }
-        }
-        _ => {}
-    }
-}
-
-fn dedent_scope_source(
-    snippet: &str,
-    indent: usize,
-    insertion_byte: usize,
-) -> Option<(String, usize)> {
-    if indent == 0 {
-        return Some((snippet.to_string(), insertion_byte.min(snippet.len())));
-    }
-
-    let mut dedented = String::with_capacity(snippet.len());
-    let mut old_line_start = 0usize;
-    let mut new_insertion_byte = None;
-
-    for line in snippet.split_inclusive('\n') {
-        let line_without_newline = line.strip_suffix('\n').unwrap_or(line);
-        let removable = line_without_newline
-            .chars()
-            .take_while(|&ch| ch == ' ')
-            .count()
-            .min(indent);
-        let line_start = old_line_start;
-        let line_end = line_start + line.len();
-        if new_insertion_byte.is_none() && (line_start..=line_end).contains(&insertion_byte) {
-            new_insertion_byte = Some(
-                dedented.len()
-                    + insertion_byte
-                        .saturating_sub(line_start)
-                        .saturating_sub(removable),
-            );
-        }
-        dedented.push_str(&line[removable..]);
-        old_line_start = line_end;
-    }
-
-    Some((
-        dedented,
-        new_insertion_byte.unwrap_or_else(|| insertion_byte.saturating_sub(indent)),
-    ))
 }
 
 fn rebase_virtual_context(
@@ -1250,6 +1151,8 @@ fn rebase_virtual_context(
     full.in_mapping_key |= local.in_mapping_key;
     full.entire_scalar_value |= local.entire_scalar_value;
     full.inside_block_scalar |= local.inside_block_scalar;
+    full.explicit_mapping_value_slot |= local.explicit_mapping_value_slot;
+    full.sequence_item_slot |= local.sequence_item_slot;
     full
 }
 
@@ -1797,6 +1700,8 @@ fn resolve_output_context(
                         in_mapping_key: false,
                         entire_scalar_value: true,
                         inside_block_scalar: false,
+                        explicit_mapping_value_slot: false,
+                        sequence_item_slot: false,
                     });
                 }
                 return Some(ResolvedNodeContext {
@@ -1806,6 +1711,8 @@ fn resolve_output_context(
                     in_mapping_key: true,
                     entire_scalar_value: false,
                     inside_block_scalar: false,
+                    explicit_mapping_value_slot: false,
+                    sequence_item_slot: false,
                 });
             }
 
@@ -1834,6 +1741,8 @@ fn resolve_output_context(
                 in_mapping_key: false,
                 entire_scalar_value: false,
                 inside_block_scalar: false,
+                explicit_mapping_value_slot: false,
+                sequence_item_slot: false,
             })
         }
         "block_sequence" | "flow_sequence" => {
@@ -1864,6 +1773,8 @@ fn resolve_output_context(
             in_mapping_key: false,
             entire_scalar_value: false,
             inside_block_scalar: true,
+            explicit_mapping_value_slot: false,
+            sequence_item_slot: false,
         }),
         kind if is_scalar_like(kind) => {
             Some(resolve_scalar_context(node, source, placeholder, path))
@@ -1983,6 +1894,8 @@ fn resolve_control_context(
                         in_mapping_key: false,
                         entire_scalar_value: false,
                         inside_block_scalar: true,
+                        explicit_mapping_value_slot: false,
+                        sequence_item_slot: false,
                     });
                 }
                 let seq_path = append_sequence_segment(path);
@@ -1999,6 +1912,8 @@ fn resolve_control_context(
             in_mapping_key: false,
             entire_scalar_value: false,
             inside_block_scalar: true,
+            explicit_mapping_value_slot: false,
+            sequence_item_slot: false,
         }),
         _ => Some(default_context(path)),
     }
@@ -2041,6 +1956,8 @@ fn resolve_output_sequence_child(
             in_mapping_key: false,
             entire_scalar_value: false,
             inside_block_scalar: true,
+            explicit_mapping_value_slot: false,
+            sequence_item_slot: false,
         });
     }
 
@@ -2063,6 +1980,8 @@ fn resolve_scalar_context(
         in_mapping_key: false,
         entire_scalar_value: text == placeholder,
         inside_block_scalar: false,
+        explicit_mapping_value_slot: false,
+        sequence_item_slot: false,
     }
 }
 
@@ -2074,6 +1993,8 @@ fn default_context(path: &YamlPath) -> ResolvedNodeContext {
         in_mapping_key: false,
         entire_scalar_value: false,
         inside_block_scalar: false,
+        explicit_mapping_value_slot: false,
+        sequence_item_slot: false,
     }
 }
 

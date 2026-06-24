@@ -172,11 +172,10 @@ fn prefer_fragment_output_path(
         return current_path.clone();
     }
     if path_is_prefix_of(&rendered_path.0, &current_path.0) {
-        return if current.entire_scalar_value {
-            current_path.clone()
-        } else {
-            rendered_path.clone()
-        };
+        if rendered.sequence_item_slot {
+            return rendered_path.clone();
+        }
+        return current_path.clone();
     }
     if path_is_prefix_of(&current_path.0, &rendered_path.0) {
         return preserve_specific_prefix(current_path, rendered_path);

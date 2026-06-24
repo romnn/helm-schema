@@ -731,6 +731,47 @@ fn tracker_attributes_networkpolicy_extra_ingress_to_ingress_rules() {
 }
 
 #[test]
+fn tracker_attributes_servicemonitor_metric_relabelings_to_endpoint_field() {
+    let source =
+        include_str!("../../../../../../testdata/charts/surveyor/templates/serviceMonitor.yaml");
+    let tree = parse_template(source);
+    let defines = DefineIndex::new();
+    let mut tracker = DocumentTracker::new(source, &defines);
+    tracker.reset_for_tree(&tree);
+
+    let mut actions = Vec::new();
+    output_nodes_containing(
+        tree.root_node(),
+        source,
+        "toYaml . | nindent 4",
+        &mut actions,
+    );
+    let marker = source
+        .find("metricRelabelings:")
+        .expect("metricRelabelings key");
+    let action = actions
+        .into_iter()
+        .filter(|node| node.start_byte() > marker)
+        .min_by_key(tree_sitter::Node::start_byte)
+        .expect("metricRelabelings render action");
+    let rendered_context = tracker
+        .attribution
+        .virtual_indent_context_for_node(action, 4);
+    let path = tracker
+        .output_slot_for_node(action, ValueKind::Fragment, Some(4))
+        .path;
+    sim_assert_eq!(
+        have: path.0,
+        want: vec!["spec", "endpoints[*]", "metricRelabelings"],
+        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        tracker.path_for_node(action).0,
+        tracker.path_at_mapping_entry_indent(action, 4).0,
+        tracker.context_for_node(action),
+        rendered_context
+    );
+}
+
+#[test]
 fn tracker_attributes_networkpolicy_standard_labels_to_metadata_labels() {
     let source = include_str!(
         "../../../../../../testdata/charts/bitnami-redis/templates/networkpolicy.yaml"
@@ -964,6 +1005,77 @@ fn tracker_attributes_signoz_storage_class_scalar_include_to_pvc_spec_container(
         tracker.path_for_node(action).0,
         tracker.path_at_mapping_entry_indent(action, 8).0,
         tracker.context_for_node(action)
+    );
+}
+
+#[test]
+fn tracker_attributes_signoz_storage_class_fragment_include_to_pvc_spec_container() {
+    let source = include_str!(
+        "../../../../../../testdata/charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml"
+    );
+    let tree = parse_template(source);
+    let defines = DefineIndex::new();
+    let mut tracker = DocumentTracker::new(source, &defines);
+    tracker.reset_for_tree(&tree);
+
+    let mut actions = Vec::new();
+    output_nodes_containing(
+        tree.root_node(),
+        source,
+        "common.storage.class",
+        &mut actions,
+    );
+    let action = actions.into_iter().next().expect("storage class include");
+    sim_assert_eq!(
+        have: tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(8))
+            .path
+            .0,
+        want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
+        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        tracker.path_for_node(action).0,
+        tracker.path_at_mapping_entry_indent(action, 8).0,
+        tracker.context_for_node(action),
+        tracker.attribution.virtual_indent_context_for_node(action, 8)
+    );
+}
+
+#[test]
+fn tracker_attributes_signoz_extra_volume_mounts_to_volume_mounts() {
+    let source = include_str!(
+        "../../../../../../testdata/charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/statefulset.yaml"
+    );
+    let tree = parse_template(source);
+    let defines = DefineIndex::new();
+    let mut tracker = DocumentTracker::new(source, &defines);
+    tracker.reset_for_tree(&tree);
+
+    let mut actions = Vec::new();
+    output_nodes_containing(tree.root_node(), source, "extraVolumeMounts", &mut actions);
+    let action = actions
+        .into_iter()
+        .find(|node| {
+            node.utf8_text(source.as_bytes())
+                .is_ok_and(|text| text.contains("nindent 12"))
+        })
+        .expect("extraVolumeMounts include");
+    sim_assert_eq!(
+        have: tracker
+            .output_slot_for_node(action, ValueKind::Fragment, Some(12))
+            .path
+            .0,
+        want: vec![
+            "spec",
+            "template",
+            "spec",
+            "containers[*]",
+            "volumeMounts",
+        ],
+        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        tracker.path_for_node(action).0,
+        tracker.path_at_mapping_entry_indent(action, 12).0,
+        tracker.context_for_node(action),
+        tracker.attribution.virtual_indent_context_for_node(action, 12)
     );
 }
 
