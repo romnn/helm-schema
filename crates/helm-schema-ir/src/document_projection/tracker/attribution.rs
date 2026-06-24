@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
@@ -43,9 +43,7 @@ impl Default for ResolvedNodeContext {
 
 #[derive(Default)]
 pub(super) struct AttributionIndex {
-    sanitized: String,
     output_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
-    output_spans: HashSet<(usize, usize)>,
     control_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
     rendered_output_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
     mapping_entry_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
@@ -71,18 +69,7 @@ impl AttributionIndex {
         node: tree_sitter::Node<'_>,
         indent: usize,
     ) -> Option<ResolvedNodeContext> {
-        let (span_start, span_end) = self.output_span_for_node_or_ancestor(node)?;
-        self.rendered_output_nodes
-            .get(&(span_start, span_end, indent))
-            .cloned()
-            .or_else(|| {
-                resolve_full_document_fragment_output_context(
-                    &self.sanitized,
-                    span_start,
-                    span_end,
-                    indent,
-                )
-            })
+        self.context_for_node_or_ancestor_at_indent(&self.rendered_output_nodes, node, indent)
     }
 
     pub(super) fn mapping_entry_context_in_span_at_indent(
@@ -91,14 +78,7 @@ impl AttributionIndex {
         end: usize,
         indent: usize,
     ) -> Option<ResolvedNodeContext> {
-        self.mapping_entry_nodes
-            .get(&(start, end, indent))
-            .cloned()
-            .or_else(|| {
-                let insertion_byte =
-                    first_nonblank_byte(self.sanitized.as_bytes(), start, end).unwrap_or(start);
-                resolve_full_document_mapping_entry_context(&self.sanitized, insertion_byte, indent)
-            })
+        self.mapping_entry_nodes.get(&(start, end, indent)).cloned()
     }
 
     fn context_for_node_or_ancestor(
@@ -114,14 +94,15 @@ impl AttributionIndex {
         }
     }
 
-    fn output_span_for_node_or_ancestor(
+    fn context_for_node_or_ancestor_at_indent(
         &self,
+        contexts: &HashMap<(usize, usize, usize), ResolvedNodeContext>,
         mut node: tree_sitter::Node<'_>,
-    ) -> Option<(usize, usize)> {
+        indent: usize,
+    ) -> Option<ResolvedNodeContext> {
         loop {
-            let span = (node.start_byte(), node.end_byte());
-            if self.output_spans.contains(&span) {
-                return Some(span);
+            if let Some(context) = contexts.get(&(node.start_byte(), node.end_byte(), indent)) {
+                return Some(context.clone());
             }
             node = node.parent()?;
         }
@@ -163,20 +144,10 @@ pub(super) fn build_attribution_index(
 
     let sanitized = String::from_utf8(sanitized).expect("sanitized template is utf-8");
     let tree = parse_yaml_tree(&sanitized);
-    let mut attribution = AttributionIndex {
-        sanitized: sanitized.clone(),
-        ..AttributionIndex::default()
-    };
+    let mut attribution = AttributionIndex::default();
     let mut previous_output_paths = Vec::new();
 
     for output in outputs {
-        attribution
-            .output_spans
-            .insert((output.action_start, output.action_end));
-        attribution
-            .output_spans
-            .insert((output.node_start, output.node_end));
-
         let base_context = tree.as_ref().and_then(|tree| {
             resolve_yaml_context(
                 tree.root_node(),
@@ -195,13 +166,17 @@ pub(super) fn build_attribution_index(
             &output.placeholder,
         );
         let rendered_context = output.structural_indent.and_then(|indent| {
+            let tree = tree.as_ref()?;
+            let root = tree.root_node();
             let rendered = resolve_full_document_fragment_output_context(
+                root,
                 &sanitized,
                 output.action_start,
                 output.action_end,
                 indent,
             );
             let mapping = resolve_full_document_mapping_entry_context(
+                root,
                 &sanitized,
                 output.action_start,
                 indent,
@@ -275,6 +250,7 @@ pub(super) fn build_attribution_index(
             }
             if let Some(indent) = control.mapping_entry_indent
                 && let Some(context) = resolve_full_document_mapping_entry_context(
+                    root,
                     &sanitized,
                     control.context_byte,
                     indent,
@@ -382,13 +358,16 @@ fn resolve_inline_output_probe_context(
 }
 
 fn resolve_full_document_fragment_output_context(
+    root: tree_sitter::Node<'_>,
     sanitized: &str,
     insertion_start: usize,
     insertion_end: usize,
     indent: usize,
 ) -> Option<ResolvedNodeContext> {
-    let mapping = resolve_full_document_mapping_entry_context(sanitized, insertion_start, indent);
+    let mapping =
+        resolve_full_document_mapping_entry_context(root, sanitized, insertion_start, indent);
     let sequence = resolve_full_document_sequence_item_context(
+        root,
         sanitized,
         insertion_start,
         insertion_end,
@@ -410,17 +389,20 @@ fn resolve_full_document_fragment_output_context(
 }
 
 fn resolve_full_document_mapping_entry_context(
+    root: tree_sitter::Node<'_>,
     sanitized: &str,
     insertion_byte: usize,
     indent: usize,
 ) -> Option<ResolvedNodeContext> {
     let structural = resolve_structural_gap_context(
+        root,
         sanitized,
         insertion_byte,
         indent,
         ProbeContextKind::Mapping,
     );
-    let value_slot = resolve_full_document_mapping_value_context(sanitized, insertion_byte, indent);
+    let value_slot =
+        resolve_full_document_mapping_value_context(root, sanitized, insertion_byte, indent);
     match (structural, value_slot) {
         (Some(structural), Some(value_slot))
             if value_slot.output_path.0.len() > structural.output_path.0.len()
@@ -438,6 +420,7 @@ fn resolve_full_document_mapping_entry_context(
 }
 
 fn resolve_full_document_mapping_value_context(
+    root: tree_sitter::Node<'_>,
     sanitized: &str,
     insertion_byte: usize,
     indent: usize,
@@ -447,6 +430,7 @@ fn resolve_full_document_mapping_value_context(
     }
     let key = previous_open_mapping_key(sanitized, insertion_byte, indent)?;
     let mut context = resolve_structural_gap_context(
+        root,
         sanitized,
         insertion_byte,
         indent + 1,
@@ -483,6 +467,7 @@ fn previous_open_mapping_key(
 }
 
 fn resolve_full_document_sequence_item_context(
+    root: tree_sitter::Node<'_>,
     sanitized: &str,
     insertion_start: usize,
     insertion_end: usize,
@@ -490,11 +475,13 @@ fn resolve_full_document_sequence_item_context(
 ) -> Option<ResolvedNodeContext> {
     let insertion_byte = first_nonblank_byte(sanitized.as_bytes(), insertion_start, insertion_end)
         .unwrap_or(insertion_start);
-    if let Some(context) = resolve_exact_sequence_indent_context(sanitized, insertion_byte, indent)
+    if let Some(context) =
+        resolve_exact_sequence_indent_context(root, sanitized, insertion_byte, indent)
     {
         return Some(context);
     }
     resolve_structural_gap_context(
+        root,
         sanitized,
         insertion_byte,
         indent,
@@ -509,6 +496,7 @@ enum ProbeContextKind {
 }
 
 fn resolve_structural_gap_context(
+    root: tree_sitter::Node<'_>,
     sanitized: &str,
     insertion_byte: usize,
     indent: usize,
@@ -517,8 +505,6 @@ fn resolve_structural_gap_context(
     if line_has_inline_prefix(sanitized, insertion_byte) {
         return None;
     }
-    let tree = parse_yaml_tree(sanitized)?;
-    let root = tree.root_node();
     let insertion_byte = insertion_byte.min(root.end_byte());
     resolve_structural_gap_context_in_node(
         root,
@@ -531,14 +517,14 @@ fn resolve_structural_gap_context(
 }
 
 fn resolve_exact_sequence_indent_context(
+    root: tree_sitter::Node<'_>,
     sanitized: &str,
     insertion_byte: usize,
     indent: usize,
 ) -> Option<ResolvedNodeContext> {
-    let tree = parse_yaml_tree(sanitized)?;
     let mut best = None;
     collect_exact_sequence_indent_slots(
-        tree.root_node(),
+        root,
         sanitized,
         insertion_byte,
         indent,
