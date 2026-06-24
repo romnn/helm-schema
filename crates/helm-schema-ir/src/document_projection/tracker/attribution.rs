@@ -7,10 +7,10 @@ use crate::tree_sitter_utils::parse_go_template;
 use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
 use crate::{SourceSpan, ValueKind, YamlPath};
 
-use super::OutputSlot;
 use super::yaml_tree::{
     is_scalar_like, parse_yaml_tree, scalar_text, strip_scalar_quotes, unwrap_yaml_node,
 };
+use super::{OutputSlot, OutputSlotKind};
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
 const INLINE_PLACEHOLDER: &str = "__HSINLINE__";
@@ -46,7 +46,7 @@ impl Default for ResolvedNodeContext {
 pub(super) struct AttributionIndex {
     output_slots: HashMap<(usize, usize), OutputSlot>,
     control_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
-    mapping_entry_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
+    range_mapping_entry_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
 }
 
 impl AttributionIndex {
@@ -61,13 +61,11 @@ impl AttributionIndex {
         self.context_for_node_or_ancestor(&self.control_nodes, node)
     }
 
-    pub(super) fn mapping_entry_context_in_span_at_indent(
+    pub(super) fn range_mapping_entry_context_for_node(
         &self,
-        start: usize,
-        end: usize,
-        indent: usize,
+        node: tree_sitter::Node<'_>,
     ) -> Option<ResolvedNodeContext> {
-        self.mapping_entry_nodes.get(&(start, end, indent)).cloned()
+        self.context_for_node_or_ancestor(&self.range_mapping_entry_nodes, node)
     }
 
     fn context_for_node_or_ancestor(
@@ -177,15 +175,6 @@ pub(super) fn build_attribution_index(
                 output.action_start,
                 indent,
             );
-            if let Some(context) = mapping.clone() {
-                attribution.mapping_entry_nodes.insert(
-                    (output.action_start, output.action_end, indent),
-                    context.clone(),
-                );
-                attribution
-                    .mapping_entry_nodes
-                    .insert((output.node_start, output.node_end, indent), context);
-            }
             rendered.or(mapping)
         });
 
@@ -240,13 +229,14 @@ pub(super) fn build_attribution_index(
     if let Some(tree) = tree.as_ref() {
         let root = tree.root_node();
         for control in controls {
-            if let Some(context) = resolve_yaml_context(
+            let control_context = resolve_yaml_context(
                 root,
                 &sanitized,
                 control.context_byte,
                 ContextMode::Control,
                 &YamlPath(Vec::new()),
-            ) {
+            );
+            if let Some(context) = control_context.clone() {
                 attribution
                     .control_nodes
                     .insert((control.span_start, control.span_end), context);
@@ -258,10 +248,11 @@ pub(super) fn build_attribution_index(
                     control.context_byte,
                     indent,
                 )
+                .or(control_context)
             {
                 attribution
-                    .mapping_entry_nodes
-                    .insert((control.span_start, control.span_end, indent), context);
+                    .range_mapping_entry_nodes
+                    .insert((control.span_start, control.span_end), context);
             }
         }
     }
@@ -291,14 +282,38 @@ fn output_slot_from_context(
         *last = stripped.to_string();
     }
 
+    let in_yaml_comment = document_site_is_yaml_comment_part(source, start);
+    let slot = output_slot_kind(output.kind, &path, context, in_yaml_comment);
+
     OutputSlot {
         kind: output.kind,
         path,
         resource: None,
-        in_mapping_key: context.in_mapping_key,
-        in_yaml_comment: document_site_is_yaml_comment_part(source, start),
-        entire_scalar_value: context.entire_scalar_value,
+        slot,
         source_span: SourceSpan::new(start, end),
+    }
+}
+
+fn output_slot_kind(
+    output_kind: ValueKind,
+    path: &YamlPath,
+    context: &ResolvedNodeContext,
+    in_yaml_comment: bool,
+) -> OutputSlotKind {
+    if context.in_mapping_key {
+        OutputSlotKind::MappingKey
+    } else if in_yaml_comment {
+        OutputSlotKind::YamlComment
+    } else if context.inside_block_scalar {
+        OutputSlotKind::BlockScalarSuppressed
+    } else if output_kind == ValueKind::Fragment {
+        OutputSlotKind::FragmentInsertion
+    } else if context.entire_scalar_value {
+        OutputSlotKind::WholeScalar
+    } else if !path.0.is_empty() {
+        OutputSlotKind::PartialScalar
+    } else {
+        OutputSlotKind::Opaque
     }
 }
 

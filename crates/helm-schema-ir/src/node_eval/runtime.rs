@@ -22,12 +22,11 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath;
 
-    fn document_path_for_mapping_entry_indent(
+    fn document_mapping_entry_path_for_range_node(
         &self,
-        node: tree_sitter::Node<'_>,
-        _indent: usize,
-    ) -> YamlPath {
-        self.document_path_for_node(node)
+        _node: tree_sitter::Node<'_>,
+    ) -> Option<YamlPath> {
+        None
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot;
@@ -92,14 +91,8 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
         node: tree_sitter::Node<'_>,
         header: Option<&TemplateHeader>,
         current_path: &YamlPath,
+        mapping_entry_path: Option<&YamlPath>,
     ) -> Self::RangePlan;
-
-    fn range_output_path(
-        &self,
-        node: tree_sitter::Node<'_>,
-        current_path: &YamlPath,
-        plan: &Self::RangePlan,
-    ) -> YamlPath;
 
     fn activate_range_action(
         &mut self,

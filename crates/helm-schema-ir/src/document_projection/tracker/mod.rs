@@ -22,32 +22,31 @@ pub(crate) struct OutputSlot {
     pub(crate) kind: ValueKind,
     pub(crate) path: YamlPath,
     pub(crate) resource: Option<ResourceRef>,
-    pub(crate) in_mapping_key: bool,
-    pub(crate) in_yaml_comment: bool,
-    pub(crate) entire_scalar_value: bool,
+    pub(crate) slot: OutputSlotKind,
     pub(crate) source_span: SourceSpan,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ObservedOutputSite {
-    pub(crate) kind: ValueKind,
-    pub(crate) path: YamlPath,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum OutputSlotKind {
+    MappingKey,
+    YamlComment,
+    WholeScalar,
+    PartialScalar,
+    FragmentInsertion,
+    BlockScalarSuppressed,
+    Opaque,
 }
 
 impl OutputSlot {
-    pub(crate) fn fragment_output_site(&self) -> Option<ObservedOutputSite> {
-        if self.in_mapping_key {
-            return None;
-        }
-
-        Some(ObservedOutputSite {
-            kind: self.direct_value_kind(),
-            path: self.path.clone(),
-        })
+    pub(crate) fn suppresses_fragment_output(&self) -> bool {
+        self.slot == OutputSlotKind::MappingKey
     }
 
     pub(crate) fn direct_value_kind(&self) -> ValueKind {
-        if self.kind == ValueKind::Scalar && !self.entire_scalar_value && !self.path.0.is_empty() {
+        if self.kind == ValueKind::Scalar
+            && self.slot == OutputSlotKind::PartialScalar
+            && !self.path.0.is_empty()
+        {
             ValueKind::PartialScalar
         } else {
             self.kind
@@ -63,17 +62,19 @@ impl OutputSlot {
     }
 
     pub(crate) fn can_project_scalar_helper_to_caller_path(&self) -> bool {
-        !self.in_mapping_key
-            && !self.path.0.is_empty()
+        !self.path.0.is_empty()
             && self.kind == ValueKind::Scalar
-            && self.entire_scalar_value
+            && self.slot == OutputSlotKind::WholeScalar
     }
 
     pub(crate) fn can_project_structured_helper_to_caller_path(&self) -> bool {
-        !self.in_mapping_key
-            && !self.path.0.is_empty()
+        !self.path.0.is_empty()
             && (self.kind == ValueKind::Fragment
-                || (self.kind == ValueKind::Scalar && self.entire_scalar_value))
+                || (self.kind == ValueKind::Scalar && self.slot == OutputSlotKind::WholeScalar))
+    }
+
+    pub(crate) fn is_yaml_comment(&self) -> bool {
+        self.slot == OutputSlotKind::YamlComment
     }
 
     fn in_sequence_item(&self) -> bool {
@@ -119,25 +120,13 @@ impl<'a> DocumentTracker<'a> {
         context.current_path
     }
 
-    pub(crate) fn path_at_mapping_entry_indent(
+    pub(crate) fn range_mapping_entry_path_for_node(
         &self,
         node: tree_sitter::Node<'_>,
-        indent: usize,
-    ) -> YamlPath {
-        let context = self.context_for_node(node);
-        if context.inside_block_scalar {
-            return YamlPath(Vec::new());
-        }
-
-        if let Some(context) = self.attribution.mapping_entry_context_in_span_at_indent(
-            node.start_byte(),
-            node.end_byte(),
-            indent,
-        ) {
-            return context.mapping_entry_path;
-        }
-
-        context.mapping_entry_path
+    ) -> Option<YamlPath> {
+        self.attribution
+            .range_mapping_entry_context_for_node(node)
+            .map(|context| context.mapping_entry_path)
     }
 
     pub(crate) fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
@@ -156,9 +145,7 @@ impl<'a> DocumentTracker<'a> {
                 kind: ValueKind::Scalar,
                 path: YamlPath(Vec::new()),
                 resource: None,
-                in_mapping_key: false,
-                in_yaml_comment: false,
-                entire_scalar_value: false,
+                slot: OutputSlotKind::Opaque,
                 source_span: SourceSpan::new(node.start_byte(), node.end_byte()),
             });
         slot.path = self

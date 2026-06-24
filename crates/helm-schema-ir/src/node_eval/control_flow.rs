@@ -183,8 +183,9 @@ pub(super) fn eval_range_node<R>(
     let entry = runtime.scope_snapshot();
 
     let current_path = runtime.document_path_for_node(node);
-    let plan = runtime.plan_range_action(node, header, &current_path);
-    let range_output_path = runtime.range_output_path(node, &current_path, &plan);
+    let mapping_entry_path = runtime.document_mapping_entry_path_for_range_node(node);
+    let plan = runtime.plan_range_action(node, header, &current_path, mapping_entry_path.as_ref());
+    let range_output_path = mapping_entry_path.unwrap_or_else(|| current_path.clone());
 
     runtime.enter_local_scope();
     runtime.activate_range_action(node, &plan, &range_output_path);

@@ -426,13 +426,12 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         self.document_tracker.path_for_node(node)
     }
 
-    fn document_path_for_mapping_entry_indent(
+    fn document_mapping_entry_path_for_range_node(
         &self,
         node: tree_sitter::Node<'_>,
-        indent: usize,
-    ) -> YamlPath {
+    ) -> Option<YamlPath> {
         self.document_tracker
-            .path_at_mapping_entry_indent(node, indent)
+            .range_mapping_entry_path_for_node(node)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
@@ -535,10 +534,10 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
             return;
         }
         let output_slot = self.document_tracker.output_slot_for_action(node);
-        let Some(site) = output_slot.fragment_output_site() else {
+        if output_slot.suppresses_fragment_output() {
             return;
-        };
-        self.collect_fragment_expression(exprs, &site.path, site.kind);
+        }
+        self.collect_fragment_expression(exprs, &output_slot.path, output_slot.direct_value_kind());
     }
 
     fn observe_assignment_exprs(
@@ -652,6 +651,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         _node: tree_sitter::Node<'_>,
         header: Option<&helm_schema_ast::TemplateHeader>,
         _current_path: &YamlPath,
+        _mapping_entry_path: Option<&YamlPath>,
     ) -> Self::RangePlan {
         let value_dot = self.current_value_dot().cloned();
         let value_fragment_dot = value_dot.as_ref().map(AbstractValue::to_context_value);
@@ -679,28 +679,6 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 FRAGMENT_SEMANTICS,
             ),
         }
-    }
-
-    fn range_output_path(
-        &self,
-        node: tree_sitter::Node<'_>,
-        current_path: &YamlPath,
-        plan: &Self::RangePlan,
-    ) -> YamlPath {
-        let value_path = plan
-            .value
-            .action
-            .mapping_entry_indent
-            .map(|indent| self.document_path_for_mapping_entry_indent(node, indent))
-            .unwrap_or_else(|| current_path.clone());
-        let fragment_path = plan
-            .fragment
-            .action
-            .mapping_entry_indent
-            .map(|indent| self.document_path_for_mapping_entry_indent(node, indent))
-            .unwrap_or_else(|| current_path.clone());
-        debug_assert!(value_path == fragment_path);
-        value_path
     }
 
     fn activate_range_action(

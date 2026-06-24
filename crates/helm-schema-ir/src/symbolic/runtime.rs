@@ -74,13 +74,12 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         self.document_tracker.path_for_node(node)
     }
 
-    fn document_path_for_mapping_entry_indent(
+    fn document_mapping_entry_path_for_range_node(
         &self,
         node: tree_sitter::Node<'_>,
-        indent: usize,
-    ) -> YamlPath {
+    ) -> Option<YamlPath> {
         self.document_tracker
-            .path_at_mapping_entry_indent(node, indent)
+            .range_mapping_entry_path_for_node(node)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
@@ -175,20 +174,17 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         node: tree_sitter::Node<'_>,
         header: Option<&TemplateHeader>,
         current_path: &YamlPath,
+        mapping_entry_path: Option<&YamlPath>,
     ) -> RangeActionPlan {
         let value_path_context = self.value_path_context();
-        plan_range_action(node, header, self.source, &value_path_context, current_path)
-    }
-
-    fn range_output_path(
-        &self,
-        node: tree_sitter::Node<'_>,
-        current_path: &YamlPath,
-        plan: &RangeActionPlan,
-    ) -> YamlPath {
-        plan.mapping_entry_indent
-            .map(|indent| self.document_path_for_mapping_entry_indent(node, indent))
-            .unwrap_or_else(|| current_path.clone())
+        plan_range_action(
+            node,
+            header,
+            self.source,
+            &value_path_context,
+            current_path,
+            mapping_entry_path,
+        )
     }
 
     fn activate_range_action(
